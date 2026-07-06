@@ -203,7 +203,7 @@ grouped into coherent fix batches; LOWs are per-area sweeps. Related LOW items a
 into the MEDIUM task that touches the same files (noted in each task).
 
 HIGH:
-- [ ] 454-001 Fix CI test file inclusion drift (H1)
+- [x] 454-001 Fix CI test file inclusion drift (H1) — done; CI now 1271 tests green, spawned 454-033
 - [ ] 454-002 Fix help emitter brace escaping (H2)
 - [ ] 454-003 Fix DSL interpreter self reference stack overflow (H3)
 - [ ] 454-004 Fix NURU H002 false positive on named arguments (H4)
@@ -231,6 +231,9 @@ MEDIUM:
 - [ ] 454-024 Make MCP GitHub cache thread safe (M24 + cache filename collision)
 - [ ] 454-025 Remove stale scratch files from repo (M25)
 - [ ] 454-026 Unify analyzer packaging TFM for logging abstractions (M26)
+
+MEDIUM (discovered during 454-001):
+- [ ] 454-033 Fix MCP examples manifest drift and endpoint syntax regions
 
 LOW sweeps:
 - [ ] 454-027 Sweep core runtime low severity findings

@@ -198,15 +198,47 @@ can throw `ArgumentOutOfRangeException`. Windows only.
 
 ## Checklist
 
-- [ ] H1: Fix CI test-file inclusion (globs or drift check) and wire in excluded tests
-- [ ] H2: Fix help-emitter brace escaping / drop unnecessary interpolation
-- [ ] H3: Fix DSL interpreter self-reference StackOverflow (cache sentinel)
-- [ ] H4: Fix NURU_H002 false positive on named arguments
-- [ ] H5: Resolve multi-char single-dash option lexer/parser split
-- [ ] H6: Fix undo-stack double-reverse
-- [ ] H7: Fix Windows CRLF multiline cursor math
-- [ ] Triage MEDIUM findings (M1–M26) into child tasks or fix batches
-- [ ] Sweep LOW findings (dead code, doc fixes, hygiene deletions)
+Findings are broken out into child tasks 454-001 … 454-032. HIGHs map 1:1; MEDIUMs are
+grouped into coherent fix batches; LOWs are per-area sweeps. Related LOW items are folded
+into the MEDIUM task that touches the same files (noted in each task).
+
+HIGH:
+- [ ] 454-001 Fix CI test file inclusion drift (H1)
+- [ ] 454-002 Fix help emitter brace escaping (H2)
+- [ ] 454-003 Fix DSL interpreter self reference stack overflow (H3)
+- [ ] 454-004 Fix NURU H002 false positive on named arguments (H4)
+- [ ] 454-005 Resolve multi char single dash option support (H5)
+- [ ] 454-006 Fix undo stack trim order reversal (H6)
+- [ ] 454-007 Fix Windows CRLF multiline cursor mapping (H7)
+
+MEDIUM:
+- [ ] 454-008 Reject undefined enum values in enum type converter (M1)
+- [ ] 454-009 Align runtime type converters with invariant culture path (M2, M3 + dead converters)
+- [ ] 454-010 Restore generator incrementality (M4, M5)
+- [ ] 454-011 Harden DSL interpreter against invalid user code (M6, M7, M9)
+- [ ] 454-012 Replace string type heuristics with SemanticModel checks (M8 + property defaults)
+- [ ] 454-013 Fix false NURU R003 unreachable route warning (M10)
+- [ ] 454-014 Fix grouped short option over matching (M11)
+- [ ] 454-015 Fix lexer whitespace and end of options handling (M12, M14)
+- [ ] 454-016 Validate duplicate long form options (M13)
+- [ ] 454-017 Wire Ctrl C cancellation into REPL command execution (M15)
+- [ ] 454-018 Fix Windows clipboard set in REPL (M16)
+- [ ] 454-019 Fix redraw of lines longer than terminal width (M17)
+- [ ] 454-020 Fix REPL reader state desync bugs (M18, M19, M20)
+- [ ] 454-021 Fix enum completion overflow for wide underlying types (M21)
+- [ ] 454-022 Fix release gate already published version check (M22 + CompareVersions)
+- [ ] 454-023 Fix FTS query sanitizer malformed match expressions (M23 + LIKE wildcards)
+- [ ] 454-024 Make MCP GitHub cache thread safe (M24 + cache filename collision)
+- [ ] 454-025 Remove stale scratch files from repo (M25)
+- [ ] 454-026 Unify analyzer packaging TFM for logging abstractions (M26)
+
+LOW sweeps:
+- [ ] 454-027 Sweep core runtime low severity findings
+- [ ] 454-028 Sweep analyzer low severity findings
+- [ ] 454-029 Sweep parsing low severity findings
+- [ ] 454-030 Sweep REPL and completion low severity findings
+- [ ] 454-031 Sweep aux project low severity findings (mostly verification of folded items)
+- [ ] 454-032 Sweep infrastructure low severity findings
 
 ## Notes
 

@@ -445,3 +445,4 @@ repl-*-history.txt
 
 # Language server cache
 *.lscache
+.memsearch/

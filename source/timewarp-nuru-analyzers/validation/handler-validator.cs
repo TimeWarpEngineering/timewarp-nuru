@@ -276,6 +276,18 @@ internal static class HandlerValidator
       if (identifier.Parent is MemberBindingExpressionSyntax mb && mb.Name == identifier)
         continue;
 
+      // Skip if it's the name of a named argument or property pattern:
+      // WriteLine(format: value) - 'format' binds to the callee's parameter;
+      // obj is { Length: > 0 } - 'Length' binds to the matched type's member.
+      // Neither is a capture from the enclosing scope.
+      if (identifier.Parent is NameColonSyntax nc && nc.Name == identifier)
+        continue;
+
+      // Skip if it's the name in a NameEquals: anonymous type members (new { X = v })
+      // and attribute named arguments ([Attr(Prop = v)]) - not captures either.
+      if (identifier.Parent is NameEqualsSyntax ne && ne.Name == identifier)
+        continue;
+
       // Skip if it's the target of a property assignment in an object initializer
       // e.g., new Foo { X = value } - X is not a closure, it's setting a property on the new object
       if (IsObjectInitializerTarget(identifier))
@@ -385,6 +397,14 @@ internal static class HandlerValidator
 
       // Skip if it's the name part of a conditional member access
       if (identifier.Parent is MemberBindingExpressionSyntax mb && mb.Name == identifier)
+        continue;
+
+      // Skip if it's the name of a named argument or property pattern (see DetectClosures)
+      if (identifier.Parent is NameColonSyntax nc && nc.Name == identifier)
+        continue;
+
+      // Skip if it's the name in a NameEquals (anonymous type member / attribute argument)
+      if (identifier.Parent is NameEqualsSyntax ne && ne.Name == identifier)
         continue;
 
       // Skip if it's the target of a property assignment in an object initializer

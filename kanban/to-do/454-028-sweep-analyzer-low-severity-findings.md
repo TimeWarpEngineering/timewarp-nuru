@@ -35,3 +35,11 @@ in 454-012, not here). All paths under `source/timewarp-nuru-analyzers/`:
 - [ ] Multi-word group alias math fixed (+ test)
 - [ ] Dead debug diagnostics and IsBuilderType removed
 - [ ] `ganda runfile cache --clear` + run CI tests
+
+## Additional item (discovered during 454-004)
+
+7. `validation/handler-validator.cs` — `DetectClosures` walks `lambda.Body.DescendantNodes()`,
+   which excludes the body node itself, so `() => capturedLocal` (body IS the identifier)
+   is a false NEGATIVE for NURU_H002. Before "fixing" with DescendantNodesAndSelf, analyze
+   whether single-identifier constant captures are deliberately tolerated (the DSL
+   interpreter inlines resolvable constants); decide + add tests either way.

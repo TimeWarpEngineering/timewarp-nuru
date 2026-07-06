@@ -206,7 +206,7 @@ HIGH:
 - [x] 454-001 Fix CI test file inclusion drift (H1) — done; CI now 1271 tests green, spawned 454-033
 - [x] 454-002 Fix help emitter brace escaping (H2) — done; regression test help-07 added
 - [x] 454-003 Fix DSL interpreter self reference stack overflow (H3) — done; crashes on VALID code fixed, Roslyn-hosted test added
-- [ ] 454-004 Fix NURU H002 false positive on named arguments (H4)
+- [x] 454-004 Fix NURU H002 false positive on named arguments (H4) — done; also fixed property-pattern/anonymous-type shapes
 - [ ] 454-005 Resolve multi char single dash option support (H5)
 - [ ] 454-006 Fix undo stack trim order reversal (H6)
 - [ ] 454-007 Fix Windows CRLF multiline cursor mapping (H7)

@@ -19,6 +19,7 @@ string ciDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? ".
 string[] standaloneTests =
 [
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-28-interpreter-cycle-guard.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-29-h002-named-arguments.cs"),
 ];
 
 int standaloneFailures = 0;

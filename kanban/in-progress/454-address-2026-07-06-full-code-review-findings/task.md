@@ -209,7 +209,7 @@ HIGH:
 - [x] 454-004 Fix NURU H002 false positive on named arguments (H4) — done; also fixed property-pattern/anonymous-type shapes
 - [x] 454-005 Resolve multi char single dash option support (H5) — done; multi-char shorts supported, grouping removed
 - [x] 454-006 Fix undo stack trim order reversal (H6) — done; one-line fix + regression test
-- [ ] 454-007 Fix Windows CRLF multiline cursor mapping (H7)
+- [x] 454-007 Fix Windows CRLF multiline cursor mapping (H7) — done; \n contract pinned by tests, Windows human check pending
 
 MEDIUM:
 - [ ] 454-008 Reject undefined enum values in enum type converter (M1)

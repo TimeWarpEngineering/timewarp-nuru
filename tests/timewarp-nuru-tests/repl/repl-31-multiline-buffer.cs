@@ -441,8 +441,44 @@ public class MultilineBufferTests
     // Act
     string fullText = buffer.GetFullText();
 
-    // Assert
-    fullText.ShouldBe($"line one{System.Environment.NewLine}line two", "Full text should include newlines");
+    // Assert - joined with '\n' on EVERY platform: the cursor-mapping math counts one
+    // char per line break, so GetFullText() must too. Environment.NewLine here broke
+    // cursor positions on Windows (kanban 454-007).
+    fullText.ShouldBe("line one\nline two", "Full text should join lines with a single \\n");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_keep_linear_positions_consistent_with_full_text()
+  {
+    // Regression for kanban 454-007: TotalLength, CursorToPosition, and GetFullText()
+    // must agree so linear positions index into the text on every platform.
+
+    // Arrange
+    MultilineBuffer buffer = new();
+    buffer.SetText("first\nsecond\nthird");
+    string fullText = buffer.GetFullText();
+
+    // Assert - lengths agree
+    buffer.TotalLength.ShouldBe(fullText.Length, "TotalLength must equal GetFullText().Length");
+
+    // Assert - cursor at start of each line maps to an index whose char begins that line
+    for (int line = 0; line < buffer.LineCount; line++)
+    {
+      int position = buffer.CursorToPosition(new MultilineCursor(line, 0));
+      if (buffer.Lines[line].Length > 0)
+      {
+        fullText[position].ShouldBe(buffer.Lines[line][0], $"Position of line {line} start must index its first char");
+      }
+
+      // Assert - round-trip
+      MultilineCursor roundTripped = buffer.PositionToCursor(position);
+      roundTripped.ShouldBe(new MultilineCursor(line, 0), "PositionToCursor must invert CursorToPosition");
+    }
+
+    // Assert - slicing at an interior cursor does not throw and splits correctly
+    int mid = buffer.CursorToPosition(new MultilineCursor(1, 3));
+    fullText[..mid].ShouldBe("first\nsec", "Prefix slice at (1,3) must end mid-second-line");
 
     await Task.CompletedTask;
   }

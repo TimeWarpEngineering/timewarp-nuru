@@ -74,13 +74,10 @@ internal sealed class SemanticValidator
               context.ParametersByName[option.Parameter.Name] = paramList;
             }
 
-            // Store the option, not just its parameter, for better error messages
-            paramList.Add(option);
+          // Store the option, not just its parameter, for better error messages
+          paramList.Add(option);
           }
 
-          // Track aliases
-          if (option.ShortForm is not null)
-            context.OptionAliases[option.ShortForm] = option;
           break;
 
         case LiteralSyntax literal:
@@ -276,26 +273,45 @@ internal sealed class SemanticValidator
     }
   }
 
-  // NURU_S005: Check for duplicate option aliases
+  // NURU_S005: Check for duplicate option aliases (short and long forms)
   private static void ValidateDuplicateOptionAliases(ValidationContext context, List<SemanticError> semanticErrors)
   {
-    Dictionary<string, OptionSyntax> seen = [];
+    Dictionary<string, OptionSyntax> shortSeen = [];
+    Dictionary<string, OptionSyntax> longSeen = [];
 
     foreach (OptionSyntax option in context.Options)
     {
       if (option.ShortForm is not null)
       {
-        if (seen.TryGetValue(option.ShortForm, out OptionSyntax? existing))
+        if (shortSeen.TryGetValue(option.ShortForm, out OptionSyntax? existing))
         {
           semanticErrors.Add(new DuplicateOptionAliasError(
             option.Position,
             option.Length,
-            option.ShortForm!,
-            [existing.LongForm ?? existing.ShortForm!]));
+            option.ShortForm,
+            [existing.LongForm ?? existing.ShortForm!],
+            IsLongForm: false));
         }
         else
         {
-          seen[option.ShortForm] = option;
+          shortSeen[option.ShortForm] = option;
+        }
+      }
+
+      if (option.LongForm is not null)
+      {
+        if (longSeen.TryGetValue(option.LongForm, out OptionSyntax? existing))
+        {
+          semanticErrors.Add(new DuplicateOptionAliasError(
+            option.Position,
+            option.Length,
+            option.LongForm,
+            [existing.LongForm ?? existing.ShortForm ?? option.LongForm],
+            IsLongForm: true));
+        }
+        else
+        {
+          longSeen[option.LongForm] = option;
         }
       }
     }

@@ -44,11 +44,11 @@ internal static partial class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor DuplicateOptionAlias = new(
       id: "NURU_S005",
       title: "Option with duplicate alias",
-      messageFormat: "Option has duplicate short form '{0}' (conflicts with: {1})",
+      messageFormat: "Option has duplicate alias '{0}' (conflicts with: {1})",
       category: SemanticCategory,
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
-      description: "Options cannot have the same short form specified multiple times.");
+      description: "Options cannot have the same alias specified multiple times.");
 
   public static readonly DiagnosticDescriptor OptionalBeforeRequired = new(
       id: "NURU_S006",

@@ -11,10 +11,6 @@ internal sealed class ValidationContext
   /// </summary>
   public Dictionary<string, List<SegmentSyntax>> ParametersByName { get; } = [];
   /// <summary>
-  /// Maps option aliases to their option syntax for duplicate detection.
-  /// </summary>
-  public Dictionary<string, OptionSyntax> OptionAliases { get; } = [];
-  /// <summary>
   /// All parameter segments in the route.
   /// </summary>
   public List<ParameterSyntax> Parameters { get; } = [];

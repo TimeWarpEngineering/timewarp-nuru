@@ -140,7 +140,7 @@ internal class Lexer
         {
           // Check if this is standalone -- (end-of-options separator)
           // It should be followed by whitespace or end of input
-          if (IsAtEnd() || Peek() == ' ')
+          if (IsAtEnd() || char.IsWhiteSpace(Peek()))
           {
             AddToken(RouteTokenType.EndOfOptions, "--");
           }

@@ -132,3 +132,16 @@ public record InvalidModifierCombinationError(
   public override string ToString() =>
     $"Error at position {Position}: Invalid modifier combination in parameter '{ParameterName}' - cannot combine catch-all (*) and optional (?) modifiers";
 }
+
+/// <summary>
+/// Adjacent parameter blocks error (e.g., "{a}{b}" with no whitespace separator).
+/// </summary>
+public record AdjacentParametersError(
+  int Position,
+  int Length
+) : ParseError(Position, Length)
+{
+  public override string ToString() =>
+    $"Error at position {Position}: Adjacent parameters must be separated by whitespace " +
+    "(e.g., '{a} {b}' rather than '{a}{b}')";
+}

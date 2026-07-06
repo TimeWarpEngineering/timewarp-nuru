@@ -50,14 +50,14 @@ internal static class HelpEmitter
     // Version with colon format
     string version = model.Version ?? "1.0.0";
     sb.AppendLine("    terminal.WriteLine(\"Version:\".BrightCyan().Bold());");
-    sb.AppendLine($"    terminal.WriteLine($\"  v{version}\".BrightCyan().Bold());");
+    sb.AppendLine($"    terminal.WriteLine(\"  v{EscapeString(version)}\".BrightCyan().Bold());");
     sb.AppendLine("    terminal.WriteLine();");
 
     // App description with "Description:" header and indented value (default colors for light/dark mode compatibility)
     if (model.Description is not null)
     {
       sb.AppendLine("    terminal.WriteLine(\"Description:\");");
-      sb.AppendLine($"    terminal.WriteLine($\"  {EscapeString(model.Description)}\");");
+      sb.AppendLine($"    terminal.WriteLine(\"  {EscapeString(model.Description)}\");");
     }
 
     sb.AppendLine("    terminal.WriteLine();");

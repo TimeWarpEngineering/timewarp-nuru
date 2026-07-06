@@ -204,7 +204,7 @@ into the MEDIUM task that touches the same files (noted in each task).
 
 HIGH:
 - [x] 454-001 Fix CI test file inclusion drift (H1) — done; CI now 1271 tests green, spawned 454-033
-- [ ] 454-002 Fix help emitter brace escaping (H2)
+- [x] 454-002 Fix help emitter brace escaping (H2) — done; regression test help-07 added
 - [ ] 454-003 Fix DSL interpreter self reference stack overflow (H3)
 - [ ] 454-004 Fix NURU H002 false positive on named arguments (H4)
 - [ ] 454-005 Resolve multi char single dash option support (H5)

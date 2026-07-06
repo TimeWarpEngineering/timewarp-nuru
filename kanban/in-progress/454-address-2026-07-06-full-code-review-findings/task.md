@@ -219,7 +219,7 @@ MEDIUM:
 - [ ] 454-012 Replace string type heuristics with SemanticModel checks (M8 + property defaults)
 - [ ] 454-013 Fix false NURU R003 unreachable route warning (M10)
 - [x] 454-014 Fix grouped short option over matching (M11) — resolved by 454-005 (heuristic removed)
-- [ ] 454-015 Fix lexer whitespace and end of options handling (M12, M14)
+- [x] 454-015 Fix lexer whitespace and end of options handling (M12, M14) — done; char.IsWhiteSpace for --, AdjacentParametersError for {a}{b}, 11 tests
 - [x] 454-016 Validate duplicate long form options (M13) — done; short+long form dup detection, dead OptionAliases removed, 5 tests
 - [ ] 454-017 Wire Ctrl C cancellation into REPL command execution (M15)
 - [ ] 454-018 Fix Windows clipboard set in REPL (M16)

@@ -18,10 +18,10 @@ Two lexer whitespace defects in `source/timewarp-nuru-parsing/lexer/lexer.cs`:
 
 ## Checklist
 
-- [ ] `--` detection uses whitespace class (tab/CR/LF)
-- [ ] Adjacent segments without whitespace produce a diagnostic (or documented decision)
-- [ ] Lexer/parser tests for `--\tx` and `{a}{b}`
-- [ ] `ganda runfile cache --clear` + run CI tests
+- [x] `--` detection uses whitespace class (tab/CR/LF)
+- [x] Adjacent segments without whitespace produce a diagnostic (or documented decision)
+- [x] Lexer/parser tests for `--\tx` and `{a}{b}`
+- [x] `ganda runfile cache --clear` + run CI tests
 
 ## Notes
 
@@ -91,3 +91,38 @@ File: `tests/timewarp-nuru-tests/lexer/lexer-08-whitespace-handling.cs`
 - M14 is a breaking change: `{a}{b}` previously parsed successfully, now errors. But this is almost certainly a typo. Unlikely to affect real route patterns.
 - No throws from new paths: M14 emits a ParseError and continues parsing (recovery). Fuzz guarantee preserved.
 - No new RouteTokenType: parser-level detection uses token positions only.
+
+## Results
+
+### What was implemented
+
+Fixed two lexer whitespace defects (M12, M14) in the route pattern parser.
+
+- **M12 (end-of-options whitespace)**: Changed `Peek() == ' '` to `char.IsWhiteSpace(Peek())` at `lexer.cs:143`. Now `--\tx`, `--\rx`, `--\nx` correctly tokenize as `EndOfOptions + Identifier` instead of `DoubleDash + Identifier` (which silently created a long option `--x`). Tab/CR/LF after `--` no longer change parse semantics.
+- **M14 (adjacent parameters)**: Added `AdjacentParametersError` ParseError subtype and a parser-level check in `ParseSegment`. When a `LeftBrace` token immediately follows a `RightBrace` token with no position gap (`Previous().EndPosition == token.Position`), there was no whitespace separator — emit a diagnostic. The parser continues parsing (emits error, doesn't throw) to preserve the 200k-fuzz no-throws guarantee.
+- Detection is parser-level (not lexer-level) because the parser already has `AddParseError` and token-position awareness. No new `RouteTokenType` needed.
+
+### Files changed
+
+- `source/timewarp-nuru-parsing/parsing/lexer/lexer.cs` — M12 one-liner (`char.IsWhiteSpace`)
+- `source/timewarp-nuru-parsing/parsing/parser/parse-error.cs` — added `AdjacentParametersError` record
+- `source/timewarp-nuru-parsing/parsing/parser/parser.cs` — added adjacency check in `ParseSegment`
+- `tests/timewarp-nuru-tests/lexer/lexer-06-end-of-options.cs` — 4 M12 tests (tab/CR/LF/newline after `--`)
+- `tests/timewarp-nuru-tests/lexer/lexer-08-whitespace-handling.cs` — 1 M14 lexer documentation test
+- `tests/timewarp-nuru-tests/parser/parser-18-adjacent-parameters.cs` (new) — 6 M14 parser tests
+
+### Key decisions made
+
+- **`char.IsWhiteSpace` over inline four-char check**: Standard .NET whitespace check; route patterns are unlikely to contain exotic Unicode whitespace.
+- **Parser-level detection for M14**: The lexer has no error accumulator (only emits `Invalid` tokens). The parser already has `AddParseError` and token positions, so M14 is cleanest there. `Token.EndPosition` exists as a computed property (`Position + Length`).
+- **Emit diagnostic, continue parsing**: The adjacency check adds a `ParseError` but still calls `ParseParameter()` — the parser recovers and the error makes `result.Success` false, surfacing as `PatternException`. No throws, fuzz guarantee preserved.
+- **Scope limited to `}{` adjacency**: Only consecutive parameter blocks (`{a}{b}`) are checked. `literal{a}` or `--opt{a}` (non-`}{` adjacency) are out of scope per the design decision.
+
+### Test outcomes
+
+- **Standalone lexer-06**: 9 passed (5 existing + 4 new M12 tests)
+- **Standalone lexer-08**: 8 passed (7 existing + 1 new M14 doc test)
+- **Standalone parser-18**: 6 passed (all new M14 tests)
+- **Full CI** (`dotnet run tests/ci-tests/run-ci-tests.cs`): 1337 passed, 7 skipped, 0 failed. No regressions.
+
+(End of file - total 93 lines)

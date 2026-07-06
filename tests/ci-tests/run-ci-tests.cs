@@ -1,9 +1,46 @@
 #!/usr/bin/dotnet --
+#:package TimeWarp.Amuru
 
 // Multi-mode Test Runner
 // Test classes are auto-registered via [ModuleInitializer] when compiled with JARIBU_MULTI.
 
+using TimeWarp.Amuru;
+
 WriteLine("TimeWarp.Nuru Multi-Mode Test Runner");
 WriteLine();
 
-return await RunAllTests();
+int multiResult = await RunAllTests();
+
+// Roslyn-hosted generator tests reference timewarp-nuru-analyzers as a LIBRARY, whose
+// shared parsing types (Lexer/Token) collide with timewarp-nuru's in the multi-mode
+// compilation (CS0433). They are excluded from the multi assembly (CiTestExcludes in
+// Directory.Build.props) and executed standalone here so CI still covers them.
+string ciDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? ".";
+string[] standaloneTests =
+[
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-28-interpreter-cycle-guard.cs"),
+];
+
+int standaloneFailures = 0;
+foreach (string testFile in standaloneTests)
+{
+  string fullPath = Path.GetFullPath(testFile);
+  WriteLine();
+  WriteLine($"Running standalone: {Path.GetFileName(fullPath)}");
+
+  CommandOutput result = await Shell.Builder("dotnet")
+    .WithArguments("run", fullPath)
+    .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
+    .WithNoValidation()
+    .CaptureAsync();
+
+  WriteLine(result.Stdout);
+  if (result.ExitCode != 0)
+  {
+    standaloneFailures++;
+    WriteLine(result.Stderr);
+    WriteLine($"❌ {Path.GetFileName(fullPath)} failed with exit code {result.ExitCode}");
+  }
+}
+
+return multiResult != 0 ? multiResult : (standaloneFailures > 0 ? 1 : 0);

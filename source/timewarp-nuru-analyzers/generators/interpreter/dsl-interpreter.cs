@@ -436,9 +436,17 @@ public sealed class DslInterpreter
     if (symbol is null)
       return null;
 
-    // Check cache first (avoid re-evaluating same declaration)
+    // Check cache first (avoid re-evaluating same declaration).
+    // This doubles as the cycle guard: the null sentinel written below makes a
+    // re-entrant resolution of the same symbol return here instead of recursing.
     if (VariableState.TryGetValue(symbol, out object? cached))
       return cached;
+
+    // Pre-cache a null sentinel BEFORE evaluating the initializer. Self-referential
+    // or mutually-referential declarations (e.g. the ordinary mid-typing state
+    // `var x = x;`) would otherwise recurse forever and kill the analyzer host
+    // with an uncatchable StackOverflowException.
+    VariableState[symbol] = null;
 
     // Use semantic model to find declaration and evaluate initializer
     if (symbol is ILocalSymbol localSymbol)

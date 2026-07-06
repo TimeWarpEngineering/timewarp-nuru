@@ -52,3 +52,14 @@ Two user-facing MCP server content bugs:
 - [ ] mcp-02 re-included in CI and green
 - [ ] mcp-01 serilog/calculator-endpoint coverage restored
 - [ ] Decide on remote-master vs local-content coupling
+
+## Progress (2026-07-06, review of 454-008)
+
+The remote-coupling risk materialized: GitHub rate-limited (429) the CI sandbox and all
+12 ExampleRetrieval tests failed — the manifest had only an in-process memory cache, so
+every fresh process required a live GitHub fetch. Fixed in GetExampleTool: the manifest
+is now persisted via the existing disk-cache helpers and, when the fetch fails (network
+error, timeout, non-success status, bad JSON), the tool falls back to the last
+successfully fetched manifest ignoring TTL. Failure message now includes the reason and
+only throws when no cached manifest exists. Remaining scope of this task (manifest path
+drift, endpoint syntax regions, mcp-02) is unchanged.

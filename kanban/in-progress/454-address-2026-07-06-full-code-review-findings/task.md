@@ -212,7 +212,7 @@ HIGH:
 - [x] 454-007 Fix Windows CRLF multiline cursor mapping (H7) — done; \n contract pinned by tests, Windows human check pending
 
 MEDIUM:
-- [ ] 454-008 Reject undefined enum values in enum type converter (M1)
+- [x] 454-008 Reject undefined enum values in enum type converter (M1) — done by agent, reviewed OK
 - [ ] 454-009 Align runtime type converters with invariant culture path (M2, M3 + dead converters)
 - [ ] 454-010 Restore generator incrementality (M4, M5)
 - [ ] 454-011 Harden DSL interpreter against invalid user code (M6, M7, M9)

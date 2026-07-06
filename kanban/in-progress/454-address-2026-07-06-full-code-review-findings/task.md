@@ -225,7 +225,7 @@ MEDIUM:
 - [ ] 454-018 Fix Windows clipboard set in REPL (M16)
 - [ ] 454-019 Fix redraw of lines longer than terminal width (M17)
 - [ ] 454-020 Fix REPL reader state desync bugs (M18, M19, M20)
-- [ ] 454-021 Fix enum completion overflow for wide underlying types (M21)
+- [x] 454-021 Fix enum completion overflow for wide underlying types (M21) — done; Convert.ToInt32 → value.ToString("D"), 3 regression tests added
 - [ ] 454-022 Fix release gate already published version check (M22 + CompareVersions)
 - [ ] 454-023 Fix FTS query sanitizer malformed match expressions (M23 + LIKE wildcards)
 - [ ] 454-024 Make MCP GitHub cache thread safe (M24 + cache filename collision)

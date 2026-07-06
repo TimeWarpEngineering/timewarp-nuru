@@ -12,9 +12,9 @@ values — crashing the `__complete` request for that command.
 
 ## Checklist
 
-- [ ] Use Convert.ToInt64/UInt64 or format via the enum's underlying type
-- [ ] Test: completion over `enum : ulong` with a > Int32.MaxValue member
-- [ ] Run completion test suite
+- [x] Use Convert.ToInt64/UInt64 or format via the enum's underlying type
+- [x] Test: completion over `enum : ulong` with a > Int32.MaxValue member
+- [x] Run completion test suite
 
 ## Notes
 
@@ -80,3 +80,29 @@ enum WideUlongEnum : ulong
 - No regression: "D" format produces identical output to Convert.ToInt32 for Int32-range values
 - No cross-contamination: no [NuruRoute] endpoints added/changed
 - Runtime-only: no generator changes
+
+## Results
+
+### What was implemented
+
+Fixed the `OverflowException` crash in `EnumCompletionSource<TEnum>.GetEnumDescription` when an enum has a wide underlying type (`enum : long/ulong`) with member values exceeding Int32 range.
+
+- Replaced `Convert.ToInt32(value, CultureInfo.InvariantCulture)` at line 81 with `value.ToString("D")` — the "D" format specifier returns the decimal representation of the enum's underlying value for ALL underlying types (int/uint/long/ulong/short/ushort/byte/sbyte), with no overflow.
+- Note: Used `value.ToString("D")` (no IFormatProvider) because `Enum.ToString(string?, IFormatProvider?)` is `[Obsolete]` in this target framework and the project treats warnings as errors. The "D" format is culture-invariant for enums, so behavior is unchanged.
+- Added explanatory comment block so future reviewers understand why `Convert.ToInt32` was not used.
+- Added 3 regression tests + 2 wide-underlying-type test enums.
+
+### Files changed
+
+- `source/timewarp-nuru/completion/completion/sources/enum-completion-source.cs` — one-line fix (Convert.ToInt32 → value.ToString("D")) + explanatory comment
+- `tests/timewarp-nuru-tests/completion/completion-17-enum-source.cs` — 3 new tests + 2 new enums (WideLongEnum, WideUlongEnum)
+
+### Key decisions made
+
+- **Option A chosen over Option C**: `value.ToString("D")` handles `ulong` values > Int64.MaxValue (e.g. `0x8000000000000000UL = 9223372036854775808`), which `Convert.ToInt64` (Option C) could not.
+- **Dropped IFormatProvider**: `Enum.ToString(string?, IFormatProvider?)` is obsolete in the target framework; "D" format is culture-invariant for enums regardless.
+
+### Test outcomes
+
+- **Standalone** (`dotnet run tests/timewarp-nuru-tests/completion/completion-17-enum-source.cs`): 13 passed, 0 failed (10 existing + 3 new)
+- **Full CI** (`dotnet run tests/ci-tests/run-ci-tests.cs`): 1319 passed, 7 skipped, 0 failed. No regressions.

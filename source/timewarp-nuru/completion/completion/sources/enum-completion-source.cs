@@ -77,7 +77,11 @@ public sealed class EnumCompletionSource<[DynamicallyAccessedMembers(Dynamically
       }
     }
 
-    // Fallback: use the numeric value
-    return $"Value: {Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture)}";
+    // Fallback: use the numeric value.
+    // "D" format returns the decimal representation of the underlying value for any
+    // enum underlying type (int/uint/long/ulong/short/ushort/byte/sbyte), avoiding
+    // the OverflowException that Convert.ToInt32 throws for wide underlying types
+    // (e.g. [Flags] enum : ulong with a 0x80000000 bit exceeding Int32 range).
+    return $"Value: {value.ToString("D")}";
   }
 }

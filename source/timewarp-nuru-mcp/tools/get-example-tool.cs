@@ -6,7 +6,9 @@ namespace TimeWarp.Nuru.Mcp.Tools;
 internal sealed class GetExampleTool
 {
   private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
-  private static readonly Dictionary<string, CachedExample> MemoryCache = [];
+  // ConcurrentDictionary: MCP tool calls dispatch concurrently (same hazard as
+  // GitHubCacheService.MemoryCache, fixed in kanban 454-024).
+  private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, CachedExample> MemoryCache = [];
   private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
   private static readonly TimeSpan ManifestCacheTtl = TimeSpan.FromHours(24);
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)

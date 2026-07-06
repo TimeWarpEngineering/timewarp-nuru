@@ -34,7 +34,7 @@ public class CacheFileNameTests
 
     result.ShouldNotContain('/');
     result.ShouldNotContain('\\');
-    result.ShouldBe("documentation-reference-foo");
+    result.ShouldBe("documentation-reference-foo.md");
 
     await Task.CompletedTask;
   }
@@ -43,7 +43,19 @@ public class CacheFileNameTests
   {
     string result = GitHubCacheService.GetSafeCacheFileName("foo.md");
 
-    result.ShouldBe("foo");
+    result.ShouldBe("foo.md");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_not_collide_for_same_stem_with_different_extensions()
+  {
+    // Same directory, same stem, different extension must produce distinct cache
+    // names — the extension is kept for exactly this reason.
+    string markdown = GitHubCacheService.GetSafeCacheFileName("docs/foo.md");
+    string json = GitHubCacheService.GetSafeCacheFileName("docs/foo.json");
+
+    markdown.ShouldNotBe(json);
 
     await Task.CompletedTask;
   }

@@ -133,17 +133,12 @@ internal static class GitHubCacheService
 
   internal static string GetSafeCacheFileName(string path)
   {
-    // Use the full relative path (without extension) with path separators replaced by '-'.
-    // This prevents collisions between different directories that share a filename
-    // (e.g., "examples/routing/foo.md" vs "examples/parser/foo.md").
-    string? directory = Path.GetDirectoryName(path);
-    string fileName = Path.GetFileNameWithoutExtension(path);
-
-    string result = string.IsNullOrEmpty(directory)
-      ? fileName
-      : directory.Replace('/', '-').Replace('\\', '-') + "-" + fileName;
-
-    return result;
+    // Use the full relative path with separators replaced by '-', KEEPING the
+    // extension. This prevents collisions both between directories sharing a
+    // filename ("examples/routing/foo.md" vs "examples/parser/foo.md") and between
+    // same-directory files differing only by extension ("docs/foo.md" vs
+    // "docs/foo.json").
+    return path.Replace('/', '-').Replace('\\', '-');
   }
 
   private sealed class CachedContent

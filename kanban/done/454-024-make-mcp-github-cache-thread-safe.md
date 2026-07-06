@@ -21,7 +21,7 @@ hash of the full relative path in the cache file name.
 - [x] Replace static Dictionary with ConcurrentDictionary
 - [x] Disambiguate disk-cache file names (path hash)
 - [x] Check other statics in the MCP server for the same pattern
-- [x] Run MCP tests (note: currently excluded from CI — see task 454-001)
+- [x] Run MCP tests (in CI since 454-001; only mcp-02 remains excluded — see 454-033)
 
 ## Notes
 

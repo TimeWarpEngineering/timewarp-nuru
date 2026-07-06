@@ -69,6 +69,7 @@
   <ItemGroup>
     <!-- Package references -->
     <PackageReference Include="TimeWarp.Amuru" />
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
   </ItemGroup>
 
 </Project>

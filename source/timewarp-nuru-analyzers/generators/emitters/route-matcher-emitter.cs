@@ -1163,7 +1163,7 @@ internal static class RouteMatcherEmitter
       "double" => $"double.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
       "float" => $"float.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
       "decimal" => $"decimal.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "bool" => $"bool.Parse({varName})",
+      "bool" => $"global::TimeWarp.Nuru.BooleanConverter.Parse({varName})",
       "datetime" => $"global::System.DateTime.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
       "guid" => $"global::System.Guid.Parse({varName})",
       _ => varName // Unknown type - return as-is (string)

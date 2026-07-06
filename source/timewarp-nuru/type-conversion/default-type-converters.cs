@@ -18,7 +18,7 @@ internal static class DefaultTypeConverters
 
     if (targetType == typeof(int))
     {
-      if (int.TryParse(value, out int intValue))
+      if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int intValue))
       {
         result = intValue;
         return true;
@@ -26,7 +26,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(byte))
     {
-      if (byte.TryParse(value, out byte byteValue))
+      if (byte.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out byte byteValue))
       {
         result = byteValue;
         return true;
@@ -34,7 +34,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(sbyte))
     {
-      if (sbyte.TryParse(value, out sbyte sbyteValue))
+      if (sbyte.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out sbyte sbyteValue))
       {
         result = sbyteValue;
         return true;
@@ -42,7 +42,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(short))
     {
-      if (short.TryParse(value, out short shortValue))
+      if (short.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out short shortValue))
       {
         result = shortValue;
         return true;
@@ -50,7 +50,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(ushort))
     {
-      if (ushort.TryParse(value, out ushort ushortValue))
+      if (ushort.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out ushort ushortValue))
       {
         result = ushortValue;
         return true;
@@ -58,7 +58,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(uint))
     {
-      if (uint.TryParse(value, out uint uintValue))
+      if (uint.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out uint uintValue))
       {
         result = uintValue;
         return true;
@@ -66,7 +66,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(ulong))
     {
-      if (ulong.TryParse(value, out ulong ulongValue))
+      if (ulong.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong ulongValue))
       {
         result = ulongValue;
         return true;
@@ -74,7 +74,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(float))
     {
-      if (float.TryParse(value, out float floatValue))
+      if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out float floatValue))
       {
         result = floatValue;
         return true;
@@ -90,7 +90,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(bool))
     {
-      if (bool.TryParse(value, out bool boolValue))
+      if (BooleanConverter.TryParse(value, out bool boolValue))
       {
         result = boolValue;
         return true;
@@ -98,7 +98,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(long))
     {
-      if (long.TryParse(value, out long longValue))
+      if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out long longValue))
       {
         result = longValue;
         return true;
@@ -106,7 +106,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(double))
     {
-      if (double.TryParse(value, out double doubleValue))
+      if (double.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double doubleValue))
       {
         result = doubleValue;
         return true;
@@ -114,7 +114,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(decimal))
     {
-      if (decimal.TryParse(value, out decimal decimalValue))
+      if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal decimalValue))
       {
         result = decimalValue;
         return true;
@@ -130,7 +130,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(DateTime))
     {
-      if (DateTime.TryParse(value, out DateTime dateTimeValue))
+      if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeValue))
       {
         result = dateTimeValue;
         return true;
@@ -138,7 +138,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(TimeSpan))
     {
-      if (TimeSpan.TryParse(value, out TimeSpan timeSpanValue))
+      if (TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out TimeSpan timeSpanValue))
       {
         result = timeSpanValue;
         return true;
@@ -188,7 +188,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(DateOnly))
     {
-      if (DateOnly.TryParse(value, out DateOnly dateOnlyValue))
+      if (DateOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly dateOnlyValue))
       {
         result = dateOnlyValue;
         return true;
@@ -196,7 +196,7 @@ internal static class DefaultTypeConverters
     }
     else if (targetType == typeof(TimeOnly))
     {
-      if (TimeOnly.TryParse(value, out TimeOnly timeOnlyValue))
+      if (TimeOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out TimeOnly timeOnlyValue))
       {
         result = timeOnlyValue;
         return true;
@@ -206,17 +206,52 @@ internal static class DefaultTypeConverters
     {
       try
       {
-        result = Enum.Parse(targetType, value, ignoreCase: true);
-        return true;
+        object? enumValue = Enum.Parse(targetType, value, ignoreCase: true);
+        bool isFlagsEnum = targetType.GetCustomAttribute<FlagsAttribute>() is not null;
+
+        if (isFlagsEnum)
+        {
+          if (IsAllNamedEnumParts(value, targetType))
+          {
+            result = enumValue;
+            return true;
+          }
+        }
+        else if (Enum.IsDefined(targetType, enumValue))
+        {
+          result = enumValue;
+          return true;
+        }
       }
       catch (ArgumentException)
       {
         // Value is not a valid enum member
+      }
+
+      return false;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Verifies that every comma-separated part of the input is a named enum member.
+  /// Used for [Flags] enums to reject raw numeric input.
+  /// </summary>
+  private static bool IsAllNamedEnumParts(string value, Type enumType)
+  {
+    HashSet<string> nameSet = new(Enum.GetNames(enumType), StringComparer.OrdinalIgnoreCase);
+    string[] parts = value.Split(',');
+    foreach (string part in parts)
+    {
+      string trimmedPart = part.Trim();
+      if (string.IsNullOrEmpty(trimmedPart) || !nameSet.Contains(trimmedPart))
+      {
         return false;
       }
     }
 
-    return false;
+    return true;
   }
 
   /// <summary>

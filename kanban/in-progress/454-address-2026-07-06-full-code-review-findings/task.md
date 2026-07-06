@@ -208,7 +208,7 @@ HIGH:
 - [x] 454-003 Fix DSL interpreter self reference stack overflow (H3) — done; crashes on VALID code fixed, Roslyn-hosted test added
 - [x] 454-004 Fix NURU H002 false positive on named arguments (H4) — done; also fixed property-pattern/anonymous-type shapes
 - [x] 454-005 Resolve multi char single dash option support (H5) — done; multi-char shorts supported, grouping removed
-- [ ] 454-006 Fix undo stack trim order reversal (H6)
+- [x] 454-006 Fix undo stack trim order reversal (H6) — done; one-line fix + regression test
 - [ ] 454-007 Fix Windows CRLF multiline cursor mapping (H7)
 
 MEDIUM:

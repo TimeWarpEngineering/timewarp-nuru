@@ -1,3 +1,16 @@
+#region Purpose
+// Undo/redo stacks for the REPL line editor, with PSReadLine-style character grouping.
+#endregion
+
+#region Design
+// Two Stack<UndoUnit>s; a new edit clears the redo stack. Consecutive character
+// insertions collapse into one undo unit (IsGroupingCharacters) so Ctrl+Z undoes a
+// typed word, not one char at a time. TrimToCapacity must preserve stack ORDER:
+// Stack enumeration is newest-first, so trim reverses once to drop the oldest and
+// pushes back oldest-first — a second reverse before pushing inverts undo history
+// (kanban 454-006).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -172,7 +185,8 @@ internal sealed class UndoStack
     // If over capacity, remove oldest items
     if (UndoHistory.Count > MaxCapacity)
     {
-      // Convert to list, remove oldest, convert back
+      // Stack enumeration yields newest-first; reverse to oldest-first, drop the
+      // oldest, then push back in oldest-first order so the newest ends up on top.
       List<UndoUnit> items = [.. UndoHistory];
       items.Reverse();
       while (items.Count > MaxCapacity)
@@ -181,7 +195,6 @@ internal sealed class UndoStack
       }
 
       UndoHistory.Clear();
-      items.Reverse();
       foreach (UndoUnit item in items)
       {
         UndoHistory.Push(item);

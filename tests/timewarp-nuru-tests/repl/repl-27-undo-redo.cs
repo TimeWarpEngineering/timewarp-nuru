@@ -39,6 +39,36 @@ public class UndoRedoTests
     await Task.CompletedTask;
   }
 
+  public static async Task UndoStack_should_preserve_order_when_trimmed_past_capacity()
+  {
+    // Regression for kanban 454-006: TrimToCapacity reversed the list twice, so
+    // exceeding MaxCapacity re-pushed the entries inverted — Ctrl+Z then walked
+    // history from the OLDEST state forward.
+
+    // Arrange - small capacity, then push past it
+    UndoStack stack = new(maxCapacity: 3);
+    for (int i = 1; i <= 5; i++)
+    {
+      stack.SaveState($"state-{i}", i, isCharacterInput: false);
+    }
+
+    // Assert - trimmed to capacity, and undo pops NEWEST-first (5, 4, 3)
+    stack.UndoCount.ShouldBe(3, "Should be trimmed to MaxCapacity");
+
+    UndoUnit? first = stack.Undo("current", 0);
+    first!.Value.Text.ShouldBe("state-5", "First undo should restore the newest saved state");
+
+    UndoUnit? second = stack.Undo("state-5", 5);
+    second!.Value.Text.ShouldBe("state-4", "Second undo should walk backward in time");
+
+    UndoUnit? third = stack.Undo("state-4", 4);
+    third!.Value.Text.ShouldBe("state-3", "Third undo should walk backward in time");
+
+    stack.CanUndo.ShouldBeFalse("Oldest states (1, 2) should have been trimmed away");
+
+    await Task.CompletedTask;
+  }
+
   public static async Task UndoStack_should_support_redo()
   {
     // Arrange

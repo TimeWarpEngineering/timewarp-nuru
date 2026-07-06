@@ -74,8 +74,8 @@ internal sealed class SemanticValidator
               context.ParametersByName[option.Parameter.Name] = paramList;
             }
 
-          // Store the option, not just its parameter, for better error messages
-          paramList.Add(option);
+            // Store the option, not just its parameter, for better error messages
+            paramList.Add(option);
           }
 
           break;

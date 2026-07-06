@@ -9,9 +9,8 @@ Low-severity findings in `source/timewarp-nuru-parsing/`:
 1. `parser/parser.segments.cs:68-74` — InvalidModifierCombinationError span is
    `nameToken.EndPosition - startPos`, excluding the offending `?`/`*`/`}`; the
    diagnostic underlines less than the construct (e.g. `{*name?}`).
-2. Dead code: `validation/validation-context.cs:16` — `OptionAliases` is write-only
-   (populated at `semantic-validator.cs:82-83`, never read; the dup check builds its own
-   local dict). Note 454-016 touches this area — coordinate.
+2. ~~Dead code: `validation/validation-context.cs:16` — `OptionAliases` write-only~~
+   DONE in 454-016 (commit 589c6d52): the dict and its population were removed.
 3. Dead code: unused locals `firstLocation`/`secondLocation` in
    `ValidateDuplicateParameters` (`semantic-validator.cs:108-120`).
 4. Dead code: `lexer/lexer.cs:273-276` — `Lexer.PeekNext()` never called.

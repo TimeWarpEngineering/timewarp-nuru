@@ -92,6 +92,35 @@ public class DuplicateOptionAliasTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_reject_short_alias_colliding_across_options()
+  {
+    // Arrange & Act - two different long options declare the same -e alias via
+    // the comma syntax; the short-form check must see through the alias form.
+    Exception ex = Should.Throw<Exception>(() =>
+      PatternParser.Parse("show --edit,-e --extract,-e")
+    );
+
+    // Assert
+    ex.Message.ShouldContain("duplicate", Case.Insensitive);
+    ex.Message.ShouldContain("e");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_reject_long_form_colliding_with_aliased_option()
+  {
+    // Arrange & Act - same long form, one bare and one carrying a short alias.
+    Exception ex = Should.Throw<Exception>(() =>
+      PatternParser.Parse("build --verbose,-v --verbose")
+    );
+
+    // Assert
+    ex.Message.ShouldContain("duplicate", Case.Insensitive);
+    ex.Message.ShouldContain("verbose");
+
+    await Task.CompletedTask;
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Parser

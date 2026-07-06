@@ -22,3 +22,30 @@ reduce to `list`) trigger a false **NURU_R003** unreachable-route warning.
 - [ ] Test: `list {filter?}` + `list --all` → no NURU_R003
 - [ ] Test: genuinely shadowed route still reports NURU_R003
 - [ ] `ganda runfile cache --clear` + run CI tests
+
+## Concrete repro (found during 454-005)
+
+Two routes in one app:
+```
+.Map("p16-build -bl").WithHandler(() => "binary-log-on").AsQuery().Done()
+.Map("p16-build").WithHandler(() => "plain-build").AsQuery().Done()
+```
+fails the BUILD with:
+`error NURU_R003: Route 'p16-build' is unreachable. Route 'p16-build --,-bl' ... will
+match all the same inputs with equal or higher specificity (1075 vs 1000 points).`
+
+IMPORTANT nuance (verified in the generated matcher, route-matcher-emitter.cs
+EmitFlagParsingWithIndexTracking): BOOLEAN flags never check IsOptional — the route
+matches with or without the flag (flag binds false when absent). So the R003 report
+above is CONSISTENT with current matcher semantics: 'p16-build -bl' really does match
+bare 'p16-build'. The task is therefore two-sided:
+1. Decide the semantics: should an unmarked boolean flag be REQUIRED to match (with
+   `--flag?` opting into optional), or stay always-optional? Value options already
+   respect IsOptional; flags do not — the asymmetry is the root problem.
+2. Then make the overlap validator agree with whichever semantics wins, so reports
+   like `list {filter?}` vs `list --all` are judged correctly.
+Also note the display artifact
+`'p16-build --,-bl'` — a short-only option renders with an empty long form; fix the
+route display string while in here. When fixed, extend
+`tests/timewarp-nuru-tests/parser/parser-16-multi-char-short-options.cs`
+(`Should_route_multi_char_short_end_to_end`) back to the two-route flag/plain shape.

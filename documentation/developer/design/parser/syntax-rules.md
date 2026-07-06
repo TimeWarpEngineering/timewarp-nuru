@@ -50,20 +50,28 @@ All opening braces `{` must have matching closing braces `}`.
 
 ### NURU_P003: Invalid Option Format
 
-Multi-character options must use double dash `--`. Single dash `-` is only for single-character options.
+Long options use double dash `--`. Single-dash options support both single-character
+(`-v`) and multi-character (`-bl`, `-verbosity`) names, matching real-world tools like
+dotnet and msbuild.
 
 ```csharp
-// ❌ Error: Multi-character with single dash
-.Map("build -verbose", handler);
-
-// ✅ Correct: Double dash for multi-character
+// ✅ Correct: Double dash for long options
 .Map("build --verbose", handler);
 
-// ✅ Correct: Single dash for single character
+// ✅ Correct: Single dash, single character
 .Map("build -v", handler);
+
+// ✅ Correct: Single dash, multi-character (dotnet/msbuild style)
+.Map("build -bl", handler);
 ```
 
-**Why:** This follows POSIX conventions where `-v` and `--verbose` are distinct but related options.
+**Why:** Options are declared literally in route patterns and matched by exact token
+equality, so multi-character short options are unambiguous. The trade-off: POSIX-style
+flag grouping (`-la` meaning `-l -a`) is not supported — grouping and multi-character
+shorts are mutually exclusive conventions.
+
+NURU_P003 is reserved for malformed option syntax; it does not fire for multi-character
+single-dash options.
 
 ### NURU_P004: Invalid Type Constraint
 

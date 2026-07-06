@@ -1,3 +1,16 @@
+#region Purpose
+// Tokenizes route pattern strings into RouteTokens for the parser.
+#endregion
+
+#region Design
+// Single-dash options tokenize as [SingleDash]+[Identifier] for BOTH single- and
+// multi-character names (-h, -bl, -verbosity) — real-world tools (dotnet, msbuild)
+// use multi-char shorts, and the parser/matcher accept them end-to-end (454-005).
+// Standalone "--" followed by end/whitespace is EndOfOptions; otherwise DoubleDash.
+// Whitespace separates tokens and is not itself a token.
+// See documentation/developer/design/lexer/ for the full token-type rationale.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

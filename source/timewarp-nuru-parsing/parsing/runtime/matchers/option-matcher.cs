@@ -1,3 +1,16 @@
+#region Purpose
+// Runtime matcher for a declared option token (long form and optional alternate form).
+#endregion
+
+#region Design
+// Matching is EXACT string equality against the declared forms, mirroring the
+// source-generated matcher path. Short forms may be multi-character (-bl).
+// POSIX-style flag grouping (-abc matching -a) was removed deliberately: it was
+// undocumented, matched the short char ANYWHERE in the arg (-e matched -help),
+// and conflicts with multi-char short options (kanban 454-005/454-014). If
+// bundling is ever wanted, design it as an opt-in feature with validator support.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -74,16 +87,6 @@ public class OptionMatcher : RouteMatcher
     // Check if arg matches the alternate form
     if (AlternateForm is not null && arg == AlternateForm)
       return true;
-
-    // For short options, check grouped options (e.g., -abc contains -a)
-    if (AlternateForm?.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) == true && AlternateForm.Length == 2)
-    {
-      if (arg.StartsWith(CommonStrings.SingleDash, StringComparison.Ordinal) && arg.Length > 2 && !arg.StartsWith(CommonStrings.DoubleDash, StringComparison.Ordinal))
-      {
-        char shortChar = AlternateForm[1];
-        return arg.Contains(shortChar.ToString(), StringComparison.Ordinal);
-      }
-    }
 
     return false;
   }

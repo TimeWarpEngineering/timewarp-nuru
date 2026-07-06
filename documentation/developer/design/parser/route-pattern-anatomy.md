@@ -240,11 +240,12 @@ Route Pattern (entire string)
 
 **Syntax:**
 - **Long Form:** `--` + multi-character name (`--verbose`, `--env`)
-- **Short Form:** `-` + single character (`-v`, `-e`)
+- **Short Form:** `-` + one or more characters (`-v`, `-e`, `-bl`, `-verbosity`)
 
 **Rules:**
 - Long form: 2+ characters, lowercase, hyphens allowed
-- Short form: exactly 1 character
+- Short form: 1+ characters (multi-character shorts model dotnet/msbuild-style tools;
+  matching is exact, so POSIX-style flag grouping `-la` is not supported)
 - Both forms case-sensitive
 
 #### 6.4 Option Alias

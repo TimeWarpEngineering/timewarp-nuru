@@ -37,11 +37,11 @@ the runtime DefaultTypeConverters.cs to ensure parity" — but parity is broken:
 
 ## Checklist
 
-- [ ] Invariant culture in default-type-converters.cs and all public converters
-- [ ] Bool spelling decision implemented consistently in both paths
-- [ ] Dead TypeConverterRegistry field + unused converter classes resolved
-- [ ] Tests under a non-invariant culture (e.g. de-DE) for double/DateTime parsing
-- [ ] `ganda runfile cache --clear` + run CI tests
+- [x] Invariant culture in default-type-converters.cs and all public converters
+- [x] Bool spelling decision implemented consistently in both paths
+- [x] Dead TypeConverterRegistry field + unused converter classes resolved
+- [x] Tests under a non-invariant culture (e.g. de-DE) for double/DateTime parsing
+- [x] `ganda runfile cache --clear` + run CI tests
 
 ## Notes
 
@@ -103,3 +103,49 @@ New public static class `BooleanConverter` with `TryParse(string, out bool)` and
 - Enum change is behavior tightening (rejects undefined values) — matches generated path already fixed in 454-008
 - Dead code deletion: 7+1 classes never instantiated anywhere
 - MUST clear runfile cache (generator code changed)
+
+## Results
+
+### What was implemented
+
+Restored culture parity between the source-generated fast path and the runtime fallback path, extended boolean parsing to support CLI-friendly spellings, aligned the runtime enum branch with the 454-008 fix, and removed dead code.
+
+- **M2 (culture parity)**: Added `CultureInfo.InvariantCulture` with the correct `NumberStyles`/`DateTimeStyles` to all 15 numeric/date `TryParse` calls in `DefaultTypeConverters`, exactly matching the generator's `type-conversion-map.cs` (NumberStyles.Integer for integers, NumberStyles.Float|AllowThousands for float/double, NumberStyles.Number for decimal, InvariantCulture+DateTimeStyles.None for DateTime/DateOnly/TimeOnly, InvariantCulture for TimeSpan).
+- **M3 (bool divergence)**: Created `BooleanConverter` as the single source of truth for bool parsing, accepting true/false, yes/no, 1/0, on/off, enabled/disabled (case-insensitive). Updated both the runtime path (`DefaultTypeConverters`) and the generator (`type-conversion-map.cs` + `route-matcher-emitter.cs`) to use it.
+- **Q1 (enum parity)**: Fixed the enum branch in `DefaultTypeConverters` to match 454-008: `Enum.IsDefined` gate for non-Flags enums, `IsAllNamedEnumParts` gate for [Flags] enums. The runtime fallback path (via `TypeConverterRegistry.TryConvert`) now rejects undefined values like "999" and raw numeric Flags input.
+- **LOW (dead code)**: Deleted 8 dead converter class files (int/double/decimal/long/dateTime/timeSpan/guid/bool) that were never instantiated anywhere. Removed the dead `TypeConverterRegistry` field from `NuruAppBuilder`. Kept `AddTypeConverter` as a no-op (compile-time DSL hook) and kept `TypeConverterRegistry` class public (external consumers may use it directly).
+
+### Files changed
+
+**Created:**
+- `source/timewarp-nuru/type-conversion/boolean-converter.cs` — public static `BooleanConverter` with `TryParse`/`Parse`
+- `tests/timewarp-nuru-tests/routing/routing-30-invariant-culture-binding.cs` — 15 tests (generated path: culture + bool spellings)
+- `tests/timewarp-nuru-tests/type-conversion/type-conversion-02-runtime-parity.cs` — 11 tests (runtime path: enum parity + culture + bool)
+
+**Edited:**
+- `source/timewarp-nuru/type-conversion/default-type-converters.cs` — InvariantCulture on 15 TryParse calls, BooleanConverter for bool, IsDefined/Flags gates for enum, IsAllNamedEnumParts helper
+- `source/timewarp-nuru-analyzers/generators/emitters/type-conversion-map.cs` — bool entry → BooleanConverter.TryParse
+- `source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs` — GetParseExpression bool → BooleanConverter.Parse
+- `source/timewarp-nuru/builders/nuru-app-builder/nuru-app-builder.cs` — removed dead TypeConverterRegistry field
+
+**Deleted (8 dead converter class files):**
+- `source/timewarp-nuru/type-conversion/converters/int-type-converter.cs`
+- `source/timewarp-nuru/type-conversion/converters/double-type-converter.cs`
+- `source/timewarp-nuru/type-conversion/converters/decimal-type-converter.cs`
+- `source/timewarp-nuru/type-conversion/converters/long-type-converter.cs`
+- `source/timewarp-nuru/type-conversion/converters/date-time-type-converter.cs`
+- `source/timewarp-nuru/type-conversion/converters/time-span-type-converter.cs`
+- `source/timewarp-nuru/type-conversion/converters/guid-type-converter.cs`
+- `source/timewarp-nuru/type-conversion/converters/bool-type-converter.cs`
+
+### Key decisions made
+
+- **Handler output formatting**: Tests use `value.ToString(CultureInfo.InvariantCulture)` in handlers so assertions are culture-independent (default `$"{value}"` would format with de-DE comma separator).
+- **Comma-as-thousands behavior**: `NumberStyles.Float | NumberStyles.AllowThousands` (matching the generator) means `"3,14"` parses as `314` (thousands separator), not rejected. Tests updated to reflect this — this is correct parity with the generator.
+- **`.AsQuery()` for bool positional routes**: Matches existing routing-02 bool test pattern; the generator supports bool positional constraints.
+
+### Test outcomes
+
+- **Standalone** `routing-30-invariant-culture-binding.cs`: 15 passed, 0 failed
+- **Standalone** `type-conversion-02-runtime-parity.cs`: 11 passed, 0 failed
+- **Full CI** (`dotnet run tests/ci-tests/run-ci-tests.cs`): 1316 passed, 7 skipped, 0 failed. No existing tests broke.

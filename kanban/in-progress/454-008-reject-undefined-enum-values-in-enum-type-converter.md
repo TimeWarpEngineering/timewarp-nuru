@@ -23,10 +23,10 @@ with an invalid enum value instead of failing route matching.
 
 ## Checklist
 
-- [ ] Add defined-value check for non-Flags enums
-- [ ] Decide + document [Flags]/numeric policy
-- [ ] Tests: "999" rejected, valid name accepted case-insensitively, Flags behavior
-- [ ] `ganda runfile cache --clear` + run CI tests
+- [x] Add defined-value check for non-Flags enums
+- [x] Decide + document [Flags]/numeric policy
+- [x] Tests: "999" rejected, valid name accepted case-insensitively, Flags behavior
+- [x] `ganda runfile cache --clear` + run CI tests
 
 ## Notes
 
@@ -83,3 +83,34 @@ Tests:
 - `tests/timewarp-nuru-tests/routing/routing-29-enum-undefined-values.cs` (create)
 
 No generator, interface, or GetValidValuesMessage changes.
+
+## Results
+
+### What was implemented
+
+Added defined-value validation to `EnumTypeConverter<TEnum>` so undefined enum values are rejected at the runtime/AOT binding path instead of leaking into handlers.
+
+- **Non-[Flags] enums**: After `Enum.TryParse` succeeds, the value is gated by `Enum.IsDefined<TEnum>(enumValue)`. Undefined numerics (e.g. `"999"`) are rejected; numeric strings mapping to a defined member (e.g. `"10"` when `Normal=10`) are accepted.
+- **[Flags] enums**: Only named members and comma-separated name combinations (e.g. `"Read,Write"`) are accepted. Raw numeric input (e.g. `"12"`, `"1,2"`) is rejected via `IsAllNamedParts`, which verifies every comma-separated part is a defined member name (C# enum names can't be purely numeric).
+- Both policies documented in the `TryConvert` XML doc comment.
+- Added a `null` guard in `TryConvert` (CA1062 compliance).
+- `IsFlagsEnum` and `NameSet` are `static readonly`, cached once per generic instantiation (no per-call reflection overhead).
+- `GetValidValuesMessage()` unchanged.
+- No generator, interface, or emitter changes.
+
+### Files changed
+
+- `source/timewarp-nuru/type-conversion/converters/enum-type-converter.cs` (modified — added IsFlagsEnum/NameSet caches, IsDefined + IsAllNamedParts gates, null guard, policy docs)
+- `tests/timewarp-nuru-tests/routing/routing-29-enum-undefined-values.cs` (new — 15 tests)
+
+### Key decisions made
+
+- **Non-Flags numeric policy**: Reject only undefined values via `Enum.IsDefined`. A numeric string that maps to a defined member is accepted (e.g. `"10"` → `Normal`).
+- **[Flags] numeric policy**: Reject all raw numeric input; accept only named members and comma-separated name combinations.
+- **Route constraints**: Tests use explicit constraints (`{priority:Priority}`, `{perm:FilePermissions}`) because the generator does not infer enum types for positional parameters.
+- **AOT safety**: `Enum.IsDefined<TEnum>`, `GetCustomAttribute<FlagsAttribute>`, and `Enum.GetNames<TEnum>` are all AOT-safe on .NET 10.
+
+### Test outcomes
+
+- **Standalone** (`dotnet run tests/timewarp-nuru-tests/routing/routing-29-enum-undefined-values.cs`): 15 passed, 0 failed.
+- **Full CI** (`dotnet run tests/ci-tests/run-ci-tests.cs`): 1290 passed, 7 skipped, 0 failed (total 1297). No existing tests broke.

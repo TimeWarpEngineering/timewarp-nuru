@@ -22,3 +22,53 @@ hash of the full relative path in the cache file name.
 - [ ] Disambiguate disk-cache file names (path hash)
 - [ ] Check other statics in the MCP server for the same pattern
 - [ ] Run MCP tests (note: currently excluded from CI — see task 454-001)
+
+## Notes
+
+### Implementation Plan (2026-07-06)
+
+#### Decisions
+
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | Memory cache | `Dictionary` → `ConcurrentDictionary` (drop-in swap, keep explicit read-check-write flow — no AddOrUpdate/GetOrAdd) |
+| 2 | Filename collision | Full relativePath with `/`/`\` → `-` (preserves readability, eliminates collision) |
+| 3 | Test approach | Unit test `GetSafeCacheFileName` (no network needed); promote from `private` to `internal` for test access |
+| 4 | MCP tests in CI | CI glob already covers `mcp-07-*.cs`, no Directory.Build.props change needed |
+
+#### Step 1: Swap to ConcurrentDictionary
+File: `source/timewarp-nuru-mcp/services/github-cache-service.cs`
+- Add `using System.Collections.Concurrent;` if not present
+- Line 9: `Dictionary<string, CachedContent>` → `ConcurrentDictionary<string, CachedContent>`
+- Lines 39, 50, 59: no change — TryGetValue + indexer semantics identical
+- Keep explicit read-check-write flow (no AddOrUpdate/GetOrAdd — would call value factory on cache hits)
+
+#### Step 2: Fix GetSafeCacheFileName collision (lines 132-142)
+File: `source/timewarp-nuru-mcp/services/github-cache-service.cs`
+- Promote from `private` to `internal` (for test access)
+- Replace body: use `Path.GetDirectoryName(path)` + `Path.GetFileNameWithoutExtension(path)`, join with `-` after replacing `/`/`\` with `-`
+- `documentation/reference/foo.md` → `"documentation-reference-foo"` (was `"foo"` — collided with any other `foo.md`)
+- Top-level `foo.md` → `"foo"` (unchanged, backwards compatible)
+
+#### Step 3: Create test file
+New file: `tests/timewarp-nuru-mcp-tests/mcp-07-cache-filename.cs`
+- 3 unit tests for `GetSafeCacheFileName` (no network):
+  1. `Should_not_collide_for_same_filename_in_different_directories` — `"examples/routing/foo.md"` vs `"examples/parser/foo.md"` → different results
+  2. `Should_replace_path_separators_with_dashes` — `"documentation/reference/foo.md"` → `"documentation-reference-foo"`, no `/` or `\`
+  3. `Should_handle_top_level_filename_without_directory` — `"foo.md"` → `"foo"`
+- Uses `#:project $(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj` header + `using TimeWarp.Nuru.Mcp.Services;`
+
+#### Step 4: Verify
+1. `ganda runfile cache --clear`
+2. `dotnet run tests/timewarp-nuru-mcp-tests/mcp-07-cache-filename.cs` (standalone)
+3. `dotnet run tests/ci-tests/run-ci-tests.cs` (full CI)
+
+#### Files touched
+- Edit: `source/timewarp-nuru-mcp/services/github-cache-service.cs` (ConcurrentDictionary + GetSafeCacheFileName fix + internal promotion)
+- Create: `tests/timewarp-nuru-mcp-tests/mcp-07-cache-filename.cs` (3 tests)
+
+#### Risk assessment
+- ConcurrentDictionary swap is idempotent (same content from GitHub on concurrent fetches, last-writer-wins is fine)
+- Disk cache files for nested paths get new names — one-time orphan, regenerated on demand (CacheManagementTool.ClearCache cleans up)
+- No AddOrUpdate/GetOrAdd temptation — would defeat caching
+- No trailing whitespace (RCS1037)

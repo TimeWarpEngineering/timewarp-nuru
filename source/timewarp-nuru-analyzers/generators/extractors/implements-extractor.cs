@@ -167,7 +167,9 @@ internal static class ImplementsExtractor
     // Try candidate symbols (may be ambiguous but first is usually correct)
     if (symbolInfo.CandidateSymbols.Length > 0 &&
         symbolInfo.CandidateSymbols[0] is IPropertySymbol candidateProp)
+    {
       return candidateProp.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    }
 
     // Try to infer from the expression type on the left side
     // This works for lambda parameters where the type is known

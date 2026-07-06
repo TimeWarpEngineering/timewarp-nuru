@@ -381,7 +381,10 @@ internal static class HandlerInvokerEmitter
       return "app.Terminal";
     if (serviceTypeName is "global::Microsoft.Extensions.Configuration.IConfiguration"
                         or "global::Microsoft.Extensions.Configuration.IConfigurationRoot")
+    {
       return "configuration";
+    }
+
     if (serviceTypeName == "global::TimeWarp.Nuru.NuruApp")
       return "app";
 

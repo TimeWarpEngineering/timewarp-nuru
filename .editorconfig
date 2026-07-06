@@ -138,7 +138,7 @@ csharp_style_prefer_readonly_struct = true
 csharp_style_prefer_readonly_struct_member = true
 
 # Code-block preferences
-csharp_prefer_braces = when-multiline:suggestion
+csharp_prefer_braces = when_multiline:warning
 csharp_prefer_simple_using_statement = true:suggestion
 csharp_style_namespace_declarations = file_scoped:error
 csharp_style_prefer_method_group_conversion = true

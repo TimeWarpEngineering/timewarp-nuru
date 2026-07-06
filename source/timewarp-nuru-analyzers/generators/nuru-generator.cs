@@ -177,7 +177,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
     if (expression is not LiteralExpressionSyntax literal ||
         !literal.IsKind(SyntaxKind.StringLiteralExpression))
+    {
       return null;
+    }
 
     string? pattern = literal.Token.ValueText;
     if (string.IsNullOrEmpty(pattern))

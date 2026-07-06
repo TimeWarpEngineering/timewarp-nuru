@@ -382,7 +382,10 @@ internal static class ServiceExtractor
       if (current.DeclaredAccessibility is Accessibility.Internal
           or Accessibility.Private
           or Accessibility.ProtectedAndInternal)
+      {
         return true;
+      }
+
       current = current.ContainingType;
     }
 

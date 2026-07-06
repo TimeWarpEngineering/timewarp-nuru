@@ -1,12 +1,14 @@
 namespace TimeWarp.Nuru.Mcp.Services;
 
+using System.Collections.Concurrent;
+
 /// <summary>
 /// Shared service for fetching content from GitHub with multi-tier caching.
 /// </summary>
 internal static class GitHubCacheService
 {
   private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
-  private static readonly Dictionary<string, CachedContent> MemoryCache = [];
+  private static readonly ConcurrentDictionary<string, CachedContent> MemoryCache = [];
   private static readonly TimeSpan DefaultCacheTtl = TimeSpan.FromHours(1);
   private const string GitHubRawBaseUrl = "https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-nuru/master/";
 
@@ -129,16 +131,19 @@ internal static class GitHubCacheService
     catch (UnauthorizedAccessException) { }
   }
 
-  private static string GetSafeCacheFileName(string path)
+  internal static string GetSafeCacheFileName(string path)
   {
-    // Use just the filename without extension, or hash for complex paths
+    // Use the full relative path (without extension) with path separators replaced by '-'.
+    // This prevents collisions between different directories that share a filename
+    // (e.g., "examples/routing/foo.md" vs "examples/parser/foo.md").
+    string? directory = Path.GetDirectoryName(path);
     string fileName = Path.GetFileNameWithoutExtension(path);
-    if (string.IsNullOrEmpty(fileName))
-    {
-      fileName = path.Replace('/', '-').Replace('\\', '-');
-    }
 
-    return fileName;
+    string result = string.IsNullOrEmpty(directory)
+      ? fileName
+      : directory.Replace('/', '-').Replace('\\', '-') + "-" + fileName;
+
+    return result;
   }
 
   private sealed class CachedContent

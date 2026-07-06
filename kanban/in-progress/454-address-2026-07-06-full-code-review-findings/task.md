@@ -213,7 +213,7 @@ HIGH:
 
 MEDIUM:
 - [x] 454-008 Reject undefined enum values in enum type converter (M1) — done by agent, reviewed OK
-- [ ] 454-009 Align runtime type converters with invariant culture path (M2, M3 + dead converters)
+- [x] 454-009 Align runtime type converters with invariant culture path (M2, M3 + dead converters) — done by agent, reviewed OK
 - [ ] 454-010 Restore generator incrementality (M4, M5)
 - [ ] 454-011 Harden DSL interpreter against invalid user code (M6, M7, M9)
 - [ ] 454-012 Replace string type heuristics with SemanticModel checks (M8 + property defaults)

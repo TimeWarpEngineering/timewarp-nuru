@@ -18,10 +18,10 @@ reduce to `list`) trigger a false **NURU_R003** unreachable-route warning.
 
 ## Checklist
 
-- [ ] Fix the always-true specificity guard / reduced-signature logic
-- [ ] Test: `list {filter?}` + `list --all` → no NURU_R003
-- [ ] Test: genuinely shadowed route still reports NURU_R003
-- [ ] `ganda runfile cache --clear` + run CI tests
+- [x] Fix the always-true specificity guard / reduced-signature logic
+- [x] Test: `list {filter?}` + `list --all` → no NURU_R003
+- [x] Test: genuinely shadowed route still reports NURU_R003
+- [x] `ganda runfile cache --clear` + run CI tests
 
 ## Concrete repro (found during 454-005)
 
@@ -152,3 +152,44 @@ File: `tests/timewarp-nuru-tests/parser/parser-16-multi-char-short-options.cs`
 - Breaking change: only routes with unbound flags that relied on matching without the flag (no-op). Expected blast radius ≈ zero.
 - CI count must increase by the routing-31 test count (the 454-023 lesson).
 - generator-30 is standalone (excluded from CI multi-mode) — run standalone.
+
+## Results
+
+### What was implemented
+
+Adopted a handler-binding rule for boolean flag matching: bound flags stay optional (presence=true, absence=false), unbound flags become required discriminators, explicit `--flag?` stays optional regardless. This eliminates the false NURU_R003 for `list --all` + `list {filter?}` while preserving genuine shadow detection.
+
+- **IsFlagBound helper**: Added `OptionDefinition.IsFlagBound(RouteDefinition route)` — checks `route.Handler.Parameters` for a `ParameterBinding` with `Source == BindingSource.Flag` and `SourceName` matching `LongForm ?? ShortForm`.
+- **Matcher guard**: `EmitFlagParsingWithIndexTracking` now emits `if (!{varName}) goto route_skip_{routeIndex};` when `!option.IsOptional && !option.IsFlagBound(route)` — effectively-required flags must be present to match. Mirrors the value-option guard pattern.
+- **Required signature**: `ComputeRequiredSignature` now includes effectively-required flags (`option.IsFlag && !option.IsOptional && !option.IsFlagBound(route)`), so `list --all` reduces to `list --all` and no longer groups with `list {filter?}` (which reduces to `list`).
+- **PatternSyntax fix**: Short-only options no longer render as `--,-bl` — tuple switch handles null LongForm correctly, producing `-bl`.
+- **Tests**: Extended parser-16 to two-route discriminator shape, added routing-31 (CI e2e), added generator-30 (standalone generator-hosted R003 assertion in both directions).
+- **Docs**: Updated routing.md and route-pattern-anatomy.md with the binding rule.
+
+### Files changed
+
+- `source/timewarp-nuru-analyzers/generators/models/segment-definition.cs` — `IsFlagBound` method + `PatternSyntax` tuple switch
+- `source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs` — `route` param + skip guard for effectively-required flags
+- `source/timewarp-nuru-analyzers/validation/overlap-validator.cs` — effectively-required flag case in `ComputeRequiredSignature` + updated comments
+- `tests/timewarp-nuru-tests/parser/parser-16-multi-char-short-options.cs` — updated comment + new two-route discriminator test
+- `tests/timewarp-nuru-tests/routing/routing-31-unbound-flag-discriminator.cs` (new) — CI e2e test
+- `tests/timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs` (new) — standalone generator-hosted R003 assertion
+- `tests/ci-tests/Directory.Build.props` — added generator-30 to CiTestExcludes
+- `tests/ci-tests/run-ci-tests.cs` — added generator-30 to standalone runner list
+- `source/timewarp-nuru/internals-visible-to.g.cs` — regenerated for routing-31
+- `documentation/user/features/routing.md` — added "Boolean Flag Binding" subsection
+- `documentation/developer/design/parser/route-pattern-anatomy.md` — corrected "always optional" claim
+
+### Key decisions made
+
+- **IsFlagBound as instance method on OptionDefinition**: Takes `RouteDefinition` parameter. Used by both the emitter and validator (same project, same namespace). `ArgumentNullException.ThrowIfNull(route)` for CA1062.
+- **Generator-hosted test pattern**: `OverlapValidator` can't be unit-tested directly (analyzer internals not visible to CI, CS0433 collision if analyzer referenced as library). Used the generator-28 pattern: host `NuruGenerator` in `CSharpGeneratorDriver`, read diagnostics from `GeneratorDriverRunResult.Diagnostics`. Excluded from CI multi-mode, added to standalone runner list.
+- **RunAsync in generator test source**: The in-memory test source must call `RunAsync` — without it, `AppExtractor` doesn't build an `AppModel` and validation (including NURU_R003) never runs.
+- **No change to CheckForUnreachableRoutes**: The `higher >= lower` guard is redundant given descending sort but harmless. The real fix is in `ComputeRequiredSignature` — once effectively-required flags are in the signature, the grouping separates discriminator routes from plain routes.
+
+### Test outcomes
+
+- **parser-16 standalone**: 7 passed, 0 failed (including new two-route discriminator test)
+- **generator-30 standalone**: 2 passed, 0 failed (no-R003 for discriminator + R003 for genuine shadow)
+- **routing-31 standalone**: 1 passed, 0 failed
+- **Full CI** (`dotnet run tests/ci-tests/run-ci-tests.cs`): 1376 passed, 7 skipped, 0 failed. CI count increased by 2 (from 1374 to 1376) — the two new multi-mode tests (parser-16 + routing-31). No regressions.

@@ -22,15 +22,12 @@
     <!-- generator-17: tests local functions in TOP-LEVEL STATEMENTS by design; it cannot
          exist inside the multi-mode assembly (the runner owns the entry point). Run it
          standalone: dotnet run tests/timewarp-nuru-tests/generator/generator-17-local-function-config.cs -->
-    <!-- temp-iconfig-test.cs: scratch repro with no Jaribu structure; slated for deletion
-         (kanban task 454-025). -->
     <!-- engine-01: references ParsedInput/InputTokenizer, types removed from source in the
          #360 refactor; does not compile standalone either. Delete or rewrite (task 454-001 notes). -->
     <!-- generator-28: Roslyn-hosted generator test; references timewarp-nuru-analyzers as a
          LIBRARY, whose shared parsing types (Lexer/Token) collide with timewarp-nuru's in one
          compilation (CS0433). Run standalone by run-ci-tests.cs as a second phase instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
-    <CiTestExcludes Include="../timewarp-nuru-tests/generator/temp-iconfig-test.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/completion/engine/engine-01-input-tokenizer.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />

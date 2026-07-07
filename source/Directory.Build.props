@@ -4,6 +4,11 @@
 
   <PropertyGroup>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- TFM of dependency DLLs packed into analyzers/dotnet/cs. Both timewarp-nuru
+         and timewarp-nuru-analyzers pack Microsoft.Extensions.Logging.Abstractions
+         for the analyzer host; defining the TFM once prevents the packages from
+         silently drifting to different builds of the same DLL (kanban 454-026). -->
+    <AnalyzerDependencyTfm>net10.0</AnalyzerDependencyTfm>
   </PropertyGroup>
 
   <!-- Default package metadata (can be overridden in individual projects) -->

@@ -98,7 +98,7 @@
     <!-- Include analyzer DLL in the package -->
     <None Include="../timewarp-nuru-analyzers/bin/$(Configuration)/$(TargetFramework)/TimeWarp.Nuru.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <!-- Include the logging dependency for the analyzer -->
-    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)/lib/net10.0/Microsoft.Extensions.Logging.Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)/lib/$(AnalyzerDependencyTfm)/Microsoft.Extensions.Logging.Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
   <!-- Include build task and targets in NuGet package -->

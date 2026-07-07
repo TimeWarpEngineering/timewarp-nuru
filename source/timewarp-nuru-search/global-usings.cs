@@ -17,3 +17,4 @@ global using TimeWarp.Terminal;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("timewarp-nuru-search-tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-01-fts-sanitizer")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("run-ci-tests")]

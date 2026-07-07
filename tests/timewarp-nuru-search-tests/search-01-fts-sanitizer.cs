@@ -106,6 +106,62 @@ public class FtsSanitizerTests
     await Task.CompletedTask;
   }
 
+  // ==========================================================================
+  // End-to-end FTS5 validity: the original bug was an uncaught SqliteException
+  // from real SQLite (MATCH '((*' etc.), so string-level assertions are not
+  // enough — every sanitizer output must PARSE as a valid FTS5 MATCH expression.
+  // Uses an in-memory database (SearchIndex's path is hard-coded to ~/.nuru).
+  // ==========================================================================
+
+  private static async Task AssertFtsQueryExecutes(string userInput)
+  {
+    string sanitized = SearchIndex.SanitizeFtsQuery(userInput);
+    if (string.IsNullOrEmpty(sanitized))
+    {
+      return; // SearchAsync returns early for empty sanitized queries
+    }
+
+    await using Microsoft.Data.Sqlite.SqliteConnection connection = new("Data Source=:memory:");
+    await connection.OpenAsync();
+
+    await using (Microsoft.Data.Sqlite.SqliteCommand create = connection.CreateCommand())
+    {
+      create.CommandText = "CREATE VIRTUAL TABLE fts USING fts5(content)";
+      await create.ExecuteNonQueryAsync();
+    }
+
+    await using (Microsoft.Data.Sqlite.SqliteCommand insert = connection.CreateCommand())
+    {
+      insert.CommandText = "INSERT INTO fts(content) VALUES ('hello world sample content')";
+      await insert.ExecuteNonQueryAsync();
+    }
+
+    await using Microsoft.Data.Sqlite.SqliteCommand query = connection.CreateCommand();
+    query.CommandText = "SELECT count(*) FROM fts WHERE fts MATCH $q";
+    query.Parameters.AddWithValue("$q", sanitized);
+
+    // Must not throw SqliteException — result count is irrelevant.
+    await query.ExecuteScalarAsync();
+  }
+
+  public static async Task Should_execute_fts_query_for_open_paren() =>
+    await AssertFtsQueryExecutes("(");
+
+  public static async Task Should_execute_fts_query_for_asterisks() =>
+    await AssertFtsQueryExecutes("***");
+
+  public static async Task Should_execute_fts_query_for_embedded_quotes() =>
+    await AssertFtsQueryExecutes("hello\"world");
+
+  public static async Task Should_execute_fts_query_for_fts_operators() =>
+    await AssertFtsQueryExecutes("NOT AND OR NEAR");
+
+  public static async Task Should_execute_fts_query_for_normal_words() =>
+    await AssertFtsQueryExecutes("hello world");
+
+  public static async Task Should_execute_fts_query_for_punctuation_soup() =>
+    await AssertFtsQueryExecutes("^ [ ] ( ) : - \" '");
+
   public static async Task Should_escape_underscore_in_like_pattern()
   {
     string result = SearchIndex.EscapeLikePattern("my_cli");

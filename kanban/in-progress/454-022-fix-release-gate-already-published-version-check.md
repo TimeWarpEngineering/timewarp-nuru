@@ -102,3 +102,45 @@ using the fixed comparer. Reasons: (1) the command file can't be compiled into C
 adding to the existing service file is zero packaging risk for downstream repos
 (Terminal, Ganda, Amuru, Builder). `HandleNuGetSearchAsync` then calls it with the
 FULL versions list (replacing the `versions[^1]` comparison).
+
+### Finalized Implementation Plan (2026-07-07)
+
+#### Files to modify
+1. `source/timewarp-nuru-devcli/content/any/services/nuget-version-service.cs` — rewrite `CompareVersions` with full SemVer 2.0 §11, add `IsVersionPublished` + 5 private helpers
+2. `source/timewarp-nuru-devcli/content/any/endpoints/check-version-command.cs` — line 168: replace `string.Equals(version, highestVersion, ...)` with `NuGetVersionService.IsVersionPublished(version, versions)`
+3. `tests/ci-tests/Directory.Build.props` — add `<Compile Include>` for 5 service files ONLY (not the endpoint file)
+4. `tests/timewarp-nuru-tests/devcli/check-version-01-version-comparison.cs` — new, 11 tests
+
+#### Step 1: Rewrite CompareVersions (nuget-version-service.cs)
+Full SemVer 2.0 §11: strip build metadata (`+...`), split pre-release on `.`, numeric identifiers compare numerically (beta.9 < beta.10), alphanumeric lexically ordinal case-insensitive, numeric < alphanumeric, prefix rule (shorter < longer), release > same-version pre-release, missing parts normalized to 0. Add 5 private helpers: `GetCoreVersion`, `GetPreRelease`, `CompareCoreVersions`, `ComparePreRelease`, `IsNumeric`.
+
+#### Step 2: Add IsVersionPublished (nuget-version-service.cs)
+`public static bool IsVersionPublished(string sourceVersion, IEnumerable<string> publishedVersions)` — iterates full list, returns true if `CompareVersions(sourceVersion, published) == 0`. Uses `IEnumerable<string>` per A3.
+
+#### Step 3: Fix HandleNuGetSearchAsync (check-version-command.cs)
+Replace line 168 `string.Equals(version, highestVersion, ...)` with `NuGetVersionService.IsVersionPublished(version, versions)`. Keep `highestVersion` (line 161) and `latestNuGetVersion` tracking (line 163) — only the membership check changes.
+
+#### Step 4: CI wiring (tests/ci-tests/Directory.Build.props)
+Add `<Compile Include>` for EXACTLY these 5 files (explicit, not glob — git-tag-check-service.cs and repo-config-service.cs would pull unwanted deps):
+- `nuget-version-service.cs`
+- `dev-cli-json-context.cs`
+- `repo-config.cs`
+- `check-version-config.cs`
+- `check-version-strategy.cs`
+Do NOT compile `check-version-command.cs` — its `[NuruRoute]` + `IRepoConfigService` breaks every `.DiscoverEndpoints()` test in multi-mode (A2).
+
+#### Step 5: Create test file (tests/timewarp-nuru-tests/devcli/)
+11 tests: 7 CompareVersions (release > prerelease, numeric identifiers, alpha < beta, prefix rule, build metadata, case-insensitive, missing parts) + 4 IsVersionPublished (in list, not in list, prerelease in full list, build metadata ignored).
+
+#### Step 6: Verify
+1. `ganda runfile cache --clear`
+2. `dotnet run tests/ci-tests/run-ci-tests.cs` — CI count must increase by 11 (the 454-023 lesson)
+3. `dotnet run tests/timewarp-nuru-tests/devcli/check-version-01-version-comparison.cs` (standalone)
+
+#### Risks
+- `DevCliJsonContext` source generator must fire in CI assembly (SDK-builtin for .NET 10)
+- `System.Linq` `.All(char.IsDigit)` — if unavailable, inline foreach loop
+- CS1998 — every async test needs `await Task.CompletedTask;`
+- Do NOT compile the endpoint file into CI
+
+(End of file - total 104 lines)

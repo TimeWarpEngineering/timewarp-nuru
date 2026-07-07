@@ -85,3 +85,70 @@ EmitFlagParsingWithIndexTracking), flow effective optionality into ComputedSpeci
 (short-only option rendering as `--,-bl`). Extend parser-16's e2e test back to the
 two-route flag/plain shape as noted above. Update route docs (routing.md,
 route-pattern-anatomy.md) with the binding rule.
+
+## Notes
+
+### Implementation Plan (2026-07-07)
+
+#### Decision: effective-required = unbound && !markedOptional
+- Bound flag → optional (presence=true, absence=false)
+- Unbound flag → required discriminator
+- `--flag?` → always optional regardless
+
+#### Step 1: Add IsFlagBound helper to OptionDefinition
+File: `source/timewarp-nuru-analyzers/generators/models/segment-definition.cs`
+- Add `public bool IsFlagBound(RouteDefinition route)` method to `OptionDefinition`
+- Checks `route.Handler.Parameters` for `ParameterBinding` with `Source == BindingSource.Flag` and `SourceName` matching `LongForm ?? ShortForm`
+
+#### Step 2: Emit route_skip guard for effectively-required flags
+File: `source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs`
+- `EmitFlagParsingWithIndexTracking`: add `RouteDefinition route` parameter, update call site
+- After the scan loop, emit `if (!{varName}) goto route_skip_{routeIndex};` when `!option.IsOptional && !option.IsFlagBound(route)`
+
+#### Step 3: Include effectively-required flags in required signature
+File: `source/timewarp-nuru-analyzers/validation/overlap-validator.cs`
+- `ComputeRequiredSignature`: add case `option.IsFlag && !option.IsOptional && !option.IsFlagBound(route)` → include in signature
+- Update outdated comment ("boolean flags - always optional at runtime" → "bound boolean flags - optional at match time")
+
+#### Step 4: Fix PatternSyntax null-LongForm bug
+File: `source/timewarp-nuru-analyzers/generators/models/segment-definition.cs`
+- `PatternSyntax`: use tuple switch `(LongForm, ShortForm)` to handle null LongForm correctly (was producing `--,-bl`)
+
+#### Step 5: Extend parser-16 test
+File: `tests/timewarp-nuru-tests/parser/parser-16-multi-char-short-options.cs`
+- Update comment on existing bound-flag test
+- Add `Should_route_unbound_short_flag_as_discriminator_two_routes` — two routes (plain + flag), unbound flag is discriminator
+
+#### Step 6: New tests
+- `tests/timewarp-nuru-tests/routing/routing-31-unbound-flag-discriminator.cs` (CI-eligible e2e) — `list --all` + `list {filter?}` → no NURU_R003 (app compiles under TreatWarningsAsErrors)
+- `tests/timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs` (standalone, generator-hosted) — asserts no R003 for discriminator + R003 still fires for genuine shadow (bound flag + flagless)
+- Add `generator-30` to CiTestExcludes (CS0433 collision, same as generator-28)
+- Regenerate `internals-visible-to.g.cs` for routing-31
+
+#### Step 7: Doc updates
+- `documentation/user/features/routing.md` — add "Boolean Flag Binding" subsection
+- `documentation/developer/design/parser/route-pattern-anatomy.md` — correct "always optional" claim in §6.1
+
+#### Step 8: Verify
+1. `ganda runfile cache --clear` (generator code changed)
+2. `dotnet run tests/ci-tests/run-ci-tests.cs` (full CI — no regressions, routing-31 passes)
+3. `dotnet run tests/timewarp-nuru-tests/parser/parser-16-multi-char-short-options.cs` (standalone)
+4. `dotnet run tests/timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs` (standalone)
+5. Regenerate internals-visible-to.g.cs
+6. Build analyzer + main library clean
+
+#### Files touched
+- Edit: segment-definition.cs (IsFlagBound + PatternSyntax fix)
+- Edit: route-matcher-emitter.cs (route param + skip guard)
+- Edit: overlap-validator.cs (required signature + comments)
+- Edit: parser-16-multi-char-short-options.cs (comment + new test)
+- Create: routing-31-unbound-flag-discriminator.cs
+- Create: generator-30-nuru-r003-overlap.cs
+- Edit: tests/ci-tests/Directory.Build.props (CiTestExcludes)
+- Regenerate: internals-visible-to.g.cs
+- Edit: routing.md, route-pattern-anatomy.md
+
+#### Risk assessment
+- Breaking change: only routes with unbound flags that relied on matching without the flag (no-op). Expected blast radius ≈ zero.
+- CI count must increase by the routing-31 test count (the 454-023 lesson).
+- generator-30 is standalone (excluded from CI multi-mode) — run standalone.

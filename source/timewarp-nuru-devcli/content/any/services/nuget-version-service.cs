@@ -11,7 +11,6 @@
 
 namespace DevCli;
 
-using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -184,7 +183,11 @@ public sealed class NuGetVersionService : IDisposable
       if (isNum1 && isNum2)
       {
         // §11.4.1: numeric identifier compared numerically (beta.9 < beta.10).
-        cmp = int.Parse(id1, CultureInfo.InvariantCulture).CompareTo(int.Parse(id2, CultureInfo.InvariantCulture));
+        // Parse-free: date-stamped identifiers (1.0.0-ci.20260707191500) overflow
+        // Int32, and the gate iterates EVERY published version, so one odd entry
+        // in feed history must not crash it. Trim leading zeros, then compare by
+        // length and ordinal digits — equivalent to arbitrary-precision compare.
+        cmp = CompareNumericIdentifiers(id1, id2);
       }
       else if (!isNum1 && !isNum2)
       {
@@ -206,8 +209,23 @@ public sealed class NuGetVersionService : IDisposable
     return 0;
   }
 
+  private static int CompareNumericIdentifiers(string id1, string id2)
+  {
+    string trimmed1 = id1.TrimStart('0');
+    string trimmed2 = id2.TrimStart('0');
+
+    if (trimmed1.Length != trimmed2.Length)
+    {
+      return trimmed1.Length.CompareTo(trimmed2.Length);
+    }
+
+    return string.CompareOrdinal(trimmed1, trimmed2);
+  }
+
   private static bool IsNumeric(string identifier)
   {
+    // Empty identifiers (malformed input like "1.0.0-") are treated as numeric zero
+    // rather than crashing; the gate must tolerate garbage in feed history.
     foreach (char c in identifier)
     {
       if (!char.IsDigit(c))

@@ -92,6 +92,37 @@ public class VersionComparisonTests
     await Task.CompletedTask;
   }
 
+  public static async Task Huge_numeric_identifiers_do_not_overflow()
+  {
+    // Date-stamped pre-release identifiers exceed Int32/Int64 range; the gate
+    // iterates every published version, so this must compare, not crash.
+    NuGetVersionService.CompareVersions("1.0.0-ci.20260707191500", "1.0.0-ci.20260707191501")
+      .ShouldBeLessThan(0);
+    NuGetVersionService.CompareVersions("1.0.0-ci.99999999999999999999", "1.0.0-ci.9")
+      .ShouldBeGreaterThan(0);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Malformed_empty_prerelease_does_not_crash()
+  {
+    // "1.0.0-" is malformed SemVer but present-in-the-wild garbage must not
+    // crash the gate; empty identifier is tolerated (treated as lowest).
+    Should.NotThrow(() => NuGetVersionService.CompareVersions("1.0.0-", "1.0.0-beta"));
+    Should.NotThrow(() => NuGetVersionService.IsVersionPublished("1.0.0", ["1.0.0-", "1.0.0"]));
+    NuGetVersionService.IsVersionPublished("1.0.0", ["1.0.0-", "1.0.0"]).ShouldBeTrue();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Leading_zeros_compare_numerically()
+  {
+    // §11.4.1 numeric comparison: 007 == 7 numerically.
+    NuGetVersionService.CompareVersions("1.0.0-beta.007", "1.0.0-beta.7").ShouldBe(0);
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Published_ignores_build_metadata()
   {
     NuGetVersionService.IsVersionPublished("1.2.0+build", ["1.2.0"]).ShouldBeTrue();

@@ -16,3 +16,4 @@ global using TimeWarp.Nuru.Search.Services;
 global using TimeWarp.Terminal;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("timewarp-nuru-search-tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-01-fts-sanitizer")]

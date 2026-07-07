@@ -226,7 +226,7 @@ MEDIUM:
 - [ ] 454-019 Fix redraw of lines longer than terminal width (M17)
 - [ ] 454-020 Fix REPL reader state desync bugs (M18, M19, M20)
 - [x] 454-021 Fix enum completion overflow for wide underlying types (M21) — done; Convert.ToInt32 → value.ToString("D"), 3 regression tests added
-- [ ] 454-022 Fix release gate already published version check (M22 + CompareVersions)
+- [x] 454-022 Fix release gate already published version check (M22 + CompareVersions) — done; full SemVer 2.0 §11 CompareVersions, IsVersionPublished full-list check, 5 service files wired into CI (not endpoint), 11 tests
 - [x] 454-023 Fix FTS query sanitizer malformed match expressions (M23 + LIKE wildcards) — done; FTS5 double-quoted tokens, empty-query guard, EscapeLikePattern + ESCAPE clause, 13 tests
 - [x] 454-024 Make MCP GitHub cache thread safe (M24 + cache filename collision) — done; ConcurrentDictionary swap, full-path filename fix, also fixed broken InternalsVisibleTo generator, 3 tests
 - [x] 454-025 Remove stale scratch files from repo (M25) — done; 4 scratch files + 1 stale nested .g.cs deleted, CiTestExcludes cleaned, .g.cs regenerated, CI 1360 green

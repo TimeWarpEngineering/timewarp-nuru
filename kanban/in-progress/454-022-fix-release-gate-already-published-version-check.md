@@ -20,9 +20,9 @@ fallback then ranks `1.0.0-beta` NEWER than `1.0.0`. Wrong if reused beyond disp
 
 ## Checklist
 
-- [ ] Test membership of source version in the full versions list
-- [ ] Fix or replace CompareVersions with proper SemVer comparison (e.g. NuGetVersion)
-- [ ] Tests: already-published-but-not-latest → flagged; pre-release ordering correct
+- [x] Test membership of source version in the full versions list
+- [x] Fix or replace CompareVersions with proper SemVer comparison (e.g. NuGetVersion)
+- [x] Tests: already-published-but-not-latest → flagged; pre-release ordering correct
 
 ## Notes
 
@@ -143,4 +143,36 @@ Do NOT compile `check-version-command.cs` — its `[NuruRoute]` + `IRepoConfigSe
 - CS1998 — every async test needs `await Task.CompletedTask;`
 - Do NOT compile the endpoint file into CI
 
-(End of file - total 104 lines)
+## Results
+
+### What was implemented
+
+Fixed two bugs in the DevCli release gate: the membership check that only compared against `versions[^1]` (missing non-latest duplicates), and the `CompareVersions` SemVer ranking that treated `1.0.0-beta` as newer than `1.0.0` and ranked `beta.9 > beta.10` lexically.
+
+- **M22 (membership check)**: Extracted `IsVersionPublished(string sourceVersion, IEnumerable<string> publishedVersions)` into `nuget-version-service.cs`. Checks the FULL published-versions list using `CompareVersions == 0`. `HandleNuGetSearchAsync` now calls `NuGetVersionService.IsVersionPublished(version, versions)` instead of `string.Equals(version, highestVersion, ...)`.
+- **LOW (CompareVersions SemVer)**: Rewrote `CompareVersions` with full SemVer 2.0 §11 implementation (~30 lines + 5 private helpers): strips build metadata (`+...`), splits pre-release on `.`, numeric identifiers compare numerically (`beta.9 < beta.10`), alphanumeric lexically ordinal case-insensitive, numeric < alphanumeric, prefix rule (shorter < longer), release > same-version pre-release, missing parts normalized to 0. No new NuGet.Versioning dependency — preserves the "no NuGet.* deps" AOT design intent.
+- **CI wiring**: Added `<Compile Include>` for 5 DevCli service files to `tests/ci-tests/Directory.Build.props` (explicit includes, not glob — `git-tag-check-service.cs` and `repo-config-service.cs` would pull unwanted deps). The endpoint file (`check-version-command.cs`) is NOT compiled into CI — its `[NuruRoute]` + `IRepoConfigService` would break every `.DiscoverEndpoints()` test in multi-mode (A2 decision). Added `Directory.Build.props` in `tests/timewarp-nuru-tests/devcli/` for standalone runfile compilation.
+
+### Files changed
+
+- `source/timewarp-nuru-devcli/content/any/services/nuget-version-service.cs` — rewrote `CompareVersions` (SemVer 2.0 §11), added `IsVersionPublished` + 5 private helpers (`GetCoreVersion`, `GetPreRelease`, `CompareCoreVersions`, `ComparePreRelease`, `IsNumeric`), added `using System.Globalization;`
+- `source/timewarp-nuru-devcli/content/any/endpoints/check-version-command.cs` — line 168: `string.Equals(version, highestVersion, ...)` → `NuGetVersionService.IsVersionPublished(version, versions)`
+- `tests/ci-tests/Directory.Build.props` — added `<Compile Include>` for 5 service files + CA5399 suppression
+- `tests/timewarp-nuru-tests/devcli/Directory.Build.props` (new) — standalone runfile compilation support
+- `tests/timewarp-nuru-tests/devcli/check-version-01-version-comparison.cs` (new) — 11 tests
+
+### Key decisions made
+
+- **No NuGet.Versioning dependency** (A1=b): Hand-fixed `CompareVersions` with full SemVer 2.0 §11 rules. The existing code deliberately avoids NuGet dependencies for AOT compatibility. Full §11 implementation was required because dot-separated pre-release identifiers (`1.0.0-beta.32`, `3.0.0-beta.71`) are THE common case in this ecosystem — a lexical comparison would rank `beta.9 > beta.10`.
+- **Only service files compiled into CI** (A2=c modified): The endpoint file carries `[NuruRoute("check-version")]` whose handler requires `IRepoConfigService`. In CI multi-mode, endpoints are collected globally — including it would give every `.DiscoverEndpoints()` test app an unregistered service → NURU050 build errors. Only the 5 service files are compiled; the endpoint's logic is testable via `IsVersionPublished`.
+- **IsVersionPublished extracted INTO nuget-version-service.cs** (A3=a): Not a new file, not in the command file. Because the command file can't be compiled into CI, logic left there is untestable. Adding to the existing service file is zero packaging risk — `services/*.cs` is auto-included by `build/TimeWarp.Nuru.DevCli.props` for downstream repos.
+- **`using global::DevCli;`**: The test namespace `TimeWarp.Nuru.Tests.DevCli` makes a plain `using DevCli;` resolve to itself. Used `global::` prefix to reference the actual `DevCli` namespace.
+- **CA5399 suppression**: `NuGetVersionService` creates `HttpClient` without `CheckCertificateRevocationList`. Matches the downstream `tools/dev-cli` suppression pattern.
+- **`int.Parse` with `InvariantCulture`**: CA1305 compliance in `ComparePreRelease`.
+
+### Test outcomes
+
+- **Standalone** (`dotnet run tests/timewarp-nuru-tests/devcli/check-version-01-version-comparison.cs`): 11 passed, 0 failed
+- **Full CI** (`dotnet run tests/ci-tests/run-ci-tests.cs`): 1371 passed, 7 skipped, 0 failed. CI count increased by exactly 11 (from 1360 to 1371) — confirming the tests are IN CI (the 454-023 lesson applied). No regressions.
+
+(End of file - total 146 lines)

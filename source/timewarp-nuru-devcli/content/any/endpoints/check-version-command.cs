@@ -165,7 +165,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
           latestNuGetVersion = highestVersion;
         }
 
-        if (string.Equals(version, highestVersion, StringComparison.OrdinalIgnoreCase))
+        if (NuGetVersionService.IsVersionPublished(version, versions))
         {
           alreadyPublished.Add(pkg);
         }

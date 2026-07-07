@@ -10,7 +10,9 @@
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     <!-- Suppress unused parameter warnings in test lambdas -->
     <!-- Suppress namespace style warnings for tests with top-level statements + namespace blocks -->
-    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065</NoWarn>
+    <!-- CA5399: the shared NuGetVersionService creates HttpClient without enabling
+         CRL checks; the consuming CLI (tools/dev-cli) already suppresses this. -->
+    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065;CA5399</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <!-- ALL test files are included via recursive glob so that new tests are picked up
@@ -44,6 +46,23 @@
       Include="../timewarp-nuru-mcp-tests/*.cs"
       Exclude="../timewarp-nuru-mcp-tests/mcp-02-syntax-documentation.cs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- DevCli service files compiled INTO the CI test assembly so that
+         NuGetVersionService.CompareVersions / IsVersionPublished are testable.
+         ONLY the service files are included — the endpoint file
+         (check-version-command.cs) carries [NuruRoute("check-version")] whose
+         handler requires IRepoConfigService; endpoints are collected GLOBALLY
+         in multi-mode, so including it would give every .DiscoverEndpoints()
+         test app an endpoint with an unregistered service -> NURU050 build
+         errors across CI (task 454-022 decision A2). -->
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-cli-json-context.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-strategy.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
     <ProjectReference Include="$(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" />

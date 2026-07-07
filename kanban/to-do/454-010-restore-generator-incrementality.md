@@ -32,3 +32,11 @@ re-runs on every keystroke in the IDE:
 - [ ] CompilationProvider dependency narrowed
 - [ ] Verify cacheability (e.g. incremental generator cachability tests / step-reason asserts)
 - [ ] `ganda runfile cache --clear` + run CI tests
+
+## Sequencing (reviewer, 2026-07-07)
+
+LAST of the analyzer trio: after 454-011 and 454-012 — this refactor rewrites model
+types across many files and would force rebases of any concurrent analyzer work.
+Verify cacheability empirically: GeneratorDriver with trackIncrementalGeneratorSteps
+asserting step reasons are Cached/Unchanged on a no-op edit (the generator-28 harness
+shows how to host the driver).

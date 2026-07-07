@@ -27,3 +27,11 @@ returns, so a hung or long-running command cannot be aborted.
 ## Notes
 
 Claude cannot run interactive REPL tests; human verification needed for the key handling.
+
+## Verification protocol (reviewer, 2026-07-07)
+
+Implement now with TestTerminal-based unit coverage of the state/logic layer; do NOT
+block on interactive verification. Interactive confirmation is batched into ONE human
+REPL verification session tracked on parent task 454 (together with 454-007's pending
+Windows multiline check). Leave a "Human verification pending" line in this task's
+Results listing exactly what the human should try.

@@ -235,6 +235,13 @@ MEDIUM:
 MEDIUM (discovered during 454-001):
 - [ ] 454-033 Fix MCP examples manifest drift and endpoint syntax regions
 
+Cross-cutting:
+- [ ] Human REPL verification session (single batch, after 454-017/018/019/020 land):
+      Ctrl+C cancels in-flight command; Windows clipboard cut/copy; long-line redraw;
+      Alt+. cycling past last args entry; i-search extension; stale-selection ops;
+      Windows Shift+Enter multiline cursor (454-007 leftover). Each task's Results
+      lists its exact manual steps.
+
 LOW sweeps:
 - [ ] 454-027 Sweep core runtime low severity findings
 - [ ] 454-028 Sweep analyzer low severity findings

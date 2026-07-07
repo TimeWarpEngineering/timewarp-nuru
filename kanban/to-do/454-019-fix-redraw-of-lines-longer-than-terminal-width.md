@@ -20,3 +20,11 @@ long single-line commands is visually broken.
 - [ ] RedrawLine clears all occupied rows
 - [ ] UpdateCursorPosition supports positions beyond one row
 - [ ] Unit-test the row/col math (TestTerminal); human check for visuals
+
+## Verification protocol (reviewer, 2026-07-07)
+
+Implement now with TestTerminal-based unit coverage of the state/logic layer; do NOT
+block on interactive verification. Interactive confirmation is batched into ONE human
+REPL verification session tracked on parent task 454 (together with 454-007's pending
+Windows multiline check). Leave a "Human verification pending" line in this task's
+Results listing exactly what the human should try.

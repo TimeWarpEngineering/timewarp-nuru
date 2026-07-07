@@ -18,3 +18,11 @@ The READ path at line ~86 does it correctly with two separate arguments — mirr
 - [ ] Split `-command` and the script into separate WithArguments elements
 - [ ] Verify quoting/escaping of clipboard content (quotes, newlines) in the script arg
 - [ ] Human verification on Windows (interactive)
+
+## Verification protocol (reviewer, 2026-07-07)
+
+Implement now with TestTerminal-based unit coverage of the state/logic layer; do NOT
+block on interactive verification. Interactive confirmation is batched into ONE human
+REPL verification session tracked on parent task 454 (together with 454-007's pending
+Windows multiline check). Leave a "Human verification pending" line in this task's
+Results listing exactly what the human should try.

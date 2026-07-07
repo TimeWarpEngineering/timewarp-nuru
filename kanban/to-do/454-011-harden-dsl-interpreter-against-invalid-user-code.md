@@ -32,3 +32,12 @@ partial code (they run inside Roslyn on broken code constantly):
 - [ ] Add IsDslBuilderMethod guard to WithDescription/WithAlias/WithGroupPrefix dispatch (M9)
 - [ ] Tests for each scenario (mistaken handler, unrelated fluent API, partial code)
 - [ ] `ganda runfile cache --clear` + run CI tests
+
+## Sequencing (reviewer, 2026-07-07)
+
+Run FIRST of the analyzer trio: 454-011 → 454-012 → 454-010. All three touch
+generator internals; 454-010's EquatableArray refactor rewrites model types across
+many files, so behavior fixes (011, 012) land first to avoid rebasing them onto a
+wide mechanical refactor. Do not run any of the trio concurrently with each other or
+with 454-028. The GeneratorDriver test harness from generator-28/29 (standalone CI
+phase, see run-ci-tests.cs) is the right tool for the M6/M7/M9 regression tests.

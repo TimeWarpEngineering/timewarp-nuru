@@ -34,3 +34,7 @@ misclassification consequences:
 - [ ] Property defaults emitted fully-qualified
 - [ ] Regression tests (e.g. IListManager type, IData parameter)
 - [ ] `ganda runfile cache --clear` + run CI tests
+
+## Sequencing (reviewer, 2026-07-07)
+
+SECOND of the analyzer trio: after 454-011, before 454-010. See 454-011 for rationale.

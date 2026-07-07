@@ -49,3 +49,39 @@ Also note the display artifact
 route display string while in here. When fixed, extend
 `tests/timewarp-nuru-tests/parser/parser-16-multi-char-short-options.cs`
 (`Should_route_multi_char_short_end_to_end`) back to the two-route flag/plain shape.
+
+## DECISION (recommended by reviewer, 2026-07-07 — confirm before implementing)
+
+**Adopt a handler-binding rule for boolean flag matching:**
+
+1. A boolean flag **bound** to a handler parameter (or endpoint property) stays
+   **optional at match time** — presence binds `true`, absence binds `false`. This is
+   the overwhelmingly common case, matches universal CLI convention (flags are
+   optional everywhere: getopt, System.CommandLine, clap, cobra), and preserves all
+   existing samples/tests.
+2. A boolean flag **not bound to anything** is a route DISCRIMINATOR — semantically a
+   literal — and becomes **required to match**. The only reason to write
+   `.Map("commit --amend").WithHandler(() => ...)` with no bool parameter is to select
+   this route when the flag is present. Today such a flag is an always-optional no-op,
+   which is clearly never what the author meant.
+3. Explicit `--flag?` remains optional regardless (marker keeps its meaning).
+4. Value options are untouched (they already respect IsOptional).
+
+**Then** rework the overlap validator to judge shadowing by EFFECTIVE optionality:
+- `list --all` (unbound → required) no longer shadows `list {filter?}` → the false
+  NURU_R003 disappears for discriminator routes.
+- A BOUND optional flag route + flagless route both matching bare input is genuine
+  ambiguity → NURU_R003 legitimately still fires.
+
+**Breaking-change surface:** only routes with unbound flags that relied on matching
+without the flag — i.e., code depending on a no-op. Expected blast radius ≈ zero;
+verify via full CI.
+
+**Implementation notes:** the generator already knows binding (it maps flags to
+params); compute effective-required = unbound && !markedOptional, emit the same
+`goto route_skip` guard value options use (route-matcher-emitter
+EmitFlagParsingWithIndexTracking), flow effective optionality into ComputedSpecificity
+/ reduced-signature logic in overlap-validator.cs:397, and fix the display artifact
+(short-only option rendering as `--,-bl`). Extend parser-16's e2e test back to the
+two-route flag/plain shape as noted above. Update route docs (routing.md,
+route-pattern-anatomy.md) with the binding rule.

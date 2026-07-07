@@ -29,10 +29,10 @@ input without escaping `%`/`_` — over-matches, no injection.
 
 ## Checklist
 
-- [ ] Rewrite SanitizeFtsQuery with proper FTS5 token quoting
-- [ ] Empty-token-list → graceful "no results"
-- [ ] LIKE wildcard escaping for --group
-- [ ] Tests: `(`, `***`, quotes, normal multi-word queries
+- [x] Rewrite SanitizeFtsQuery with proper FTS5 token quoting
+- [x] Empty-token-list → graceful "no results"
+- [x] LIKE wildcard escaping for --group
+- [x] Tests: `(`, `***`, quotes, normal multi-word queries
 
 ## Notes
 
@@ -100,3 +100,34 @@ New file: `tests/timewarp-nuru-search-tests/search-01-fts-sanitizer.cs`
 - No behavioral change for normal queries: `"hello"*` produces same prefix-match as old `hello*`
 - LIKE escaping only affects user-supplied $groupPath, not the trailing SQL literal `%`
 - Robustness fix: crashes become "no results" — same discipline as 454-015 fuzz guarantee
+
+## Results
+
+### What was implemented
+
+Fixed two robustness bugs in the FTS5 search query path: malformed MATCH expressions crashing with `SqliteException`, and LIKE wildcard over-matching in the group filter.
+
+- **M23 (FTS5 sanitizer)**: Rewrote `SanitizeFtsQuery` to wrap each token in FTS5 double-quoted strings (doubling internal `"` → `""`), append `*` outside the closing quote for prefix matching. Strips nothing — `*`, `^`, `(`, `)`, `[`, `]`, `'` are all literal inside quotes. `(` → `"("*` (was `((*` → unbalanced-paren error). `***` → `"***"*` (was empty → `MATCH ''` error). Promoted from `private` to `internal`.
+- **Empty query guard**: Added early return in `SearchAsync` when `sanitizedQuery` is empty — returns empty `List<SearchResult>` before SQL execution, preventing `MATCH ''` syntax error.
+- **LIKE wildcard escaping (LOW)**: Added `EscapeLikePattern` helper (`\` → `\\`, `%` → `\%`, `_` → `\_`, in that order). Changed LIKE clause to `LIKE $groupPath || '%' ESCAPE '\'` and wrap the parameter value with `EscapeLikePattern`. The trailing SQL literal `'%'` remains a wildcard — only user-supplied `$groupPath` is escaped. `--group my_cli` now matches `my_cli...` literally, not `myXcli`.
+- Added `InternalsVisibleTo("search-01-fts-sanitizer")` to the search project.
+- Created new `tests/timewarp-nuru-search-tests/` directory with `Directory.Build.props` and 13 unit tests.
+
+### Files changed
+
+- `source/timewarp-nuru-search/services/search-index.cs` — SanitizeFtsQuery rewrite (lines 295-309), empty query guard (lines 236-239), EscapeLikePattern helper (lines 311-317), LIKE clause fix (lines 259-260)
+- `source/timewarp-nuru-search/global-usings.cs` — added InternalsVisibleTo for test assembly
+- `tests/timewarp-nuru-search-tests/Directory.Build.props` (new) — imports parent, adds search using
+- `tests/timewarp-nuru-search-tests/search-01-fts-sanitizer.cs` (new) — 13 tests (9 FTS + 4 LIKE)
+
+### Key decisions made
+
+- **Always append `*` for prefix matching**: `"hello"*` produces the same prefix-match behavior as the old `hello*` — FTS5 treats quoted string tokens the same as bare tokens for matching, just safer.
+- **Strip nothing**: All special chars (`*`, `^`, `(`, etc.) are literal inside double quotes. No need to strip or double them individually.
+- **ESCAPE `\`**: Standard SQL ESCAPE clause with backslash as the escape character. Escape `\` first in `EscapeLikePattern` to avoid double-escaping.
+- **Standalone runfile tests**: Search project not wired into CI multi-mode (no ProjectReference in ci-tests). Tests use `#:project` standalone pattern matching `mcp-07-cache-filename.cs`. Wiring search into CI is a separate follow-up.
+
+### Test outcomes
+
+- **Standalone** (`dotnet run tests/timewarp-nuru-search-tests/search-01-fts-sanitizer.cs`): 13 passed, 0 failed
+- **Full CI** (`dotnet run tests/ci-tests/run-ci-tests.cs`): 1341 passed, 7 skipped, 0 failed. No regressions (search tests are standalone, not in CI multi-mode).

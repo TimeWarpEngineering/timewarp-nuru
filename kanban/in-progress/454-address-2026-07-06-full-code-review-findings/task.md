@@ -230,7 +230,7 @@ MEDIUM:
 - [x] 454-023 Fix FTS query sanitizer malformed match expressions (M23 + LIKE wildcards) — done; FTS5 double-quoted tokens, empty-query guard, EscapeLikePattern + ESCAPE clause, 13 tests
 - [x] 454-024 Make MCP GitHub cache thread safe (M24 + cache filename collision) — done; ConcurrentDictionary swap, full-path filename fix, also fixed broken InternalsVisibleTo generator, 3 tests
 - [x] 454-025 Remove stale scratch files from repo (M25) — done; 4 scratch files + 1 stale nested .g.cs deleted, CiTestExcludes cleaned, .g.cs regenerated, CI 1360 green
-- [ ] 454-026 Unify analyzer packaging TFM for logging abstractions (M26)
+- [x] 454-026 Unify analyzer packaging TFM for logging abstractions (M26) — done; net9.0→net10.0 in timewarp-nuru.csproj, SHA-256 confirmed both nupkg ship identical DLL
 
 MEDIUM (discovered during 454-001):
 - [ ] 454-033 Fix MCP examples manifest drift and endpoint syntax regions

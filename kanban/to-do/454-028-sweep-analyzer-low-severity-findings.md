@@ -43,3 +43,11 @@ in 454-012, not here). All paths under `source/timewarp-nuru-analyzers/`:
    is a false NEGATIVE for NURU_H002. Before "fixing" with DescendantNodesAndSelf, analyze
    whether single-identifier constant captures are deliberately tolerated (the DSL
    interpreter inlines resolvable constants); decide + add tests either way.
+
+## Additional item (noted during 454-013 review)
+
+8. `validation/overlap-validator.cs` (~:407) — the `higherRoute.ComputedSpecificity >=
+   lowerRoute.ComputedSpecificity` guard is always true (the group is pre-sorted
+   descending by ComputedSpecificity). Harmless now that required signatures include
+   effectively-required flags (454-013), but it is dead weight — remove or replace with
+   a comment stating the sort invariant.

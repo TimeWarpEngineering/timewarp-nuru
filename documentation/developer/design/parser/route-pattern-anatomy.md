@@ -210,14 +210,15 @@ Route Pattern (entire string)
 
 **Examples from pattern:**
 - `--detach?` - optional boolean
-- `--verbose` - boolean (always optional)
+- `--verbose` - boolean (optional when bound to a `bool` handler parameter)
 
 **Characteristics:**
 - Never takes a value
-- **Always optional** (presence = true, absence = false)
-- Maps to `bool` parameter in handler
+- **Bound flags** (mapped to a `bool` handler parameter) are optional at match time (presence = true, absence = false)
+- **Unbound flags** (no `bool` parameter) are route discriminators and are effectively required to match
+- Explicit `--flag?` is optional regardless of binding
 
-**Anti-Pattern:** "Required flag" - flags are always optional by definition
+**Anti-Pattern:** Treating all flags as optional regardless of binding. An unbound flag like `--amend` can differentiate `commit --amend` from `commit`.
 
 #### 6.2 Value-Bearing Option
 
@@ -386,7 +387,7 @@ docker run {image} {tag:string?} --env,-e {var}* --port {num:int} --detach? --ve
   │      │    │         │               │              │           │        │      │     │    │
   │      │    │         │               │              │           │        │      │     │    └─ Catch-all parameter
   │      │    │         │               │              │           │        │      │     └───── End-of-options separator
-  │      │    │         │               │              │           │        │      └─────────── Boolean option (always optional)
+  │      │    │         │               │              │           │        │      └─────────── Boolean option (optional when bound)
   │      │    │         │               │              │           │        └────────────────── Optional boolean option
   │      │    │         │               │              │           └─────────────────────────── Required value-bearing option
   │      │    │         │               │              └─────────────────────────────────────── Typed parameter (int)
@@ -414,7 +415,7 @@ docker run {image} {tag:string?} --env,-e {var}* --port {num:int} --detach? --ve
 | **Catch-All Modifier** | `*` | Modifier | Boolean flag | Captures remaining args |
 | **Catch-All Parameter** | `{*args}` | Positional | `ParameterMatcher` | Collects all remaining positional args |
 | **Option** | `--verbose`, `--env {var}` | Options | `OptionMatcher` | Named argument |
-| **Boolean Option** | `--verbose`, `--detach` | Option type | `OptionMatcher` | Flag without value |
+| **Boolean Option** | `--verbose`, `--detach` | Option type | `OptionMatcher` | Flag without value (bound = optional, unbound = discriminator) |
 | **Value-Bearing Option** | `--env {var}` | Option type | `OptionMatcher` | Option with parameter |
 | **Option Name** | `--env`, `-e` | Component | String | Option identifier |
 | **Option Alias** | `--env,-e` | Component | String | Alternative form |

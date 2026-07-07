@@ -268,6 +268,23 @@ builder.Map("build --config? {mode?}")
 ./cli build                    # mode = null, defaults to "Release"
 ```
 
+### Boolean Flag Binding
+
+A boolean flag's match-time behavior depends on whether it is bound to a handler parameter:
+
+- **Bound flag** (`(bool verbose)`) — optional at match time. Presence binds `true`, absence binds `false`.
+- **Unbound flag** (`--amend` with no `bool` parameter) — acts as a route discriminator and is required to match.
+- **Explicit `--flag?`** — optional regardless of binding.
+
+This means the following routes coexist without a false `NURU_R003` warning:
+
+```csharp
+builder.Map("commit --amend").WithHandler(() => ...).AsCommand().Done();
+builder.Map("commit").WithHandler(() => ...).AsCommand().Done();
+```
+
+Value-bearing options are unaffected by this rule.
+
 ### Option Aliases
 
 Options can have both long and short forms:

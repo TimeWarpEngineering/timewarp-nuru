@@ -137,6 +137,21 @@ public sealed record OptionDefinition(
   public bool IsFlag => !ExpectsValue;
 
   /// <summary>
+  /// Gets whether this boolean flag is bound to a handler parameter or endpoint
+  /// property. Bound flags stay optional at match time (presence=true, absence=false);
+  /// unbound flags act as route discriminators and become required to match.
+  /// The SourceName comparison mirrors ParameterBinding creation (LongForm ?? ShortForm).
+  /// </summary>
+  public bool IsFlagBound(RouteDefinition route)
+  {
+    ArgumentNullException.ThrowIfNull(route);
+    string optionName = LongForm ?? ShortForm!;
+    return route.Handler.Parameters.Any(p =>
+      p.Source == BindingSource.Flag &&
+      string.Equals(p.SourceName, optionName, StringComparison.OrdinalIgnoreCase));
+  }
+
+  /// <summary>
   /// Gets the long form with prefix (e.g., "--verbose"), or null if no long form.
   /// </summary>
   public string? LongFormWithPrefix => LongForm is not null ? $"--{LongForm}" : null;
@@ -167,9 +182,13 @@ public sealed record OptionDefinition(
   {
     get
     {
-      string forms = ShortForm is not null
-        ? $"--{LongForm},-{ShortForm}"
-        : $"--{LongForm}";
+      string forms = (LongForm, ShortForm) switch
+      {
+        (not null, not null) => $"--{LongForm},-{ShortForm}",
+        (not null, null) => $"--{LongForm}",
+        (null, not null) => $"-{ShortForm}",
+        _ => throw new InvalidOperationException("Option must have at least one form")
+      };
 
       if (!ExpectsValue)
         return IsOptional ? $"{forms}?" : forms;

@@ -100,9 +100,9 @@ public class MultiCharShortOptionTests
   public static async Task Should_route_multi_char_short_end_to_end()
   {
     // Arrange - exercises the source-GENERATED matcher path, not just the parser.
-    // Boolean flags bind false when absent (the route still matches), so the handler
-    // takes the bool. NOTE: a companion plain "p16-build" route would trip NURU_R003
-    // (kanban 454-013 — flag-optionality semantics), so this app has one route.
+    // Boolean flags bound to a handler parameter stay optional: presence binds true,
+    // absence binds false. The unbound two-route discriminator case is covered by
+    // Should_route_unbound_short_flag_as_discriminator_two_routes below.
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
@@ -119,6 +119,31 @@ public class MultiCharShortOptionTests
     exitCode = await app.RunAsync(["p16-build"]);
     exitCode.ShouldBe(0);
     terminal.OutputContains("binary-log-off").ShouldBeTrue();
+  }
+
+  public static async Task Should_route_unbound_short_flag_as_discriminator_two_routes()
+  {
+    // Arrange - unbound -bl flag is a route DISCRIMINATOR (required to match), so
+    // "p16-build -bl" and "p16-build" no longer shadow each other (kanban 454-013).
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("p16-build -bl").WithHandler(() => "binary-log-on").AsQuery().Done()
+      .Map("p16-build").WithHandler(() => "plain-build").AsQuery().Done()
+      .Build();
+
+    // Act & Assert - flag present selects the discriminator route
+    int exitCode = await app.RunAsync(["p16-build", "-bl"]);
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("binary-log-on").ShouldBeTrue();
+    terminal.OutputContains("plain-build").ShouldBeFalse();
+
+    // Act & Assert - bare invocation selects the plain route (no false match)
+    terminal.ClearOutput();
+    exitCode = await app.RunAsync(["p16-build"]);
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("plain-build").ShouldBeTrue();
+    terminal.OutputContains("binary-log-on").ShouldBeFalse();
   }
 }
 

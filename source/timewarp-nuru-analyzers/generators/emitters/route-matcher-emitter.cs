@@ -456,7 +456,7 @@ internal static class RouteMatcherEmitter
     {
       if (option.IsFlag)
       {
-        EmitFlagParsingWithIndexTracking(sb, option, routeIndex);
+        EmitFlagParsingWithIndexTracking(sb, option, routeIndex, route);
       }
       else if (option.IsRepeated)
       {
@@ -472,7 +472,11 @@ internal static class RouteMatcherEmitter
   /// <summary>
   /// Emits code to parse a boolean flag option with index tracking.
   /// </summary>
-  private static void EmitFlagParsingWithIndexTracking(StringBuilder sb, OptionDefinition option, int routeIndex)
+  private static void EmitFlagParsingWithIndexTracking(
+    StringBuilder sb,
+    OptionDefinition option,
+    int routeIndex,
+    RouteDefinition route)
   {
     string varName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "flag");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
@@ -497,6 +501,15 @@ internal static class RouteMatcherEmitter
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
+
+    // Effectively-required flag: an unbound, non-optional boolean flag is a route
+    // discriminator (e.g. "commit --amend" with no bool parameter). It must be
+    // present to match, mirroring the required-value-option guard. Bound flags
+    // and explicitly-optional flags (--flag?) stay optional at match time.
+    if (!option.IsOptional && !option.IsFlagBound(route))
+    {
+      sb.AppendLine($"      if (!{escapedVarName}) goto route_skip_{routeIndex};");
+    }
   }
 
   /// <summary>

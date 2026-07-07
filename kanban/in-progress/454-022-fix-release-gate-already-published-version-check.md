@@ -62,3 +62,43 @@ The membership check is embedded in `HandleNuGetSearchAsync` (a method with heav
 - (b) No, just fix it in-place — the pattern is simple enough (`versions.Any(v => CompareVersions(version, v) == 0)`)
 
 Recommendation: (a) — extracting it makes the fix verifiable without network access, and it's a clean separation.
+
+### Answers (reviewer, 2026-07-07)
+
+**A1 → (b) hand-fix, with one scope correction.** Do NOT treat dot-separated
+pre-release identifiers as an exotic edge to skip — they are THE common case in this
+ecosystem: the repo's own history is `1.0.0-beta.32`, `3.0.0-beta.71`, Jaribu
+`1.0.0-beta.13`. A release gate that ranks `beta.9 > beta.10` (lexical) will
+green-light or block the wrong releases here. Required precedence rules (~30 lines,
+straight from SemVer 2.0 §11):
+- release > same-version pre-release (`1.0.0` > `1.0.0-beta`)
+- pre-release identifiers split on `.`; numeric identifiers compare numerically,
+  alphanumeric lexically (ordinal); numeric < alphanumeric
+- when one identifier list is a prefix of the other, shorter < longer
+- build metadata (`+...`) stripped/ignored for both comparison and membership
+- compare case-insensitively (NuGet treats `1.0.0-Beta` == `1.0.0-beta`); tolerate a
+  missing/4th version part as 0 (NuGet normalization)
+Test cases: `1.0.0-beta < 1.0.0`, `1.0.0-beta.2 < 1.0.0-beta.10`,
+`1.0.0-alpha < 1.0.0-beta`, `1.0.0-beta < 1.0.0-beta.1`, `1.2.0+build == 1.2.0`,
+`1.0.0-BETA == 1.0.0-beta`.
+
+**A2 → (c) modified: compile ONLY the service file into CI, never the endpoint file.**
+`check-version-command.cs` carries `[NuruRoute("check-version")]` whose handler
+requires `IRepoConfigService`. Endpoints are collected GLOBALLY in the multi-mode
+compilation, so including that file gives every unfiltered `.DiscoverEndpoints()`
+test app an endpoint with an unregistered service → NURU050 build errors across CI
+(verified failure mode: Gen20KanbanQuery in 454-001, 50 errors). So:
+- `<Compile Include="...devcli/content/any/services/nuget-version-service.cs" />` in
+  tests/ci-tests/Directory.Build.props (plain service class, `namespace DevCli`, safe)
+- tests in `tests/timewarp-nuru-tests/devcli/` (already globbed — CI count must rise)
+- the endpoint file stays uncompiled in CI; its logic becomes testable via A3
+
+**A3 → (a) extract, but INTO nuget-version-service.cs** (not a new file, and not a
+helper left in the command file): e.g.
+`public static bool IsVersionPublished(string sourceVersion, IEnumerable<string> publishedVersions)`
+using the fixed comparer. Reasons: (1) the command file can't be compiled into CI
+(A2), so logic left there is untestable; (2) a new content file would require a
+`build/TimeWarp.Nuru.DevCli.props` glob check — services/*.cs is auto-included, so
+adding to the existing service file is zero packaging risk for downstream repos
+(Terminal, Ganda, Amuru, Builder). `HandleNuGetSearchAsync` then calls it with the
+FULL versions list (replacing the `versions[^1]` comparison).

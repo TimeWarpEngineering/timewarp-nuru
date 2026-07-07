@@ -50,7 +50,7 @@ route display string while in here. When fixed, extend
 `tests/timewarp-nuru-tests/parser/parser-16-multi-char-short-options.cs`
 (`Should_route_multi_char_short_end_to_end`) back to the two-route flag/plain shape.
 
-## DECISION (recommended by reviewer, 2026-07-07 — confirm before implementing)
+## DECISION (APPROVED by user 2026-07-07 — implement as specified below)
 
 **Adopt a handler-binding rule for boolean flag matching:**
 

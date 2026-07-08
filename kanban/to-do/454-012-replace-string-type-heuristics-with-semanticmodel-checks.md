@@ -41,6 +41,8 @@ SECOND of the analyzer trio: after 454-011, before 454-010. See 454-011 for rati
 
 ## Notes
 
+**Blocked by #455**
+
 **Implementation Plan: Replace String Type Heuristics With SemanticModel Checks (454-012 / M8)**
 
 ## Overview

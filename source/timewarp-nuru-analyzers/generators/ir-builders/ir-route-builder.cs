@@ -147,4 +147,5 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   IIrRouteBuilder IIrRouteBuilder.AsIdempotentCommand() => AsIdempotentCommand();
   IIrRouteBuilder IIrRouteBuilder.AddImplementation(InterfaceImplementationDefinition implementation) => AddImplementation(implementation);
   object IIrRouteBuilder.Done() => Done()!;
+  object IIrRouteBuilder.DoneParent => Parent!;
 }

@@ -21,6 +21,9 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-28-interpreter-cycle-guard.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-29-h002-named-arguments.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-30-nuru-r003-overlap.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-31-m7-param-mismatch.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-32-m9-unrelated-fluent.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-33-m6-failsoft-catch.cs"),
 ];
 
 int standaloneFailures = 0;

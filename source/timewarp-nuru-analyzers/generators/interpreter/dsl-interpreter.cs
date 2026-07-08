@@ -64,7 +64,14 @@ public sealed class DslInterpreter
     BuiltApps = [];
     CollectedDiagnostics = [];
 
-    ProcessBlock(block);
+    try
+    {
+      ProcessBlock(block);
+    }
+    catch (Exception ex) when (ex is not OperationCanceledException)
+    {
+      // swallow — the diagnostic path is the one that reports to the user
+    }
 
     // Finalize all built apps
     return BuiltApps.ConvertAll(app => app.FinalizeModel());
@@ -88,7 +95,7 @@ public sealed class DslInterpreter
     {
       ProcessBlock(block);
     }
-    catch (InvalidOperationException ex)
+    catch (Exception ex) when (ex is not OperationCanceledException)
     {
       // Convert exception to diagnostic (fallback for not-yet-converted throws)
       CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, block.GetLocation()));
@@ -117,15 +124,22 @@ public sealed class DslInterpreter
     BuiltApps = [];
     CollectedDiagnostics = [];
 
-    // Process each GlobalStatementSyntax member
-    foreach (MemberDeclarationSyntax member in compilationUnit.Members)
+    try
     {
-      CancellationToken.ThrowIfCancellationRequested();
-
-      if (member is GlobalStatementSyntax globalStatement)
+      // Process each GlobalStatementSyntax member
+      foreach (MemberDeclarationSyntax member in compilationUnit.Members)
       {
-        ProcessStatement(globalStatement.Statement);
+        CancellationToken.ThrowIfCancellationRequested();
+
+        if (member is GlobalStatementSyntax globalStatement)
+        {
+          ProcessStatement(globalStatement.Statement);
+        }
       }
+    }
+    catch (Exception ex) when (ex is not OperationCanceledException)
+    {
+      // swallow — the diagnostic path is the one that reports to the user
     }
 
     // Finalize all built apps
@@ -159,7 +173,7 @@ public sealed class DslInterpreter
         }
       }
     }
-    catch (InvalidOperationException ex)
+    catch (Exception ex) when (ex is not OperationCanceledException)
     {
       // Convert exception to diagnostic (fallback for not-yet-converted throws)
       CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, compilationUnit.GetLocation()));
@@ -224,7 +238,7 @@ public sealed class DslInterpreter
       AppModel model = appBuilder.FinalizeModel();
       return new ExtractionResult(model, [.. CollectedDiagnostics]);
     }
-    catch (InvalidOperationException ex)
+    catch (Exception ex) when (ex is not OperationCanceledException)
     {
       CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, invocation.GetLocation()));
       return new ExtractionResult(null, [.. CollectedDiagnostics]);
@@ -561,7 +575,7 @@ public sealed class DslInterpreter
 
       "AsIdempotentCommand" => DispatchAsIdempotentCommand(receiver),
 
-      "Done" => DispatchDone(receiver),
+      "Done" => DispatchDone(invocation, receiver),
 
       "Build" => DispatchBuild(receiver),
 
@@ -892,8 +906,10 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithGroupPrefix() call to any IIrRouteSource (app or group builder).
   /// </summary>
-  private static object? DispatchWithGroupPrefix(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchWithGroupPrefix(InvocationExpressionSyntax invocation, object? receiver)
   {
+    if (!IsDslBuilderMethod(invocation)) return null;
+
     if (receiver is not IIrRouteSource source)
     {
       throw new InvalidOperationException(
@@ -947,8 +963,10 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithDescription() call to IIrRouteBuilder or IIrAppBuilder.
   /// </summary>
-  private static object? DispatchWithDescription(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchWithDescription(InvocationExpressionSyntax invocation, object? receiver)
   {
+    if (!IsDslBuilderMethod(invocation)) return null;
+
     string? description = ExtractStringArgument(invocation);
 
     return receiver switch
@@ -1505,8 +1523,10 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithAlias() call to IIrRouteBuilder.
   /// </summary>
-  private static object? DispatchWithAlias(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchWithAlias(InvocationExpressionSyntax invocation, object? receiver)
   {
+    if (!IsDslBuilderMethod(invocation)) return null;
+
     if (receiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException(
@@ -1587,14 +1607,33 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches Done() call to IIrRouteBuilder or IIrGroupBuilder.
   /// </summary>
-  private static object? DispatchDone(object? receiver)
+  private object? DispatchDone(InvocationExpressionSyntax invocation, object? receiver)
   {
     return receiver switch
     {
-      IIrRouteBuilder routeBuilder => routeBuilder.Done(),
+      IIrRouteBuilder routeBuilder => TryDoneRoute(invocation, routeBuilder),
       IIrGroupBuilder groupBuilder => groupBuilder.Done(),
       _ => throw new InvalidOperationException("Done() must be called on a route or group builder.")
     };
+  }
+
+  /// <summary>
+  /// Tries Done() on a route builder, catching parameter mismatch and emitting diagnostic.
+  /// </summary>
+  private object? TryDoneRoute(InvocationExpressionSyntax invocation, IIrRouteBuilder routeBuilder)
+  {
+    try
+    {
+      return routeBuilder.Done();
+    }
+    catch (HandlerParameterMismatchException ex)
+    {
+      CollectedDiagnostics.Add(Diagnostic.Create(
+        DiagnosticDescriptors.ParameterNameMismatch,
+        invocation.GetLocation(),
+        ex.ParameterName, ex.AvailableSegments));
+      return routeBuilder.DoneParent;
+    }
   }
 
   /// <summary>

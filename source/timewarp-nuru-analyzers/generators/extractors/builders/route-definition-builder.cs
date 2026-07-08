@@ -225,10 +225,10 @@ internal sealed class RouteDefinitionBuilder
           LiteralDefinition l => l.Value,
           _ => s.ToString() ?? "?"
         }));
-        throw new InvalidOperationException(
-          $"Handler parameter '{original.ParameterName}' ({original.ParameterTypeName}) " +
-          $"does not match any segment in route [{segmentNames}]. " +
-          $"Rebound {reboundParams.Length} of {handlerParams.Length} route parameters.");
+        throw new HandlerParameterMismatchException(
+          original.ParameterName,
+          original.ParameterTypeName,
+          segmentNames);
       }
     }
 

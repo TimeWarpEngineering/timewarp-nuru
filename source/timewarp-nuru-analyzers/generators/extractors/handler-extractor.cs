@@ -641,8 +641,12 @@ internal static class HandlerExtractor
         return true;
     }
 
-    // Any other interface is a user-defined service (IGreeter, IData, etc.). Built-in
-    // route-bindable interfaces (IList<T>, IEnumerable<T>) were already excluded above.
+    // Any other interface is treated as a user-defined service (IGreeter, IData, etc.).
+    // Scalar route-bindable types (IPAddress, primitives) were excluded above via
+    // IsBuiltInRouteBindableType. Collection interfaces (IEnumerable<T>/IList<T>) are NOT
+    // excluded and so land here as services — which is harmless because route collections
+    // bind through array parameters (string[]), never a bare collection interface, so this
+    // shape does not occur for a genuine route parameter.
     return type.TypeKind == TypeKind.Interface;
   }
 

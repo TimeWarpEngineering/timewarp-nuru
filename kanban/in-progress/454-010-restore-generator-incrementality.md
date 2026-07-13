@@ -28,11 +28,51 @@ re-runs on every keystroke in the IDE:
 
 ## Checklist
 
-- [ ] EquatableArray<T> added and applied to all models
-- [ ] Location/ImmutableDictionary removed from emit model (the THIRD killer — see plan)
-- [ ] CompilationProvider dependency narrowed (M4 enum-info extraction)
+- [x] EquatableArray<T> added and applied to all models — commits 9fcecd08/b96c45c8
+- [~] Location/ImmutableDictionary removed from emit model (the THIRD killer):
+      - [x] InterceptSiteModel → precomputed string; InterceptSitesByMethod dict → EquatableArray<InterceptSiteGroup> (commit 6a9df1ad)
+      - [ ] ServiceDefinition.RegistrationLocation → remove + side-channel to ServiceValidator (see progress note)
+- [ ] CompilationProvider dependency narrowed (M4 enum-info extraction) + pipeline split
 - [ ] Verify cacheability (generator-37: trackIncrementalGeneratorSteps → Cached)
 - [ ] `ganda runfile cache --clear` + run CI tests
+
+## Progress (reviewer, 2026-07-13) — 4 commits, all validated green
+
+Done and behavior-preserving (full CI 1383 total / 1376 passed / 0 failed after each):
+- **Commit 1** `9fcecd08`+`b96c45c8`: `EquatableArray<T>` (generators/models/equatable-array.cs).
+  net10 `[CollectionBuilder]`; crucially a **two-way implicit conversion** with
+  `ImmutableArray<T>` — this is what kept ~110 emit/validation consumers unchanged (the
+  signature-change approach was tried first and cascaded unboundedly through the emitter tree).
+- **Commit 2** `b96c45c8`: all 13 model array fields → `EquatableArray<T>` (M5). Diagnostic
+  arrays kept `ImmutableArray<Diagnostic>` (off the emit path).
+- **Commit 3a/b** `6a9df1ad`: `InterceptSiteModel` now stores precomputed `string AttributeSyntax`
+  (no live `InterceptableLocation`); `AppModel.InterceptSitesByMethod` dict → equatable
+  `EquatableArray<InterceptSiteGroup>` with a `TryGetSites` helper. `GetDisplayLocation()`
+  dropped (was unused).
+
+Remaining (the delicate part — do with fresh focus):
+- **3c — ServiceDefinition.RegistrationLocation**: it is a `Location` in the emit model →
+  breaks value equality. Remove it and side-channel service→Location to `ServiceValidator`.
+  Pattern exists: `ModelValidator.Validate(model, routeLocations, extensionMethods)` already
+  takes a non-cached `IReadOnlyDictionary<string,Location> routeLocations` (nuru-generator.cs
+  builds it at :72-96, threads it at :382). Service locations are captured at
+  service-extractor.cs:254 (`invocation.GetLocation()`), so the map must be produced by
+  `AppExtractor` and flow via `ExtractionResult` → `CreateGeneratorModelWithValidation`
+  (nuru-generator.cs:~309) → `ModelValidator.Validate` → new
+  `ServiceValidator.Validate(model, serviceLocations)`. The 3 use sites are
+  service-validator.cs:266/292/316 (`service.RegistrationLocation ?? Location.None`). Key the
+  map by `ImplementationTypeName`. ExtractionResult carrying Locations is fine — it is upstream
+  of the cached GeneratorModel; only the model that feeds EMIT must be Location-free.
+- **Commit 4 — M4 + pipeline split** (nuru-generator.cs:104-144): split the single
+  `RegisterSourceOutput` into (1) an uncached diagnostics/logger-warning output over
+  `generatorModelWithDiagnostics`, and (2) a CACHEABLE emit output over
+  `modelProvider.Combine(enumInfoProvider)` — no `Compilation`, no diagnostics. Add
+  `EnumInfo(string MetadataTypeName, EquatableArray<string> MemberNames)` +
+  `EnumInfoExtractor.Resolve(model, compilation, ct)`; the only two `compilation` enum
+  consumers are completion-data-extractor.cs:138 and capabilities-emitter.cs:364 (both drop
+  their `Compilation` param, consume the precomputed set). Add `.WithTrackingName("NuruGeneratorModel")`
+  / `("NuruEnumInfo")`.
+- **Commit 5 — generator-37** cacheability test (see D5 in plan) + CI wiring.
 
 ## Verified Implementation Plan (reviewer, 2026-07-13)
 

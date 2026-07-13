@@ -100,6 +100,9 @@ internal static class HandlerExtractor
         hasCancellationToken = true;
         parameters.Add(ParameterBinding.ForCancellationToken(paramName));
       }
+      // No symbol was available for this lambda (partial/uncompilable code only —
+      // valid code always resolves via ExtractFromMethodSymbol above), so classification
+      // falls back to the string heuristic. See IsServiceType(string) for rationale.
       else if (IsServiceType(typeName))
       {
         requiresServiceProvider = true;
@@ -260,6 +263,9 @@ internal static class HandlerExtractor
           hasCancellationToken = true;
           parameters.Add(ParameterBinding.ForCancellationToken(paramName));
         }
+        // No symbol was available for this anonymous method (partial/uncompilable code
+        // only — valid code always resolves via ExtractFromMethodSymbol above), so
+        // classification falls back to the string heuristic.
         else if (IsServiceType(typeName))
         {
           requiresServiceProvider = true;
@@ -383,7 +389,7 @@ internal static class HandlerExtractor
         hasCancellationToken = true;
         parameters.Add(ParameterBinding.ForCancellationToken(param.Name));
       }
-      else if (IsServiceType(typeName))
+      else if (IsServiceType(param.Type))
       {
         requiresServiceProvider = true;
         parameters.Add(CreateServiceBinding(param, typeName, compilation));
@@ -439,7 +445,7 @@ internal static class HandlerExtractor
         hasCancellationToken = true;
         parameters.Add(ParameterBinding.ForCancellationToken(param.Name));
       }
-      else if (IsServiceType(typeName))
+      else if (IsServiceType(param.Type))
       {
         requiresServiceProvider = true;
         parameters.Add(CreateServiceBinding(param, typeName, compilation));
@@ -606,8 +612,66 @@ internal static class HandlerExtractor
   }
 
   /// <summary>
+  /// Checks if a type is a service (interface or known service types), using symbol
+  /// inspection rather than name heuristics. Preferred over the string overload below;
+  /// used at every call site where a symbol is available.
+  /// Excludes built-in route-bindable types like IPAddress, IList&lt;T&gt;, etc.
+  /// </summary>
+  private static bool IsServiceType(ITypeSymbol type)
+  {
+    // First, check if it's a built-in route-bindable type
+    // These should NEVER be treated as services even if they are interfaces (e.g. IList<T>)
+    if (IsBuiltInRouteBindableType(type))
+      return false;
+
+    // Known service namespaces (Microsoft.Extensions.*), checked by symbol namespace
+    // rather than string prefix matching. Covers non-interface DI types too.
+    string? namespaceName = type.ContainingNamespace?.ToDisplayString();
+    if (namespaceName?.StartsWith("Microsoft.Extensions.", StringComparison.Ordinal) == true)
+      return true;
+
+    // ILogger/ILogger<T>/IServiceProvider, matched by symbol name/OriginalDefinition,
+    // whether implemented directly or via an interface in the type's interface list.
+    if (IsLoggerOrServiceProvider(type))
+      return true;
+
+    foreach (INamedTypeSymbol iface in type.AllInterfaces)
+    {
+      if (IsLoggerOrServiceProvider(iface))
+        return true;
+    }
+
+    // Any other interface is a user-defined service (IGreeter, IData, etc.). Built-in
+    // route-bindable interfaces (IList<T>, IEnumerable<T>) were already excluded above.
+    return type.TypeKind == TypeKind.Interface;
+  }
+
+  /// <summary>
+  /// Checks whether a type symbol is Microsoft.Extensions.Logging.ILogger(&lt;T&gt;) or
+  /// System.IServiceProvider, matched by OriginalDefinition name/namespace rather than
+  /// a fragile string.Contains check.
+  /// </summary>
+  private static bool IsLoggerOrServiceProvider(ITypeSymbol type)
+  {
+    if (type is not INamedTypeSymbol namedType)
+      return false;
+
+    INamedTypeSymbol original = namedType.OriginalDefinition;
+    return original.Name switch
+    {
+      "ILogger" => original.ContainingNamespace?.ToDisplayString() == "Microsoft.Extensions.Logging",
+      "IServiceProvider" => original.ContainingNamespace?.ToDisplayString() == "System",
+      _ => false
+    };
+  }
+
+  /// <summary>
   /// Checks if a type name appears to be a service (interface or known service types).
   /// Excludes built-in route-bindable types like IPAddress, IList, etc.
+  /// Fallback for the two syntax-only lambda paths (ExtractFromLambda/ExtractFromAnonymousMethod)
+  /// which run only when GetSymbolInfo does not resolve to an IMethodSymbol — i.e.
+  /// partial/uncompilable code. Valid code always resolves a symbol and uses the
+  /// IsServiceType(ITypeSymbol) overload above.
   /// </summary>
   private static bool IsServiceType(string typeName)
   {
@@ -633,6 +697,37 @@ internal static class HandlerExtractor
       return true;
 
     return false;
+  }
+
+  /// <summary>
+  /// Checks if a type is a built-in route-bindable type from TypeConversionMap, using
+  /// SpecialType for primitives/string and falling back to fully-qualified name matching
+  /// (against the same set the string overload hardcodes) for the remaining CLR types
+  /// that have no SpecialType (Guid, DateTime, Uri, IPAddress, etc.).
+  /// </summary>
+  private static bool IsBuiltInRouteBindableType(ITypeSymbol type)
+  {
+    switch (type.SpecialType)
+    {
+      case SpecialType.System_Int32:
+      case SpecialType.System_Int64:
+      case SpecialType.System_Int16:
+      case SpecialType.System_Byte:
+      case SpecialType.System_SByte:
+      case SpecialType.System_UInt16:
+      case SpecialType.System_UInt32:
+      case SpecialType.System_UInt64:
+      case SpecialType.System_Single:
+      case SpecialType.System_Double:
+      case SpecialType.System_Decimal:
+      case SpecialType.System_Boolean:
+      case SpecialType.System_Char:
+      case SpecialType.System_String:
+        return true;
+    }
+
+    string fullyQualifiedName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    return IsBuiltInRouteBindableType(fullyQualifiedName);
   }
 
   /// <summary>

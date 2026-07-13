@@ -76,4 +76,13 @@ internal static partial class DiagnosticDescriptors
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
       description: "Options cannot appear after the end-of-options separator.");
+
+  public static readonly DiagnosticDescriptor UnresolvedTypeConverterType = new(
+      id: "NURU_S009",
+      title: "Unresolved type converter type",
+      messageFormat: "Could not resolve the type of the type converter passed to AddTypeConverter(); the converter was not registered",
+      category: SemanticCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "AddTypeConverter() requires the converter's type to be resolvable via the semantic model so its fully qualified name can be emitted into generated code.");
 }

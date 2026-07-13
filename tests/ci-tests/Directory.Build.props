@@ -31,6 +31,8 @@
          compilation (CS0433). Run standalone by run-ci-tests.cs as a second phase instead. -->
     <!-- generator-30: same Roslyn-hosted generator test pattern as generator-28; CS0433
          collision applies. Run standalone instead. -->
+    <!-- generator-34/35/36: same Roslyn-hosted generator test pattern as generator-28
+         (kanban 454-012 / M8); CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/completion/engine/engine-01-input-tokenizer.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
@@ -39,6 +41,9 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-31-m7-param-mismatch.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-32-m9-unrelated-fluent.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-33-m6-failsoft-catch.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-34-m8-ilistmanager-repeated.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-35-m8-idata-service.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-36-m8-typeconverter-fqn.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

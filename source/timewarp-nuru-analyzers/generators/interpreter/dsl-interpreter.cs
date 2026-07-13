@@ -1482,23 +1482,39 @@ public sealed class DslInterpreter
       string converterTypeName;
       string targetTypeName = "";
 
-      if (symbolInfo.Symbol is INamedTypeSymbol namedType)
+      INamedTypeSymbol? resolvedType = symbolInfo.Symbol as INamedTypeSymbol;
+
+      // GetSymbolInfo can miss types that GetTypeInfo resolves, and vice versa — try harder
+      // semantically before giving up (repo convention, see nuru-specific.md).
+      resolvedType ??= SemanticModel.GetTypeInfo(objectCreation.Type).Type as INamedTypeSymbol;
+
+      // A genuinely unresolvable type (e.g. missing namespace) still produces a non-null
+      // symbol from Roslyn's error recovery, but its TypeKind is Error and its display
+      // string is not usable as a real type name (no "global::" qualification is possible).
+      if (resolvedType?.TypeKind == TypeKind.Error)
+        resolvedType = null;
+
+      if (resolvedType is not null)
       {
         // Use fully qualified format to avoid ambiguity with System types
-        converterTypeName = namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        converterTypeName = resolvedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        if (namedType.IsGenericType && namedType.TypeArguments.Length > 0)
+        if (resolvedType.IsGenericType && resolvedType.TypeArguments.Length > 0)
         {
           // Generic converter like EnumTypeConverter<Environment>
           // Extract the first type argument as the target type
-          ITypeSymbol targetType = namedType.TypeArguments[0];
+          ITypeSymbol targetType = resolvedType.TypeArguments[0];
           targetTypeName = targetType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
       }
       else
       {
-        // Fallback to syntax text if semantic model resolution fails
-        converterTypeName = objectCreation.Type.ToString();
+        // Both GetSymbolInfo and GetTypeInfo failed to resolve a type: this is a genuine
+        // generator error, not something to silently emit an unqualified/broken name for.
+        CollectedDiagnostics.Add(Diagnostic.Create(
+          DiagnosticDescriptors.UnresolvedTypeConverterType,
+          objectCreation.Type.GetLocation()));
+        return appBuilder;
       }
 
       CustomConverterDefinition converter = new(

@@ -23,34 +23,34 @@ using System.Text;
 /// <param name="GroupTypeHierarchy">Type hierarchy for group filtering in subset CLI editions</param>
 public sealed record RouteDefinition(
   string OriginalPattern,
-  ImmutableArray<SegmentDefinition> Segments,
+  EquatableArray<SegmentDefinition> Segments,
   string MessageType,
   string? Description,
   HandlerDefinition Handler,
   PipelineDefinition? Pipeline,
-  ImmutableArray<string> Aliases,
+  EquatableArray<string> Aliases,
   string? GroupPrefix,
   int ComputedSpecificity,
   int Order,
-  ImmutableArray<InterfaceImplementationDefinition> Implements = default,
-  ImmutableArray<string> GroupTypeHierarchy = default)
+  EquatableArray<InterfaceImplementationDefinition> Implements = default,
+  EquatableArray<string> GroupTypeHierarchy = default)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
   /// </summary>
   public static RouteDefinition Create(
     string originalPattern,
-    ImmutableArray<SegmentDefinition> segments,
+    EquatableArray<SegmentDefinition> segments,
     HandlerDefinition handler,
     string messageType = "Unspecified",
     string? description = null,
     PipelineDefinition? pipeline = null,
-    ImmutableArray<string>? aliases = null,
+    EquatableArray<string>? aliases = null,
     string? groupPrefix = null,
     int computedSpecificity = 0,
     int order = 0,
-    ImmutableArray<InterfaceImplementationDefinition>? implements = null,
-    ImmutableArray<string>? groupTypeHierarchy = null)
+    EquatableArray<InterfaceImplementationDefinition>? implements = null,
+    EquatableArray<string>? groupTypeHierarchy = null)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,

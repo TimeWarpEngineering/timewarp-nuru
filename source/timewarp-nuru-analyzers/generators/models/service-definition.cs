@@ -53,8 +53,8 @@ public sealed record ServiceDefinition(
   string ServiceTypeName,
   string ImplementationTypeName,
   ServiceLifetime Lifetime,
-  ImmutableArray<string> ConstructorDependencyTypes = default,
-  ImmutableArray<ConstructorParameter> ConstructorParameters = default,
+  EquatableArray<string> ConstructorDependencyTypes = default,
+  EquatableArray<ConstructorParameter> ConstructorParameters = default,
   bool IsFactoryRegistration = false,
   bool IsInternalType = false,
   Location? RegistrationLocation = null)
@@ -72,8 +72,8 @@ public sealed record ServiceDefinition(
   public static ServiceDefinition Singleton(
     string serviceType,
     string implementationType,
-    ImmutableArray<string> constructorDependencyTypes = default,
-    ImmutableArray<ConstructorParameter> constructorParameters = default,
+    EquatableArray<string> constructorDependencyTypes = default,
+    EquatableArray<ConstructorParameter> constructorParameters = default,
     bool isFactoryRegistration = false,
     bool isInternalType = false,
     Location? registrationLocation = null) => new(
@@ -92,8 +92,8 @@ public sealed record ServiceDefinition(
   public static ServiceDefinition Scoped(
     string serviceType,
     string implementationType,
-    ImmutableArray<string> constructorDependencyTypes = default,
-    ImmutableArray<ConstructorParameter> constructorParameters = default,
+    EquatableArray<string> constructorDependencyTypes = default,
+    EquatableArray<ConstructorParameter> constructorParameters = default,
     bool isFactoryRegistration = false,
     bool isInternalType = false,
     Location? registrationLocation = null) => new(
@@ -112,8 +112,8 @@ public sealed record ServiceDefinition(
   public static ServiceDefinition Transient(
     string serviceType,
     string implementationType,
-    ImmutableArray<string> constructorDependencyTypes = default,
-    ImmutableArray<ConstructorParameter> constructorParameters = default,
+    EquatableArray<string> constructorDependencyTypes = default,
+    EquatableArray<ConstructorParameter> constructorParameters = default,
     bool isFactoryRegistration = false,
     bool isInternalType = false,
     Location? registrationLocation = null) => new(

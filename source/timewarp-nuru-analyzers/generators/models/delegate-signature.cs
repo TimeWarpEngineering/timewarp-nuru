@@ -9,7 +9,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="IsAsync">Whether the delegate returns a Task or Task&lt;T&gt;</param>
 /// <param name="UniqueIdentifier">A unique identifier for code generation</param>
 public sealed record DelegateSignature(
-  ImmutableArray<DelegateParameterInfo> Parameters,
+  EquatableArray<DelegateParameterInfo> Parameters,
   DelegateTypeInfo ReturnType,
   bool IsAsync,
   string UniqueIdentifier)
@@ -17,7 +17,7 @@ public sealed record DelegateSignature(
   /// <summary>
   /// Creates a unique identifier based on parameter types and return type.
   /// </summary>
-  public static string CreateIdentifier(ImmutableArray<DelegateParameterInfo> parameters, DelegateTypeInfo returnType)
+  public static string CreateIdentifier(EquatableArray<DelegateParameterInfo> parameters, DelegateTypeInfo returnType)
   {
     ArgumentNullException.ThrowIfNull(returnType);
     System.Text.StringBuilder sb = new();

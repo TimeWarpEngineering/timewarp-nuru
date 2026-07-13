@@ -48,23 +48,23 @@ public sealed record AppModel(
   ReplModel? ReplOptions,
   bool HasConfiguration,
   bool HasCheckUpdatesRoute,
-  ImmutableArray<RouteDefinition> Routes,
-  ImmutableArray<BehaviorDefinition> Behaviors,
-  ImmutableArray<ServiceDefinition> Services,
+  EquatableArray<RouteDefinition> Routes,
+  EquatableArray<BehaviorDefinition> Behaviors,
+  EquatableArray<ServiceDefinition> Services,
   ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> InterceptSitesByMethod,
-  ImmutableArray<string> UserUsings,
-  ImmutableArray<CustomConverterDefinition> CustomConverters,
+  EquatableArray<string> UserUsings,
+  EquatableArray<CustomConverterDefinition> CustomConverters,
   LoggingConfiguration? LoggingConfiguration,
   bool DiscoverEndpoints = false,
-  ImmutableArray<string> ExplicitEndpointTypes = default,
+  EquatableArray<string> ExplicitEndpointTypes = default,
   string? BuildLocation = null,
   bool HasTelemetry = false,
   bool HasCompletion = false,
   bool UseMicrosoftDependencyInjection = false,
   string? ConfigureServicesLambdaBody = null,
-  ImmutableArray<ExtensionMethodCall> ExtensionMethods = default,
-  ImmutableArray<HttpClientConfiguration> HttpClientConfigurations = default,
-  ImmutableArray<string> FilterGroupTypeNames = default)
+  EquatableArray<ExtensionMethodCall> ExtensionMethods = default,
+  EquatableArray<HttpClientConfiguration> HttpClientConfigurations = default,
+  EquatableArray<string> FilterGroupTypeNames = default)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.

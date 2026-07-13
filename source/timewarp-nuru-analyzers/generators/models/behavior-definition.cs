@@ -16,7 +16,7 @@ public sealed record BehaviorDefinition(
   string FullTypeName,
   int Order,
   BehaviorScope AppliesTo,
-  ImmutableArray<ParameterBinding> ConstructorDependencies,
+  EquatableArray<ParameterBinding> ConstructorDependencies,
   string? StateTypeName,
   string? FilterTypeName = null)
 {
@@ -26,7 +26,7 @@ public sealed record BehaviorDefinition(
   public static BehaviorDefinition ForAll(
     string fullTypeName,
     int order = 0,
-    ImmutableArray<ParameterBinding> constructorDependencies = default,
+    EquatableArray<ParameterBinding> constructorDependencies = default,
     string? stateTypeName = null) => new(
     FullTypeName: fullTypeName,
     Order: order,
@@ -47,7 +47,7 @@ public sealed record BehaviorDefinition(
     string fullTypeName,
     string filterTypeName,
     int order = 0,
-    ImmutableArray<ParameterBinding> constructorDependencies = default,
+    EquatableArray<ParameterBinding> constructorDependencies = default,
     string? stateTypeName = null) => new(
     FullTypeName: fullTypeName,
     Order: order,
@@ -62,7 +62,7 @@ public sealed record BehaviorDefinition(
   public static BehaviorDefinition ForCommands(
     string fullTypeName,
     int order = 0,
-    ImmutableArray<ParameterBinding> constructorDependencies = default,
+    EquatableArray<ParameterBinding> constructorDependencies = default,
     string? stateTypeName = null) => new(
     FullTypeName: fullTypeName,
     Order: order,
@@ -77,7 +77,7 @@ public sealed record BehaviorDefinition(
   public static BehaviorDefinition ForQueries(
     string fullTypeName,
     int order = 0,
-    ImmutableArray<ParameterBinding> constructorDependencies = default,
+    EquatableArray<ParameterBinding> constructorDependencies = default,
     string? stateTypeName = null) => new(
     FullTypeName: fullTypeName,
     Order: order,

@@ -34,9 +34,9 @@ public sealed record HttpClientConfiguration(
 /// <param name="ExtensionMethods">Extension method calls detected (AddLogging, etc.).</param>
 /// <param name="HttpClientConfigurations">HttpClient configurations extracted from AddHttpClient calls.</param>
 public sealed record ServiceExtractionResult(
-  ImmutableArray<ServiceDefinition> Services,
-  ImmutableArray<ExtensionMethodCall> ExtensionMethods,
-  ImmutableArray<HttpClientConfiguration> HttpClientConfigurations)
+  EquatableArray<ServiceDefinition> Services,
+  EquatableArray<ExtensionMethodCall> ExtensionMethods,
+  EquatableArray<HttpClientConfiguration> HttpClientConfigurations)
 {
   /// <summary>
   /// Empty extraction result (no services, no extension methods, no HttpClient configurations).
@@ -46,7 +46,7 @@ public sealed record ServiceExtractionResult(
   /// <summary>
   /// Creates a result with only services (no extension methods or HttpClient configurations detected).
   /// </summary>
-  public static ServiceExtractionResult FromServices(ImmutableArray<ServiceDefinition> services) =>
+  public static ServiceExtractionResult FromServices(EquatableArray<ServiceDefinition> services) =>
     new(services, [], []);
 
   /// <summary>

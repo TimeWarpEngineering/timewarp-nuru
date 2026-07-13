@@ -331,7 +331,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
     foreach (ExtractionResult result in extractionResults)
     {
-      if (result.Model is null || result.Model.InterceptSitesByMethod.Count == 0)
+      if (result.Model is null || result.Model.InterceptSitesByMethod.Length == 0)
         continue;
 
       // Use BuildLocation as the deduplication key
@@ -351,7 +351,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       else
       {
         // Merge intercept sites (shouldn't happen often with Build()-based extraction)
-        ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> mergedSites =
+        EquatableArray<InterceptSiteGroup> mergedSites =
           MergeInterceptSites(existingApp.InterceptSitesByMethod, result.Model.InterceptSitesByMethod);
         uniqueApps[key] = existingApp with { InterceptSitesByMethod = mergedSites };
       }
@@ -528,20 +528,22 @@ public sealed class NuruGenerator : IIncrementalGenerator
   /// <summary>
   /// Merges two intercept site dictionaries.
   /// </summary>
-  private static ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> MergeInterceptSites(
-    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> a,
-    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> b)
+  private static EquatableArray<InterceptSiteGroup> MergeInterceptSites(
+    EquatableArray<InterceptSiteGroup> a,
+    EquatableArray<InterceptSiteGroup> b)
   {
-    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>>.Builder builder = a.ToBuilder();
-    foreach (KeyValuePair<string, ImmutableArray<InterceptSiteModel>> kvp in b)
+    Dictionary<string, EquatableArray<InterceptSiteModel>> merged = [];
+    foreach (InterceptSiteGroup group in a)
+      merged[group.MethodName] = group.Sites;
+
+    foreach (InterceptSiteGroup group in b)
     {
-      if (builder.TryGetValue(kvp.Key, out ImmutableArray<InterceptSiteModel> existing))
-        builder[kvp.Key] = existing.AddRange(kvp.Value);
-      else
-        builder[kvp.Key] = kvp.Value;
+      merged[group.MethodName] = merged.TryGetValue(group.MethodName, out EquatableArray<InterceptSiteModel> existing)
+        ? existing.AddRange(group.Sites)
+        : group.Sites;
     }
 
-    return builder.ToImmutable();
+    return [.. merged.Select(kvp => new InterceptSiteGroup(kvp.Key, kvp.Value))];
   }
 
   /// <summary>

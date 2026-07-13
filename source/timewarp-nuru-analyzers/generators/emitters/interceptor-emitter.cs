@@ -89,7 +89,7 @@ internal static class InterceptorEmitter
     string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
     // Get RunAsync intercept sites from the dictionary
-    bool hasRunAsyncSites = app.InterceptSitesByMethod.TryGetValue("RunAsync", out ImmutableArray<InterceptSiteModel> runAsyncSites);
+    bool hasRunAsyncSites = app.InterceptSitesByMethod.TryGetSites("RunAsync", out EquatableArray<InterceptSiteModel> runAsyncSites);
 
     // Emit ExecuteRouteAsync when:
     // - App has routes (needs route matching)
@@ -107,7 +107,7 @@ internal static class InterceptorEmitter
     // Emit [InterceptsLocation] attributes for this app's RunAsync calls
     foreach (InterceptSiteModel site in runAsyncSites)
     {
-      sb.AppendLine($"  {site.GetAttributeSyntax()}");
+      sb.AppendLine($"  {site.AttributeSyntax}");
     }
 
     // Method signature - use index suffix for uniqueness when multiple apps
@@ -177,7 +177,7 @@ internal static class InterceptorEmitter
   private static void EmitRunReplAsyncInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model)
   {
     // Get RunReplAsync intercept sites from the dictionary
-    if (!app.InterceptSitesByMethod.TryGetValue("RunReplAsync", out ImmutableArray<InterceptSiteModel> replSites))
+    if (!app.InterceptSitesByMethod.TryGetSites("RunReplAsync", out EquatableArray<InterceptSiteModel> replSites))
       return;
 
     // Only emit if app has REPL enabled
@@ -189,7 +189,7 @@ internal static class InterceptorEmitter
     // Emit [InterceptsLocation] attributes for this app's RunReplAsync calls
     foreach (InterceptSiteModel site in replSites)
     {
-      sb.AppendLine($"  {site.GetAttributeSyntax()}");
+      sb.AppendLine($"  {site.AttributeSyntax}");
     }
 
     // Method signature - matches NuruApp.RunReplAsync signature

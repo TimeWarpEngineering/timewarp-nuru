@@ -95,7 +95,7 @@ internal static class AppExtractor
     // Find the model whose InterceptSitesByMethod contains this call
     foreach (AppModel model in models)
     {
-      if (!model.InterceptSitesByMethod.TryGetValue("RunAsync", out ImmutableArray<InterceptSiteModel> sites))
+      if (!model.InterceptSitesByMethod.TryGetSites("RunAsync", out EquatableArray<InterceptSiteModel> sites))
         continue;
 
       foreach (InterceptSiteModel site in sites)
@@ -277,7 +277,7 @@ internal static class AppExtractor
     }
 
     // DEBUG: Serialize interpreter result
-    string modelStatus = result.Model is null ? "NULL" : $"HasRoutes={result.Model.HasRoutes}, HasRepl={result.Model.HasRepl}, InterceptSites={result.Model.InterceptSitesByMethod.Count}, CustomConverters={result.Model.CustomConverters.Length}";
+    string modelStatus = result.Model is null ? "NULL" : $"HasRoutes={result.Model.HasRoutes}, HasRepl={result.Model.HasRepl}, InterceptSites={result.Model.InterceptSitesByMethod.Length}, CustomConverters={result.Model.CustomConverters.Length}";
     string diagCount = result.Diagnostics.Length.ToString();
     string diagMessages = string.Join("; ", result.Diagnostics.Select(d => d.GetMessage()));
     earlyDiagnostics.Add(Diagnostic.Create(
@@ -292,7 +292,7 @@ internal static class AppExtractor
       string buildLocation = buildInvocation.GetLocation().GetLineSpan().ToString();
 
       // 6. Check if Build() result is assigned to a field and find entry points in other methods
-      ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> interceptSites = result.Model.InterceptSitesByMethod;
+      EquatableArray<InterceptSiteGroup> interceptSites = result.Model.InterceptSitesByMethod;
       IFieldSymbol? fieldSymbol = FindFieldAssignmentTarget(buildInvocation, context.SemanticModel);
 
       List<Diagnostic> diagnostics = [.. result.Diagnostics];
@@ -311,22 +311,26 @@ internal static class AppExtractor
           additionalSites.Length,
           fieldSymbol.Name));
 
-        // Merge additional intercept sites
+        // Merge additional intercept sites (work in a dictionary, then back to the equatable group array)
+        Dictionary<string, List<InterceptSiteModel>> siteMap =
+          interceptSites.ToDictionary(g => g.MethodName, g => g.Sites.ToList());
         foreach ((string methodName, InterceptSiteModel site) in additionalSites)
         {
-          if (interceptSites.TryGetValue(methodName, out ImmutableArray<InterceptSiteModel> existingSites))
+          if (siteMap.TryGetValue(methodName, out List<InterceptSiteModel>? existingSites))
           {
             // Avoid duplicates by checking if site already exists
             if (!existingSites.Any(s => s.FilePath == site.FilePath && s.Line == site.Line && s.Column == site.Column))
             {
-              interceptSites = interceptSites.SetItem(methodName, existingSites.Add(site));
+              existingSites.Add(site);
             }
           }
           else
           {
-            interceptSites = interceptSites.Add(methodName, [site]);
+            siteMap[methodName] = [site];
           }
         }
+
+        interceptSites = [.. siteMap.Select(kvp => new InterceptSiteGroup(kvp.Key, [.. kvp.Value]))];
       }
       else
       {

@@ -262,6 +262,25 @@ LOW sweeps:
 - No SQL injection (parameterized throughout), no command injection (Amuru argv builders),
   no resource leaks found in search/MCP/telemetry paths.
 
+## Reprioritization (2026-07-14)
+
+The remaining backlog was re-assessed against how this framework is actually consumed now
+(AI-authored code + a curated Nuru skill), rather than treating this review list as the roadmap:
+
+- **MCP server frozen/deprecated.** The `timewarp-nuru` MCP server's example/syntax/validation
+  tools duplicate what `skills/nuru/SKILL.md` + `samples/` now deliver in-context and more
+  reliably. It is frozen (docs + `.agent/local/nuru-specific.md` updated); no further MCP work.
+  - **454-033 → CLOSED won't-do, archived** (`kanban/archived/`). Its manifest-drift and
+    endpoint-syntax-region work would invest in the frozen component.
+- **REPL batch parked for human verification.** 454-017/018/019/020 and 454-030 carry
+  "Status: PARKED — needs human interactive verification" banners. Their value is real but
+  *human-user* facing (key handling, cursor/redraw, clipboard, cancellation) and cannot be
+  verified by an automated agent in a non-interactive shell. Held for a keyboard-verify pass.
+- **Everything else is done.** The analyzer trio (011/012/010), analyzer sweep (028), and the
+  core/parsing/aux/infra sweeps (027/029/031/032) all landed green. The high-value items in
+  this list are exhausted; further forward investment (diagnostic message quality for AI
+  fix-loops, skill accuracy, cold-build/AOT) is proactive work, not review remediation.
+
 ## Session
 
 - Created: 2026-07-06 (full-repo review session)

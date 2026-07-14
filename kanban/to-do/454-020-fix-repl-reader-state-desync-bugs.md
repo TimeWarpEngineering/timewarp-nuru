@@ -1,5 +1,11 @@
 # Fix REPL Reader State Desync Bugs
 
+> **Status: PARKED — needs human interactive verification (re-prioritized 2026-07-14).**
+> REPL behavior (key handling, cursor/redraw, clipboard, Ctrl-C cancellation) cannot be
+> verified by an automated agent in a non-interactive shell. Code may be written and
+> compile-checked, but these are held for a human keyboard-verification pass. See the 454
+> parent's reprioritization note.
+
 Parent: 454 (2026-07-06 full code review). Severity: MEDIUM (M18, M19, M20).
 
 ## Description

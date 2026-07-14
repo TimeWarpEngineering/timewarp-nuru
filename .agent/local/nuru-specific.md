@@ -98,10 +98,14 @@ terminal.OutputContains("output").ShouldBeTrue();
 dotnet publish -c Release -r linux-x64 -p:PublishAot=true
 ```
 
-### MCP Server
+### MCP Server (frozen / deprecated)
 
-The `timewarp-nuru` MCP server provides route validation and pattern examples.
-See `source/timewarp-nuru-mcp-server/` for implementation.
+The `timewarp-nuru` MCP server (`source/timewarp-nuru-mcp/`) is **frozen as of 2026-07-14**
+and should not be extended. Its example/syntax/validation tools duplicate what the **Nuru
+skill** (`skills/nuru/SKILL.md`) now delivers in-context, more reliably and without a network
+round-trip. When you need Nuru knowledge, use the skill; for a concrete example, read the
+`samples/` files directly — do not reach for the MCP. No new MCP features or content fixes
+are planned (kanban 454-033, its outstanding manifest/syntax bugs, is closed won't-do).
 
 ### Roslyn Best Practices (Source Generators)
 

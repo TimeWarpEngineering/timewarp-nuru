@@ -3,6 +3,17 @@
 Parent: 454 (2026-07-06 full code review). Severity: MEDIUM (product bugs discovered by
 re-enabling the MCP tests in CI — task 454-001).
 
+## CLOSED — WON'T DO (2026-07-14)
+
+The `timewarp-nuru` MCP server was **frozen/deprecated** on 2026-07-14. Its example/syntax
+tools duplicate content the Nuru skill (`skills/nuru/SKILL.md`) + `samples/` now deliver
+in-context, so the MCP is no longer the interface AI consumers reach for. Fixing the
+examples.json manifest drift and authoring the endpoint syntax regions (below) would be
+investment in a component we are no longer developing. Closed without implementation and
+archived. If the MCP is ever un-frozen, reopen this from the archive.
+
+(Original description retained below for context.)
+
 ## Description
 
 Two user-facing MCP server content bugs:

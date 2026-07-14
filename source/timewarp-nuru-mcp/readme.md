@@ -1,5 +1,15 @@
 # TimeWarp.Nuru MCP Server
 
+> [!WARNING]
+> **Frozen / deprecated (2026-07-14).** This MCP server is no longer under active
+> development. Its example/syntax/validation tools duplicate content that is now delivered
+> more reliably and in-context by the **Nuru skill** (`skills/nuru/SKILL.md`) plus the
+> repository's `samples/`. For AI-assisted Nuru development, use the skill; for a canonical
+> example, read the sample files directly. The server still builds and its existing tests
+> still run, but no new features or content fixes are planned (e.g. the examples.json
+> manifest drift tracked in kanban 454-033 is intentionally left unfixed — see that task).
+> Full retirement/removal is a possible future step.
+
 An MCP (Model Context Protocol) server that provides tools for working with TimeWarp.Nuru, a route-based CLI framework for .NET.
 
 ## Installation

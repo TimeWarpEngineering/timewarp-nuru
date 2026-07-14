@@ -33,7 +33,7 @@ internal static class ModelValidator
     diagnostics.AddRange(overlapDiagnostics);
 
     // Run service validator (NURU050, NURU051, NURU053, NURU054)
-    ImmutableArray<Diagnostic> serviceDiagnostics = ServiceValidator.Validate(model);
+    ImmutableArray<Diagnostic> serviceDiagnostics = ServiceValidator.Validate(model, routeLocations);
     diagnostics.AddRange(serviceDiagnostics);
 
     // Run extension method validation (NURU052)

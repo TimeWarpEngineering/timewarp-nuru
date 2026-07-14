@@ -23,8 +23,12 @@ internal static class ServiceValidator
   /// Validates services and handler requirements, returning diagnostics.
   /// </summary>
   /// <param name="app">The app model to validate.</param>
+  /// <param name="routeLocations">Map from route pattern to source location, used to anchor
+  /// unregistered-service diagnostics at the offending route.</param>
   /// <returns>Diagnostics for any issues found.</returns>
-  public static ImmutableArray<Diagnostic> Validate(AppModel app)
+  public static ImmutableArray<Diagnostic> Validate(
+    AppModel app,
+    IReadOnlyDictionary<string, Location>? routeLocations = null)
   {
     // Skip ALL validation when runtime DI is enabled
     if (app.UseMicrosoftDependencyInjection)
@@ -48,8 +52,25 @@ internal static class ServiceValidator
       }
     }
 
+    // Map service implementation type names to their registration locations (from 3c LocationInfo).
+    // Keyed both by normalized full name (for cycle detection) and short name (for lifetime mismatches).
+    Dictionary<string, Location> serviceLocationByImpl = new(StringComparer.Ordinal);
+    Dictionary<string, Location> serviceLocationByShortImpl = new(StringComparer.Ordinal);
+    if (!app.Services.IsDefaultOrEmpty)
+    {
+      foreach (ServiceDefinition service in app.Services)
+      {
+        Location? loc = service.RegistrationLocation?.ToLocation();
+        if (loc is null)
+          continue;
+
+        serviceLocationByImpl.TryAdd(NormalizeTypeName(service.ImplementationTypeName), loc);
+        serviceLocationByShortImpl.TryAdd(service.ShortImplementationTypeName, loc);
+      }
+    }
+
     // NURU050: Validate handler service requirements
-    ValidateHandlerServiceRequirements(app, registeredServices, diagnostics);
+    ValidateHandlerServiceRequirements(app, registeredServices, routeLocations, diagnostics);
 
     // NURU051: Validate service constructor dependencies
     ValidateServiceConstructorDependencies(app.Services, registeredServices, diagnostics);
@@ -61,10 +82,10 @@ internal static class ServiceValidator
     ValidateTypeAccessibility(app.Services, diagnostics);
 
     // NURU055: Validate circular dependencies
-    ValidateCircularDependencies(app.Services, diagnostics);
+    ValidateCircularDependencies(app.Services, serviceLocationByImpl, diagnostics);
 
     // NURU056: Validate lifetime mismatches
-    ValidateLifetimeMismatches(app.Services, diagnostics);
+    ValidateLifetimeMismatches(app.Services, serviceLocationByShortImpl, diagnostics);
 
     return [.. diagnostics];
   }
@@ -156,6 +177,7 @@ internal static class ServiceValidator
   private static void ValidateHandlerServiceRequirements(
     AppModel app,
     HashSet<string> registeredServices,
+    IReadOnlyDictionary<string, Location>? routeLocations,
     List<Diagnostic> diagnostics)
   {
     if (app.Routes.IsDefaultOrEmpty)
@@ -163,10 +185,16 @@ internal static class ServiceValidator
 
     foreach (RouteDefinition route in app.Routes)
     {
+      // Anchor unregistered-service diagnostics at the route when its location is known.
+      Location routeLocation = routeLocations is not null
+        && routeLocations.TryGetValue(route.EffectivePattern, out Location? loc)
+          ? loc
+          : Location.None;
+
       // Check handler service parameters
       foreach (ParameterBinding param in route.Handler.ServiceParameters)
       {
-        ValidateServiceRequirement(param.ParameterTypeName, registeredServices, diagnostics);
+        ValidateServiceRequirement(param.ParameterTypeName, registeredServices, routeLocation, diagnostics);
       }
 
       // Check constructor dependencies for endpoint handlers
@@ -174,12 +202,12 @@ internal static class ServiceValidator
       {
         foreach (ParameterBinding dep in route.Handler.ConstructorDependencies)
         {
-          ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, diagnostics);
+          ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, routeLocation, diagnostics);
         }
       }
     }
 
-    // Also check behavior constructor dependencies
+    // Also check behavior constructor dependencies (no route to anchor to)
     if (!app.Behaviors.IsDefaultOrEmpty)
     {
       foreach (BehaviorDefinition behavior in app.Behaviors)
@@ -188,7 +216,7 @@ internal static class ServiceValidator
         {
           foreach (ParameterBinding dep in behavior.ConstructorDependencies)
           {
-            ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, diagnostics);
+            ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, Location.None, diagnostics);
           }
         }
       }
@@ -201,6 +229,7 @@ internal static class ServiceValidator
   private static void ValidateServiceRequirement(
     string? typeName,
     HashSet<string> registeredServices,
+    Location location,
     List<Diagnostic> diagnostics)
   {
     if (typeName is null)
@@ -218,7 +247,7 @@ internal static class ServiceValidator
     {
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.UnregisteredService,
-        Location.None,
+        location,
         GetShortTypeName(typeName)));
     }
   }
@@ -327,6 +356,7 @@ internal static class ServiceValidator
   /// </summary>
   private static void ValidateCircularDependencies(
     ImmutableArray<ServiceDefinition> services,
+    Dictionary<string, Location> serviceLocationByImpl,
     List<Diagnostic> diagnostics)
   {
     if (services.IsDefaultOrEmpty)
@@ -336,9 +366,20 @@ internal static class ServiceValidator
 
     if (!cycles.IsDefaultOrEmpty && cycles.Length > 0)
     {
+      // Anchor at the first service in the cycle whose registration location is known.
+      Location location = Location.None;
+      foreach (string node in cycles)
+      {
+        if (serviceLocationByImpl.TryGetValue(NormalizeTypeName(node), out Location? loc))
+        {
+          location = loc;
+          break;
+        }
+      }
+
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.CircularDependency,
-        Location.None,
+        location,
         string.Join(" -> ", cycles)));
     }
   }
@@ -348,6 +389,7 @@ internal static class ServiceValidator
   /// </summary>
   private static void ValidateLifetimeMismatches(
     ImmutableArray<ServiceDefinition> services,
+    Dictionary<string, Location> serviceLocationByShortImpl,
     List<Diagnostic> diagnostics)
   {
     if (services.IsDefaultOrEmpty)
@@ -360,9 +402,14 @@ internal static class ServiceValidator
     {
       foreach ((string dependentService, string dependencyService, string dependentLifetime, string dependencyLifetime) in mismatches)
       {
+        // Anchor at the dependent service's registration when known (mismatch names are short impl names).
+        Location location = serviceLocationByShortImpl.TryGetValue(dependentService, out Location? loc)
+          ? loc
+          : Location.None;
+
         diagnostics.Add(Diagnostic.Create(
           DiagnosticDescriptors.LifetimeMismatch,
-          Location.None,
+          location,
           dependentService,
           dependentLifetime,
           dependencyService));

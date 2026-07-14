@@ -260,11 +260,13 @@ internal static class HandlerValidator
       }
     }
 
-    // Walk lambda body looking for identifiers
+    // Walk lambda body looking for identifiers. DescendantNodesAndSelf (not DescendantNodes)
+    // so a body that IS a single identifier — e.g. `() => capturedLocal` — is checked too;
+    // DescendantNodes excludes the body node itself, which silently missed that capture.
     if (lambda.Body is null)
       return capturedVariables;
 
-    foreach (IdentifierNameSyntax identifier in lambda.Body.DescendantNodes()
+    foreach (IdentifierNameSyntax identifier in lambda.Body.DescendantNodesAndSelf()
       .OfType<IdentifierNameSyntax>())
     {
       string name = identifier.Identifier.Text;

@@ -251,7 +251,7 @@ internal static class ServiceExtractor
       ConstructorParameters: constructorParams,
       IsFactoryRegistration: isFactoryRegistration,
       IsInternalType: isInternalType,
-      RegistrationLocation: invocation.GetLocation());
+      RegistrationLocation: LocationInfo.CreateFrom(invocation.GetLocation()));
 
     return (service, null);
   }

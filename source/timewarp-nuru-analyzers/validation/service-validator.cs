@@ -263,7 +263,7 @@ internal static class ServiceValidator
 
       if (missingDeps.Count > 0)
       {
-        Location location = service.RegistrationLocation ?? Location.None;
+        Location location = service.RegistrationLocation?.ToLocation() ?? Location.None;
 
         diagnostics.Add(Diagnostic.Create(
           DiagnosticDescriptors.ServiceHasConstructorDependencies,
@@ -289,7 +289,7 @@ internal static class ServiceValidator
       if (!service.IsFactoryRegistration)
         continue;
 
-      Location location = service.RegistrationLocation ?? Location.None;
+      Location location = service.RegistrationLocation?.ToLocation() ?? Location.None;
 
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.FactoryDelegateNotSupported,
@@ -313,7 +313,7 @@ internal static class ServiceValidator
       if (!service.IsInternalType)
         continue;
 
-      Location location = service.RegistrationLocation ?? Location.None;
+      Location location = service.RegistrationLocation?.ToLocation() ?? Location.None;
 
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.InternalTypeNotAccessible,

@@ -48,7 +48,7 @@ public sealed record ConstructorParameter(
 /// <param name="ConstructorParameters">Detailed constructor parameter information.</param>
 /// <param name="IsFactoryRegistration">True if registered with a factory delegate</param>
 /// <param name="IsInternalType">True if implementation type is internal</param>
-/// <param name="RegistrationLocation">Source location of the registration for error reporting</param>
+/// <param name="RegistrationLocation">Value-equatable source location of the registration for error reporting</param>
 public sealed record ServiceDefinition(
   string ServiceTypeName,
   string ImplementationTypeName,
@@ -57,7 +57,7 @@ public sealed record ServiceDefinition(
   EquatableArray<ConstructorParameter> ConstructorParameters = default,
   bool IsFactoryRegistration = false,
   bool IsInternalType = false,
-  Location? RegistrationLocation = null)
+  LocationInfo? RegistrationLocation = null)
 {
   /// <summary>
   /// Gets whether this service has constructor dependencies.
@@ -76,7 +76,7 @@ public sealed record ServiceDefinition(
     EquatableArray<ConstructorParameter> constructorParameters = default,
     bool isFactoryRegistration = false,
     bool isInternalType = false,
-    Location? registrationLocation = null) => new(
+    LocationInfo? registrationLocation = null) => new(
     ServiceTypeName: serviceType,
     ImplementationTypeName: implementationType,
     Lifetime: ServiceLifetime.Singleton,
@@ -96,7 +96,7 @@ public sealed record ServiceDefinition(
     EquatableArray<ConstructorParameter> constructorParameters = default,
     bool isFactoryRegistration = false,
     bool isInternalType = false,
-    Location? registrationLocation = null) => new(
+    LocationInfo? registrationLocation = null) => new(
     ServiceTypeName: serviceType,
     ImplementationTypeName: implementationType,
     Lifetime: ServiceLifetime.Scoped,
@@ -116,7 +116,7 @@ public sealed record ServiceDefinition(
     EquatableArray<ConstructorParameter> constructorParameters = default,
     bool isFactoryRegistration = false,
     bool isInternalType = false,
-    Location? registrationLocation = null) => new(
+    LocationInfo? registrationLocation = null) => new(
     ServiceTypeName: serviceType,
     ImplementationTypeName: implementationType,
     Lifetime: ServiceLifetime.Transient,

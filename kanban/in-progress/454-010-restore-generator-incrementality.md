@@ -31,7 +31,7 @@ re-runs on every keystroke in the IDE:
 - [x] EquatableArray<T> added and applied to all models — commits 9fcecd08/b96c45c8
 - [~] Location/ImmutableDictionary removed from emit model (the THIRD killer):
       - [x] InterceptSiteModel → precomputed string; InterceptSitesByMethod dict → EquatableArray<InterceptSiteGroup> (commit 6a9df1ad)
-      - [ ] ServiceDefinition.RegistrationLocation → remove + side-channel to ServiceValidator (see progress note)
+      - [x] ServiceDefinition.RegistrationLocation → value-equatable LocationInfo (commit pending, see 3c note)
 - [ ] CompilationProvider dependency narrowed (M4 enum-info extraction) + pipeline split
 - [ ] Verify cacheability (generator-37: trackIncrementalGeneratorSteps → Cached)
 - [ ] `ganda runfile cache --clear` + run CI tests
@@ -51,18 +51,6 @@ Done and behavior-preserving (full CI 1383 total / 1376 passed / 0 failed after 
   dropped (was unused).
 
 Remaining (the delicate part — do with fresh focus):
-- **3c — ServiceDefinition.RegistrationLocation**: it is a `Location` in the emit model →
-  breaks value equality. Remove it and side-channel service→Location to `ServiceValidator`.
-  Pattern exists: `ModelValidator.Validate(model, routeLocations, extensionMethods)` already
-  takes a non-cached `IReadOnlyDictionary<string,Location> routeLocations` (nuru-generator.cs
-  builds it at :72-96, threads it at :382). Service locations are captured at
-  service-extractor.cs:254 (`invocation.GetLocation()`), so the map must be produced by
-  `AppExtractor` and flow via `ExtractionResult` → `CreateGeneratorModelWithValidation`
-  (nuru-generator.cs:~309) → `ModelValidator.Validate` → new
-  `ServiceValidator.Validate(model, serviceLocations)`. The 3 use sites are
-  service-validator.cs:266/292/316 (`service.RegistrationLocation ?? Location.None`). Key the
-  map by `ImplementationTypeName`. ExtractionResult carrying Locations is fine — it is upstream
-  of the cached GeneratorModel; only the model that feeds EMIT must be Location-free.
 - **Commit 4 — M4 + pipeline split** (nuru-generator.cs:104-144): split the single
   `RegisterSourceOutput` into (1) an uncached diagnostics/logger-warning output over
   `generatorModelWithDiagnostics`, and (2) a CACHEABLE emit output over

@@ -24,8 +24,22 @@ Low-severity repo-infrastructure findings:
 
 ## Checklist
 
-- [ ] Deduplicate BannedSymbols ItemGroup
-- [ ] Fix warnings-as-errors comment; document the source-vs-tests split
-- [ ] Merge docs/ orphan into documentation/, delete docs/
+- [x] Deduplicate BannedSymbols ItemGroup (#1 — 3 identical ItemGroups → 1, kept with the analyzers)
+- [x] Fix warnings-as-errors comment; document the source-vs-tests split (#2)
+- [x] Merge docs/ orphan into documentation/, delete docs/ (#3 — subset-publishing.md → documentation/user/guides/, indexed in overview.md)
 - [x] Regenerate internals-visible-to.g.cs (done in 454-024/454-025)
-- [ ] Build green
+- [x] Build green
+
+## Resolution (2026-07-14)
+
+- **#1** — Root `Directory.Build.props` had the "Banned API Symbols" `<AdditionalFiles>`
+  ItemGroup three times (identical). Collapsed to one, kept alongside the "Code Analyzers"
+  PackageReference group. Verified exactly one `BannedSymbols.txt` entry remains and the
+  BannedApiAnalyzers still enforce (RS0030).
+- **#2** — Corrected the misleading "Treat all warnings as errors" comment above
+  `TreatWarningsAsErrors=false`. Documented the real split: OFF at root (tests/samples/
+  benchmarks), re-enabled `true` in `source/Directory.Build.props` for the shipping library.
+- **#3** — Moved the sole `docs/` orphan (`docs/advanced/subset-publishing.md`) to
+  `documentation/user/guides/subset-publishing.md` (a user how-to about group-based subset
+  editions), linked it from `guides/overview.md`, and removed the now-empty `docs/` tree.
+  Nothing referenced the old path.

@@ -32,10 +32,6 @@
   <ItemGroup Label="Source Generator Output">
     <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
   </ItemGroup>
-  <!-- Banned API Symbols -->
-  <ItemGroup Label="Banned API Analyzers">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
-  </ItemGroup>
 
   <!-- C# Interceptors (for source generators) -->
   <PropertyGroup Label="Interceptors">
@@ -48,14 +44,12 @@
   <ItemGroup Label="Compiler Visible Properties">
     <CompilerVisibleProperty Include="UseNewGen" />
   </ItemGroup>
-  <!-- Banned API Symbols -->
-  <ItemGroup Label="Banned API Analyzers">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
-  </ItemGroup>
 
   <!-- Code quality, analyzers, and warning configuration -->
   <PropertyGroup Label="Code Quality and Analysis">
-    <!-- Treat all warnings as errors -->
+    <!-- Warnings-as-errors is OFF by default (applies to tests/samples/benchmarks).
+         source/Directory.Build.props re-enables it (true) for the shipping library so
+         released code stays warning-clean while local test/sample iteration is not blocked. -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -84,6 +78,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" PrivateAssets="all" />
   </ItemGroup>
+
   <!-- Banned API Symbols -->
   <ItemGroup Label="Banned API Analyzers">
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />

@@ -27,6 +27,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-34-m8-ilistmanager-repeated.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-35-m8-idata-service.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-36-m8-typeconverter-fqn.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-37-incrementality-caching.cs"),
 ];
 
 int standaloneFailures = 0;

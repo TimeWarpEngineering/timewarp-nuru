@@ -31,10 +31,10 @@ re-runs on every keystroke in the IDE:
 - [x] EquatableArray<T> added and applied to all models — commits 9fcecd08/b96c45c8
 - [~] Location/ImmutableDictionary removed from emit model (the THIRD killer):
       - [x] InterceptSiteModel → precomputed string; InterceptSitesByMethod dict → EquatableArray<InterceptSiteGroup> (commit 6a9df1ad)
-      - [x] ServiceDefinition.RegistrationLocation → value-equatable LocationInfo (commit pending, see 3c note)
-- [ ] CompilationProvider dependency narrowed (M4 enum-info extraction) + pipeline split
-- [ ] Verify cacheability (generator-37: trackIncrementalGeneratorSteps → Cached)
-- [ ] `ganda runfile cache --clear` + run CI tests
+      - [x] ServiceDefinition.RegistrationLocation → value-equatable LocationInfo (commit 5e0e5cfe)
+- [x] CompilationProvider dependency narrowed (M4 enum-info extraction) + pipeline split (commit 2ab48dd1)
+- [x] Verify cacheability (generator-37: trackIncrementalGeneratorSteps → Cached/Unchanged — 2 tests, both green)
+- [x] `ganda runfile cache --clear` + run CI tests (1383/1376/0 after each commit)
 
 ## Progress (reviewer, 2026-07-14) — 5 commits, all validated green
 

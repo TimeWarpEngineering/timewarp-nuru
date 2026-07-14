@@ -13,8 +13,9 @@
 // .DiscoverEndpoints() includes ALL endpoints; .Map<T>() includes only that type.
 //
 // ALIAS GENERATION: ExtractAndCombineAliases builds full alias strings that completely replace
-// groupPrefix + pattern. For group aliases, the alias word replaces one segment in the prefix
-// at the correct index. The emitter should NOT re-match literal segments after the alias prefix.
+// groupPrefix + pattern. For group aliases, the alias replaces one GROUP's entire prefix (which
+// may be multi-word, e.g. "git remote") by index into GroupInfo.GroupPrefixes. The emitter should
+// NOT re-match literal segments after the alias prefix.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -143,25 +144,27 @@ internal static class EndpointExtractor
     ImmutableArray<string> directAliases = ExtractNuruRouteAliasAttribute(classDeclaration, semanticModel, cancellationToken);
     allAliases.AddRange(directAliases);
 
-    // Generate full alias patterns from group aliases
-    if (!groupInfo.GroupAliases.IsDefaultOrEmpty && !string.IsNullOrEmpty(groupInfo.FullPrefix))
+    // Generate full alias patterns from group aliases. GroupPrefixIndex selects a GROUP
+    // (not a word), so the alias replaces that group's ENTIRE prefix — correct even when the
+    // prefix is multi-word (e.g. a group "git remote" aliased to "gr" yields "gr {pattern}").
+    if (!groupInfo.GroupAliases.IsDefaultOrEmpty && !groupInfo.GroupPrefixes.IsDefaultOrEmpty)
     {
-      string[] prefixParts = groupInfo.FullPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+      ImmutableArray<string> groupPrefixes = groupInfo.GroupPrefixes;
 
       foreach (GroupAliasDefinition groupAlias in groupInfo.GroupAliases)
       {
-        if (groupAlias.GroupPrefixIndex < prefixParts.Length)
-        {
-          string[] aliasParts = (string[])prefixParts.Clone();
-          aliasParts[groupAlias.GroupPrefixIndex] = groupAlias.Alias;
+        if (groupAlias.GroupPrefixIndex < 0 || groupAlias.GroupPrefixIndex >= groupPrefixes.Length)
+          continue;
 
-          string aliasPrefix = string.Join(" ", aliasParts);
-          string fullAliasPattern = string.IsNullOrEmpty(pattern)
-            ? aliasPrefix
-            : $"{aliasPrefix} {pattern}";
+        string aliasPrefix = string.Join(
+          " ",
+          groupPrefixes.Select((prefix, index) => index == groupAlias.GroupPrefixIndex ? groupAlias.Alias : prefix));
 
-          allAliases.Add(fullAliasPattern);
-        }
+        string fullAliasPattern = string.IsNullOrEmpty(pattern)
+          ? aliasPrefix
+          : $"{aliasPrefix} {pattern}";
+
+        allAliases.Add(fullAliasPattern);
       }
     }
 
@@ -276,7 +279,11 @@ internal static class EndpointExtractor
   (
     ImmutableArray<string> TypeHierarchy,
     string? FullPrefix,
-    ImmutableArray<GroupAliasDefinition> GroupAliases
+    ImmutableArray<GroupAliasDefinition> GroupAliases,
+    // Per-group prefixes in root-to-leaf order (each may itself be multi-word, e.g. "git remote").
+    // GroupAliasDefinition.GroupPrefixIndex indexes into this, so a group alias replaces the whole
+    // group's prefix regardless of how many words it contains.
+    ImmutableArray<string> GroupPrefixes
   );
 
   /// <summary>
@@ -303,7 +310,8 @@ internal static class EndpointExtractor
       (
         TypeHierarchy: [],
         FullPrefix: null,
-        GroupAliases: []
+        GroupAliases: [],
+        GroupPrefixes: []
       );
     }
 
@@ -314,7 +322,8 @@ internal static class EndpointExtractor
       (
         TypeHierarchy: [],
         FullPrefix: null,
-        GroupAliases: []
+        GroupAliases: [],
+        GroupPrefixes: []
       );
     }
 
@@ -416,7 +425,10 @@ internal static class EndpointExtractor
     (
       TypeHierarchy: typeHierarchy,
       FullPrefix: fullPrefix,
-      GroupAliases: [.. recalculatedAliases]
+      GroupAliases: [.. recalculatedAliases],
+      // Non-empty prefixes in root-to-leaf order — the un-joined form of FullPrefix, aligned
+      // with GroupAliasDefinition.GroupPrefixIndex (which only counts non-empty group prefixes).
+      GroupPrefixes: [.. prefixesReversed.Where(p => !string.IsNullOrEmpty(p))]
     );
   }
 

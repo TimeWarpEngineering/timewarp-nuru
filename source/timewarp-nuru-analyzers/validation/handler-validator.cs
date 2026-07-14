@@ -178,9 +178,18 @@ internal static class HandlerValidator
       return;
     }
 
-    // Check accessibility - private methods can't be called from generated code
-    if (methodSymbol.DeclaredAccessibility is Accessibility.Private or Accessibility.Protected)
+    if (!methodSymbol.IsStatic)
     {
+      // Instance method (e.g. a bare identifier referencing a member of the enclosing
+      // type) - not supported. Mirrors the member-access path's NURU_H001 check.
+      diagnostics.Add(Diagnostic.Create(
+        DiagnosticDescriptors.InstanceMethodNotSupported,
+        location,
+        methodSymbol.Name));
+    }
+    else if (methodSymbol.DeclaredAccessibility is Accessibility.Private or Accessibility.Protected)
+    {
+      // Private static methods can't be called from generated code
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.PrivateMethodNotAccessible,
         location,

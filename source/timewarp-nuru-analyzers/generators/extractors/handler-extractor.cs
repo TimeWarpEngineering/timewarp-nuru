@@ -495,8 +495,11 @@ internal static class HandlerExtractor
     if (returnType.SpecialType == SpecialType.System_Void)
       return HandlerReturnType.Void;
 
-    if (fullTypeName == "global::System.Threading.Tasks.Task")
+    if (fullTypeName is "global::System.Threading.Tasks.Task"
+        or "global::System.Threading.Tasks.ValueTask")
+    {
       return HandlerReturnType.Task;
+    }
 
     if (fullTypeName.StartsWith("global::System.Threading.Tasks.Task<", StringComparison.Ordinal) ||
         fullTypeName.StartsWith("global::System.Threading.Tasks.ValueTask<", StringComparison.Ordinal))

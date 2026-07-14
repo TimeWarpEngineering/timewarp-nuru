@@ -25,7 +25,21 @@ is handled in 454-009, not here):
 
 ## Checklist
 
-- [ ] Fix ToCamelCase doc example; decide on algorithm convergence
-- [ ] AppNameDetector handles dotnet-host case
-- [ ] Telemetry uses TotalMilliseconds
-- [ ] CI tests green
+- [x] Fix ToCamelCase doc example; decide on algorithm convergence
+- [x] AppNameDetector handles dotnet-host case
+- [x] Telemetry uses TotalMilliseconds
+- [x] CI tests green (1386/1379/0)
+
+## Resolution (2026-07-14)
+
+- **#1** — Fixed the misleading `WithOption` remark ("dry-run" becomes "dryRun" → "dryrun",
+  matching the actual `ToCamelCase`). **Decision: do NOT converge** the runtime
+  (builder/Compiler → "dryrun") and source-gen (`csharp-identifier-utils` → "dryRun")
+  algorithms — convergence is a runtime parameter-binding behavior change, out of scope for a
+  LOW doc sweep. Documented the intentional divergence in the remark; each path is internally
+  consistent.
+- **#2** — `AppNameDetector` now skips the dotnet host: when `Environment.ProcessPath` /
+  process name is "dotnet" (framework-dependent `dotnet myapp.dll` runs), it falls back to the
+  entry-assembly name so REPL history and completion get the real app name.
+- **#3** — Telemetry histogram records `stopwatch.Elapsed.TotalMilliseconds` (double) instead
+  of integer `ElapsedMilliseconds`, so sub-millisecond commands no longer bucket to 0.

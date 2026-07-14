@@ -36,9 +36,18 @@ re-runs on every keystroke in the IDE:
 - [ ] Verify cacheability (generator-37: trackIncrementalGeneratorSteps → Cached)
 - [ ] `ganda runfile cache --clear` + run CI tests
 
-## Progress (reviewer, 2026-07-13) — 4 commits, all validated green
+## Progress (reviewer, 2026-07-14) — 5 commits, all validated green
 
 Done and behavior-preserving (full CI 1383 total / 1376 passed / 0 failed after each):
+- **Commit 5 (3c)** `5e0e5cfe`: `ServiceDefinition.RegistrationLocation` `Location` →
+  value-equatable `LocationInfo` (new `generators/models/location-info.cs`:
+  `FilePath` + `TextSpan` + `LinePositionSpan`, rebuilt to a `Location` via
+  `Location.Create(...)` only when a diagnostic is created). This is a **deviation from the
+  originally-planned validator side-channel** — chosen because it is strictly smaller (3
+  files + 1 tiny type vs threading a `serviceLocations` map through
+  interpreter→ir-app-builder→app-extractor→nuru-generator→ModelValidator→ServiceValidator)
+  and idiomatic (the standard Roslyn "LocationInfo" pattern). NURU051/053/054 still point at
+  the exact registration site. All DI/service-diagnostic suites green.
 - **Commit 1** `9fcecd08`+`b96c45c8`: `EquatableArray<T>` (generators/models/equatable-array.cs).
   net10 `[CollectionBuilder]`; crucially a **two-way implicit conversion** with
   `ImmutableArray<T>` — this is what kept ~110 emit/validation consumers unchanged (the
@@ -51,16 +60,39 @@ Done and behavior-preserving (full CI 1383 total / 1376 passed / 0 failed after 
   dropped (was unused).
 
 Remaining (the delicate part — do with fresh focus):
-- **Commit 4 — M4 + pipeline split** (nuru-generator.cs:104-144): split the single
+- **Commit 6 — M4 + pipeline split** (nuru-generator.cs:104-144): split the single
   `RegisterSourceOutput` into (1) an uncached diagnostics/logger-warning output over
   `generatorModelWithDiagnostics`, and (2) a CACHEABLE emit output over
   `modelProvider.Combine(enumInfoProvider)` — no `Compilation`, no diagnostics. Add
   `EnumInfo(string MetadataTypeName, EquatableArray<string> MemberNames)` +
-  `EnumInfoExtractor.Resolve(model, compilation, ct)`; the only two `compilation` enum
-  consumers are completion-data-extractor.cs:138 and capabilities-emitter.cs:364 (both drop
-  their `Compilation` param, consume the precomputed set). Add `.WithTrackingName("NuruGeneratorModel")`
+  `EnumInfoExtractor.Resolve(model, compilation, ct)`. Add `.WithTrackingName("NuruGeneratorModel")`
   / `("NuruEnumInfo")`.
-- **Commit 5 — generator-37** cacheability test (see D5 in plan) + CI wiring.
+  - **SCOPE REFINEMENT (2026-07-14, verified against code):** the "only 2 consumers" note
+    understates the change. `Compilation` is threaded through **~13 sites across 5 emitter
+    files** (interceptor-emitter, repl-emitter, completion-emitter, completion-data-extractor,
+    capabilities-emitter) feeding **two distinct resolution sites** that must both be replaced
+    by a precomputed lookup:
+      1. `CompletionDataExtractor.ExtractEnumParameters` (completion-data-extractor.cs:138) —
+         resolves `route.Handler.Parameters[Source==Parameter].ParameterTypeName`.
+      2. `CapabilitiesEmitter.ExtractEnumValues` (capabilities-emitter.cs:353) — resolves
+         `param.ResolvedClrTypeName ?? handlerTypeName` and
+         `option.ResolvedClrTypeName ?? handlerTypeName`.
+    Both normalise (strip `global::` + trailing `?`) then `GetTypeByMetadataName`.
+    `EnumInfoExtractor.Resolve` must gather the **UNION** of those candidate type-name strings
+    (a superset is safe — extra entries are harmless, a MISSING entry silently drops
+    `AllowedValues`/completion values = regression). Good news: the ONLY external caller of the
+    public emitter surface is nuru-generator.cs:142 — the whole cascade is internal to
+    `generators/emitters/`, and CI suites **EnumSource (13), CapabilitiesGroup, CapabilitiesRoundtrip,
+    CompletionRegistry, CompletionEndpointProtocol** cover the output, so a bad gather is caught.
+    Recommended sub-steps: (a) add `EnumInfo` + `EnumInfoExtractor.Resolve` gathering the union;
+    (b) thread an `EquatableArray<EnumInfo>` (or a prebuilt `Dictionary<string,string[]>` built
+    at the top of `InterceptorEmitter.Emit`) exactly where `compilation` currently flows,
+    deleting the `Compilation` params; (c) split the `RegisterSourceOutput`; (d) `ganda runfile
+    cache --clear` + full CI, watching the enum/capabilities/completion suites specifically.
+- **Commit 7 — generator-37** cacheability test (see D5 in plan) + CI wiring.
+  Note D5's B-only-edit scenario validates M4/M5 but NOT the Location-stripping (tree A's
+  locations are stable when only tree B changes) — to also exercise the LocationInfo win, add a
+  second run that edits tree A's whitespace and asserts the model still caches.
 
 ## Verified Implementation Plan (reviewer, 2026-07-13)
 

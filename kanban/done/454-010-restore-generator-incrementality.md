@@ -29,7 +29,7 @@ re-runs on every keystroke in the IDE:
 ## Checklist
 
 - [x] EquatableArray<T> added and applied to all models — commits 9fcecd08/b96c45c8
-- [~] Location/ImmutableDictionary removed from emit model (the THIRD killer):
+- [x] Location/ImmutableDictionary removed from emit model (the THIRD killer):
       - [x] InterceptSiteModel → precomputed string; InterceptSitesByMethod dict → EquatableArray<InterceptSiteGroup> (commit 6a9df1ad)
       - [x] ServiceDefinition.RegistrationLocation → value-equatable LocationInfo (commit 5e0e5cfe)
 - [x] CompilationProvider dependency narrowed (M4 enum-info extraction) + pipeline split (commit 2ab48dd1)

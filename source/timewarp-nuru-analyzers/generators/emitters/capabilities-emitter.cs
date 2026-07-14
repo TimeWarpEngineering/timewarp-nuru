@@ -42,7 +42,7 @@ internal static class CapabilitiesEmitter
   /// <param name="methodSuffix">Suffix for method name (e.g., "_0" for multi-app assemblies).</param>
   private static void EmitSearchCapabilities(StringBuilder sb, AppModel model, string methodSuffix)
   {
-    string? nameLiteral = model.Name is not null ? $"\"{EscapeCSharpString(model.Name)}\"" : null;
+    string? nameLiteral = model.Name is not null ? $"\"{EmitterStringUtils.EscapeForStringLiteral(model.Name)}\"" : null;
 
     sb.AppendLine();
     sb.AppendLine($"  private static async global::System.Threading.Tasks.Task<int> SearchCapabilitiesAsync{methodSuffix}(ITerminal terminal, string query, string? groupFilter = null)");
@@ -97,8 +97,8 @@ internal static class CapabilitiesEmitter
   /// </summary>
   private static void EmitResponseConstruction(StringBuilder sb, AppModel model, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
-    string? nameLiteral = model.Name is not null ? $"\"{EscapeCSharpString(model.Name)}\"" : null;
-    string version = EscapeCSharpString(model.Version ?? "0.0.0");
+    string? nameLiteral = model.Name is not null ? $"\"{EmitterStringUtils.EscapeForStringLiteral(model.Name)}\"" : null;
+    string version = EmitterStringUtils.EscapeForStringLiteral(model.Version ?? "0.0.0");
 
     sb.AppendLine("    global::System.Collections.Generic.List<global::TimeWarp.Nuru.EndpointCapability> __endpoints = new();");
     sb.AppendLine();
@@ -131,7 +131,7 @@ internal static class CapabilitiesEmitter
 
     if (model.Description is not null)
     {
-      string description = EscapeCSharpString(model.Description);
+      string description = EmitterStringUtils.EscapeForStringLiteral(model.Description);
       sb.AppendLine($"      Description = \"{description}\",");
     }
 
@@ -145,7 +145,7 @@ internal static class CapabilitiesEmitter
   /// </summary>
   private static void EmitEndpointCapabilityAdd(StringBuilder sb, RouteDefinition route, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
-    string pattern = EscapeCSharpString(route.FullPattern);
+    string pattern = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
     string[] groupPathParts = string.IsNullOrEmpty(route.GroupPrefix)
       ? []
       : route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -162,7 +162,7 @@ internal static class CapabilitiesEmitter
     {
       if (i > 0)
         sb.Append(", ");
-      sb.Append($"\"{EscapeCSharpString(groupPathParts[i])}\"");
+      sb.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(groupPathParts[i])}\"");
     }
 
     sb.AppendLine("],");
@@ -174,7 +174,7 @@ internal static class CapabilitiesEmitter
     {
       if (i > 0)
         sb.Append(", ");
-      sb.Append($"\"{EscapeCSharpString(aliases[i])}\"");
+      sb.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(aliases[i])}\"");
     }
 
     sb.AppendLine("],");
@@ -182,7 +182,7 @@ internal static class CapabilitiesEmitter
     // Description
     if (route.Description is not null)
     {
-      string description = EscapeCSharpString(route.Description);
+      string description = EmitterStringUtils.EscapeForStringLiteral(route.Description);
       sb.AppendLine($"        Description = \"{description}\",");
     }
 
@@ -230,8 +230,8 @@ internal static class CapabilitiesEmitter
   /// </summary>
   private static void EmitParameterCapability(StringBuilder sb, ParameterDefinition param, bool isLast, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues, string? handlerTypeName = null)
   {
-    string name = EscapeCSharpString(param.Name);
-    string type = EscapeCSharpString(param.TypeConstraint ?? "string");
+    string name = EmitterStringUtils.EscapeForStringLiteral(param.Name);
+    string type = EmitterStringUtils.EscapeForStringLiteral(param.TypeConstraint ?? "string");
     string required = param.IsOptional ? "false" : "true";
     string isCatchAll = param.IsCatchAll ? "true" : "false";
 
@@ -244,13 +244,13 @@ internal static class CapabilitiesEmitter
 
     if (param.Description is not null)
     {
-      string description = EscapeCSharpString(param.Description);
+      string description = EmitterStringUtils.EscapeForStringLiteral(param.Description);
       sb.AppendLine($"              Description = \"{description}\",");
     }
 
     if (param.DefaultValue is not null)
     {
-      string defaultValue = EscapeCSharpString(param.DefaultValue);
+      string defaultValue = EmitterStringUtils.EscapeForStringLiteral(param.DefaultValue);
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 
@@ -265,7 +265,7 @@ internal static class CapabilitiesEmitter
         if (i > 0)
           sb.Append(", ");
 
-        sb.Append($"\"{EscapeCSharpString(allowedValues[i])}\"");
+        sb.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(allowedValues[i])}\"");
       }
 
       sb.AppendLine("],");
@@ -280,8 +280,8 @@ internal static class CapabilitiesEmitter
   /// </summary>
   private static void EmitOptionCapability(StringBuilder sb, OptionDefinition option, bool isLast, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues, string? handlerTypeName = null)
   {
-    string name = EscapeCSharpString(option.LongForm ?? option.ShortForm ?? "");
-    string type = EscapeCSharpString(option.TypeConstraint ?? (option.IsFlag ? "bool" : "string"));
+    string name = EmitterStringUtils.EscapeForStringLiteral(option.LongForm ?? option.ShortForm ?? "");
+    string type = EmitterStringUtils.EscapeForStringLiteral(option.TypeConstraint ?? (option.IsFlag ? "bool" : "string"));
     string required = option.IsOptional ? "false" : "true";
     string isFlag = option.IsFlag ? "true" : "false";
     string isRepeated = option.IsRepeated ? "true" : "false";
@@ -292,7 +292,7 @@ internal static class CapabilitiesEmitter
 
     if (option.ShortForm is not null)
     {
-      string alias = EscapeCSharpString(option.ShortForm);
+      string alias = EmitterStringUtils.EscapeForStringLiteral(option.ShortForm);
       sb.AppendLine($"              Alias = \"{alias}\",");
     }
 
@@ -303,13 +303,13 @@ internal static class CapabilitiesEmitter
 
     if (option.Description is not null)
     {
-      string description = EscapeCSharpString(option.Description);
+      string description = EmitterStringUtils.EscapeForStringLiteral(option.Description);
       sb.AppendLine($"              Description = \"{description}\",");
     }
 
     if (option.DefaultValueLiteral is not null)
     {
-      string defaultValue = EscapeCSharpString(option.DefaultValueLiteral);
+      string defaultValue = EmitterStringUtils.EscapeForStringLiteral(option.DefaultValueLiteral);
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 
@@ -324,7 +324,7 @@ internal static class CapabilitiesEmitter
         if (i > 0)
           sb.Append(", ");
 
-        sb.Append($"\"{EscapeCSharpString(allowedValues[i])}\"");
+        sb.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(allowedValues[i])}\"");
       }
 
       sb.AppendLine("],");
@@ -362,16 +362,4 @@ internal static class CapabilitiesEmitter
       : null;
   }
 
-  /// <summary>
-  /// Escapes a string for use in a C# string literal.
-  /// </summary>
-  private static string EscapeCSharpString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal)
-      .Replace("\n", "\\n", StringComparison.Ordinal)
-      .Replace("\r", "\\r", StringComparison.Ordinal)
-      .Replace("\t", "\\t", StringComparison.Ordinal);
-  }
 }

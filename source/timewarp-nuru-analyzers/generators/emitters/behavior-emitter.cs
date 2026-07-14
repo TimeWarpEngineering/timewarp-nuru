@@ -226,7 +226,7 @@ internal static class BehaviorEmitter
     int routeIndex,
     string indent)
   {
-    string commandName = EscapeString(route.FullPattern);
+    string commandName = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
     string commandTypeName = route.Handler.HandlerKind == HandlerKind.Delegate
       ? CommandClassEmitter.GetCommandClassName(routeIndex)
       : (route.Handler.FullTypeName ?? $"Route_{routeIndex}");
@@ -435,16 +435,6 @@ internal static class BehaviorEmitter
   internal static string GetBehaviorFieldName(BehaviorDefinition behavior)
   {
     return $"__behavior_{behavior.SafeIdentifierName}";
-  }
-
-  /// <summary>
-  /// Escapes a string for use in generated code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal);
   }
 
   /// <summary>

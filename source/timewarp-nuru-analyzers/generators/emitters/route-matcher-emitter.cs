@@ -162,7 +162,7 @@ internal static class RouteMatcherEmitter
       foreach (string word in route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries))
       {
         sb.AppendLine(
-          $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(word)}\") goto route_skip_{routeIndex};");
+          $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EmitterStringUtils.EscapeForStringLiteral(word)}\") goto route_skip_{routeIndex};");
         positionalIndex++;
       }
     }
@@ -174,7 +174,7 @@ internal static class RouteMatcherEmitter
       {
         case LiteralDefinition literal:
           sb.AppendLine(
-            $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(literal.Value)}\") goto route_skip_{routeIndex};");
+            $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EmitterStringUtils.EscapeForStringLiteral(literal.Value)}\") goto route_skip_{routeIndex};");
           positionalIndex++;
           break;
 
@@ -291,7 +291,7 @@ internal static class RouteMatcherEmitter
     foreach (string word in aliasParts)
     {
       sb.AppendLine(
-        $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(word)}\") goto {aliasSkipLabel};");
+        $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EmitterStringUtils.EscapeForStringLiteral(word)}\") goto {aliasSkipLabel};");
       positionalIndex++;
     }
 
@@ -1505,19 +1505,6 @@ internal static class RouteMatcherEmitter
   }
 
   private static string ToCamelCase(string value) => CSharpIdentifierUtils.ToCamelCase(value);
-
-  /// <summary>
-  /// Escapes a string for use in C# source code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal)
-      .Replace("\n", "\\n", StringComparison.Ordinal)
-      .Replace("\r", "\\r", StringComparison.Ordinal)
-      .Replace("\t", "\\t", StringComparison.Ordinal);
-  }
 
   /// <summary>
   /// Escapes text for use in XML comments.

@@ -40,7 +40,7 @@ internal static class RouteHelpEmitter
     patternBuilder.Append('[');
     foreach (string literal in literalPrefix)
     {
-      patternBuilder.Append($"\"{EscapeString(literal)}\", ");
+      patternBuilder.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(literal)}\", ");
     }
 
     // Use BuiltInFlags constant for help forms
@@ -101,13 +101,13 @@ internal static class RouteHelpEmitter
 
     // Pattern line (e.g., "deploy {env} [--dry-run,-d] [--force,-f]")
     string pattern = HelpPatternHelper.BuildPatternDisplay(route);
-    sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"{EscapeString(pattern)}\");");
+    sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"{EmitterStringUtils.EscapeForStringLiteral(pattern)}\");");
 
     // Description (if present)
     if (!string.IsNullOrEmpty(route.Description))
     {
       sb.AppendLine($"{indentStr}app.Terminal.WriteLine();");
-      sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"  {EscapeString(route.Description)}\");");
+      sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"  {EmitterStringUtils.EscapeForStringLiteral(route.Description)}\");");
     }
 
     // Parameters section
@@ -144,11 +144,11 @@ internal static class RouteHelpEmitter
         if (anyDescriptions)
         {
           string description = param.Description ?? "";
-          sb.AppendLine($"{indentStr}  .AddRow(\"{EscapeString(name)}\", \"{EscapeString(required)}\", \"{EscapeString(type)}\", \"{EscapeString(description)}\")");
+          sb.AppendLine($"{indentStr}  .AddRow(\"{EmitterStringUtils.EscapeForStringLiteral(name)}\", \"{EmitterStringUtils.EscapeForStringLiteral(required)}\", \"{EmitterStringUtils.EscapeForStringLiteral(type)}\", \"{EmitterStringUtils.EscapeForStringLiteral(description)}\")");
         }
         else
         {
-          sb.AppendLine($"{indentStr}  .AddRow(\"{EscapeString(name)}\", \"{EscapeString(required)}\", \"{EscapeString(type)}\")");
+          sb.AppendLine($"{indentStr}  .AddRow(\"{EmitterStringUtils.EscapeForStringLiteral(name)}\", \"{EmitterStringUtils.EscapeForStringLiteral(required)}\", \"{EmitterStringUtils.EscapeForStringLiteral(type)}\")");
         }
       }
 
@@ -190,7 +190,7 @@ internal static class RouteHelpEmitter
 
         string description = option.Description ?? (option.IsOptional ? "(optional)" : "");
 
-        sb.AppendLine($"{indentStr}  .AddRow(\"{EscapeString(optionDisplay)}\", \"{EscapeString(description)}\")");
+        sb.AppendLine($"{indentStr}  .AddRow(\"{EmitterStringUtils.EscapeForStringLiteral(optionDisplay)}\", \"{EmitterStringUtils.EscapeForStringLiteral(description)}\")");
       }
 
       sb.AppendLine($"{indentStr});");
@@ -229,7 +229,7 @@ internal static class RouteHelpEmitter
       patternBuilder.Append('[');
       foreach (string word in words)
       {
-        patternBuilder.Append($"\"{EscapeString(word)}\", ");
+        patternBuilder.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(word)}\", ");
       }
 
       // Use BuiltInFlags constant for help forms
@@ -267,7 +267,7 @@ internal static class RouteHelpEmitter
     string indentStr = new(' ', indent);
 
     // Header line
-    sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"{EscapeString(groupPrefix)} commands:\");");
+    sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"{EmitterStringUtils.EscapeForStringLiteral(groupPrefix)} commands:\");");
     sb.AppendLine($"{indentStr}app.Terminal.WriteLine();");
 
     // Table of routes in the group
@@ -290,22 +290,10 @@ internal static class RouteHelpEmitter
 
       string description = route.Description ?? "";
 
-      sb.AppendLine($"{indentStr}  .AddRow(\"{EscapeString(displayPattern)}\", \"{EscapeString(description)}\")");
+      sb.AppendLine($"{indentStr}  .AddRow(\"{EmitterStringUtils.EscapeForStringLiteral(displayPattern)}\", \"{EmitterStringUtils.EscapeForStringLiteral(description)}\")");
     }
 
     sb.AppendLine($"{indentStr});");
   }
 
-  /// <summary>
-  /// Escapes a string for use in C# source code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal)
-      .Replace("\n", "\\n", StringComparison.Ordinal)
-      .Replace("\r", "\\r", StringComparison.Ordinal)
-      .Replace("\t", "\\t", StringComparison.Ordinal);
-  }
 }

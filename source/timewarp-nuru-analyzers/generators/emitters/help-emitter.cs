@@ -27,7 +27,7 @@ internal static class HelpEmitter
     sb.AppendLine("    // Get app name: explicit > assembly name > \"app\"");
     if (model.Name is not null)
     {
-      sb.AppendLine($"    string __appName = \"{EscapeString(model.Name)}\";");
+      sb.AppendLine($"    string __appName = \"{EmitterStringUtils.EscapeForStringLiteral(model.Name)}\";");
     }
     else
     {
@@ -50,14 +50,14 @@ internal static class HelpEmitter
     // Version with colon format
     string version = model.Version ?? "1.0.0";
     sb.AppendLine("    terminal.WriteLine(\"Version:\".BrightCyan().Bold());");
-    sb.AppendLine($"    terminal.WriteLine(\"  v{EscapeString(version)}\".BrightCyan().Bold());");
+    sb.AppendLine($"    terminal.WriteLine(\"  v{EmitterStringUtils.EscapeForStringLiteral(version)}\".BrightCyan().Bold());");
     sb.AppendLine("    terminal.WriteLine();");
 
     // App description with "Description:" header and indented value (default colors for light/dark mode compatibility)
     if (model.Description is not null)
     {
       sb.AppendLine("    terminal.WriteLine(\"Description:\");");
-      sb.AppendLine($"    terminal.WriteLine(\"  {EscapeString(model.Description)}\");");
+      sb.AppendLine($"    terminal.WriteLine(\"  {EmitterStringUtils.EscapeForStringLiteral(model.Description)}\");");
     }
 
     sb.AppendLine("    terminal.WriteLine();");
@@ -101,7 +101,7 @@ internal static class HelpEmitter
         sb.AppendLine("    terminal.WriteLine();");
       }
 
-      sb.AppendLine($"    terminal.WriteLine(\"{EscapeString(categoryName)}:\".Cyan().Bold());");
+      sb.AppendLine($"    terminal.WriteLine(\"{EmitterStringUtils.EscapeForStringLiteral(categoryName)}:\".Cyan().Bold());");
 
       // Table with command names only (not full patterns)
       sb.AppendLine("    terminal.WriteTable(table => table");
@@ -112,7 +112,7 @@ internal static class HelpEmitter
       {
         string commandName = GetCommandName(route);
         string description = route.Description ?? "";
-        sb.AppendLine($"      .AddRow(\"{EscapeString(commandName)}\", \"{EscapeString(description)}\")");
+        sb.AppendLine($"      .AddRow(\"{EmitterStringUtils.EscapeForStringLiteral(commandName)}\", \"{EmitterStringUtils.EscapeForStringLiteral(description)}\")");
       }
 
       sb.AppendLine("      .HideHeaders()         // ← Remove headers");
@@ -161,16 +161,4 @@ internal static class HelpEmitter
     sb.AppendLine("    );");
   }
 
-  /// <summary>
-  /// Escapes a string for use in C# source code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal)
-      .Replace("\n", "\\n", StringComparison.Ordinal)
-      .Replace("\r", "\\r", StringComparison.Ordinal)
-      .Replace("\t", "\\t", StringComparison.Ordinal);
-  }
 }

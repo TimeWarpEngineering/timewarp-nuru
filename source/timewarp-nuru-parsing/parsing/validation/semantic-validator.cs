@@ -99,22 +99,7 @@ internal sealed class SemanticValidator
       if (kvp.Value.Count > 1)
       {
         // Found duplicate - report on the second occurrence
-        SegmentSyntax first = kvp.Value[0];
         SegmentSyntax second = kvp.Value[1];
-
-        string firstLocation = first switch
-        {
-          ParameterSyntax p => $"parameter '{p.Name}'",
-          OptionSyntax o => $"option '{o.LongForm ?? o.ShortForm}'",
-          _ => "unknown"
-        };
-
-        string secondLocation = second switch
-        {
-          ParameterSyntax p => $"parameter '{p.Name}'",
-          OptionSyntax o => $"option '{o.LongForm ?? o.ShortForm}'",
-          _ => "unknown"
-        };
 
         semanticErrors.Add(new DuplicateParameterNamesError(
           second.Position,

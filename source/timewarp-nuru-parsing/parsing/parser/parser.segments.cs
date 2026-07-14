@@ -77,12 +77,15 @@ internal sealed partial class Parser
     // Validate that catch-all and optional are not combined
     if (isCatchAll && isOptional)
     {
+      // isOptional is true here only because the '?' was just matched, so Previous() is that
+      // '?' token — span through it so the diagnostic underlines the offending modifier, not
+      // just the name (e.g. covers `{*name?` rather than `{*name`).
       AddParseError
       (
         new InvalidModifierCombinationError
         (
           startPos,
-          nameToken.EndPosition - startPos,
+          Previous().EndPosition - startPos,
           paramName
         )
       );

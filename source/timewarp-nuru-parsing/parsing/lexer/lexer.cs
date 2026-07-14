@@ -283,11 +283,6 @@ internal class Lexer
     return IsAtEnd() ? '\0' : Input[Position];
   }
 
-  private char PeekNext()
-  {
-    return Position + 1 >= Input.Length ? '\0' : Input[Position + 1];
-  }
-
   private bool IsAtEnd()
   {
     return Position >= Input.Length;

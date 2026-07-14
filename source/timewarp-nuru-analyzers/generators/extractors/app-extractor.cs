@@ -238,15 +238,6 @@ internal static class AppExtractor
     if (!BuildLocator.IsConfirmedBuildCall(buildInvocation, context.SemanticModel, cancellationToken))
       return ExtractionResult.Empty;
 
-    // DEBUG: Early trace that we found a Build() call
-    List<Diagnostic> earlyDiagnostics =
-    [
-      Diagnostic.Create(
-        new DiagnosticDescriptor("NURU_DEBUG2", "Debug", "ExtractFromBuildCall entered for Build() at {0}", "Debug", DiagnosticSeverity.Hidden, true),
-        buildInvocation.GetLocation(),
-        buildInvocation.GetLocation().GetLineSpan().ToString())
-    ];
-
     // 3. Find the CompilationUnit (needed for usings extraction)
     CompilationUnitSyntax? compilationUnit = FindCompilationUnit(buildInvocation);
     if (compilationUnit is null)
@@ -258,13 +249,6 @@ internal static class AppExtractor
 
     BlockSyntax? block = FindContainingBlock(buildInvocation);
 
-    // DEBUG: Show block info
-    string blockInfo = block is null ? "NULL" : $"Statements={block.Statements.Count}, Parent={block.Parent?.GetType().Name}";
-    earlyDiagnostics.Add(Diagnostic.Create(
-      new DiagnosticDescriptor("NURU_DEBUG4", "Debug", "Block info: {0}", "Debug", DiagnosticSeverity.Hidden, true),
-      buildInvocation.GetLocation(),
-      blockInfo));
-
     if (block is not null)
     {
       // Traditional method body - interpret the whole block
@@ -275,15 +259,6 @@ internal static class AppExtractor
       // Top-level statements
       result = interpreter.InterpretTopLevelStatementsWithDiagnostics(compilationUnit);
     }
-
-    // DEBUG: Serialize interpreter result
-    string modelStatus = result.Model is null ? "NULL" : $"HasRoutes={result.Model.HasRoutes}, HasRepl={result.Model.HasRepl}, InterceptSites={result.Model.InterceptSitesByMethod.Length}, CustomConverters={result.Model.CustomConverters.Length}";
-    string diagCount = result.Diagnostics.Length.ToString();
-    string diagMessages = string.Join("; ", result.Diagnostics.Select(d => d.GetMessage()));
-    earlyDiagnostics.Add(Diagnostic.Create(
-      new DiagnosticDescriptor("NURU_DEBUG3", "Debug", "Interpreter result: Model={0}, Diagnostics={1}, Messages=[{2}]", "Debug", DiagnosticSeverity.Hidden, true),
-      buildInvocation.GetLocation(),
-      modelStatus, diagCount, diagMessages));
 
     // 5. If we have a model, add user usings and set build location
     if (result.Model is not null)
@@ -297,19 +272,11 @@ internal static class AppExtractor
 
       List<Diagnostic> diagnostics = [.. result.Diagnostics];
 
-      // DEBUG: Trace field assignment detection
       if (fieldSymbol is not null)
       {
         // Scan containing type for entry point calls on this field
         ImmutableArray<(string MethodName, InterceptSiteModel Site)> additionalSites =
           FindEntryPointCallsOnField(fieldSymbol, context.SemanticModel, cancellationToken);
-
-        // DEBUG: Report how many sites were found
-        diagnostics.Add(Diagnostic.Create(
-          new DiagnosticDescriptor("NURU_DEBUG", "Debug", "Found {0} additional entry point sites for field {1}", "Debug", DiagnosticSeverity.Hidden, true),
-          buildInvocation.GetLocation(),
-          additionalSites.Length,
-          fieldSymbol.Name));
 
         // Merge additional intercept sites (work in a dictionary, then back to the equatable group array)
         Dictionary<string, List<InterceptSiteModel>> siteMap =
@@ -332,15 +299,6 @@ internal static class AppExtractor
 
         interceptSites = [.. siteMap.Select(kvp => new InterceptSiteGroup(kvp.Key, [.. kvp.Value]))];
       }
-      else
-      {
-        // DEBUG: Report that no field was found
-        string parentType = buildInvocation.Parent?.GetType().Name ?? "null";
-        diagnostics.Add(Diagnostic.Create(
-          new DiagnosticDescriptor("NURU_DEBUG", "Debug", "No field assignment found. Build() parent type: {0}", "Debug", DiagnosticSeverity.Hidden, true),
-          buildInvocation.GetLocation(),
-          parentType));
-      }
 
       AppModel modelWithMetadata = result.Model with
       {
@@ -348,12 +306,11 @@ internal static class AppExtractor
         BuildLocation = buildLocation,
         InterceptSitesByMethod = interceptSites
       };
-      diagnostics.AddRange(earlyDiagnostics);
       return new ExtractionResult(modelWithMetadata, [.. diagnostics]);
     }
 
-    // Return early diagnostics even if model is null
-    return new ExtractionResult(null, [.. earlyDiagnostics]);
+    // No model produced.
+    return ExtractionResult.Empty;
   }
 
   /// <summary>

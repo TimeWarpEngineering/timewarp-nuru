@@ -1522,12 +1522,6 @@ public sealed class DslInterpreter
         TargetTypeName: targetTypeName,
         ConstraintAlias: null);
 
-      // DEBUG: Trace converter registration
-      CollectedDiagnostics.Add(Diagnostic.Create(
-        new DiagnosticDescriptor("NURU_DEBUG_CONV1", "Debug", "AddTypeConverter called: ConverterTypeName={0}, TargetTypeName={1}", "Debug", DiagnosticSeverity.Hidden, true),
-        invocation.GetLocation(),
-        converterTypeName, targetTypeName));
-
       return appBuilder.AddTypeConverter(converter);
     }
 
@@ -1769,20 +1763,6 @@ public sealed class DslInterpreter
         => literal.Token.ValueText,
       _ => null
     };
-  }
-
-  /// <summary>
-  /// Determines if a type is a DSL builder type.
-  /// Used for semantic type checking when handling unknown method calls.
-  /// </summary>
-  private static bool IsBuilderType(ITypeSymbol? type)
-  {
-    if (type is null) return false;
-
-    string typeName = type.Name;
-    return typeName is "NuruAppBuilder"
-        or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
-        or "NestedCompiledRouteBuilder";
   }
 
   /// <summary>

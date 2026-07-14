@@ -402,9 +402,10 @@ internal static class OverlapValidator
           if (reportedUnreachable.Contains(lowerRoute.EffectivePattern))
             continue;
 
-          // Higher specificity route shadows lower specificity route with same required signature
-          // Also check equal specificity - first one wins, second is unreachable
-          if (higherRoute.ComputedSpecificity >= lowerRoute.ComputedSpecificity)
+          // sortedGroup is ordered by descending ComputedSpecificity and j > i, so higherRoute
+          // always shadows lowerRoute here (equal specificity: first wins, second is unreachable).
+          // The previous `higherRoute.ComputedSpecificity >= lowerRoute.ComputedSpecificity` guard
+          // was therefore always true; kept as a scoping block for the diagnostic's locals.
           {
             Location location = routeLocations.TryGetValue(lowerRoute.EffectivePattern, out Location? loc)
               ? loc

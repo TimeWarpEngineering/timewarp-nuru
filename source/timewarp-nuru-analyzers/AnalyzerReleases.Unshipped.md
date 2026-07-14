@@ -5,7 +5,6 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-NURU_DEBUG | Debug | Hidden | Development route detection diagnostic
 NURU_P001 | RoutePattern.Syntax | Error | Invalid parameter syntax
 NURU_P002 | RoutePattern.Syntax | Error | Unbalanced braces in route pattern
 NURU_P003 | RoutePattern.Syntax | Error | Invalid option format

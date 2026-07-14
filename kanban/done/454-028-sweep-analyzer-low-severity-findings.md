@@ -28,13 +28,33 @@ in 454-012, not here). All paths under `source/timewarp-nuru-analyzers/`:
 
 ## Checklist
 
-- [ ] Shared, complete EscapeString helper; all emitters use it
-- [ ] IsStatic check in method-group validation path
-- [ ] Non-generic ValueTask recognized
-- [ ] Service-validator diagnostics carry locations
-- [ ] Multi-word group alias math fixed (+ test)
-- [ ] Dead debug diagnostics and IsBuilderType removed
-- [ ] `ganda runfile cache --clear` + run CI tests
+- [x] Shared, complete EscapeString helper; all emitters use it (#1, commit 7f752e15)
+- [x] IsStatic check in method-group validation path (#2, commit bae8b3ab)
+- [x] Non-generic ValueTask recognized (#3, commit bae8b3ab)
+- [x] Service-validator diagnostics carry locations (#4, commit 6c7d41c3)
+- [x] Multi-word group alias math fixed (+ test routing-29) (#5, commit bae8b3ab)
+- [x] Dead debug diagnostics and IsBuilderType removed (#6, commit f59826bd)
+- [x] `ganda runfile cache --clear` + run CI tests (1386/1379/0 after each commit)
+
+## Resolution (2026-07-14)
+
+All eight findings fixed across six commits, full CI green (1386/1379/0) after each:
+- **#1** `7f752e15` — one shared `EmitterStringUtils.EscapeForStringLiteral`; all 8 emitters
+  + telemetry's 3 inline escapes route through it (fixes behavior/telemetry under-escaping).
+- **#2** `bae8b3ab` — `ValidateMethodGroupHandler` now checks `IsStatic` (NURU_H001).
+- **#3** `bae8b3ab` — non-generic `ValueTask` recognized as awaitable.
+- **#4** `6c7d41c3` — NURU050 anchors at the route; NURU055/056 anchor at the service
+  registration site (via the LocationInfo added in 454-010 3c).
+- **#5** `bae8b3ab` — multi-word group alias replaces the whole group prefix
+  (`GroupInfo.GroupPrefixes`); regression test `routing-29-multiword-group-alias`.
+- **#6** `f59826bd` — removed all NURU_DEBUG* hidden diagnostics, `DebugRouteFound`,
+  `NURU_DEBUG_CONV1`, and the never-called `IsBuilderType`.
+- **#7** `f93c01b5` — `DetectClosures` walks `DescendantNodesAndSelf` so a sole-identifier
+  handler body (`() => capturedLocal`) is flagged NURU_H002. Analysis showed const-local
+  captures are already treated as closures in non-sole positions, so there is no tolerated
+  behavior to preserve. Regression test `generator-38-h002-sole-identifier-body`.
+- **#8** `f59826bd` — removed the always-true `>= ComputedSpecificity` guard in
+  overlap-validator (sorted descending; kept as a documented scoping block).
 
 ## Additional item (discovered during 454-004)
 

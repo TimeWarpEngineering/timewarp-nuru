@@ -18,11 +18,13 @@ internal static class InterceptorEmitter
   /// Generates the complete source code for the interceptor.
   /// </summary>
   /// <param name="model">The generator model containing all apps and routes.</param>
-  /// <param name="compilation">The Roslyn compilation for type resolution (used for enum completions).</param>
+  /// <param name="enumInfo">Precomputed enum member names for enum completions (replaces the live Compilation).</param>
   /// <returns>The generated C# source code.</returns>
-  public static string Emit(GeneratorModel model, Compilation compilation)
+  public static string Emit(GeneratorModel model, EquatableArray<EnumInfo> enumInfo)
   {
     StringBuilder sb = new();
+
+    IReadOnlyDictionary<string, ImmutableArray<string>> enumValues = EnumInfoExtractor.BuildLookup(enumInfo);
 
     EmitHeader(sb);
     EmitInterceptsLocationAttribute(sb);
@@ -71,11 +73,11 @@ internal static class InterceptorEmitter
     for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
     {
       AppModel app = model.Apps[appIndex];
-      EmitAppInterceptorMethod(sb, app, appIndex, model, compilation, loggerFactoryFieldName);
+      EmitAppInterceptorMethod(sb, app, appIndex, model, loggerFactoryFieldName);
       EmitRunReplAsyncInterceptorMethod(sb, app, appIndex, model);
     }
 
-    EmitClassEnd(sb, model, compilation);
+    EmitClassEnd(sb, model, enumValues);
 
     return sb.ToString();
   }
@@ -84,7 +86,7 @@ internal static class InterceptorEmitter
   /// Emits a single interceptor method for one app.
   /// Each app gets its own method with its own [InterceptsLocation] attributes and routes.
   /// </summary>
-  private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, Compilation compilation, string? loggerFactoryFieldName)
+  private static void EmitAppInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string? loggerFactoryFieldName)
   {
     string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
@@ -1291,7 +1293,7 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Emits the closing of the class and helper methods.
   /// </summary>
-  private static void EmitClassEnd(StringBuilder sb, GeneratorModel model, Compilation compilation)
+  private static void EmitClassEnd(StringBuilder sb, GeneratorModel model, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     sb.AppendLine();
 
@@ -1318,20 +1320,20 @@ internal static class InterceptorEmitter
 
       HelpEmitter.Emit(sb, enrichedApp, methodSuffix);
       sb.AppendLine();
-      CapabilitiesEmitter.Emit(sb, enrichedApp, methodSuffix, compilation);
+      CapabilitiesEmitter.Emit(sb, enrichedApp, methodSuffix, enumValues);
       sb.AppendLine();
 
       // REPL support (opt-in via AddRepl())
       if (app.HasRepl)
       {
-        ReplEmitter.Emit(sb, enrichedApp, methodSuffix, model.Endpoints, compilation);
+        ReplEmitter.Emit(sb, enrichedApp, methodSuffix, model.Endpoints, enumValues);
         sb.AppendLine();
       }
 
       // Shell completion support (opt-in via EnableCompletion() or implicitly via AddRepl())
       if (app.HasCompletion || app.HasRepl)
       {
-        CompletionEmitter.Emit(sb, enrichedApp, methodSuffix, model.Endpoints, compilation);
+        CompletionEmitter.Emit(sb, enrichedApp, methodSuffix, model.Endpoints, enumValues);
         sb.AppendLine();
       }
     }

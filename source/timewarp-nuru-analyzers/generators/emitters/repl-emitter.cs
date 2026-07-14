@@ -18,15 +18,15 @@ internal static class ReplEmitter
   /// <param name="app">The application model containing route definitions.</param>
   /// <param name="methodSuffix">Suffix for per-app methods (e.g., "_0" for multi-app assemblies).</param>
   /// <param name="endpoints">Routes from [NuruRoute] endpoint classes.</param>
-  /// <param name="compilation">The Roslyn compilation for resolving enum types.</param>
-  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
+  /// <param name="enumValues">Precomputed enum member names keyed by normalized metadata type name.</param>
+  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // REPL (INTERACTIVE MODE) SUPPORT");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
 
-    EmitGeneratedReplRouteProvider(sb, app, methodSuffix, endpoints, compilation);
+    EmitGeneratedReplRouteProvider(sb, app, methodSuffix, endpoints, enumValues);
     sb.AppendLine();
     EmitRunReplAsyncMethod(sb, methodSuffix);
   }
@@ -34,7 +34,7 @@ internal static class ReplEmitter
   /// <summary>
   /// Emits the GeneratedReplRouteProvider class implementing IReplRouteProvider.
   /// </summary>
-  private static void EmitGeneratedReplRouteProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
+  private static void EmitGeneratedReplRouteProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     // Collect all routes for this app
     IEnumerable<RouteDefinition> allRoutes = app.Routes.Concat(endpoints);
@@ -44,7 +44,7 @@ internal static class ReplEmitter
     List<CompletionDataExtractor.OptionInfo> options = CompletionDataExtractor.ExtractOptions(allRoutes);
     List<CompletionDataExtractor.RouteOptionInfo> routeOptions = CompletionDataExtractor.ExtractRouteOptions(allRoutes);
     List<CompletionDataExtractor.ParameterInfo> parameters = CompletionDataExtractor.ExtractParameters(allRoutes);
-    List<CompletionDataExtractor.EnumParameterInfo> enumParameters = CompletionDataExtractor.ExtractEnumParameters(allRoutes, compilation);
+    List<CompletionDataExtractor.EnumParameterInfo> enumParameters = CompletionDataExtractor.ExtractEnumParameters(allRoutes, enumValues);
 
     string className = $"GeneratedReplRouteProvider{methodSuffix}";
 

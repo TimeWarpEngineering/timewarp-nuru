@@ -115,14 +115,33 @@ public sealed class NuruGenerator : IIncrementalGenerator
         data.Right,
         ct));
 
-    // 8. Emit generated code and report diagnostics
-    // Combine with compilation for enum type resolution in REPL completions
-    context.RegisterSourceOutput(
-      generatorModelWithDiagnostics.Combine(context.CompilationProvider),
-      static (ctx, data) =>
-      {
-        (GeneratorModelWithDiagnostics? modelWithDiags, Compilation compilation) = data;
+    // 8. Split the output into two stages so the heavy emit can cache (M4):
+    //   - The Compilation changes on every keystroke. Feeding it (or the Location-bearing
+    //     diagnostics) into the emit output forces InterceptorEmitter.Emit to re-run every edit.
+    //   - Stage A (uncached): report diagnostics + logger warnings from the wrapper.
+    //   - Stage B (cacheable): emit from the equatable GeneratorModel + a precomputed, equatable
+    //     EnumInfo set. Enum resolution still needs the Compilation, but only to PRODUCE the
+    //     equatable EnumInfo — when the enum shapes are unchanged, emit compares equal and caches.
 
+    // The pure emit model (no diagnostics, no Location) — the cache key for emit.
+    IncrementalValueProvider<GeneratorModel?> modelProvider =
+      generatorModelWithDiagnostics
+        .Select(static (modelWithDiags, _) => modelWithDiags?.Model)
+        .WithTrackingName("NuruGeneratorModel");
+
+    // Enum member names, resolved from the Compilation but projected into an equatable set.
+    // Re-runs on every edit (Compilation changes), but its OUTPUT caches when enums are unchanged.
+    IncrementalValueProvider<EquatableArray<EnumInfo>> enumInfoProvider =
+      modelProvider
+        .Combine(context.CompilationProvider)
+        .Select(static (data, ct) => EnumInfoExtractor.Resolve(data.Left, data.Right, ct))
+        .WithTrackingName("NuruEnumInfo");
+
+    // Stage A: diagnostics + logger warnings (uncached — diagnostics carry Roslyn Locations).
+    context.RegisterSourceOutput(
+      generatorModelWithDiagnostics,
+      static (ctx, modelWithDiags) =>
+      {
         if (modelWithDiags is null)
           return;
 
@@ -137,9 +156,20 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
         // Report diagnostic if ILogger is injected but no logging is configured
         ReportLoggerWithoutConfigurationWarnings(ctx, modelWithDiags.Model);
+      });
+
+    // Stage B: emit generated code (cacheable — no Compilation, no diagnostics).
+    context.RegisterSourceOutput(
+      modelProvider.Combine(enumInfoProvider),
+      static (ctx, data) =>
+      {
+        (GeneratorModel? model, EquatableArray<EnumInfo> enumInfo) = data;
+
+        if (model is null)
+          return;
 
         // Emit the interceptor (includes InterceptsLocationAttribute definition)
-        string source = InterceptorEmitter.Emit(modelWithDiags.Model, compilation);
+        string source = InterceptorEmitter.Emit(model, enumInfo);
         ctx.AddSource("NuruGenerated.g.cs", source);
       });
   }

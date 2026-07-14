@@ -18,21 +18,21 @@ internal static class CompletionEmitter
   /// <param name="app">The application model containing route definitions.</param>
   /// <param name="methodSuffix">Suffix for per-app methods (e.g., "_0" for multi-app assemblies).</param>
   /// <param name="endpoints">Routes from [NuruRoute] endpoint classes.</param>
-  /// <param name="compilation">The Roslyn compilation for resolving enum types.</param>
-  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
+  /// <param name="enumValues">Precomputed enum member names keyed by normalized metadata type name.</param>
+  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // SHELL COMPLETION SUPPORT (source-generated static data)");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
 
-    EmitGeneratedShellCompletionProvider(sb, app, methodSuffix, endpoints, compilation);
+    EmitGeneratedShellCompletionProvider(sb, app, methodSuffix, endpoints, enumValues);
   }
 
   /// <summary>
   /// Emits the GeneratedShellCompletionProvider class implementing IShellCompletionProvider.
   /// </summary>
-  private static void EmitGeneratedShellCompletionProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
+  private static void EmitGeneratedShellCompletionProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     // Collect all routes for this app (excluding completion-related routes)
     IEnumerable<RouteDefinition> allRoutes = app.Routes
@@ -46,7 +46,7 @@ internal static class CompletionEmitter
     List<CompletionDataExtractor.OptionInfo> options = CompletionDataExtractor.ExtractOptions(allRoutes);
     List<CompletionDataExtractor.RouteOptionInfo> routeOptions = CompletionDataExtractor.ExtractRouteOptions(allRoutes);
     List<CompletionDataExtractor.ParameterInfo> parameters = CompletionDataExtractor.ExtractParameters(allRoutes);
-    List<CompletionDataExtractor.EnumParameterInfo> enumParameters = CompletionDataExtractor.ExtractEnumParameters(allRoutes, compilation);
+    List<CompletionDataExtractor.EnumParameterInfo> enumParameters = CompletionDataExtractor.ExtractEnumParameters(allRoutes, enumValues);
 
     string className = $"GeneratedShellCompletionProvider{methodSuffix}";
 

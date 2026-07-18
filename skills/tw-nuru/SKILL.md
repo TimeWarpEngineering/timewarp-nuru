@@ -1,5 +1,5 @@
 ---
-name: nuru
+name: tw-nuru
 description: Build CLI applications with TimeWarp.Nuru - a .NET route-based CLI framework with web-style routing, source generators, and AOT support. Use when creating CLI tools, defining commands/queries, adding parameters or options, testing CLI output, or working with TimeWarp.Nuru.
 ---
 

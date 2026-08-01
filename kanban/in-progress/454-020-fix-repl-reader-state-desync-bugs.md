@@ -38,3 +38,39 @@ block on interactive verification. Interactive confirmation is batched into ONE 
 REPL verification session tracked on parent task 454 (together with 454-007's pending
 Windows multiline check). Leave a "Human verification pending" line in this task's
 Results listing exactly what the human should try.
+
+## Implementation Plan (2026-08-01)
+
+Grounded in the current source. All three are automatable — M20 as a pure `Selection`
+unit test; M18/M19 as TestTerminal keystroke-driven integration tests (reader state
+fields are `private`, so drive through the REPL and assert on terminal output).
+
+**M18 — `repl-console-reader.yank-arg.cs` (defer the removal):** restructure
+`HandleYankLastArgAsync` so the "remove previously-yanked text" block and `SaveUndoState`
+run *only after* an older args-bearing entry is found. Search the history without
+mutating the buffer; on a match, remove-old + insert-new + redraw; on no match, leave the
+buffer untouched and just clear `DigitArgument`. Eliminates the removed-but-not-redrawn
+desync entirely (no silent loss, no spurious undo entry).
+
+**M19 — `repl-console-reader.search.cs` (re-test current on refine):** add
+`bool includeCurrent = false` to `FindNextMatch`; when set, start the scan *at*
+`SearchMatchIndex` instead of `±1`. The character-input path (pattern extension) passes
+`includeCurrent: true`; the Ctrl+R/Ctrl+S cycle callers keep the advancing default.
+
+**M20 — `selection.cs` + `repl-console-reader.selection.cs` (one shared clamp):** add
+`Selection.GetClampedBounds(int textLength) => (Clamp(Start), Clamp(End))` (monotonic ⇒
+`start ≤ end`, always safe to slice); refactor `GetSelectedText` to use it; replace the
+raw `Start`/`End` slices in `HandleCutAsync`, `HandlePasteAsync` (replace-selection
+branch), and `HandleDeleteSelectionAsync` with it. Kills the ArgumentOutOfRangeException.
+
+**Tests — `tests/timewarp-nuru-tests/repl/repl-40-reader-state-desync.cs`:**
+- M20 unit on `Selection`: stale `End` > text length ⇒ `GetClampedBounds`/`GetSelectedText`
+  no-throw + clamp; slicing with the clamped bounds is safe.
+- M18 integration: one args-bearing history entry, type prefix, Alt+. then Alt+. (no
+  older) ⇒ yanked arg preserved (catch-all echo).
+- M19 integration: two "git …" entries, Ctrl+R, type "gi" then "t" ⇒ the still-matching
+  newer entry stays selected (not the older one).
+
+No `run-ci-tests.cs` registration — these are normal multi-mode REPL tests (like repl-33),
+picked up by the ci glob. Uses fluent `Map(...)` (no `[NuruRoute]`/`DiscoverEndpoints`),
+so no multi-mode cross-contamination.

@@ -12,10 +12,11 @@ Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
     $position = if ($wordToComplete -ne '') { $words.Count - 1 } else { $words.Count }
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName = "{{APP_PATH}}"
-    # Pass each token as a separate argument (ArgumentList) so no re-splitting occurs.
-    $psi.ArgumentList.Add("__complete")
-    $psi.ArgumentList.Add("$position")
-    foreach ($w in $words) { $psi.ArgumentList.Add($w) }
+    # Re-quote each token into the Arguments string so spaces survive. Uses .Arguments (not
+    # .ArgumentList) because ArgumentList is unavailable on Windows PowerShell 5.1 (.NET
+    # Framework); this path works on both 5.1 and PowerShell Core.
+    $escaped = @("__complete", "$position") + $words | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }
+    $psi.Arguments = $escaped -join ' '
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.UseShellExecute = $false

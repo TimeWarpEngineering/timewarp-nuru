@@ -88,9 +88,9 @@ public class LowSevSweepTests
   {
     string script = DynamicCompletionScriptGenerator.GeneratePowerShell("myapp");
 
-    script.ShouldContain("ArgumentList"); // args passed individually, no re-join
-    script.ShouldContain("CommandElements"); // tokenized via the AST
+    script.ShouldContain("CommandElements"); // tokenized via the AST, not a naive split
     script.Contains("-split ' '").ShouldBeFalse("must not space-split the command line (breaks quoted args)");
+    script.Contains("$words -join ' '").ShouldBeFalse("must not naively re-join args into one unquoted string");
 
     await Task.CompletedTask;
   }

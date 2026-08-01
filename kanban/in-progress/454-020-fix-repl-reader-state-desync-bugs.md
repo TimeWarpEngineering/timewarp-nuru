@@ -26,10 +26,10 @@ Three related buffer/screen/state desync bugs in the REPL console reader partial
 
 ## Checklist
 
-- [ ] M18: reset path re-inserts or redraws; no silent loss
-- [ ] M19: re-test current match before advancing
-- [ ] M20: clamp Selection End in all mutation paths (share one helper with GetSelectedText)
-- [ ] Unit tests for each via the reader/state classes
+- [x] M18: reset path re-inserts or redraws; no silent loss (defer-removal restructure)
+- [x] M19: re-test current match before advancing (FindNextMatch includeCurrent)
+- [x] M20: clamp Selection End in all mutation paths (shared Selection.GetClampedBounds)
+- [x] Unit tests for each via the reader/state classes (repl-40, 4 tests)
 
 ## Verification protocol (reviewer, 2026-07-07)
 
@@ -74,3 +74,45 @@ branch), and `HandleDeleteSelectionAsync` with it. Kills the ArgumentOutOfRangeE
 No `run-ci-tests.cs` registration — these are normal multi-mode REPL tests (like repl-33),
 picked up by the ci glob. Uses fluent `Map(...)` (no `[NuruRoute]`/`DiscoverEndpoints`),
 so no multi-mode cross-contamination.
+
+## Results (2026-08-01)
+
+All three bugs fixed and covered by automated regression tests — **no human verification
+needed** for 454-020 (contrast 454-018/019, which still batch a human confirmation on 454).
+
+**Implementation** (commit `8f36e521`):
+- **M18** `repl-console-reader.yank-arg.cs` — `HandleYankLastArgAsync` now defers removing
+  the previously-yanked text until an older args-bearing entry is confirmed found. A
+  fruitless consecutive Alt+. leaves the buffer untouched (no silent loss, no orphaned
+  undo entry). `SaveUndoState` moved into the found-branch.
+- **M19** `repl-console-reader.search.cs` — added `FindNextMatch(bool includeCurrent = false)`;
+  the character-input (pattern-extension) path passes `includeCurrent: true` so the current
+  match is re-tested before advancing. Reverse and forward start-index math both handle the
+  sentinel (`== History.Count` / `== -1`) and mid-range cases. Ctrl+R/Ctrl+S cycle callers
+  keep the advancing default; the Backspace path already rescans from the sentinel.
+- **M20** `selection.cs` + `repl-console-reader.selection.cs` — added
+  `Selection.GetClampedBounds(int textLength)` returning ordered, in-range bounds (shared
+  with `GetSelectedText`); Cut / Paste-replace / Delete now clamp with it instead of slicing
+  raw `Start`/`End`. Kills the `ArgumentOutOfRangeException` on a stale selection.
+
+**Tests** — `tests/timewarp-nuru-tests/repl/repl-40-reader-state-desync.cs` (4 tests):
+- M20: two pure `Selection` unit tests (stale-bounds no-throw + clamp; ordered in-range).
+- M18/M19: `TestTerminal` keystroke-driven integration tests. Both use
+  `PersistHistory: false` to isolate in-session history from the shared on-disk file —
+  without it the M18 premise ("no older args-bearing entry") is broken by cross-test
+  history leak under multi-mode (this is exactly 454-030 finding #2; surfaced and worked
+  around here). Regenerated `InternalsVisibleTo` for the new test assembly.
+
+**Verification** — full multi-mode CI green: **1390 total / 1383 passed / 7 skipped / 0
+failed** (+4 from repl-40). The M18/M19 integration tests were confirmed to be genuine
+regression guards (they fail against pre-fix behavior).
+
+**Phase 4b review** — 1 round, single independent reviewer (general-purpose), effort 1.
+Disposition: **CLEAN** — 0 open findings; the reviewer confirmed all three fixes correct
+and both integration tests genuine. Two LOW pre-existing observations were raised and
+accepted as out-of-scope for M18/M19/M20 (both untouched by this commit):
+1. After Backspace / char rescan, incremental search restarts from the most-recent entry
+   rather than strict readline "stay-put" — mild divergence, pre-existing.
+2. Switching search direction mid-search (e.g. Ctrl+R with `SearchMatchIndex == -1` from a
+   prior forward search) yields a one-shot no-match on that keypress — pre-existing edge.
+These belong to a future search-semantics polish task, not this state-desync fix.

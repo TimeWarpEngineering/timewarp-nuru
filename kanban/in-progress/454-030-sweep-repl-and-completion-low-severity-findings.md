@@ -75,7 +75,7 @@ Grounded in the current source. Decisions per item:
 ## Results (2026-08-01)
 
 All 5 findings resolved; fully automated coverage. Commits `91da42cf` (sweep) +
-`<pwsh-5.1-fix>` (review fix).
+`8b900ff2` (review fix).
 
 **Item 1 — dead code.** Deleted the unreferenced `DetectShell()` from
 `install-completion-handler.cs`. The installer installs ALL shells by design, so

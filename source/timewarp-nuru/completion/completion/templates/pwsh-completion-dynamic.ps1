@@ -3,11 +3,19 @@
 
 Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
-    $words = $commandAst.ToString() -split ' '
+    # Tokenize via the AST so quoted arguments containing spaces stay intact
+    # (splitting/joining on ' ' would corrupt e.g. "hello world").
+    $words = @($commandAst.CommandElements | ForEach-Object {
+        if ($_ -is [System.Management.Automation.Language.StringConstantExpressionAst]) { $_.Value }
+        else { $_.Extent.Text }
+    })
     $position = if ($wordToComplete -ne '') { $words.Count - 1 } else { $words.Count }
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName = "{{APP_PATH}}"
-    $psi.Arguments = "__complete $position $($words -join ' ')"
+    # Pass each token as a separate argument (ArgumentList) so no re-splitting occurs.
+    $psi.ArgumentList.Add("__complete")
+    $psi.ArgumentList.Add("$position")
+    foreach ($w in $words) { $psi.ArgumentList.Add($w) }
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.UseShellExecute = $false
@@ -27,8 +35,10 @@ Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
     $results = [System.Collections.ArrayList]::new()
 
     foreach ($line in $completions) {
-        # Skip directive line (starts with :) and exit code line (standalone number)
-        if ($line -match '^:' -or $line -match '^\d+$') {
+        # Skip the directive line (starts with :). Do NOT skip standalone numbers — no
+        # exit-code line is printed to stdout, so a numeric filter would drop a legitimate
+        # numeric candidate (e.g. "0").
+        if ($line -match '^:') {
             continue
         }
 

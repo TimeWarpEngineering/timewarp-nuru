@@ -98,17 +98,26 @@ public sealed class ReplSession : IDisposable
     ILoggerFactory? loggerFactory,
     CancellationToken cancellationToken = default)
   {
-    CurrentSession = new ReplSession(nuruApp, replOptions, routeProvider, commandExecutor, loggerFactory);
+    // Run and dispose a LOCAL instance; CurrentSession is only a mirror for observability.
+    // A concurrently-started session would otherwise clobber the static and cause this
+    // finally to dispose the wrong instance.
+    ReplSession session = new(nuruApp, replOptions, routeProvider, commandExecutor, loggerFactory);
+    CurrentSession = session;
 
     try
     {
-      await CurrentSession.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
+      await session.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
     }
     finally
     {
       // Guaranteed cleanup even on exceptions
-      CurrentSession.Dispose();
-      CurrentSession = null;
+      session.Dispose();
+
+      // Only clear the static if it still points at our session (don't null a newer one).
+      if (ReferenceEquals(CurrentSession, session))
+      {
+        CurrentSession = null;
+      }
     }
   }
 
@@ -257,14 +266,19 @@ public sealed class ReplSession : IDisposable
 
       return exitCode;
     }
-    catch (InvalidOperationException ex)
+    catch (OperationCanceledException)
+    {
+      // Cancellation (Ctrl+C / external token) is not a command failure — let it propagate.
+      throw;
+    }
+#pragma warning disable CA1031 // Do not catch general exception types — the REPL is a command
+                               // boundary; an unexpected exception thrown by a user command must
+                               // not tear down the whole interactive session.
+    catch (Exception ex)
     {
       return HandleCommandException(stopwatch, ex);
     }
-    catch (ArgumentException ex)
-    {
-      return HandleCommandException(stopwatch, ex);
-    }
+#pragma warning restore CA1031
   }
 
   private int HandleCommandException(Stopwatch stopwatch, Exception ex)

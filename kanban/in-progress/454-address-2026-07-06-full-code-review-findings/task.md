@@ -272,10 +272,18 @@ The remaining backlog was re-assessed against how this framework is actually con
   reliably. It is frozen (docs + `.agent/local/nuru-specific.md` updated); no further MCP work.
   - **454-033 → CLOSED won't-do, archived** (`kanban/archived/`). Its manifest-drift and
     endpoint-syntax-region work would invest in the frozen component.
-- **REPL batch parked for human verification.** 454-017/018/019/020 and 454-030 carry
-  "Status: PARKED — needs human interactive verification" banners. Their value is real but
-  *human-user* facing (key handling, cursor/redraw, clipboard, cancellation) and cannot be
-  verified by an automated agent in a non-interactive shell. Held for a keyboard-verify pass.
+- **REPL batch UN-parked (correction, 2026-08-01).** The 2026-07-14 blanket park was wrong.
+  The REPL reads every keystroke through one seam — `ITerminal.ReadKey()` — and `TestTerminal`
+  implements it with a scripted key queue (`QueueKey`/`QueueKeys`/`QueueLine`); ~40 REPL tests
+  already drive input this way. This matches the original reviewer's 2026-07-07 protocol on each
+  task ("implement now with TestTerminal coverage; batch one human pass"). Corrected disposition:
+  - **454-017** (Ctrl-C cancellation), **454-020** (M18/M19/M20 reader state desync), **454-030**
+    (REPL/completion low-sev sweep) are **fully automatable** — CTS plumbing, deterministic state
+    bugs (M20 is an outright `ArgumentOutOfRangeException`), dead code / file I/O / template
+    strings. No human needed.
+  - **454-018** (Windows clipboard) and **454-019** (wrapped-line redraw) implement + unit-test
+    now; only the *final* confirmation (real Windows clipboard populated; wrapped redraw looks
+    right) batches into ONE human pass tracked on this parent.
 - **Everything else is done.** The analyzer trio (011/012/010), analyzer sweep (028), and the
   core/parsing/aux/infra sweeps (027/029/031/032) all landed green. The high-value items in
   this list are exhausted; further forward investment (diagnostic message quality for AI

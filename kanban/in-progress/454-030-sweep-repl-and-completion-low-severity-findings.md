@@ -29,12 +29,12 @@ Low-severity REPL/completion findings in `source/timewarp-nuru/`:
 
 ## Checklist
 
-- [ ] DetectShell wired or deleted
-- [ ] History: merge-on-save or lock; Load clears before loading
-- [ ] pwsh/fish template quoting + `0` candidate fixes
-- [ ] Surrogate-pair decision recorded (fix or document)
-- [ ] REPL survives unexpected handler exceptions
-- [ ] CI tests green
+- [x] DetectShell wired or deleted (deleted — installer installs all shells by design)
+- [x] History: merge-on-save or lock; Load clears before loading (both: clear-on-load + merge-on-save)
+- [x] pwsh/fish template quoting + `0` candidate fixes (AST tokenize + `^:`-only filter)
+- [x] Surrogate-pair decision recorded (documented UTF-16 limitation; full grapheme deferred)
+- [x] REPL survives unexpected handler exceptions (broadened catch, rethrow cancellation)
+- [x] CI tests green (1395 / 1388 passed / 7 skipped / 0 failed)
 
 ## Implementation Plan (2026-08-01)
 
@@ -71,3 +71,55 @@ Grounded in the current source. Decisions per item:
 - Item 5: a handler throwing a non-Argument/InvalidOperation exception with ContinueOnError=true
   is caught and the REPL survives to run the next command.
 - Item 1/4 verified by compile + inspection (no behavioral test).
+
+## Results (2026-08-01)
+
+All 5 findings resolved; fully automated coverage. Commits `91da42cf` (sweep) +
+`<pwsh-5.1-fix>` (review fix).
+
+**Item 1 — dead code.** Deleted the unreferenced `DetectShell()` from
+`install-completion-handler.cs`. The installer installs ALL shells by design, so
+auto-detect was orphaned; wiring it would change install UX (out of scope).
+
+**Item 2 — history.** `Load` clears before loading (a second Load no longer duplicates);
+`Save` re-reads the current file and writes the union (file entries first, then in-memory
+items not already present, dedup by exact line, capped to `MaxHistorySize` from the front so
+newest survive) — a concurrent instance's entries are no longer clobbered. Still best-effort
+last-writer-wins (documented), but strictly better than the prior unconditional clobber.
+
+**Item 3 — completion templates.** pwsh now tokenizes via `$commandAst.CommandElements`
+(unquoting string constants) and re-quotes each token into `$psi.Arguments`, so quoted
+arguments containing spaces are no longer corrupted by split/join. Both pwsh and fish strip
+only the `:` directive line — the old `^0$`/`^\d+$` filters wrongly dropped legitimate
+numeric candidates ("0"), and `dynamic-completion-handler.cs` confirms no numeric exit-code
+line is printed to stdout (candidates + one `:N` line only).
+
+**Item 4 — surrogate pairs (DECISION: document).** Cursor/index math is UTF-16 code-unit
+based; astral characters (emoji surrogate pairs) can be split by character-level editing ops.
+Full grapheme-cluster handling across every op is a large, risky change unjustified at LOW
+severity — recorded as a documented limitation in a `<remarks>` note on the reader's
+word-operations partial. Deferred to a potential future Unicode-editing task.
+
+**Item 5 — catch + static.** `ExecuteCommandAsync` now catches `Exception` (rethrowing
+`OperationCanceledException` first so cancellation is preserved; `#pragma CA1031` per the
+clipboard.cs convention) so an unexpected user-command exception no longer tears down the
+REPL. `RunAsync` runs/disposes a LOCAL `ReplSession` and nulls the `CurrentSession` static
+only if it still points at that instance — removes the concurrent dispose-wrong-session
+hazard without a breaking public-API change (nothing external reads the static).
+
+**Tests** — `tests/timewarp-nuru-tests/repl/repl-41-lowsev-sweep.cs` (5): history
+clear-on-load + merge-on-save; pwsh AST tokenization / no numeric-candidate drop; REPL
+survives an unexpected handler exception. pwsh template additionally syntax-validated under
+the real pwsh runtime. Items 1 & 4 verified by compile + inspection (no behavioral test).
+
+**Verification** — multi-mode CI green: **1395 total / 1388 passed / 7 skipped / 0 failed**
+(+5 from repl-41).
+
+**Phase 4b review** — 1 round, single independent reviewer (general-purpose), effort 1.
+**1 finding (LOW-MEDIUM), fixed:** the initial pwsh fix used `$psi.ArgumentList`, which does
+not exist on Windows PowerShell 5.1 (.NET Framework) — the installer targets 5.1 via the
+WindowsPowerShell profile fallback, so completion would have thrown there. Reworked to quote
+into `$psi.Arguments` (works on 5.1 and Core), keeping the AST-tokenization correctness.
+Re-verified green. Disposition: **CLEAN** (0 open findings). The reviewer independently
+confirmed all five items correct, the merge trim keeps newest entries, and all 5 tests are
+genuine regression guards.

@@ -160,8 +160,10 @@ public sealed partial class ReplConsoleReader
     if (!char.IsControl(keyInfo.KeyChar))
     {
       SearchPattern += keyInfo.KeyChar;
-      // Search with new pattern
-      FindNextMatch(SearchDirectionIsReverse);
+      // Refining the pattern: re-test the CURRENT match first — if it still satisfies the
+      // longer pattern the selection stays put (readline behavior) instead of jumping to
+      // an older entry (or "no match") that also happens to contain the new pattern.
+      FindNextMatch(SearchDirectionIsReverse, includeCurrent: true);
       return null;
     }
 
@@ -184,7 +186,7 @@ public sealed partial class ReplConsoleReader
     return null;
   }
 
-  private void FindNextMatch(bool reverse)
+  private void FindNextMatch(bool reverse, bool includeCurrent = false)
   {
     if (History.Count == 0)
     {
@@ -196,8 +198,11 @@ public sealed partial class ReplConsoleReader
 
     if (reverse)
     {
-      // Search backward (older entries)
-      int searchIndex = startIndex == History.Count ? History.Count - 1 : startIndex - 1;
+      // Search backward (older entries). When refining the pattern (includeCurrent) start
+      // AT the current match so it is re-tested before advancing to an older entry.
+      int searchIndex = startIndex >= History.Count
+        ? History.Count - 1
+        : includeCurrent ? startIndex : startIndex - 1;
       while (searchIndex >= 0)
       {
         if (string.IsNullOrEmpty(SearchPattern) ||
@@ -213,8 +218,11 @@ public sealed partial class ReplConsoleReader
     }
     else
     {
-      // Search forward (newer entries)
-      int searchIndex = startIndex < 0 ? 0 : startIndex + 1;
+      // Search forward (newer entries). When refining the pattern (includeCurrent) start
+      // AT the current match so it is re-tested before advancing to a newer entry.
+      int searchIndex = startIndex < 0
+        ? 0
+        : includeCurrent ? startIndex : startIndex + 1;
       while (searchIndex < History.Count)
       {
         if (string.IsNullOrEmpty(SearchPattern) ||

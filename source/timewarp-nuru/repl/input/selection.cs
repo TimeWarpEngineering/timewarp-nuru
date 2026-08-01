@@ -58,13 +58,29 @@ internal sealed class Selection
     if (!IsActive || string.IsNullOrEmpty(text))
       return string.Empty;
 
-    int start = Math.Max(0, Start);
-    int end = Math.Min(text.Length, End);
+    (int start, int end) = GetClampedBounds(text.Length);
 
     if (start >= end)
       return string.Empty;
 
     return text[start..end];
+  }
+
+  /// <summary>
+  /// Gets the selection bounds clamped to the given text length.
+  /// </summary>
+  /// <param name="textLength">The length of the text the selection applies to.</param>
+  /// <returns>
+  /// A (Start, End) pair with both ends clamped to [0, textLength]. Because Start and End
+  /// are already ordered (min/max of Anchor/Cursor) and clamping is monotonic, Start is
+  /// always less than or equal to End, so the result is always safe to slice — even when a
+  /// stale selection outruns a now-shorter buffer.
+  /// </returns>
+  public (int Start, int End) GetClampedBounds(int textLength)
+  {
+    int start = Math.Clamp(Start, 0, textLength);
+    int end = Math.Clamp(End, 0, textLength);
+    return (start, end);
   }
 
   /// <summary>

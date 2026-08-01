@@ -46,34 +46,32 @@ public sealed partial class ReplConsoleReader
     if (History.Count == 0)
       return Task.CompletedTask;
 
-    SaveUndoState(isCharacterInput: false);
+    // Determine which history entry to start searching from.
+    // Consecutive press cycles to an older entry; first press starts at the most recent.
+    int historyIndexToUse = LastCommandWasYankArg
+      ? YankArgHistoryIndex - 1
+      : History.Count - 1;
 
-    // Determine which history entry to use
-    int historyIndexToUse;
-    if (LastCommandWasYankArg)
-    {
-      // Consecutive press - go to older history entry
-      historyIndexToUse = YankArgHistoryIndex - 1;
-
-      // Remove previously yanked text first
-      if (LastYankArgLength > 0 && LastYankArgStart >= 0 && LastYankArgStart + LastYankArgLength <= UserInput.Length)
-      {
-        UserInput = UserInput[..LastYankArgStart] + UserInput[(LastYankArgStart + LastYankArgLength)..];
-        CursorPosition = LastYankArgStart;
-      }
-    }
-    else
-    {
-      // First press - start from most recent history
-      historyIndexToUse = History.Count - 1;
-    }
-
-    // Find a history entry with arguments
+    // Find a history entry with arguments WITHOUT mutating the buffer yet. The previously
+    // yanked text is only removed once a replacement is confirmed, so a fruitless search
+    // (no older args-bearing entry) leaves the buffer and screen untouched instead of
+    // silently deleting the current yank without a redraw.
     while (historyIndexToUse >= 0)
     {
       string[] args = ParseHistoryArguments(History[historyIndexToUse]);
       if (args.Length > 0)
       {
+        SaveUndoState(isCharacterInput: false);
+
+        // Remove the previously yanked text (consecutive press) now that we have a replacement.
+        if (LastCommandWasYankArg &&
+            LastYankArgLength > 0 && LastYankArgStart >= 0 &&
+            LastYankArgStart + LastYankArgLength <= UserInput.Length)
+        {
+          UserInput = UserInput[..LastYankArgStart] + UserInput[(LastYankArgStart + LastYankArgLength)..];
+          CursorPosition = LastYankArgStart;
+        }
+
         // Use digit argument if set, otherwise use last argument
         int argIndex = DigitArgument.HasValue
           ? Math.Min(DigitArgument.Value, args.Length - 1)
@@ -100,8 +98,8 @@ public sealed partial class ReplConsoleReader
       historyIndexToUse--;
     }
 
-    // No history entry with arguments found - reset state
-    LastCommandWasYankArg = false;
+    // No (older) history entry with arguments found - leave the current yank in place.
+    // Keep LastCommandWasYankArg so state stays consistent; just clear any pending digit.
     DigitArgument = null;
     return Task.CompletedTask;
   }

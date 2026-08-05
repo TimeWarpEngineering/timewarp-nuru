@@ -19,10 +19,10 @@ returns, so a hung or long-running command cannot be aborted.
 
 ## Checklist
 
-- [ ] Linked CTS per command execution
-- [ ] Ctrl+C cancels in-flight command, REPL survives
-- [ ] Behavior at idle prompt decided + documented
-- [ ] Non-interactive tests where feasible (cancellation plumbing unit-testable)
+- [x] Linked CTS per command execution
+- [x] Ctrl+C cancels in-flight command, REPL survives
+- [x] Behavior at idle prompt decided + documented (never exits REPL; use exit / Ctrl+D)
+- [x] Non-interactive tests where feasible (repl-42, 6 tests — fully automated via SimulateCancelKeyPress)
 
 ## Notes
 
@@ -83,3 +83,76 @@ TimeWarp.Terminal 1.0.0, so Ctrl+C is fully simulatable — automated tests, no 
 Timing note: the in-flight test needs the Ctrl+C to fire while the executor awaits — use a
 TaskCompletionSource handshake (handler signals started; test thread simulates Ctrl+C) to
 avoid flakiness rather than sleeps.
+
+## Results (2026-08-05)
+
+Ctrl+C now cancels the in-flight command instead of exiting the REPL. Fully automated
+coverage via `TestTerminal.SimulateCancelKeyPress()` — the "human verification needed"
+note above is superseded (no interactive pass required for this task). Commits
+`016aee53` (implementation) + `6d39a1b9` (review fixes).
+
+**Decided semantics** (bash/python/PSReadLine model):
+- Ctrl+C with a command in flight → cancels that command via a per-command
+  `CancellationTokenSource` linked to the external token; prints "Command cancelled"
+  (exit 130 = 128+SIGINT, honoring ShowExitCode/ShowTiming); REPL re-prompts.
+- Ctrl+C at an idle prompt → newline only; **never exits the REPL** (exit via `exit` /
+  Ctrl+D). This intentionally replaces the old Running=false behavior per the task.
+- Double Ctrl+C → harmless no-op for the already-cancelled command.
+- External-token (host shutdown) cancellation still rethrows and unwinds RunAsync.
+- User cancellation bypasses ContinueOnError teardown (not a command failure).
+
+**Session** (`repl-session.cs`): volatile `CurrentCommandCts` published around the
+executor await, unpublished in `finally` before `using`-disposal (never cancels a
+disposed CTS; snapshot race guarded by ODE + AggregateException catches).
+
+**Generator** — the pipeline previously dropped the token at every hop:
+`ExecuteRouteAsync` gained a `CancellationToken` parameter (also the declaration handler
+`CancellationToken` params bind to); `RunReplAsync_Intercepted` / `--interactive` /
+`AutoStartWhenEmpty` forward it; the REPL command-executor lambda forwards `ct` (was
+discarded); endpoint `Handle()` calls and `BehaviorContext.CancellationToken` now receive
+the flowing token instead of `CancellationToken.None`.
+
+**Tests** — `tests/timewarp-nuru-tests/repl/repl-42-ctrl-c-cancellation.cs` (6): in-flight
+cancel (TCS handshake, no sleeps), loop survival, double-press no-op, external-token exit,
+unrelated-OCE-is-a-failure (HttpClient-timeout mislabel regression), ContinueOnError
+bypass. Handlers are static method groups (H002-safe).
+
+**Phase 4b review** — 1 round, single independent reviewer, effort 1. 5 findings:
+- [MED, fixed] unrelated OCE (no token cancelled) was mislabeled "Command cancelled" —
+  now gated on `commandCts.IsCancellationRequested` + regression test.
+- [LOW, fixed] `Cancel()` can surface AggregateException from throwing user token
+  callbacks — now caught in OnCancelKeyPress.
+- [LOW, fixed] cancelled commands now honor ShowExitCode/ShowTiming (inlined to avoid
+  DisplayCommandResult's misleading "Exiting REPL." branch).
+- [LOW, accepted] concurrent Dispose/Cancel window — mitigated by the catches; BCL
+  contract caveat documented.
+- [LOW, accepted] test statics — established sequential-Jaribu pattern (repl-19).
+Disposition: **clean** (0 open).
+
+**Verification** — multi-mode CI green: **1401 total / 1394 passed / 7 skipped / 0
+failed** (+6 from repl-42).
+
+### How to validate
+
+**Smoke (interactive, optional — automated tests already cover this):**
+```bash
+cd samples # any repl-enabled sample, or:
+dotnet run tests/timewarp-nuru-tests/repl/repl-42-ctrl-c-cancellation.cs
+```
+Interactive spot-check in any AddRepl() app: run `yourapp --interactive`, start a
+long-running command, press Ctrl+C.
+
+**Expect:**
+- The in-flight command aborts; "Command cancelled" appears; the prompt returns.
+- Ctrl+C at the idle prompt prints a newline and re-prompts (does NOT exit).
+- `exit` or Ctrl+D still exits the REPL.
+
+**Automated gate:**
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/repl/repl-42-ctrl-c-cancellation.cs  # 6/6 pass
+dotnet run tests/ci-tests/run-ci-tests.cs                                  # 1401/1394/7skip/0fail
+```
+
+**Not in scope:** REPL reader-level Ctrl+C during ReadLine (idle) uses the same
+OnCancelKeyPress path; interactive redraw polish is covered by 454-019.

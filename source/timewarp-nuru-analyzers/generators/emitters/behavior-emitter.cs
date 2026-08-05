@@ -236,7 +236,8 @@ internal static class BehaviorEmitter
     sb.AppendLine($"{indent}{{");
     sb.AppendLine($"{indent}  CommandName = \"{commandName}\",");
     sb.AppendLine($"{indent}  CommandTypeName = \"{commandTypeName}\",");
-    sb.AppendLine($"{indent}  CancellationToken = global::System.Threading.CancellationToken.None,");
+    // cancellationToken is ExecuteRouteAsync's parameter (REPL per-command token, 454-017)
+    sb.AppendLine($"{indent}  CancellationToken = cancellationToken,");
     sb.AppendLine($"{indent}  Command = __command");
     sb.AppendLine($"{indent}}};");
     sb.AppendLine();

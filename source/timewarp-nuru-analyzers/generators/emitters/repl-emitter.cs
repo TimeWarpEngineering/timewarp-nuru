@@ -242,7 +242,7 @@ internal static class ReplEmitter
   {
     string providerClassName = $"GeneratedReplRouteProvider{methodSuffix}";
 
-    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task RunReplAsync{methodSuffix}(global::TimeWarp.Nuru.NuruApp app)");
+    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task RunReplAsync{methodSuffix}(global::TimeWarp.Nuru.NuruApp app, global::System.Threading.CancellationToken cancellationToken = default)");
     sb.AppendLine("  {");
     sb.AppendLine($"    global::TimeWarp.Nuru.IReplRouteProvider routeProvider = new {providerClassName}();");
     sb.AppendLine("    global::TimeWarp.Nuru.ReplOptions replOptions = app.ReplOptions ?? new global::TimeWarp.Nuru.ReplOptions();");
@@ -251,9 +251,11 @@ internal static class ReplEmitter
     sb.AppendLine("      app,");
     sb.AppendLine("      replOptions,");
     sb.AppendLine("      routeProvider,");
-    // Call ExecuteRouteAsync directly - the core route matching logic used by both RunAsync and REPL
-    sb.AppendLine($"      static (nuruApp, args, ct) => ExecuteRouteAsync{methodSuffix}(nuruApp, args),");
-    sb.AppendLine("      app.LoggerFactory");
+    // Call ExecuteRouteAsync directly - the core route matching logic used by both RunAsync and REPL.
+    // ct is the session's per-command linked token (Ctrl+C cancellation, 454-017) — forward it.
+    sb.AppendLine($"      static (nuruApp, args, ct) => ExecuteRouteAsync{methodSuffix}(nuruApp, args, ct),");
+    sb.AppendLine("      app.LoggerFactory,");
+    sb.AppendLine("      cancellationToken");
     sb.AppendLine("    ).ConfigureAwait(false);");
     sb.AppendLine("  }");
   }

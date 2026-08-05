@@ -151,7 +151,10 @@ internal static class InterceptorEmitter
     sb.AppendLine($"  private static async Task<int> ExecuteRouteAsync{methodSuffix}");
     sb.AppendLine("  (");
     sb.AppendLine("    NuruApp app,");
-    sb.AppendLine("    string[] args");
+    sb.AppendLine("    string[] args,");
+    // The token flows from the REPL's per-command linked CTS (Ctrl+C cancellation, 454-017)
+    // and doubles as the declaration that handler CancellationToken parameters bind to.
+    sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
 
@@ -201,7 +204,7 @@ internal static class InterceptorEmitter
     sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
-    sb.AppendLine($"    await RunReplAsync{methodSuffix}(app).ConfigureAwait(false);");
+    sb.AppendLine($"    await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
     sb.AppendLine("  }");
     sb.AppendLine();
   }
@@ -1231,7 +1234,7 @@ internal static class InterceptorEmitter
       sb.AppendLine("    // Emitted BEFORE user routes so catch-all routes don't intercept it");
       sb.AppendLine("    if (routeArgs is [\"--interactive\"] or [\"-i\"])");
       sb.AppendLine("    {");
-      sb.AppendLine($"      await RunReplAsync{methodSuffix}(app).ConfigureAwait(false);");
+      sb.AppendLine($"      await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
       sb.AppendLine("      return 0;");
       sb.AppendLine("    }");
       sb.AppendLine();
@@ -1242,7 +1245,7 @@ internal static class InterceptorEmitter
         sb.AppendLine("    // Auto-start REPL when no arguments provided (AutoStartWhenEmpty = true)");
         sb.AppendLine("    if (routeArgs.Length == 0)");
         sb.AppendLine("    {");
-        sb.AppendLine($"      await RunReplAsync{methodSuffix}(app).ConfigureAwait(false);");
+        sb.AppendLine($"      await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
         sb.AppendLine("      return 0;");
         sb.AppendLine("    }");
         sb.AppendLine();

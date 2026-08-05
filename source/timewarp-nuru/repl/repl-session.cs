@@ -27,6 +27,17 @@ public sealed class ReplSession : IDisposable
   private bool Running;
   private bool Disposed;
 
+  // CTS for the command currently executing, linked to the external token. Published so
+  // OnCancelKeyPress (raised on a console/threadpool thread) can cancel the in-flight
+  // command; null whenever no command is executing. Volatile: written on the loop thread,
+  // read on the Ctrl+C callback thread.
+  // CA2213: not disposed from Dispose() by design — ownership is method-scoped (`using`)
+  // in ExecuteCommandAsync; this field only publishes a reference and is nulled before
+  // that disposal runs, so it never holds a CTS the session must clean up.
+#pragma warning disable CA2213
+  private volatile CancellationTokenSource? CurrentCommandCts;
+#pragma warning restore CA2213
+
   /// <summary>
   /// Gets the current active REPL session instance.
   /// This is guaranteed to be non-null when REPL commands execute.
@@ -252,9 +263,16 @@ public sealed class ReplSession : IDisposable
   private async Task<int> ExecuteCommandAsync(string[] args, CancellationToken cancellationToken)
   {
     Stopwatch stopwatch = Stopwatch.StartNew();
+
+    // Per-command CTS linked to the external token so Ctrl+C can abort the in-flight
+    // command (M15). Published to CurrentCommandCts for OnCancelKeyPress; cleared before
+    // disposal so the callback never cancels a disposed CTS.
+    using CancellationTokenSource commandCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+    CurrentCommandCts = commandCts;
+
     try
     {
-      int exitCode = await CommandExecutor(App, args, cancellationToken).ConfigureAwait(false);
+      int exitCode = await CommandExecutor(App, args, commandCts.Token).ConfigureAwait(false);
       stopwatch.Stop();
 
       DisplayCommandResult(exitCode, stopwatch.ElapsedMilliseconds, success: true);
@@ -268,8 +286,19 @@ public sealed class ReplSession : IDisposable
     }
     catch (OperationCanceledException)
     {
-      // Cancellation (Ctrl+C / external token) is not a command failure — let it propagate.
-      throw;
+      // External cancellation (host shutdown) must still unwind RunAsync as before.
+      if (cancellationToken.IsCancellationRequested)
+      {
+        throw;
+      }
+
+      // Ctrl+C on THIS command: report and return to the prompt. User-initiated
+      // cancellation is not a command failure, so ContinueOnError does not apply.
+      // 130 = 128 + SIGINT, the conventional Unix exit code for interrupt.
+      stopwatch.Stop();
+      string message = "Command cancelled";
+      await Terminal.WriteErrorLineAsync(ReplOptions.EnableColors ? message.Yellow() : message).ConfigureAwait(false);
+      return 130;
     }
 #pragma warning disable CA1031 // Do not catch general exception types — the REPL is a command
                                // boundary; an unexpected exception thrown by a user command must
@@ -279,6 +308,12 @@ public sealed class ReplSession : IDisposable
       return HandleCommandException(stopwatch, ex);
     }
 #pragma warning restore CA1031
+    finally
+    {
+      // Unpublish before the using-disposal runs so OnCancelKeyPress can never observe
+      // (and Cancel) a disposed CTS.
+      CurrentCommandCts = null;
+    }
   }
 
   private int HandleCommandException(Stopwatch stopwatch, Exception ex)
@@ -330,7 +365,24 @@ public sealed class ReplSession : IDisposable
   private void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
   {
     e.Cancel = true; // Prevent immediate termination
-    Running = false;
+
+    // Command in flight → cancel just that command; the REPL survives and re-prompts.
+    // Idle prompt → newline only; Ctrl+C does NOT exit the REPL (use `exit` or Ctrl+D).
+    // A second Ctrl+C while cancellation is in flight is a no-op (already cancelled).
+    CancellationTokenSource? commandCts = CurrentCommandCts;
+    if (commandCts is not null)
+    {
+      try
+      {
+        commandCts.Cancel();
+      }
+      catch (ObjectDisposedException)
+      {
+        // Benign race: the command completed and its CTS was disposed between our
+        // snapshot and Cancel(). Nothing left to cancel.
+      }
+    }
+
     Terminal.WriteLine(); // Move to new line after ^C
   }
 }

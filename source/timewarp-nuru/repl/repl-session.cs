@@ -284,12 +284,20 @@ public sealed class ReplSession : IDisposable
 
       return exitCode;
     }
-    catch (OperationCanceledException)
+    catch (OperationCanceledException ex)
     {
       // External cancellation (host shutdown) must still unwind RunAsync as before.
       if (cancellationToken.IsCancellationRequested)
       {
         throw;
+      }
+
+      // An OCE that did NOT come from our per-command token is an ordinary command
+      // failure (e.g. an HttpClient timeout throwing TaskCanceledException with no
+      // token cancelled) — do not mislabel it as a user cancellation.
+      if (!commandCts.IsCancellationRequested)
+      {
+        return HandleCommandException(stopwatch, ex);
       }
 
       // Ctrl+C on THIS command: report and return to the prompt. User-initiated
@@ -298,6 +306,22 @@ public sealed class ReplSession : IDisposable
       stopwatch.Stop();
       string message = "Command cancelled";
       await Terminal.WriteErrorLineAsync(ReplOptions.EnableColors ? message.Yellow() : message).ConfigureAwait(false);
+
+      // Honor ShowExitCode/ShowTiming like every other completion path — but not via
+      // DisplayCommandResult, whose ContinueOnError branch would print "Exiting REPL."
+      // (cancellation never exits the REPL).
+      if (ReplOptions.ShowExitCode)
+      {
+        string text = "Exit code: 130";
+        await Terminal.WriteLineAsync(ReplOptions.EnableColors ? text.Gray() : text).ConfigureAwait(false);
+      }
+
+      if (ReplOptions.ShowTiming)
+      {
+        string text = $"({stopwatch.ElapsedMilliseconds}ms)";
+        await Terminal.WriteLineAsync(ReplOptions.EnableColors ? text.Gray() : text).ConfigureAwait(false);
+      }
+
       return 130;
     }
 #pragma warning disable CA1031 // Do not catch general exception types — the REPL is a command
@@ -380,6 +404,13 @@ public sealed class ReplSession : IDisposable
       {
         // Benign race: the command completed and its CTS was disposed between our
         // snapshot and Cancel(). Nothing left to cancel.
+      }
+      catch (AggregateException)
+      {
+        // Cancel() runs token-registered callbacks synchronously; a user callback that
+        // throws surfaces here as AggregateException. Swallow it — an unhandled exception
+        // on the console-event thread would tear down the process, breaking the
+        // "REPL survives Ctrl+C" contract. The command itself is already cancelled.
       }
     }
 

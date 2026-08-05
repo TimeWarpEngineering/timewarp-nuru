@@ -60,6 +60,9 @@ public class CtrlCCancellationTests
     return "FIRST-RAN";
   }
 
+  internal static string ThrowUnrelatedTimeout() =>
+    throw new TaskCanceledException("simulated HttpClient timeout"); // OCE with NO token cancelled
+
   public static async Task Ctrl_c_cancels_in_flight_command_and_repl_survives()
   {
     // Arrange
@@ -177,6 +180,38 @@ public class CtrlCCancellationTests
     // Assert: RunReplAsync unwinds with cancellation (does not hang, does not swallow).
     await Should.ThrowAsync<OperationCanceledException>(async () =>
       await repl.WaitAsync(TimeSpan.FromSeconds(10)));
+  }
+
+  public static async Task Unrelated_timeout_oce_is_a_command_failure_not_a_cancellation()
+  {
+    // Arrange: a handler throwing TaskCanceledException with NO token cancelled (e.g. an
+    // HttpClient timeout) is an ordinary command failure — it must NOT be mislabeled
+    // "Command cancelled", and the REPL continues (ContinueOnError default true).
+    Terminal!.QueueLine("timeout");
+    Terminal.QueueLine("after");
+    Terminal.QueueLine("exit");
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(Terminal)
+      .Map("timeout")
+        .WithHandler(ThrowUnrelatedTimeout)
+        .AsCommand()
+        .Done()
+      .Map("after")
+        .WithHandler(() => "AFTER-RAN")
+        .AsCommand()
+        .Done()
+      .AddRepl(options => { options.EnableColors = false; options.PersistHistory = false; })
+      .Build();
+
+    // Act
+    await app.RunAsync(["--interactive"]).WaitAsync(TimeSpan.FromSeconds(10));
+
+    // Assert
+    Terminal.ErrorOutput.Contains("Command cancelled", StringComparison.Ordinal)
+      .ShouldBeFalse("an unrelated OCE must not be reported as a user cancellation");
+    Terminal.ErrorOutput.ShouldContain("simulated HttpClient timeout");
+    Terminal.OutputContains("AFTER-RAN").ShouldBeTrue("the REPL must survive the failed command");
   }
 
   public static async Task Cancelled_command_does_not_trip_continue_on_error_teardown()

@@ -60,6 +60,24 @@ verbatim; deviations require a written reason in that repo.
     `documentation/developer/guides/releasing.md` (or repo equivalent), pointing at
     this convention and listing only repo-specific deltas.
 
+## Enforcement architecture (how consistency survives without daily policing)
+
+Decided 2026-08-07 after the org audit (`repo-matrix.md`). Constraint: the org is
+on GitHub Free — branch protection cannot be enforced on private repos, and
+file-syncing workflows into repos was already tried and abandoned
+(`sync-configurable-files`, now `.disabled` in state/quickbooks). Therefore:
+
+1. **One reusable workflow** in the public `.github` repo (`workflow_call`);
+   every repo carries only a fixed ~10-line caller. Org-wide CI changes are one
+   edit in one repo. Private repos can call public reusable workflows on Free.
+2. **DevCli is the enforcement point.** All gate logic (rules 6–7) runs inside
+   release mode, identically on public and private repos, independent of GitHub
+   plan. Branch protection / required status checks are defense-in-depth where
+   available — never load-bearing.
+3. **Automated drift audit.** `dev audit-convention` runs in every merge build
+   (deviating repos fail their own CI) plus a scheduled org sweep regenerating
+   the deviation matrix. Consistency is checked by machines, not by memory.
+
 ## Shared implementation surface
 
 Repos should share, not re-implement:

@@ -1,0 +1,79 @@
+# TimeWarp versioning + release convention (proposed)
+
+Status: **proposed** by task 458 review (2026-08-06). Becomes canonical when the 458
+follow-up tasks land in Nuru. Other TimeWarp package-publishing repos copy this
+verbatim; deviations require a written reason in that repo.
+
+## The convention
+
+1. **Version SSOT.** The repo's package version lives in exactly one place:
+   `<Version>` in `source/Directory.Build.props`. No MinVer, no CI-injected
+   versions, no per-project overrides.
+
+2. **One version per repo.** All packable projects in a repo share the SSOT version
+   and are released together (lockstep). Burned numbers on unchanged packages are
+   accepted and harmless.
+
+3. **A version bump is a normal PR.** Bumping `<Version>` declares "the next release
+   will be X." Bumps may ride feature PRs or stand alone; no enforcement either way.
+   `dev check-version` warns when source drifts more than one increment ahead of the
+   last release (task 456) — a bump merged is not a release cut.
+
+4. **Publishing happens only from a published GitHub Release.** The
+   `release: published` event is the sole routine publish trigger.
+   `workflow_dispatch` builds and tests; it publishes only via an explicit
+   break-glass input (`mode: release` plus typed confirmation), and CI supplies
+   NuGet credentials (OIDC trusted publishing) under exactly the same condition
+   that enables release mode — never otherwise.
+
+5. **The tag is derived, not typed.** Releases are cut with `dev release`, which
+   reads the SSOT version, runs the release gate, and creates tag `v{Version}` and
+   the GitHub Release on the master head commit. Humans type a version exactly
+   once: in the props bump PR.
+
+6. **Release gate (all hard-fail unless stated):**
+   - tag == `v{Version}` from props (defense-in-depth even with derived tags);
+   - tag commit is reachable from master;
+   - version not already fully published — none published → proceed; all published
+     → abort; partially published → proceed with a loud resume warning
+     (`--skip-duplicate` makes the re-push idempotent);
+   - distance warning (advisory, task 456) when source is >1 increment ahead.
+
+7. **Release pipeline runs the full quality gate before publishing:**
+   `check-version → clean → build → verify/test → pack → push`. Nothing is pushed
+   from a run that did not build **and test** those exact artifacts.
+
+8. **No hand-maintained package lists.** Pack, push, and check-version derive the
+   package set from MSBuild `IsPackable` (or one generated manifest). Adding a
+   packable project automatically adds it to pack, push, and the gate.
+
+9. **Prerelease policy is explicit.** Mainline `-beta.N` (or `-rc.N`) is allowed
+   only as a declared pre-GA state with written exit criteria in the repo. A repo
+   may not sit in prerelease by drift; going GA or staying prerelease is a recorded
+   product decision.
+
+10. **Canonical doc.** Each repo documents its release process at
+    `documentation/developer/guides/releasing.md` (or repo equivalent), pointing at
+    this convention and listing only repo-specific deltas.
+
+## Shared implementation surface
+
+Repos should share, not re-implement:
+
+- `TimeWarp.Nuru.DevCli` content endpoints: `check-version` (gate semantics above),
+  `workflow` shape (mode matrix below), `release` (tag/Release cutter).
+- `.timewarp/dev.jsonc` for per-repo config (strategy only; package lists go away
+  per rule 8).
+- Thin `workflow.yml`: checkout (fetch-depth 0 for tag history), setup, OIDC login
+  gated on release condition, `dev workflow`.
+
+### Event → mode matrix
+
+| Event | Mode | Publishes |
+|-------|------|-----------|
+| `pull_request` | pr: clean → build → verify → test | no |
+| `push` (master) | merge: clean → build → verify → test | no |
+| `release: published` | release: full gate + pipeline (rule 7) | yes |
+| `workflow_dispatch` (default) | merge | no |
+| `workflow_dispatch` (`mode: release` + confirm) | release | yes (break-glass) |
+| local (no `GITHUB_EVENT_NAME`) | pr | no |

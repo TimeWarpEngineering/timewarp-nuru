@@ -63,22 +63,22 @@ Repos that do **not** publish packages may only need a short “N/A” note.
 
 ### Discovery
 
-- [ ] Re-read `source/Directory.Build.props`, `.github/workflows/workflow.yml`, `tools/dev-cli/endpoints/workflow-command.cs`, check-version + config
-- [ ] Note how `workflow_dispatch` vs `release` map to release mode today
-- [ ] Inventory TimeWarp publish repos (from org / known list / `ganda` workspace if useful)
+- [x] Re-read `source/Directory.Build.props`, `.github/workflows/workflow.yml`, `tools/dev-cli/endpoints/workflow-command.cs`, check-version + config
+- [x] Note how `workflow_dispatch` vs `release` map to release mode today (DevCli says Release, YAML withholds credentials — incoherent; findings F1)
+- [x] Inventory TimeWarp publish repos (known list from 454-022 downstream review; recorded in repo-matrix.md)
 
 ### Analysis & recommendation
 
-- [ ] Write `review/findings.md` — what works, what to change, what to leave alone (be opinionated; avoid laundry lists of theoretical footguns)
-- [ ] Write `review/convention.md` — proposed TimeWarp versioning + release convention (copy-pasteable)
-- [ ] Write `review/repo-matrix.md` — repo × current state × required change (if any)
-- [ ] Call out **breaking process changes** (e.g. dispatch no longer publishes without confirm)
+- [x] Write `review/findings.md` — what works, what to change, what to leave alone (be opinionated; avoid laundry lists of theoretical footguns)
+- [x] Write `review/convention.md` — proposed TimeWarp versioning + release convention (copy-pasteable)
+- [x] Write `review/repo-matrix.md` — repo × current state × required change (per-repo audit deferred by operator instruction; population + F4 warning recorded)
+- [x] Call out **breaking process changes** (convention.md rule 4 / 458-001: dispatch no longer publishes; 458-003: git-tag strategy behavior change for consumers)
 
 ### Follow-through
 
-- [ ] Create Nuru implementation child tasks (if any) via `ganda kanban create … --parent 458`
-- [ ] Create or file tasks for other TimeWarp repos that must align (link from `review/repo-matrix.md`)
-- [ ] `## Results` with How to validate (what a cold reader re-reads / re-runs)
+- [x] Create Nuru implementation child tasks via `ganda kanban create … --parent 458` (458-001 … 458-008)
+- [x] ~~Create or file tasks for other TimeWarp repos that must align~~ — deferred by operator instruction (2026-08-06): "pristine convention first, do NOT worry about migration work"; repo-matrix.md records the population and the trigger for the future audit
+- [x] `## Results` with How to validate (what a cold reader re-reads / re-runs)
 
 ## Notes
 
@@ -108,6 +108,49 @@ Prior multi-agent discussion mixed useful points with overstated “footguns.”
     repo-matrix.md   # required if multi-repo impact; else short N/A in findings
 ```
 
+## Results
+
+Review complete (2026-08-06). Deliverables under `review/`:
+
+- **`review/findings.md`** — 9 findings (F1–F9). Keep: props SSOT, lockstep monorepo
+  version, release-published-only publishing, check-version + 456 warning. Fix:
+  dispatch/release incoherence (F1), no tests in release pipeline (F2), no tag==props
+  assertion (F3), inverted git-tag strategy in DevCli (F4), triplicated package lists
+  (F5), gate blocks partial-publish resume (F6), dual human version entry (F7),
+  undecided perpetual-beta policy (F8), missing release docs + stale MinVer comment (F9).
+- **`review/convention.md`** — proposed 10-rule TimeWarp versioning + release
+  convention with event→mode matrix (copy-pasteable).
+- **`review/repo-matrix.md`** — publishing-repo population; per-repo audit and
+  migration tasks **deferred by operator instruction** ("pristine convention first,
+  no migration work").
+- **Child tasks 458-001 … 458-008** — Nuru implementation + decision follow-ups,
+  one per actionable finding.
+
+Hard evidence anchoring the review: git tag `v3.0.0-beta.69` exists with no such
+version on NuGet, while NuGet has `3.0.0-beta.70` with no git tag — tag↔package
+divergence has already occurred in both directions.
+
+### How to validate
+
+Smoke (cold reader, ~10 min):
+
+1. Read `review/findings.md`; for F1, confirm `tools/dev-cli/endpoints/workflow-command.cs`
+   maps `workflow_dispatch` → `Release` (DetermineMode) while `.github/workflows/workflow.yml`
+   gates `nuget/login` and `--api-key` on `github.event_name == 'release'`.
+2. For F2, confirm `RunReleaseWorkflowAsync` has no verify-samples/test steps.
+3. For the divergence evidence:
+   `git tag | grep beta.69` → present; `git tag | grep beta.70` → absent;
+   `curl -s https://api.nuget.org/v3-flatcontainer/timewarp.nuru/index.json | grep -o '3.0.0-beta.69\|3.0.0-beta.70'`
+   → only beta.70.
+4. Confirm children exist: `ls kanban/to-do/458-00*` → 8 tasks referencing findings F1–F9.
+
+Expect: each finding traceable to a file/line or reproducible observation; no
+finding relies on a hypothetical incident.
+
+Task remains open until children 458-001…008 land (kanban parent/child propagation);
+the review deliverable itself is complete.
+
 ## Session
 
 - Created: grok session (2026-08-06) — folder task for Claude (or human) review of Nuru versioning; TimeWarp-wide consistency required if Nuru changes
+- Review: Claude Code session (2026-08-06) — discovery, findings/convention/repo-matrix written, children 458-001…008 created; migration work waived by operator

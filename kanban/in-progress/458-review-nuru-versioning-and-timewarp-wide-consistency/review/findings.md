@@ -21,7 +21,7 @@ out of scope (operator instruction, 2026-08-06).
 | git-tag strategy semantics in release context | **Defective — fix in DevCli** |
 | Triplicated hand-maintained package lists | **Fragile — derive instead** |
 | Partial-publish recovery | **Gate contradicts recovery — fix** |
-| Perpetual `-beta.N` | **Undecided product policy — decide explicitly** |
+| Long-running `-beta.N` on next-major line | **Correct as-is — F8 retracted** (stable 2.0.0 serves default consumers) |
 | Canonical release docs | **Missing — write** |
 
 ## Hard evidence of divergence (not theoretical)
@@ -187,15 +187,25 @@ has exactly one human act: merge the props bump. The tag/Release should be
 gate, creates `v{Version}` tag + GitHub Release on master head. F3's assertion then
 remains as defense-in-depth, not as the primary mechanism.
 
-### F8 — Perpetual beta is an undecided policy, not a bug
+### F8 — RETRACTED (2026-08-07): the beta line is correct as-is
 
-`3.0.0-beta.71` — seventy-one mainline prereleases. SemVer ordering is fine and
-NuGet handles it, but "beta" tells consumers "unstable, hidden without
--Prerelease" while the framework is treated as production elsewhere in the org.
-This review's call: prerelease on mainline is **legitimate only as a declared
-pre-GA state with written exit criteria**. Nuru must either ship `3.0.0` or write
-down what blocks GA. That is a product decision — filed as a decision task, not
-decided here.
+Original claim: 71 mainline betas = undecided "perpetual beta" policy needing an
+explicit GA decision. **Wrong.** Verified: NuGet serves stable `1.0.0` and `2.0.0`;
+default (non-`-Prerelease`) consumers get `2.0.0`. `3.0.0-beta.N` is the
+next-major prerelease train — exactly what SemVer prerelease is for.
+
+The correct principle, recorded for the convention: **beta exit is defined by API
+commitment, not by any metric.** A version leaves beta when the maintainer would
+pay for the next breaking change with a new major version instead of another
+prerelease increment. Beta count, dogfooding breadth, and elapsed time are not
+criteria — frequent betas are release granularity, and org-wide dogfooding is how
+breaks are found while breaking is still cheap. The decision is the maintainer's,
+made per line, whenever the API-freeze commitment is real. No repo owes anyone
+"exit criteria" documentation. (Decision task 458-007 archived accordingly.)
+
+The adjacent mechanical concern stays separate and stands: bump-without-release
+drift is caught by the task 456 distance warning, which is about release cadence
+mechanics, not the prerelease label.
 
 ### F9 — No canonical release doc; stale breadcrumbs
 

@@ -117,14 +117,20 @@ Review complete (2026-08-06). Deliverables under `review/`:
   dispatch/release incoherence (F1), no tests in release pipeline (F2), no tag==props
   assertion (F3), inverted git-tag strategy in DevCli (F4), triplicated package lists
   (F5), gate blocks partial-publish resume (F6), dual human version entry (F7),
-  undecided perpetual-beta policy (F8), missing release docs + stale MinVer comment (F9).
+  missing release docs + stale MinVer comment (F9). **F8 retracted 2026-08-07**:
+  stable 2.0.0 serves default consumers; the 3.0 beta line is a correct
+  next-major prerelease train — beta exit is defined by API commitment and is
+  the maintainer's call (458-007 archived accordingly).
 - **`review/convention.md`** — proposed 10-rule TimeWarp versioning + release
-  convention with event→mode matrix (copy-pasteable).
-- **`review/repo-matrix.md`** — publishing-repo population; per-repo audit and
-  migration tasks **deferred by operator instruction** ("pristine convention first,
-  no migration work").
-- **Child tasks 458-001 … 458-008** — Nuru implementation + decision follow-ups,
-  one per actionable finding.
+  convention with event→mode matrix (copy-pasteable) plus the enforcement
+  architecture (reusable workflow + DevCli gate + automated drift audit).
+- **`review/repo-matrix.md`** — full org audit (2026-08-07, 65 repos via live
+  API): 21 publishers with per-repo deviations, org-plan constraint (Free — no
+  branch protection on private repos), enforcement architecture, rollout order.
+  Raw data in `review/audit-results-2026-08-07.json`.
+- **Child tasks 458-001 … 458-008** — Nuru implementation follow-ups, one per
+  actionable finding (458-002 reframed to promote-or-retest; 458-007 archived
+  with F8's retraction).
 
 Hard evidence anchoring the review: git tag `v3.0.0-beta.69` exists with no such
 version on NuGet, while NuGet has `3.0.0-beta.70` with no git tag — tag↔package

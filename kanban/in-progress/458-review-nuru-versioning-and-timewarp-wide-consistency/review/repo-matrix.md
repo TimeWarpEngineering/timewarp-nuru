@@ -68,17 +68,17 @@ workflow → `dev workflow` + release-published trigger + OIDC.
 
 | Repo | Vis | Version (props) | Deviations from convention |
 |------|-----|-----------------|----------------------------|
-| timewarp-nuru | pub | 3.0.0-beta.71 | Reference repo. Own findings F1–F9 (dispatch→release incoherence, untested publish, no tag assertion, triplicated package lists, partial-publish deadlock, beta policy, docs). PR protection, no required checks. |
+| timewarp-nuru | pub | 3.0.0-beta.71 | Reference repo. Own findings F1–F9 (dispatch→release incoherence, untested publish, no tag assertion, triplicated package lists, partial-publish deadlock, docs). PR protection, no required checks. |
 | timewarp-amuru | pub | 1.0.0 | Nuru-shape. No `.timewarp/dev.jsonc`; no protection; inherits DevCli F1/F2/F5. |
 | timewarp-builder | pub | 1.0.0 | Nuru-shape. jsonc: nuget-search + hardcoded packages (F5); no protection. |
 | timewarp-flexbox | pub | 1.0.0 | Same as builder. |
-| timewarp-jaribu | pub | 1.0.0-beta.15 | Nuru-shape; no jsonc; no protection; perpetual beta (policy per rule 9). |
+| timewarp-jaribu | pub | 1.0.0-beta.15 | Nuru-shape; no jsonc; no protection |
 | timewarp-terminal | pub | 1.0.0 | Nuru-shape; jsonc+pkgs (F5); **tag `1.0.0` missing `v` prefix**; PR protection, no checks. |
 | timewarp-components | pub | 1.0.0-beta.2 | Nuru-shape; **tag missing `v` prefix**; no jsonc; no protection. |
 | timewarp-heroicons | pub | 2.0.19+2.0.18 | Nuru-shape; version embeds build metadata (`+2.0.18`) — allowed by NuGet (metadata stripped) but nonstandard; **zero git tags** → release-published path apparently never exercised; no jsonc. |
 | timewarp-simple-icons | pub | 16.27.1 | Nuru-shape; **zero git tags** (same concern as heroicons); no jsonc. |
-| timewarp-source-generators | pub | 1.0.0-beta.10 | Nuru-shape; jsonc+pkgs (F5); no protection; perpetual beta. |
-| timewarp-options-validation | pub | 1.0.0-beta.5 | Nuru-shape; no jsonc; no protection; perpetual beta. |
+| timewarp-source-generators | pub | 1.0.0-beta.10 | Nuru-shape; jsonc+pkgs (F5); no protection |
+| timewarp-options-validation | pub | 1.0.0-beta.5 | Nuru-shape; no jsonc; no protection |
 | timewarp-architecture | pub | 2.0.0-beta.14 | Nuru-shape **but `checkVersionStrategy: git-tag` → F4 inversion: its next release-published run will abort (tag==props reads as "already released") or pass a mismatched tag**. Documented dual-version coupling with its templates tree (manual sync). Real burned-version incident (task 456). PR protection, no checks. |
 | timewarp-ganda | PRI | 1.0.0-beta.23 | Nuru-shape; props one ahead of latest tag (beta.22) — pending release or burn; no jsonc; **private ⇒ no protection possible on Free**. |
 | timewarp-health | PRI | 1.0.0-beta.1 | Nuru-shape; no tags yet; private ⇒ no protection possible. |

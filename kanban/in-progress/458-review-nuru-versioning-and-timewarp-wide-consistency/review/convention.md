@@ -51,10 +51,14 @@ verbatim; deviations require a written reason in that repo.
    package set from MSBuild `IsPackable` (or one generated manifest). Adding a
    packable project automatically adds it to pack, push, and the gate.
 
-9. **Prerelease policy is explicit.** Mainline `-beta.N` (or `-rc.N`) is allowed
-   only as a declared pre-GA state with written exit criteria in the repo. A repo
-   may not sit in prerelease by drift; going GA or staying prerelease is a recorded
-   product decision.
+9. **Prerelease exit is the maintainer's call; the machinery is indifferent.**
+   `-beta.N` means one thing: the API may still break without a major bump. A line
+   exits beta when the maintainer commits to its API — i.e., would pay for the
+   next breaking change with a new major version. No count, age, or usage metric
+   forces the transition, and no exit-criteria documentation is owed. The release
+   pipeline and gates treat stable and prerelease versions identically. (The task
+   456 distance warning covers the separate mechanical issue of bumps merged
+   without releases cut.)
 
 10. **Canonical doc.** Each repo documents its release process at
     `documentation/developer/guides/releasing.md` (or repo equivalent), pointing at

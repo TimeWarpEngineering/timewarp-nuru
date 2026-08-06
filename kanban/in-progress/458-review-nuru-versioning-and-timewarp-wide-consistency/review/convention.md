@@ -39,9 +39,13 @@ verbatim; deviations require a written reason in that repo.
      (`--skip-duplicate` makes the re-push idempotent);
    - distance warning (advisory, task 456) when source is >1 increment ahead.
 
-7. **Release pipeline runs the full quality gate before publishing:**
-   `check-version → clean → build → verify/test → pack → push`. Nothing is pushed
-   from a run that did not build **and test** those exact artifacts.
+7. **Published artifacts are tested artifacts — by identity, not by convention.**
+   Preferred: **build-once / promote** — master CI builds, tests, and uploads the
+   `.nupkg` set; the release job downloads the artifacts of the tag commit's green
+   CI run and pushes those exact bytes (no rebuild). Requires required status
+   checks on master. Fallback where promotion plumbing isn't warranted:
+   rebuild in the release run but insert `verify/test` before pack → push.
+   Never rebuild-and-push without testing that rebuild.
 
 8. **No hand-maintained package lists.** Pack, push, and check-version derive the
    package set from MSBuild `IsPackable` (or one generated manifest). Adding a

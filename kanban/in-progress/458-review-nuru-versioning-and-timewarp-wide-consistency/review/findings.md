@@ -78,16 +78,51 @@ publishes do happen.
 confirmation) as break-glass — and the YAML must supply credentials if and only if
 that same condition holds.
 
-### F2 — Release pipeline never runs tests
+### F2 — No test gate is enforced anywhere between PR and publish
 
 Release mode is `check-version → clean → build → pack → push`. No `verify-samples`,
-no `test`. The implicit assumption is "master was tested on merge," but a release is
-cut from a **tag**, which can point at any commit — including one never tested by
-CI, or tested before a dependency/toolchain change. Correctness first: the artifacts
-you publish must be built **and tested** in the run that publishes them.
+no `test`. The rebuttal "master was already tested on merge" describes practice, not
+mechanism — verified against the live repo settings (2026-08-07):
 
-**Fix:** release pipeline = `check-version → clean → build → verify-samples → test →
-pack → push`. Cost is minutes; buys the guarantee.
+- **Master branch protection has no `required_status_checks`** (GitHub API,
+  `branches/master/protection`): PR CI runs tests but a PR can merge red or with CI
+  still running. Merge-time testing is advisory.
+- **Push CI on master is post-hoc**: a failed merge build turns master red, but the
+  release event never reads the commit's CI status — nothing stops tagging and
+  publishing a red commit.
+- **Path-filter gap**: `dev build` builds `timewarp-nuru.slnx`, but the workflow
+  path filters omit `*.slnx` and `assets/**` — commits touching those trigger no CI
+  at all.
+- **The published binaries are never the tested binaries**: the release run
+  rebuilds from scratch with a floating SDK (`setup-dotnet: '10.0.x'` resolves at
+  run time). For a source-generator product, SDK/Roslyn drift between merge time
+  and release time changes emitted code.
+
+Historical discipline has held — all recent release tags are ancestors of master
+(verified) — so this has not produced a bad release. But "guaranteed by discipline"
+is exactly what a pristine model replaces with a mechanism.
+
+**Fix — two coherent designs; pick one (the current rebuild-without-retest is the
+only incoherent option):**
+
+- **Design B, build-once / promote (recommended as pristine).** Master merge CI
+  builds, tests, and uploads the `.nupkg` set (the workflow already uploads
+  `Packages-{run_number}`; the version is already final because the props bump
+  merged first). The release job does **not** rebuild: it locates the successful
+  CI run for the tag's commit, downloads those artifacts, runs the check-version
+  gate, and pushes. Published bits are byte-identical to tested bits; SDK drift is
+  eliminated; no retest needed — which is exactly the "release what master tested"
+  property. Requires: required status checks on master (green becomes enforced,
+  closing the advisory-CI bullet), release job fails loudly if no successful run /
+  artifact exists for that commit (re-run master CI to regenerate), artifact
+  retention long enough for the bump→release window.
+- **Design A, rebuild + retest (simpler fallback).** Keep the rebuild but insert
+  `verify-samples → test` before pack/push. Tested-what-you-ship holds within the
+  release run; costs minutes per release; simpler to propagate to other repos
+  (no cross-run artifact plumbing).
+
+Either design closes the gap; Design B is the stronger property. The path-filter
+gap (slnx/assets) should be fixed regardless — one-line workflow change.
 
 ### F3 — Nothing asserts tag == props version
 

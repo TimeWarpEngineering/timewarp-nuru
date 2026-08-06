@@ -97,6 +97,31 @@ are **org-wide** because 14 repos share the DevCli pattern; fixing DevCli + the
 reusable workflow fixes all of them at once — that is the system working as
 intended).
 
+## Trusted publishing roster (as of 2026-08-07)
+
+Policy model (MS docs): one policy per (owner account, repo, workflow file
+[, environment]); covers ALL packages owned by the account — per repo, not per
+package. No public API to enumerate policies; the automatable check is a
+`nuget/login` probe (OIDC exchange succeeds iff an active policy matches) —
+see task 458-009.
+
+- **Configured (13):** simple-icons, ganda, source-generators, flexbox,
+  architecture, components, options-validation, builder, state, amuru, jaribu,
+  terminal, nuru. Note: state's policy is inert until its workflow migrates off
+  the `PUBLISH_TO_NUGET_ORG` secret.
+- **Missing, workflow already OIDC (3):** heroicons, health,
+  [redacted-private-repo] — releases fail at login until policies exist.
+  Private repos among them: policies start temporarily active for 7 days and
+  lapse without a publish; arm just before releasing.
+- **Missing + workflow still on stored secrets (5):** build-tasks, mediator,
+  fixie, multiavatar, quickbooks.
+- **Cleanup once flipped:** revoke long-lived keys on nuget.org, delete
+  `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets.
+- **Orphaned packages, no active repo:** TimeWarp.Cli (0.6.0-rc9),
+  TimeWarp.AspNetCore.Blazor.Templates — deprecate or adopt; no TP needed.
+- Security note: the 1-hour temp key can push ANY owner-account package;
+  containment is the shared workflow + DevCli gate, not policy scoping.
+
 ## Versioned-but-not-publishing repos (6)
 
 Have a props `<Version>` but no NuGet push detected — likely future packages or

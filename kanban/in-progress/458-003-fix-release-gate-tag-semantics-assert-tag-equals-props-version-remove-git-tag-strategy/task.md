@@ -37,13 +37,61 @@ published NuGet versions (three-state per 458-005).
 
 ## Checklist
 
-- [ ] Release mode: assert `GITHUB_REF_NAME == "v" + propsVersion`, clear failure message
-- [ ] Release mode: assert tag commit is an ancestor of master (`git merge-base --is-ancestor`)
-- [ ] Remove `git-tag` strategy: delete `GitTagCheckService`, the `--strategy`/`--tag` options, `CheckVersionStrategy` enum, and the `checkVersionStrategy` config key (or hard-error on `git-tag` with pointer to this task)
-- [ ] timewarp-architecture: remove `checkVersionStrategy: git-tag` from `.timewarp/dev.jsonc` (falls to nuget-search default) — coordinate with that repo
-- [ ] Tests: correct release passes; mismatched tag aborts; tag off master aborts; unknown strategy config → clear error
-- [ ] DevCli consumers note: breaking change for git-tag strategy config (architecture is the only known user); update convention.md rule 6 wording if it references strategies
-- [ ] Record resurrect condition: tags-as-ledger returns only if a repo ships versioned NON-NuGet releases (no such repo today); would be a deliberate re-add with membership-across-all-tags semantics, never `GITHUB_REF_NAME`
+- [x] Release mode: assert `GITHUB_REF_NAME == "v" + propsVersion`, clear failure message (release events only; explicit skip log for break-glass/local — D1)
+- [x] Release mode: assert HEAD is an ancestor of master (all release modes; 4-state outcome: Ancestor/NotAncestor/MasterUnresolvable/GitError, each with distinct message; fail-closed default)
+- [x] Remove `git-tag` strategy: `GitTagCheckService`, `--strategy`/`--tag`, `CheckVersionStrategy` enum, config key deleted; lingering `checkVersionStrategy` in dev.jsonc silently ignored by design (regression-tested)
+- [ ] timewarp-architecture: remove `checkVersionStrategy: git-tag` from `.timewarp/dev.jsonc` — **cross-repo, deferred to org rollout** (its config keeps parsing and lands on nuget-search meanwhile)
+- [x] Tests: 11 tag-assertion matrix tests + 3 legacy-config tests; gate simulations for mismatch-abort and break-glass-skip paths
+- [x] DevCli consumers note: readme Migration Notes cover strategy removal, lingering-config behavior, new public TagAssertion types; convention.md shared-surface bullet reworded (rule 6 itself references no strategies)
+- [x] Resurrect condition recorded in readme migration notes (tags-as-ledger only for versioned non-NuGet releases; membership-across-all-tags; never GITHUB_REF_NAME)
+
+## Results
+
+Implemented in commits `f002e65a` (implementation), `d0355613` (round-1 fixes),
+`e4a7c9c3` (round-2 fail-closed default).
+
+- **Release gate (Step 1/6 of release pipeline,** `tools/dev-cli/endpoints/workflow-command.cs`**):**
+  on `release` events, `TagAssertion.Validate` (new pure DevCli content service,
+  `services/tag-assertion.cs`) hard-fails unless `GITHUB_REF_NAME == v{<Version>}`
+  (Ordinal); non-release release-mode runs log an explicit skip. HEAD
+  ancestor-of-master asserted in ALL release modes via
+  `git merge-base --is-ancestor` (origin/master with logged local-master
+  fallback); four distinct outcomes with precise failure messages; every
+  non-Ancestor path aborts with exit 1 before check-version.
+- **git-tag strategy removed:** `git-tag-check-service.cs` and
+  `check-version-strategy.cs` deleted; `--strategy`/`--tag` options gone;
+  check-version is single-methodology (NuGet membership). Legacy
+  `checkVersionStrategy` config keys deserialize silently to defaults
+  (nuget-search) — proven by `RepoConfigService.Parse` regression tests.
+  This repo's `.timewarp/dev.jsonc` dropped the key.
+- **Tests:** `workflow-02-release-tag-assertion.cs` (11) +
+  `check-version-02-legacy-strategy-config.cs` (3). Test props swap includes;
+  TimeWarp.Amuru.Tools reference added (Git.FindRoot lives there — verified by
+  decompile).
+- **Review (Phase 4b):** 2 rounds, 1 sonnet reviewer, effort 1. 4 findings
+  total (1 MED, 1 LOW, 2 INFO) — all resolved, no wontfix. Disposition:
+  **clean** (`review/disposition.md`). Reviewer disproved the `+`-in-tag
+  footgun (git accepts build-metadata tags).
+
+### How to validate
+
+Smoke:
+1. `dotnet run tests/timewarp-nuru-tests/devcli/workflow-02-release-tag-assertion.cs`
+   → Expect 11/11. `dotnet run tests/timewarp-nuru-tests/devcli/check-version-02-legacy-strategy-config.cs`
+   → Expect 3/3.
+2. `GITHUB_EVENT_NAME=release GITHUB_REF_NAME=v0.0.0 dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release`
+   → Expect abort at Step 1/6: tag `v0.0.0` does not match expected, exit 1.
+3. `GITHUB_EVENT_NAME=workflow_dispatch dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release`
+   → Expect "Tag assertion skipped…", then (from a branch not on master) the
+   distinct NotAncestor abort.
+4. `dotnet run --file tools/dev-cli/dev.cs -- check-version` → Expect no
+   "Strategy:" line; `--strategy git-tag` → unknown-option error.
+
+Automated gate: `ganda runfile cache --clear && dotnet run tests/ci-tests/run-ci-tests.cs`
+→ Expect 0 failed (last: 1431 total / 1424 passed / 7 skipped / 0 failed).
+
+Depends on / not in scope: timewarp-architecture config flip (org rollout);
+next real release-event run exercises the tag-pass path end-to-end.
 
 ## Notes
 

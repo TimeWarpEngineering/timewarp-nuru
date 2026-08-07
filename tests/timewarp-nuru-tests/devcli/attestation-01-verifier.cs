@@ -111,12 +111,7 @@ public class AttestationVerifierTests
 
   public static async Task DecodeSignature_round_trips_a_64_byte_signature()
   {
-    byte[] original = new byte[64];
-    for (int i = 0; i < original.Length; i++)
-    {
-      original[i] = (byte)(i * 4 + 1);
-    }
-
+    byte[] original = MakeSampleSignatureBytes();
     string unpaddedBase64Url = EncodeUnpaddedBase64Url(original);
 
     byte[]? decoded = AttestationVerifier.DecodeSignature(unpaddedBase64Url);
@@ -137,11 +132,13 @@ public class AttestationVerifierTests
     await Task.CompletedTask;
   }
 
-  public static async Task DecodeSignature_returns_null_for_padded_base64()
+  // Short, deliberately-not-64-bytes smoke check that a lone padding
+  // character is rejected — kept for backward compatibility with round-1,
+  // but this is a QUICK sanity check, not the rigorous coverage: the tests
+  // below prove strictness against REAL 64-byte-signature encodings in
+  // both disallowed alphabets (round-1 review Fix 1).
+  public static async Task DecodeSignature_returns_null_for_a_string_containing_a_padding_character()
   {
-    // "abc=" is syntactically valid base64 (decodes to 2 bytes) but is
-    // PADDED, not the unpadded base64url this contract requires; either
-    // way it is nowhere near 64 bytes, so it must be rejected.
     AttestationVerifier.DecodeSignature("abc=").ShouldBeNull();
 
     await Task.CompletedTask;
@@ -150,6 +147,66 @@ public class AttestationVerifierTests
   public static async Task DecodeSignature_returns_null_for_non_base64_garbage()
   {
     AttestationVerifier.DecodeSignature("not!!!base64###").ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  // --- DecodeSignature: strict unpadded-base64url-only (round-1 review Fix 1) ---
+  //
+  // These use the SAME 64 real signature bytes as the happy-path round-trip
+  // test above, re-encoded in two DIFFERENT (disallowed) base64 dialects —
+  // proving DecodeSignature rejects them on ALPHABET/PADDING grounds, not
+  // merely because they happen not to decode to 64 bytes (they decode to
+  // the identical 64 bytes; the encodings are bijective).
+
+  public static async Task DecodeSignature_returns_null_for_standard_alphabet_padded_encoding_of_a_real_64_byte_signature()
+  {
+    byte[] original = MakeSampleSignatureBytes();
+    string standardPaddedBase64 = Convert.ToBase64String(original);
+
+    // Sanity on the fixture itself: this really does contain a
+    // disallowed character (padding, and — for these particular bytes —
+    // a standard-alphabet '/' too), not an accidental no-op re-encoding.
+    standardPaddedBase64.ShouldContain("=");
+    standardPaddedBase64.ShouldContain("/");
+
+    AttestationVerifier.DecodeSignature(standardPaddedBase64).ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task DecodeSignature_returns_null_for_base64url_alphabet_with_padding_of_a_real_64_byte_signature()
+  {
+    byte[] original = MakeSampleSignatureBytes();
+    string base64UrlWithPadding = Convert.ToBase64String(original).Replace('+', '-').Replace('/', '_');
+
+    // Sanity: url-safe alphabet ('-'/'_'), but STILL carries '=' padding —
+    // the one thing wrong with it relative to the frozen contract.
+    base64UrlWithPadding.ShouldContain("=");
+    base64UrlWithPadding.ShouldNotContain("+");
+    base64UrlWithPadding.ShouldNotContain("/");
+
+    AttestationVerifier.DecodeSignature(base64UrlWithPadding).ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task DecodeSignature_returns_null_when_input_contains_plus()
+  {
+    string valid = EncodeUnpaddedBase64Url(MakeSampleSignatureBytes());
+    string withPlus = "+" + valid[1..];
+
+    AttestationVerifier.DecodeSignature(withPlus).ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task DecodeSignature_returns_null_when_input_contains_slash()
+  {
+    string valid = EncodeUnpaddedBase64Url(MakeSampleSignatureBytes());
+    string withSlash = "/" + valid[1..];
+
+    AttestationVerifier.DecodeSignature(withSlash).ShouldBeNull();
 
     await Task.CompletedTask;
   }
@@ -246,7 +303,7 @@ public class AttestationVerifierTests
     await Task.CompletedTask;
   }
 
-  public static async Task Evaluate_padded_base64_sig_yields_ParseFailure()
+  public static async Task Evaluate_sig_containing_a_padding_character_yields_ParseFailure()
   {
     string json = ValidNoteJson(sig: "abc=");
     AttestationVerifier.Evaluate(json, Tree).Status.ShouldBe(AttestationVerificationStatus.ParseFailure);
@@ -259,6 +316,40 @@ public class AttestationVerifierTests
     string shortSig = EncodeUnpaddedBase64Url(new byte[63]);
     string json = ValidNoteJson(sig: shortSig);
     AttestationVerifier.Evaluate(json, Tree).Status.ShouldBe(AttestationVerificationStatus.ParseFailure);
+
+    await Task.CompletedTask;
+  }
+
+  // Both use the SAME real 64-byte signature as the ReadyToVerify happy
+  // path below, just encoded in a disallowed dialect — Evaluate must
+  // reject them at the ParseFailure stage (via DecodeSignature) and name
+  // 'sig' as the offending field, never let a bijective re-encoding of a
+  // genuinely valid signature slip through (round-1 review Fix 1).
+
+  public static async Task Evaluate_standard_alphabet_padded_sig_yields_ParseFailure_naming_sig()
+  {
+    string standardPaddedBase64 = Convert.ToBase64String(MakeSampleSignatureBytes());
+    string json = ValidNoteJson(sig: standardPaddedBase64);
+
+    AttestationEvaluation result = AttestationVerifier.Evaluate(json, Tree);
+
+    result.Status.ShouldBe(AttestationVerificationStatus.ParseFailure);
+    result.Detail.ShouldNotBeNull();
+    result.Detail.ShouldContain("sig");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Evaluate_base64url_alphabet_with_padding_sig_yields_ParseFailure_naming_sig()
+  {
+    string base64UrlWithPadding = Convert.ToBase64String(MakeSampleSignatureBytes()).Replace('+', '-').Replace('/', '_');
+    string json = ValidNoteJson(sig: base64UrlWithPadding);
+
+    AttestationEvaluation result = AttestationVerifier.Evaluate(json, Tree);
+
+    result.Status.ShouldBe(AttestationVerificationStatus.ParseFailure);
+    result.Detail.ShouldNotBeNull();
+    result.Detail.ShouldContain("sig");
 
     await Task.CompletedTask;
   }
@@ -347,6 +438,20 @@ public class AttestationVerifierTests
 
   private static string EncodeUnpaddedBase64Url(byte[] bytes) =>
     Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+  // Deterministic 64-byte fixture reused across the happy-path round-trip
+  // test and the strict-decoding rejection tests, so the latter genuinely
+  // prove "same bytes, disallowed encoding" rather than an unrelated fixture.
+  private static byte[] MakeSampleSignatureBytes()
+  {
+    byte[] bytes = new byte[64];
+    for (int i = 0; i < bytes.Length; i++)
+    {
+      bytes[i] = (byte)(i * 4 + 1);
+    }
+
+    return bytes;
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.DevCli

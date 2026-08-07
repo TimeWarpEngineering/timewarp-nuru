@@ -164,10 +164,22 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     // nothing is enforced org-wide until repos opt in; see
     // attestation-config.cs Design region). "require" fails the pipeline on
     // any non-Valid outcome; "warn" prints a loud advisory but never aborts.
+    // Mode interpretation itself is delegated to the pure
+    // AttestationConfigResolver.ResolveMode (round-1 review Fix 3) so a
+    // typo'd mode value (e.g. "requiree") is unit-tested rather than only
+    // exercisable end-to-end — it still resolves to Warn, but this prints a
+    // warning naming the bad value instead of silently doing so.
     private async Task<AttestationStepResult> RunPrAttestationStepAsync(string repoRoot)
     {
       RepoConfig config = await ConfigService.GetConfigAsync(CancellationToken.None).ConfigureAwait(false);
-      bool requireMode = string.Equals(config.Attestation?.Mode, "require", StringComparison.OrdinalIgnoreCase);
+      AttestationModeResolution modeResolution = AttestationConfigResolver.ResolveMode(config.Attestation?.Mode);
+
+      if (modeResolution.UnrecognizedValue is not null)
+      {
+        Terminal.WriteLine($"Warning: unrecognized attestation.mode '{modeResolution.UnrecognizedValue}' — treating as 'warn'. Valid values: warn, require.".Yellow());
+      }
+
+      bool requireMode = modeResolution.Mode == AttestationMode.Require;
 
       AttestationVerifyOutcome outcome = await VerifyAttestationAsync(repoRoot).ConfigureAwait(false);
 
@@ -486,6 +498,17 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     // status; only a genuinely broken git repo (HEAD^{tree} unresolvable)
     // throws, matching LocateCiRunAsync's precedent for "this should never
     // happen in a real checkout".
+    //
+    // RefMissing/NoNote classification (round-1 review Fix 2): the fetch and
+    // notes-show calls below match specific ENGLISH substrings ("couldn't
+    // find remote ref", "no note found") against git's stderr. Amuru's
+    // Shell.Builder DOES expose per-invocation environment injection
+    // (WithEnvironmentVariable — confirmed via its existing use in
+    // tests/scripts/run-nuru-tests.cs), so both calls pin LC_ALL=C and
+    // LANG=C to make that stderr locale-stable rather than just documenting
+    // the English-locale assumption. Either outcome (RefMissing vs NoNote)
+    // is fail-closed either way — this only sharpens which operator-facing
+    // message is shown, never lets an unattested tree read as attested.
     private static async Task<AttestationVerifyOutcome> VerifyAttestationAsync(string repoRoot)
     {
       // (a) Best-effort forced fetch of the notes ref. A repo that has never
@@ -493,9 +516,15 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       // 128 with "couldn't find remote ref ..." on stderr in that case; that
       // is expected and not a fetch failure, just a signal that RefMissing
       // (rather than plain NoNote) is the more accurate verdict below.
+      // LC_ALL/LANG=C pins git's stderr to English so the substring match
+      // below is locale-stable (round-1 review Fix 2) — Amuru's
+      // WithEnvironmentVariable injects into the child process only, never
+      // mutates this process's own environment.
       CommandOutput fetchResult = await Shell.Builder("git")
         .WithArguments("fetch", "origin", $"+{AttestationVerifier.NotesRef}:{AttestationVerifier.NotesRef}")
         .WithWorkingDirectory(repoRoot)
+        .WithEnvironmentVariable("LC_ALL", "C")
+        .WithEnvironmentVariable("LANG", "C")
         .WithNoValidation()
         .CaptureAsync(CancellationToken.None)
         .ConfigureAwait(false);
@@ -518,10 +547,13 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       string treeSha = treeResult.Stdout.Trim();
 
-      // (c) Read the note for this tree.
+      // (c) Read the note for this tree. Same LC_ALL/LANG=C pinning as the
+      // fetch above — "no note found" is matched as English stderr text.
       CommandOutput noteResult = await Shell.Builder("git")
         .WithArguments("notes", $"--ref={AttestationVerifier.NotesRefShort}", "show", treeSha)
         .WithWorkingDirectory(repoRoot)
+        .WithEnvironmentVariable("LC_ALL", "C")
+        .WithEnvironmentVariable("LANG", "C")
         .WithNoValidation()
         .CaptureAsync(CancellationToken.None)
         .ConfigureAwait(false);

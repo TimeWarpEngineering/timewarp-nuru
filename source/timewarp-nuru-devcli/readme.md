@@ -28,6 +28,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `ReleaseGuard` (`GuardVerdict`) | Pure per-guard classifiers for the `release` gate: working tree clean, on master, synced with origin, tag `v{Version}` available (neither local nor remote), and publish state (none/partial/all) — no process execution |
 | `AttestationVerifier` (`AttestationNoteDto`, `AttestationEvaluation`, `AttestationVerificationStatus`) | Pure verifier for ganda-audit attestation notes (kanban task 458-010): parses the frozen v1 note JSON, rebuilds the canonical signed payload, decodes the unpadded-base64url signature, resolves `key_id` against a baked-in key registry (or a test-only `keyOverride`), and compares the note's tree against the tree being verified — no process execution; the actual Ed25519 verify (via `openssl pkeyutl -verify -rawin`) runs in `workflow-command.cs`, not here |
 | `AttestationConfig` | Config model for the attestation verify step's `mode` (`"warn"`\|`"require"`, default `warn`) |
+| `AttestationConfigResolver` (`AttestationMode`, `AttestationModeResolution`) | Pure resolver for `attestation.mode`: blank/absent and "warn"/"require" (case-insensitive) resolve exactly; any other non-blank value resolves to `Warn` but also returns the offending raw value so the caller can warn about a typo (e.g. `"requiree"`) instead of silently falling back |
 
 ## Configuration
 
@@ -106,10 +107,14 @@ must be on PATH (runners and operator machines) or the step reports `VerifierUna
 Pipeline shape by mode:
 
 - **PR/merge mode**: new Step 1 ("Attestation"), before Clean — Steps renumber from `1/4..4/4` to
-  `1/5..5/5`. Governed by `.timewarp/dev.jsonc` `attestation.mode`: `"warn"` (default — nothing is
-  attested org-wide yet) prints a loud advisory on any non-`Valid` outcome but never fails the
-  pipeline (the advisory repeats once more immediately before the `SUCCEEDED` banner so it
-  survives scrollback); `"require"` fails the pipeline on any non-`Valid` outcome.
+  `1/5..5/5`. Governed by `.timewarp/dev.jsonc` `attestation.mode`, resolved by the pure
+  `AttestationConfigResolver.ResolveMode`: `"warn"` (default — nothing is attested org-wide yet)
+  prints a loud advisory on any non-`Valid` outcome but never fails the pipeline (the advisory
+  repeats once more immediately before the `SUCCEEDED` banner so it survives scrollback);
+  `"require"` fails the pipeline on any non-`Valid` outcome. An unrecognized non-blank value (a
+  typo like `"requiree"`) still resolves to `warn` — it never silently becomes `require` — but
+  prints `Warning: unrecognized attestation.mode '<value>' — treating as 'warn'. Valid values:
+  warn, require.` so the operator does not believe enforcement is on when it is not.
 - **Release mode**: hard gate, always — inserted into the existing Step 1/6 gate block
   immediately after the ancestor-of-master check, and **ignores** `attestation.mode` entirely. A
   release with no verifiable audit evidence must never ship; the runner never signs, so a missing
@@ -124,6 +129,13 @@ malformed field). See `AttestationVerifier`'s Design region for the full frozen 
 (notes ref, canonical payload bytes, signature encoding, key registry + rotation procedure) —
 it must match ganda's `documentation/developer/attestation.md` byte-for-byte.
 
+`DecodeSignature` is STRICT: `sig` must be unpadded base64url only (`[A-Za-z0-9_-]`, no `+`, `/`,
+or `=`) — any character outside that alphabet is rejected before a decode is even attempted, so a
+padded or standard-alphabet re-encoding of an otherwise-valid 64-byte signature is still refused
+(same bytes, wrong wire format). The `RefMissing`/`NoNote` classification pins `LC_ALL=C`/`LANG=C`
+on the underlying `git fetch`/`git notes show` calls so the English-substring match on their
+stderr is locale-stable rather than assuming the runner's locale.
+
 `.timewarp/dev.jsonc` example (see this repo's own `.timewarp/dev.jsonc` for a live, commented
 one — default `warn`, nothing to configure until you want to flip to `require`):
 
@@ -136,7 +148,8 @@ one — default `warn`, nothing to configure until you want to flip to `require`
 ```
 
 The package also now ships the new public `AttestationNoteDto`, `AttestationVerifier`,
-`AttestationEvaluation`, `AttestationVerificationStatus`, `AttestationConfig` types (namespace
+`AttestationEvaluation`, `AttestationVerificationStatus`, `AttestationConfig`,
+`AttestationConfigResolver`, `AttestationMode`, `AttestationModeResolution` types (namespace
 `DevCli`) — no known downstream equivalent, so no expected collision; listed here for
 completeness (`TagAssertion` precedent above). If a consuming repo already declares its own type
 under any of these names, the build fails with `CS0101` (duplicate type in namespace `DevCli`).

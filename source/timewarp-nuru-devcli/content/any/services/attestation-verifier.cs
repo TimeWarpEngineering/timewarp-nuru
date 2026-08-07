@@ -29,8 +29,14 @@
 //     a timestamp here).
 //   - sig: Ed25519 signature (64 raw bytes) encoded as UNPADDED base64url
 //     (RFC 4648 §5 alphabet, '-'/'_' in place of '+'/'/', trailing '='
-//     stripped). DecodeSignature reverses this and rejects anything that
-//     does not decode to exactly 64 bytes.
+//     stripped). DecodeSignature enforces this STRICTLY: any character
+//     outside [A-Za-z0-9_-] — including standard-alphabet '+'/'/' or any
+//     '=' padding — is rejected BEFORE a decode is even attempted, not
+//     just "whatever happens not to decode to 64 bytes." Standard
+//     (padded and/or '+'/'/') base64 of the same 64 bytes decodes to the
+//     identical byte sequence (the encodings are bijective), so accepting
+//     it would be forgery-neutral, but it is still a real wire-contract
+//     divergence from the frozen v1 spec and must not silently pass.
 //
 // Key registry + rotation:
 //   KnownKeys maps key_id -> lowercase hex of the 32-byte raw Ed25519 public
@@ -244,13 +250,33 @@ public static class AttestationVerifier
   }
 
   /// <summary>
-  /// Decode an unpadded base64url signature. Returns null (never throws)
-  /// on any input that is not valid base64 or that does not decode to
-  /// exactly 64 bytes (the Ed25519 signature length).
+  /// Decode a STRICTLY unpadded base64url signature. Returns null (never
+  /// throws) on any character outside the unpadded base64url alphabet
+  /// (<c>[A-Za-z0-9_-]</c> — no '+', '/', or '=' — see the Design region
+  /// above), on anything that is not otherwise valid base64, or that does
+  /// not decode to exactly 64 bytes (the Ed25519 signature length).
   /// </summary>
   public static byte[]? DecodeSignature(string value)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(value);
+
+    foreach (char c in value)
+    {
+      bool isUnpaddedBase64UrlChar =
+        (c >= 'A' && c <= 'Z')
+        || (c >= 'a' && c <= 'z')
+        || (c >= '0' && c <= '9')
+        || c == '-'
+        || c == '_';
+
+      if (!isUnpaddedBase64UrlChar)
+      {
+        // Rejects '+', '/', '=' (padding) and everything else BEFORE any
+        // decode is attempted — standard-alphabet or padded base64 of the
+        // same bytes must not silently pass (Fix 1, review round 1).
+        return null;
+      }
+    }
 
     string padded = value.Replace('-', '+').Replace('_', '/');
     int remainder = padded.Length % 4;

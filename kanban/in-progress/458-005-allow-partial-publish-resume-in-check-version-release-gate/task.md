@@ -49,6 +49,16 @@ Target (convention.md rule 6): three-state gate —
    `dev check-version` smoke (current repo state: all 5 packages have
    beta.71 → expect All → abort message unchanged).
 
+### Known residual (accepted)
+
+Round-1 review finding #3 (untagged double break-glass): two different commits under one
+never-bumped, never-tagged version leaves the release-gate tag-pin check (added in round-1
+fix batch, `tools/dev-cli/endpoints/workflow-command.cs`) nothing to pin against — it only
+enforces same-commit resume once a tag for the version exists. Full closure arrives once
+releases are always cut by tooling that tags first (458-006) or by build-once/promote
+(458-002); until then, this narrow case relies on operator discipline. Documented in the
+DevCli readme migration-notes tag-pin paragraph too.
+
 ## Checklist
 
 - [ ] `HandleNuGetSearchAsync`: distinguish none / some / all published instead of `alreadyPublished.Count == 0`

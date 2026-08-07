@@ -95,6 +95,16 @@ states:
 Single-package repos are unaffected in shape: 1 of 1 published is still the **All** state and
 still aborts.
 
+Resuming a partial publish is only byte-safe when the resume run is the SAME commit that
+produced the earlier partial push — this package's warning says so, but does not enforce it.
+Enforcement is a release-gate tag-pin check in `tools/dev-cli/endpoints/workflow-command.cs`
+(this repo's own dev-cli, not shipped package content): if a local tag `v<version>` already
+exists, `HEAD` must be at that tag's commit, or the release aborts with a mismatch error.
+**Known residual (accepted):** an untagged double break-glass — two different commits under one
+never-bumped, never-tagged version — leaves tag-pin nothing to pin against; full closure arrives
+once releases are always cut by tooling that tags first (458-006) or by build-once/promote
+(458-002), and until then this narrow case relies on operator discipline.
+
 ### 3.0.0-beta.72+: shared `CiMode` / `CiModeDetector` (`ci-mode.cs`)
 
 `workflow-command.cs` previously declared its own internal `CiMode` enum; `ci-mode.cs` now ships

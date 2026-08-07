@@ -4,7 +4,11 @@
   <PropertyGroup>
     <!-- CA5399: the shared NuGetVersionService creates HttpClient without enabling
          CRL checks; the consuming CLI (tools/dev-cli) already suppresses this. -->
-    <NoWarn>$(NoWarn);CA5399</NoWarn>
+    <!-- CA1849: Sync WriteLine is fine for CLI output - ITerminal doesn't have async methods
+         (same suppression as tools/dev-cli/Directory.Build.props; check-version-command.cs
+         calls Terminal.WriteLine/WriteErrorLine, now compiled here for the round-2 endpoint
+         test, kanban task 458-005). -->
+    <NoWarn>$(NoWarn);CA5399;CA1849</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +24,18 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/publish-state.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config-service.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/irepo-config-service.cs" />
+
+    <!-- check-version-command.cs (the [NuruRoute] endpoint) compiled ONLY here, not in
+         tests/ci-tests: this directory's standalone runfiles are compiled one at a time,
+         so there is no cross-file endpoint-discovery collision to worry about (unlike the
+         ci-tests multi-mode assembly, where ALL [NuruRoute] endpoints in the compilation
+         are collected globally by .DiscoverEndpoints() — task 454-022 decision A2). The
+         new check-version-04-endpoint-zero-package.cs test (458-005 round-2) constructs
+         CheckVersionCommand.Handler directly, so this file must be visible to THIS project
+         without also reaching tests/ci-tests (guarded there via #if !JARIBU_MULTI in the
+         test file itself, since this Compile Include is per-project and does not affect
+         tests/ci-tests/Directory.Build.props, which is intentionally left untouched). -->
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/endpoints/check-version-command.cs" />
   </ItemGroup>
 
   <ItemGroup>

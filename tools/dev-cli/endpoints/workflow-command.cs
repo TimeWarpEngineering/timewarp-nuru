@@ -37,19 +37,22 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     private readonly IRepoCleanService RepoCleanService;
     private readonly NuGetVersionService NuGetVersionService;
     private readonly IRepoConfigService ConfigService;
+    private readonly IPackableProjectService PackableProjectService;
 
     public Handler
     (
       ITerminal terminal,
       IRepoCleanService repoCleanService,
       NuGetVersionService nuGetVersionService,
-      IRepoConfigService configService
+      IRepoConfigService configService,
+      IPackableProjectService packableProjectService
     )
     {
       Terminal = terminal;
       RepoCleanService = repoCleanService;
       NuGetVersionService = nuGetVersionService;
       ConfigService = configService;
+      PackableProjectService = packableProjectService;
     }
 
     public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
@@ -238,7 +241,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 2/6: Check Version");
       Terminal.WriteLine("===============================================================================");
-      CheckVersionCommand.Handler checkVersionHandler = new(Terminal, NuGetVersionService, ConfigService);
+      CheckVersionCommand.Handler checkVersionHandler = new(Terminal, NuGetVersionService, ConfigService, PackableProjectService);
       await checkVersionHandler.Handle(new CheckVersionCommand(), CancellationToken.None);
 
       if (Environment.ExitCode != 0)
@@ -267,14 +270,26 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 5/6: Pack");
       Terminal.WriteLine("===============================================================================");
-      await PackProjectsAsync(repoRoot);
+
+      IReadOnlyList<PackableProject> packableProjects = await PackableProjectService
+        .GetPackableProjectsAsync(repoRoot, CancellationToken.None)
+        .ConfigureAwait(false);
+
+      if (packableProjects.Count == 0)
+      {
+        Terminal.WriteErrorLine("Release gate failed: no packable projects found under source/.");
+        AbortPipeline("no packable projects found");
+        return;
+      }
+
+      await PackProjectsAsync(repoRoot, packableProjects);
 
       // Step 6: Push
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 6/6: Push to NuGet");
       Terminal.WriteLine("===============================================================================");
-      await PushPackagesAsync(repoRoot, apiKey);
+      await PushPackagesAsync(repoRoot, packableProjects, apiKey);
 
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
@@ -410,42 +425,38 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       return new AncestorCheckOutcome(AncestorCheckStatus.GitError, ancestorResult.Stderr.Trim());
     }
 
-    private async Task PackProjectsAsync(string repoRoot)
+    // Pack order is cosmetic: --no-build packs the already-built output of each
+    // project independently, so there is no dependency-order requirement between
+    // packages (kanban task 458-004, decision D1). projects is the derived
+    // packable set (IPackableProjectService), sorted by PackageId.
+    private async Task PackProjectsAsync(string repoRoot, IReadOnlyList<PackableProject> projects)
     {
       // Create artifacts directory
       string artifactsDir = Path.Combine(repoRoot, "artifacts", "packages");
       Directory.CreateDirectory(artifactsDir);
 
-      // Projects to pack (in dependency order)
-      string[] projectsToPack =
-      [
-        "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
-        "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
-        "source/timewarp-nuru/timewarp-nuru.csproj",
-        "source/timewarp-nuru-search/timewarp-nuru-search.csproj",
-        "source/timewarp-nuru-devcli/timewarp-nuru-devcli.csproj"
-      ];
-
-      foreach (string projectPath in projectsToPack)
+      foreach (PackableProject project in projects)
       {
-        string fullPath = Path.Combine(repoRoot, projectPath);
-        Terminal.WriteLine($"Packing {projectPath}...");
+        Terminal.WriteLine($"Packing {project.ProjectPath}...");
 
         int exitCode = await Shell.Builder("dotnet")
-          .WithArguments("pack", fullPath, "--configuration", "Release", "--output", artifactsDir, "--no-build")
+          .WithArguments("pack", project.ProjectPath, "--configuration", "Release", "--output", artifactsDir, "--no-build")
           .WithWorkingDirectory(repoRoot)
           .RunAsync();
 
         if (exitCode != 0)
         {
-          throw new InvalidOperationException($"Failed to pack {projectPath}!");
+          throw new InvalidOperationException($"Failed to pack {project.ProjectPath}!");
         }
       }
 
       Terminal.WriteLine($"\nPackages created in: {artifactsDir}");
     }
 
-    private async Task PushPackagesAsync(string repoRoot, string? apiKey)
+    // Push order is cosmetic: NuGet does not validate inter-package dependencies
+    // at push time (kanban task 458-004, decision D1). projects is the derived
+    // packable set (IPackableProjectService), sorted by PackageId.
+    private async Task PushPackagesAsync(string repoRoot, IReadOnlyList<PackableProject> projects, string? apiKey)
     {
       string artifactsDir = Path.Combine(repoRoot, "artifacts", "packages");
 
@@ -457,26 +468,41 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         throw new InvalidOperationException("Could not determine version for push");
       }
 
-      // Packages in dependency order
-      string[] packages =
-      [
-        "TimeWarp.Nuru.Analyzers",
-        "TimeWarp.Nuru.Mcp",
-        "TimeWarp.Nuru",
-        "TimeWarp.Nuru.Search",
-        "TimeWarp.Nuru.DevCli"
-      ];
+      HashSet<string> expectedNupkgFileNames = [.. projects.Select(p => $"{p.PackageId}.{version}.nupkg")];
 
-      foreach (string package in packages)
+      // Cross-check: no *.{version}.nupkg file in the artifacts directory may
+      // fall outside the derived packable set — stronger than a glob-only push,
+      // catches a stray/leftover package (e.g. from a renamed or removed
+      // project) that would otherwise be pushed unnoticed.
+      string[] actualNupkgFiles = Directory.Exists(artifactsDir)
+        ? Directory.GetFiles(artifactsDir, $"*.{version}.nupkg")
+        : [];
+
+      List<string> unexpectedNupkgFileNames = [];
+      foreach (string filePath in actualNupkgFiles)
       {
-        string nupkgPath = Path.Combine(artifactsDir, $"{package}.{version}.nupkg");
+        string fileName = Path.GetFileName(filePath);
+        if (!expectedNupkgFileNames.Contains(fileName))
+        {
+          unexpectedNupkgFileNames.Add(fileName);
+        }
+      }
+
+      if (unexpectedNupkgFileNames.Count > 0)
+      {
+        throw new InvalidOperationException($"Unexpected package(s) in {artifactsDir} not in the derived packable set: {string.Join(", ", unexpectedNupkgFileNames)}");
+      }
+
+      foreach (PackableProject project in projects)
+      {
+        string nupkgPath = Path.Combine(artifactsDir, $"{project.PackageId}.{version}.nupkg");
 
         if (!File.Exists(nupkgPath))
         {
           throw new FileNotFoundException($"Package not found: {nupkgPath}");
         }
 
-        Terminal.WriteLine($"Pushing {package}.{version}.nupkg...");
+        Terminal.WriteLine($"Pushing {project.PackageId}.{version}.nupkg...");
 
         // Build push arguments - include API key if provided (from OIDC Trusted Publishing)
         List<string> args = ["nuget", "push", nupkgPath, "--source", "https://api.nuget.org/v3/index.json", "--skip-duplicate"];
@@ -493,7 +519,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
         if (exitCode != 0)
         {
-          throw new InvalidOperationException($"Failed to push {package}!");
+          throw new InvalidOperationException($"Failed to push {project.PackageId}!");
         }
       }
 

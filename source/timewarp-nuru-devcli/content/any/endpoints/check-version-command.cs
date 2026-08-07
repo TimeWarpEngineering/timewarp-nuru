@@ -4,8 +4,14 @@
 #region Design
 // One methodology: props-version membership in the published NuGet versions
 // (NuGetVersionService, HttpClient-based — no NuGet.Protocol dependency).
-// Per-repo config (.timewarp/dev.jsonc) supplies the package list via
-// IRepoConfigService; --package overrides it for a single ad-hoc run.
+// Package set precedence (kanban task 458-004): --package overrides everything
+// for a single ad-hoc run; else .timewarp/dev.jsonc's checkVersionConfig.packages
+// (an explicit, repo-level override); else the derived set of packable projects
+// under source/ (IPackableProjectService, IsPackable=true via MSBuild evaluation)
+// — so a repo with no override needs zero hand-maintained package lists. A
+// --package value that parses to zero packages (e.g. ",") is still an explicit
+// override and does NOT fall through to derivation — it hits the same "no
+// packages" error as an empty/unconfigured repo.
 #endregion
 
 namespace DevCli;
@@ -25,38 +31,60 @@ public sealed class CheckVersionCommand : ICommand<Unit>
     private readonly ITerminal Terminal;
     private readonly NuGetVersionService NuGetVersionService;
     private readonly IRepoConfigService ConfigService;
+    private readonly IPackableProjectService PackableProjectService;
 
     public Handler
     (
       ITerminal terminal,
       NuGetVersionService nuGetVersionService,
-      IRepoConfigService configService
+      IRepoConfigService configService,
+      IPackableProjectService packableProjectService
     )
     {
       Terminal = terminal;
       NuGetVersionService = nuGetVersionService;
       ConfigService = configService;
+      PackableProjectService = packableProjectService;
     }
 
     public async ValueTask<Unit> Handle(CheckVersionCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 
+      string? repoRoot = Git.FindRoot();
+
       RepoConfig config = await ConfigService
         .GetConfigAsync(cancellationToken)
         .ConfigureAwait(false);
 
       string? packageInput = command.Package ?? config.CheckVersionConfig?.Packages;
-      IReadOnlyList<string> packages = PublishStateClassifier.ParsePackageList(packageInput);
+      IReadOnlyList<string> packages;
+
+      if (packageInput is not null)
+      {
+        packages = PublishStateClassifier.ParsePackageList(packageInput);
+      }
+      else if (repoRoot is not null)
+      {
+        IReadOnlyList<PackableProject> packableProjects = await PackableProjectService
+          .GetPackableProjectsAsync(repoRoot, cancellationToken)
+          .ConfigureAwait(false);
+
+        packages = [.. packableProjects.Select(p => p.PackageId)];
+      }
+      else
+      {
+        packages = [];
+      }
 
       if (packages.Count == 0)
       {
-        Terminal.WriteErrorLine("Error: no packages specified. Use --package or configure Packages in .timewarp/dev.jsonc");
+        Terminal.WriteErrorLine("Error: no packable projects found under source/ and no packages configured. Use --package or checkVersionConfig.packages.");
         Environment.ExitCode = 1;
         return Value;
       }
 
-      string? version = GetVersionFromSource();
+      string? version = GetVersionFromSource(repoRoot);
       if (version is null)
       {
         Terminal.WriteErrorLine("Error: could not read Version from source/Directory.Build.props");
@@ -136,9 +164,8 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       return Value;
     }
 
-    private static string? GetVersionFromSource()
+    private static string? GetVersionFromSource(string? repoRoot)
     {
-      string? repoRoot = Git.FindRoot();
       if (repoRoot is null)
       {
         return null;

@@ -50,9 +50,35 @@ manifest. Remove the `packages` key from `.timewarp/dev.jsonc` once derived.
 
 ## Checklist
 
-- [ ] Pack: enumerate packable projects (or `dotnet pack` the solution) instead of the hardcoded array
-- [ ] Push: glob `artifacts/packages/*.{version}.nupkg` instead of the hardcoded ID array
-- [ ] check-version nuget-search: derive package IDs instead of `.timewarp/dev.jsonc` `packages`
-- [ ] Verify the derived set equals today's five packages exactly (no test/tool projects leak in)
-- [ ] Tests for the derivation (add a fake packable project → appears in set)
-- [ ] Update `.timewarp/dev.jsonc` and DevCli readme
+- [x] Pack: enumerate packable projects (or `dotnet pack` the solution) instead of the hardcoded array
+- [x] Push: glob `artifacts/packages/*.{version}.nupkg` instead of the hardcoded ID array
+- [x] check-version nuget-search: derive package IDs instead of `.timewarp/dev.jsonc` `packages`
+- [x] Verify the derived set equals today's five packages exactly (no test/tool projects leak in)
+- [x] Tests for the derivation (add a fake packable project → appears in set)
+- [x] Update `.timewarp/dev.jsonc` and DevCli readme
+
+## Session (2026-08-07)
+
+Implemented per the Phase 2 plan (D1-D4 above). New shared DevCli content:
+`ipackable-project-service.cs` (`IPackableProjectService`/`PackableProject` record) and
+`packable-project-service.cs` (`PackableProjectService`, `MsBuildEvaluationOutput`,
+pure `ParseGetPropertyOutput`). `check-version-command.cs` now resolves the package set
+via `--package` → `checkVersionConfig.packages` → derived (only when both are unset;
+an explicit override that parses to zero packages does NOT fall through to derivation).
+`workflow-command.cs` derives the packable set once before Step 5/6 (pack/push), aborts
+the pipeline if empty, and `PushPackagesAsync` cross-checks that no `*.{version}.nupkg`
+in the artifacts dir falls outside the derived set. `.timewarp/dev.jsonc`'s `packages`
+key removed (kept as an optional override, now empty/commented). Added
+`tests/timewarp-nuru-tests/devcli/packable-projects-01-parse.cs` (13 tests, pure parse
+matrix) and `packable-projects-02-derivation-fixture.cs` (2 tests, temp-root fixture
+against real `dotnet msbuild`; no iteration needed — fixture csproj evaluated cleanly
+on the first attempt). Updated `check-version-04-endpoint-zero-package.cs` for the new
+4-arg `Handler` ctor and changed error text.
+
+Verification: `dev check-version` lists exactly TimeWarp.Nuru, TimeWarp.Nuru.Analyzers,
+TimeWarp.Nuru.DevCli, TimeWarp.Nuru.Mcp, TimeWarp.Nuru.Search (sorted), aborts exit 1
+(beta.71 already published — expected). `--package TimeWarp.Nuru` override confirmed
+single-package. `dotnet build timewarp-nuru.slnx`: 0 warnings/errors. Full CI suite
+(`tests/ci-tests/run-ci-tests.cs`): exit 0, multi-mode assembly 1461 total / 1454 passed
+/ 7 skipped / 0 failed, all standalone generator runs green. Changes left uncommitted
+in the working tree per the delegating agent's instruction.

@@ -49,6 +49,7 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddSingleton<IRepoCleanService, RepoCleanService>();
     services.AddSingleton<NuGetVersionService>();
     services.AddSingleton<IRepoConfigService, RepoConfigService>();
+    services.AddSingleton<IPackableProjectService, PackableProjectService>();
   })
   .DiscoverEndpoints()
   .Build();

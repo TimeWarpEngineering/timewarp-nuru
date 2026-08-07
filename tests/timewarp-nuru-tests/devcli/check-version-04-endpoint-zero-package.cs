@@ -20,11 +20,20 @@ using global::DevCli;
 /// Endpoint-level regression test for round-1 review finding #1 (kanban task 458-005):
 /// a delimiter-only --package value (e.g. ",") used to split to zero packages and reach
 /// PublishStateClassifier.Classify(0, 0), which throws. The fix routes the parsed zero
-/// count to the existing friendly "no packages specified" error instead. This test drives
+/// count to the existing friendly "no packages" error instead. This test drives
 /// the real CheckVersionCommand.Handler (not just the extracted PublishStateClassifier
 /// unit) so the wiring — not just the classifier in isolation — is covered. The guard
 /// (packages.Count == 0) fires before any HTTP call, so a real NuGetVersionService and a
 /// real RepoConfigService are safe to construct here.
+///
+/// Kanban task 458-004 added a third package-set source (derived packable projects
+/// under source/) below --package and checkVersionConfig.packages. An explicit
+/// --package value that parses to zero packages (this test's ",") is still an
+/// explicit override — CheckVersionCommand.Handler does NOT fall through to
+/// derivation in that case, so a real PackableProjectService here never actually
+/// runs (verified: this test passes without ever shelling out to `dotnet msbuild`).
+/// The error text also changed ("no packable projects found under source/ and no
+/// packages configured...") to describe all three sources being empty.
 /// </summary>
 [TestTag("DevCli")]
 public class CheckVersionEndpointZeroPackageTests
@@ -41,12 +50,13 @@ public class CheckVersionEndpointZeroPackageTests
       using TestTerminal terminal = new();
       using NuGetVersionService nuGetVersionService = new();
       RepoConfigService configService = new();
+      PackableProjectService packableProjectService = new();
 
-      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, configService);
+      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, configService, packableProjectService);
 
       await handler.Handle(new CheckVersionCommand { Package = "," }, CancellationToken.None);
 
-      terminal.ErrorContains("no packages specified").ShouldBeTrue();
+      terminal.ErrorContains("no packable projects found under source/ and no packages configured").ShouldBeTrue();
       Environment.ExitCode.ShouldBe(1);
     }
     finally

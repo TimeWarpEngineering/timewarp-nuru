@@ -10,13 +10,14 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 |----------|-------------|--------------|
 | `clean` | Clean solution and build artifacts | `IRepoCleanService` (TimeWarp.Amuru) |
 | `self-install` | AOT compile dev CLI to ./bin | None (standalone) |
-| `check-version` | Verify version is ready to release — three-state gate: none published (proceed), all published (abort), some published (resume with warning) | `NuGetVersionService`, `IRepoConfigService` |
+| `check-version` | Verify version is ready to release — three-state gate: none published (proceed), all published (abort), some published (resume with warning) | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
 
 ### Services
 
 | Service | Description |
 |---------|-------------|
 | `IRepoConfigService` / `RepoConfigService` | Reads per-repo config from `.timewarp/dev.jsonc` |
+| `IPackableProjectService` / `PackableProjectService` | Derives the packable project set (`IsPackable=true`, via real MSBuild evaluation) under a repo's `source/` tree — no hand-maintained project/package-ID lists |
 | `TagAssertion` | Pure release-gate check: tag must equal `v` + `<Version>` from `source/Directory.Build.props` |
 | `CheckVersionConfig` | Config model for the check-version command |
 | `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
@@ -25,18 +26,28 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 
 ## Configuration
 
-Create a `.timewarp/dev.jsonc` file in your repository root:
+`check-version`'s package set is resolved with this precedence: `--package` (single ad-hoc
+run) → `checkVersionConfig.packages` in `.timewarp/dev.jsonc` (explicit repo-level override) →
+**derived** from every project under `source/**/*.csproj` with `IsPackable=true` (via
+`dotnet msbuild -getProperty:IsPackable,PackageId`, no build/restore needed). Most repos need
+no configuration at all — the derived set is correct as long as packable projects live under a
+`source/` directory at the repo root, following the convention that project layout mirrors
+package boundaries.
+
+Create a `.timewarp/dev.jsonc` file in your repository root only to override the derived set:
 
 ```jsonc
 {
   "checkVersionConfig": {
-    // packages: comma-separated NuGet package IDs to check against NuGet.org
+    // packages: comma-separated NuGet package IDs to check against NuGet.org.
+    // Optional — omit to use the derived (IsPackable=true) set under source/.
     "packages": "TimeWarp.Nuru,TimeWarp.Nuru.Analyzers"
   }
 }
 ```
 
-If the file does not exist, `IRepoConfigService` returns defaults (no packages configured).
+If the file does not exist, `IRepoConfigService` returns defaults and the package set is fully
+derived.
 
 ## Installation
 
@@ -66,6 +77,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
     services.AddSingleton<IRepoCleanService, RepoCleanService>();
     services.AddSingleton<NuGetVersionService>();
     services.AddSingleton<IRepoConfigService, RepoConfigService>();
+    services.AddSingleton<IPackableProjectService, PackableProjectService>();
   })
   .UseMicrosoftDependencyInjection()
   .DiscoverEndpoints()
@@ -75,6 +87,26 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 3.0.0-beta.72+: package set derived from MSBuild `IsPackable` (`packable-project-service.cs`)
+
+`check-version` (and this repo's own `pack`/`push` in `tools/dev-cli/endpoints/workflow-command.cs`)
+used to require a hand-maintained package list — three separate hardcoded lists in some repos
+(project paths for pack, package IDs for push, `checkVersionConfig.packages` for the release
+gate) that had to be kept in sync by hand. Adding, renaming, or removing a packable project now
+needs zero edits: `IPackableProjectService` derives the set from every `source/**/*.csproj` with
+`IsPackable=true` (real MSBuild evaluation via `dotnet msbuild -getProperty:IsPackable,PackageId`,
+not XML parsing — `IsPackable` is commonly a two-level props default and `PackageId` commonly
+derives from `AssemblyName` with no explicit override).
+
+`CheckVersionCommand.Handler` gains a fourth constructor parameter, `IPackableProjectService`;
+update any direct construction site (`new CheckVersionCommand.Handler(...)`) to pass one — see
+`tools/dev-cli/dev.cs` for the DI registration and `tools/dev-cli/endpoints/workflow-command.cs`
+for the call site.
+
+**To adopt:** delete `checkVersionConfig.packages` from `.timewarp/dev.jsonc` (it becomes an
+optional override — no longer required) as long as your repo's packable projects live under
+`source/` at the repo root.
 
 ### 3.0.0-beta.72+: partial-publish resume in `check-version` (`publish-state.cs`)
 

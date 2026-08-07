@@ -21,7 +21,7 @@
 // Commands (Phase 1 - CI/CD Orchestration):
 //   dev ci                 - Run full CI/CD pipeline (auto-detects mode)
 //   dev ci --mode pr       - PR workflow: build -> verify-samples -> test
-//   dev ci --mode release  - Release workflow: tag-gate -> check-version -> clean -> build -> pack -> push
+//   dev ci --mode release  - Release workflow: tag-gate -> check-version -> locate-run -> download-artifact -> verify -> push
 //   dev build              - Build all TimeWarp.Nuru projects
 //   dev clean              - Clean solution and artifacts
 //   dev test               - Run CI test suite

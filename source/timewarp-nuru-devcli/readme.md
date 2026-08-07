@@ -23,6 +23,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
 | `CiMode` (enum) / `CiModeDetector` | Pure CI mode detection (`pr`/`merge`/`release`); `workflow_dispatch` auto-detects `merge`; unknown explicit mode throws |
 | `PublishState` (enum) / `PublishStateClassifier` | Pure none/some/all classification of published packages for the `check-version` gate; throws on zero packages or an out-of-range published count |
+| `CiRunPromotion` | Pure logic for release-mode artifact promotion: orders candidate CI runs for a commit, selects a run's `Packages-*` artifact (including expiry handling), and verifies a downloaded `.nupkg` set against the derived packable set — no process execution |
 
 ## Configuration
 
@@ -177,6 +178,42 @@ released, not a released tag to search against.
 
 The package also now ships the new public `TagAssertion` / `TagAssertionResult` types (namespace
 `DevCli`) — no known downstream equivalent, so no expected collision; listed here for completeness.
+
+### 3.0.0-beta.72+: release mode promotes CI artifacts (`ci-run-promotion.cs`)
+
+Release mode (`dev workflow --mode release`) no longer rebuilds from source. The pipeline was
+`tag-gate -> check-version -> clean -> build -> pack -> push`; it is now `tag-gate ->
+check-version -> locate-run -> download-artifact -> verify -> push`. Master-merge CI already
+builds, tests, and uploads the `.nupkg` set (`Packages-{run_number}`, always-run upload step in
+`workflow.yml`); release now locates the successful `workflow.yml` run at the release commit
+(push-event preferred over a same-commit release-event run, then newest), downloads that run's
+`Packages-*` artifact, verifies the downloaded file names against the derived packable set at the
+source version, and pushes those exact bytes. There is no local `dotnet pack` in release mode
+anymore — a green run of CI's `pr` pipeline (`build -> verify-samples -> test`) against the exact
+commit is now a hard prerequisite for release, not just an aspiration; a commit with no matching
+successful run, or one whose only artifact has expired, aborts with `gh run rerun <run-id>`
+guidance instead of silently rebuilding and shipping untested bits (kanban task 458-002, parent
+458 finding F2 — "release does not ship what is in master, it ships a new build of the same
+source").
+
+Locating and downloading the run uses the `gh` CLI (`gh run list`, `gh api
+repos/{owner}/{repo}/actions/runs/{id}/artifacts`, `gh run download`) — `workflow.yml` sets
+`GH_TOKEN: ${{ github.token }}` and grants the job `actions: read` for CI runners; a local or
+break-glass release needs `gh` installed and `gh auth login` run first, or the pipeline aborts
+with that guidance before attempting anything.
+
+The package also now ships the new public `CiRunSummary`, `RunArtifact`,
+`RunArtifactListResponse`, `CiRunPromotion`, `PackagesArtifactOutcome`,
+`PackageSetVerification` types (namespace `DevCli`) — no known downstream equivalent, so no
+expected collision; listed here for completeness (`TagAssertion` precedent above). If a consuming
+repo already declares its own type under any of these names, the build fails with `CS0101`
+(duplicate type in namespace `DevCli`).
+
+**458-005 residual closure:** the untagged double-break-glass residual noted above (two different
+commits mixing under one never-bumped, never-tagged version) is now fully closed for release mode
+— release mode never builds locally, so there is no local `dotnet pack` output for two different
+break-glass attempts to mix through the pipeline in the first place; every release push is the one
+CI-verified artifact for a specific commit.
 
 ## Source-Only Package
 

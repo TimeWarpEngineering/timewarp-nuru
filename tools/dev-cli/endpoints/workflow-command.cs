@@ -10,7 +10,9 @@
 //
 // Modes:
 //   pr/merge:  clean -> build -> verify-samples -> test
-//   release:   tag-gate -> check-version -> clean -> build -> pack -> push
+//   release:   tag-gate -> check-version -> locate-run -> download-artifact -> verify -> push
+//              (no rebuild — promotes the exact .nupkg set that master-merge CI
+//              already built+tested+uploaded for this commit; kanban task 458-002)
 //
 // Event mapping: pull_request -> pr, push -> merge, release -> release,
 // workflow_dispatch -> merge (manual dispatch never publishes by default;
@@ -135,7 +137,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
     private async Task RunReleaseWorkflowAsync(string? apiKey)
     {
-      Terminal.WriteLine("Pipeline: tag-gate -> check-version -> clean -> build -> pack -> push");
+      Terminal.WriteLine("Pipeline: tag-gate -> check-version -> locate-run -> download-artifact -> verify -> push");
       Terminal.WriteLine("");
 
       // Get repo root for pack/push operations
@@ -268,28 +270,94 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       Terminal.WriteLine($"Packable set ({packableProjects.Count}): {string.Join(", ", packableProjects.Select(p => p.PackageId))}");
 
-      // Step 3: Clean
+      // Step 3: Locate CI Run
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 3/6: Clean");
+      Terminal.WriteLine("  Step 3/6: Locate CI Run");
       Terminal.WriteLine("===============================================================================");
-      CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
-      await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
 
-      // Step 4: Build
+      LocateRunOutcome locateOutcome = await LocateCiRunAsync();
+
+      switch (locateOutcome.Status)
+      {
+        case LocateRunStatus.GhUnavailable:
+          Terminal.WriteErrorLine("Release gate failed: release mode promotes CI-built artifacts and requires the gh CLI. On runners GH_TOKEN is provided by workflow.yml; locally install gh and run 'gh auth login'.");
+          AbortPipeline("gh CLI unavailable");
+          return;
+
+        case LocateRunStatus.NoMatchingRun:
+          Terminal.WriteErrorLine($"Release gate failed: no successful CI run of workflow.yml exists for commit {locateOutcome.HeadSha}. Only tested CI artifacts are published — this commit must pass CI first. If a run failed, fix and re-run it (gh run rerun <run-id>).");
+          AbortPipeline("no successful CI run found");
+          return;
+
+        case LocateRunStatus.Found:
+          break;
+
+        default:
+          Terminal.WriteErrorLine($"Release gate failed: unhandled locate-run status '{locateOutcome.Status}'.");
+          AbortPipeline("unhandled locate-run status");
+          return;
+      }
+
+      Terminal.WriteLine($"Found {locateOutcome.CandidateRuns.Count} candidate CI run(s) for commit {ShortSha(locateOutcome.HeadSha)}.");
+
+      // Step 4: Download Artifact
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 4/6: Build");
+      Terminal.WriteLine("  Step 4/6: Download Artifact");
       Terminal.WriteLine("===============================================================================");
-      BuildCommand.Handler buildHandler = new(Terminal);
-      await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
 
-      // Step 5: Pack
+      DownloadArtifactOutcome downloadOutcome = await DownloadPackagesArtifactAsync(repoRoot, locateOutcome.CandidateRuns);
+
+      if (downloadOutcome.Status == DownloadArtifactStatus.Exhausted)
+      {
+        if (downloadOutcome.ExpiredEncounters.Count > 0)
+        {
+          string expiredDetail = string.Join("; ", downloadOutcome.ExpiredEncounters.Select(e => $"run {e.RunId} ({e.Event}): {string.Join(", ", e.ArtifactNames)}"));
+          Terminal.WriteErrorLine($"Release gate failed: every candidate CI run's Packages-* artifact has expired — {expiredDetail}. Re-run CI to produce a fresh tested artifact (gh run rerun {downloadOutcome.ExpiredEncounters[0].RunId}).");
+        }
+        else
+        {
+          Terminal.WriteErrorLine($"Release gate failed: no candidate CI run for commit {locateOutcome.HeadSha} uploaded a Packages-* artifact. Re-run CI to produce one (gh run rerun {locateOutcome.CandidateRuns[0].DatabaseId}).");
+        }
+
+        AbortPipeline("no usable CI artifact found");
+        return;
+      }
+
+      Terminal.WriteLine($"Downloaded '{downloadOutcome.ArtifactName}' from run {downloadOutcome.Run!.DatabaseId} ({downloadOutcome.Run.Event}).");
+
+      // Step 5: Verify Package Set
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 5/6: Pack");
+      Terminal.WriteLine("  Step 5/6: Verify Package Set");
       Terminal.WriteLine("===============================================================================");
 
-      await PackProjectsAsync(repoRoot, packableProjects);
+      string artifactsDir = Path.Combine(repoRoot, "artifacts", "packages");
+      string[] actualNupkgPaths = Directory.Exists(artifactsDir) ? Directory.GetFiles(artifactsDir, "*.nupkg") : [];
+      IReadOnlyList<string> actualFileNames = [.. actualNupkgPaths.Select(Path.GetFileName)!];
+
+      // propsVersion is guaranteed non-null here: Step 2/6 (Check Version) fails
+      // the pipeline above whenever it cannot read <Version> from source/Directory.Build.props.
+      PackageSetVerification verification = CiRunPromotion.VerifyPackageSet(actualFileNames, packableProjects, propsVersion!);
+
+      if (!verification.IsMatch)
+      {
+        if (verification.Missing.Count > 0)
+        {
+          Terminal.WriteErrorLine($"Release gate failed: downloaded artifact is missing package(s): {string.Join(", ", verification.Missing)}.");
+        }
+
+        if (verification.Unexpected.Count > 0)
+        {
+          Terminal.WriteErrorLine($"Release gate failed: downloaded artifact has unexpected package(s): {string.Join(", ", verification.Unexpected)}.");
+        }
+
+        Terminal.WriteErrorLine($"CI run likely predates the version bump — re-run CI on commit {locateOutcome.HeadSha} and retry.");
+        AbortPipeline("downloaded package set does not match derived packable set");
+        return;
+      }
+
+      Terminal.WriteLine("Package set verified.");
 
       // Step 6: Push
       Terminal.WriteLine("");
@@ -432,32 +500,122 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       return new AncestorCheckOutcome(AncestorCheckStatus.GitError, ancestorResult.Stderr.Trim());
     }
 
-    // Pack order is cosmetic: --no-build packs the already-built output of each
-    // project independently, so there is no dependency-order requirement between
-    // packages (kanban task 458-004, decision D1). projects is the derived
-    // packable set (IPackableProjectService), sorted by PackageId.
-    private async Task PackProjectsAsync(string repoRoot, IReadOnlyList<PackableProject> projects)
+    // Resolves the commit to release (HEAD) and asks gh for every successful
+    // workflow.yml run at that commit, ordered by CiRunPromotion.OrderCandidateRuns
+    // (push-event preferred, then newest). `gh run list` exits 0 with an empty
+    // JSON array `[]` when nothing matches — that is NoMatchingRun, a distinct
+    // outcome from gh itself being unusable (missing binary or not
+    // authenticated), which is GhUnavailable. A missing gh binary throws
+    // Win32Exception from Process.Start; caught here rather than propagating,
+    // so the release gate reports a clear remediation instead of a raw
+    // exception (workflow.yml sets GH_TOKEN for runners; local/break-glass
+    // release needs `gh auth login`).
+    private static async Task<LocateRunOutcome> LocateCiRunAsync()
     {
-      // Create artifacts directory
-      string artifactsDir = Path.Combine(repoRoot, "artifacts", "packages");
-      Directory.CreateDirectory(artifactsDir);
+      CommandOutput headResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "HEAD")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
 
-      foreach (PackableProject project in projects)
+      if (headResult.ExitCode != 0)
       {
-        Terminal.WriteLine($"Packing {project.ProjectPath}...");
+        throw new InvalidOperationException($"Could not determine HEAD commit: {headResult.Stderr.Trim()}");
+      }
 
-        int exitCode = await Shell.Builder("dotnet")
-          .WithArguments("pack", project.ProjectPath, "--configuration", "Release", "--output", artifactsDir, "--no-build")
+      string headSha = headResult.Stdout.Trim();
+
+      CommandOutput runListResult;
+      try
+      {
+        runListResult = await Shell.Builder("gh")
+          .WithArguments("run", "list", "--workflow", "workflow.yml", "--commit", headSha, "--status", "success", "--json", "databaseId,event,headSha,createdAt")
+          .WithNoValidation()
+          .CaptureAsync(CancellationToken.None);
+      }
+      catch (System.ComponentModel.Win32Exception)
+      {
+        return new LocateRunOutcome(LocateRunStatus.GhUnavailable, headSha, []);
+      }
+
+      if (runListResult.ExitCode != 0)
+      {
+        return new LocateRunOutcome(LocateRunStatus.GhUnavailable, headSha, []);
+      }
+
+      List<CiRunSummary>? runs = JsonSerializer.Deserialize(runListResult.Stdout, DevCliJsonContext.Default.ListCiRunSummary);
+      IReadOnlyList<CiRunSummary> candidateRuns = CiRunPromotion.OrderCandidateRuns(runs ?? [], headSha);
+
+      return candidateRuns.Count == 0
+        ? new LocateRunOutcome(LocateRunStatus.NoMatchingRun, headSha, [])
+        : new LocateRunOutcome(LocateRunStatus.Found, headSha, candidateRuns);
+    }
+
+    // Walks candidateRuns (already ordered push-first/newest-first) until one
+    // has a non-expired Packages-* artifact. A run with NO matching artifact
+    // (NoneMatching — pre-458-002 release-event runs won't have one) is skipped
+    // silently; a run whose ONLY matches are expired is recorded so the final
+    // abort message (if every candidate is exhausted) can tell an operator
+    // "these artifacts expired" apart from "CI never uploaded one at all".
+    // On the winning run: the artifacts directory is cleared and recreated
+    // first — Clean no longer runs in release mode, so a leftover file from a
+    // prior local/break-glass attempt must not silently survive into the
+    // verified set.
+    private async Task<DownloadArtifactOutcome> DownloadPackagesArtifactAsync(string repoRoot, IReadOnlyList<CiRunSummary> candidateRuns)
+    {
+      string artifactsDir = Path.Combine(repoRoot, "artifacts", "packages");
+      List<ExpiredArtifactEncounter> expiredEncounters = [];
+
+      foreach (CiRunSummary run in candidateRuns)
+      {
+        CommandOutput artifactsResult = await Shell.Builder("gh")
+          .WithArguments("api", $"repos/{{owner}}/{{repo}}/actions/runs/{run.DatabaseId}/artifacts")
+          .WithNoValidation()
+          .CaptureAsync(CancellationToken.None);
+
+        if (artifactsResult.ExitCode != 0)
+        {
+          throw new InvalidOperationException($"Failed to list artifacts for run {run.DatabaseId}: {artifactsResult.Stderr.Trim()}");
+        }
+
+        RunArtifactListResponse? artifactList = JsonSerializer.Deserialize(artifactsResult.Stdout, DevCliJsonContext.Default.RunArtifactListResponse);
+        PackagesArtifactOutcome selectOutcome = CiRunPromotion.SelectPackagesArtifact(artifactList?.Artifacts ?? []);
+
+        if (selectOutcome.Status == PackagesArtifactStatus.Expired)
+        {
+          expiredEncounters.Add(new ExpiredArtifactEncounter(run.DatabaseId, run.Event, selectOutcome.ExpiredNames));
+          continue;
+        }
+
+        if (selectOutcome.Status == PackagesArtifactStatus.NoneMatching)
+        {
+          continue;
+        }
+
+        RunArtifact artifact = selectOutcome.Artifact!;
+
+        if (Directory.Exists(artifactsDir))
+        {
+          Directory.Delete(artifactsDir, recursive: true);
+        }
+
+        Directory.CreateDirectory(artifactsDir);
+
+        Terminal.WriteLine($"Downloading artifact '{artifact.Name}' from run {run.DatabaseId} ({run.Event})...");
+
+        int exitCode = await Shell.Builder("gh")
+          .WithArguments("run", "download", run.DatabaseId.ToString(System.Globalization.CultureInfo.InvariantCulture), "--name", artifact.Name, "--dir", artifactsDir)
           .WithWorkingDirectory(repoRoot)
           .RunAsync();
 
         if (exitCode != 0)
         {
-          throw new InvalidOperationException($"Failed to pack {project.ProjectPath}!");
+          throw new InvalidOperationException($"Failed to download artifact '{artifact.Name}' from run {run.DatabaseId}!");
         }
+
+        return new DownloadArtifactOutcome(DownloadArtifactStatus.Downloaded, run, artifact.Name, expiredEncounters);
       }
 
-      Terminal.WriteLine($"\nPackages created in: {artifactsDir}");
+      return new DownloadArtifactOutcome(DownloadArtifactStatus.Exhausted, null, null, expiredEncounters);
     }
 
     // Push order is cosmetic: NuGet does not validate inter-package dependencies
@@ -556,5 +714,32 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     }
 
     private sealed record TagPinOutcome(TagPinStatus Status, string? TagCommit, string? HeadCommit, string? Detail);
+
+    // Outcome of locating the CI run to promote — GhUnavailable (missing
+    // binary or not authenticated) and NoMatchingRun (gh works fine, nothing
+    // matched) require different operator remediation and must not collapse
+    // into one message.
+    private enum LocateRunStatus
+    {
+      Found,
+      GhUnavailable,
+      NoMatchingRun
+    }
+
+    private sealed record LocateRunOutcome(LocateRunStatus Status, string HeadSha, IReadOnlyList<CiRunSummary> CandidateRuns);
+
+    // Outcome of walking candidate runs for a downloadable Packages-* artifact.
+    private enum DownloadArtifactStatus
+    {
+      Downloaded,
+      Exhausted
+    }
+
+    private sealed record DownloadArtifactOutcome(DownloadArtifactStatus Status, CiRunSummary? Run, string? ArtifactName, IReadOnlyList<ExpiredArtifactEncounter> ExpiredEncounters);
+
+    // One candidate run whose only matching artifact(s) were expired — carried
+    // through so the final "every candidate exhausted" abort message can name
+    // a specific run for `gh run rerun {RunId}` guidance.
+    private sealed record ExpiredArtifactEncounter(long RunId, string Event, IReadOnlyList<string> ArtifactNames);
   }
 }

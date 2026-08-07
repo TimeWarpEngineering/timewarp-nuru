@@ -26,6 +26,7 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/irepo-config-service.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ipackable-project-service.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/packable-project-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-run-promotion.cs" />
 
     <!-- check-version-command.cs (the [NuruRoute] endpoint) compiled ONLY here, not in
          tests/ci-tests: this directory's standalone runfiles are compiled one at a time,

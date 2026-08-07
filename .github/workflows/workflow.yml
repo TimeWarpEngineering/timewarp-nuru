@@ -4,27 +4,9 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'source/**'
-      - 'samples/**'
-      - 'tests/**'
-      - 'tools/**'
-      - 'runfiles/**'
-      - '.github/workflows/**'
-      - 'Directory.Build.props'
-      - 'Directory.Packages.props'
   pull_request:
     branches:
       - master
-    paths:
-      - 'source/**'
-      - 'samples/**'
-      - 'tests/**'
-      - 'tools/**'
-      - 'runfiles/**'
-      - '.github/workflows/**'
-      - 'Directory.Build.props'
-      - 'Directory.Packages.props'
   release:
     types: [published]
   workflow_dispatch:
@@ -47,6 +29,7 @@ jobs:
     permissions:
       contents: read
       id-token: write  # Required for NuGet Trusted Publishing (OIDC)
+      actions: read  # Release mode lists CI runs and downloads their package artifacts
 
     steps:
       - name: Checkout repository
@@ -73,6 +56,8 @@ jobs:
           user: TimeWarp.Enterprises
 
       - name: Run CI Pipeline
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ github.event_name }}" == "release" ]; then
             dotnet run --file tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"

@@ -27,10 +27,18 @@ only incoherent one:
 ## Checklist
 
 - [x] Decided 2026-08-08 (operator): **Design B — build-once / promote**. Design A not chosen.
-- [ ] Enable required status checks on master (green CI enforced at merge)
-- [ ] Release job resolves tag commit → successful CI run → downloads `Packages-*` artifact; hard-fail with re-run guidance when absent; confirm artifact retention covers the bump→release window
-- [ ] **Drop workflow path filters entirely** (decided 2026-08-08 — CI runs on every PR/push; closes the `*.slnx`/`assets/**` gap; kanban/docs PRs cost minutes, accepted)
-- [ ] Update mode comments in `workflow-command.cs` and the releasing guide (458-008)
+- [ ] Enable required status checks on master (green CI enforced at merge) — **operator
+      post-merge step, not run by this implementation session**: PUT
+      `repos/TimeWarpEngineering/timewarp-nuru/branches/master/protection` with
+      `required_status_checks` context `ci`, `strict: false`, preserving
+      `enforce_admins` and the existing 0-approval review requirement (D8).
+- [x] Release job resolves tag commit → successful CI run → downloads `Packages-*` artifact; hard-fail with re-run guidance when absent; confirm artifact retention covers the bump→release window
+- [x] **Drop workflow path filters entirely** (decided 2026-08-08 — CI runs on every PR/push; closes the `*.slnx`/`assets/**` gap; kanban/docs PRs cost minutes, accepted)
+- [x] Update mode comments in `workflow-command.cs` (and `tools/dev-cli/dev.cs`'s
+      pipeline description line) — done here. The releasing guide itself is
+      tracked separately in 458-008 (not yet written; still `to-do`), so that
+      half of this item is deliberately left for 458-008 rather than
+      pre-empted here.
 
 ## Notes
 
@@ -69,3 +77,63 @@ only incoherent one:
 Raised by operator during 458 review: "it should only release what is in master,
 not something else" — that is Design B's property, byte-identical promotion. A
 retest is only needed when a rebuild exists.
+
+### Session — implementation (2026-08-07)
+
+Implemented per the Phase 2 plan above. Changes left uncommitted in the working tree:
+
+- `.github/workflows/workflow.yml`: deleted both `paths:` blocks; added
+  `actions: read` permission; added `env: GH_TOKEN: ${{ github.token }}` to the
+  "Run CI Pipeline" step.
+- New shared content `source/timewarp-nuru-devcli/content/any/services/ci-run-promotion.cs`:
+  `CiRunSummary`/`RunArtifact`/`RunArtifactListResponse` DTOs,
+  `PackagesArtifactStatus` enum, `PackagesArtifactOutcome`/`PackageSetVerification`
+  records, static `CiRunPromotion` with `OrderCandidateRuns`,
+  `SelectPackagesArtifact`, `VerifyPackageSet` — pure logic, no process
+  execution. `dev-cli-json-context.cs` gained `List<CiRunSummary>` and
+  `RunArtifactListResponse` to the AOT source-gen context.
+- `tools/dev-cli/endpoints/workflow-command.cs`: release pipeline reshaped to
+  tag-gate → check-version → locate-run → download-artifact → verify → push
+  (6 steps). New `LocateCiRunAsync` (git rev-parse HEAD + `gh run list`,
+  `LocateRunStatus` outcome: Found/GhUnavailable/NoMatchingRun) and
+  `DownloadPackagesArtifactAsync` (walks candidates via `gh api .../artifacts`
+  + `gh run download`, clears/recreates `artifacts/packages` before download,
+  `DownloadArtifactStatus` outcome: Downloaded/Exhausted, tracks
+  `ExpiredArtifactEncounter`s for the abort message). `PackProjectsAsync`
+  deleted entirely. Header pipeline comment updated here and in
+  `tools/dev-cli/dev.cs`.
+- Tests: `tests/timewarp-nuru-tests/devcli/promotion-01-run-selection.cs` (8
+  tests), `promotion-02-artifact-selection.cs` (8),
+  `promotion-03-package-set-verification.cs` (5),
+  `promotion-04-json-parse.cs` (6, real live-verified gh payloads for sha
+  `b2eea2c9acdd5f1a0cd3f1a07af36ed1658409b1` / runs 27553776617 (release) and
+  27553073284 (push) / artifact `Packages-42`) — 27 new tests total. Added
+  `ci-run-promotion.cs` `Compile Include` to both
+  `tests/timewarp-nuru-tests/devcli/Directory.Build.props` and
+  `tests/ci-tests/Directory.Build.props`.
+- Docs: `source/timewarp-nuru-devcli/readme.md` — new Services table row for
+  `CiRunPromotion`, new Migration Notes section "3.0.0-beta.72+: release mode
+  promotes CI artifacts (ci-run-promotion.cs)" with the CS0101 note for the
+  six new public types and the 458-005 residual-closure note.
+
+**Verification (all green):**
+- `dotnet run tests/timewarp-nuru-tests/devcli/promotion-0{1,2,3,4}-*.cs` — 8+8+5+6 = 27/27 passed.
+- `dotnet build timewarp-nuru.slnx` — 0 warnings, 0 errors.
+- `dotnet run tests/ci-tests/run-ci-tests.cs` — 0 failed (7 pre-existing skips, unrelated to this task; new promotion tests ran and passed inside the multi-mode assembly).
+- `gh run list --workflow workflow.yml --commit b2eea2c9... --status success --json ...` — returns the same 2 live runs the plan cites.
+- `dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release` from dev HEAD — aborts at Step 1/6 tag-pin Mismatch, confirming gate order is preserved (locate/download/verify never run when an earlier gate fails).
+- `dotnet run --file tools/dev-cli/dev.cs -- --help` — compiles/runs clean (sanity check on the whole dev-cli after the workflow-command.cs rewrite).
+
+**Deviations / notes for reviewer:**
+- `LocateCiRunAsync`'s `git rev-parse HEAD` failure path is not explicitly
+  specced; on nonzero exit it throws `InvalidOperationException` (fail-loud,
+  consistent with `PackableProjectService`'s MSBuild-eval-failure precedent)
+  rather than adding a third `LocateRunStatus` — HEAD is already resolved
+  successfully by the ancestor check earlier in the same pipeline run, so this
+  path is not expected to be reachable in practice.
+- gh missing vs. unauthenticated are not distinguished — both collapse to
+  `LocateRunStatus.GhUnavailable` with the single specced remediation message,
+  since the task text gives one message for both.
+- Branch-protection PUT intentionally NOT run (explicit instruction) — left as
+  the sole unchecked checklist item, an operator post-merge step per D8.
+- No commit made (explicit instruction) — all changes are in the working tree.

@@ -35,15 +35,18 @@ attempt to restate the convention itself — only what is actually implemented h
 Open a PR that changes `<Version>` in `source/Directory.Build.props` (it may ride a
 feature PR or stand alone). Once it merges to master, the `push` event runs
 `workflow.yml` in **merge** mode: `dev workflow` executes
-`clean → build → verify-samples → test`, and on success the `Packages-{run_number}`
-`.nupkg` artifact is uploaded. This is the CI-tested artifact a later release will
-promote — nothing is published yet.
+`clean → build → verify-samples → test`; the `Packages-{run_number}` `.nupkg`
+artifact is uploaded whenever nupkgs exist (the upload step runs on non-release
+events with `if-no-files-found: ignore`, and packages exist exactly when the
+build succeeded — `GeneratePackageOnBuild` produces them during Build). This is
+the CI-tested artifact a later release will promote — nothing is published yet.
 
 ### 2. Cut the release with `dev release`
 
 `dev release` (from the `TimeWarp.Nuru.DevCli` package, `release-command.cs`) reads
 `<Version>` from `source/Directory.Build.props` and runs eight guards, in order,
-before creating anything. Every guard prints a `✓` line on success; the first
+before creating anything. Guards 2–8 each print a `✓` line on success (guard 1,
+reading the props version, confirms itself implicitly by proceeding); the first
 failure aborts with an operator-facing reason and a nonzero exit code:
 
 1. **Props version readable** — `<Version>` parses out of
@@ -58,9 +61,10 @@ failure aborts with an operator-facing reason and a nonzero exit code:
 6. **Tag `v{Version}` available** — the tag must not already exist locally or on
    origin. If it does, resume from that commit via break-glass, or bump the
    version.
-7. **Publish-state gate** — same package-set precedence as the standalone
-   `check-version` command (`--package` override → `.timewarp/dev.jsonc`
-   `checkVersionConfig.packages` → derived `IsPackable` set), but a **stricter**
+7. **Publish-state gate** — package set resolves from `.timewarp/dev.jsonc`
+   `checkVersionConfig.packages` when configured, else the derived `IsPackable`
+   set (`dev release` has no `--package` override — that flag exists only on
+   the standalone `check-version` command), and applies a **stricter**
    verdict than `check-version` itself: **None** published passes; **All**
    published aborts ("bump the version"); **Partial** also **aborts** here — at
    this point in `dev release` guard 6 has already confirmed no `v{Version}` tag
@@ -174,8 +178,10 @@ and "tested" are the same artifact, by construction, not by convention.
 
 ## Break-glass
 
-`workflow_dispatch` normally runs in **merge** mode regardless of input (`dev
-workflow` never publishes on a bare manual dispatch). Publishing via dispatch
+A bare `workflow_dispatch` (default inputs) runs in **merge** mode — `dev
+workflow` never publishes on it. One input combination neither merges nor
+releases: `mode: release` with a missing/wrong `confirm` fails the run
+immediately at the confirmation guard. Publishing via dispatch
 requires two explicit inputs together: `mode: release` **and** `confirm: release`
 (typed exactly). `workflow.yml`'s "Validate break-glass confirmation" step fails
 the run immediately if `mode` is `release` but `confirm` doesn't match. Only when

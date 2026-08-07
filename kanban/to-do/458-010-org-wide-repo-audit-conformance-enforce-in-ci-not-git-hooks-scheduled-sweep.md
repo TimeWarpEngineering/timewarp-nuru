@@ -19,21 +19,33 @@ exists on public nuget.org (unlisted, beta.15 vs repo tags at beta.22+) —
 unlisted is downloadable, not private; whether to keep publishing it publicly is
 an explicit decision item below.
 
-1. **CI is the enforcement plane, via DevCli (public).** The convention checks
-   from `review/convention.md` — props SSOT present, canonical caller workflow
-   shape, v-prefixed tags, OIDC not secrets — live in `dev audit-convention` in
-   TimeWarp.Nuru.DevCli (public, NuGet-distributed, already compiled into each
-   repo's `dev.cs`). Runs in merge/PR mode of the shared reusable workflow; a
-   non-conforming repo fails its own CI on every PR, no ganda dependency, zero
-   per-repo wiring. Git hooks remain optional local convenience for fast
-   feedback, never the mechanism of record.
-2. **Scheduled org sweep runs centrally, where ganda lives.** A scheduled job in
-   a PRIVATE repo (timewarp-flow or timewarp-ganda) with an org-scoped token
-   walks all non-fork/non-archived repos via the API, runs the full
-   `ganda repo audit` checks, and publishes a conformance report (which repos
-   fail, which checks) — the regenerable version of 458's hand-built deviation
-   matrix. Ganda never leaves private infrastructure; public repos never see it.
-3. **No duplication — check ownership, one home per check** (verified against
+**Enforcement model (clarified 2026-08-07, operator direction):** a sweep only
+*observes* — it guarantees nothing at PR or release time and prohibits nothing.
+The mechanism is: **one-off remediation, then per-repo gates.**
+
+1. **One-off remediation pass (the migration, not a process).** Operator runs
+   `ganda repo audit` (with `--fix` where fixers exist) across all active repos
+   locally and brings them compliant once. Record the before/after list here.
+2. **PR-level gate, via DevCli (public).** The convention checks from
+   `review/convention.md` — props SSOT present, canonical caller workflow
+   shape, v-prefixed tags, OIDC not secrets — live in `dev audit-convention`
+   in TimeWarp.Nuru.DevCli (public, NuGet-distributed, already compiled into
+   each repo's `dev.cs`). Runs in PR/merge mode of the shared reusable
+   workflow. **Prohibits** merges only where required status checks exist
+   (public repos on the Free plan); on private repos it is loud-but-advisory.
+   No ganda dependency, zero per-repo wiring. Git hooks remain optional local
+   convenience, never the mechanism of record.
+3. **Release-level gate = the universal prohibition.** The same
+   `dev audit-convention` runs in release mode and hard-fails the publish.
+   Plan-independent, visibility-independent — this is where non-compliance is
+   actually blocked on every repo (consistent with the 458 Layer 2 principle).
+4. **Optional scheduled sweep — detection only, out-of-band state only.** A
+   scheduled job on PRIVATE infra (timewarp-flow or timewarp-ganda, org-scoped
+   token) exists solely for what no in-repo gate can see: GitHub-side settings
+   (branch protection), NuGet-side state (TP policies), and repos that have not
+   adopted the workflow or never receive PRs. It reports; it never enforces.
+   Nothing in 1–3 depends on it; drop it if not worth the upkeep.
+5. **No duplication — check ownership, one home per check** (verified against
    `ganda repo audit --list-checks`, 23 checks, 2026-08-07):
    - **Hygiene → ganda only** (all current checks: directory structure, kebab
      names, slnx, CPM, banned APIs, bin/dev, envrc, icon, runfile shebangs,
@@ -45,13 +57,10 @@ an explicit decision item below.
    - Actual overlap today is only two existence checks (`workflow-file`,
      `source-directory-build-props`) — existence stays hygiene/ganda; content
      assertions are convention/DevCli.
-   - **Ganda's sweep composes both**: runs its own checks natively and invokes
-     each repo's `dev audit-convention` (ganda already requires `bin/dev` via
-     its own check). Ganda never reimplements convention checks; DevCli never
-     grows hygiene checks.
-4. **Baseline pass:** run the audit against all active repos once, record the
-   current failure list here, and burn it down (or explicitly waive per repo
-   with a reason).
+   - **Ganda composes both** (locally and in the optional sweep): runs its own
+     checks natively and invokes each repo's `dev audit-convention` (ganda
+     already requires `bin/dev` via its own check). Ganda never reimplements
+     convention checks; DevCli never grows hygiene checks.
 
 ### Considered and rejected: running ganda itself in public-repo CI (2026-08-07)
 
@@ -79,18 +88,21 @@ appears — then re-evaluate single-tool-via-App-token against this record.
 
 ## Checklist
 
-- [ ] Implement `dev audit-convention` in DevCli content (checks per convention.md; no ganda dependency)
-- [ ] Add audit step to the reusable workflow's pr/merge mode (fails the build)
+- [ ] **One-off remediation:** run `ganda repo audit` (`--fix` where available) across all active repos locally; record before/after compliance list in this task
+- [ ] Implement `dev audit-convention` in DevCli content (checks per convention.md; no ganda dependency; check-only, no fixers)
+- [ ] Add audit step to the reusable workflow's PR/merge mode
+- [ ] Add audit step to release mode as a **hard gate** before pack/push (the universal prohibition)
+- [ ] Required status checks on public repos so the PR gate actually prohibits merges (same enabler as 458-002 Design B)
 - [ ] Waiver mechanism: per-repo documented opt-out with reason (config in `.timewarp/dev.jsonc`), so N/A repos don't red forever
-- [ ] Central sweep: scheduled job in private repo (timewarp-flow or timewarp-ganda) with org-read token; regenerates conformance/deviation report via `ganda repo audit`
-- [ ] Baseline: run sweep across all active repos; record failures in this task
+- [ ] Decide: keep the optional detection-only sweep (out-of-band state: branch protection, TP policies, non-adopted repos) or drop it — nothing else depends on it
 - [ ] Decide: keep publishing TimeWarp.Ganda to public nuget.org (unlisted = still downloadable/decompilable) or stop and install from private repo — record decision and align 458-009 TP roster
 - [ ] Deprecate audit git hooks as enforcement where present (keep as optional local convenience)
-- [ ] Convention doc updated: "enforcement = CI via DevCli; ganda = private superset + central sweep; hooks = convenience"
+- [ ] Convention doc updated: "remediate once; enforce at PR (where checks are required) and always at release; ganda = private superset; hooks = convenience"
 
 ## Notes
 
-Implementation lands in DevCli (audit-convention), ganda (sweep), and the
-`.github` repo (reusable workflow step); tracked here because 458 owns the org
-consistency program. The sweep replaces ever hand-rebuilding the 458 audit
-(`review/audit-results-2026-08-07.json` is the manual baseline snapshot).
+Implementation lands in DevCli (audit-convention) and the `.github` repo
+(reusable workflow step); the one-off remediation is operator-driven with ganda
+locally; tracked here because 458 owns the org consistency program.
+`review/audit-results-2026-08-07.json` is the manual baseline snapshot the
+remediation pass starts from.

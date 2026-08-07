@@ -40,6 +40,55 @@ only incoherent one:
       half of this item is deliberately left for 458-008 rather than
       pre-empted here.
 
+## Results
+
+Implemented in commits `02cbcf4f` (promotion pipeline) and `bd79b9bc` (review
+fixes). Release mode is now build-once/promote:
+
+- **Pipeline:** tag-gate → check-version → locate-run → download-artifact →
+  verify → push. No Clean/Build/Pack in release mode; `PackProjectsAsync`
+  deleted. Every pushed byte comes from a successful CI run at the exact HEAD
+  sha (push-event runs preferred; **pull_request runs excluded by
+  construction** — they build from synthetic merge refs); candidate walk is
+  expiry-aware with `gh run rerun` guidance; downloaded set verified
+  bidirectionally against the derived packable set at the props version.
+- **workflow.yml:** path filters removed (CI on every PR/push — closes the
+  slnx/assets gap and makes the `ci` check always report); `actions: read` +
+  `GH_TOKEN` added; artifact upload skipped on release runs.
+- **Failure paths:** gh-missing vs gh-failed distinguished with stderr
+  surfaced; no-green-run, expired-artifact, and set-mismatch each abort
+  non-zero with precise guidance before push.
+- **458-005 interplay (stated honestly):** the untagged double-break-glass
+  residual is improved (every package now CI-tested for a specific commit),
+  not closed — cross-attempt commit mixing under one unbumped version remains
+  until 458-006's tag-first cutting.
+- **Review (Phase 4b):** 2 rounds, effort 1. 5 findings: 3 MED + 1 LOW
+  resolved, 1 LOW/INFO wontfix. Disposition: **accepted-exceptions**
+  (`review/disposition.md`). Reviewer live-verified merge-ref checkout
+  behavior, 100-run collision audit, real gh auth failure, artifact
+  extraction layout, and the upload condition across all 5 trigger shapes.
+
+### How to validate
+
+Smoke:
+1. `dotnet run tests/timewarp-nuru-tests/devcli/promotion-01-run-selection.cs`
+   → 11/11; `promotion-02` → 8/8; `promotion-03` → 5/5; `promotion-04` → 6/6
+   (fixtures are verbatim live gh payloads).
+2. `gh run list --workflow workflow.yml --commit b2eea2c9acdd5f1a0cd3f1a07af36ed1658409b1 --status success --json databaseId,event` → the beta.71 push+release runs; `gh run download 27553073284 --name Packages-42 --dir <scratch>` → 5 nupkgs, flat.
+3. `dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release` from a
+   non-tag commit → aborts at Step 1/6 tag-pin before any locate/download.
+4. Read workflow.yml: no `paths:` blocks; `actions: read`; upload step's `if`
+   excludes release + confirmed break-glass dispatch.
+
+Automated gate: `ganda runfile cache --clear && dotnet run tests/ci-tests/run-ci-tests.cs`
+→ 0 failed (last: 1498 total / 1491 passed / 7 skipped).
+
+**Depends on (operator, post-merge):** the branch-protection PUT enabling
+required status check `ci` — exact command in Notes (D8); run it right after
+this branch merges to master. Full end-to-end promotion is exercised by the
+next real release (beta.72): its log must show locate → download → verify →
+push and no build steps.
+
 ## Notes
 
 ### Implementation plan (Phase 2, 2026-08-08) — key decisions (all live-verified)

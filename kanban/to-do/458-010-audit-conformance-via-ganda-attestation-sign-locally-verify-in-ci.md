@@ -87,6 +87,11 @@ One-off remediation still precedes turn-on: operator runs
 
 ### Ganda (private side — signer)
 
+> Tracked in the ganda repo as **timewarp-ganda kanban 199**
+> (`199-implement-release-audit-attestation-signer-...`, created 2026-08-08);
+> the items below are the coordination view — implementation status lives
+> there.
+
 - [ ] Attestation format: signature over (tree hash, audit version/check-set hash, timestamp); note in `refs/notes/ganda-audit`
 - [ ] Key management: private key on operator machines, ganda-only signing path; public key published (repo- or org-level); rotation procedure written down
 - [ ] `post-merge` + `post-checkout` hook install (via ganda) — audit + sign + push note when tree unattested

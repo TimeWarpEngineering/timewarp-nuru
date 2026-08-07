@@ -9,12 +9,24 @@
 
   <ItemGroup>
     <!-- DevCli service files compiled into standalone devcli test runfiles so that
-         NuGetVersionService.CompareVersions / IsVersionPublished are testable. -->
+         NuGetVersionService.CompareVersions / IsVersionPublished / TagAssertion.Validate /
+         RepoConfigService.Parse are testable. -->
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-cli-json-context.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-config.cs" />
-    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-strategy.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-mode.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/tag-assertion.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/irepo-config-service.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- repo-config-service.cs calls Git.FindRoot(); TimeWarp.Amuru.Git lives in the
+         TimeWarp.Amuru.Tools package (not core TimeWarp.Amuru, which only flows in
+         transitively via ProjectReference) — reference it directly, plus the namespace
+         global using since this test project doesn't declare one. -->
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
+    <Using Include="TimeWarp.Amuru" />
   </ItemGroup>
 </Project>

@@ -10,7 +10,7 @@
 //
 // Modes:
 //   pr/merge:  clean -> build -> verify-samples -> test
-//   release:   check-version -> clean -> build -> pack -> push
+//   release:   tag-gate -> check-version -> clean -> build -> pack -> push
 //
 // Event mapping: pull_request -> pr, push -> merge, release -> release,
 // workflow_dispatch -> merge (manual dispatch never publishes by default;
@@ -36,7 +36,6 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
     private readonly NuGetVersionService NuGetVersionService;
-    private readonly GitTagCheckService GitTagCheckService;
     private readonly IRepoConfigService ConfigService;
 
     public Handler
@@ -44,14 +43,12 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       ITerminal terminal,
       IRepoCleanService repoCleanService,
       NuGetVersionService nuGetVersionService,
-      GitTagCheckService gitTagCheckService,
       IRepoConfigService configService
     )
     {
       Terminal = terminal;
       RepoCleanService = repoCleanService;
       NuGetVersionService = nuGetVersionService;
-      GitTagCheckService = gitTagCheckService;
       ConfigService = configService;
     }
 
@@ -135,7 +132,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
     private async Task RunReleaseWorkflowAsync(string? apiKey)
     {
-      Terminal.WriteLine("Pipeline: check-version -> clean -> build -> pack -> push");
+      Terminal.WriteLine("Pipeline: tag-gate -> check-version -> clean -> build -> pack -> push");
       Terminal.WriteLine("");
 
       // Get repo root for pack/push operations
@@ -145,49 +142,80 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
       }
 
-      // Step 1: Check Version
+      // Step 1: Release Gate — Tag Assertions
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 1/5: Check Version");
+      Terminal.WriteLine("  Step 1/6: Release Gate — Tag Assertions");
       Terminal.WriteLine("===============================================================================");
-      CheckVersionCommand.Handler checkVersionHandler = new(Terminal, NuGetVersionService, GitTagCheckService, ConfigService);
+
+      string? eventName = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME");
+      string? propsVersion = ReadPropsVersion(repoRoot);
+
+      if (eventName == "release")
+      {
+        string? refName = Environment.GetEnvironmentVariable("GITHUB_REF_NAME");
+        TagAssertionResult tagResult = TagAssertion.Validate(refName, propsVersion);
+
+        if (!tagResult.IsValid)
+        {
+          Terminal.WriteErrorLine($"Release gate failed: {tagResult.Error}");
+          AbortPipeline("release tag does not match source version");
+          return;
+        }
+
+        Terminal.WriteLine($"Tag assertion passed: {tagResult.ExpectedTag}");
+      }
+      else
+      {
+        Terminal.WriteLine("Tag assertion skipped: GITHUB_EVENT_NAME is not 'release' (break-glass/local release has no tag).");
+      }
+
+      if (!await IsHeadAncestorOfMasterAsync())
+      {
+        Terminal.WriteErrorLine("Release gate failed: current commit is not an ancestor of master. Releases must be cut from commits on master.");
+        AbortPipeline("commit not on master");
+        return;
+      }
+
+      // Step 2: Check Version
+      Terminal.WriteLine("");
+      Terminal.WriteLine("===============================================================================");
+      Terminal.WriteLine("  Step 2/6: Check Version");
+      Terminal.WriteLine("===============================================================================");
+      CheckVersionCommand.Handler checkVersionHandler = new(Terminal, NuGetVersionService, ConfigService);
       await checkVersionHandler.Handle(new CheckVersionCommand(), CancellationToken.None);
 
       if (Environment.ExitCode != 0)
       {
-        Terminal.WriteLine("");
-        Terminal.WriteLine("===============================================================================");
-        Terminal.WriteLine("  Pipeline ABORTED — version already released");
-        Terminal.WriteLine("===============================================================================");
-        Environment.ExitCode = 1;
+        AbortPipeline("version already released");
         return;
       }
 
-      // Step 2: Clean
+      // Step 3: Clean
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 2/5: Clean");
+      Terminal.WriteLine("  Step 3/6: Clean");
       Terminal.WriteLine("===============================================================================");
       CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
       await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
 
-      // Step 3: Build
+      // Step 4: Build
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 3/5: Build");
+      Terminal.WriteLine("  Step 4/6: Build");
       Terminal.WriteLine("===============================================================================");
       BuildCommand.Handler buildHandler = new(Terminal);
       await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
 
-      // Step 4: Pack
+      // Step 5: Pack
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 4/5: Pack");
+      Terminal.WriteLine("  Step 5/6: Pack");
       Terminal.WriteLine("===============================================================================");
       await PackProjectsAsync(repoRoot);
 
-      // Step 5: Push
+      // Step 6: Push
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 5/5: Push to NuGet");
+      Terminal.WriteLine("  Step 6/6: Push to NuGet");
       Terminal.WriteLine("===============================================================================");
       await PushPackagesAsync(repoRoot, apiKey);
 
@@ -195,6 +223,50 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Pipeline SUCCEEDED - Packages published to NuGet.org");
       Terminal.WriteLine("===============================================================================");
+    }
+
+    private void AbortPipeline(string reason)
+    {
+      Terminal.WriteLine("");
+      Terminal.WriteLine("===============================================================================");
+      Terminal.WriteLine($"  Pipeline ABORTED — {reason}");
+      Terminal.WriteLine("===============================================================================");
+      Environment.ExitCode = 1;
+    }
+
+    private static string? ReadPropsVersion(string repoRoot)
+    {
+      string propsPath = Path.Combine(repoRoot, "source", "Directory.Build.props");
+
+      if (!File.Exists(propsPath))
+      {
+        return null;
+      }
+
+      XDocument doc = XDocument.Load(propsPath);
+      return doc.Descendants("Version").FirstOrDefault()?.Value;
+    }
+
+    private static async Task<bool> IsHeadAncestorOfMasterAsync()
+    {
+      string masterRef = "origin/master";
+
+      CommandOutput verifyResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "--verify", "origin/master")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (verifyResult.ExitCode != 0)
+      {
+        masterRef = "master";
+      }
+
+      CommandOutput ancestorResult = await Shell.Builder("git")
+        .WithArguments("merge-base", "--is-ancestor", "HEAD", masterRef)
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      return ancestorResult.ExitCode == 0;
     }
 
     private async Task PackProjectsAsync(string repoRoot)
@@ -237,9 +309,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       string artifactsDir = Path.Combine(repoRoot, "artifacts", "packages");
 
       // Read version to construct package names
-      string propsPath = Path.Combine(repoRoot, "source", "Directory.Build.props");
-      XDocument doc = XDocument.Load(propsPath);
-      string? version = doc.Descendants("Version").FirstOrDefault()?.Value;
+      string? version = ReadPropsVersion(repoRoot);
 
       if (string.IsNullOrEmpty(version))
       {

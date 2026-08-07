@@ -11,14 +11,7 @@ namespace DevCli;
 public sealed class CheckVersionConfig
 {
   /// <summary>
-  /// The strategy to use when checking versions.
-  /// Defaults to <see cref="CheckVersionStrategy.NuGetSearch"/> if not specified.
-  /// </summary>
-  public CheckVersionStrategy CheckVersionStrategy { get; init; } = CheckVersionStrategy.NuGetSearch;
-
-  /// <summary>
   /// Comma-separated NuGet package IDs to check.
-  /// Only used with <see cref="CheckVersionStrategy.NuGetSearch"/>.
   /// </summary>
   public string? Packages { get; init; }
 }

@@ -10,14 +10,14 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 |----------|-------------|--------------|
 | `clean` | Clean solution and build artifacts | `IRepoCleanService` (TimeWarp.Amuru) |
 | `self-install` | AOT compile dev CLI to ./bin | None (standalone) |
-| `check-version` | Verify version is ready to release | `IRepoCheckVersionService`, `IRepoConfigService` |
+| `check-version` | Verify version is ready to release | `NuGetVersionService`, `IRepoConfigService` |
 
 ### Services
 
 | Service | Description |
 |---------|-------------|
 | `IRepoConfigService` / `RepoConfigService` | Reads per-repo config from `.timewarp/dev.jsonc` |
-| `CheckVersionStrategy` | Enum for version check strategies (`git-tag`, `nuget-search`) |
+| `TagAssertion` | Pure release-gate check: tag must equal `v` + `<Version>` from `source/Directory.Build.props` |
 | `CheckVersionConfig` | Config model for the check-version command |
 | `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
 | `CiMode` (enum) / `CiModeDetector` | Pure CI mode detection (`pr`/`merge`/`release`); `workflow_dispatch` auto-detects `merge`; unknown explicit mode throws |
@@ -29,15 +29,13 @@ Create a `.timewarp/dev.jsonc` file in your repository root:
 ```jsonc
 {
   "checkVersionConfig": {
-    // checkVersionStrategy: "git-tag" (compare to GitHub releases) or "nuget-search" (check NuGet.org)
-    "checkVersionStrategy": "nuget-search",
-    // packages: comma-separated NuGet package IDs (nuget-search strategy only)
+    // packages: comma-separated NuGet package IDs to check against NuGet.org
     "packages": "TimeWarp.Nuru,TimeWarp.Nuru.Analyzers"
   }
 }
 ```
 
-If the file does not exist, `IRepoConfigService` returns defaults (strategy: `nuget-search`, no packages).
+If the file does not exist, `IRepoConfigService` returns defaults (no packages configured).
 
 ## Installation
 
@@ -65,7 +63,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
   {
     // Register required services
     services.AddSingleton<IRepoCleanService, RepoCleanService>();
-    services.AddSingleton<IRepoCheckVersionService, RepoCheckVersionService>();
+    services.AddSingleton<NuGetVersionService>();
     services.AddSingleton<IRepoConfigService, RepoConfigService>();
   })
   .UseMicrosoftDependencyInjection()
@@ -86,6 +84,26 @@ repo's `workflow-command.cs` and use the shared `CiModeDetector` — otherwise t
 
 Also note: `workflow_dispatch` now auto-detects `merge` mode (never publishes); break-glass release
 requires explicit `--mode release`.
+
+### 3.0.0-beta.72+: git-tag strategy removed
+
+`check-version` now has exactly one methodology: props-version membership in the published NuGet
+versions. The `git-tag` strategy is gone — `GitTagCheckService`, the `CheckVersionStrategy` enum,
+and the `--strategy`/`--tag` options on `check-version` no longer exist. The release gate instead
+asserts (in `dev workflow --mode release`, on `GITHUB_EVENT_NAME == "release"`) that the triggering
+tag equals `v` + `<Version>` from `source/Directory.Build.props`, via the new pure `TagAssertion`
+service; it also asserts the released commit is an ancestor of master in every release mode
+(release event, break-glass, local).
+
+A lingering `checkVersionStrategy` key in `.timewarp/dev.jsonc` is silently ignored on deserialize
+(unknown-key tolerance) rather than erroring — remove the key; it does nothing. Repos that copy
+this config shape (e.g. timewarp-architecture-style configs) should drop it too.
+
+**Resurrect condition:** tags-as-a-release-ledger only comes back for a repo that ships versioned
+releases through a channel other than NuGet (no such repo today). If it does, re-add it deliberately
+with membership-across-all-tags semantics (search all tags for the version, like the old
+nuget-search membership check) — never compare against `GITHUB_REF_NAME`, which names the tag being
+released, not a released tag to search against.
 
 ## Source-Only Package
 

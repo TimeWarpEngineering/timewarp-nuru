@@ -73,8 +73,10 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-cli-json-context.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-config.cs" />
-    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-strategy.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-mode.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/tag-assertion.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/irepo-config-service.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -97,10 +99,16 @@
     <Using Include="TimeWarp.Nuru.Mcp.Tools" />
     <!-- Search services namespace -->
     <Using Include="TimeWarp.Nuru.Search.Services" />
+    <!-- repo-config-service.cs calls Git.FindRoot(); TimeWarp.Amuru.Git lives in the
+         TimeWarp.Amuru.Tools package (not core TimeWarp.Amuru, which only flows in
+         transitively via ProjectReference) — reference it directly, plus the namespace
+         global using since this test project doesn't declare one. -->
+    <Using Include="TimeWarp.Amuru" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Packages for configuration tests -->
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
   </ItemGroup>
 </Project>

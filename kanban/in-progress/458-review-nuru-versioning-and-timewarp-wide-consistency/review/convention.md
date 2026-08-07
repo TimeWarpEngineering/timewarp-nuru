@@ -88,8 +88,7 @@ Repos should share, not re-implement:
 
 - `TimeWarp.Nuru.DevCli` content endpoints: `check-version` (gate semantics above),
   `workflow` shape (mode matrix below), `release` (tag/Release cutter).
-- `.timewarp/dev.jsonc` for per-repo config (strategy only; package lists go away
-  per rule 8).
+- `.timewarp/dev.jsonc` for per-repo config (package list only until rule 8 lands).
 - Thin `workflow.yml`: checkout (fetch-depth 0 for tag history), setup, OIDC login
   gated on release condition, `dev workflow`.
 

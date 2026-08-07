@@ -27,6 +27,7 @@
 //   dev test               - Run CI test suite
 //   dev verify-samples     - Verify sample compilation
 //   dev check-version      - Check if version already published
+//   dev release            - Cut a release: tag + GitHub Release from source/Directory.Build.props (--dry-run to preview)
 //   dev format             - Check code formatting (--fix to auto-fix)
 //   dev analyze            - Run Roslynator analysis and fixes
 //   dev self-install       - AOT compile and install dev CLI to ./bin

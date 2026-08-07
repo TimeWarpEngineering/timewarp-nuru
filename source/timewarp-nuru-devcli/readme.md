@@ -11,6 +11,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `clean` | Clean solution and build artifacts | `IRepoCleanService` (TimeWarp.Amuru) |
 | `self-install` | AOT compile dev CLI to ./bin | None (standalone) |
 | `check-version` | Verify version is ready to release — three-state gate: none published (proceed), all published (abort), some published (resume with warning) | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
+| `release` | Cut a release: create tag `v{Version}` (from `source/Directory.Build.props`) and the GitHub Release, gated by working-tree/branch/sync/tag-availability/publish-state/CI-run guards; `--dry-run` runs every guard and previews the exact commands without creating anything | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
 
 ### Services
 
@@ -24,6 +25,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `CiMode` (enum) / `CiModeDetector` | Pure CI mode detection (`pr`/`merge`/`release`); `workflow_dispatch` auto-detects `merge`; unknown explicit mode throws |
 | `PublishState` (enum) / `PublishStateClassifier` | Pure none/some/all classification of published packages for the `check-version` gate; throws on zero packages or an out-of-range published count |
 | `CiRunPromotion` | Pure logic for release-mode artifact promotion: orders candidate CI runs for a commit, selects a run's `Packages-*` artifact (including expiry handling), and verifies a downloaded `.nupkg` set against the derived packable set — no process execution |
+| `ReleaseGuard` (`GuardVerdict`) | Pure per-guard classifiers for the `release` gate: working tree clean, on master, synced with origin, tag `v{Version}` available (neither local nor remote), and publish state (none/partial/all) — no process execution |
 
 ## Configuration
 
@@ -88,6 +90,28 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 3.0.0-beta.72+: `dev release` cuts tag+Release from props (`release-guard.cs`, `release-command.cs`)
+
+`dev release` cuts tag+Release from props (convention rule 5): reads `<Version>` from
+`source/Directory.Build.props`, runs the working-tree/branch/sync/tag-availability/publish-state/
+CI-run guards (in that order — see `release-guard.cs`'s Design region), then creates annotated tag
+`v{Version}` and the GitHub Release (`gh release create v{Version} --title v{Version}
+--generate-notes --verify-tag`) on the verified commit. `--dry-run` runs every guard and prints the
+exact commands without creating anything. Humans type the version exactly once — in the props bump
+PR; the tag is derived, never hand-typed.
+
+The package also now ships the new public `GuardVerdict`, `ReleaseGuard`, `ReleaseCommand` types
+(namespace `DevCli`) — no known downstream equivalent, so no expected collision; listed here for
+completeness (`TagAssertion` precedent above). If a consuming repo already declares its own type
+under any of these names, the build fails with `CS0101` (duplicate type in namespace `DevCli`).
+
+This closes the untagged double-break-glass residual for tooling-cut releases noted in the two
+entries below: because the tag is created and pushed BEFORE any package is published, any resume
+attempt has a concrete, already-existing tag to pin against — `workflow-command.cs`'s tag-pin check
+enforces that a partial-publish resume runs from the SAME commit the tag points at (tag precedes
+publish → tag-pin enforces same-commit resume). The residual remains only for releases NOT cut
+through `dev release` (e.g. a fully manual `git tag` + `gh release create` bypassing this command).
 
 ### 3.0.0-beta.72+: package set derived from MSBuild `IsPackable` (`packable-project-service.cs`)
 

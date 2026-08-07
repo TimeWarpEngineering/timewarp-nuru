@@ -250,6 +250,24 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         return;
       }
 
+      // Derive the packable set once, right after check-version and before
+      // Clean/Build — an empty derived set must abort before those steps
+      // waste time, not at Step 5 (round-1 review finding #3). The same list
+      // is threaded through to both Pack and Push below, and printed here so
+      // release logs always show exactly what will ship (finding #1c).
+      IReadOnlyList<PackableProject> packableProjects = await PackableProjectService
+        .GetPackableProjectsAsync(repoRoot, CancellationToken.None)
+        .ConfigureAwait(false);
+
+      if (packableProjects.Count == 0)
+      {
+        Terminal.WriteErrorLine("Release gate failed: no packable projects found under source/.");
+        AbortPipeline("no packable projects found");
+        return;
+      }
+
+      Terminal.WriteLine($"Packable set ({packableProjects.Count}): {string.Join(", ", packableProjects.Select(p => p.PackageId))}");
+
       // Step 3: Clean
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 3/6: Clean");
@@ -270,17 +288,6 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 5/6: Pack");
       Terminal.WriteLine("===============================================================================");
-
-      IReadOnlyList<PackableProject> packableProjects = await PackableProjectService
-        .GetPackableProjectsAsync(repoRoot, CancellationToken.None)
-        .ConfigureAwait(false);
-
-      if (packableProjects.Count == 0)
-      {
-        Terminal.WriteErrorLine("Release gate failed: no packable projects found under source/.");
-        AbortPipeline("no packable projects found");
-        return;
-      }
 
       await PackProjectsAsync(repoRoot, packableProjects);
 

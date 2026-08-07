@@ -112,6 +112,68 @@ public class PackableProjectDerivationFixtureTests
     }
   }
 
+  public static async Task Packable_project_with_blank_package_id_throws()
+  {
+    string root = CreateFixtureRoot();
+
+    try
+    {
+      string sourceDir = Path.Combine(root, "source");
+      Directory.CreateDirectory(sourceDir);
+
+      await File.WriteAllTextAsync
+      (
+        Path.Combine(sourceDir, "Directory.Build.props"),
+        """
+        <Project>
+          <PropertyGroup>
+            <IsPackable>true</IsPackable>
+          </PropertyGroup>
+        </Project>
+        """,
+        CancellationToken.None
+      ).ConfigureAwait(false);
+
+      // Deliberately NOT Microsoft.NET.Sdk: the SDK's own
+      // NuGet.Build.Tasks.Pack.targets unconditionally backfills a blank
+      // PackageId from AssemblyName (`PackageId Condition="'$(PackageId)'
+      // == ''">$(AssemblyName)`), imported as part of the SDK's own
+      // Sdk.targets — so no ordinary SDK-style project (with or without an
+      // explicit `<PackageId></PackageId>` element) can actually produce a
+      // blank evaluated PackageId to exercise this guard. A bare `<Project>`
+      // (no Sdk, no pack-defaulting targets) that manually imports Directory
+      // .Build.props is the only way to reproduce IsPackable=true with a
+      // genuinely blank PackageId via real MSBuild evaluation.
+      string projectDir = Path.Combine(sourceDir, "fake-blank");
+      Directory.CreateDirectory(projectDir);
+      await File.WriteAllTextAsync
+      (
+        Path.Combine(projectDir, "fake-blank.csproj"),
+        """
+        <Project>
+          <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)'))" />
+          <PropertyGroup>
+            <TargetFramework>net10.0</TargetFramework>
+            <PackageId></PackageId>
+          </PropertyGroup>
+        </Project>
+        """,
+        CancellationToken.None
+      ).ConfigureAwait(false);
+
+      PackableProjectService service = new();
+
+      InvalidOperationException exception = await Should.ThrowAsync<InvalidOperationException>(async () =>
+        await service.GetPackableProjectsAsync(root, CancellationToken.None).ConfigureAwait(false));
+
+      exception.Message.ShouldContain("fake-blank.csproj");
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+  }
+
   public static async Task Root_without_source_directory_returns_empty()
   {
     string root = CreateFixtureRoot();

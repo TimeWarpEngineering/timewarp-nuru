@@ -57,6 +57,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         .GetConfigAsync(cancellationToken)
         .ConfigureAwait(false);
 
+      bool usingConfigOverride = command.Package is null && config.CheckVersionConfig?.Packages is not null;
       string? packageInput = command.Package ?? config.CheckVersionConfig?.Packages;
       IReadOnlyList<string> packages;
 
@@ -82,6 +83,15 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         Terminal.WriteErrorLine("Error: no packable projects found under source/ and no packages configured. Use --package or checkVersionConfig.packages.");
         Environment.ExitCode = 1;
         return Value;
+      }
+
+      // Round-1 review finding #2: a repo hand-maintaining checkVersionConfig
+      // .packages otherwise gets zero signal that derivation exists, so it
+      // never learns to stop. Only for the config-override path — --package
+      // is an intentional single-run override and needs no nudge.
+      if (usingConfigOverride)
+      {
+        Terminal.WriteLine("Using configured package override; delete checkVersionConfig.packages to derive the set from IsPackable.");
       }
 
       string? version = GetVersionFromSource(repoRoot);

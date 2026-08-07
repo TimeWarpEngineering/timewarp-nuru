@@ -108,6 +108,14 @@ for the call site.
 optional override — no longer required) as long as your repo's packable projects live under
 `source/` at the repo root.
 
+The package also now ships the new public `IPackableProjectService` / `PackableProjectService`,
+`PackableProject` (record), and `MsBuildEvaluationOutput` types (namespace `DevCli`) — no known
+downstream equivalent, so no expected collision for `IPackableProjectService`,
+`PackableProjectService`, or `PackableProject`; listed here for completeness (`TagAssertion`
+precedent above). `MsBuildEvaluationOutput` is a genuinely generic name — flagged explicitly in
+case a consuming repo already declares its own type with that name, which would fail with
+`CS0101` (duplicate type in namespace `DevCli`).
+
 ### 3.0.0-beta.72+: partial-publish resume in `check-version` (`publish-state.cs`)
 
 `check-version` used to be a two-state gate: `alreadyPublished.Count == 0` meant "safe to

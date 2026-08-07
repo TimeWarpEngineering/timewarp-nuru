@@ -82,3 +82,60 @@ single-package. `dotnet build timewarp-nuru.slnx`: 0 warnings/errors. Full CI su
 (`tests/ci-tests/run-ci-tests.cs`): exit 0, multi-mode assembly 1461 total / 1454 passed
 / 7 skipped / 0 failed, all standalone generator runs green. Changes left uncommitted
 in the working tree per the delegating agent's instruction.
+
+## Session (2026-08-07, round-1 review fixes)
+
+Commit `789cadd1` reviewed (`review/round-1/merged.md`); applied the fix-batch (findings
+1–5), left 6–7 as wontfix per the review's disposition:
+
+- **1a:** `ParseGetPropertyOutput` no longer anchors on the first `{` in stdout (a log
+  line with a stray brace before the real payload, e.g. `warning XY{123}: ...`, could
+  mis-anchor). Now finds `"Properties"` and walks backward to the nearest preceding `{`
+  (whitespace-only gap allowed) — handles both msbuild's real pretty-printed shape and a
+  hypothetical compact shape. Verified live shape first (`dotnet msbuild ... -getProperty`
+  → pretty-printed with `{\n  "Properties"`). New tests: noise-with-its-own-brace, compact
+  shape; updated the two tests whose semantics shifted with the anchor change.
+- **1b:** `GetPackableProjectsAsync` now throws `InvalidOperationException` naming the
+  project when `IsPackable=true` evaluates to a null/blank `PackageId`, instead of
+  silently dropping it. Fixture note: Microsoft.NET.Sdk's own `NuGet.Build.Tasks.Pack
+  .targets` unconditionally backfills a blank `PackageId` from `AssemblyName`
+  (`Condition="'$(PackageId)' == ''"`), so no ordinary SDK-style project — with or
+  without an explicit `<PackageId></PackageId>` element, with or without a
+  `Directory.Build.targets` override — can produce a genuinely blank evaluated
+  `PackageId` to exercise this guard. Fixture uses a bare `<Project>` (no `Sdk=`) that
+  manually imports `Directory.Build.props`, which is the only way to reproduce
+  `IsPackable=true` + blank `PackageId` via real MSBuild evaluation; documented inline.
+- **1c:** (i) extracted `PackableProjectService.ValidateDerivedSet` (pure static) —
+  throws on a duplicate `PackageId` across two projects, naming both paths; also owns
+  the final PackageId-ordinal sort. Unit-tested directly (pass-through, duplicate-throw,
+  empty). (ii) `workflow-command.cs` now prints `"Packable set (N): ..."` after deriving.
+- **2:** `check-version-command.cs` prints a one-line nudge — "Using configured package
+  override; delete checkVersionConfig.packages to derive the set from IsPackable." — only
+  when the package set came from `checkVersionConfig.packages` (not `--package`). Verified
+  manually: no nudge with today's override-free `dev.jsonc`; temporarily set
+  `checkVersionConfig.packages` to confirm the nudge fires; reverted.
+- **3:** Derivation + empty-set abort moved from Step 5 to immediately after Step 2
+  (Check Version), before Clean/Build — an empty derived set no longer wastes a
+  clean+build cycle before failing. Same derived list threaded to Pack and Push.
+- **4:** Readme migration note extended to name `PackableProject` and (explicitly
+  flagged, generic-name) `MsBuildEvaluationOutput` alongside `IPackableProjectService`/
+  `PackableProjectService`, mirroring the `TagAssertion` collision-callout precedent.
+- **6, 7 (wontfix, per review disposition):** case-sensitive obj/bin exclusion; harmless
+  double derivation per release (~2s, nothing mutates in between).
+
+Verification re-run: parse tests 13→19 (added noise-with-brace, compact-shape,
+`ValidateDerivedSet` pass-through/duplicate/empty), all pass; fixture tests 2→3 (added
+blank-PackageId-throws), all pass; `dev check-version` still lists exactly the 5 sorted
+IDs with no nudge line; manual override round-trip confirmed the nudge; `dotnet build
+timewarp-nuru.slnx` clean (0/0); full CI suite exit 0, multi-mode 1468 total / 1461
+passed / 7 skipped / 0 failed (net +7 tests vs. pre-fix run, all green). No trailing
+whitespace introduced (pre-existing readme trailing whitespace in an unrelated XML
+example block, unchanged). Still uncommitted per instruction.
+
+No deviations from the requested fix batch. One judgment call: fixture 1b's project
+shape (bare `<Project>`, no `Sdk=`) diverges from the review's literal suggestion
+(`<PackageId></PackageId>` on an ordinary csproj) because the literal suggestion does
+not reproduce under real MSBuild evaluation — verified empirically (three attempts:
+plain empty element, `Directory.Build.targets` override, both backfilled by the SDK's
+own pack-defaulting targets) before landing on the non-SDK project as the only real
+reproduction.

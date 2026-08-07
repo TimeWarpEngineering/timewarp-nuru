@@ -87,10 +87,30 @@ One-off remediation still precedes turn-on: operator runs
 
 ### Ganda (private side — signer)
 
-> Tracked in the ganda repo as **timewarp-ganda kanban 199**
-> (`199-implement-release-audit-attestation-signer-...`, created 2026-08-08);
-> the items below are the coordination view — implementation status lives
-> there.
+> Tracked in the ganda repo as **timewarp-ganda kanban 199** — **DONE**
+> (2026-08-08, ganda commits 440235a/27602af/cb43967, clean review
+> disposition; shipped in ganda v1.0.0-beta.23). CLI surface:
+> `ganda repo attest` (audit+sign, `--force/--no-push/--no-status`),
+> `repo attest keygen` (Ed25519), `repo attest key-show`,
+> `repo attest status`, `ganda hooks install attest`.
+>
+> **Frozen verifier contract (v1) as implemented — the DevCli verifier must
+> match this exactly:**
+> - Notes ref `refs/notes/ganda-audit`, keyed by **tree SHA** (note attaches
+>   to the tree object, not the commit).
+> - Note body: compact JSON `{v:1, alg:"ed25519", tree, check_set, ts,
+>   key_id, sig}` (field names frozen).
+> - Signed bytes: UTF-8 of `v1\ned25519\n{tree}\n{check_set}\n{ts}\n{key_id}`
+>   — NO trailing newline after key_id.
+> - `ts`: ISO-8601 UTC, second precision, trailing Z.
+> - Private key: `~/.timewarp/ganda/keys/audit-ed25519.pem` (operator
+>   machines); public material via `ganda repo attest key-show`.
+> - Green-flip commit-status context: `ganda/attestation`.
+> - `check_set`: hash of the audit check-set (staleness policy input).
+> - Branch policy AS IMPLEMENTED: branches tracking a remote are allowed
+>   (observed: dev branch → "allow — tracks origin/dev") — broader than the
+>   recorded master+pulled-only decision; operator's implementation call,
+>   recorded here for the verifier's staleness/policy design.
 
 - [ ] Attestation format: signature over (tree hash, audit version/check-set hash, timestamp); note in `refs/notes/ganda-audit`
 - [ ] Key management: private key on operator machines, ganda-only signing path; public key published (repo- or org-level); rotation procedure written down

@@ -189,8 +189,12 @@ internal sealed class WorkflowCommand : ICommand<Unit>
           return;
 
         case AncestorCheckStatus.Ancestor:
-        default:
           break;
+
+        default:
+          Terminal.WriteErrorLine($"Release gate failed: unhandled ancestor check status '{ancestorOutcome.Status}'.");
+          AbortPipeline("unhandled ancestor check status");
+          return;
       }
 
       // Step 2: Check Version

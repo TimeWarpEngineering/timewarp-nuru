@@ -160,3 +160,19 @@ the review deliverable itself is complete.
 
 - Created: grok session (2026-08-06) — folder task for Claude (or human) review of Nuru versioning; TimeWarp-wide consistency required if Nuru changes
 - Review: Claude Code session (2026-08-06) — discovery, findings/convention/repo-matrix written, children 458-001…008 created; migration work waived by operator
+- Implementation wave (2026-08-07/08, orchestrated session): **458-001, -002,
+  -003, -004, -005, -006, -008 all done** — each through plan → implement →
+  multi-round adversarial review → disposition. Nuru now has: merge-default
+  dispatch with confirm-gated break-glass; release gate (tag assertion,
+  tag-pin, ancestor, 4-state outcomes); single check-version methodology with
+  3-state partial-resume; fully derived package set (IsPackable, fail-loud
+  guards); build-once/promote release pipeline (publishes only CI-tested
+  bytes; pull_request runs excluded); `dev release` (8 guards, tag-first
+  cutting); canonical releasing guide validated word-for-word against code.
+  CI: 1520 total / 1513 passed / 0 failed. **Outstanding operator steps:**
+  (1) merge this branch to master, then run the branch-protection PUT
+  (458-002 Notes, D8); (2) first real `dev release` (requires props bump —
+  beta.71 is published) is the live end-to-end confirmation.
+  **Remaining children:** 458-009 (TP rollout — NuGet.org UI + cross-repo
+  workflow migrations) and 458-010 (attestation — ganda-side implementation);
+  both are cross-repo/operator phases outside this repo's wave.

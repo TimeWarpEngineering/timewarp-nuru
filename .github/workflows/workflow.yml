@@ -35,7 +35,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for MinVer to read all tags
+          fetch-depth: 0  # Full history required for the release gate's tag/ancestor checks (git merge-base, tag-pin, ls-remote comparisons)
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

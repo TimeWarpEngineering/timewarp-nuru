@@ -10,7 +10,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 |----------|-------------|--------------|
 | `clean` | Clean solution and build artifacts | `IRepoCleanService` (TimeWarp.Amuru) |
 | `self-install` | AOT compile dev CLI to ./bin | None (standalone) |
-| `check-version` | Verify version is ready to release | `NuGetVersionService`, `IRepoConfigService` |
+| `check-version` | Verify version is ready to release — three-state gate: none published (proceed), all published (abort), some published (resume with warning) | `NuGetVersionService`, `IRepoConfigService` |
 
 ### Services
 
@@ -21,6 +21,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `CheckVersionConfig` | Config model for the check-version command |
 | `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
 | `CiMode` (enum) / `CiModeDetector` | Pure CI mode detection (`pr`/`merge`/`release`); `workflow_dispatch` auto-detects `merge`; unknown explicit mode throws |
+| `PublishState` (enum) / `PublishStateClassifier` | Pure none/some/all classification of published packages for the `check-version` gate; throws on zero packages or an out-of-range published count |
 
 ## Configuration
 
@@ -74,6 +75,25 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 3.0.0-beta.72+: partial-publish resume in `check-version` (`publish-state.cs`)
+
+`check-version` used to be a two-state gate: `alreadyPublished.Count == 0` meant "safe to
+release", anything else aborted. That meant a release run that failed partway through the push
+loop (some packages published, some not) could never be resumed through the pipeline — the
+retry aborted at `check-version` before the push loop's `--skip-duplicate` even got a chance to
+make the re-push a no-op.
+
+`check-version` now classifies the package set with the new `PublishStateClassifier` into three
+states:
+
+- **None** published — unchanged: "safe to release" (exit 0).
+- **All** published — unchanged: abort with the existing "already released" message (exit 1).
+- **Partial** (some but not all) — **new, behavior change**: exit 0 with a loud warning block
+  listing already-published and missing packages, and a note that the run will resume the push.
+
+Single-package repos are unaffected in shape: 1 of 1 published is still the **All** state and
+still aborts.
 
 ### 3.0.0-beta.72+: shared `CiMode` / `CiModeDetector` (`ci-mode.cs`)
 

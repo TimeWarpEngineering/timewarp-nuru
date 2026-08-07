@@ -105,23 +105,31 @@ public sealed class CheckVersionCommand : ICommand<Unit>
 
       Terminal.WriteLine("");
 
-      bool isNewVersion = alreadyPublished.Count == 0;
+      PublishState publishState = PublishStateClassifier.Classify(checkedPackages.Count, alreadyPublished.Count);
 
-      if (isNewVersion)
+      switch (publishState)
       {
-        Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
-      }
-      else
-      {
-        Terminal.WriteLine($"✗ Version {version} was already released.".Red());
-        Terminal.WriteLine("  Bump the version before releasing.".Yellow());
+        case PublishState.None:
+          Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
+          break;
 
-        if (alreadyPublished.Count > 0)
-        {
+        case PublishState.Partial:
+          List<string> missingPackages = [.. checkedPackages.Except(alreadyPublished)];
+          Terminal.WriteLine($"Partial publish detected: {alreadyPublished.Count} of {checkedPackages.Count} packages already have {version}.".Yellow());
           Terminal.WriteLine($"  Already published: {string.Join(", ", alreadyPublished)}".Yellow());
-        }
+          Terminal.WriteLine($"  Missing: {string.Join(", ", missingPackages)}".Yellow());
+          Terminal.WriteLine("  This release run will resume the push; --skip-duplicate makes re-pushing published packages a no-op.".Yellow());
+          break;
 
-        Environment.ExitCode = 1;
+        case PublishState.All:
+          Terminal.WriteLine($"✗ Version {version} was already released.".Red());
+          Terminal.WriteLine("  Bump the version before releasing.".Yellow());
+          Terminal.WriteLine($"  Already published: {string.Join(", ", alreadyPublished)}".Yellow());
+          Environment.ExitCode = 1;
+          break;
+
+        default:
+          throw new InvalidOperationException($"Unknown publish state '{publishState}'.");
       }
 
       return Value;

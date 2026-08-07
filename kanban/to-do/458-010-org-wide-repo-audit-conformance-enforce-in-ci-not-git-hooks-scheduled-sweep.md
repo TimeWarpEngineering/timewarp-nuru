@@ -53,6 +53,30 @@ an explicit decision item below.
    current failure list here, and burn it down (or explicitly waive per repo
    with a reason).
 
+### Considered and rejected: running ganda itself in public-repo CI (2026-08-07)
+
+Feasible: org-level secret with fine-grained PAT or GitHub App token
+(`contents:read` on timewarp-ganda) lets any repo's workflow clone-and-build
+ganda or download a prebuilt private release asset / GitHub Packages binary.
+Rejected because:
+
+1. **It imposes the stability contract ganda is private to avoid** — 20 repos'
+   CI invoking ganda on every PR means any ganda change can break org CI;
+   that is a de facto public API with worse debugging.
+2. **Exposure**: the private binary lands on every public runner; any
+   compromised workflow/third-party action with org-secret access can
+   exfiltrate the token and the binary. Today ganda's blast surface is
+   operator machines; this would make it every CI environment in the org.
+
+**Fixes stance:** CI fails, never fixes — an enforcement gate that rewrites
+code is out. `--fix` is a local, human-triggered activity where ganda already
+exists. Convention violations are mostly one-time migration acts (458 rollout);
+afterward the CI check is a drift tripwire. If a convention check later earns a
+fixer, the fixer lives in ganda while the authoritative check stays in DevCli.
+
+Revisit trigger: convention check count grows past ~10 or recurring-fix demand
+appears — then re-evaluate single-tool-via-App-token against this record.
+
 ## Checklist
 
 - [ ] Implement `dev audit-convention` in DevCli content (checks per convention.md; no ganda dependency)

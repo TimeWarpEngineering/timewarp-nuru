@@ -166,7 +166,43 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       }
       else
       {
-        Terminal.WriteLine("Tag assertion skipped: GITHUB_EVENT_NAME is not 'release' (break-glass/local release has no tag).");
+        Terminal.WriteLine("Tag assertion skipped: GITHUB_EVENT_NAME is not 'release' (break-glass/local release has no triggering ref tag to assert against; the tag-pin check below still applies).");
+      }
+
+      if (string.IsNullOrWhiteSpace(propsVersion))
+      {
+        Terminal.WriteLine("Tag pin skipped: could not read <Version> from source/Directory.Build.props (Step 2/6 Check Version will fail with details).");
+      }
+      else
+      {
+        TagPinOutcome tagPinOutcome = await CheckTagPinAsync(propsVersion);
+        string pinTag = $"v{propsVersion}";
+
+        switch (tagPinOutcome.Status)
+        {
+          case TagPinStatus.NoTag:
+            Terminal.WriteLine($"Tag pin: {pinTag} not yet tagged.");
+            break;
+
+          case TagPinStatus.Match:
+            Terminal.WriteLine($"Tag pin passed: HEAD is at {pinTag}.");
+            break;
+
+          case TagPinStatus.Mismatch:
+            Terminal.WriteErrorLine($"Release gate failed: tag {pinTag} already exists at commit {ShortSha(tagPinOutcome.TagCommit)}; this run is at {ShortSha(tagPinOutcome.HeadCommit)}. A partial-publish resume must run from the tag's commit (or bump the version if source changed).");
+            AbortPipeline("tag pin mismatch");
+            return;
+
+          case TagPinStatus.GitError:
+            Terminal.WriteErrorLine($"Release gate failed: tag pin check could not run — {tagPinOutcome.Detail}");
+            AbortPipeline("tag pin check could not run");
+            return;
+
+          default:
+            Terminal.WriteErrorLine($"Release gate failed: unhandled tag pin status '{tagPinOutcome.Status}'.");
+            AbortPipeline("unhandled tag pin status");
+            return;
+        }
       }
 
       AncestorCheckOutcome ancestorOutcome = await CheckHeadAncestorOfMasterAsync();
@@ -254,6 +290,65 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Environment.ExitCode = 1;
     }
+
+    // Verifies that if tag v{version} already exists locally, HEAD is at that
+    // tag's commit. This is what stops a break-glass resume from mixing
+    // packages built from two different commits under one version: the tag
+    // is created by the release pipeline itself (or by a prior release-event
+    // run), so if it exists and HEAD has moved on, this run is not the same
+    // source that produced the earlier (partial) push.
+    // `git rev-parse -q --verify` suppresses the "not a valid ref" message on
+    // a missing tag and just fails silently — nonzero exit with empty stderr
+    // means NoTag; nonzero exit with stderr means a real git error.
+    private static async Task<TagPinOutcome> CheckTagPinAsync(string version)
+    {
+      string tag = $"v{version}";
+
+      CommandOutput verifyResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "-q", "--verify", $"refs/tags/{tag}")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (verifyResult.ExitCode != 0)
+      {
+        if (!string.IsNullOrWhiteSpace(verifyResult.Stderr))
+        {
+          return new TagPinOutcome(TagPinStatus.GitError, null, null, verifyResult.Stderr.Trim());
+        }
+
+        return new TagPinOutcome(TagPinStatus.NoTag, null, null, null);
+      }
+
+      CommandOutput tagCommitResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", $"{tag}^{{commit}}")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (tagCommitResult.ExitCode != 0)
+      {
+        return new TagPinOutcome(TagPinStatus.GitError, null, null, tagCommitResult.Stderr.Trim());
+      }
+
+      CommandOutput headResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "HEAD")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (headResult.ExitCode != 0)
+      {
+        return new TagPinOutcome(TagPinStatus.GitError, null, null, headResult.Stderr.Trim());
+      }
+
+      string tagCommit = tagCommitResult.Stdout.Trim();
+      string headCommit = headResult.Stdout.Trim();
+
+      return string.Equals(tagCommit, headCommit, StringComparison.Ordinal)
+        ? new TagPinOutcome(TagPinStatus.Match, tagCommit, headCommit, null)
+        : new TagPinOutcome(TagPinStatus.Mismatch, tagCommit, headCommit, null);
+    }
+
+    private static string ShortSha(string? sha) =>
+      string.IsNullOrEmpty(sha) ? "(unknown)" : sha.Length > 7 ? sha[..7] : sha;
 
     private static string? ReadPropsVersion(string repoRoot)
     {
@@ -416,5 +511,17 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     }
 
     private sealed record AncestorCheckOutcome(AncestorCheckStatus Status, string? Detail);
+
+    // Outcome of the release-gate tag-pin check — Mismatch and GitError are
+    // distinct verdicts and must not be collapsed into one message.
+    private enum TagPinStatus
+    {
+      NoTag,
+      Match,
+      Mismatch,
+      GitError
+    }
+
+    private sealed record TagPinOutcome(TagPinStatus Status, string? TagCommit, string? HeadCommit, string? Detail);
   }
 }

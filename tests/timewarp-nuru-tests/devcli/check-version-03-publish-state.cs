@@ -73,6 +73,47 @@ public class PublishStateClassifierTests
     Should.Throw<ArgumentOutOfRangeException>(() => PublishStateClassifier.Classify(5, 6));
     await Task.CompletedTask;
   }
+
+  // --- ParsePackageList (round-1 review finding #1: delimiter-only input
+  // must yield an empty list, not a one-element list of whitespace, so the
+  // caller's Count == 0 guard catches it before Classify ever sees zero
+  // total packages) ---
+
+  public static async Task Null_input_parses_to_empty()
+  {
+    PublishStateClassifier.ParsePackageList(null).ShouldBeEmpty();
+    await Task.CompletedTask;
+  }
+
+  public static async Task Empty_input_parses_to_empty()
+  {
+    PublishStateClassifier.ParsePackageList("").ShouldBeEmpty();
+    await Task.CompletedTask;
+  }
+
+  public static async Task Delimiter_only_input_parses_to_empty()
+  {
+    PublishStateClassifier.ParsePackageList(",").ShouldBeEmpty();
+    await Task.CompletedTask;
+  }
+
+  public static async Task Whitespace_and_delimiter_input_parses_to_empty()
+  {
+    PublishStateClassifier.ParsePackageList(" , ").ShouldBeEmpty();
+    await Task.CompletedTask;
+  }
+
+  public static async Task Adjacent_delimiters_drop_empty_entries()
+  {
+    PublishStateClassifier.ParsePackageList("A,,B").ShouldBe(["A", "B"]);
+    await Task.CompletedTask;
+  }
+
+  public static async Task Entries_are_trimmed()
+  {
+    PublishStateClassifier.ParsePackageList(" A , B ").ShouldBe(["A", "B"]);
+    await Task.CompletedTask;
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.DevCli

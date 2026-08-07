@@ -47,14 +47,14 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         .ConfigureAwait(false);
 
       string? packageInput = command.Package ?? config.CheckVersionConfig?.Packages;
-      if (string.IsNullOrWhiteSpace(packageInput))
+      IReadOnlyList<string> packages = PublishStateClassifier.ParsePackageList(packageInput);
+
+      if (packages.Count == 0)
       {
         Terminal.WriteErrorLine("Error: no packages specified. Use --package or configure Packages in .timewarp/dev.jsonc");
         Environment.ExitCode = 1;
         return Value;
       }
-
-      IReadOnlyList<string> packages = packageInput.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
       string? version = GetVersionFromSource();
       if (version is null)
@@ -118,7 +118,8 @@ public sealed class CheckVersionCommand : ICommand<Unit>
           Terminal.WriteLine($"Partial publish detected: {alreadyPublished.Count} of {checkedPackages.Count} packages already have {version}.".Yellow());
           Terminal.WriteLine($"  Already published: {string.Join(", ", alreadyPublished)}".Yellow());
           Terminal.WriteLine($"  Missing: {string.Join(", ", missingPackages)}".Yellow());
-          Terminal.WriteLine("  This release run will resume the push; --skip-duplicate makes re-pushing published packages a no-op.".Yellow());
+          Terminal.WriteLine("  This run will resume the push (--skip-duplicate no-ops the already-published packages).".Yellow());
+          Terminal.WriteLine("  Safe only if this is the SAME commit as the earlier partial push — the release gate's tag-pin check enforces that. Bump the version instead if the source has changed.".Yellow());
           break;
 
         case PublishState.All:

@@ -61,8 +61,52 @@ DevCli readme migration-notes tag-pin paragraph too.
 
 ## Checklist
 
-- [ ] `HandleNuGetSearchAsync`: distinguish none / some / all published instead of `alreadyPublished.Count == 0`
-- [ ] Partial state: exit 0, print which packages are missing and that this run resumes the push
-- [ ] All-published state: keep current abort behavior and message
-- [ ] Tests: all three states, including single-package repos (some == all)
-- [ ] Releasing guide (458-008): document the resume flow for a failed release run
+- [x] Three-state gate via pure `PublishStateClassifier` (None/Partial/All; fail-loud guards) replacing the boolean
+- [x] Partial state: exit 0, loud warning listing published + missing packages, honest `--skip-duplicate` byte-safety wording
+- [x] All-published state: abort behavior and message unchanged (verified live against beta.71)
+- [x] Zero-package inputs (whitespace-only AND delimiter-only) route to the friendly error via `ParsePackageList` (review HIGH fix)
+- [x] **Tag-pin release gate** (review MED fix, beyond original scope): when tag `v{version}` exists, release-mode HEAD must be at that tag's commit — blocks mixed-commit break-glass resumes
+- [x] Tests: 15 classifier/parse tests + 11 tag-assertion (from 458-003) + endpoint-level zero-package regression test (standalone-only via whole-file JARIBU_MULTI guard)
+- [ ] Releasing guide (458-008): document the resume flow for a failed release run — deferred to 458-008 as planned
+
+## Results
+
+Implemented in commits `30dce371` (three-state gate), `35256b49` (round-1 review
+fixes: ParsePackageList guard, honest wording, tag-pin gate), `2f26dda7`
+(round-2: endpoint regression test, residual docs).
+
+- **check-version nuget-search is now a three-state gate:** None → safe;
+  All → abort (unchanged); Partial → exit 0 with a resume warning naming
+  published and missing packages and stating the byte-safety condition (same
+  commit as the earlier partial push).
+- **Tag-pin gate added to the release pipeline** (workflow-command.cs, between
+  tag assertion and ancestor check): if tag `v{propsVersion}` exists, HEAD
+  must be at its commit (NoTag/Match/Mismatch/GitError outcomes, fail-closed
+  default). Demonstrated live: break-glass from dev with beta.71 tagged
+  elsewhere aborts with both short SHAs named.
+- **Review (Phase 4b):** 3 rounds, effort 1, sonnet reviewer. 5 findings:
+  1 HIGH (crash — live-reproduced, fixed, fault-injection-verified test),
+  2 MED (fixed), 1 LOW (fixed after reviewer PoC), 1 INFO wontfix.
+  Disposition: **accepted-exceptions** (`review/disposition.md`) — wontfix +
+  documented narrow residual (untagged double-break-glass; closes via
+  458-006/458-002) + one pre-existing footnote on shipped-warning wording.
+
+### How to validate
+
+Smoke:
+1. `dotnet run tests/timewarp-nuru-tests/devcli/check-version-03-publish-state.cs`
+   → 15/15. `dotnet run tests/timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs`
+   → 1/1.
+2. `dotnet run --file tools/dev-cli/dev.cs -- check-version --package ","`
+   → Expect friendly "no packages specified" error, exit 1, NO stack trace.
+3. `dotnet run --file tools/dev-cli/dev.cs -- check-version` (all 5 packages
+   published at current props version) → Expect All-published abort, exit 1.
+4. `dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release` from a
+   commit not at the current version's tag → Expect tag-pin Mismatch abort
+   naming both short SHAs.
+
+Automated gate: `ganda runfile cache --clear && dotnet run tests/ci-tests/run-ci-tests.cs`
+→ Expect 0 failed (last: 1446 total / 1439 passed / 7 skipped).
+
+Depends on / not in scope: releasing-guide docs (458-008); full byte-identity
+closure (458-002 promotion / 458-006 tag-first tooling).

@@ -396,13 +396,17 @@ public sealed class ReleaseCommand : ICommand<Unit>
 
       if (pushResult.ExitCode != 0)
       {
-        await Shell.Builder("git")
+        CommandOutput deleteResult = await Shell.Builder("git")
           .WithArguments("tag", "-d", tag)
           .WithNoValidation()
           .CaptureAsync(cancellationToken)
           .ConfigureAwait(false);
 
-        Terminal.WriteErrorLine($"Error: failed to push tag {tag} to origin — local tag deleted.\n{pushResult.Stderr.Trim()}");
+        string cleanupNote = deleteResult.ExitCode == 0
+          ? "local tag deleted."
+          : $"WARNING: could not delete local tag {tag} — remove it manually with 'git tag -d {tag}' before retrying. ({deleteResult.Stderr.Trim()})";
+
+        Terminal.WriteErrorLine($"Error: failed to push tag {tag} to origin — {cleanupNote}\n{pushResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
         return Value;
       }

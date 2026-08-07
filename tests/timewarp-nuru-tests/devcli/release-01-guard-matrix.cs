@@ -91,6 +91,16 @@ public class ReleaseGuardTests
     await Task.CompletedTask;
   }
 
+  public static async Task Empty_branch_fails_naming_unknown()
+  {
+    GuardVerdict verdict = ReleaseGuard.CheckBranch("");
+    verdict.Ok.ShouldBeFalse();
+    verdict.Reason.ShouldNotBeNull();
+    verdict.Reason.ShouldContain("(unknown)");
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Detached_head_fails_naming_head()
   {
     GuardVerdict verdict = ReleaseGuard.CheckBranch("HEAD");

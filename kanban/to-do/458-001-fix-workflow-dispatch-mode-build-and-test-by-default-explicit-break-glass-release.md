@@ -26,6 +26,10 @@ and the YAML enables `nuget/login` + `--api-key` under exactly that same conditi
 
 ## Notes
 
+Decided 2026-08-08 (operator): **keep the break-glass path** — confirm-gated
+dispatch release stays as the recovery escape hatch (e.g. beta.69-style stranded
+releases). Plain dispatch remains non-publishing.
+
 Breaking process change: dispatch no longer attempts to publish. This is the
 documented intent of convention.md; call it out in the release notes for DevCli
 consumers.

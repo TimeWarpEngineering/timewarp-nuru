@@ -26,11 +26,10 @@ only incoherent one:
 
 ## Checklist
 
-- [ ] Decide A vs B (record here; B preferred per review)
-- [ ] If B: enable required status checks on master (green CI enforced at merge)
-- [ ] If B: release job resolves tag commit → successful CI run → downloads `Packages-*` artifact; hard-fail with re-run guidance when absent; confirm artifact retention covers the bump→release window
-- [ ] If A: add verify-samples + test steps to `RunReleaseWorkflowAsync`, renumber banners, verify failure aborts before pack
-- [ ] Either: add `*.slnx` and `assets/**` to workflow path filters
+- [x] Decided 2026-08-08 (operator): **Design B — build-once / promote**. Design A not chosen.
+- [ ] Enable required status checks on master (green CI enforced at merge)
+- [ ] Release job resolves tag commit → successful CI run → downloads `Packages-*` artifact; hard-fail with re-run guidance when absent; confirm artifact retention covers the bump→release window
+- [ ] **Drop workflow path filters entirely** (decided 2026-08-08 — CI runs on every PR/push; closes the `*.slnx`/`assets/**` gap; kanban/docs PRs cost minutes, accepted)
 - [ ] Update mode comments in `workflow-command.cs` and the releasing guide (458-008)
 
 ## Notes

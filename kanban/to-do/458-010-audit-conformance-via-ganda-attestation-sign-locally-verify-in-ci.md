@@ -91,7 +91,7 @@ One-off remediation still precedes turn-on: operator runs
 - [ ] Key management: private key on operator machines, ganda-only signing path; public key published (repo- or org-level); rotation procedure written down
 - [ ] `post-merge` + `post-checkout` hook install (via ganda) — audit + sign + push note when tree unattested
 - [ ] Green-flip: post `ganda/attestation` commit status and/or `gh run rerun` after attesting
-- [ ] Attest-branch policy: decide whether hooks attest any branch or master + explicitly pulled PR branches only
+- [x] Attest-branch policy — decided 2026-08-08 (operator): **master + explicitly pulled PR branches only**; hooks do not attest arbitrary checkouts
 
 ### DevCli / reusable workflow (public side — verifier)
 
@@ -102,10 +102,11 @@ One-off remediation still precedes turn-on: operator runs
 
 ### Rollout
 
+- [ ] Clone the 3 publisher repos missing locally (needed for remediation): `ganda repo clone git@github.com:TimeWarpEngineering/timewarp-fixie.git`, `…/timewarp-quickbooks.git`, `…/timewarp-build-tasks.git` (verified vs `ganda repo list` 2026-08-08 — all other 18 publishers already cloned)
 - [ ] One-off remediation: `ganda repo audit --fix` across all active repos; record before/after here
 - [ ] Waiver mechanism for repos where the attestation requirement is N/A (dormant/sites), so they don't red forever
-- [ ] Decide: keep or drop the optional detection-only sweep for out-of-band state (TP policies, branch protection, non-adopted repos)
-- [ ] Decide: keep publishing TimeWarp.Ganda to public nuget.org (unlisted = still downloadable/decompilable) or stop and install from private repo — align 458-009 TP roster
+- [x] Sweep — decided 2026-08-08 (operator): **dropped**. No detection-only sweep; revisit only if out-of-band drift (branch protection, lapsed TP policies) actually bites.
+- [x] TimeWarp.Ganda public NuGet — decided 2026-08-08 (operator): **stop publishing**. Install from private repo on operator machines; remove ganda from the 458-009 TP roster and delete its existing TP policy. (Existing public versions up to beta.15 remain on nuget.org — NuGet does not truly delete; unlist them.)
 - [ ] Update `review/convention.md` Layer 3 wording to the attestation model when this lands
 
 ## Notes

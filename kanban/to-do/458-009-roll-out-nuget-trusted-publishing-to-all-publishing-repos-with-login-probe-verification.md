@@ -44,9 +44,9 @@ policies as failures (that is correct behavior, not noise).
 - **Same trust separation.** TP and attestation follow the same principle:
   CI verifies evidence (OIDC identity / signature), never holds long-lived
   authority (stored keys / the private tool).
-- **TimeWarp.Ganda public-NuGet decision** is owned by 458-010's checklist;
-  if the outcome is "stop publishing," remove ganda from this task's policy
-  roster and skip its TP policy.
+- **TimeWarp.Ganda public-NuGet decision** (owned by 458-010) — decided
+  2026-08-08: **stop publishing**. Ganda drops off this task's roster: delete
+  its existing TP policy and remove it from the configured-13 count (→ 12).
 
 ## Checklist
 
@@ -55,7 +55,9 @@ policies as failures (that is correct behavior, not noise).
 - [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
 - [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)
 - [ ] After all repos flip: revoke every long-lived NuGet API key on nuget.org; delete `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets
-- [ ] Verify package ownership: every published package must have TimeWarp.Enterprises as owner (policies act on the owner account's packages); also confirm intent for orphans TimeWarp.Cli and TimeWarp.AspNetCore.Blazor.Templates (deprecate or adopt)
+- [ ] Verify package ownership: every published package must have TimeWarp.Enterprises as owner (policies act on the owner account's packages)
+- [ ] Orphans — decided 2026-08-08 (operator): **deprecate TimeWarp.AspNetCore.Blazor.Templates**; **leave TimeWarp.Cli alone for now** (revisit later)
+- [ ] Ganda: delete its existing TP policy and remove its publish workflow (per 458-010 stop-publishing decision)
 - [ ] Record the TP roster in 458 `review/repo-matrix.md`
 
 ## Notes

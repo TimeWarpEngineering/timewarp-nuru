@@ -27,9 +27,10 @@ Consistency must be **structural, not copied**. Three layers:
 `workflow_call` reusable workflow (`timewarp-ci.yml`). Every repo's own workflow
 file becomes a fixed ~10-line caller. Private repos CAN call reusable workflows
 from public repos on the Free plan. Changing CI behavior org-wide = one edit in one
-repo, effective everywhere instantly (reference `@master`). This is what kills the
-"address it every day" problem: there is nothing per-repo left to drift except the
-tiny caller, which Layer 3 audits.
+repo, effective everywhere instantly (reference `@master` — confirmed by operator
+2026-08-08 over version pinning). This is what kills the "address it every day"
+problem: there is nothing per-repo left to drift except the tiny caller, which
+Layer 3 audits.
 
 **Layer 2 — DevCli owns all pipeline logic; the release gate is the enforcement
 point.** The reusable workflow only does checkout / setup-dotnet / OIDC login /
@@ -60,6 +61,7 @@ hand-built again.
 only adds GitHub-side merge blocking on private repos; publish-time enforcement
 (Layer 2) is already plan-independent. Upgrade if you want red PRs physically
 unmergeable on private repos; the convention works identically either way.
+Decided 2026-08-08 (operator): **stay on Free**.
 
 ## Publisher deviation matrix (21 repos with a NuGet publish path)
 

@@ -169,11 +169,28 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         Terminal.WriteLine("Tag assertion skipped: GITHUB_EVENT_NAME is not 'release' (break-glass/local release has no tag).");
       }
 
-      if (!await IsHeadAncestorOfMasterAsync())
+      AncestorCheckOutcome ancestorOutcome = await CheckHeadAncestorOfMasterAsync();
+
+      switch (ancestorOutcome.Status)
       {
-        Terminal.WriteErrorLine("Release gate failed: current commit is not an ancestor of master. Releases must be cut from commits on master.");
-        AbortPipeline("commit not on master");
-        return;
+        case AncestorCheckStatus.NotAncestor:
+          Terminal.WriteErrorLine("Release gate failed: current commit is not an ancestor of master. Releases must be cut from commits on master.");
+          AbortPipeline("commit not on master");
+          return;
+
+        case AncestorCheckStatus.MasterUnresolvable:
+          Terminal.WriteErrorLine("Release gate failed: cannot resolve origin/master or master — ensure the checkout has full history (fetch-depth: 0) and a master ref exists.");
+          AbortPipeline("master ref unresolvable");
+          return;
+
+        case AncestorCheckStatus.GitError:
+          Terminal.WriteErrorLine($"Release gate failed: ancestor check could not run — {ancestorOutcome.Detail}");
+          AbortPipeline("ancestor check could not run");
+          return;
+
+        case AncestorCheckStatus.Ancestor:
+        default:
+          break;
       }
 
       // Step 2: Check Version
@@ -244,10 +261,13 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       }
 
       XDocument doc = XDocument.Load(propsPath);
-      return doc.Descendants("Version").FirstOrDefault()?.Value;
+      return doc.Descendants("Version").FirstOrDefault()?.Value.Trim();
     }
 
-    private static async Task<bool> IsHeadAncestorOfMasterAsync()
+    // git merge-base --is-ancestor exit codes: 0 = ancestor, 1 = NOT ancestor,
+    // >1 = git error (e.g. bad ref, corrupt repo) — must not be reported as
+    // "not an ancestor", which is a specific, different verdict.
+    private async Task<AncestorCheckOutcome> CheckHeadAncestorOfMasterAsync()
     {
       string masterRef = "origin/master";
 
@@ -259,6 +279,18 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       if (verifyResult.ExitCode != 0)
       {
         masterRef = "master";
+
+        CommandOutput fallbackVerifyResult = await Shell.Builder("git")
+          .WithArguments("rev-parse", "--verify", "master")
+          .WithNoValidation()
+          .CaptureAsync(CancellationToken.None);
+
+        if (fallbackVerifyResult.ExitCode != 0)
+        {
+          return new AncestorCheckOutcome(AncestorCheckStatus.MasterUnresolvable, null);
+        }
+
+        Terminal.WriteLine("origin/master not found; using local master.");
       }
 
       CommandOutput ancestorResult = await Shell.Builder("git")
@@ -266,7 +298,17 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         .WithNoValidation()
         .CaptureAsync(CancellationToken.None);
 
-      return ancestorResult.ExitCode == 0;
+      if (ancestorResult.ExitCode == 0)
+      {
+        return new AncestorCheckOutcome(AncestorCheckStatus.Ancestor, null);
+      }
+
+      if (ancestorResult.ExitCode == 1)
+      {
+        return new AncestorCheckOutcome(AncestorCheckStatus.NotAncestor, null);
+      }
+
+      return new AncestorCheckOutcome(AncestorCheckStatus.GitError, ancestorResult.Stderr.Trim());
     }
 
     private async Task PackProjectsAsync(string repoRoot)
@@ -358,5 +400,17 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       Terminal.WriteLine("\nAll packages pushed successfully!");
     }
+
+    // Outcome of the release-gate ancestor check — a git-error verdict must
+    // never be silently coerced into "not an ancestor".
+    private enum AncestorCheckStatus
+    {
+      Ancestor,
+      NotAncestor,
+      MasterUnresolvable,
+      GitError
+    }
+
+    private sealed record AncestorCheckOutcome(AncestorCheckStatus Status, string? Detail);
   }
 }

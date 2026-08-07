@@ -105,6 +105,9 @@ with membership-across-all-tags semantics (search all tags for the version, like
 nuget-search membership check) — never compare against `GITHUB_REF_NAME`, which names the tag being
 released, not a released tag to search against.
 
+The package also now ships the new public `TagAssertion` / `TagAssertionResult` types (namespace
+`DevCli`) — no known downstream equivalent, so no expected collision; listed here for completeness.
+
 ## Source-Only Package
 
 This is a **source-only NuGet package**. The endpoint and service files are included in your project's compilation, not as a compiled assembly. This is required for Nuru's source generators to work correctly.

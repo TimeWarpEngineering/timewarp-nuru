@@ -29,12 +29,31 @@ successful publish. For ganda/health/[redacted-private-repo]: arm or re-arm
 the policy just before the release, and expect the probe to report lapsed
 policies as failures (that is correct behavior, not noise).
 
+**Relation to the attestation model (458-010):**
+
+- **Release-mode gate stack.** Release mode now opens with two cheap
+  verifications before any build: the ganda **attestation check** on the tag's
+  tree (458-010) and the TP **login probe** (this task). Both fail in seconds
+  with precise messages; order them before build/pack/push alongside
+  check-version.
+- **TP state is probe-only, per-repo.** The OIDC exchange only works from
+  inside the repo's own workflow run, so TP configuration can NOT be checked
+  centrally — 458-010's optional detection-only sweep cannot cover TP policies
+  by probing; it could at best track the roster list in this task. The
+  authoritative TP check is always the in-repo probe.
+- **Same trust separation.** TP and attestation follow the same principle:
+  CI verifies evidence (OIDC identity / signature), never holds long-lived
+  authority (stored keys / the private tool).
+- **TimeWarp.Ganda public-NuGet decision** is owned by 458-010's checklist;
+  if the outcome is "stop publishing," remove ganda from this task's policy
+  roster and skip its TP policy.
+
 ## Checklist
 
 - [ ] Add policies for the 8 missing repos (owner TimeWarp.Enterprises; workflow file name only, e.g. `workflow.yml`)
 - [ ] Migrate secret-key workflows to `nuget/login`: state (`PUBLISH_TO_NUGET_ORG`), mediator, fixie, multiavatar, quickbooks, build-tasks, quickbooks (`PUBLISH_TO_NUGET_ORG`)
 - [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
-- [ ] Release mode runs the probe first — fail fast before build, not at push
+- [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)
 - [ ] After all repos flip: revoke every long-lived NuGet API key on nuget.org; delete `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets
 - [ ] Verify package ownership: every published package must have TimeWarp.Enterprises as owner (policies act on the owner account's packages); also confirm intent for orphans TimeWarp.Cli and TimeWarp.AspNetCore.Blazor.Templates (deprecate or adopt)
 - [ ] Record the TP roster in 458 `review/repo-matrix.md`

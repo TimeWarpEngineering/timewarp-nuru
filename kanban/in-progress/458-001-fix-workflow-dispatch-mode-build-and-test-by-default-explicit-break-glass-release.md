@@ -30,6 +30,32 @@ Decided 2026-08-08 (operator): **keep the break-glass path** — confirm-gated
 dispatch release stays as the recovery escape hatch (e.g. beta.69-style stranded
 releases). Plain dispatch remains non-publishing.
 
+### Implementation plan (Phase 2, 2026-08-08)
+
+1. **New `source/timewarp-nuru-devcli/content/any/services/ci-mode.cs`** —
+   `CiMode` enum (moved from workflow-command.cs) + pure static
+   `CiModeDetector.DetermineMode(explicitMode, eventName)`;
+   `workflow_dispatch` → Merge; explicit `--mode` always wins. Lives in DevCli
+   content so the existing services glob compiles it into tools/dev-cli and the
+   454-022 test-props pattern compiles it into tests (no `[NuruRoute]`, so no
+   multi-mode endpoint contamination).
+2. **workflow-command.cs** — DetermineMode becomes a thin env-reading wrapper
+   over the pure function; header comment updated; local enum deleted.
+3. **workflow.yml** — dispatch inputs `mode` (choice merge|release, default
+   merge) + `confirm` (must equal `release`); fail-loud guard step when
+   mode=release with bad confirm; nuget/login `if:` covers release event OR
+   confirmed dispatch, never plain dispatch; run step three-way branch passing
+   `--mode release --api-key` only on confirmed dispatch. Confirm string is
+   never shell-interpolated (expression results only — no injection surface).
+4. **New test `tests/timewarp-nuru-tests/devcli/workflow-01-mode-detection.cs`**
+   (skeleton copied from check-version-01): full auto-detect matrix incl.
+   `workflow_dispatch → Merge`, explicit-override matrix incl. case-insensitive
+   and bogus values, break-glass precedence both directions.
+5. **Wire ci-mode.cs** into `tests/ci-tests/Directory.Build.props` and
+   `tests/timewarp-nuru-tests/devcli/Directory.Build.props`.
+6. Verify: dev CLI compiles; standalone test runfile passes; full CI run
+   (`ganda runfile cache --clear` first — DevCli content changed).
+
 Breaking process change: dispatch no longer attempts to publish. This is the
 documented intent of convention.md; call it out in the release notes for DevCli
 consumers.

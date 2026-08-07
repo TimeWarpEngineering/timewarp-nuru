@@ -92,9 +92,16 @@ public class ModeDetectionTests
     await Task.CompletedTask;
   }
 
-  public static async Task Bogus_explicit_mode_defaults_to_pr()
+  public static async Task Bogus_explicit_mode_throws()
   {
-    CiModeDetector.DetermineMode("bogus", "push").ShouldBe(CiMode.Pr);
+    ArgumentException exception = Should.Throw<ArgumentException>(() => CiModeDetector.DetermineMode("bogus", "push"));
+    exception.Message.ShouldContain("Valid values");
+    await Task.CompletedTask;
+  }
+
+  public static async Task Whitespace_explicit_mode_throws()
+  {
+    Should.Throw<ArgumentException>(() => CiModeDetector.DetermineMode("   ", "push"));
     await Task.CompletedTask;
   }
 

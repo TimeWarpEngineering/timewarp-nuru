@@ -20,6 +20,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `CheckVersionStrategy` | Enum for version check strategies (`git-tag`, `nuget-search`) |
 | `CheckVersionConfig` | Config model for the check-version command |
 | `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
+| `CiMode` (enum) / `CiModeDetector` | Pure CI mode detection (`pr`/`merge`/`release`); `workflow_dispatch` auto-detects `merge`; unknown explicit mode throws |
 
 ## Configuration
 
@@ -73,6 +74,18 @@ NuruApp app = NuruApp.CreateBuilder(args)
 
 await app.RunAsync(args);
 ```
+
+## Migration Notes
+
+### 3.0.0-beta.72+: shared `CiMode` / `CiModeDetector` (`ci-mode.cs`)
+
+`workflow-command.cs` previously declared its own internal `CiMode` enum; `ci-mode.cs` now ships
+that type in package content. When updating the package, delete any local `CiMode` enum from your
+repo's `workflow-command.cs` and use the shared `CiModeDetector` — otherwise the build fails with
+`CS0101` (duplicate `'CiMode'` in namespace `DevCli`).
+
+Also note: `workflow_dispatch` now auto-detects `merge` mode (never publishes); break-glass release
+requires explicit `--mode release`.
 
 ## Source-Only Package
 

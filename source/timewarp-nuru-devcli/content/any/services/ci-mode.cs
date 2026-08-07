@@ -4,7 +4,9 @@
 #endregion
 #region Design
 // Explicit --mode always wins (break-glass release via workflow_dispatch relies
-// on this). Auto-detection maps GITHUB_EVENT_NAME:
+// on this). Unknown explicit mode throws (fail loud — a typo like 'relase' must
+// not silently downgrade a release to a PR build); empty/null explicit mode falls
+// through to event detection. Auto-detection maps GITHUB_EVENT_NAME:
 //   pull_request      -> Pr
 //   push              -> Merge
 //   release           -> Release
@@ -32,7 +34,7 @@ public static class CiModeDetector
         "pr" => CiMode.Pr,
         "merge" => CiMode.Merge,
         "release" => CiMode.Release,
-        _ => CiMode.Pr
+        _ => throw new ArgumentException($"Unknown --mode '{explicitMode}'. Valid values: pr, merge, release.", nameof(explicitMode))
       };
     }
 

@@ -284,6 +284,11 @@ internal sealed class WorkflowCommand : ICommand<Unit>
           AbortPipeline("gh CLI unavailable");
           return;
 
+        case LocateRunStatus.GhFailed:
+          Terminal.WriteErrorLine($"Release gate failed: gh run list failed — {locateOutcome.Detail}. If this is transient (network/rate limit), retry; for auth issues run 'gh auth login'.");
+          AbortPipeline("gh run list failed");
+          return;
+
         case LocateRunStatus.NoMatchingRun:
           Terminal.WriteErrorLine($"Release gate failed: no successful CI run of workflow.yml exists for commit {locateOutcome.HeadSha}. Only tested CI artifacts are published — this commit must pass CI first. If a run failed, fix and re-run it (gh run rerun <run-id>).");
           AbortPipeline("no successful CI run found");
@@ -504,12 +509,18 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     // workflow.yml run at that commit, ordered by CiRunPromotion.OrderCandidateRuns
     // (push-event preferred, then newest). `gh run list` exits 0 with an empty
     // JSON array `[]` when nothing matches — that is NoMatchingRun, a distinct
-    // outcome from gh itself being unusable (missing binary or not
-    // authenticated), which is GhUnavailable. A missing gh binary throws
-    // Win32Exception from Process.Start; caught here rather than propagating,
-    // so the release gate reports a clear remediation instead of a raw
-    // exception (workflow.yml sets GH_TOKEN for runners; local/break-glass
-    // release needs `gh auth login`).
+    // outcome from gh itself being unusable. Two DIFFERENT unusable-gh outcomes
+    // are distinguished (round-1 review finding #2), matching the
+    // TagPinOutcome/AncestorCheckOutcome GitError precedent of surfacing the
+    // real detail rather than a single generic message:
+    // - GhUnavailable: gh could not even be launched — a missing binary throws
+    //   Win32Exception from Process.Start, caught here so the release gate
+    //   reports "install gh / gh auth login" instead of a raw exception.
+    // - GhFailed: gh launched and ran, but exited nonzero (bad/expired token,
+    //   network failure, API rate limit, ...) — its stderr is real diagnostic
+    //   information and must not be discarded behind the same "install gh"
+    //   message, which would be actively misleading on a runner where gh is
+    //   already installed and normally authenticated via GH_TOKEN.
     private static async Task<LocateRunOutcome> LocateCiRunAsync()
     {
       CommandOutput headResult = await Shell.Builder("git")
@@ -534,20 +545,20 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       }
       catch (System.ComponentModel.Win32Exception)
       {
-        return new LocateRunOutcome(LocateRunStatus.GhUnavailable, headSha, []);
+        return new LocateRunOutcome(LocateRunStatus.GhUnavailable, headSha, [], null);
       }
 
       if (runListResult.ExitCode != 0)
       {
-        return new LocateRunOutcome(LocateRunStatus.GhUnavailable, headSha, []);
+        return new LocateRunOutcome(LocateRunStatus.GhFailed, headSha, [], runListResult.Stderr.Trim());
       }
 
       List<CiRunSummary>? runs = JsonSerializer.Deserialize(runListResult.Stdout, DevCliJsonContext.Default.ListCiRunSummary);
       IReadOnlyList<CiRunSummary> candidateRuns = CiRunPromotion.OrderCandidateRuns(runs ?? [], headSha);
 
       return candidateRuns.Count == 0
-        ? new LocateRunOutcome(LocateRunStatus.NoMatchingRun, headSha, [])
-        : new LocateRunOutcome(LocateRunStatus.Found, headSha, candidateRuns);
+        ? new LocateRunOutcome(LocateRunStatus.NoMatchingRun, headSha, [], null)
+        : new LocateRunOutcome(LocateRunStatus.Found, headSha, candidateRuns, null);
     }
 
     // Walks candidateRuns (already ordered push-first/newest-first) until one
@@ -715,18 +726,21 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
     private sealed record TagPinOutcome(TagPinStatus Status, string? TagCommit, string? HeadCommit, string? Detail);
 
-    // Outcome of locating the CI run to promote — GhUnavailable (missing
-    // binary or not authenticated) and NoMatchingRun (gh works fine, nothing
-    // matched) require different operator remediation and must not collapse
-    // into one message.
+    // Outcome of locating the CI run to promote. GhUnavailable (gh could not
+    // be launched at all), GhFailed (gh launched and ran but exited nonzero —
+    // Detail carries its stderr), and NoMatchingRun (gh ran fine, exited 0,
+    // nothing matched this commit) are three DIFFERENT verdicts requiring
+    // different operator remediation and must not collapse into one message
+    // (round-1 review finding #2).
     private enum LocateRunStatus
     {
       Found,
       GhUnavailable,
+      GhFailed,
       NoMatchingRun
     }
 
-    private sealed record LocateRunOutcome(LocateRunStatus Status, string HeadSha, IReadOnlyList<CiRunSummary> CandidateRuns);
+    private sealed record LocateRunOutcome(LocateRunStatus Status, string HeadSha, IReadOnlyList<CiRunSummary> CandidateRuns, string? Detail);
 
     // Outcome of walking candidate runs for a downloadable Packages-* artifact.
     private enum DownloadArtifactStatus

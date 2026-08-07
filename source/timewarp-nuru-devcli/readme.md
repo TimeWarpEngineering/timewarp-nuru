@@ -209,11 +209,16 @@ expected collision; listed here for completeness (`TagAssertion` precedent above
 repo already declares its own type under any of these names, the build fails with `CS0101`
 (duplicate type in namespace `DevCli`).
 
-**458-005 residual closure:** the untagged double-break-glass residual noted above (two different
-commits mixing under one never-bumped, never-tagged version) is now fully closed for release mode
-— release mode never builds locally, so there is no local `dotnet pack` output for two different
-break-glass attempts to mix through the pipeline in the first place; every release push is the one
-CI-verified artifact for a specific commit.
+**458-005 residual (improved, not fully closed):** release mode no longer ships untested local
+builds — every pushed package is now the exact, CI-built-and-tested artifact for a specific commit
+(a genuine improvement over the prior "rebuild from source at push time" behavior). The untagged
+double-break-glass residual noted above is NOT fully closed by this alone, though: two break-glass
+attempts from two DIFFERENT commits, run under one never-bumped, never-tagged version, can still
+mix — each attempt downloads and pushes a genuinely CI-tested artifact, but `check-version`'s
+Partial state plus `--skip-duplicate` do not verify that both attempts came from the SAME commit,
+so packages tested at different commits can still end up published together under one version
+number. Full closure needs release to be commit-consistent across attempts, which lands with
+458-006 (tag-first tooling — tag before build, so a resume has a concrete commit to pin against).
 
 ## Source-Only Package
 

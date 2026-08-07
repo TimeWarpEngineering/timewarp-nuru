@@ -68,7 +68,11 @@ jobs:
           fi
 
       - name: Upload Artifacts
-        if: always()
+        # Skip in release mode: release no longer builds/packs locally — it
+        # downloads and pushes an already-uploaded CI artifact (458-002), so
+        # re-uploading artifacts/packages here would just re-upload the same
+        # bytes the run just downloaded (harmless but wasteful).
+        if: always() && github.event_name != 'release' && !(github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
         uses: actions/upload-artifact@v4
         with:
           name: Packages-${{ github.run_number }}

@@ -66,9 +66,14 @@ only incoherent one:
   preserves enforce_admins + 0-approval review requirement). PUT is an
   operator/post-merge step.
 - D9: break-glass/local release uses the same promotion path (gh user auth;
-  clear failure if gh missing). **Closes the 458-005 untagged
-  double-break-glass residual**: release mode never builds locally, so two
-  local builds can no longer mix under one version through the pipeline.
+  clear failure if gh missing). **Improves (does not fully close) the 458-005
+  untagged double-break-glass residual**: release mode never builds locally,
+  so every pushed package is now a genuine CI-tested artifact for a specific
+  commit — but two break-glass attempts from two DIFFERENT commits can still
+  mix under one never-bumped, never-tagged version (`check-version`'s Partial
+  state + `--skip-duplicate` do not verify cross-attempt commit consistency).
+  Full closure lands with 458-006 tag-first tooling (round-1 review finding
+  #3, corrected from the original overstated "fully closed" phrasing).
 - D10: artifact expiry/missing → hard fail with `gh run rerun <id>` guidance
   (rerun executes the same sha — tested-bytes property preserved).
 - Tests: promotion-01..04 (run selection, artifact selection, set
@@ -131,9 +136,80 @@ Implemented per the Phase 2 plan above. Changes left uncommitted in the working 
   rather than adding a third `LocateRunStatus` — HEAD is already resolved
   successfully by the ancestor check earlier in the same pipeline run, so this
   path is not expected to be reachable in practice.
-- gh missing vs. unauthenticated are not distinguished — both collapse to
-  `LocateRunStatus.GhUnavailable` with the single specced remediation message,
-  since the task text gives one message for both.
+- ~~gh missing vs. unauthenticated are not distinguished~~ — superseded by
+  round-1 review finding #2 below: gh-could-not-launch (`GhUnavailable`) and
+  gh-launched-but-exited-nonzero (`GhFailed`, carrying stderr) are now
+  distinguished.
 - Branch-protection PUT intentionally NOT run (explicit instruction) — left as
   the sole unchecked checklist item, an operator post-merge step per D8.
 - No commit made (explicit instruction) — all changes are in the working tree.
+
+### Session — round-1 review fixes (2026-08-07)
+
+Round-1 review of commit `02cbcf4f` (full record:
+`review/round-1/merged.md`) returned 4 fix findings + 1 wontfix. All 4 fixed
+in the working tree (still uncommitted, per instruction):
+
+- **Fix 1 (MED)** — `CiRunPromotion.OrderCandidateRuns` now excludes
+  `event == "pull_request"` runs from candidacy outright (filtered alongside
+  the foreign-sha rows, single combined `Where` to avoid an RCS1112 chain
+  warning). Design region explains why: a `pull_request` run checks out
+  GitHub's synthetic merge ref (`refs/pull/N/merge`), so its artifacts are
+  built from a DIFFERENT tree than the commit named by its own reported
+  headSha — dormant today under this repo's merge-commit-only +
+  `enforce_admins` policy, but candidacy must not depend on that external,
+  unstated config. Added 3 tests to `promotion-01-run-selection.cs`: a lone
+  `pull_request` run at the matching sha excluded (empty result even as the
+  only candidate), mixed pull_request+push at the same sha → only push
+  survives, and a three-way pull_request+release+push mix → push first,
+  release second, pull_request excluded. 11/11 pass (was 8).
+- **Fix 2 (MED)** — `LocateRunOutcome` gained a `Detail` (`string?`) field.
+  `LocateRunStatus` split `GhUnavailable` into two: `GhUnavailable` (gh could
+  not even be launched — `Win32Exception` from a missing binary, unchanged
+  "install gh / gh auth login" message) and new `GhFailed` (gh launched and
+  ran but exited nonzero — `Detail = stderr.Trim()`, message: "gh run list
+  failed — {stderr}. If this is transient (network/rate limit), retry; for
+  auth issues run 'gh auth login'."). Mirrors the existing
+  `TagPinOutcome`/`AncestorCheckOutcome` GitError precedent of surfacing real
+  stderr instead of a generic message.
+- **Fix 3 (MED)** — softened the 458-005 "fully closed" overclaim in both
+  `source/timewarp-nuru-devcli/readme.md` and this file's D9 note above (see
+  the corrected D9 bullet): release mode no longer ships untested local
+  builds (genuine improvement, every push is CI-tested for a specific
+  commit), but the untagged double-break-glass case can still mix
+  CI-tested-but-different-commit packages under one version — full closure
+  needs 458-006 tag-first tooling.
+- **Fix 4 (LOW)** — `workflow.yml`'s "Upload Artifacts" step now skips in
+  release mode (release event, or confirmed break-glass dispatch) to avoid
+  re-uploading the just-downloaded set: `if: always() && github.event_name
+  != 'release' && !(github.event_name == 'workflow_dispatch' && inputs.mode
+  == 'release' && inputs.confirm == 'release')`.
+- **Wontfix (finding #5, LOW/INFO, decided by orchestrator)** — partial-download
+  leftover state in `artifacts/packages`: self-heals (next attempt clears
+  unconditionally) and cannot cause an unsafe push (throw aborts before push).
+  No code change.
+
+**Verification (round-1 fixes):**
+- `promotion-01-run-selection.cs`: 11/11 passed (3 new pull_request tests).
+- `promotion-02/03/04`: unaffected, still passing (re-run to confirm no
+  regression from the shared `ci-run-promotion.cs` edits).
+- `dotnet build timewarp-nuru.slnx`: 0 warnings, 0 errors (the RCS1112
+  chained-`Where` warning surfaced once and was fixed by combining the two
+  predicates into one `Where`).
+- `dotnet run tests/ci-tests/run-ci-tests.cs`: 0 failed.
+- `dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release` from
+  dev HEAD: still aborts at Step 1/6 tag-pin Mismatch — gate order intact,
+  locate/download/verify never reached.
+- Manual `gh` failure-path simulation: ran the exact command shape
+  `LocateCiRunAsync` uses with a deliberately bad token —
+  `GH_TOKEN=bad_token_xyz gh run list --workflow workflow.yml --commit
+  9e7f900dd8660b516c70b8ab76909f90edaa9e86 --status success --json
+  databaseId,event,headSha,createdAt` — exit code 1, stderr:
+  `HTTP 401: Bad credentials (https://api.github.com/repos/TimeWarpEngineering/timewarp-nuru/actions/workflows/workflow.yml)`
+  + `Try authenticating with:  gh auth login -h github.com`. Confirms the new
+  `GhFailed` branch renders a real, human-readable, auth-actionable message —
+  "Release gate failed: gh run list failed — HTTP 401: Bad credentials
+  (...)\nTry authenticating with: gh auth login -h github.com. If this is
+  transient (network/rate limit), retry; for auth issues run 'gh auth
+  login'." — clearly distinct from the generic "install gh" `GhUnavailable`
+  message.

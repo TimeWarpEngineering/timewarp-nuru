@@ -9,9 +9,19 @@
 #region Design
 // OrderCandidateRuns: `gh run list --json databaseId,event,headSha,createdAt`
 // returns every recent run regardless of commit, so callers must filter to the
-// tag's headSha first. Among matches, a push-event run (ordinary master-merge
-// CI) is preferred over a release-event run at the SAME sha — a release-event
-// run only re-runs the same pipeline and, pre-458-002, uploaded its own rebuilt
+// tag's headSha first. `pull_request`-event runs are excluded from candidacy
+// OUTRIGHT, not merely deprioritized: a pull_request run checks out GitHub's
+// synthetic merge ref (refs/pull/N/merge, HEAD merged into the target branch),
+// so its build/test artifacts come from a DIFFERENT tree than the commit named
+// by its own reported headSha — that headSha match is real but the artifact
+// content is not "this exact commit, tested." (Dormant today: this repo's
+// merge-commit-only + enforce_admins policy means a pull_request run's
+// reported headSha never collides with the resulting push run's headSha in
+// practice — but candidacy must not depend on that external, unstated repo
+// config; the exclusion holds regardless.) Among the remaining (push/release)
+// matches, a push-event run (ordinary master-merge CI) is preferred over a
+// release-event run at the SAME sha — a release-event run only re-runs the
+// same pipeline and, pre-458-002, uploaded its own rebuilt
 // (untested-by-a-separate-step) artifact; the push run is the one that ran the
 // full pr pipeline (build -> verify-samples -> test) against this exact commit.
 // createdAt is an RFC3339 string (`2026-06-15T14:34:37Z`); ordinal string
@@ -127,9 +137,11 @@ public static class CiRunPromotion
 {
   /// <summary>
   /// Filters <paramref name="runs"/> to those at <paramref name="headSha"/>
-  /// (Ordinal), ordered push-event first, then by CreatedAt descending
-  /// (ordinal string compare — RFC3339 timestamps sort chronologically),
-  /// then by DatabaseId descending.
+  /// (Ordinal), EXCLUDING any <c>pull_request</c>-event run outright (see the
+  /// Design region: its artifacts are built from a different tree than its
+  /// reported headSha). Remaining candidates are ordered push-event first,
+  /// then by CreatedAt descending (ordinal string compare — RFC3339
+  /// timestamps sort chronologically), then by DatabaseId descending.
   /// </summary>
   public static IReadOnlyList<CiRunSummary> OrderCandidateRuns(IReadOnlyList<CiRunSummary> runs, string headSha)
   {
@@ -139,7 +151,7 @@ public static class CiRunPromotion
     return
     [
       .. runs
-        .Where(run => string.Equals(run.HeadSha, headSha, StringComparison.Ordinal))
+        .Where(run => string.Equals(run.HeadSha, headSha, StringComparison.Ordinal) && !string.Equals(run.Event, "pull_request", StringComparison.Ordinal))
         .OrderBy(run => string.Equals(run.Event, "push", StringComparison.Ordinal) ? 0 : 1)
         .ThenByDescending(run => run.CreatedAt, StringComparer.Ordinal)
         .ThenByDescending(run => run.DatabaseId)

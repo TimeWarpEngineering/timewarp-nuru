@@ -44,3 +44,34 @@ published NuGet versions (three-state per 458-005).
 - [ ] Tests: correct release passes; mismatched tag aborts; tag off master aborts; unknown strategy config → clear error
 - [ ] DevCli consumers note: breaking change for git-tag strategy config (architecture is the only known user); update convention.md rule 6 wording if it references strategies
 - [ ] Record resurrect condition: tags-as-ledger returns only if a repo ships versioned NON-NuGet releases (no such repo today); would be a deliberate re-add with membership-across-all-tags semantics, never `GITHUB_REF_NAME`
+
+## Notes
+
+### Implementation plan (Phase 2, 2026-08-08) — key decisions
+
+- **D1:** tag-equality assertion runs only when `GITHUB_EVENT_NAME == "release"`
+  (on dispatch, `GITHUB_REF_NAME` is a branch; locally it's unset) with an
+  explicit "skipped" log line; ancestor-of-master assertion runs in ALL release
+  modes (release event, break-glass, local) — the invariant is "published code
+  is on master." Master ref: `origin/master` with local `master` fallback.
+- **D2:** removed `checkVersionStrategy` key is silently ignored on
+  deserialize (STJ default) — architecture's legacy config keeps parsing and
+  lands on nuget-search, the intended outcome; regression test proves it.
+- **D4:** pure `TagAssertion.Validate(refName, propsVersion)` in new DevCli
+  content `services/tag-assertion.cs` (unit-tested matrix); git ancestor check
+  stays a thin `Shell.Builder("git")` wrapper in workflow-command.cs.
+- Deletions in one commit unit: `git-tag-check-service.cs`,
+  `check-version-strategy.cs`, strategy property + JSON context registration,
+  `--strategy`/`--tag` options, `HandleGitTagAsync`, DI registration; both
+  test props updated (remove strategy include, add tag-assertion +
+  repo-config-service + irepo-config-service).
+- New tests: `workflow-02-release-tag-assertion.cs` (tag matrix incl.
+  branch-name and case-sensitivity), `check-version-02-legacy-strategy-config.cs`
+  (legacy jsonc parses; packages preserved; empty → defaults).
+- Release pipeline banners renumber to 6 steps with gate first; shared
+  `AbortPipeline` helper; `ReadPropsVersion` extracted and reused by push.
+- Docs: DevCli readme services/config/migration-notes updates (+ two stale
+  cells found by plan agent); convention.md line-91 shared-surface reword;
+  this repo's `.timewarp/dev.jsonc` drops the strategy key.
+- Not unit-testable (verified via gate simulations + next real release):
+  env reading, git ancestor wrapper, abort wiring.

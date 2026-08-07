@@ -33,9 +33,22 @@ an explicit decision item below.
    `ganda repo audit` checks, and publishes a conformance report (which repos
    fail, which checks) — the regenerable version of 458's hand-built deviation
    matrix. Ganda never leaves private infrastructure; public repos never see it.
-3. **`ganda repo audit` = superset** for operator/local use and private-repo CI;
-   `dev audit-convention` = the org-wide enforcement floor. Two tools, one
-   layering, no overlap ambiguity.
+3. **No duplication — check ownership, one home per check** (verified against
+   `ganda repo audit --list-checks`, 23 checks, 2026-08-07):
+   - **Hygiene → ganda only** (all current checks: directory structure, kebab
+     names, slnx, CPM, banned APIs, bin/dev, envrc, icon, runfile shebangs,
+     regions, nuru-latest, …). Private, evolves freely.
+   - **Release-convention invariants → DevCli only** (~5 checks: `<Version>`
+     SSOT in source props, caller workflow CONTENT matches canonical shape,
+     v-prefixed tags, OIDC not stored secrets, dev.jsonc valid). Small and
+     stable because the convention is.
+   - Actual overlap today is only two existence checks (`workflow-file`,
+     `source-directory-build-props`) — existence stays hygiene/ganda; content
+     assertions are convention/DevCli.
+   - **Ganda's sweep composes both**: runs its own checks natively and invokes
+     each repo's `dev audit-convention` (ganda already requires `bin/dev` via
+     its own check). Ganda never reimplements convention checks; DevCli never
+     grows hygiene checks.
 4. **Baseline pass:** run the audit against all active repos once, record the
    current failure list here, and burn it down (or explicitly waive per repo
    with a reason).

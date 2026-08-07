@@ -57,6 +57,54 @@ manifest. Remove the `packages` key from `.timewarp/dev.jsonc` once derived.
 - [x] Tests for the derivation (add a fake packable project → appears in set)
 - [x] Update `.timewarp/dev.jsonc` and DevCli readme
 
+## Results
+
+Implemented in commits `789cadd1` (derivation) and `bdf03e6a` (review fixes).
+
+- **All three hand-maintained lists are gone.** Shared
+  `IPackableProjectService`/`PackableProjectService` (DevCli content)
+  evaluates `source/**/*.csproj` via `dotnet msbuild
+  -getProperty:IsPackable,PackageId` — authoritative (handles
+  AssemblyName-derived IDs and the two-level IsPackable default flip that
+  disqualify XML heuristics). Pack loops the derived project paths; push
+  iterates derived IDs with per-package exists-throw PLUS an extras
+  cross-check; check-version precedence is `--package` → config override →
+  derived (override never silently changes on package bump — D3).
+- **Fail-loud guards:** Properties-anchored JSON parse immune to
+  brace-containing noise; blank-PackageId throws naming the project;
+  duplicate PackageId throws naming both paths; empty derived set aborts the
+  release before Clean/Build; every release log prints "Packable set (N):
+  …" membership.
+- **Config:** this repo's `.timewarp/dev.jsonc` no longer lists packages;
+  consumers with a configured override get a nudge line pointing at
+  derivation.
+- **Review (Phase 4b):** 2 rounds, effort 1. 7 findings: HIGH composite +
+  3 LOW + 1 LOW/INFO resolved; 2 INFO wontfix; 1 contrived LOW/INFO parse
+  residual accepted. Disposition: **accepted-exceptions**
+  (`review/disposition.md`). Reviewer independently verified NuGet's
+  PackageId backfill behavior, the AOT source-gen wiring (reflection
+  serializer disabled in env), and reproduced CI both rounds.
+
+### How to validate
+
+Smoke:
+1. `dotnet run --file tools/dev-cli/dev.cs -- check-version` → Expect exactly:
+   TimeWarp.Nuru, TimeWarp.Nuru.Analyzers, TimeWarp.Nuru.DevCli,
+   TimeWarp.Nuru.Mcp, TimeWarp.Nuru.Search (sorted), then the All-published
+   abort (exit 1) while props version remains published.
+2. `dotnet run tests/timewarp-nuru-tests/devcli/packable-projects-01-parse.cs`
+   → 19/19. `dotnet run tests/timewarp-nuru-tests/devcli/packable-projects-02-derivation-fixture.cs`
+   → 3/3 (live msbuild fixtures incl. blank-PackageId throw).
+3. Add a packable project under source/ → it appears in check-version's list
+   with zero config edits (fixture test 2 proves the mechanism).
+
+Automated gate: `ganda runfile cache --clear && dotnet run tests/ci-tests/run-ci-tests.cs`
+→ Expect 0 failed (last: 1468 total / 1461 passed / 7 skipped).
+
+Depends on / not in scope: BuildCommand's curated build list (noted in
+disposition; 458-002 territory); downstream repos delete their `packages`
+override during org rollout.
+
 ## Session (2026-08-07)
 
 Implemented per the Phase 2 plan (D1-D4 above). New shared DevCli content:

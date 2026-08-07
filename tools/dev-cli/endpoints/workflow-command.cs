@@ -95,44 +95,105 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
     private async Task RunPrWorkflowAsync()
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> verify-samples -> test");
+      Terminal.WriteLine("Pipeline: attestation -> clean -> build -> verify-samples -> test");
       Terminal.WriteLine("");
 
-      // Step 1: Clean
+      string repoRoot = ResolveRepoRoot();
+
+      // Step 1: Attestation
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 1/4: Clean");
+      Terminal.WriteLine("  Step 1/5: Attestation");
+      Terminal.WriteLine("===============================================================================");
+      AttestationStepResult attestationResult = await RunPrAttestationStepAsync(repoRoot).ConfigureAwait(false);
+
+      if (attestationResult.ShouldAbort)
+      {
+        AbortPipeline("attestation required (mode=require) and not valid");
+        return;
+      }
+
+      // Step 2: Clean
+      Terminal.WriteLine("");
+      Terminal.WriteLine("===============================================================================");
+      Terminal.WriteLine("  Step 2/5: Clean");
       Terminal.WriteLine("===============================================================================");
       CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
       await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
 
-      // Step 2: Build
+      // Step 3: Build
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 2/4: Build");
+      Terminal.WriteLine("  Step 3/5: Build");
       Terminal.WriteLine("===============================================================================");
       BuildCommand.Handler buildHandler = new(Terminal);
       await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
 
-      // Step 3: Verify Samples
+      // Step 4: Verify Samples
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 3/4: Verify Samples");
+      Terminal.WriteLine("  Step 4/5: Verify Samples");
       Terminal.WriteLine("===============================================================================");
       VerifySamplesCommand.Handler verifySamplesHandler = new(Terminal);
       await verifySamplesHandler.Handle(new VerifySamplesCommand(), CancellationToken.None);
 
-      // Step 4: Test
+      // Step 5: Test
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 4/4: Test");
+      Terminal.WriteLine("  Step 5/5: Test");
       Terminal.WriteLine("===============================================================================");
       TestCommand.Handler testHandler = new(Terminal);
       await testHandler.Handle(new TestCommand(), CancellationToken.None);
+
+      // Attestation advisory (warn mode only) is repeated here, immediately
+      // before the SUCCEEDED banner, so it is not lost above scrollback from
+      // clean/build/verify-samples/test output (round-1 self-review finding).
+      if (attestationResult.RepeatAdvisory is not null)
+      {
+        Terminal.WriteLine("");
+        Terminal.WriteLine(attestationResult.RepeatAdvisory.Yellow());
+      }
 
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Pipeline SUCCEEDED");
       Terminal.WriteLine("===============================================================================");
+    }
+
+    // Runs the attestation verify step for PR/merge mode and reports the
+    // outcome per .timewarp/dev.jsonc `attestation.mode` (default "warn" —
+    // nothing is enforced org-wide until repos opt in; see
+    // attestation-config.cs Design region). "require" fails the pipeline on
+    // any non-Valid outcome; "warn" prints a loud advisory but never aborts.
+    private async Task<AttestationStepResult> RunPrAttestationStepAsync(string repoRoot)
+    {
+      RepoConfig config = await ConfigService.GetConfigAsync(CancellationToken.None).ConfigureAwait(false);
+      bool requireMode = string.Equals(config.Attestation?.Mode, "require", StringComparison.OrdinalIgnoreCase);
+
+      AttestationVerifyOutcome outcome = await VerifyAttestationAsync(repoRoot).ConfigureAwait(false);
+
+      if (outcome.Status == AttestationVerificationStatus.Valid)
+      {
+        Terminal.WriteLine($"Attestation valid: check_set {ShortSha(outcome.CheckSet)} ts {outcome.Ts}");
+        return new AttestationStepResult(ShouldAbort: false, RepeatAdvisory: null);
+      }
+
+      string message = DescribeAttestationOutcome(outcome);
+
+      if (requireMode)
+      {
+        Terminal.WriteErrorLine($"Attestation required (mode=require): {message}");
+        return new AttestationStepResult(ShouldAbort: true, RepeatAdvisory: null);
+      }
+
+      string advisory = $"Attestation advisory (mode=warn, not enforced): {message}";
+      Terminal.WriteLine("");
+      Terminal.WriteLine("*******************************************************************************".Yellow());
+      Terminal.WriteLine($"  {advisory}".Yellow());
+      Terminal.WriteLine("  Set attestation.mode = \"require\" in .timewarp/dev.jsonc once org rollout".Yellow());
+      Terminal.WriteLine("  completes to enforce this in CI (kanban task 458-010).".Yellow());
+      Terminal.WriteLine("*******************************************************************************".Yellow());
+
+      return new AttestationStepResult(ShouldAbort: false, RepeatAdvisory: advisory);
     }
 
     private async Task RunReleaseWorkflowAsync(string? apiKey)
@@ -141,11 +202,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("");
 
       // Get repo root for pack/push operations
-      string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-      if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
-      {
-        repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
-      }
+      string repoRoot = ResolveRepoRoot();
 
       // Step 1: Release Gate — Tag Assertions
       Terminal.WriteLine("===============================================================================");
@@ -237,6 +294,23 @@ internal sealed class WorkflowCommand : ICommand<Unit>
           AbortPipeline("unhandled ancestor check status");
           return;
       }
+
+      // Attestation gate — ALWAYS enforced in release mode, regardless of
+      // .timewarp/dev.jsonc `attestation.mode` (that config only governs
+      // PR/merge mode's advisory-vs-required behavior; a release with no
+      // verifiable audit evidence must never ship — kanban task 458-010).
+      // The runner never signs; a missing/invalid attestation fails with
+      // guidance to pull master locally so ganda can attest.
+      AttestationVerifyOutcome attestationOutcome = await VerifyAttestationAsync(repoRoot).ConfigureAwait(false);
+
+      if (attestationOutcome.Status != AttestationVerificationStatus.Valid)
+      {
+        Terminal.WriteErrorLine($"Release gate failed: {DescribeAttestationOutcome(attestationOutcome)}");
+        AbortPipeline("attestation missing or invalid");
+        return;
+      }
+
+      Terminal.WriteLine($"Attestation valid: check_set {ShortSha(attestationOutcome.CheckSet)} ts {attestationOutcome.Ts}");
 
       // Step 2: Check Version
       Terminal.WriteLine("");
@@ -384,6 +458,180 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine($"  Pipeline ABORTED — {reason}");
       Terminal.WriteLine("===============================================================================");
       Environment.ExitCode = 1;
+    }
+
+    // Repo root heuristic shared by both pipeline modes: prefer the
+    // AOT-published binary's on-disk layout (bin/<rid>/ -> repo root is four
+    // levels up); fall back to CWD when that guess misses (e.g. running via
+    // `dotnet run tools/dev-cli/dev.cs` instead of the published binary).
+    private static string ResolveRepoRoot()
+    {
+      string repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+      if (!File.Exists(Path.Combine(repoRoot, "timewarp-nuru.slnx")))
+      {
+        repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
+      }
+
+      return repoRoot;
+    }
+
+    // Orchestrates the ganda-audit attestation verify step (kanban task
+    // 458-010): fetch notes (best-effort), resolve HEAD's tree, read the
+    // note, run the pure AttestationVerifier.Evaluate, and — only when it
+    // says ReadyToVerify — shell out to `openssl pkeyutl -verify -rawin`
+    // (no pure-.NET Ed25519 verify exists in the BCL; see
+    // attestation-verifier.cs's Design region for why that check lives here
+    // and not in the pure verifier). Never throws for any attestation-shaped
+    // failure — every branch below returns a distinct AttestationVerifyOutcome
+    // status; only a genuinely broken git repo (HEAD^{tree} unresolvable)
+    // throws, matching LocateCiRunAsync's precedent for "this should never
+    // happen in a real checkout".
+    private static async Task<AttestationVerifyOutcome> VerifyAttestationAsync(string repoRoot)
+    {
+      // (a) Best-effort forced fetch of the notes ref. A repo that has never
+      // been attested has no such ref on origin at all — `git fetch` exits
+      // 128 with "couldn't find remote ref ..." on stderr in that case; that
+      // is expected and not a fetch failure, just a signal that RefMissing
+      // (rather than plain NoNote) is the more accurate verdict below.
+      CommandOutput fetchResult = await Shell.Builder("git")
+        .WithArguments("fetch", "origin", $"+{AttestationVerifier.NotesRef}:{AttestationVerifier.NotesRef}")
+        .WithWorkingDirectory(repoRoot)
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None)
+        .ConfigureAwait(false);
+
+      bool remoteNotesRefMissing = fetchResult.ExitCode == 128
+        && fetchResult.Stderr.Contains("couldn't find remote ref", StringComparison.OrdinalIgnoreCase);
+
+      // (b) Resolve HEAD's tree — the note is keyed by tree, not commit.
+      CommandOutput treeResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "HEAD^{tree}")
+        .WithWorkingDirectory(repoRoot)
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None)
+        .ConfigureAwait(false);
+
+      if (treeResult.ExitCode != 0)
+      {
+        throw new InvalidOperationException($"Could not resolve HEAD tree for attestation verify: {treeResult.Stderr.Trim()}");
+      }
+
+      string treeSha = treeResult.Stdout.Trim();
+
+      // (c) Read the note for this tree.
+      CommandOutput noteResult = await Shell.Builder("git")
+        .WithArguments("notes", $"--ref={AttestationVerifier.NotesRefShort}", "show", treeSha)
+        .WithWorkingDirectory(repoRoot)
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None)
+        .ConfigureAwait(false);
+
+      string? noteJson = noteResult.ExitCode == 0 ? noteResult.Stdout.Trim() : null;
+
+      if (string.IsNullOrWhiteSpace(noteJson))
+      {
+        bool noLocalNote = noteResult.ExitCode == 1
+          && noteResult.Stderr.Contains("no note found", StringComparison.OrdinalIgnoreCase);
+
+        // RefMissing (never attested anywhere, ever) is a more actionable
+        // verdict than plain NoNote (ref exists, just not for this tree) —
+        // only claim it when BOTH the remote ref and a local note are absent.
+        AttestationVerificationStatus status = remoteNotesRefMissing && noLocalNote
+          ? AttestationVerificationStatus.RefMissing
+          : AttestationVerificationStatus.NoNote;
+
+        return new AttestationVerifyOutcome(status, treeSha, null, null, null);
+      }
+
+      // (d) Pure evaluation — parse, schema/field checks, key lookup, tree match.
+      AttestationEvaluation evaluation = AttestationVerifier.Evaluate(noteJson, treeSha);
+
+      if (evaluation.Status != AttestationVerificationStatus.ReadyToVerify)
+      {
+        return new AttestationVerifyOutcome(evaluation.Status, treeSha, evaluation.Note?.CheckSet, evaluation.Note?.Ts, evaluation.Detail);
+      }
+
+      // (e) Ed25519 verify via openssl — the one step that is genuinely a
+      // process launch, isolated here so everything above stays unit-testable.
+      DirectoryInfo tempDir = Directory.CreateTempSubdirectory("dev-attest-");
+      try
+      {
+        string payloadPath = Path.Combine(tempDir.FullName, "payload.bin");
+        string sigPath = Path.Combine(tempDir.FullName, "sig.bin");
+        string pemPath = Path.Combine(tempDir.FullName, "pub.pem");
+
+        await File.WriteAllBytesAsync(payloadPath, evaluation.CanonicalBytes!).ConfigureAwait(false);
+        await File.WriteAllBytesAsync(sigPath, evaluation.SignatureBytes!).ConfigureAwait(false);
+        await File.WriteAllTextAsync(pemPath, evaluation.PublicKeyPem).ConfigureAwait(false);
+
+        CommandOutput verifyResult;
+        try
+        {
+          verifyResult = await Shell.Builder("openssl")
+            .WithArguments("pkeyutl", "-verify", "-pubin", "-inkey", pemPath, "-rawin", "-in", payloadPath, "-sigfile", sigPath)
+            .WithNoValidation()
+            .CaptureAsync(CancellationToken.None)
+            .ConfigureAwait(false);
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+          return new AttestationVerifyOutcome(
+            AttestationVerificationStatus.VerifierUnavailable,
+            treeSha,
+            evaluation.Note!.CheckSet,
+            evaluation.Note.Ts,
+            "openssl could not be launched");
+        }
+
+        AttestationVerificationStatus finalStatus = verifyResult.ExitCode == 0
+          ? AttestationVerificationStatus.Valid
+          : AttestationVerificationStatus.BadSignature;
+
+        return new AttestationVerifyOutcome(
+          finalStatus,
+          treeSha,
+          evaluation.Note!.CheckSet,
+          evaluation.Note.Ts,
+          finalStatus == AttestationVerificationStatus.BadSignature ? verifyResult.Stderr.Trim() : null);
+      }
+      finally
+      {
+        tempDir.Delete(recursive: true);
+      }
+    }
+
+    // Single source of truth for the operator-facing message per outcome —
+    // shared by PR/merge mode (advisory or required-failure text) and
+    // release mode (hard-gate failure text). Messages match kanban task
+    // 458-010's frozen guidance verbatim ("pull master locally so ganda can
+    // attest" / "update TimeWarp.Nuru.DevCli" / "install openssl" /
+    // "re-attest via ganda").
+    private static string DescribeAttestationOutcome(AttestationVerifyOutcome outcome)
+    {
+      string shortTree = ShortSha(outcome.Tree);
+
+      return outcome.Status switch
+      {
+        AttestationVerificationStatus.Valid =>
+          $"Attestation valid: check_set {ShortSha(outcome.CheckSet)} ts {outcome.Ts}",
+
+        AttestationVerificationStatus.NoNote or AttestationVerificationStatus.RefMissing =>
+          $"tree {shortTree} is unattested — pull master locally so ganda can attest (ganda repo attest)",
+
+        AttestationVerificationStatus.UnknownKey =>
+          $"tree {shortTree} attestation uses an unrecognized key_id — update TimeWarp.Nuru.DevCli ({outcome.Detail})",
+
+        AttestationVerificationStatus.VerifierUnavailable =>
+          "openssl not found — install openssl",
+
+        AttestationVerificationStatus.TreeMismatch or AttestationVerificationStatus.BadSignature =>
+          $"tree {shortTree} attestation invalid (possible tampering) — re-attest via ganda",
+
+        AttestationVerificationStatus.ParseFailure =>
+          $"tree {shortTree} attestation note could not be parsed ({outcome.Detail})",
+
+        _ => $"tree {shortTree} attestation verification returned unexpected status '{outcome.Status}'"
+      };
     }
 
     // Verifies that if tag v{version} already exists locally, HEAD is at that
@@ -755,5 +1003,21 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     // through so the final "every candidate exhausted" abort message can name
     // a specific run for `gh run rerun {RunId}` guidance.
     private sealed record ExpiredArtifactEncounter(long RunId, string Event, IReadOnlyList<string> ArtifactNames);
+
+    // Outcome of VerifyAttestationAsync — one of every AttestationVerificationStatus
+    // value EXCEPT ReadyToVerify (an internal-to-Evaluate intermediate state
+    // that never escapes VerifyAttestationAsync; by the time this record is
+    // returned, the openssl step has already resolved it to Valid or
+    // BadSignature, or a pre-signature check already resolved it to something
+    // else). CheckSet/Ts are populated whenever a note was parsed far enough
+    // to have them (including failure paths like TreeMismatch/BadSignature),
+    // so failure messages can still cite them when useful.
+    private sealed record AttestationVerifyOutcome(AttestationVerificationStatus Status, string? Tree, string? CheckSet, string? Ts, string? Detail);
+
+    // Outcome of RunPrAttestationStepAsync — whether PR/merge mode must abort
+    // the pipeline (mode=require + non-Valid) and, when in mode=warn with a
+    // non-Valid outcome, the advisory line to repeat just before the
+    // SUCCEEDED banner so it survives scrollback from the later steps.
+    private sealed record AttestationStepResult(bool ShouldAbort, string? RepeatAdvisory);
   }
 }

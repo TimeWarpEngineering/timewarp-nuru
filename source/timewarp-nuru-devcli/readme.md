@@ -26,6 +26,8 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `PublishState` (enum) / `PublishStateClassifier` | Pure none/some/all classification of published packages for the `check-version` gate; throws on zero packages or an out-of-range published count |
 | `CiRunPromotion` | Pure logic for release-mode artifact promotion: orders candidate CI runs for a commit, selects a run's `Packages-*` artifact (including expiry handling), and verifies a downloaded `.nupkg` set against the derived packable set — no process execution |
 | `ReleaseGuard` (`GuardVerdict`) | Pure per-guard classifiers for the `release` gate: working tree clean, on master, synced with origin, tag `v{Version}` available (neither local nor remote), and publish state (none/partial/all) — no process execution |
+| `AttestationVerifier` (`AttestationNoteDto`, `AttestationEvaluation`, `AttestationVerificationStatus`) | Pure verifier for ganda-audit attestation notes (kanban task 458-010): parses the frozen v1 note JSON, rebuilds the canonical signed payload, decodes the unpadded-base64url signature, resolves `key_id` against a baked-in key registry (or a test-only `keyOverride`), and compares the note's tree against the tree being verified — no process execution; the actual Ed25519 verify (via `openssl pkeyutl -verify -rawin`) runs in `workflow-command.cs`, not here |
+| `AttestationConfig` | Config model for the attestation verify step's `mode` (`"warn"`\|`"require"`, default `warn`) |
 
 ## Configuration
 
@@ -90,6 +92,60 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 3.0.0-beta.72+: attestation verify step (`attestation-verifier.cs`, `attestation-config.cs`)
+
+`dev workflow` now includes an attestation verify step (kanban task 458-010) — the DevCli/public
+half of "sign locally in ganda, verify in CI." Ganda (private, operator-only) audits a repo and
+signs evidence over `(tree sha, check-set hash, timestamp)` into `refs/notes/ganda-audit`; this
+package's `AttestationVerifier` rebuilds that evidence and `workflow-command.cs` shells out to
+`openssl pkeyutl -verify -rawin` to check the Ed25519 signature — no BCL Ed25519 verify exists,
+and a crypto NuGet dependency was rejected for this source-only package's posture, so `openssl`
+must be on PATH (runners and operator machines) or the step reports `VerifierUnavailable`.
+
+Pipeline shape by mode:
+
+- **PR/merge mode**: new Step 1 ("Attestation"), before Clean — Steps renumber from `1/4..4/4` to
+  `1/5..5/5`. Governed by `.timewarp/dev.jsonc` `attestation.mode`: `"warn"` (default — nothing is
+  attested org-wide yet) prints a loud advisory on any non-`Valid` outcome but never fails the
+  pipeline (the advisory repeats once more immediately before the `SUCCEEDED` banner so it
+  survives scrollback); `"require"` fails the pipeline on any non-`Valid` outcome.
+- **Release mode**: hard gate, always — inserted into the existing Step 1/6 gate block
+  immediately after the ancestor-of-master check, and **ignores** `attestation.mode` entirely. A
+  release with no verifiable audit evidence must never ship; the runner never signs, so a missing
+  or invalid attestation aborts with "pull master locally so ganda can attest."
+
+Outcomes and their operator-facing messages: `Valid` (check_set + ts printed); `NoNote` /
+`RefMissing` ("tree `<short>` is unattested — pull master locally so ganda can attest (`ganda repo
+attest`)"); `UnknownKey` ("update TimeWarp.Nuru.DevCli" — the key registry needs a bump);
+`VerifierUnavailable` ("openssl not found — install openssl"); `TreeMismatch` / `BadSignature`
+("attestation invalid (possible tampering) — re-attest via ganda"); `ParseFailure` (names the
+malformed field). See `AttestationVerifier`'s Design region for the full frozen v1 contract
+(notes ref, canonical payload bytes, signature encoding, key registry + rotation procedure) —
+it must match ganda's `documentation/developer/attestation.md` byte-for-byte.
+
+`.timewarp/dev.jsonc` example (see this repo's own `.timewarp/dev.jsonc` for a live, commented
+one — default `warn`, nothing to configure until you want to flip to `require`):
+
+```jsonc
+{
+  "attestation": {
+    "mode": "warn"
+  }
+}
+```
+
+The package also now ships the new public `AttestationNoteDto`, `AttestationVerifier`,
+`AttestationEvaluation`, `AttestationVerificationStatus`, `AttestationConfig` types (namespace
+`DevCli`) — no known downstream equivalent, so no expected collision; listed here for
+completeness (`TagAssertion` precedent above). If a consuming repo already declares its own type
+under any of these names, the build fails with `CS0101` (duplicate type in namespace `DevCli`).
+
+**Never** point this verifier's tests, or any consuming repo's config, at
+`~/.timewarp/ganda/keys/` — that path is the production signing key and is out of scope for
+anything outside `ganda repo attest` itself. `AttestationVerifier.KnownKeys` holds only public
+key material (hex), and `Evaluate`'s `keyOverride` parameter exists specifically so tests can
+inject a throwaway keypair instead.
 
 ### 3.0.0-beta.72+: `dev release` cuts tag+Release from props (`release-guard.cs`, `release-command.cs`)
 

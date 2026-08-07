@@ -19,6 +19,8 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-cli-json-context.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/attestation-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/attestation-verifier.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-mode.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/tag-assertion.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/publish-state.cs" />

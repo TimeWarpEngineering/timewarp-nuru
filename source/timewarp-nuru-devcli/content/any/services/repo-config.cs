@@ -14,4 +14,9 @@ public sealed class RepoConfig
   /// Configuration for the check-version command.
   /// </summary>
   public CheckVersionConfig? CheckVersionConfig { get; init; }
+
+  /// <summary>
+  /// Configuration for the ganda-audit attestation verify step (kanban task 458-010).
+  /// </summary>
+  public AttestationConfig? Attestation { get; set; }
 }

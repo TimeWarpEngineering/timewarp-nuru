@@ -36,7 +36,8 @@ Open a PR that changes `<Version>` in `source/Directory.Build.props` (it may rid
 feature PR or stand alone). Once it merges to master, the `push` event runs
 `workflow.yml` in **merge** mode: `dev workflow` executes
 `clean → build → verify-samples → test`; the `Packages-{run_number}` `.nupkg`
-artifact is uploaded whenever nupkgs exist (the upload step runs on non-release
+artifact is uploaded whenever nupkgs exist (the upload step skips release-mode
+runs — release events and confirmed break-glass dispatches — and runs on other
 events with `if-no-files-found: ignore`, and packages exist exactly when the
 build succeeded — `GeneratePackageOnBuild` produces them during Build). This is
 the CI-tested artifact a later release will promote — nothing is published yet.

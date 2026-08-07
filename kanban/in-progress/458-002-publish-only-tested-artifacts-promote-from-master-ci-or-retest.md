@@ -34,6 +34,38 @@ only incoherent one:
 
 ## Notes
 
+### Implementation plan (Phase 2, 2026-08-08) — key decisions (all live-verified)
+
+- Release pipeline becomes: tag-gate → check-version → **locate-run →
+  download-artifact → verify → push**. No Clean/Build/Pack in release mode;
+  merge CI already produces+uploads the nupkg set (GeneratePackageOnBuild +
+  existing `Packages-{run_number}` upload; live artifact from the beta.71 run
+  verified non-expired at 53 days).
+- D2: run selection = successful workflow.yml runs at the tag's HEAD sha,
+  push-event first then newest; walk candidates until a non-expired
+  `Packages-*` artifact is found (release-event runs at the same sha won't
+  have one post-change).
+- D3: pure logic (run ordering, artifact selection incl. expiry, bidirectional
+  version-pinned set verification, JSON DTOs) in shared content
+  `ci-run-promotion.cs`; gh orchestration stays repo-local in
+  workflow-command.cs. AOT: DTOs added to DevCliJsonContext.
+- D5: `PackProjectsAsync` deleted (unused private method fails build anyway;
+  a pack fallback would invite pushing untested bytes).
+- D6: workflow.yml gains `actions: read` permission + `GH_TOKEN` env (gh on
+  runners needs both); path filters deleted from push+pull_request.
+- D8: sequencing — workflow changes merge to master FIRST, then the
+  branch-protection PUT (exact command in plan; context `ci`, strict false,
+  preserves enforce_admins + 0-approval review requirement). PUT is an
+  operator/post-merge step.
+- D9: break-glass/local release uses the same promotion path (gh user auth;
+  clear failure if gh missing). **Closes the 458-005 untagged
+  double-break-glass residual**: release mode never builds locally, so two
+  local builds can no longer mix under one version through the pipeline.
+- D10: artifact expiry/missing → hard fail with `gh run rerun <id>` guidance
+  (rerun executes the same sha — tested-bytes property preserved).
+- Tests: promotion-01..04 (run selection, artifact selection, set
+  verification, real-payload JSON round-trip through source-gen context).
+
 Raised by operator during 458 review: "it should only release what is in master,
 not something else" — that is Design B's property, byte-identical promotion. A
 retest is only needed when a rebuild exists.

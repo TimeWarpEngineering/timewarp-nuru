@@ -24,6 +24,40 @@ org-wide convention.
 - [x] Link the guide from the developer docs index / readme as appropriate
 - [x] Keep in sync with 458-001/002/003/005/006 as they land (write last, or update per landing)
 
+## Results
+
+Written last, against implemented behavior (commits `29a17960`, `2de852c2`,
+plus a round-2 wording one-liner).
+
+- **`documentation/developer/guides/releasing.md`** — canonical guide: SSOT +
+  lockstep derived package set; bump-PR → `dev release` (8 guards, dry-run) →
+  release-event promotion pipeline with every gate's exact refusal text and
+  remedy; why-promotion; break-glass + partial resume; trusted publishing;
+  operator appendix (branch-protection PUT, retention, 456 pointer). The
+  deliberate Partial-gate asymmetry between `dev release` and the pipeline is
+  documented with reasoning so it isn't "corrected" later.
+- **workflow.yml** fetch-depth comment now states the real reason (release
+  gate's tag/ancestor checks — MinVer was never used).
+- Linked from `guides/overview.md` and root `readme.md`.
+- **Review (Phase 4b):** docs-accuracy-validator, 2 rounds — 4 findings
+  (1 HIGH: guide invented a `--package` flag on `dev release`; 1 MED; 2 LOW)
+  all resolved; disposition **clean** (`review/disposition.md`). Validator
+  verified every quoted refusal string word-for-word against code.
+
+### How to validate
+
+Smoke:
+1. Read `documentation/developer/guides/releasing.md` next to
+   `tools/dev-cli/endpoints/workflow-command.cs` and
+   `source/timewarp-nuru-devcli/content/any/endpoints/release-command.cs`:
+   step banners, guard order, and refusal strings must match the code.
+2. `grep -n MinVer .github/workflows/workflow.yml` → no MinVer mention.
+3. Links resolve: `guides/overview.md` → releasing.md; root readme →
+   documentation/developer/guides/releasing.md.
+
+Not in scope: the org convention doc itself (lives with the 458 program);
+first live `dev release` run remains the end-to-end pipeline confirmation.
+
 ## Notes
 
 Sequencing: this task documents the end state — do it after (or alongside the tail

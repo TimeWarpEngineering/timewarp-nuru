@@ -120,6 +120,31 @@ One-off remediation still precedes turn-on: operator runs
 
 ### DevCli / reusable workflow (public side — verifier)
 
+> **Implementation plan (Phase 2, 2026-08-08), key decisions:** Ed25519 via
+> `openssl pkeyutl -verify -pubin -rawin` (BCL has none — probed; NuGet dep
+> rejected for source-only package posture; openssl on runners + operator
+> machines; missing binary → VerifierUnavailable, fail-closed in release
+> mode). Key registry baked into DevCli content (key_id → hex;
+> `tw-audit-1` = `ea6d9ea94f07d0ffe4d46fa7021115f2d5130b715fced113c8742e1d3be94681`
+> — POST-ROTATION key, 2026-08-08; rotation = additive registry update via
+> package bump; PEM synthesized from hex via fixed SPKI prefix — derivation
+> verified). Sig encoding: unpadded base64url, 64 bytes (per ganda
+> ed25519-attestation-signer.cs). Pure verifier in content
+> `attestation-verifier.cs` (DTO in DevCliJsonContext); orchestration in
+> workflow-command.cs: PR/merge mode Step 1 with `.timewarp/dev.jsonc`
+> `attestation.mode: warn|require` (default warn — nothing is attested
+> org-wide yet; org flips to require after rollout), release mode = always
+> hard gate after ancestor check. Outcomes: Valid / RefMissing / NoNote /
+> ParseFailure / UnknownKey / TreeMismatch / BadSignature /
+> VerifierUnavailable — distinct messages, "pull master so ganda can attest"
+> guidance. Notes fetch: forced refspec, absent-remote-ref tolerated
+> (RefMissing only if local note also absent); contents:read suffices, no
+> workflow.yml change. **Fixture policy (amended after the near-miss): test
+> fixtures use a THROWAWAY keypair generated in-test — never the production
+> key** (prefs SSOT now forbids touching ~/.timewarp/ganda/keys/ outside
+> ganda repo attest; production key rotated 2026-08-08, prior stray
+> signature void).
+
 - [ ] Verify step: fetch notes, compute tree hash, verify signature with public key — no convention knowledge
 - [ ] Wire into PR mode ("requires attestation") and release mode (hard gate on tag tree)
 - [ ] Required status checks on public repos so the PR check prohibits (same enabler as 458-002 Design B)

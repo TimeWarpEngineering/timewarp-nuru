@@ -118,6 +118,43 @@ One-off remediation still precedes turn-on: operator runs
 - [ ] Green-flip: post `ganda/attestation` commit status and/or `gh run rerun` after attesting
 - [x] Attest-branch policy — decided 2026-08-08 (operator): **master + explicitly pulled PR branches only**; hooks do not attest arbitrary checkouts
 
+## Results (code halves — rollout items below remain open)
+
+**Both code halves of the attestation model are implemented and reviewed.**
+
+- **Signer (ganda 199, DONE):** `ganda repo attest` / `keygen` / `key-show` /
+  `status` / `hooks install attest`; Ed25519, tree-keyed notes in
+  `refs/notes/ganda-audit`, frozen v1 contract; shipped in
+  ganda v1.0.0-beta.23. Production key rotated 2026-08-08 after a
+  near-miss (agent signed a synthetic payload with the prior key — void);
+  prefs SSOT now forbids touching the key outside `ganda repo attest`.
+- **Verifier (this repo, commits `b7f0cf34` + `2e9b65f2`):** pure
+  contract-exact verifier in DevCli content (canonical bytes byte-identical
+  to the signer; strict unpadded base64url; key registry seeded with the
+  post-rotation `tw-audit-1` hex; SPKI PEM synthesized from hex —
+  derivation reproduces key-show byte-for-byte); openssl-based Ed25519
+  check orchestrated in workflow-command (locale-pinned git calls); PR/merge
+  mode Step 1 attestation with `attestation.mode: warn|require` (warn
+  default, typo warns), release mode always-hard gate; 8 distinct outcomes
+  with remediation guidance. 41 tests incl. a genuine throwaway-key
+  cryptographic round-trip — production key never touched.
+- **Review:** 2 rounds, security-elevated; 1 MED + 2 LOW resolved, 1 INFO
+  wontfix; disposition **accepted-exceptions** (`review/disposition.md`).
+  Ganda-side decoder tightening tracked as timewarp-ganda kanban 200.
+
+### How to validate (code halves)
+
+1. `dotnet run tests/timewarp-nuru-tests/devcli/attestation-01-verifier.cs`
+   → 30/30; `attestation-02-openssl-verify.cs` → 1/1 (real Ed25519
+   round-trip with throwaway key); `attestation-03-mode-resolution.cs` → 10/10.
+2. `dotnet run --file tools/dev-cli/dev.cs -- workflow --mode pr | head -12`
+   → Step 1/5 warn advisory "tree <sha> is unattested — pull master locally
+   so ganda can attest", pipeline continues.
+3. After attesting any repo via `ganda repo attest`: its `dev workflow` PR
+   run shows "Attestation valid: check_set <hash> ts <ts>".
+4. Automated gate: `ganda runfile cache --clear && dotnet run tests/ci-tests/run-ci-tests.cs`
+   → 0 failed (last: 1561 total / 1554 passed / 7 skipped).
+
 ### DevCli / reusable workflow (public side — verifier)
 
 > **Implementation plan (Phase 2, 2026-08-08), key decisions:** Ed25519 via

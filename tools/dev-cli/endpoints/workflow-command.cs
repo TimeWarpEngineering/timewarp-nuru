@@ -11,6 +11,11 @@
 // Modes:
 //   pr/merge:  clean -> build -> verify-samples -> test
 //   release:   check-version -> clean -> build -> pack -> push
+//
+// Event mapping: pull_request -> pr, push -> merge, release -> release,
+// workflow_dispatch -> merge (manual dispatch never publishes by default;
+// break-glass release requires explicit --mode release, wired in workflow.yml
+// behind a confirm input).
 
 namespace DevCli;
 
@@ -74,32 +79,15 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
     private CiMode DetermineMode(string? explicitMode)
     {
-      // If explicit mode provided, use it
-      if (!string.IsNullOrEmpty(explicitMode))
+      string? eventName = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME");
+      CiMode mode = CiModeDetector.DetermineMode(explicitMode, eventName);
+
+      if (string.IsNullOrEmpty(explicitMode))
       {
-        return explicitMode.ToLowerInvariant() switch
-        {
-          "pr" => CiMode.Pr,
-          "merge" => CiMode.Merge,
-          "release" => CiMode.Release,
-          _ => CiMode.Pr
-        };
+        string displayEventName = eventName ?? "(not set)";
+        Terminal.WriteLine($"Detected GITHUB_EVENT_NAME: {displayEventName} -> Mode: {mode}");
       }
 
-      // Auto-detect from GitHub Actions environment
-      string? eventName = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME");
-
-      CiMode mode = eventName switch
-      {
-        "pull_request" => CiMode.Pr,
-        "push" => CiMode.Merge,
-        "release" => CiMode.Release,
-        "workflow_dispatch" => CiMode.Release,
-        _ => CiMode.Pr  // Default for local dev
-      };
-
-      string displayEventName = eventName ?? "(not set)";
-      Terminal.WriteLine($"Detected GITHUB_EVENT_NAME: {displayEventName} -> Mode: {mode}");
       return mode;
     }
 
@@ -301,11 +289,4 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("\nAll packages pushed successfully!");
     }
   }
-}
-
-internal enum CiMode
-{
-  Pr,
-  Merge,
-  Release
 }

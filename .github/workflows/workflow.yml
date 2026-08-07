@@ -28,6 +28,18 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm.'
+        type: choice
+        options:
+          - merge
+          - release
+        default: merge
+      confirm:
+        description: 'Break-glass guard: type the word release to confirm publishing when mode is release. Ignored otherwise.'
+        type: string
+        default: ''
 
 jobs:
   ci:
@@ -47,8 +59,14 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Validate break-glass confirmation
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm != 'release'
+        run: |
+          echo "::error::mode=release requires confirm=release. Refusing to run a break-glass release."
+          exit 1
+
       - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
         id: nuget-login
         uses: nuget/login@v1
         with:
@@ -58,6 +76,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "release" ]; then
             dotnet run --file tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          elif [ "${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release' }}" == "true" ]; then
+            dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
           else
             dotnet run --file tools/dev-cli/dev.cs -- workflow
           fi

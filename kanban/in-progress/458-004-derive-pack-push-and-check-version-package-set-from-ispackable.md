@@ -19,6 +19,35 @@ order via MSBuild), push every `artifacts/packages/*.{Version}.nupkg`, and have
 check-version derive package IDs from packable csprojs or from a single generated
 manifest. Remove the `packages` key from `.timewarp/dev.jsonc` once derived.
 
+## Notes
+
+### Implementation plan (Phase 2, 2026-08-08) — key decisions
+
+- **D1:** authoritative derivation via `dotnet msbuild <csproj>
+  -getProperty:IsPackable,PackageId` (no build/restore needed, ~0.4s/project,
+  verified live returning exactly the 5 IDs). XML heuristics rejected: the
+  flagship timewarp-nuru.csproj has NO explicit PackageId (derives from
+  AssemblyName), and IsPackable is a two-level props default flip (root false
+  → source true → csproj override). Pack = per-project loop over derived set
+  (NOT slnx pack — dev build builds a curated subset); pack order irrelevant
+  with --no-build; push = derived IDs with per-package exists-throw PLUS
+  cross-check that no unexpected `*.{version}.nupkg` exists (stronger than
+  glob-only); push order cosmetic (NuGet doesn't validate deps at push).
+- **D2:** shared DevCli content `IPackableProjectService`/
+  `PackableProjectService` (repoRoot passed in for fixture testability);
+  call sites stay in workflow-command.cs.
+- **D3:** `checkVersionConfig.packages` becomes an OPTIONAL OVERRIDE (kept in
+  model; removed from this repo's dev.jsonc). Deleting the property outright
+  would silently flip downstream repos to derivation on package bump —
+  worse than the 458-003 silent-ignore precedent since the semantics here
+  survive. Precedence: --package → config override → derived.
+- **D4:** tests — pure `ParseGetPropertyOutput` matrix + temp-root fixture
+  test reproducing the props-inherited-default and AssemblyName-derived-ID
+  cases ("add fake packable project → appears in set"); live equality check:
+  `dev check-version` must list exactly the current 5 IDs.
+- AOT: add `MsBuildEvaluationOutput` to DevCliJsonContext.
+- check-version-04 endpoint test ctor gains the new service param.
+
 ## Checklist
 
 - [ ] Pack: enumerate packable projects (or `dotnet pack` the solution) instead of the hardcoded array

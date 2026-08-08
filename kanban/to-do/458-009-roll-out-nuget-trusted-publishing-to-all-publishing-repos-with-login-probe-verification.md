@@ -58,13 +58,21 @@ policies as failures (that is correct behavior, not noise).
       publishing, so they are N/A for TP until they first publish (when they
       do: create the policy just before the first release — private-repo
       policies lapse after 7 days without a publish).
-- [ ] Migrate secret-key workflows to `nuget/login`: state (`PUBLISH_TO_NUGET_ORG`), mediator, fixie, multiavatar, quickbooks, build-tasks, quickbooks (`PUBLISH_TO_NUGET_ORG`)
+- [ ] Migrate secret-key workflows to `nuget/login` — **per-repo tasks filed and
+      committed in each repo (2026-08-08); all six repos cloned locally**:
+      state **077**, multiavatar **001**, quickbooks **009**, mediator **001**,
+      fixie **001**, build-tasks **001** (kanban skeletons bootstrapped in
+      mediator/fixie/build-tasks, which had none). Each task carries its
+      repo-specific audit facts (state's draft-release trigger, multiavatar's
+      ungated tag-push publish, etc.) and notes the full 458 conversion
+      supersedes it if imminent. Commits are LOCAL — push each repo (or PR
+      where master requires it) when starting the work.
 - [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
 - [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)
 - [ ] After all repos flip: revoke every long-lived NuGet API key on nuget.org; delete `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets
 - [ ] Verify package ownership: every published package must have TimeWarp.Enterprises as owner (policies act on the owner account's packages)
 - [ ] Orphans — decided 2026-08-08 (operator): **deprecate TimeWarp.AspNetCore.Blazor.Templates**; **leave TimeWarp.Cli alone for now** (revisit later)
-- [ ] Ganda: delete its existing TP policy and remove its publish workflow (per 458-010 stop-publishing decision)
+- [ ] Ganda: delete its existing TP policy and remove its publish workflow (per 458-010 stop-publishing decision) — **tracked as timewarp-ganda kanban 201** (filed 2026-08-08)
 - [ ] Record the TP roster in 458 `review/repo-matrix.md`
 
 ## Notes

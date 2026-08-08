@@ -226,6 +226,15 @@ NuGet API key (`steps.nuget-login.outputs.NUGET_API_KEY`), passed straight into
 exchange (which repo, which workflow file, which NuGet package) is configured per
 package on NuGet.org's Trusted Publishing settings, not in this repo.
 
+### Verifying a policy without releasing: the probe
+
+Dispatch the workflow with `mode: probe`: it runs only the `nuget/login` OIDC
+exchange and stops — no build, no publish. Success proves an active trusted
+publishing policy matches this repo + `workflow.yml`; failure at the login step
+means the policy is missing or misconfigured on NuGet.org.
+(`gh workflow run workflow.yml -f mode=probe`)
+
+
 ## Operator / maintenance appendix
 
 - **Outstanding post-merge step — required status check.** Master branch

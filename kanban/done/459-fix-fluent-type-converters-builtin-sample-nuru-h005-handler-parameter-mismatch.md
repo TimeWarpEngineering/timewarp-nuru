@@ -19,10 +19,24 @@ currently reports exactly this one failure.
 
 ## Checklist
 
-- [ ] Align handler parameter names with route segments (or rename the route
-      parameters — pick whichever reads better for a type-converter demo)
-- [ ] `dotnet build samples/fluent/08-type-converters/fluent-type-converters-builtin.cs` clean
-- [ ] `dev verify-samples` → 0 failures
+- [x] Route params renamed to match handlers: `read {file:FileInfo}`,
+      `list {dir:DirectoryInfo}` (reads better for a type-converter demo)
+- [x] Second failure layer exposed and worked around: `{event}`/`{when}`
+      params make the GENERATOR emit unescaped C# keywords (CS0065/CS0246) —
+      renamed to `{name}`/`{at}`; generator bug filed as **task 460**
+- [x] Sample builds clean
+- [x] `dev verify-samples` → **64/64**
+
+## Results
+
+Fixed in commit `70793702` (dev). Two layers: NURU_H005 param-name mismatch
+(fixed by route rename) and an unescaped-keyword generator bug underneath
+(worked around by param rename; tracked as task 460 with exact repro).
+
+### How to validate
+
+Smoke: `dotnet build samples/fluent/08-type-converters/fluent-type-converters-builtin.cs`
+→ clean. Automated: `dev verify-samples` → 64/64.
 
 ## Notes
 

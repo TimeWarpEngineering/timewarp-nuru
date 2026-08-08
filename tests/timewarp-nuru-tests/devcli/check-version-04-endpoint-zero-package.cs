@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // This file is guarded ENTIRELY by #if !JARIBU_MULTI (not just the runner entry
 // point like sibling devcli test files): it references CheckVersionCommand, whose

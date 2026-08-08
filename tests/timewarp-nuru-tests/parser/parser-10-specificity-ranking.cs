@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
 

@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 #region Purpose
 // Regression tests for kanban 454-005/454-014: multi-character single-dash options

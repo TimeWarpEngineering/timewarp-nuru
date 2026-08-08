@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGRESSION TEST: kanban 454-028 item #5 — multi-word group alias index math

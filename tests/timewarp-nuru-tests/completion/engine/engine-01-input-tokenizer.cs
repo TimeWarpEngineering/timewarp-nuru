@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // Test: InputTokenizer - Tokenizes command-line input for completion analysis
 // Task: 063 - Implement InputTokenizer

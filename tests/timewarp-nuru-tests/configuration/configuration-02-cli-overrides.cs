@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // ===============================================================================
 // CONFIGURATION TEST: CLI Configuration Overrides (#353)

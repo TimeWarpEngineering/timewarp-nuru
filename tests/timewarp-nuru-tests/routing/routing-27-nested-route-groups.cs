@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGRESSION TEST: GitHub Issue #160

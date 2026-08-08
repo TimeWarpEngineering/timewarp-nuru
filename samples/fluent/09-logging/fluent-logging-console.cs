@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package Microsoft.Extensions.Logging
 #:package Microsoft.Extensions.Logging.Console

@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:project $(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj
 #:package Microsoft.CodeAnalysis.CSharp

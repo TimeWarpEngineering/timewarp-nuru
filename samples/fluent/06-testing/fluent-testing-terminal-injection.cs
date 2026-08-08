@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 // fluent-testing-terminal-injection - Demonstrates ITerminal injection into route handlers
 // Uses NuruApp.CreateBuilder() with UseTerminal() for testable CLI apps
 //

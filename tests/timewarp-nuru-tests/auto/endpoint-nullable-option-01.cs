@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #pragma warning disable CA1062 // Validate arguments of public methods
 
 #if !JARIBU_MULTI

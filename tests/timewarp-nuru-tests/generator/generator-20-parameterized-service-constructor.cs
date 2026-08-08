@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #pragma warning disable CA1849 // Call async methods when in async method
 
 // ═══════════════════════════════════════════════════════════════════════════════

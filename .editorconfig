@@ -441,3 +441,8 @@ csharp_style_prefer_primary_constructors = false
 [ganda.audit]
 # This IS the TimeWarp.Nuru repo, so it cannot reference TimeWarp.Nuru as a package.
 nuru.severity = off
+# kebab-path-names prune (additive, basename match):
+# workspace/presentations — ISO-timestamped report files (tw-analysis-report convention);
+# generated/.generated — generator-emitted dirs mirror namespaces, recreated on build;
+# build — NuGet convention dirs whose props/targets MUST match the PackageId exactly.
+kebab-path-names.prune = workspace,presentations,generated,.generated,build

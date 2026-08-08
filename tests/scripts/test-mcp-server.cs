@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // NOTE: This is a standalone integration test that spawns the MCP server as a process.
 // It does not use RunTests framework or reference the MCP project directly.

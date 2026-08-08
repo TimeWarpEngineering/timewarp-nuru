@@ -109,7 +109,12 @@ policies as failures (that is correct behavior, not noise).
       All commits LOCAL — push per repo when ready.
 - [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
 - [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)
-- [ ] After all repos flip: revoke every long-lived NuGet API key on nuget.org; delete `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets
+- [x] Revoke long-lived NuGet API keys — **DONE (operator, 2026-08-08): all
+      keys killed.** Safe because every publisher is consolidated onto OIDC;
+      no fallback remains, so each repo's next release is its live
+      verification. Residual cosmetic cleanup: dead `NUGET_API_KEY` /
+      `PUBLISH_TO_NUGET_ORG` entries may linger in repos' GitHub secrets
+      settings — nothing references them; delete at leisure.
 - [ ] Verify package ownership: every published package must have TimeWarp.Enterprises as owner (policies act on the owner account's packages)
 - [ ] Orphans — decided 2026-08-08 (operator): **deprecate TimeWarp.AspNetCore.Blazor.Templates**; **leave TimeWarp.Cli alone for now** (revisit later)
 - [ ] Ganda: delete its existing TP policy and remove its publish workflow (per 458-010 stop-publishing decision) — **tracked as timewarp-ganda kanban 201** (filed 2026-08-08)

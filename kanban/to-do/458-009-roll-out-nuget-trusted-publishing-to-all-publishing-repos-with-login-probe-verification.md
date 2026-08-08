@@ -51,20 +51,21 @@ policies as failures (that is correct behavior, not noise).
 ## Checklist
 
 - [ ] **INCIDENT 2026-08-08: all TP policies accidentally deleted on
-      NuGet.org** (mistaken for API keys — UX). Recreate list (owner
-      TimeWarp.Enterprises, repo owner TimeWarpEngineering, env blank):
-      **Tier 1, recreate NOW (live OIDC publishers — releases fail at login
-      without them), all `workflow.yml`:** nuru, amuru, architecture,
-      builder, components, flexbox, heroicons, jaribu, options-validation,
-      simple-icons, source-generators, terminal (12).
-      **Tier 2, create at each repo's migration** (inert until then):
-      state `ci-cd.yml`, mediator `ci-cd.yml`, fixie `ci-cd.yml`,
-      multiavatar `release.yml`, quickbooks `release-build.yml` (confirm
-      pushing file during migration), build-tasks `release.yml`.
-      Do NOT recreate: ganda (stop-publishing — deletion was wanted; ganda
-      201's policy-delete item is thereby done), health + the redacted repo
-      (don't publish). Also verify no long-lived API keys were deleted
-      alongside (Tier-2 repos can't publish without them until migrated).
+      NuGet.org** (mistaken for API keys — UX). **Recreate ALL 18 uniformly —
+      one canonical workflow name, per operator ruling: policies encode the
+      convention (`workflow.yml`), never legacy filenames; repos conform to
+      policy.** Owner TimeWarp.Enterprises, repo owner TimeWarpEngineering,
+      env blank, workflow `workflow.yml` for every row: amuru, architecture,
+      build-tasks, builder, components, fixie, flexbox, heroicons, jaribu,
+      mediator, multiavatar, nuru, options-validation, quickbooks,
+      simple-icons, source-generators, state, terminal.
+      Consequence: the six legacy repos' policies stay dormant until their
+      publish workflow IS `workflow.yml` — their migration tasks must
+      produce that rename/conversion (noted in each). Do NOT recreate:
+      ganda (stop-publishing — ganda 201's policy-delete item thereby
+      done), health + the redacted repo (don't publish). Verify no
+      long-lived API keys were deleted alongside (legacy repos publish on
+      those until migrated).
 - [x] ~~Add policies for the missing repos~~ — was done (operator,
       2026-08-08) before the deletion incident above; superseded by the
       recreate item. Classification correction from the same report:

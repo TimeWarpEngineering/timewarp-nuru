@@ -50,9 +50,24 @@ policies as failures (that is correct behavior, not noise).
 
 ## Checklist
 
-- [x] Add policies for the missing repos — **DONE (operator, 2026-08-08): TP
-      policies exist on NuGet.org for all repos that actually publish
-      packages.** Classification correction from the same report:
+- [ ] **INCIDENT 2026-08-08: all TP policies accidentally deleted on
+      NuGet.org** (mistaken for API keys — UX). Recreate list (owner
+      TimeWarp.Enterprises, repo owner TimeWarpEngineering, env blank):
+      **Tier 1, recreate NOW (live OIDC publishers — releases fail at login
+      without them), all `workflow.yml`:** nuru, amuru, architecture,
+      builder, components, flexbox, heroicons, jaribu, options-validation,
+      simple-icons, source-generators, terminal (12).
+      **Tier 2, create at each repo's migration** (inert until then):
+      state `ci-cd.yml`, mediator `ci-cd.yml`, fixie `ci-cd.yml`,
+      multiavatar `release.yml`, quickbooks `release-build.yml` (confirm
+      pushing file during migration), build-tasks `release.yml`.
+      Do NOT recreate: ganda (stop-publishing — deletion was wanted; ganda
+      201's policy-delete item is thereby done), health + the redacted repo
+      (don't publish). Also verify no long-lived API keys were deleted
+      alongside (Tier-2 repos can't publish without them until migrated).
+- [x] ~~Add policies for the missing repos~~ — was done (operator,
+      2026-08-08) before the deletion incident above; superseded by the
+      recreate item. Classification correction from the same report:
       **timewarp-health and [redacted-private-repo] do NOT currently
       publish NuGets** — their `nuget/login` workflows predate any actual
       publishing, so they are N/A for TP until they first publish (when they

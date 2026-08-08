@@ -10,116 +10,86 @@
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     <!-- Suppress unused parameter warnings in test lambdas -->
     <!-- Suppress namespace style warnings for tests with top-level statements + namespace blocks -->
-    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065</NoWarn>
+    <!-- CA5399: the shared NuGetVersionService creates HttpClient without enabling
+         CRL checks; the consuming CLI (tools/dev-cli) already suppresses this. -->
+    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065;CA5399</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Core tests - lexer (migrated) -->
-    <Compile Include="../timewarp-nuru-tests/lexer/*.cs" />
-    <!-- Core tests - generator (Jaribu format tests that support JARIBU_MULTI) -->
-    <!-- Tests 01, 10, 11, 12 have guards that skip entry point in multi-mode -->
-    <Compile Include="../timewarp-nuru-tests/generator/generator-01-intercept.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-10-required-options.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-11-endpoints.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-12-method-reference-handlers.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-14-options-validation.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-04-static-service-injection.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-13-ioptions-parameter-injection.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-15-runtime-di.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs" />
-    <Compile Include="../timewarp-nuru-tests/generator/generator-27-ienumerable-dependency.cs" />
-    <!-- Core tests - migrated files -->
-
-    <!-- TimeWarp.Terminal widget/utils tests have been moved to that repo -->
-
-    <!-- DISABLED: These tests use old APIs (HelpProvider.GetHelpText, CreateSlimBuilder, SessionContext, InvokerRegistry) -->
-    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-01-option-detection.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-02-filtering.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-03-session-context.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-04-default-route.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-tests/help-provider-05-color-output.cs" /> -->
-    
-    <!-- <Compile Include="../timewarp-nuru-tests/invoker-registry-01-basic.cs" /> -->
-    <!-- Message type tests - folder is empty after deleting tests that used Endpoint class -->
-    <!-- <Compile Include="../timewarp-nuru-tests/message-type/*.cs" /> -->
-    <!-- TODO: Create or restore route-builder-01-basic.cs -->
-    <!-- <Compile Include="../timewarp-nuru-tests/route-builder-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-tests/test-terminal-context-01-basic.cs" /> -->
-    <!-- <Compile Include="../timewarp-nuru-tests/compiled-route-test-helper.cs" /> -->
-    <!-- Parser tests (migrated) -->
-    <Compile Include="../timewarp-nuru-tests/parser/*.cs" />
-    <!-- Routing tests (migrated) -->
-    <Compile Include="../timewarp-nuru-tests/routing/*.cs" />
-    <!-- Configuration tests -->
-    <Compile Include="../timewarp-nuru-tests/configuration/configuration-01-validate-on-start.cs" />
-    <Compile Include="../timewarp-nuru-tests/configuration/configuration-02-cli-overrides.cs" />
-    <!-- Factory tests - excluded from multi-mode -->
-    <!-- <Compile Include="../timewarp-nuru-tests/factory/*.cs" /> -->
-    <!-- Options tests (migrated) -->
-    <Compile Include="../timewarp-nuru-tests/options/options-01-mixed-required-optional.cs" />
-    <Compile Include="../timewarp-nuru-tests/options/options-02-optional-flag-optional-value.cs" />
-    <!-- Help tests (per-route help, Task #356) -->
-    <Compile Include="../timewarp-nuru-tests/help/*.cs" />
-    <!-- Capabilities tests (task #157 - route not yet implemented) -->
-    <Compile Include="../timewarp-nuru-tests/capabilities/*.cs" />
-    <!-- Type conversion tests (migrated) -->
-    <Compile Include="../timewarp-nuru-tests/type-conversion/*.cs" />
-    <!-- REPL tests (Phase 3 of #362) -->
-    <!-- NOTE: Many REPL integration tests fail because key bindings and advanced features -->
-    <!-- aren't fully connected in the new source generator architecture. Only stable tests included. -->
-    <!-- Stable REPL tests: session lifecycle, history, console input, tab completion, builtin commands -->
-    <Compile Include="../timewarp-nuru-tests/repl/repl-01-session-lifecycle.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-03-history-management.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-03b-history-security.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-04-history-persistence.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-05-console-input.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-06-tab-completion-basic.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-07-tab-completion-advanced.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-08-syntax-highlighting.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-09-builtin-commands.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-13-nuruapp-integration.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-14-performance.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-15-edge-cases.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-20-double-tab-bug.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-21-escape-clears-line.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-22-prompt-display-no-arrow-history.cs" />
-    <!-- Additional REPL tests (Phase 4 of #362) -->
-    <Compile Include="../timewarp-nuru-tests/repl/repl-02-command-parsing.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-10-error-handling.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-11-display-formatting.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-12-configuration.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-17-sample-validation.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-18-psreadline-keybindings.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-19-tab-cycling-bug.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-23-key-binding-profiles.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-24-custom-key-bindings.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-25-interactive-history-search.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-26-kill-ring.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-27-undo-redo.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-28-text-selection.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-29-word-operations.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-30-basic-editing-enhancement.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-31-multiline-buffer.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-33-yank-arguments.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-16-enum-completion.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-32-multiline-editing.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-36-run-repl-async-inline.cs" />
-    <Compile Include="../timewarp-nuru-tests/repl/repl-37-quoted-strings.cs" />
-    <!-- Command-line parser tests in subdirectory -->
-    <Compile Include="../timewarp-nuru-tests/repl/command-line-parser/*.cs" />
-    <!-- Completion tests - unit tests for components (don't need source generation) -->
-    <Compile Include="../timewarp-nuru-tests/completion/completion-15-completion-registry.cs" />
-    <Compile Include="../timewarp-nuru-tests/completion/completion-17-enum-source.cs" />
-    <Compile Include="../timewarp-nuru-tests/completion/completion-20-dynamic-script-gen.cs" />
-    <!-- All REPL tests (recursive glob includes subfolders, excludes obj/bin) -->
-    <!-- <Compile Include="../timewarp-nuru-repl-tests/**/*.cs" Exclude="../timewarp-nuru-repl-tests/obj/**;../timewarp-nuru-repl-tests/bin/**" /> -->
-    <!-- MCP tests (migrated) -->
-    <!-- <Compile Include="../timewarp-nuru-mcp-tests/*.cs" /> -->
+    <!-- ALL test files are included via recursive glob so that new tests are picked up
+         automatically — CI coverage must not silently drift (kanban task 454-001).
+         If you CREATE A NEW tests/<something>-tests DIRECTORY, you must add its glob
+         (and any ProjectReference/Using it needs) here, or its tests will never run.
+         Anything that cannot run in multi-mode MUST be listed in CiTestExcludes below
+         with a reason; do not switch back to hand-enumerated includes. -->
+    <!-- generator-17: tests local functions in TOP-LEVEL STATEMENTS by design; it cannot
+         exist inside the multi-mode assembly (the runner owns the entry point). Run it
+         standalone: dotnet run tests/timewarp-nuru-tests/generator/generator-17-local-function-config.cs -->
+    <!-- engine-01: references ParsedInput/InputTokenizer, types removed from source in the
+         #360 refactor; does not compile standalone either. Delete or rewrite (task 454-001 notes). -->
+    <!-- generator-28: Roslyn-hosted generator test; references timewarp-nuru-analyzers as a
+         LIBRARY, whose shared parsing types (Lexer/Token) collide with timewarp-nuru's in one
+         compilation (CS0433). Run standalone by run-ci-tests.cs as a second phase instead. -->
+    <!-- generator-30: same Roslyn-hosted generator test pattern as generator-28; CS0433
+         collision applies. Run standalone instead. -->
+    <!-- generator-34/35/36: same Roslyn-hosted generator test pattern as generator-28
+         (kanban 454-012 / M8); CS0433 collision applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/completion/engine/engine-01-input-tokenizer.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-31-m7-param-mismatch.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-32-m9-unrelated-fluent.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-33-m6-failsoft-catch.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-34-m8-ilistmanager-repeated.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-35-m8-idata-service.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-36-m8-typeconverter-fqn.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-37-incrementality-caching.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-38-h002-sole-identifier-body.cs" />
+    <Compile
+      Include="../timewarp-nuru-tests/**/*.cs"
+      Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />
+    <!-- Search tests (timewarp-nuru-search: FTS index) -->
+    <Compile Include="../timewarp-nuru-search-tests/*.cs" />
+    <!-- MCP server tests -->
+    <!-- mcp-02: GetSyntaxTool's default (endpoint) path asserts MCP:endpoint-* regions
+         that exist nowhere — only the fluent syntax file is embedded. Product bug tracked
+         in kanban task 454-033; re-include this file when fixed. -->
+    <Compile
+      Include="../timewarp-nuru-mcp-tests/*.cs"
+      Exclude="../timewarp-nuru-mcp-tests/mcp-02-syntax-documentation.cs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- DevCli service files compiled INTO the CI test assembly so that
+         NuGetVersionService.CompareVersions / IsVersionPublished are testable.
+         ONLY the service files are included — the endpoint file
+         (check-version-command.cs) carries [NuruRoute("check-version")] whose
+         handler requires IRepoConfigService; endpoints are collected GLOBALLY
+         in multi-mode, so including it would give every .DiscoverEndpoints()
+         test app an endpoint with an unregistered service -> NURU050 build
+         errors across CI (task 454-022 decision A2). -->
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-cli-json-context.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/attestation-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/attestation-verifier.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-mode.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/tag-assertion.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/publish-state.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/release-guard.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/irepo-config-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ipackable-project-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/packable-project-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-run-promotion.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
-    <!-- <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-completion/timewarp-nuru-completion.csproj" /> -->
-    <!-- <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-repl/timewarp-nuru-repl.csproj" /> -->
-    <!-- <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" /> -->
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" />
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru-search/timewarp-nuru-search.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -133,11 +103,19 @@
     <Using Include="Microsoft.Extensions.Configuration" />
     <Using Include="System.Net" />
     <!-- MCP tools namespace -->
-    <!-- <Using Include="TimeWarp.Nuru.Mcp.Tools" /> -->
+    <Using Include="TimeWarp.Nuru.Mcp.Tools" />
+    <!-- Search services namespace -->
+    <Using Include="TimeWarp.Nuru.Search.Services" />
+    <!-- repo-config-service.cs calls Git.FindRoot(); TimeWarp.Amuru.Git lives in the
+         TimeWarp.Amuru.Tools package (not core TimeWarp.Amuru, which only flows in
+         transitively via ProjectReference) — reference it directly, plus the namespace
+         global using since this test project doesn't declare one. -->
+    <Using Include="TimeWarp.Amuru" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Packages for configuration tests -->
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
   </ItemGroup>
 </Project>

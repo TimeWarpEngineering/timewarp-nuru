@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEV CLI - TIMEWARP.NURU DEVELOPMENT TOOL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -21,12 +21,13 @@
 // Commands (Phase 1 - CI/CD Orchestration):
 //   dev ci                 - Run full CI/CD pipeline (auto-detects mode)
 //   dev ci --mode pr       - PR workflow: build -> verify-samples -> test
-//   dev ci --mode release  - Release workflow: check-version -> clean -> build -> pack -> push
+//   dev ci --mode release  - Release workflow: tag-gate -> check-version -> locate-run -> download-artifact -> verify -> push
 //   dev build              - Build all TimeWarp.Nuru projects
 //   dev clean              - Clean solution and artifacts
 //   dev test               - Run CI test suite
 //   dev verify-samples     - Verify sample compilation
 //   dev check-version      - Check if version already published
+//   dev release            - Cut a release: tag + GitHub Release from source/Directory.Build.props (--dry-run to preview)
 //   dev format             - Check code formatting (--fix to auto-fix)
 //   dev analyze            - Run Roslynator analysis and fixes
 //   dev self-install       - AOT compile and install dev CLI to ./bin
@@ -48,8 +49,8 @@ NuruApp app = NuruApp.CreateBuilder()
   {
     services.AddSingleton<IRepoCleanService, RepoCleanService>();
     services.AddSingleton<NuGetVersionService>();
-    services.AddSingleton<GitTagCheckService>();
     services.AddSingleton<IRepoConfigService, RepoConfigService>();
+    services.AddSingleton<IPackableProjectService, PackableProjectService>();
   })
   .DiscoverEndpoints()
   .Build();

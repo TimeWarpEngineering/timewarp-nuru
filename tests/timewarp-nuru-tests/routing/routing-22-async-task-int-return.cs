@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // Issue #120: Verify async Task<int> return type delegates work with CreateBuilder
 // https://github.com/TimeWarpEngineering/timewarp-nuru/issues/120

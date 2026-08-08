@@ -64,10 +64,10 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   private void SyncFromMultilineBuffer()
   {
-    // For compatibility with existing single-line operations, we maintain UserInput
-    // as a space-separated version of the multiline content
-    // But for multiline mode, we use the actual buffer
-    UserInput = MultilineInput.GetFullText(Environment.NewLine);
+    // UserInput mirrors the buffer joined with '\n' — one char per line break — so
+    // CursorPosition (from CursorToPosition's 1-char-per-break math) indexes into it.
+    // Environment.NewLine here desynchronized the two on Windows (kanban 454-007).
+    UserInput = MultilineInput.GetFullText();
     CursorPosition = MultilineInput.CursorToPosition(MultilineInput.Cursor);
   }
 

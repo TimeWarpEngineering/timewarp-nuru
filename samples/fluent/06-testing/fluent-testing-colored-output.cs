@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 // fluent-testing-colored-output - Demonstrates testing handlers with colored output
 // Uses NuruApp.CreateBuilder() with UseTerminal() for testable CLI apps
 //

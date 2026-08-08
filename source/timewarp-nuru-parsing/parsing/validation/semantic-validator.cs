@@ -78,9 +78,6 @@ internal sealed class SemanticValidator
             paramList.Add(option);
           }
 
-          // Track aliases
-          if (option.ShortForm is not null)
-            context.OptionAliases[option.ShortForm] = option;
           break;
 
         case LiteralSyntax literal:
@@ -102,22 +99,7 @@ internal sealed class SemanticValidator
       if (kvp.Value.Count > 1)
       {
         // Found duplicate - report on the second occurrence
-        SegmentSyntax first = kvp.Value[0];
         SegmentSyntax second = kvp.Value[1];
-
-        string firstLocation = first switch
-        {
-          ParameterSyntax p => $"parameter '{p.Name}'",
-          OptionSyntax o => $"option '{o.LongForm ?? o.ShortForm}'",
-          _ => "unknown"
-        };
-
-        string secondLocation = second switch
-        {
-          ParameterSyntax p => $"parameter '{p.Name}'",
-          OptionSyntax o => $"option '{o.LongForm ?? o.ShortForm}'",
-          _ => "unknown"
-        };
 
         semanticErrors.Add(new DuplicateParameterNamesError(
           second.Position,
@@ -276,26 +258,45 @@ internal sealed class SemanticValidator
     }
   }
 
-  // NURU_S005: Check for duplicate option aliases
+  // NURU_S005: Check for duplicate option aliases (short and long forms)
   private static void ValidateDuplicateOptionAliases(ValidationContext context, List<SemanticError> semanticErrors)
   {
-    Dictionary<string, OptionSyntax> seen = [];
+    Dictionary<string, OptionSyntax> shortSeen = [];
+    Dictionary<string, OptionSyntax> longSeen = [];
 
     foreach (OptionSyntax option in context.Options)
     {
       if (option.ShortForm is not null)
       {
-        if (seen.TryGetValue(option.ShortForm, out OptionSyntax? existing))
+        if (shortSeen.TryGetValue(option.ShortForm, out OptionSyntax? existing))
         {
           semanticErrors.Add(new DuplicateOptionAliasError(
             option.Position,
             option.Length,
-            option.ShortForm!,
-            [existing.LongForm ?? existing.ShortForm!]));
+            option.ShortForm,
+            [existing.LongForm ?? existing.ShortForm!],
+            IsLongForm: false));
         }
         else
         {
-          seen[option.ShortForm] = option;
+          shortSeen[option.ShortForm] = option;
+        }
+      }
+
+      if (option.LongForm is not null)
+      {
+        if (longSeen.TryGetValue(option.LongForm, out OptionSyntax? existing))
+        {
+          semanticErrors.Add(new DuplicateOptionAliasError(
+            option.Position,
+            option.Length,
+            option.LongForm,
+            [existing.LongForm ?? existing.ShortForm ?? option.LongForm],
+            IsLongForm: true));
+        }
+        else
+        {
+          longSeen[option.LongForm] = option;
         }
       }
     }

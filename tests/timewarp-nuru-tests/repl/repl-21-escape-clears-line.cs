@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // Test that Escape key clears the current line (PSReadLine RevertLine behavior)

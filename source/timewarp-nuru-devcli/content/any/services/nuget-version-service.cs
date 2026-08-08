@@ -61,13 +61,87 @@ public sealed class NuGetVersionService : IDisposable
     ArgumentNullException.ThrowIfNull(version1);
     ArgumentNullException.ThrowIfNull(version2);
 
-    string[] parts1 = version1.Split('.');
-    string[] parts2 = version2.Split('.');
+    string core1 = GetCoreVersion(version1);
+    string pre1 = GetPreRelease(version1);
+    string core2 = GetCoreVersion(version2);
+    string pre2 = GetPreRelease(version2);
 
+    int coreCmp = CompareCoreVersions(core1, core2);
+    if (coreCmp != 0)
+    {
+      return coreCmp;
+    }
+
+    // SemVer §11.3: a version WITHOUT pre-release has HIGHER precedence.
+    bool hasPre1 = pre1.Length > 0;
+    bool hasPre2 = pre2.Length > 0;
+    if (!hasPre1 && !hasPre2)
+    {
+      return 0;
+    }
+
+    if (!hasPre1)
+    {
+      return 1;
+    }
+
+    if (!hasPre2)
+    {
+      return -1;
+    }
+
+    return ComparePreRelease(pre1, pre2);
+  }
+
+  /// <summary>
+  /// Checks whether <paramref name="sourceVersion"/> matches any entry in
+  /// <paramref name="publishedVersions"/> using full SemVer 2.0 precedence
+  /// (build metadata stripped, case-insensitive). Replaces the old
+  /// <c>versions[^1]</c>-only membership check that missed non-latest duplicates.
+  /// </summary>
+  public static bool IsVersionPublished(string sourceVersion, IEnumerable<string> publishedVersions)
+  {
+    ArgumentNullException.ThrowIfNull(sourceVersion);
+    ArgumentNullException.ThrowIfNull(publishedVersions);
+
+    foreach (string published in publishedVersions)
+    {
+      if (CompareVersions(sourceVersion, published) == 0)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Strips build metadata (+...) and returns the core (pre-`-`/pre-`+`) portion.
+  private static string GetCoreVersion(string version)
+  {
+    int plus = version.IndexOf('+');
+    string noBuild = plus >= 0 ? version[..plus] : version;
+    int dash = noBuild.IndexOf('-');
+    return dash >= 0 ? noBuild[..dash] : noBuild;
+  }
+
+  // Strips build metadata and returns the pre-release portion (after first `-`).
+  private static string GetPreRelease(string version)
+  {
+    int plus = version.IndexOf('+');
+    string noBuild = plus >= 0 ? version[..plus] : version;
+    int dash = noBuild.IndexOf('-');
+    return dash >= 0 ? noBuild[(dash + 1)..] : "";
+  }
+
+  private static int CompareCoreVersions(string core1, string core2)
+  {
+    string[] parts1 = core1.Split('.');
+    string[] parts2 = core2.Split('.');
     int maxLen = Math.Max(parts1.Length, parts2.Length);
 
     for (int i = 0; i < maxLen; i++)
     {
+      // Tolerate missing/extra parts as 0 (NuGet normalization: 1.0 == 1.0.0 == 1.0.0.0)
       int v1 = i < parts1.Length && int.TryParse(parts1[i], out int p1) ? p1 : 0;
       int v2 = i < parts2.Length && int.TryParse(parts2[i], out int p2) ? p2 : 0;
 
@@ -78,7 +152,89 @@ public sealed class NuGetVersionService : IDisposable
       }
     }
 
-    return string.Compare(version1, version2, StringComparison.OrdinalIgnoreCase);
+    return 0;
+  }
+
+  private static int ComparePreRelease(string pre1, string pre2)
+  {
+    string[] ids1 = pre1.Split('.');
+    string[] ids2 = pre2.Split('.');
+    int maxLen = Math.Max(ids1.Length, ids2.Length);
+
+    for (int i = 0; i < maxLen; i++)
+    {
+      // §11.4.4: a larger set of pre-release fields has HIGHER precedence (prefix rule).
+      if (i >= ids1.Length)
+      {
+        return -1;
+      }
+
+      if (i >= ids2.Length)
+      {
+        return 1;
+      }
+
+      string id1 = ids1[i];
+      string id2 = ids2[i];
+      bool isNum1 = IsNumeric(id1);
+      bool isNum2 = IsNumeric(id2);
+
+      int cmp;
+      if (isNum1 && isNum2)
+      {
+        // §11.4.1: numeric identifier compared numerically (beta.9 < beta.10).
+        // Parse-free: date-stamped identifiers (1.0.0-ci.20260707191500) overflow
+        // Int32, and the gate iterates EVERY published version, so one odd entry
+        // in feed history must not crash it. Trim leading zeros, then compare by
+        // length and ordinal digits — equivalent to arbitrary-precision compare.
+        cmp = CompareNumericIdentifiers(id1, id2);
+      }
+      else if (!isNum1 && !isNum2)
+      {
+        // §11.4.2: alphanumeric compared lexically, case-insensitive (NuGet normalization).
+        cmp = string.Compare(id1, id2, StringComparison.OrdinalIgnoreCase);
+      }
+      else
+      {
+        // §11.4.3: numeric identifiers have LOWER precedence than alphanumeric.
+        cmp = isNum1 ? -1 : 1;
+      }
+
+      if (cmp != 0)
+      {
+        return cmp;
+      }
+    }
+
+    return 0;
+  }
+
+  private static int CompareNumericIdentifiers(string id1, string id2)
+  {
+    string trimmed1 = id1.TrimStart('0');
+    string trimmed2 = id2.TrimStart('0');
+
+    if (trimmed1.Length != trimmed2.Length)
+    {
+      return trimmed1.Length.CompareTo(trimmed2.Length);
+    }
+
+    return string.CompareOrdinal(trimmed1, trimmed2);
+  }
+
+  private static bool IsNumeric(string identifier)
+  {
+    // Empty identifiers (malformed input like "1.0.0-") are treated as numeric zero
+    // rather than crashing; the gate must tolerate garbage in feed history.
+    foreach (char c in identifier)
+    {
+      if (!char.IsDigit(c))
+      {
+        return false;
+      }
+    }
+
+    return identifier.Length > 0;
   }
 
   public void Dispose()

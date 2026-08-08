@@ -162,7 +162,7 @@ internal static class RouteMatcherEmitter
       foreach (string word in route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries))
       {
         sb.AppendLine(
-          $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(word)}\") goto route_skip_{routeIndex};");
+          $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EmitterStringUtils.EscapeForStringLiteral(word)}\") goto route_skip_{routeIndex};");
         positionalIndex++;
       }
     }
@@ -174,7 +174,7 @@ internal static class RouteMatcherEmitter
       {
         case LiteralDefinition literal:
           sb.AppendLine(
-            $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(literal.Value)}\") goto route_skip_{routeIndex};");
+            $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EmitterStringUtils.EscapeForStringLiteral(literal.Value)}\") goto route_skip_{routeIndex};");
           positionalIndex++;
           break;
 
@@ -291,7 +291,7 @@ internal static class RouteMatcherEmitter
     foreach (string word in aliasParts)
     {
       sb.AppendLine(
-        $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EscapeString(word)}\") goto {aliasSkipLabel};");
+        $"      if (__positionalArgs_{routeIndex}[{positionalIndex}] != \"{EmitterStringUtils.EscapeForStringLiteral(word)}\") goto {aliasSkipLabel};");
       positionalIndex++;
     }
 
@@ -456,7 +456,7 @@ internal static class RouteMatcherEmitter
     {
       if (option.IsFlag)
       {
-        EmitFlagParsingWithIndexTracking(sb, option, routeIndex);
+        EmitFlagParsingWithIndexTracking(sb, option, routeIndex, route);
       }
       else if (option.IsRepeated)
       {
@@ -472,7 +472,11 @@ internal static class RouteMatcherEmitter
   /// <summary>
   /// Emits code to parse a boolean flag option with index tracking.
   /// </summary>
-  private static void EmitFlagParsingWithIndexTracking(StringBuilder sb, OptionDefinition option, int routeIndex)
+  private static void EmitFlagParsingWithIndexTracking(
+    StringBuilder sb,
+    OptionDefinition option,
+    int routeIndex,
+    RouteDefinition route)
   {
     string varName = ToCamelCase(option.LongForm ?? option.ShortForm ?? "flag");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
@@ -497,6 +501,15 @@ internal static class RouteMatcherEmitter
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
+
+    // Effectively-required flag: an unbound, non-optional boolean flag is a route
+    // discriminator (e.g. "commit --amend" with no bool parameter). It must be
+    // present to match, mirroring the required-value-option guard. Bound flags
+    // and explicitly-optional flags (--flag?) stay optional at match time.
+    if (!option.IsOptional && !option.IsFlagBound(route))
+    {
+      sb.AppendLine($"      if (!{escapedVarName}) goto route_skip_{routeIndex};");
+    }
   }
 
   /// <summary>
@@ -1163,7 +1176,7 @@ internal static class RouteMatcherEmitter
       "double" => $"double.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
       "float" => $"float.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
       "decimal" => $"decimal.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "bool" => $"bool.Parse({varName})",
+      "bool" => $"global::TimeWarp.Nuru.BooleanConverter.Parse({varName})",
       "datetime" => $"global::System.DateTime.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
       "guid" => $"global::System.Guid.Parse({varName})",
       _ => varName // Unknown type - return as-is (string)
@@ -1492,19 +1505,6 @@ internal static class RouteMatcherEmitter
   }
 
   private static string ToCamelCase(string value) => CSharpIdentifierUtils.ToCamelCase(value);
-
-  /// <summary>
-  /// Escapes a string for use in C# source code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal)
-      .Replace("\n", "\\n", StringComparison.Ordinal)
-      .Replace("\r", "\\r", StringComparison.Ordinal)
-      .Replace("\t", "\\t", StringComparison.Ordinal);
-  }
 
   /// <summary>
   /// Escapes text for use in XML comments.

@@ -1,8 +1,11 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif
+
+namespace TimeWarp.Nuru.Tests.Generator.Gen21SingletonParamCtor
+{
 
 // Service with parameterized constructor
 public interface IWorkspaceService
@@ -32,8 +35,6 @@ public class KanbanService : IKanbanService
   public string GetStatus() => $"Workspace: {_workspaceService.GetPath()}";
 }
 
-namespace TimeWarp.Nuru.Tests.Generator.ParameterizedServiceConstructor
-{
   [TestTag("generator")]
   [TestTag("DI")]
   [TestTag("Issue175")]

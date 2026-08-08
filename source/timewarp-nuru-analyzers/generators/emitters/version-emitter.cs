@@ -25,7 +25,7 @@ internal static class VersionEmitter
     if (model.Name is not null)
     {
       sb.AppendLine(
-        $"    terminal.Write(\"{EscapeString(model.Name)} \");");
+        $"    terminal.Write(\"{EmitterStringUtils.EscapeForStringLiteral(model.Name)} \");");
     }
 
     // Version is read from assembly at runtime
@@ -40,16 +40,4 @@ internal static class VersionEmitter
     sb.AppendLine("  }");
   }
 
-  /// <summary>
-  /// Escapes a string for use in C# source code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal)
-      .Replace("\n", "\\n", StringComparison.Ordinal)
-      .Replace("\r", "\\r", StringComparison.Ordinal)
-      .Replace("\t", "\\t", StringComparison.Ordinal);
-  }
 }

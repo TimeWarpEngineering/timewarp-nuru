@@ -103,7 +103,10 @@ public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
   /// </para>
   /// <para>
   /// For boolean flags (expectsValue=false), the parameter name is automatically derived
-  /// from the long form using camelCase conversion (e.g., "dry-run" becomes "dryRun").
+  /// from the long form by <see cref="ToCamelCase"/>, which strips dashes/underscores and
+  /// lowercases the first character (e.g., "dry-run" becomes "dryrun"). Note this runtime
+  /// algorithm differs from the source generator's per-word camelCasing (which would produce
+  /// "dryRun"); each path is internally consistent for its own parameter binding.
   /// </para>
   /// </remarks>
   public CompiledRouteBuilder WithOption(

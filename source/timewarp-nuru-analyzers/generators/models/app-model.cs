@@ -48,28 +48,28 @@ public sealed record AppModel(
   ReplModel? ReplOptions,
   bool HasConfiguration,
   bool HasCheckUpdatesRoute,
-  ImmutableArray<RouteDefinition> Routes,
-  ImmutableArray<BehaviorDefinition> Behaviors,
-  ImmutableArray<ServiceDefinition> Services,
-  ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> InterceptSitesByMethod,
-  ImmutableArray<string> UserUsings,
-  ImmutableArray<CustomConverterDefinition> CustomConverters,
+  EquatableArray<RouteDefinition> Routes,
+  EquatableArray<BehaviorDefinition> Behaviors,
+  EquatableArray<ServiceDefinition> Services,
+  EquatableArray<InterceptSiteGroup> InterceptSitesByMethod,
+  EquatableArray<string> UserUsings,
+  EquatableArray<CustomConverterDefinition> CustomConverters,
   LoggingConfiguration? LoggingConfiguration,
   bool DiscoverEndpoints = false,
-  ImmutableArray<string> ExplicitEndpointTypes = default,
+  EquatableArray<string> ExplicitEndpointTypes = default,
   string? BuildLocation = null,
   bool HasTelemetry = false,
   bool HasCompletion = false,
   bool UseMicrosoftDependencyInjection = false,
   string? ConfigureServicesLambdaBody = null,
-  ImmutableArray<ExtensionMethodCall> ExtensionMethods = default,
-  ImmutableArray<HttpClientConfiguration> HttpClientConfigurations = default,
-  ImmutableArray<string> FilterGroupTypeNames = default)
+  EquatableArray<ExtensionMethodCall> ExtensionMethods = default,
+  EquatableArray<HttpClientConfiguration> HttpClientConfigurations = default,
+  EquatableArray<string> FilterGroupTypeNames = default)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.
   /// </summary>
-  public static AppModel Empty(ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> interceptSitesByMethod) => new(
+  public static AppModel Empty(EquatableArray<InterceptSiteGroup> interceptSitesByMethod) => new(
     VariableName: null,
     Name: null,
     Description: null,
@@ -99,8 +99,7 @@ public sealed record AppModel(
   /// Creates an empty AppModel with a single intercept site for a specific method.
   /// </summary>
   public static AppModel Empty(string methodName, InterceptSiteModel interceptSite) =>
-    Empty(ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>>.Empty
-      .Add(methodName, [interceptSite]));
+    Empty([new InterceptSiteGroup(methodName, [interceptSite])]);
 
   /// <summary>
   /// Gets whether this app has any routes defined.

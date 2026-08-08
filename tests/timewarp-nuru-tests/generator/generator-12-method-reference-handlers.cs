@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // Generator: Method Reference Handler Tests
 // Tests that .WithHandler(MethodName) works with method references, not just lambdas

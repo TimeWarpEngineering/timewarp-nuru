@@ -6,7 +6,9 @@ namespace TimeWarp.Nuru.Mcp.Tools;
 internal sealed class GetExampleTool
 {
   private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
-  private static readonly Dictionary<string, CachedExample> MemoryCache = [];
+  // ConcurrentDictionary: MCP tool calls dispatch concurrently (same hazard as
+  // GitHubCacheService.MemoryCache, fixed in kanban 454-024).
+  private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, CachedExample> MemoryCache = [];
   private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
   private static readonly TimeSpan ManifestCacheTtl = TimeSpan.FromHours(24);
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
@@ -216,6 +218,7 @@ internal sealed class GetExampleTool
       return DynamicExamples;
     }
 
+    string? failureReason;
     try
     {
       // Fetch manifest from GitHub
@@ -225,33 +228,85 @@ internal sealed class GetExampleTool
       if (response.IsSuccessStatusCode)
       {
         string json = await response.Content.ReadAsStringAsync();
-        ExampleManifest? manifest = JsonSerializer.Deserialize<ExampleManifest>(json, JsonOptions);
+        Dictionary<string, ExampleInfo>? examples = ParseManifest(json);
 
-        if (manifest?.Examples is not null)
+        if (examples is not null)
         {
-          DynamicExamples = manifest.Examples.ToDictionary(
-              e => e.Id,
-              e => new ExampleInfo(e.Path, e.Description)
-          );
+          DynamicExamples = examples;
           ManifestLastFetched = DateTime.UtcNow;
+          // Persist so later processes survive GitHub being unreachable or rate-limited
+          await WriteToDiskCacheAsync("manifest", json);
           return DynamicExamples;
         }
+
+        failureReason = "Examples manifest was empty or invalid";
+      }
+      else
+      {
+        failureReason = $"GitHub returned {(int)response.StatusCode} ({response.StatusCode})";
       }
     }
     catch (HttpRequestException ex)
     {
-      throw new InvalidOperationException($"Failed to fetch examples manifest from GitHub: {ex.Message}", ex);
+      failureReason = $"Network error: {ex.Message}";
     }
     catch (TaskCanceledException ex)
     {
-      throw new InvalidOperationException($"Request timed out fetching examples manifest: {ex.Message}", ex);
+      failureReason = $"Request timed out: {ex.Message}";
     }
     catch (JsonException ex)
     {
-      throw new InvalidOperationException($"Failed to parse examples manifest JSON: {ex.Message}", ex);
+      failureReason = $"Failed to parse manifest JSON: {ex.Message}";
     }
 
-    throw new InvalidOperationException("Examples manifest was empty or invalid");
+    // Fetch failed - fall back to the last successfully fetched manifest on disk,
+    // ignoring TTL (a stale manifest beats a dead tool).
+    Dictionary<string, ExampleInfo>? cached = await TryLoadManifestFromDiskAsync();
+    if (cached is not null)
+    {
+      DynamicExamples = cached;
+      ManifestLastFetched = DateTime.UtcNow;
+      return cached;
+    }
+
+    throw new InvalidOperationException($"Failed to fetch examples manifest from GitHub ({failureReason}) and no cached manifest is available");
+  }
+
+  private static Dictionary<string, ExampleInfo>? ParseManifest(string json)
+  {
+    ExampleManifest? manifest = JsonSerializer.Deserialize<ExampleManifest>(json, JsonOptions);
+    if (manifest?.Examples is null)
+      return null;
+
+    return manifest.Examples.ToDictionary(
+        e => e.Id,
+        e => new ExampleInfo(e.Path, e.Description)
+    );
+  }
+
+  private static async Task<Dictionary<string, ExampleInfo>?> TryLoadManifestFromDiskAsync()
+  {
+    try
+    {
+      string cacheFile = Path.Combine(CacheDirectory, "manifest.cache");
+      if (!File.Exists(cacheFile))
+        return null;
+
+      string json = await File.ReadAllTextAsync(cacheFile);
+      return ParseManifest(json);
+    }
+    catch (IOException)
+    {
+      return null;
+    }
+    catch (UnauthorizedAccessException)
+    {
+      return null;
+    }
+    catch (JsonException)
+    {
+      return null;
+    }
   }
 
   private sealed record ExampleInfo(string Path, string Description);

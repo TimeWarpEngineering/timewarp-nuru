@@ -1,4 +1,4 @@
-#!/usr/bin/env -S dotnet run --launch-profile AppHost --
+#!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 using Microsoft.Extensions.DependencyInjection;

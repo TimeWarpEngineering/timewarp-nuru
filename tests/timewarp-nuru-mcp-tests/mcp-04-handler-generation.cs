@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj
 
 #if !JARIBU_MULTI

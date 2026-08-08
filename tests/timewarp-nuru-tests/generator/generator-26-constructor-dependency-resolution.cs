@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #pragma warning disable CA1848 // Use LoggerMessage delegates
 #pragma warning disable CA1873 // Evaluation of this argument may be expensive
 #pragma warning disable CA1305 // Specify IFormatProvider

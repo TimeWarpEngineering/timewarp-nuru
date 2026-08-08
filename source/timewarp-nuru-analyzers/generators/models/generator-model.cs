@@ -11,9 +11,9 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="CommitHash">Git commit hash (from TimeWarp.Build.Tasks, may be null)</param>
 /// <param name="CommitDate">Git commit date (from TimeWarp.Build.Tasks, may be null)</param>
 public sealed record GeneratorModel(
-  ImmutableArray<AppModel> Apps,
-  ImmutableArray<string> UserUsings,
-  ImmutableArray<RouteDefinition> Endpoints,
+  EquatableArray<AppModel> Apps,
+  EquatableArray<string> UserUsings,
+  EquatableArray<RouteDefinition> Endpoints,
   string? Version,
   string? CommitHash,
   string? CommitDate)

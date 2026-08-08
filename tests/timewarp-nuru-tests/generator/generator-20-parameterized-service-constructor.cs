@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #pragma warning disable CA1849 // Call async methods when in async method
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -23,8 +23,11 @@
 return await RunAllTests();
 #endif
 
+namespace TimeWarp.Nuru.Tests.Generator.Gen20ParameterizedServiceConstructor
+{
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// SERVICE INTERFACES AND IMPLEMENTATIONS (global scope for generator discovery)
+// SERVICE INTERFACES AND IMPLEMENTATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 public interface IFormatter
@@ -139,6 +142,11 @@ public class KanbanService : IKanbanService
 }
 
 // Endpoint: Singleton service with parameterized constructor (reproduces #175)
+// STANDALONE ONLY: [NuruRoute] endpoints are collected globally in the CI multi-mode
+// compilation, so every OTHER test app using unfiltered .DiscoverEndpoints() would pick
+// this endpoint up and fail NURU050 because IKanbanService isn't registered there.
+// Run standalone to exercise it: dotnet run tests/timewarp-nuru-tests/generator/generator-20-parameterized-service-constructor.cs
+#if !JARIBU_MULTI
 [NuruRoute("gen20-kanban", Description = "List kanban tasks")]
 public sealed class Gen20KanbanQuery : IQuery<Unit>
 {
@@ -151,13 +159,12 @@ public sealed class Gen20KanbanQuery : IQuery<Unit>
     }
   }
 }
+#endif
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // JARIBU TESTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-namespace TimeWarp.Nuru.Tests.Generator.ParameterizedServiceConstructor
-{
   /// <summary>
   /// Tests that verify services with parameterized constructors are resolved
   /// at compile time (no MS DI runtime).
@@ -296,7 +303,9 @@ namespace TimeWarp.Nuru.Tests.Generator.ParameterizedServiceConstructor
     /// <summary>
     /// Endpoint DSL: Singleton service with parameterized constructor.
     /// Reproduces issue #175 - CS0103 missing Lazy field for KanbanService.
+    /// Standalone-only: see the #if !JARIBU_MULTI note on Gen20KanbanQuery above.
     /// </summary>
+#if !JARIBU_MULTI
     public static async Task Should_resolve_singleton_with_constructor_deps_in_endpoint()
     {
       // Arrange
@@ -319,5 +328,6 @@ namespace TimeWarp.Nuru.Tests.Generator.ParameterizedServiceConstructor
       exitCode.ShouldBe(0);
       terminal.OutputContains("Tasks in /home/user/workspace").ShouldBeTrue();
     }
+#endif
   }
 }

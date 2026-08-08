@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -63,6 +63,31 @@ public class WhitespaceHandlingTests
     tokens[0].Type.ShouldBe(RouteTokenType.LeftBrace);
     tokens[1].Type.ShouldBe(RouteTokenType.RightBrace);
     tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_tokenize_adjacent_parameter_blocks_without_special_token()
+  {
+    // Arrange
+    string pattern = "run {a}{b}";
+    Lexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert - lexer tokenizes {a}{b} as two separate parameter groups;
+    // the adjacency diagnostic is emitted by the parser, not the lexer.
+    tokens.Count.ShouldBe(8);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[0].Value.ShouldBe("run");
+    tokens[1].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[2].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[2].Value.ShouldBe("a");
+    tokens[3].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[4].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[5].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[5].Value.ShouldBe("b");
+    tokens[6].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[7].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }

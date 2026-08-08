@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // BUG: git commit<Tab><Tab> completes to "git --help" instead of showing "git commit" options

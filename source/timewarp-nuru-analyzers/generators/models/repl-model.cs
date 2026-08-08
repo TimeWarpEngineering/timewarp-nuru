@@ -13,7 +13,7 @@ namespace TimeWarp.Nuru.Generators;
 public sealed record ReplModel(
   string Prompt,
   string ContinuationPrompt,
-  ImmutableArray<string> ExitCommands,
+  EquatableArray<string> ExitCommands,
   int HistorySize,
   bool EnableSyntaxHighlighting,
   bool EnableAutoComplete,

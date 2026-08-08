@@ -27,6 +27,17 @@ public sealed class ReplSession : IDisposable
   private bool Running;
   private bool Disposed;
 
+  // CTS for the command currently executing, linked to the external token. Published so
+  // OnCancelKeyPress (raised on a console/threadpool thread) can cancel the in-flight
+  // command; null whenever no command is executing. Volatile: written on the loop thread,
+  // read on the Ctrl+C callback thread.
+  // CA2213: not disposed from Dispose() by design — ownership is method-scoped (`using`)
+  // in ExecuteCommandAsync; this field only publishes a reference and is nulled before
+  // that disposal runs, so it never holds a CTS the session must clean up.
+#pragma warning disable CA2213
+  private volatile CancellationTokenSource? CurrentCommandCts;
+#pragma warning restore CA2213
+
   /// <summary>
   /// Gets the current active REPL session instance.
   /// This is guaranteed to be non-null when REPL commands execute.
@@ -98,17 +109,26 @@ public sealed class ReplSession : IDisposable
     ILoggerFactory? loggerFactory,
     CancellationToken cancellationToken = default)
   {
-    CurrentSession = new ReplSession(nuruApp, replOptions, routeProvider, commandExecutor, loggerFactory);
+    // Run and dispose a LOCAL instance; CurrentSession is only a mirror for observability.
+    // A concurrently-started session would otherwise clobber the static and cause this
+    // finally to dispose the wrong instance.
+    ReplSession session = new(nuruApp, replOptions, routeProvider, commandExecutor, loggerFactory);
+    CurrentSession = session;
 
     try
     {
-      await CurrentSession.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
+      await session.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
     }
     finally
     {
       // Guaranteed cleanup even on exceptions
-      CurrentSession.Dispose();
-      CurrentSession = null;
+      session.Dispose();
+
+      // Only clear the static if it still points at our session (don't null a newer one).
+      if (ReferenceEquals(CurrentSession, session))
+      {
+        CurrentSession = null;
+      }
     }
   }
 
@@ -243,9 +263,16 @@ public sealed class ReplSession : IDisposable
   private async Task<int> ExecuteCommandAsync(string[] args, CancellationToken cancellationToken)
   {
     Stopwatch stopwatch = Stopwatch.StartNew();
+
+    // Per-command CTS linked to the external token so Ctrl+C can abort the in-flight
+    // command (M15). Published to CurrentCommandCts for OnCancelKeyPress; cleared before
+    // disposal so the callback never cancels a disposed CTS.
+    using CancellationTokenSource commandCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+    CurrentCommandCts = commandCts;
+
     try
     {
-      int exitCode = await CommandExecutor(App, args, cancellationToken).ConfigureAwait(false);
+      int exitCode = await CommandExecutor(App, args, commandCts.Token).ConfigureAwait(false);
       stopwatch.Stop();
 
       DisplayCommandResult(exitCode, stopwatch.ElapsedMilliseconds, success: true);
@@ -257,13 +284,59 @@ public sealed class ReplSession : IDisposable
 
       return exitCode;
     }
-    catch (InvalidOperationException ex)
+    catch (OperationCanceledException ex)
+    {
+      // External cancellation (host shutdown) must still unwind RunAsync as before.
+      if (cancellationToken.IsCancellationRequested)
+      {
+        throw;
+      }
+
+      // An OCE that did NOT come from our per-command token is an ordinary command
+      // failure (e.g. an HttpClient timeout throwing TaskCanceledException with no
+      // token cancelled) — do not mislabel it as a user cancellation.
+      if (!commandCts.IsCancellationRequested)
+      {
+        return HandleCommandException(stopwatch, ex);
+      }
+
+      // Ctrl+C on THIS command: report and return to the prompt. User-initiated
+      // cancellation is not a command failure, so ContinueOnError does not apply.
+      // 130 = 128 + SIGINT, the conventional Unix exit code for interrupt.
+      stopwatch.Stop();
+      string message = "Command cancelled";
+      await Terminal.WriteErrorLineAsync(ReplOptions.EnableColors ? message.Yellow() : message).ConfigureAwait(false);
+
+      // Honor ShowExitCode/ShowTiming like every other completion path — but not via
+      // DisplayCommandResult, whose ContinueOnError branch would print "Exiting REPL."
+      // (cancellation never exits the REPL).
+      if (ReplOptions.ShowExitCode)
+      {
+        string text = "Exit code: 130";
+        await Terminal.WriteLineAsync(ReplOptions.EnableColors ? text.Gray() : text).ConfigureAwait(false);
+      }
+
+      if (ReplOptions.ShowTiming)
+      {
+        string text = $"({stopwatch.ElapsedMilliseconds}ms)";
+        await Terminal.WriteLineAsync(ReplOptions.EnableColors ? text.Gray() : text).ConfigureAwait(false);
+      }
+
+      return 130;
+    }
+#pragma warning disable CA1031 // Do not catch general exception types — the REPL is a command
+                               // boundary; an unexpected exception thrown by a user command must
+                               // not tear down the whole interactive session.
+    catch (Exception ex)
     {
       return HandleCommandException(stopwatch, ex);
     }
-    catch (ArgumentException ex)
+#pragma warning restore CA1031
+    finally
     {
-      return HandleCommandException(stopwatch, ex);
+      // Unpublish before the using-disposal runs so OnCancelKeyPress can never observe
+      // (and Cancel) a disposed CTS.
+      CurrentCommandCts = null;
     }
   }
 
@@ -316,7 +389,31 @@ public sealed class ReplSession : IDisposable
   private void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
   {
     e.Cancel = true; // Prevent immediate termination
-    Running = false;
+
+    // Command in flight → cancel just that command; the REPL survives and re-prompts.
+    // Idle prompt → newline only; Ctrl+C does NOT exit the REPL (use `exit` or Ctrl+D).
+    // A second Ctrl+C while cancellation is in flight is a no-op (already cancelled).
+    CancellationTokenSource? commandCts = CurrentCommandCts;
+    if (commandCts is not null)
+    {
+      try
+      {
+        commandCts.Cancel();
+      }
+      catch (ObjectDisposedException)
+      {
+        // Benign race: the command completed and its CTS was disposed between our
+        // snapshot and Cancel(). Nothing left to cancel.
+      }
+      catch (AggregateException)
+      {
+        // Cancel() runs token-registered callbacks synchronously; a user callback that
+        // throws surfaces here as AggregateException. Swallow it — an unhandled exception
+        // on the console-event thread would tear down the process, breaking the
+        // "REPL survives Ctrl+C" contract. The command itself is already cancelled.
+      }
+    }
+
     Terminal.WriteLine(); // Move to new line after ^C
   }
 }

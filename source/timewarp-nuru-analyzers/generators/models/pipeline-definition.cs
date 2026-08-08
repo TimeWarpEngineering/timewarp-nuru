@@ -9,7 +9,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HasValidation">Whether any validation middleware is present</param>
 /// <param name="HasLogging">Whether any logging middleware is present</param>
 public sealed record PipelineDefinition(
-  ImmutableArray<MiddlewareDefinition> Middleware,
+  EquatableArray<MiddlewareDefinition> Middleware,
   bool HasAuthorization,
   bool HasValidation,
   bool HasLogging)
@@ -26,7 +26,7 @@ public sealed record PipelineDefinition(
   /// <summary>
   /// Creates a pipeline from a list of middleware.
   /// </summary>
-  public static PipelineDefinition Create(ImmutableArray<MiddlewareDefinition> middleware)
+  public static PipelineDefinition Create(EquatableArray<MiddlewareDefinition> middleware)
   {
     bool hasAuth = middleware.Any(m => m.Kind == MiddlewareKind.Authorization);
     bool hasValidation = middleware.Any(m => m.Kind == MiddlewareKind.Validation);

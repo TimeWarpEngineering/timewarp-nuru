@@ -85,7 +85,7 @@ internal static class TelemetryEmitter
   /// </summary>
   public static void EmitTelemetryStart(StringBuilder sb, string routePattern)
   {
-    string escapedPattern = routePattern.Replace("\"", "\\\"", StringComparison.Ordinal);
+    string escapedPattern = EmitterStringUtils.EscapeForStringLiteral(routePattern);
     sb.AppendLine($"      using global::System.Diagnostics.Activity? __activity = __activitySource.StartActivity(\"{escapedPattern}\", global::System.Diagnostics.ActivityKind.Internal);");
     sb.AppendLine($"      __activity?.SetTag(\"command.pattern\", \"{escapedPattern}\");");
     sb.AppendLine("      global::System.Diagnostics.Stopwatch __sw = global::System.Diagnostics.Stopwatch.StartNew();");
@@ -98,7 +98,7 @@ internal static class TelemetryEmitter
   /// </summary>
   public static void EmitTelemetrySuccess(StringBuilder sb, string routePattern)
   {
-    string escapedPattern = routePattern.Replace("\"", "\\\"", StringComparison.Ordinal);
+    string escapedPattern = EmitterStringUtils.EscapeForStringLiteral(routePattern);
     sb.AppendLine("        __sw.Stop();");
     sb.AppendLine("        __activity?.SetStatus(global::System.Diagnostics.ActivityStatusCode.Ok);");
     sb.AppendLine($"        __commandsInvoked.Add(1, new global::System.Collections.Generic.KeyValuePair<string, object?>(\"command\", \"{escapedPattern}\"));");
@@ -110,7 +110,7 @@ internal static class TelemetryEmitter
   /// </summary>
   public static void EmitTelemetryCatch(StringBuilder sb, string routePattern)
   {
-    string escapedPattern = routePattern.Replace("\"", "\\\"", StringComparison.Ordinal);
+    string escapedPattern = EmitterStringUtils.EscapeForStringLiteral(routePattern);
     sb.AppendLine("      }");
     sb.AppendLine("      catch (global::System.Exception __telemetryEx)");
     sb.AppendLine("      {");

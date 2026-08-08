@@ -115,14 +115,33 @@ public sealed class NuruGenerator : IIncrementalGenerator
         data.Right,
         ct));
 
-    // 8. Emit generated code and report diagnostics
-    // Combine with compilation for enum type resolution in REPL completions
-    context.RegisterSourceOutput(
-      generatorModelWithDiagnostics.Combine(context.CompilationProvider),
-      static (ctx, data) =>
-      {
-        (GeneratorModelWithDiagnostics? modelWithDiags, Compilation compilation) = data;
+    // 8. Split the output into two stages so the heavy emit can cache (M4):
+    //   - The Compilation changes on every keystroke. Feeding it (or the Location-bearing
+    //     diagnostics) into the emit output forces InterceptorEmitter.Emit to re-run every edit.
+    //   - Stage A (uncached): report diagnostics + logger warnings from the wrapper.
+    //   - Stage B (cacheable): emit from the equatable GeneratorModel + a precomputed, equatable
+    //     EnumInfo set. Enum resolution still needs the Compilation, but only to PRODUCE the
+    //     equatable EnumInfo — when the enum shapes are unchanged, emit compares equal and caches.
 
+    // The pure emit model (no diagnostics, no Location) — the cache key for emit.
+    IncrementalValueProvider<GeneratorModel?> modelProvider =
+      generatorModelWithDiagnostics
+        .Select(static (modelWithDiags, _) => modelWithDiags?.Model)
+        .WithTrackingName("NuruGeneratorModel");
+
+    // Enum member names, resolved from the Compilation but projected into an equatable set.
+    // Re-runs on every edit (Compilation changes), but its OUTPUT caches when enums are unchanged.
+    IncrementalValueProvider<EquatableArray<EnumInfo>> enumInfoProvider =
+      modelProvider
+        .Combine(context.CompilationProvider)
+        .Select(static (data, ct) => EnumInfoExtractor.Resolve(data.Left, data.Right, ct))
+        .WithTrackingName("NuruEnumInfo");
+
+    // Stage A: diagnostics + logger warnings (uncached — diagnostics carry Roslyn Locations).
+    context.RegisterSourceOutput(
+      generatorModelWithDiagnostics,
+      static (ctx, modelWithDiags) =>
+      {
         if (modelWithDiags is null)
           return;
 
@@ -137,9 +156,20 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
         // Report diagnostic if ILogger is injected but no logging is configured
         ReportLoggerWithoutConfigurationWarnings(ctx, modelWithDiags.Model);
+      });
+
+    // Stage B: emit generated code (cacheable — no Compilation, no diagnostics).
+    context.RegisterSourceOutput(
+      modelProvider.Combine(enumInfoProvider),
+      static (ctx, data) =>
+      {
+        (GeneratorModel? model, EquatableArray<EnumInfo> enumInfo) = data;
+
+        if (model is null)
+          return;
 
         // Emit the interceptor (includes InterceptsLocationAttribute definition)
-        string source = InterceptorEmitter.Emit(modelWithDiags.Model, compilation);
+        string source = InterceptorEmitter.Emit(model, enumInfo);
         ctx.AddSource("NuruGenerated.g.cs", source);
       });
   }
@@ -177,7 +207,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
     if (expression is not LiteralExpressionSyntax literal ||
         !literal.IsKind(SyntaxKind.StringLiteralExpression))
+    {
       return null;
+    }
 
     string? pattern = literal.Token.ValueText;
     if (string.IsNullOrEmpty(pattern))
@@ -329,7 +361,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
     foreach (ExtractionResult result in extractionResults)
     {
-      if (result.Model is null || result.Model.InterceptSitesByMethod.Count == 0)
+      if (result.Model is null || result.Model.InterceptSitesByMethod.Length == 0)
         continue;
 
       // Use BuildLocation as the deduplication key
@@ -349,7 +381,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       else
       {
         // Merge intercept sites (shouldn't happen often with Build()-based extraction)
-        ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> mergedSites =
+        EquatableArray<InterceptSiteGroup> mergedSites =
           MergeInterceptSites(existingApp.InterceptSitesByMethod, result.Model.InterceptSitesByMethod);
         uniqueApps[key] = existingApp with { InterceptSitesByMethod = mergedSites };
       }
@@ -526,20 +558,22 @@ public sealed class NuruGenerator : IIncrementalGenerator
   /// <summary>
   /// Merges two intercept site dictionaries.
   /// </summary>
-  private static ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> MergeInterceptSites(
-    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> a,
-    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>> b)
+  private static EquatableArray<InterceptSiteGroup> MergeInterceptSites(
+    EquatableArray<InterceptSiteGroup> a,
+    EquatableArray<InterceptSiteGroup> b)
   {
-    ImmutableDictionary<string, ImmutableArray<InterceptSiteModel>>.Builder builder = a.ToBuilder();
-    foreach (KeyValuePair<string, ImmutableArray<InterceptSiteModel>> kvp in b)
+    Dictionary<string, EquatableArray<InterceptSiteModel>> merged = [];
+    foreach (InterceptSiteGroup group in a)
+      merged[group.MethodName] = group.Sites;
+
+    foreach (InterceptSiteGroup group in b)
     {
-      if (builder.TryGetValue(kvp.Key, out ImmutableArray<InterceptSiteModel> existing))
-        builder[kvp.Key] = existing.AddRange(kvp.Value);
-      else
-        builder[kvp.Key] = kvp.Value;
+      merged[group.MethodName] = merged.TryGetValue(group.MethodName, out EquatableArray<InterceptSiteModel> existing)
+        ? existing.AddRange(group.Sites)
+        : group.Sites;
     }
 
-    return builder.ToImmutable();
+    return [.. merged.Select(kvp => new InterceptSiteGroup(kvp.Key, kvp.Value))];
   }
 
   /// <summary>

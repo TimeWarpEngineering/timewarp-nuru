@@ -19,6 +19,12 @@ Deploy your CLI applications:
 - Size optimization strategies
 - Distribution methods
 
+### [Subset Publishing](subset-publishing.md)
+Create specialized CLI editions from a shared command library:
+- Group-based endpoint filtering
+- Smaller, focused executables per use case
+- Publishing multiple editions from one codebase
+
 ### [Best Practices](best-practices.md)
 Patterns and conventions for maintainable CLI apps:
 - Route organization strategies

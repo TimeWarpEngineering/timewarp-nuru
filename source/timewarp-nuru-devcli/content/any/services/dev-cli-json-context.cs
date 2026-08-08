@@ -11,6 +11,10 @@ using System.Text.Json.Serialization;
 
 [JsonSerializable(typeof(RepoConfig))]
 [JsonSerializable(typeof(CheckVersionConfig))]
-[JsonSerializable(typeof(CheckVersionStrategy))]
+[JsonSerializable(typeof(AttestationConfig))]
 [JsonSerializable(typeof(NuGetVersionIndex))]
+[JsonSerializable(typeof(MsBuildEvaluationOutput))]
+[JsonSerializable(typeof(List<CiRunSummary>))]
+[JsonSerializable(typeof(RunArtifactListResponse))]
+[JsonSerializable(typeof(AttestationNoteDto))]
 internal sealed partial class DevCliJsonContext : JsonSerializerContext;

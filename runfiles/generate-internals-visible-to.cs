@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 using System.Globalization;
 using System.Text;
@@ -87,6 +87,13 @@ string content = sb.ToString();
 // Write the file to all projects
 foreach (string outputFile in outputFiles)
 {
+  string? outputDirectory = Path.GetDirectoryName(outputFile);
+  if (outputDirectory is not null && !Directory.Exists(outputDirectory))
+  {
+    Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Skipping {outputFile} (directory does not exist)"));
+    continue;
+  }
+
   File.WriteAllText(outputFile, content);
   Console.WriteLine($"Generated {outputFile}");
 }

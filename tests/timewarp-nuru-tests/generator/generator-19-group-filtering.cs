@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Group Filtering (#421)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -190,7 +190,12 @@ namespace TimeWarp.Nuru.Tests.Generator.GroupFiltering
     /// <summary>
     /// Test that without any filter, all endpoints are included.
     /// Includes both grouped and ungrouped commands with full prefixes.
+    /// STANDALONE ONLY: unfiltered .DiscoverEndpoints() is global in the CI multi-mode
+    /// compilation, so this app picks up every other test file's endpoints (route
+    /// collisions, unregistered services). Run standalone to exercise it:
+    /// dotnet run tests/timewarp-nuru-tests/generator/generator-19-group-filtering.cs
     /// </summary>
+#if !JARIBU_MULTI
     public static async Task NoFilter_IncludesAll()
     {
       // Arrange - no filter
@@ -221,6 +226,7 @@ namespace TimeWarp.Nuru.Tests.Generator.GroupFiltering
       exitCode = await app.RunAsync(["testapp", "git", "commit", "-m", "all"]); exitCode.ShouldBe(0);
       terminal.OutputContains("Committed: all").ShouldBeTrue();
     }
+#endif
 
     /// <summary>
     /// Test that filtering by a non-existent type results in no commands.

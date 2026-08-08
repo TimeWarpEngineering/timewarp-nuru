@@ -18,21 +18,21 @@ internal static class CompletionEmitter
   /// <param name="app">The application model containing route definitions.</param>
   /// <param name="methodSuffix">Suffix for per-app methods (e.g., "_0" for multi-app assemblies).</param>
   /// <param name="endpoints">Routes from [NuruRoute] endpoint classes.</param>
-  /// <param name="compilation">The Roslyn compilation for resolving enum types.</param>
-  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
+  /// <param name="enumValues">Precomputed enum member names keyed by normalized metadata type name.</param>
+  public static void Emit(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // SHELL COMPLETION SUPPORT (source-generated static data)");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
 
-    EmitGeneratedShellCompletionProvider(sb, app, methodSuffix, endpoints, compilation);
+    EmitGeneratedShellCompletionProvider(sb, app, methodSuffix, endpoints, enumValues);
   }
 
   /// <summary>
   /// Emits the GeneratedShellCompletionProvider class implementing IShellCompletionProvider.
   /// </summary>
-  private static void EmitGeneratedShellCompletionProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, Compilation compilation)
+  private static void EmitGeneratedShellCompletionProvider(StringBuilder sb, AppModel app, string methodSuffix, ImmutableArray<RouteDefinition> endpoints, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     // Collect all routes for this app (excluding completion-related routes)
     IEnumerable<RouteDefinition> allRoutes = app.Routes
@@ -46,7 +46,7 @@ internal static class CompletionEmitter
     List<CompletionDataExtractor.OptionInfo> options = CompletionDataExtractor.ExtractOptions(allRoutes);
     List<CompletionDataExtractor.RouteOptionInfo> routeOptions = CompletionDataExtractor.ExtractRouteOptions(allRoutes);
     List<CompletionDataExtractor.ParameterInfo> parameters = CompletionDataExtractor.ExtractParameters(allRoutes);
-    List<CompletionDataExtractor.EnumParameterInfo> enumParameters = CompletionDataExtractor.ExtractEnumParameters(allRoutes, compilation);
+    List<CompletionDataExtractor.EnumParameterInfo> enumParameters = CompletionDataExtractor.ExtractEnumParameters(allRoutes, enumValues);
 
     string className = $"GeneratedShellCompletionProvider{methodSuffix}";
 
@@ -58,7 +58,7 @@ internal static class CompletionEmitter
     sb.AppendLine("    [");
     foreach (string prefix in commandPrefixes.OrderBy(p => p, StringComparer.OrdinalIgnoreCase))
     {
-      sb.AppendLine($"      \"{EscapeString(prefix)}\",");
+      sb.AppendLine($"      \"{EmitterStringUtils.EscapeForStringLiteral(prefix)}\",");
     }
 
     sb.AppendLine("    ];");
@@ -151,9 +151,9 @@ internal static class CompletionEmitter
       foreach (CompletionDataExtractor.EnumParameterInfo enumParam in enumParameters)
       {
         int cmdWordCount = enumParam.CommandPrefix.Split(' ').Length;
-        sb.AppendLine($"      // Enum completions for '{EscapeString(enumParam.CommandPrefix)}' parameter '{enumParam.ParameterName}' at position {enumParam.Position}");
-        sb.AppendLine($"      if (string.Equals(prefix, \"{EscapeString(enumParam.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase) ||");
-        sb.AppendLine($"          prefix.StartsWith(\"{EscapeString(enumParam.CommandPrefix)} \", global::System.StringComparison.OrdinalIgnoreCase))");
+        sb.AppendLine($"      // Enum completions for '{EmitterStringUtils.EscapeForStringLiteral(enumParam.CommandPrefix)}' parameter '{enumParam.ParameterName}' at position {enumParam.Position}");
+        sb.AppendLine($"      if (string.Equals(prefix, \"{EmitterStringUtils.EscapeForStringLiteral(enumParam.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase) ||");
+        sb.AppendLine($"          prefix.StartsWith(\"{EmitterStringUtils.EscapeForStringLiteral(enumParam.CommandPrefix)} \", global::System.StringComparison.OrdinalIgnoreCase))");
         sb.AppendLine("      {");
         sb.AppendLine($"        int paramPos = args.Length - (hasTrailingSpace ? 0 : 1) - {cmdWordCount};");
         sb.AppendLine($"        if (paramPos == {enumParam.Position})");
@@ -177,22 +177,22 @@ internal static class CompletionEmitter
       sb.AppendLine("      // Context-aware route option completions");
       foreach (CompletionDataExtractor.RouteOptionInfo routeOpt in routeOptions)
       {
-        sb.AppendLine($"      // Options for '{EscapeString(routeOpt.CommandPrefix)}'");
-        sb.AppendLine($"      if (string.Equals(prefix, \"{EscapeString(routeOpt.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase) ||");
-        sb.AppendLine($"          prefix.StartsWith(\"{EscapeString(routeOpt.CommandPrefix)} \", global::System.StringComparison.OrdinalIgnoreCase))");
+        sb.AppendLine($"      // Options for '{EmitterStringUtils.EscapeForStringLiteral(routeOpt.CommandPrefix)}'");
+        sb.AppendLine($"      if (string.Equals(prefix, \"{EmitterStringUtils.EscapeForStringLiteral(routeOpt.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase) ||");
+        sb.AppendLine($"          prefix.StartsWith(\"{EmitterStringUtils.EscapeForStringLiteral(routeOpt.CommandPrefix)} \", global::System.StringComparison.OrdinalIgnoreCase))");
         sb.AppendLine("      {");
         foreach (CompletionDataExtractor.OptionInfo opt in routeOpt.Options)
         {
           if (opt.LongForm is not null)
           {
-            string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
+            string description = opt.Description is not null ? $"\"{EmitterStringUtils.EscapeForStringLiteral(opt.Description)}\"" : "null";
             sb.AppendLine($"        if ((string.IsNullOrEmpty(currentInput) || \"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase)) && yielded.Add(\"--{opt.LongForm}\"))");
             sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--{opt.LongForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
           }
 
           if (opt.ShortForm is not null)
           {
-            string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
+            string description = opt.Description is not null ? $"\"{EmitterStringUtils.EscapeForStringLiteral(opt.Description)}\"" : "null";
             sb.AppendLine($"        if ((string.IsNullOrEmpty(currentInput) || \"-{opt.ShortForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase)) && yielded.Add(\"-{opt.ShortForm}\"))");
             sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"-{opt.ShortForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
           }
@@ -215,14 +215,14 @@ internal static class CompletionEmitter
       {
         if (opt.LongForm is not null)
         {
-          string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
+          string description = opt.Description is not null ? $"\"{EmitterStringUtils.EscapeForStringLiteral(opt.Description)}\"" : "null";
           sb.AppendLine($"        if (\"--{opt.LongForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase) && yielded.Add(\"--{opt.LongForm}\"))");
           sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"--{opt.LongForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
         }
 
         if (opt.ShortForm is not null)
         {
-          string description = opt.Description is not null ? $"\"{EscapeString(opt.Description)}\"" : "null";
+          string description = opt.Description is not null ? $"\"{EmitterStringUtils.EscapeForStringLiteral(opt.Description)}\"" : "null";
           sb.AppendLine($"        if (\"-{opt.ShortForm}\".StartsWith(currentInput, global::System.StringComparison.OrdinalIgnoreCase) && yielded.Add(\"-{opt.ShortForm}\"))");
           sb.AppendLine($"          yield return new global::TimeWarp.Nuru.CompletionCandidate(\"-{opt.ShortForm}\", {description}, global::TimeWarp.Nuru.CompletionType.Option);");
         }
@@ -262,8 +262,8 @@ internal static class CompletionEmitter
 
       int cmdWordCount = param.CommandPrefix.Split(' ').Length;
 
-      sb.AppendLine($"      // Parameter '{param.Name}' for command '{EscapeString(param.CommandPrefix)}'");
-      sb.AppendLine($"      if (prefix.StartsWith(\"{EscapeString(param.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase))");
+      sb.AppendLine($"      // Parameter '{param.Name}' for command '{EmitterStringUtils.EscapeForStringLiteral(param.CommandPrefix)}'");
+      sb.AppendLine($"      if (prefix.StartsWith(\"{EmitterStringUtils.EscapeForStringLiteral(param.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase))");
       sb.AppendLine("      {");
       sb.AppendLine($"        int paramPos = cursorIndex - 1 - {cmdWordCount};");
       sb.AppendLine("        if (paramPos == 0) // First parameter position");
@@ -281,16 +281,4 @@ internal static class CompletionEmitter
     sb.AppendLine("    }");
   }
 
-  /// <summary>
-  /// Escapes a string for use in generated C# code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal)
-      .Replace("\n", "\\n", StringComparison.Ordinal)
-      .Replace("\r", "\\r", StringComparison.Ordinal)
-      .Replace("\t", "\\t", StringComparison.Ordinal);
-  }
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:package TimeWarp.Amuru
 
 // run-tests-sequential.cs - Diagnostic runner to find compile failures and hanging tests

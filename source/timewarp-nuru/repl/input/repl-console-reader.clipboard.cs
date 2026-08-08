@@ -82,8 +82,10 @@ public sealed partial class ReplConsoleReader
 
   private static async Task<string?> GetWindowsClipboardAsync()
   {
+    // -NoProfile: a chatty profile would pollute stdout (corrupting the clipboard read)
+    // and slow every call.
     CommandOutput output = await Shell.Builder("powershell")
-      .WithArguments("-command", "Get-Clipboard")
+      .WithArguments("-NoProfile", "-Command", "Get-Clipboard")
       .WithNoValidation()
       .CaptureAsync()
       .ConfigureAwait(false);
@@ -92,8 +94,13 @@ public sealed partial class ReplConsoleReader
 
   private static async Task SetWindowsClipboardAsync(string text)
   {
+    // Pipe the text via stdin (mirrors SetLinuxClipboardAsync's pwsh branch): no argv
+    // quoting/escaping issues for quotes, apostrophes, newlines, or long content.
+    // Previously the whole invocation was glued into ONE argv element, so PowerShell
+    // never saw a valid -Command switch and the copy silently did nothing (M16).
     await Shell.Builder("powershell")
-      .WithArguments($"-command \"Set-Clipboard -Value '{text.Replace("'", "''", StringComparison.Ordinal)}'\"")
+      .WithArguments("-NoProfile", "-Command", "$input | Set-Clipboard")
+      .WithStandardInput(text)
       .WithNoValidation()
       .RunAsync()
       .ConfigureAwait(false);

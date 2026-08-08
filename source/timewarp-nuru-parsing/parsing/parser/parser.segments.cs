@@ -1,3 +1,17 @@
+#region Purpose
+// Segment-level parsing for route patterns: literals, parameters, options, end-of-options.
+#endregion
+
+#region Design
+// Option forms: --long, --long,-s (comma alias), and single-dash shorts.
+// Single-dash shorts may be MULTI-CHARACTER (-bl, -verbosity) to model real-world
+// tools (dotnet, msbuild, java, find). Options are declared literally in route
+// patterns and matched by exact token equality, so multi-char shorts are unambiguous.
+// The trade-off: POSIX-style flag grouping (-la == -l -a) is deliberately NOT
+// supported — grouping and multi-char shorts are mutually exclusive conventions,
+// and grouping would require interpreting undeclared tokens (kanban 454-005/454-014).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -63,12 +77,15 @@ internal sealed partial class Parser
     // Validate that catch-all and optional are not combined
     if (isCatchAll && isOptional)
     {
+      // isOptional is true here only because the '?' was just matched, so Previous() is that
+      // '?' token — span through it so the diagnostic underlines the offending modifier, not
+      // just the name (e.g. covers `{*name?` rather than `{*name`).
       AddParseError
       (
         new InvalidModifierCombinationError
         (
           startPos,
-          nameToken.EndPosition - startPos,
+          Previous().EndPosition - startPos,
           paramName
         )
       );
@@ -169,21 +186,9 @@ internal sealed partial class Parser
     }
     else
     {
+      // Single-dash options may be multi-character (-bl, -verbosity), matching
+      // real-world tools like dotnet/msbuild. See the Design region.
       string shortForm = optionNameToken.Value;
-
-      // Validate single dash options should be single character
-      if (shortForm.Length > 1)
-      {
-        AddParseError
-        (
-          new InvalidOptionFormatError
-          (
-            optionNameToken.Position - 1, // Include the dash
-            optionNameToken.Length + 1,
-            $"-{shortForm}")
-          );
-      }
-
       return (null, shortForm);
     }
   }

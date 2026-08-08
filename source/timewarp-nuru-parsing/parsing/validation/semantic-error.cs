@@ -67,17 +67,20 @@ public record MixedCatchAllWithOptionalError(
 }
 
 /// <summary>
-/// Duplicate option alias error.
+/// Duplicate option alias error (short or long form).
 /// </summary>
 public record DuplicateOptionAliasError(
   int Position,
   int Length,
   string Alias,
-  IReadOnlyList<string> ConflictingOptions
+  IReadOnlyList<string> ConflictingOptions,
+  bool IsLongForm
 ) : SemanticError(Position, Length)
 {
   public override string ToString() =>
-    $"Semantic Error at position {Position}: Option has duplicate short form '{Alias}' (conflicts with: {string.Join(", ", ConflictingOptions)})";
+    IsLongForm
+      ? $"Semantic Error at position {Position}: Option has duplicate long form '{Alias}' (conflicts with: {string.Join(", ", ConflictingOptions)})"
+      : $"Semantic Error at position {Position}: Option has duplicate short form '{Alias}' (conflicts with: {string.Join(", ", ConflictingOptions)})";
 }
 
 /// <summary>

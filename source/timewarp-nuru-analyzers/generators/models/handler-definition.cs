@@ -22,13 +22,13 @@ public sealed record HandlerDefinition(
   string? MethodName,
   string? LambdaBodySource,
   bool IsExpressionBody,
-  ImmutableArray<ParameterBinding> Parameters,
+  EquatableArray<ParameterBinding> Parameters,
   HandlerReturnType ReturnType,
   bool IsAsync,
   bool RequiresCancellationToken,
   bool RequiresServiceProvider,
   string? NestedHandlerTypeName = null,
-  ImmutableArray<ParameterBinding> ConstructorDependencies = default)
+  EquatableArray<ParameterBinding> ConstructorDependencies = default)
 {
   /// <summary>
   /// Creates a handler definition for a delegate-based handler.
@@ -40,7 +40,7 @@ public sealed record HandlerDefinition(
   /// <param name="isExpressionBody">True for expression body, false for block body.</param>
   /// <param name="requiresCancellationToken">Whether the handler accepts a CancellationToken.</param>
   public static HandlerDefinition ForDelegate(
-    ImmutableArray<ParameterBinding> parameters,
+    EquatableArray<ParameterBinding> parameters,
     HandlerReturnType returnType,
     bool isAsync,
     string? lambdaBodySource = null,
@@ -71,8 +71,8 @@ public sealed record HandlerDefinition(
   public static HandlerDefinition ForCommand(
     string commandTypeName,
     string nestedHandlerTypeName,
-    ImmutableArray<ParameterBinding> propertyBindings,
-    ImmutableArray<ParameterBinding> constructorDependencies,
+    EquatableArray<ParameterBinding> propertyBindings,
+    EquatableArray<ParameterBinding> constructorDependencies,
     HandlerReturnType returnType)
   {
     return new HandlerDefinition(
@@ -96,7 +96,7 @@ public sealed record HandlerDefinition(
   public static HandlerDefinition ForMethod(
     string fullTypeName,
     string methodName,
-    ImmutableArray<ParameterBinding> parameters,
+    EquatableArray<ParameterBinding> parameters,
     HandlerReturnType returnType,
     bool isAsync,
     bool requiresCancellationToken = false,

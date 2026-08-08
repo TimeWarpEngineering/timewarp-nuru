@@ -15,24 +15,27 @@ internal static class AppNameDetector
   /// <exception cref="InvalidOperationException">Thrown when application name cannot be determined through any detection method.</exception>
   public static string GetEffectiveAppName()
   {
-    // Try to get the actual process name (works for published executables)
+    // Try to get the actual process name (works for published/apphost executables).
+    // When run framework-dependent (`dotnet myapp.dll`), both ProcessPath and ProcessName
+    // resolve to the dotnet host ("dotnet"), not the app — so skip them and prefer the
+    // entry assembly, which carries the real app name.
     string? processPath = Environment.ProcessPath;
     if (processPath is not null)
     {
       string fileName = Path.GetFileNameWithoutExtension(processPath);
-      if (!string.IsNullOrEmpty(fileName))
+      if (!string.IsNullOrEmpty(fileName) && !IsDotnetHost(fileName))
         return fileName;
     }
 
-    // Fallback: try Process.GetCurrentProcess()
-    using Process currentProcess = Process.GetCurrentProcess();
-    if (!string.IsNullOrEmpty(currentProcess.ProcessName))
-      return currentProcess.ProcessName;
-
-    // Final attempt: assembly name
+    // Entry assembly name (the real app name when hosted by the dotnet muxer).
     string? assemblyName = Assembly.GetEntryAssembly()?.GetName().Name;
     if (!string.IsNullOrEmpty(assemblyName))
       return assemblyName;
+
+    // Last resort: the current process name (may be the dotnet host).
+    using Process currentProcess = Process.GetCurrentProcess();
+    if (!string.IsNullOrEmpty(currentProcess.ProcessName))
+      return currentProcess.ProcessName;
 
     // No valid name found - exceptional state
     throw new InvalidOperationException
@@ -41,4 +44,10 @@ internal static class AppNameDetector
       "This indicates an unusual hosting environment or process configuration that restricts access to process and assembly information."
     );
   }
+
+  /// <summary>
+  /// Whether the given process file name is the dotnet host/muxer rather than a real app.
+  /// </summary>
+  private static bool IsDotnetHost(string fileName) =>
+    string.Equals(fileName, "dotnet", StringComparison.OrdinalIgnoreCase);
 }

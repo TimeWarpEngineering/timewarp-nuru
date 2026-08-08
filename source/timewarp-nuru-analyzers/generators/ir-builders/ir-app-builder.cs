@@ -384,9 +384,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       Routes: [.. Routes],
       Behaviors: [.. Behaviors],
       Services: [.. Services],
-      InterceptSitesByMethod: InterceptSitesByMethod.ToImmutableDictionary(
-        kvp => kvp.Key,
-        kvp => kvp.Value.ToImmutableArray()),
+      InterceptSitesByMethod: [.. InterceptSitesByMethod.Select(kvp => new InterceptSiteGroup(kvp.Key, [.. kvp.Value]))],
       UserUsings: [],  // Usings are populated by AppExtractor, not the builder
       CustomConverters: [.. CustomConverters],
       LoggingConfiguration: LoggingConfiguration,

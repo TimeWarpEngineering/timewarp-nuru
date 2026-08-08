@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: IOptions<T> Parameter Injection (#314)

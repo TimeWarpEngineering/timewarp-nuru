@@ -38,7 +38,7 @@ internal static class TypeConversionMap
       "float" or "single" => ("float", $"float.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Float | global::System.Globalization.NumberStyles.AllowThousands, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
       "double" => ("double", $"double.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Float | global::System.Globalization.NumberStyles.AllowThousands, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
       "decimal" => ("decimal", $"decimal.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Number, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
-      "bool" or "boolean" => ("bool", $"bool.TryParse({inputVarName}, out {outputVarName})"),
+      "bool" or "boolean" => ("bool", $"global::TimeWarp.Nuru.BooleanConverter.TryParse({inputVarName}, out {outputVarName})"),
       "char" => ("char", $"({inputVarName}.Length == 1 && ({outputVarName} = {inputVarName}[0]) == {outputVarName})"), // Always true if length is 1
 
       // PascalCase type names (case-insensitive) - most have TryParse

@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 // Tests for PSReadLine basic editing enhancements (Task 043-008)

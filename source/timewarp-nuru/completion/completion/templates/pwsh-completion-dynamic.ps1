@@ -3,11 +3,20 @@
 
 Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
-    $words = $commandAst.ToString() -split ' '
+    # Tokenize via the AST so quoted arguments containing spaces stay intact
+    # (splitting/joining on ' ' would corrupt e.g. "hello world").
+    $words = @($commandAst.CommandElements | ForEach-Object {
+        if ($_ -is [System.Management.Automation.Language.StringConstantExpressionAst]) { $_.Value }
+        else { $_.Extent.Text }
+    })
     $position = if ($wordToComplete -ne '') { $words.Count - 1 } else { $words.Count }
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
     $psi.FileName = "{{APP_PATH}}"
-    $psi.Arguments = "__complete $position $($words -join ' ')"
+    # Re-quote each token into the Arguments string so spaces survive. Uses .Arguments (not
+    # .ArgumentList) because ArgumentList is unavailable on Windows PowerShell 5.1 (.NET
+    # Framework); this path works on both 5.1 and PowerShell Core.
+    $escaped = @("__complete", "$position") + $words | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }
+    $psi.Arguments = $escaped -join ' '
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.UseShellExecute = $false
@@ -27,8 +36,10 @@ Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
     $results = [System.Collections.ArrayList]::new()
 
     foreach ($line in $completions) {
-        # Skip directive line (starts with :) and exit code line (standalone number)
-        if ($line -match '^:' -or $line -match '^\d+$') {
+        # Skip the directive line (starts with :). Do NOT skip standalone numbers — no
+        # exit-code line is printed to stdout, so a numeric filter would drop a legitimate
+        # numeric candidate (e.g. "0").
+        if ($line -match '^:') {
             continue
         }
 

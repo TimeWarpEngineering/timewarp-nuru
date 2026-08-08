@@ -46,7 +46,7 @@ public sealed class TelemetryBehavior : INuruBehavior
 
       // Record success metrics
       CommandsInvoked.Add(1, new KeyValuePair<string, object?>("command", context.CommandName));
-      CommandDuration.Record(stopwatch.ElapsedMilliseconds,
+      CommandDuration.Record(stopwatch.Elapsed.TotalMilliseconds,
         new KeyValuePair<string, object?>("command", context.CommandName),
         new KeyValuePair<string, object?>("status", "ok"));
     }
@@ -64,7 +64,7 @@ public sealed class TelemetryBehavior : INuruBehavior
         new KeyValuePair<string, object?>("command", context.CommandName),
         new KeyValuePair<string, object?>("error.type", ex.GetType().Name));
 
-      CommandDuration.Record(stopwatch.ElapsedMilliseconds,
+      CommandDuration.Record(stopwatch.Elapsed.TotalMilliseconds,
         new KeyValuePair<string, object?>("command", context.CommandName),
         new KeyValuePair<string, object?>("status", "error"));
 

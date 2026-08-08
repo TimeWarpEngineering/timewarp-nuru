@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #:property TreatWarningsAsErrors=false
 
 // REPL Test Runner

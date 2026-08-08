@@ -178,9 +178,18 @@ internal static class HandlerValidator
       return;
     }
 
-    // Check accessibility - private methods can't be called from generated code
-    if (methodSymbol.DeclaredAccessibility is Accessibility.Private or Accessibility.Protected)
+    if (!methodSymbol.IsStatic)
     {
+      // Instance method (e.g. a bare identifier referencing a member of the enclosing
+      // type) - not supported. Mirrors the member-access path's NURU_H001 check.
+      diagnostics.Add(Diagnostic.Create(
+        DiagnosticDescriptors.InstanceMethodNotSupported,
+        location,
+        methodSymbol.Name));
+    }
+    else if (methodSymbol.DeclaredAccessibility is Accessibility.Private or Accessibility.Protected)
+    {
+      // Private static methods can't be called from generated code
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.PrivateMethodNotAccessible,
         location,
@@ -251,11 +260,13 @@ internal static class HandlerValidator
       }
     }
 
-    // Walk lambda body looking for identifiers
+    // Walk lambda body looking for identifiers. DescendantNodesAndSelf (not DescendantNodes)
+    // so a body that IS a single identifier — e.g. `() => capturedLocal` — is checked too;
+    // DescendantNodes excludes the body node itself, which silently missed that capture.
     if (lambda.Body is null)
       return capturedVariables;
 
-    foreach (IdentifierNameSyntax identifier in lambda.Body.DescendantNodes()
+    foreach (IdentifierNameSyntax identifier in lambda.Body.DescendantNodesAndSelf()
       .OfType<IdentifierNameSyntax>())
     {
       string name = identifier.Identifier.Text;
@@ -274,6 +285,18 @@ internal static class HandlerValidator
 
       // Skip if it's the name part of a conditional member access (obj?.name)
       if (identifier.Parent is MemberBindingExpressionSyntax mb && mb.Name == identifier)
+        continue;
+
+      // Skip if it's the name of a named argument or property pattern:
+      // WriteLine(format: value) - 'format' binds to the callee's parameter;
+      // obj is { Length: > 0 } - 'Length' binds to the matched type's member.
+      // Neither is a capture from the enclosing scope.
+      if (identifier.Parent is NameColonSyntax nc && nc.Name == identifier)
+        continue;
+
+      // Skip if it's the name in a NameEquals: anonymous type members (new { X = v })
+      // and attribute named arguments ([Attr(Prop = v)]) - not captures either.
+      if (identifier.Parent is NameEqualsSyntax ne && ne.Name == identifier)
         continue;
 
       // Skip if it's the target of a property assignment in an object initializer
@@ -385,6 +408,14 @@ internal static class HandlerValidator
 
       // Skip if it's the name part of a conditional member access
       if (identifier.Parent is MemberBindingExpressionSyntax mb && mb.Name == identifier)
+        continue;
+
+      // Skip if it's the name of a named argument or property pattern (see DetectClosures)
+      if (identifier.Parent is NameColonSyntax nc && nc.Name == identifier)
+        continue;
+
+      // Skip if it's the name in a NameEquals (anonymous type member / attribute argument)
+      if (identifier.Parent is NameEqualsSyntax ne && ne.Name == identifier)
         continue;
 
       // Skip if it's the target of a property assignment in an object initializer

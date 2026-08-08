@@ -347,18 +347,19 @@ internal static class HandlerInvokerEmitter
       $"{indent}{handlerTypeName} __handler = new({constructorArgs});");
 
     // 4. Invoke Handle method
-    // Note: Use CancellationToken.None since the interceptor doesn't have one in its signature
+    // cancellationToken is ExecuteRouteAsync's parameter — flows from the REPL's per-command
+    // linked CTS (Ctrl+C, 454-017) or default for direct RunAsync invocations.
     if (handler.ReturnType.HasValue)
     {
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(
-        $"{indent}{resultTypeName} result = await __handler.Handle(__command, global::System.Threading.CancellationToken.None);");
+        $"{indent}{resultTypeName} result = await __handler.Handle(__command, cancellationToken);");
       EmitResultOutput(sb, indent, resultTypeName);
     }
     else
     {
       sb.AppendLine(
-        $"{indent}await __handler.Handle(__command, global::System.Threading.CancellationToken.None);");
+        $"{indent}await __handler.Handle(__command, cancellationToken);");
     }
   }
 
@@ -381,7 +382,10 @@ internal static class HandlerInvokerEmitter
       return "app.Terminal";
     if (serviceTypeName is "global::Microsoft.Extensions.Configuration.IConfiguration"
                         or "global::Microsoft.Extensions.Configuration.IConfigurationRoot")
+    {
       return "configuration";
+    }
+
     if (serviceTypeName == "global::TimeWarp.Nuru.NuruApp")
       return "app";
 

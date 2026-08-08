@@ -2,11 +2,16 @@
 // Verify that the version in Directory.Build.props has not already been released
 #endregion
 #region Design
-// Uses NuGetVersionService (HttpClient-based) for NuGet checks — no NuGet.Protocol dependency.
-// Uses GitTagCheckService for git-tag checks — no INuGetPackageService dependency.
-// Uses IRepoConfigService for per-repo config defaults.
-// Supports two strategies: nuget-search (checks NuGet) and git-tag (compares to git tag).
-// Strategy defaults to per-repo config (.timewarp/dev.jsonc), then nuget-search.
+// One methodology: props-version membership in the published NuGet versions
+// (NuGetVersionService, HttpClient-based — no NuGet.Protocol dependency).
+// Package set precedence (kanban task 458-004): --package overrides everything
+// for a single ad-hoc run; else .timewarp/dev.jsonc's checkVersionConfig.packages
+// (an explicit, repo-level override); else the derived set of packable projects
+// under source/ (IPackableProjectService, IsPackable=true via MSBuild evaluation)
+// — so a repo with no override needs zero hand-maintained package lists. A
+// --package value that parses to zero packages (e.g. ",") is still an explicit
+// override and does NOT fall through to derivation — it hits the same "no
+// packages" error as an empty/unconfigured repo.
 #endregion
 
 namespace DevCli;
@@ -18,127 +23,83 @@ using TimeWarp.Terminal;
 [NuruRoute("check-version", Description = "Verify version is ready to release")]
 public sealed class CheckVersionCommand : ICommand<Unit>
 {
-  [Option("strategy", Description = "Check strategy: git-tag (GitHub releases) or nuget-search (NuGet packages)")]
-  public string? Strategy { get; set; }
-
-  [Option("package", Description = "NuGet package ID to check (comma-separated, nuget-search only)")]
+  [Option("package", Description = "NuGet package ID to check (comma-separated)")]
   public string? Package { get; set; }
-
-  [Option("tag", Description = "Git tag to compare against (git-tag strategy only)")]
-  public string? Tag { get; set; }
 
   public sealed class Handler : ICommandHandler<CheckVersionCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly NuGetVersionService NuGetVersionService;
-    private readonly GitTagCheckService GitTagCheckService;
     private readonly IRepoConfigService ConfigService;
+    private readonly IPackableProjectService PackableProjectService;
 
     public Handler
     (
       ITerminal terminal,
       NuGetVersionService nuGetVersionService,
-      GitTagCheckService gitTagCheckService,
-      IRepoConfigService configService
+      IRepoConfigService configService,
+      IPackableProjectService packableProjectService
     )
     {
       Terminal = terminal;
       NuGetVersionService = nuGetVersionService;
-      GitTagCheckService = gitTagCheckService;
       ConfigService = configService;
+      PackableProjectService = packableProjectService;
     }
 
     public async ValueTask<Unit> Handle(CheckVersionCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 
-      string? strategyInput = command.Strategy;
-      CheckVersionStrategy effectiveStrategy;
-      if (strategyInput is not null && TryParseStrategy(strategyInput, out CheckVersionStrategy parsed))
-      {
-        effectiveStrategy = parsed;
-      }
-      else if (strategyInput is not null)
-      {
-        Terminal.WriteErrorLine($"Error: unknown strategy '{strategyInput}'. Valid values: git-tag, nuget-search");
-        Environment.ExitCode = 1;
-        return Value;
-      }
-      else
-      {
-        RepoConfig config = await ConfigService
-          .GetConfigAsync(cancellationToken)
-          .ConfigureAwait(false);
+      string? repoRoot = Git.FindRoot();
 
-        effectiveStrategy = config.CheckVersionConfig?.CheckVersionStrategy ?? CheckVersionStrategy.NuGetSearch;
-      }
-
-      string strategyDisplay = effectiveStrategy switch
-      {
-        CheckVersionStrategy.GitTag => "git-tag (GitHub releases)",
-        CheckVersionStrategy.NuGetSearch => "nuget-search (NuGet packages)",
-        _ => effectiveStrategy.ToString()
-      };
-      Terminal.WriteLine($"Strategy: {strategyDisplay}");
-      Terminal.WriteLine("");
-
-      if (effectiveStrategy == CheckVersionStrategy.GitTag)
-      {
-        await HandleGitTagAsync(command, cancellationToken).ConfigureAwait(false);
-      }
-      else if (effectiveStrategy == CheckVersionStrategy.NuGetSearch)
-      {
-        await HandleNuGetSearchAsync(command, cancellationToken).ConfigureAwait(false);
-      }
-
-      return Value;
-    }
-
-    private async ValueTask HandleGitTagAsync(CheckVersionCommand command, CancellationToken cancellationToken)
-    {
-      GitTagCheckResult result = await GitTagCheckService
-        .CheckGitTagVersionAsync(command.Tag, cancellationToken)
-        .ConfigureAwait(false);
-
-      Terminal.WriteLine($"Version in source: {result.Version}".Cyan());
-      string latestTag = result.LatestReleaseTag ?? "(none)";
-      Terminal.WriteLine($"Latest release tag on GitHub: {latestTag}".Cyan());
-      Terminal.WriteLine("");
-
-      if (result.IsNewVersion)
-      {
-        Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
-      }
-      else
-      {
-        Terminal.WriteLine($"✗ Version {result.Version} was already released.".Red());
-        Terminal.WriteLine("  Bump the version before releasing.".Yellow());
-        Environment.ExitCode = 1;
-      }
-    }
-
-    private async ValueTask HandleNuGetSearchAsync(CheckVersionCommand command, CancellationToken cancellationToken)
-    {
       RepoConfig config = await ConfigService
         .GetConfigAsync(cancellationToken)
         .ConfigureAwait(false);
 
+      bool usingConfigOverride = command.Package is null && config.CheckVersionConfig?.Packages is not null;
       string? packageInput = command.Package ?? config.CheckVersionConfig?.Packages;
-      if (string.IsNullOrWhiteSpace(packageInput))
+      IReadOnlyList<string> packages;
+
+      if (packageInput is not null)
       {
-        Terminal.WriteErrorLine("Error: no packages specified. Use --package or configure Packages in .timewarp/dev.jsonc");
-        Environment.ExitCode = 1;
-        return;
+        packages = PublishStateClassifier.ParsePackageList(packageInput);
+      }
+      else if (repoRoot is not null)
+      {
+        IReadOnlyList<PackableProject> packableProjects = await PackableProjectService
+          .GetPackableProjectsAsync(repoRoot, cancellationToken)
+          .ConfigureAwait(false);
+
+        packages = [.. packableProjects.Select(p => p.PackageId)];
+      }
+      else
+      {
+        packages = [];
       }
 
-      IReadOnlyList<string> packages = packageInput.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+      if (packages.Count == 0)
+      {
+        Terminal.WriteErrorLine("Error: no packable projects found under source/ and no packages configured. Use --package or checkVersionConfig.packages.");
+        Environment.ExitCode = 1;
+        return Value;
+      }
 
-      string? version = GetVersionFromSource();
+      // Round-1 review finding #2: a repo hand-maintaining checkVersionConfig
+      // .packages otherwise gets zero signal that derivation exists, so it
+      // never learns to stop. Only for the config-override path — --package
+      // is an intentional single-run override and needs no nudge.
+      if (usingConfigOverride)
+      {
+        Terminal.WriteLine("Using configured package override; delete checkVersionConfig.packages to derive the set from IsPackable.");
+      }
+
+      string? version = GetVersionFromSource(repoRoot);
       if (version is null)
       {
         Terminal.WriteErrorLine("Error: could not read Version from source/Directory.Build.props");
         Environment.ExitCode = 1;
-        return;
+        return Value;
       }
 
       List<string> checkedPackages = [];
@@ -165,7 +126,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
           latestNuGetVersion = highestVersion;
         }
 
-        if (string.Equals(version, highestVersion, StringComparison.OrdinalIgnoreCase))
+        if (NuGetVersionService.IsVersionPublished(version, versions))
         {
           alreadyPublished.Add(pkg);
         }
@@ -182,29 +143,39 @@ public sealed class CheckVersionCommand : ICommand<Unit>
 
       Terminal.WriteLine("");
 
-      bool isNewVersion = alreadyPublished.Count == 0;
+      PublishState publishState = PublishStateClassifier.Classify(checkedPackages.Count, alreadyPublished.Count);
 
-      if (isNewVersion)
+      switch (publishState)
       {
-        Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
-      }
-      else
-      {
-        Terminal.WriteLine($"✗ Version {version} was already released.".Red());
-        Terminal.WriteLine("  Bump the version before releasing.".Yellow());
+        case PublishState.None:
+          Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
+          break;
 
-        if (alreadyPublished.Count > 0)
-        {
+        case PublishState.Partial:
+          List<string> missingPackages = [.. checkedPackages.Except(alreadyPublished)];
+          Terminal.WriteLine($"Partial publish detected: {alreadyPublished.Count} of {checkedPackages.Count} packages already have {version}.".Yellow());
           Terminal.WriteLine($"  Already published: {string.Join(", ", alreadyPublished)}".Yellow());
-        }
+          Terminal.WriteLine($"  Missing: {string.Join(", ", missingPackages)}".Yellow());
+          Terminal.WriteLine("  This run will resume the push (--skip-duplicate no-ops the already-published packages).".Yellow());
+          Terminal.WriteLine("  Safe only if this is the SAME commit as the earlier partial push — the release gate's tag-pin check enforces that. Bump the version instead if the source has changed.".Yellow());
+          break;
 
-        Environment.ExitCode = 1;
+        case PublishState.All:
+          Terminal.WriteLine($"✗ Version {version} was already released.".Red());
+          Terminal.WriteLine("  Bump the version before releasing.".Yellow());
+          Terminal.WriteLine($"  Already published: {string.Join(", ", alreadyPublished)}".Yellow());
+          Environment.ExitCode = 1;
+          break;
+
+        default:
+          throw new InvalidOperationException($"Unknown publish state '{publishState}'.");
       }
+
+      return Value;
     }
 
-    private static string? GetVersionFromSource()
+    private static string? GetVersionFromSource(string? repoRoot)
     {
-      string? repoRoot = Git.FindRoot();
       if (repoRoot is null)
       {
         return null;
@@ -230,22 +201,6 @@ public sealed class CheckVersionCommand : ICommand<Unit>
 
       XElement? versionElement = doc.Descendants(ns + "Version").FirstOrDefault();
       return (versionElement ?? doc.Descendants("Version").FirstOrDefault())?.Value;
-    }
-
-    private static bool TryParseStrategy(string input, out CheckVersionStrategy strategy)
-    {
-      return input switch
-      {
-        "git-tag" => SetResult(CheckVersionStrategy.GitTag, out strategy),
-        "nuget-search" => SetResult(CheckVersionStrategy.NuGetSearch, out strategy),
-        _ => Enum.TryParse(input, ignoreCase: true, out strategy)
-      };
-    }
-
-    private static bool SetResult(CheckVersionStrategy value, out CheckVersionStrategy strategy)
-    {
-      strategy = value;
-      return true;
     }
   }
 }

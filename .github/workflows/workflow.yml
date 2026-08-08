@@ -4,30 +4,25 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'source/**'
-      - 'samples/**'
-      - 'tests/**'
-      - 'tools/**'
-      - 'runfiles/**'
-      - '.github/workflows/**'
-      - 'Directory.Build.props'
-      - 'Directory.Packages.props'
   pull_request:
     branches:
       - master
-    paths:
-      - 'source/**'
-      - 'samples/**'
-      - 'tests/**'
-      - 'tools/**'
-      - 'runfiles/**'
-      - '.github/workflows/**'
-      - 'Directory.Build.props'
-      - 'Directory.Packages.props'
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Pipeline mode. merge = build and test only (default). release = break-glass publish; also requires confirm. probe = trusted-publishing check only (OIDC login, no build, no publish).'
+        type: choice
+        options:
+          - merge
+          - release
+          - probe
+        default: merge
+      confirm:
+        description: 'Break-glass guard: type the word release to confirm publishing when mode is release. Ignored otherwise.'
+        type: string
+        default: ''
 
 jobs:
   ci:
@@ -35,35 +30,55 @@ jobs:
     permissions:
       contents: read
       id-token: write  # Required for NuGet Trusted Publishing (OIDC)
+      actions: read  # Release mode lists CI runs and downloads their package artifacts
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for MinVer to read all tags
+          fetch-depth: 0  # Full history required for the release gate's tag/ancestor checks (git merge-base, tag-pin, ls-remote comparisons)
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
+      - name: Validate break-glass confirmation
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm != 'release'
+        run: |
+          echo "::error::mode=release requires confirm=release. Refusing to run a break-glass release."
+          exit 1
+
       - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
         id: nuget-login
         uses: nuget/login@v1
         with:
           user: TimeWarp.Enterprises
 
+      - name: Trusted publishing probe result
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
+        run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
+
       - name: Run CI Pipeline
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ github.event_name }}" == "release" ]; then
             dotnet run --file tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          elif [ "${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release' }}" == "true" ]; then
+            dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
           else
             dotnet run --file tools/dev-cli/dev.cs -- workflow
           fi
 
       - name: Upload Artifacts
-        if: always()
+        # Skip in release mode: release no longer builds/packs locally — it
+        # downloads and pushes an already-uploaded CI artifact (458-002), so
+        # re-uploading artifacts/packages here would just re-upload the same
+        # bytes the run just downloaded (harmless but wasteful).
+        if: always() && github.event_name != 'release' && !(github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
         uses: actions/upload-artifact@v4
         with:
           name: Packages-${{ github.run_number }}

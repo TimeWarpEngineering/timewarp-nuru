@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 #pragma warning disable RCS1163 // Unused parameter - parameters must match route pattern names for binding
 
 #if !JARIBU_MULTI

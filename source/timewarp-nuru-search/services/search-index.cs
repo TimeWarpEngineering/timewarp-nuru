@@ -233,6 +233,11 @@ public sealed partial class SearchIndex : IAsyncDisposable
     string sanitizedQuery = SanitizeFtsQuery(query);
     List<SearchResult> results = [];
 
+    if (string.IsNullOrEmpty(sanitizedQuery))
+    {
+      return results;
+    }
+
     await using SqliteCommand cmd = connection.CreateCommand();
 
     StringBuilder sqlBuilder = new();
@@ -251,8 +256,8 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
     if (!string.IsNullOrEmpty(groupPath))
     {
-      sqlBuilder.AppendLine("  AND e.group_path LIKE $groupPath || '%'");
-      cmd.Parameters.AddWithValue("$groupPath", groupPath);
+      sqlBuilder.AppendLine("  AND e.group_path LIKE $groupPath || '%' ESCAPE '\\'");
+      cmd.Parameters.AddWithValue("$groupPath", EscapeLikePattern(groupPath));
     }
 
     sqlBuilder.AppendLine("  ORDER BY endpoints_fts.rank");
@@ -287,30 +292,28 @@ public sealed partial class SearchIndex : IAsyncDisposable
     return results;
   }
 
-  private static string SanitizeFtsQuery(string query)
+  internal static string SanitizeFtsQuery(string query)
   {
     string[] tokens = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
     List<string> sanitizedTokens = [];
 
     foreach (string token in tokens)
     {
-      string escaped = token
-        .Replace("'", "''", StringComparison.Ordinal)
-        .Replace("\"", "\"\"", StringComparison.Ordinal)
-        .Replace("[", "[[", StringComparison.Ordinal)
-        .Replace("]", "]]", StringComparison.Ordinal)
-        .Replace("(", "((", StringComparison.Ordinal)
-        .Replace(")", "))", StringComparison.Ordinal)
-        .Replace("*", "", StringComparison.Ordinal)
-        .Replace("^", "", StringComparison.Ordinal);
-
-      if (!string.IsNullOrWhiteSpace(escaped))
-      {
-        sanitizedTokens.Add($"{escaped}*");
-      }
+      // FTS5: double-quoted string is a literal token. Double internal quotes.
+      // Append * outside the closing quote for prefix matching.
+      string escaped = token.Replace("\"", "\"\"", StringComparison.Ordinal);
+      sanitizedTokens.Add($"\"{escaped}\"*");
     }
 
     return string.Join(" ", sanitizedTokens);
+  }
+
+  internal static string EscapeLikePattern(string input)
+  {
+    return input
+      .Replace("\\", "\\\\", StringComparison.Ordinal)
+      .Replace("%", "\\%", StringComparison.Ordinal)
+      .Replace("_", "\\_", StringComparison.Ordinal);
   }
 
   public async Task<IReadOnlyList<CliInfo>> ListClisAsync(CancellationToken cancellationToken = default)

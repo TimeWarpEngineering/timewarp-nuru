@@ -6,7 +6,6 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public partial class NuruAppBuilder
 {
-  private protected readonly TypeConverterRegistry TypeConverterRegistry = new();
   private protected IConfiguration? Configuration;
   private protected HelpOptions HelpOptions = new();
   private protected ILoggerFactory? LoggerFactory;

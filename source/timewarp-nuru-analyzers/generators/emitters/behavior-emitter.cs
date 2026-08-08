@@ -226,7 +226,7 @@ internal static class BehaviorEmitter
     int routeIndex,
     string indent)
   {
-    string commandName = EscapeString(route.FullPattern);
+    string commandName = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
     string commandTypeName = route.Handler.HandlerKind == HandlerKind.Delegate
       ? CommandClassEmitter.GetCommandClassName(routeIndex)
       : (route.Handler.FullTypeName ?? $"Route_{routeIndex}");
@@ -236,7 +236,8 @@ internal static class BehaviorEmitter
     sb.AppendLine($"{indent}{{");
     sb.AppendLine($"{indent}  CommandName = \"{commandName}\",");
     sb.AppendLine($"{indent}  CommandTypeName = \"{commandTypeName}\",");
-    sb.AppendLine($"{indent}  CancellationToken = global::System.Threading.CancellationToken.None,");
+    // cancellationToken is ExecuteRouteAsync's parameter (REPL per-command token, 454-017)
+    sb.AppendLine($"{indent}  CancellationToken = cancellationToken,");
     sb.AppendLine($"{indent}  Command = __command");
     sb.AppendLine($"{indent}}};");
     sb.AppendLine();
@@ -435,16 +436,6 @@ internal static class BehaviorEmitter
   internal static string GetBehaviorFieldName(BehaviorDefinition behavior)
   {
     return $"__behavior_{behavior.SafeIdentifierName}";
-  }
-
-  /// <summary>
-  /// Escapes a string for use in generated code.
-  /// </summary>
-  private static string EscapeString(string value)
-  {
-    return value
-      .Replace("\\", "\\\\", StringComparison.Ordinal)
-      .Replace("\"", "\\\"", StringComparison.Ordinal);
   }
 
   /// <summary>

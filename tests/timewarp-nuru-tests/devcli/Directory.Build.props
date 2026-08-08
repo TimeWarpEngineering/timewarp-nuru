@@ -1,0 +1,55 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!-- CA5399: the shared NuGetVersionService creates HttpClient without enabling
+         CRL checks; the consuming CLI (tools/dev-cli) already suppresses this. -->
+    <!-- CA1849: Sync WriteLine is fine for CLI output - ITerminal doesn't have async methods
+         (same suppression as tools/dev-cli/Directory.Build.props; check-version-command.cs
+         calls Terminal.WriteLine/WriteErrorLine, now compiled here for the round-2 endpoint
+         test, kanban task 458-005). -->
+    <NoWarn>$(NoWarn);CA5399;CA1849</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- DevCli service files compiled into standalone devcli test runfiles so that
+         NuGetVersionService.CompareVersions / IsVersionPublished / TagAssertion.Validate /
+         RepoConfigService.Parse are testable. -->
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-cli-json-context.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/attestation-config.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/attestation-verifier.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-mode.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/tag-assertion.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/publish-state.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/release-guard.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/irepo-config-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ipackable-project-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/packable-project-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-run-promotion.cs" />
+
+    <!-- check-version-command.cs (the [NuruRoute] endpoint) compiled ONLY here, not in
+         tests/ci-tests: this directory's standalone runfiles are compiled one at a time,
+         so there is no cross-file endpoint-discovery collision to worry about (unlike the
+         ci-tests multi-mode assembly, where ALL [NuruRoute] endpoints in the compilation
+         are collected globally by .DiscoverEndpoints() — task 454-022 decision A2). The
+         new check-version-04-endpoint-zero-package.cs test (458-005 round-2) constructs
+         CheckVersionCommand.Handler directly, so this file must be visible to THIS project
+         without also reaching tests/ci-tests (guarded there via #if !JARIBU_MULTI in the
+         test file itself, since this Compile Include is per-project and does not affect
+         tests/ci-tests/Directory.Build.props, which is intentionally left untouched). -->
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/endpoints/check-version-command.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- repo-config-service.cs calls Git.FindRoot(); TimeWarp.Amuru.Git lives in the
+         TimeWarp.Amuru.Tools package (not core TimeWarp.Amuru, which only flows in
+         transitively via ProjectReference) — reference it directly, plus the namespace
+         global using since this test project doesn't declare one. -->
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
+    <Using Include="TimeWarp.Amuru" />
+  </ItemGroup>
+</Project>

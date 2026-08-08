@@ -1,4 +1,4 @@
-#!/usr/bin/env -S dotnet run --launch-profile http --
+#!/usr/bin/env -S dotnet --
 #:sdk Aspire.AppHost.Sdk@13.1.0
 #:property NoWarn=ASPIRE004
 

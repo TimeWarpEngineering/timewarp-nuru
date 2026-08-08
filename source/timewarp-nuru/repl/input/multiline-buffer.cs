@@ -1,3 +1,17 @@
+#region Purpose
+// Data model for multiline REPL input: lines + (Line, Column) cursor, with mapping
+// to/from linear string positions.
+#endregion
+
+#region Design
+// The linear-position domain (PositionToCursor, CursorToPosition, TotalLength) counts
+// exactly ONE character per line break, and GetFullText() joins with '\n' to match —
+// linear positions must index into that string. Environment.NewLine is only valid as
+// an explicit display separator via GetFullText(string); using it as the internal
+// representation broke cursor mapping on Windows (kanban 454-007).
+// SetText accepts any newline style (\r\n, \n, \r) on input.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -54,10 +68,17 @@ public sealed class MultilineBuffer
   public string CurrentLine => _lines[Cursor.Line];
 
   /// <summary>
-  /// Gets the full text content with newlines between lines.
+  /// Gets the full text content with lines joined by "\n".
   /// </summary>
+  /// <remarks>
+  /// The separator is a single character by contract: PositionToCursor,
+  /// CursorToPosition, and TotalLength all count one character per line break, so
+  /// linear positions index into this string. Joining with Environment.NewLine
+  /// (2 chars on Windows) desynchronizes cursor math from the text (kanban 454-007).
+  /// Use <see cref="GetFullText(string)"/> for display/output separators.
+  /// </remarks>
   /// <returns>The complete text as a single string.</returns>
-  public string GetFullText() => string.Join(Environment.NewLine, _lines);
+  public string GetFullText() => string.Join('\n', _lines);
 
   /// <summary>
   /// Gets the full text content with a custom line separator.

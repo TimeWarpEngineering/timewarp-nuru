@@ -13,8 +13,9 @@
 // .DiscoverEndpoints() includes ALL endpoints; .Map<T>() includes only that type.
 //
 // ALIAS GENERATION: ExtractAndCombineAliases builds full alias strings that completely replace
-// groupPrefix + pattern. For group aliases, the alias word replaces one segment in the prefix
-// at the correct index. The emitter should NOT re-match literal segments after the alias prefix.
+// groupPrefix + pattern. For group aliases, the alias replaces one GROUP's entire prefix (which
+// may be multi-word, e.g. "git remote") by index into GroupInfo.GroupPrefixes. The emitter should
+// NOT re-match literal segments after the alias prefix.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -32,6 +33,18 @@ internal static class EndpointExtractor
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
   private const string GroupOptionAttributeName = "GroupOption";
+
+  /// <summary>
+  /// Like SymbolDisplayFormat.FullyQualifiedFormat, but also qualifies the containing type
+  /// of member symbols (fields/properties), so an enum member or a static field reference
+  /// (e.g. Environment.Production, string.Empty) formats as "global::MyApp.Environment.Production"
+  /// rather than just "Production" — FullyQualifiedFormat's memberOptions default to None.
+  /// </summary>
+  private static readonly SymbolDisplayFormat FullyQualifiedMemberFormat = new(
+    globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+    genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+    memberOptions: SymbolDisplayMemberOptions.IncludeContainingType);
 
   /// <summary>
   /// Extracts a RouteDefinition from a class with [NuruRoute] attribute.
@@ -131,25 +144,27 @@ internal static class EndpointExtractor
     ImmutableArray<string> directAliases = ExtractNuruRouteAliasAttribute(classDeclaration, semanticModel, cancellationToken);
     allAliases.AddRange(directAliases);
 
-    // Generate full alias patterns from group aliases
-    if (!groupInfo.GroupAliases.IsDefaultOrEmpty && !string.IsNullOrEmpty(groupInfo.FullPrefix))
+    // Generate full alias patterns from group aliases. GroupPrefixIndex selects a GROUP
+    // (not a word), so the alias replaces that group's ENTIRE prefix — correct even when the
+    // prefix is multi-word (e.g. a group "git remote" aliased to "gr" yields "gr {pattern}").
+    if (!groupInfo.GroupAliases.IsDefaultOrEmpty && !groupInfo.GroupPrefixes.IsDefaultOrEmpty)
     {
-      string[] prefixParts = groupInfo.FullPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+      ImmutableArray<string> groupPrefixes = groupInfo.GroupPrefixes;
 
       foreach (GroupAliasDefinition groupAlias in groupInfo.GroupAliases)
       {
-        if (groupAlias.GroupPrefixIndex < prefixParts.Length)
-        {
-          string[] aliasParts = (string[])prefixParts.Clone();
-          aliasParts[groupAlias.GroupPrefixIndex] = groupAlias.Alias;
+        if (groupAlias.GroupPrefixIndex < 0 || groupAlias.GroupPrefixIndex >= groupPrefixes.Length)
+          continue;
 
-          string aliasPrefix = string.Join(" ", aliasParts);
-          string fullAliasPattern = string.IsNullOrEmpty(pattern)
-            ? aliasPrefix
-            : $"{aliasPrefix} {pattern}";
+        string aliasPrefix = string.Join(
+          " ",
+          groupPrefixes.Select((prefix, index) => index == groupAlias.GroupPrefixIndex ? groupAlias.Alias : prefix));
 
-          allAliases.Add(fullAliasPattern);
-        }
+        string fullAliasPattern = string.IsNullOrEmpty(pattern)
+          ? aliasPrefix
+          : $"{aliasPrefix} {pattern}";
+
+        allAliases.Add(fullAliasPattern);
       }
     }
 
@@ -264,7 +279,11 @@ internal static class EndpointExtractor
   (
     ImmutableArray<string> TypeHierarchy,
     string? FullPrefix,
-    ImmutableArray<GroupAliasDefinition> GroupAliases
+    ImmutableArray<GroupAliasDefinition> GroupAliases,
+    // Per-group prefixes in root-to-leaf order (each may itself be multi-word, e.g. "git remote").
+    // GroupAliasDefinition.GroupPrefixIndex indexes into this, so a group alias replaces the whole
+    // group's prefix regardless of how many words it contains.
+    ImmutableArray<string> GroupPrefixes
   );
 
   /// <summary>
@@ -291,7 +310,8 @@ internal static class EndpointExtractor
       (
         TypeHierarchy: [],
         FullPrefix: null,
-        GroupAliases: []
+        GroupAliases: [],
+        GroupPrefixes: []
       );
     }
 
@@ -302,7 +322,8 @@ internal static class EndpointExtractor
       (
         TypeHierarchy: [],
         FullPrefix: null,
-        GroupAliases: []
+        GroupAliases: [],
+        GroupPrefixes: []
       );
     }
 
@@ -404,7 +425,10 @@ internal static class EndpointExtractor
     (
       TypeHierarchy: typeHierarchy,
       FullPrefix: fullPrefix,
-      GroupAliases: [.. recalculatedAliases]
+      GroupAliases: [.. recalculatedAliases],
+      // Non-empty prefixes in root-to-leaf order — the un-joined form of FullPrefix, aligned
+      // with GroupAliasDefinition.GroupPrefixIndex (which only counts non-empty group prefixes).
+      GroupPrefixes: [.. prefixesReversed.Where(p => !string.IsNullOrEmpty(p))]
     );
   }
 
@@ -442,7 +466,7 @@ internal static class EndpointExtractor
           if (attributeName != GroupOptionAttributeName && attributeName != $"{GroupOptionAttributeName}Attribute")
             continue;
 
-          OptionDefinition? option = ExtractGroupOptionFromAttribute(property, attribute, position++, cancellationToken);
+          OptionDefinition? option = ExtractGroupOptionFromAttribute(property, attribute, position++, semanticModel.Compilation, cancellationToken);
           if (option is not null)
             options.Add(option);
         }
@@ -463,6 +487,7 @@ internal static class EndpointExtractor
     IPropertySymbol property,
     AttributeData attribute,
     int position,
+    Compilation? compilation,
     CancellationToken cancellationToken
   )
   {
@@ -502,16 +527,11 @@ internal static class EndpointExtractor
     string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     bool isFlag = typeName is "bool" or "global::System.Boolean";
 
-    // Check for array types (repeated options)
-    if (typeName.EndsWith("[]", StringComparison.Ordinal) ||
-        typeName.Contains("IEnumerable", StringComparison.Ordinal) ||
-        typeName.Contains("IList", StringComparison.Ordinal))
-    {
-      isRepeated = true;
-    }
+    // Check for array/collection types (repeated options), via symbol inspection.
+    isRepeated = IsRepeatedOptionType(property.Type);
 
     // Extract default value from property initializer
-    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, cancellationToken);
+    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
 
     return new OptionDefinition(
       Position: position,
@@ -661,7 +681,7 @@ internal static class EndpointExtractor
     // Iterate over all properties from the type symbol (handles partial classes correctly)
     foreach (IPropertySymbol propertySymbol in classSymbol.GetMembers().OfType<IPropertySymbol>())
     {
-      SegmentDefinition? segment = ExtractSegmentFromPropertySymbol(propertySymbol, position++, cancellationToken);
+      SegmentDefinition? segment = ExtractSegmentFromPropertySymbol(propertySymbol, position++, semanticModel.Compilation, cancellationToken);
       if (segment is not null)
         segments.Add(segment);
     }
@@ -685,6 +705,7 @@ internal static class EndpointExtractor
   (
     IPropertySymbol propertySymbol,
     int position,
+    Compilation? compilation,
     CancellationToken cancellationToken
   )
   {
@@ -699,7 +720,7 @@ internal static class EndpointExtractor
 
       if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
       {
-        return ExtractOptionFromAttribute(propertySymbol, attribute, position, cancellationToken);
+        return ExtractOptionFromAttribute(propertySymbol, attribute, position, compilation, cancellationToken);
       }
     }
 
@@ -732,7 +753,7 @@ internal static class EndpointExtractor
 
       if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
       {
-        return ExtractOptionFromAttribute(propertySymbol, attribute, position, cancellationToken);
+        return ExtractOptionFromAttribute(propertySymbol, attribute, position, semanticModel.Compilation, cancellationToken);
       }
     }
 
@@ -789,6 +810,7 @@ internal static class EndpointExtractor
     IPropertySymbol property,
     AttributeData attribute,
     int position,
+    Compilation? compilation,
     CancellationToken cancellationToken
   )
   {
@@ -828,17 +850,12 @@ internal static class EndpointExtractor
     string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     bool isFlag = typeName is "bool" or "global::System.Boolean";
 
-    // Check for array types (repeated options)
-    if (typeName.EndsWith("[]", StringComparison.Ordinal) ||
-        typeName.Contains("IEnumerable", StringComparison.Ordinal) ||
-        typeName.Contains("IList", StringComparison.Ordinal))
-    {
-      isRepeated = true;
-    }
+    // Check for array/collection types (repeated options), via symbol inspection.
+    isRepeated = IsRepeatedOptionType(property.Type);
 
     // Extract default value from property initializer via DeclaringSyntaxReferences
     // This handles properties defined in partial class files correctly
-    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, cancellationToken);
+    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
 
     return new OptionDefinition(
       Position: position,
@@ -858,11 +875,15 @@ internal static class EndpointExtractor
   /// <summary>
   /// Extracts the default value literal from a property symbol using DeclaringSyntaxReferences.
   /// This method correctly handles properties defined in partial class files.
+  /// Prefers semantic resolution (constant value / symbol reference, emitted fully-qualified)
+  /// over raw syntax text, so defaults referencing types outside the generated file's using
+  /// scope (e.g. an enum member or a static field) still resolve correctly.
   /// </summary>
   /// <param name="property">The property symbol.</param>
+  /// <param name="compilation">Compilation used to obtain a SemanticModel for the initializer, if available.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>The default value literal (e.g., "1", "\"default\""), or null if no initializer.</returns>
-  private static string? ExtractPropertyDefaultValueFromSymbol(IPropertySymbol property, CancellationToken cancellationToken)
+  /// <returns>The default value literal (e.g., "1", "\"default\"", "global::MyApp.Environment.Production"), or null if no initializer.</returns>
+  private static string? ExtractPropertyDefaultValueFromSymbol(IPropertySymbol property, Compilation? compilation, CancellationToken cancellationToken)
   {
     // Get syntax references for this property (handles partial classes correctly)
     ImmutableArray<SyntaxReference> syntaxReferences = property.DeclaringSyntaxReferences;
@@ -875,12 +896,38 @@ internal static class EndpointExtractor
       return null;
 
     // Check for property initializer (e.g., public int X { get; set; } = 1;)
-    if (propertySyntax.Initializer?.Value is { } initializerValue)
+    if (propertySyntax.Initializer?.Value is not { } initializerValue)
+      return null;
+
+    if (compilation is not null)
     {
-      return initializerValue.ToString();
+      SemanticModel semanticModel = compilation.GetSemanticModel(syntaxReferences[0].SyntaxTree);
+
+      // Member/type references (e.g. Environment.Production, SomeStaticClass.Default)
+      // resolve directly to a symbol; emit fully-qualified so the reference resolves
+      // outside the initializer's original using scope.
+      SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(initializerValue, cancellationToken);
+      if (symbolInfo.Symbol is not null)
+        return symbolInfo.Symbol.ToDisplayString(FullyQualifiedMemberFormat);
+
+      // Otherwise, prefer the compile-time constant value (numbers, bools, strings, chars).
+      Optional<object?> constantValue = semanticModel.GetConstantValue(initializerValue, cancellationToken);
+      if (constantValue.HasValue)
+      {
+        return constantValue.Value switch
+        {
+          string s => SymbolDisplay.FormatLiteral(s, quote: true),
+          char c => SymbolDisplay.FormatLiteral(c, quote: true),
+          bool b => b ? "true" : "false",
+          null => "null",
+          IFormattable formattable => formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+          _ => constantValue.Value.ToString()
+        };
+      }
     }
 
-    return null;
+    // Fall back to raw syntax text if semantic resolution is unavailable or fails.
+    return initializerValue.ToString();
   }
 
   /// <summary>
@@ -888,6 +935,12 @@ internal static class EndpointExtractor
   /// </summary>
   /// <param name="property">The property declaration syntax.</param>
   /// <returns>The default value literal (e.g., "1", "\"default\""), or null if no initializer.</returns>
+  /// <remarks>
+  /// TODO(454-012): unlike ExtractPropertyDefaultValueFromSymbol, this syntax-only overload
+  /// still emits raw initializer text and has no SemanticModel available to resolve it
+  /// fully-qualified. It is currently unused (dead code) — ExtractSegmentFromProperty, its
+  /// only caller, is itself never invoked. Fix here too if it is ever wired up.
+  /// </remarks>
   private static string? ExtractPropertyDefaultValue(PropertyDeclarationSyntax property)
   {
     // Check for property initializer (e.g., public int X { get; set; } = 1;)
@@ -1243,6 +1296,54 @@ internal static class EndpointExtractor
     }
 
     return null;
+  }
+
+  /// <summary>
+  /// Checks whether a property type represents a repeated option (array or a collection
+  /// interface), via ITypeSymbol inspection rather than substring matching on the type
+  /// name (which would false-positive on user types like MyApp.IListManager).
+  /// </summary>
+  private static bool IsRepeatedOptionType(ITypeSymbol type)
+  {
+    // string implements IEnumerable<char> but must never be treated as a repeated option.
+    if (type.SpecialType == SpecialType.System_String)
+      return false;
+
+    if (type.TypeKind == TypeKind.Array)
+      return true;
+
+    if (type is not INamedTypeSymbol namedType)
+      return false;
+
+    if (IsCollectionInterface(namedType))
+      return true;
+
+    foreach (INamedTypeSymbol iface in namedType.AllInterfaces)
+    {
+      if (IsCollectionInterface(iface))
+        return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Checks whether a type is IEnumerable&lt;T&gt;, IList&lt;T&gt;, or ICollection&lt;T&gt;
+  /// from System.Collections.Generic, matched by OriginalDefinition rather than a
+  /// substring check.
+  /// </summary>
+  private static bool IsCollectionInterface(INamedTypeSymbol type)
+  {
+    if (type.TypeKind != TypeKind.Interface)
+      return false;
+
+    if (type.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T)
+      return true;
+
+    if (type.OriginalDefinition.ContainingNamespace?.ToDisplayString() != "System.Collections.Generic")
+      return false;
+
+    return type.OriginalDefinition.Name is "IList" or "ICollection";
   }
 
   /// <summary>

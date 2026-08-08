@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 #if !JARIBU_MULTI
 return await RunAllTests();

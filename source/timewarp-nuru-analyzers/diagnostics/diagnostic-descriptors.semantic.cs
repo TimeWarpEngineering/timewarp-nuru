@@ -44,11 +44,11 @@ internal static partial class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor DuplicateOptionAlias = new(
       id: "NURU_S005",
       title: "Option with duplicate alias",
-      messageFormat: "Option has duplicate short form '{0}' (conflicts with: {1})",
+      messageFormat: "Option has duplicate alias '{0}' (conflicts with: {1})",
       category: SemanticCategory,
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
-      description: "Options cannot have the same short form specified multiple times.");
+      description: "Options cannot have the same alias specified multiple times.");
 
   public static readonly DiagnosticDescriptor OptionalBeforeRequired = new(
       id: "NURU_S006",
@@ -76,4 +76,13 @@ internal static partial class DiagnosticDescriptors
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
       description: "Options cannot appear after the end-of-options separator.");
+
+  public static readonly DiagnosticDescriptor UnresolvedTypeConverterType = new(
+      id: "NURU_S009",
+      title: "Unresolved type converter type",
+      messageFormat: "Could not resolve the type of the type converter passed to AddTypeConverter(); the converter was not registered",
+      category: SemanticCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "AddTypeConverter() requires the converter's type to be resolvable via the semantic model so its fully qualified name can be emitted into generated code.");
 }

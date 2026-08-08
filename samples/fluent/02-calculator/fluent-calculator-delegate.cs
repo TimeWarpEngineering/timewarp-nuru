@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 // fluent-calculator-delegate - Calculator using Fluent DSL delegate approach
 // Uses CreateBuilder for lightweight delegate-only patterns
 // DSL: Fluent API (Map().WithHandler().AsQuery().Done())

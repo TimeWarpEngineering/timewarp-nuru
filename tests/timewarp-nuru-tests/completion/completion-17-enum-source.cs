@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 using System.ComponentModel;
 
@@ -183,6 +183,59 @@ public class EnumSourceTests
     await Task.CompletedTask;
   }
 
+  public static async Task Should_handle_enum_with_long_underlying_type_exceeding_int32_range()
+  {
+    // Arrange - HighBit = 0x80000000L = 2147483648, which exceeds Int32.MaxValue.
+    // Previously this threw OverflowException in Convert.ToInt32 during GetCompletions.
+    EnumCompletionSource<WideLongEnum> source = new();
+    CompletionContext context = CreateContext();
+
+    // Act
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
+
+    // Assert - no exception; the wide value renders as a decimal string.
+    completions.Any(c => c.Value == "HighBit").ShouldBeTrue();
+    CompletionCandidate highBit = completions.First(c => c.Value == "HighBit");
+    highBit.Description.ShouldBe("Value: 2147483648");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_enum_with_ulong_underlying_type_exceeding_int32_range()
+  {
+    // Arrange - HighBit = 0x80000000UL = 2147483648, which exceeds Int32.MaxValue.
+    EnumCompletionSource<WideUlongEnum> source = new();
+    CompletionContext context = CreateContext();
+
+    // Act
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
+
+    // Assert
+    completions.Any(c => c.Value == "HighBit").ShouldBeTrue();
+    CompletionCandidate highBit = completions.First(c => c.Value == "HighBit");
+    highBit.Description.ShouldBe("Value: 2147483648");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_handle_ulong_value_exceeding_int64_range()
+  {
+    // Arrange - TopBit = 0x8000000000000000UL = 9223372036854775808,
+    // which exceeds even Int64.MaxValue. This is the case Convert.ToInt64
+    // (the Option C candidate) could NOT handle.
+    EnumCompletionSource<WideUlongEnum> source = new();
+    CompletionContext context = CreateContext();
+
+    // Act
+    List<CompletionCandidate> completions = [.. source.GetCompletions(context)];
+
+    // Assert
+    CompletionCandidate topBit = completions.First(c => c.Value == "TopBit");
+    topBit.Description.ShouldBe("Value: 9223372036854775808");
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Should_ignore_context_parameter()
   {
     // Arrange
@@ -261,6 +314,21 @@ enum ExplicitValuesEnum
   First = 10,
   Second = 20,
   Third = 30
+}
+
+enum WideLongEnum : long
+{
+  Low = 1L,
+  HighBit = 0x80000000L
+}
+
+[Flags]
+enum WideUlongEnum : ulong
+{
+  None = 0UL,
+  Low = 1UL,
+  HighBit = 0x80000000UL,
+  TopBit = 0x8000000000000000UL
 }
 
 } // namespace TimeWarp.Nuru.Tests.Completion.EnumSource

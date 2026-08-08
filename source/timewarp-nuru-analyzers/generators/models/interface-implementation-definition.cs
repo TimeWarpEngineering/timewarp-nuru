@@ -15,7 +15,7 @@ namespace TimeWarp.Nuru.Generators;
 /// </param>
 public sealed record InterfaceImplementationDefinition(
   string FullInterfaceTypeName,
-  ImmutableArray<PropertyAssignment> Properties)
+  EquatableArray<PropertyAssignment> Properties)
 {
   /// <summary>
   /// Gets the short interface name for display (e.g., "IRequireAuthorization").

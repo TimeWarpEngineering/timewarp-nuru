@@ -9,6 +9,11 @@ Practical guides for building CLI applications with TimeWarp.Nuru.
   * Progressive enhancement patterns
   * Avoiding factorial explosion with optional parameters
   * Command pattern support
+- **[releasing.md](releasing.md)** - How this repo cuts and publishes releases
+  * Version SSOT and the lockstep packable set
+  * The `dev release` guards and the CI-artifact promotion pipeline
+  * Break-glass publishing and partial-publish resume
+  * Trusted publishing (OIDC) and operator maintenance steps
 
 ## Guide Categories (Planned)
 

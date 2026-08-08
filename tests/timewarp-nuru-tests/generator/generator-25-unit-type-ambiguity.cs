@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR REGRESSION TEST: Unit type fully-qualified in generated code (#442)

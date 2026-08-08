@@ -14,7 +14,10 @@ function __fish_{{APP_NAME}}_complete
         # Cursor is after a space, completing the next word
         set index (count $words)
     end
-    {{APP_NAME}} __complete $index $words 2>/dev/null | string match -v -r '^:|^0$'
+    # Strip only the directive line (starts with ':'). Do NOT also strip standalone
+    # numbers — no exit-code line is printed to stdout, so that would drop a legitimate
+    # "0" completion candidate.
+    {{APP_NAME}} __complete $index $words 2>/dev/null | string match -v -r '^:'
 end
 
 complete -c {{APP_NAME}} -f -a '(__fish_{{APP_NAME}}_complete)'

@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // aot-benchmark.cs - Build and benchmark AOT CLI framework comparison
 //

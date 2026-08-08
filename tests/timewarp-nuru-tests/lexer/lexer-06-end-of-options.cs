@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -130,6 +130,85 @@ public class EndOfOptionsTests
     tokens[10].Value.ShouldBe("cmd");
     tokens[11].Type.ShouldBe(RouteTokenType.RightBrace);
     tokens[12].Type.ShouldBe(RouteTokenType.EndOfInput);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_tokenize_end_of_options_followed_by_tab()
+  {
+    // Arrange
+    string pattern = "--\tx";
+    Lexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert
+    tokens.Count.ShouldBe(3);
+    tokens[0].Type.ShouldBe(RouteTokenType.EndOfOptions);
+    tokens[0].Value.ShouldBe("--");
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[1].Value.ShouldBe("x");
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_tokenize_end_of_options_followed_by_carriage_return()
+  {
+    // Arrange
+    string pattern = "--\rx";
+    Lexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert
+    tokens.Count.ShouldBe(3);
+    tokens[0].Type.ShouldBe(RouteTokenType.EndOfOptions);
+    tokens[0].Value.ShouldBe("--");
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[1].Value.ShouldBe("x");
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_tokenize_end_of_options_followed_by_newline()
+  {
+    // Arrange
+    string pattern = "--\nx";
+    Lexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert
+    tokens.Count.ShouldBe(3);
+    tokens[0].Type.ShouldBe(RouteTokenType.EndOfOptions);
+    tokens[0].Value.ShouldBe("--");
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[1].Value.ShouldBe("x");
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfInput);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_tokenize_end_of_options_with_tab_separator()
+  {
+    // Arrange
+    string pattern = "git log --\t{*args}";
+    Lexer lexer = CreateLexer(pattern);
+    IReadOnlyList<Token> tokens = lexer.Tokenize();
+
+    // Assert
+    tokens.Count.ShouldBe(8);
+    tokens[0].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[0].Value.ShouldBe("git");
+    tokens[1].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[1].Value.ShouldBe("log");
+    tokens[2].Type.ShouldBe(RouteTokenType.EndOfOptions);
+    tokens[2].Value.ShouldBe("--");
+    tokens[3].Type.ShouldBe(RouteTokenType.LeftBrace);
+    tokens[4].Type.ShouldBe(RouteTokenType.Asterisk);
+    tokens[5].Type.ShouldBe(RouteTokenType.Identifier);
+    tokens[5].Value.ShouldBe("args");
+    tokens[6].Type.ShouldBe(RouteTokenType.RightBrace);
+    tokens[7].Type.ShouldBe(RouteTokenType.EndOfInput);
 
     await Task.CompletedTask;
   }

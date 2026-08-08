@@ -188,9 +188,9 @@ public sealed partial class ReplConsoleReader
     // Save undo state before deletion
     SaveUndoState(isCharacterInput: false);
 
-    // Delete the selected text
-    int start = SelectionState.Start;
-    int end = SelectionState.End;
+    // Delete the selected text (clamp against the current buffer — a stale selection may
+    // outrun a now-shorter UserInput).
+    (int start, int end) = SelectionState.GetClampedBounds(UserInput.Length);
     UserInput = UserInput[..start] + UserInput[end..];
     CursorPosition = start;
 
@@ -218,11 +218,10 @@ public sealed partial class ReplConsoleReader
 
     SaveUndoState(isCharacterInput: false);
 
-    // If there's a selection, replace it
+    // If there's a selection, replace it (clamp against the current buffer)
     if (SelectionState.IsActive)
     {
-      int start = SelectionState.Start;
-      int end = SelectionState.End;
+      (int start, int end) = SelectionState.GetClampedBounds(UserInput.Length);
       UserInput = UserInput[..start] + clipboardText + UserInput[end..];
       CursorPosition = start + clipboardText.Length;
       ClearSelection();
@@ -248,8 +247,8 @@ public sealed partial class ReplConsoleReader
 
     SaveUndoState(isCharacterInput: false);
 
-    int start = SelectionState.Start;
-    int end = SelectionState.End;
+    // Clamp against the current buffer — a stale selection may outrun a now-shorter UserInput.
+    (int start, int end) = SelectionState.GetClampedBounds(UserInput.Length);
     UserInput = UserInput[..start] + UserInput[end..];
     CursorPosition = start;
 

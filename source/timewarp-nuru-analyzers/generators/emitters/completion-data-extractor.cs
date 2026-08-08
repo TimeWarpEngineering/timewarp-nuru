@@ -108,7 +108,7 @@ internal static class CompletionDataExtractor
   /// <summary>
   /// Extracts enum parameter information from route definitions using Roslyn compilation.
   /// </summary>
-  public static List<EnumParameterInfo> ExtractEnumParameters(IEnumerable<RouteDefinition> routes, Compilation compilation)
+  public static List<EnumParameterInfo> ExtractEnumParameters(IEnumerable<RouteDefinition> routes, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     List<EnumParameterInfo> result = [];
 
@@ -126,32 +126,12 @@ internal static class CompletionDataExtractor
       int position = 0;
       foreach (ParameterBinding param in route.Handler.Parameters.Where(p => p.Source == BindingSource.Parameter))
       {
-        // Get the type symbol from the parameter type name
-        string typeName = param.ParameterTypeName;
+        // Normalize the parameter type name for enum lookup
+        string typeName = EnumInfoExtractor.Normalize(param.ParameterTypeName);
 
-        // Remove global:: prefix and nullable suffix for lookup
-        if (typeName.StartsWith("global::", StringComparison.Ordinal))
-          typeName = typeName[8..];
-        if (typeName.EndsWith('?'))
-          typeName = typeName[..^1];
-
-        INamedTypeSymbol? typeSymbol = compilation.GetTypeByMetadataName(typeName);
-
-        if (typeSymbol?.TypeKind == TypeKind.Enum)
+        if (enumValues.TryGetValue(typeName, out ImmutableArray<string> members) && members.Length > 0)
         {
-          // Extract enum member names
-          List<string> values =
-          [
-            .. typeSymbol.GetMembers()
-              .OfType<IFieldSymbol>()
-              .Where(f => f.HasConstantValue)
-              .Select(f => f.Name)
-          ];
-
-          if (values.Count > 0)
-          {
-            result.Add(new EnumParameterInfo(cmdPrefix, position, param.ParameterName, values));
-          }
+          result.Add(new EnumParameterInfo(cmdPrefix, position, param.ParameterName, [.. members]));
         }
 
         position++;

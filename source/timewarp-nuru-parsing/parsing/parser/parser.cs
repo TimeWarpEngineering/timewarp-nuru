@@ -138,6 +138,16 @@ internal sealed partial class Parser : IParser
   {
     Token token = Peek();
 
+    // M14: Detect adjacent parameter blocks with no whitespace separator (e.g., "{a}{b}")
+    if (token.Type == RouteTokenType.LeftBrace
+        && CurrentIndex > 0
+        && Previous().Type == RouteTokenType.RightBrace
+        && Previous().EndPosition == token.Position)
+    {
+      AddParseError(new AdjacentParametersError(token.Position, token.Length));
+      // Continue parsing the parameter — emit diagnostic, don't throw (preserve fuzz guarantee)
+    }
+
     return token.Type switch
     {
       RouteTokenType.LeftBrace => ParseParameter(),

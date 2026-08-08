@@ -309,6 +309,16 @@ internal static class OverlapValidator
           signature.Append("{P}");
           break;
 
+        case OptionDefinition option when option.IsFlag && !option.IsOptional && !option.IsFlagBound(route):
+          // Effectively-required flag: an unbound boolean flag is a route discriminator
+          // (e.g. "list --all" with no bool parameter). It must be present to match, so
+          // it is part of the required signature and differentiates from "list {filter?}".
+          // Bound flags (optional at match time) and --flag? stay excluded.
+          if (signature.Length > 0)
+            signature.Append(' ');
+          signature.Append(option.LongFormWithPrefix ?? option.ShortFormWithPrefix ?? "--opt");
+          break;
+
         case OptionDefinition option when !option.IsOptional && option.ExpectsValue:
           // Include required options with values (those without ? that expect a value)
           // Boolean flags are excluded because they're always optional at runtime
@@ -327,7 +337,7 @@ internal static class OverlapValidator
           break;
 
           // Skip: optional options (--flag?),
-          //       boolean flags (--verbose) - always optional at runtime,
+          //       bound boolean flags - optional at match time (presence=true, absence=false),
           //       optional parameters ({param?}),
           //       catch-all ({*args})
       }
@@ -392,9 +402,10 @@ internal static class OverlapValidator
           if (reportedUnreachable.Contains(lowerRoute.EffectivePattern))
             continue;
 
-          // Higher specificity route shadows lower specificity route with same required signature
-          // Also check equal specificity - first one wins, second is unreachable
-          if (higherRoute.ComputedSpecificity >= lowerRoute.ComputedSpecificity)
+          // sortedGroup is ordered by descending ComputedSpecificity and j > i, so higherRoute
+          // always shadows lowerRoute here (equal specificity: first wins, second is unreachable).
+          // The previous `higherRoute.ComputedSpecificity >= lowerRoute.ComputedSpecificity` guard
+          // was therefore always true; kept as a scoping block for the diagnostic's locals.
           {
             Location location = routeLocations.TryGetValue(lowerRoute.EffectivePattern, out Location? loc)
               ? loc

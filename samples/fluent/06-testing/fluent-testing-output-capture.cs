@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 // fluent-testing-output-capture - Demonstrates testing CLI output using Fluent DSL
 // Uses NuruApp.CreateBuilder() with UseTerminal() for testable CLI apps
 //

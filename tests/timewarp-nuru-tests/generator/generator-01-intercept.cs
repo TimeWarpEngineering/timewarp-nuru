@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 
 // Generator Phase 6: Minimal Intercept Tests
 // Tests the source generator end-to-end with minimal test cases

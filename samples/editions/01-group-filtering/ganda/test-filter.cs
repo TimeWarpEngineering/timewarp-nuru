@@ -1,4 +1,4 @@
-#!/usr/bin/dotnet --
+#!/usr/bin/env -S dotnet --
 // Test filtering by ROOT group
 
 using Editions.GroupFiltering;

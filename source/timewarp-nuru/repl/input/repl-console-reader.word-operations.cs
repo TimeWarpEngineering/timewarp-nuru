@@ -4,6 +4,16 @@ namespace TimeWarp.Nuru;
 /// Word manipulation handlers for the REPL console reader.
 /// Implements PSReadLine-compatible case conversion and character transposition.
 /// </summary>
+/// <remarks>
+/// <para><b>Known limitation — UTF-16 code units, not grapheme clusters.</b> All cursor,
+/// word, transpose and delete math in the REPL reader indexes <c>UserInput</c> by UTF-16
+/// code unit (<see cref="char"/>). Characters outside the Basic Multilingual Plane — most
+/// notably emoji, which are surrogate pairs — occupy two code units, so a character-level
+/// operation (e.g. transpose-characters, delete-char) positioned between the two halves can
+/// split the pair and produce a lone surrogate. This is an accepted limitation at this
+/// severity; full grapheme-cluster handling would touch every editing operation and is
+/// deferred. ASCII and BMP text (the overwhelming majority of CLI input) is unaffected.</para>
+/// </remarks>
 public sealed partial class ReplConsoleReader
 {
   /// <summary>

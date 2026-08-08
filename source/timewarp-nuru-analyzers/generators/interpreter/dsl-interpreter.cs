@@ -64,7 +64,14 @@ public sealed class DslInterpreter
     BuiltApps = [];
     CollectedDiagnostics = [];
 
-    ProcessBlock(block);
+    try
+    {
+      ProcessBlock(block);
+    }
+    catch (Exception ex) when (ex is not OperationCanceledException)
+    {
+      // swallow — the diagnostic path is the one that reports to the user
+    }
 
     // Finalize all built apps
     return BuiltApps.ConvertAll(app => app.FinalizeModel());
@@ -88,7 +95,7 @@ public sealed class DslInterpreter
     {
       ProcessBlock(block);
     }
-    catch (InvalidOperationException ex)
+    catch (Exception ex) when (ex is not OperationCanceledException)
     {
       // Convert exception to diagnostic (fallback for not-yet-converted throws)
       CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, block.GetLocation()));
@@ -117,15 +124,22 @@ public sealed class DslInterpreter
     BuiltApps = [];
     CollectedDiagnostics = [];
 
-    // Process each GlobalStatementSyntax member
-    foreach (MemberDeclarationSyntax member in compilationUnit.Members)
+    try
     {
-      CancellationToken.ThrowIfCancellationRequested();
-
-      if (member is GlobalStatementSyntax globalStatement)
+      // Process each GlobalStatementSyntax member
+      foreach (MemberDeclarationSyntax member in compilationUnit.Members)
       {
-        ProcessStatement(globalStatement.Statement);
+        CancellationToken.ThrowIfCancellationRequested();
+
+        if (member is GlobalStatementSyntax globalStatement)
+        {
+          ProcessStatement(globalStatement.Statement);
+        }
       }
+    }
+    catch (Exception ex) when (ex is not OperationCanceledException)
+    {
+      // swallow — the diagnostic path is the one that reports to the user
     }
 
     // Finalize all built apps
@@ -159,7 +173,7 @@ public sealed class DslInterpreter
         }
       }
     }
-    catch (InvalidOperationException ex)
+    catch (Exception ex) when (ex is not OperationCanceledException)
     {
       // Convert exception to diagnostic (fallback for not-yet-converted throws)
       CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, compilationUnit.GetLocation()));
@@ -224,7 +238,7 @@ public sealed class DslInterpreter
       AppModel model = appBuilder.FinalizeModel();
       return new ExtractionResult(model, [.. CollectedDiagnostics]);
     }
-    catch (InvalidOperationException ex)
+    catch (Exception ex) when (ex is not OperationCanceledException)
     {
       CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, invocation.GetLocation()));
       return new ExtractionResult(null, [.. CollectedDiagnostics]);
@@ -436,9 +450,17 @@ public sealed class DslInterpreter
     if (symbol is null)
       return null;
 
-    // Check cache first (avoid re-evaluating same declaration)
+    // Check cache first (avoid re-evaluating same declaration).
+    // This doubles as the cycle guard: the null sentinel written below makes a
+    // re-entrant resolution of the same symbol return here instead of recursing.
     if (VariableState.TryGetValue(symbol, out object? cached))
       return cached;
+
+    // Pre-cache a null sentinel BEFORE evaluating the initializer. Self-referential
+    // or mutually-referential declarations (e.g. the ordinary mid-typing state
+    // `var x = x;`) would otherwise recurse forever and kill the analyzer host
+    // with an uncatchable StackOverflowException.
+    VariableState[symbol] = null;
 
     // Use semantic model to find declaration and evaluate initializer
     if (symbol is ILocalSymbol localSymbol)
@@ -553,7 +575,7 @@ public sealed class DslInterpreter
 
       "AsIdempotentCommand" => DispatchAsIdempotentCommand(receiver),
 
-      "Done" => DispatchDone(receiver),
+      "Done" => DispatchDone(invocation, receiver),
 
       "Build" => DispatchBuild(receiver),
 
@@ -884,8 +906,10 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithGroupPrefix() call to any IIrRouteSource (app or group builder).
   /// </summary>
-  private static object? DispatchWithGroupPrefix(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchWithGroupPrefix(InvocationExpressionSyntax invocation, object? receiver)
   {
+    if (!IsDslBuilderMethod(invocation)) return null;
+
     if (receiver is not IIrRouteSource source)
     {
       throw new InvalidOperationException(
@@ -939,8 +963,10 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithDescription() call to IIrRouteBuilder or IIrAppBuilder.
   /// </summary>
-  private static object? DispatchWithDescription(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchWithDescription(InvocationExpressionSyntax invocation, object? receiver)
   {
+    if (!IsDslBuilderMethod(invocation)) return null;
+
     string? description = ExtractStringArgument(invocation);
 
     return receiver switch
@@ -1456,35 +1482,45 @@ public sealed class DslInterpreter
       string converterTypeName;
       string targetTypeName = "";
 
-      if (symbolInfo.Symbol is INamedTypeSymbol namedType)
+      INamedTypeSymbol? resolvedType = symbolInfo.Symbol as INamedTypeSymbol;
+
+      // GetSymbolInfo can miss types that GetTypeInfo resolves, and vice versa — try harder
+      // semantically before giving up (repo convention, see nuru-specific.md).
+      resolvedType ??= SemanticModel.GetTypeInfo(objectCreation.Type).Type as INamedTypeSymbol;
+
+      // A genuinely unresolvable type (e.g. missing namespace) still produces a non-null
+      // symbol from Roslyn's error recovery, but its TypeKind is Error and its display
+      // string is not usable as a real type name (no "global::" qualification is possible).
+      if (resolvedType?.TypeKind == TypeKind.Error)
+        resolvedType = null;
+
+      if (resolvedType is not null)
       {
         // Use fully qualified format to avoid ambiguity with System types
-        converterTypeName = namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        converterTypeName = resolvedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        if (namedType.IsGenericType && namedType.TypeArguments.Length > 0)
+        if (resolvedType.IsGenericType && resolvedType.TypeArguments.Length > 0)
         {
           // Generic converter like EnumTypeConverter<Environment>
           // Extract the first type argument as the target type
-          ITypeSymbol targetType = namedType.TypeArguments[0];
+          ITypeSymbol targetType = resolvedType.TypeArguments[0];
           targetTypeName = targetType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
       }
       else
       {
-        // Fallback to syntax text if semantic model resolution fails
-        converterTypeName = objectCreation.Type.ToString();
+        // Both GetSymbolInfo and GetTypeInfo failed to resolve a type: this is a genuine
+        // generator error, not something to silently emit an unqualified/broken name for.
+        CollectedDiagnostics.Add(Diagnostic.Create(
+          DiagnosticDescriptors.UnresolvedTypeConverterType,
+          objectCreation.Type.GetLocation()));
+        return appBuilder;
       }
 
       CustomConverterDefinition converter = new(
         ConverterTypeName: converterTypeName,
         TargetTypeName: targetTypeName,
         ConstraintAlias: null);
-
-      // DEBUG: Trace converter registration
-      CollectedDiagnostics.Add(Diagnostic.Create(
-        new DiagnosticDescriptor("NURU_DEBUG_CONV1", "Debug", "AddTypeConverter called: ConverterTypeName={0}, TargetTypeName={1}", "Debug", DiagnosticSeverity.Hidden, true),
-        invocation.GetLocation(),
-        converterTypeName, targetTypeName));
 
       return appBuilder.AddTypeConverter(converter);
     }
@@ -1497,8 +1533,10 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches WithAlias() call to IIrRouteBuilder.
   /// </summary>
-  private static object? DispatchWithAlias(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchWithAlias(InvocationExpressionSyntax invocation, object? receiver)
   {
+    if (!IsDslBuilderMethod(invocation)) return null;
+
     if (receiver is not IIrRouteBuilder routeBuilder)
     {
       throw new InvalidOperationException(
@@ -1579,14 +1617,33 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches Done() call to IIrRouteBuilder or IIrGroupBuilder.
   /// </summary>
-  private static object? DispatchDone(object? receiver)
+  private object? DispatchDone(InvocationExpressionSyntax invocation, object? receiver)
   {
     return receiver switch
     {
-      IIrRouteBuilder routeBuilder => routeBuilder.Done(),
+      IIrRouteBuilder routeBuilder => TryDoneRoute(invocation, routeBuilder),
       IIrGroupBuilder groupBuilder => groupBuilder.Done(),
       _ => throw new InvalidOperationException("Done() must be called on a route or group builder.")
     };
+  }
+
+  /// <summary>
+  /// Tries Done() on a route builder, catching parameter mismatch and emitting diagnostic.
+  /// </summary>
+  private object? TryDoneRoute(InvocationExpressionSyntax invocation, IIrRouteBuilder routeBuilder)
+  {
+    try
+    {
+      return routeBuilder.Done();
+    }
+    catch (HandlerParameterMismatchException ex)
+    {
+      CollectedDiagnostics.Add(Diagnostic.Create(
+        DiagnosticDescriptors.ParameterNameMismatch,
+        invocation.GetLocation(),
+        ex.ParameterName, ex.AvailableSegments));
+      return routeBuilder.DoneParent;
+    }
   }
 
   /// <summary>
@@ -1706,20 +1763,6 @@ public sealed class DslInterpreter
         => literal.Token.ValueText,
       _ => null
     };
-  }
-
-  /// <summary>
-  /// Determines if a type is a DSL builder type.
-  /// Used for semantic type checking when handling unknown method calls.
-  /// </summary>
-  private static bool IsBuilderType(ITypeSymbol? type)
-  {
-    if (type is null) return false;
-
-    string typeName = type.Name;
-    return typeName is "NuruAppBuilder"
-        or "EndpointBuilder" or "GroupBuilder" or "GroupEndpointBuilder"
-        or "NestedCompiledRouteBuilder";
   }
 
   /// <summary>

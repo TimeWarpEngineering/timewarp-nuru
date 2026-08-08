@@ -72,21 +72,25 @@ builder.Map("deploy {env}", handler);
 
 ### NURU_P003: Invalid Option Format
 
-**Problem**: Incorrect option naming (multi-character with single dash)
+**Problem**: Malformed option syntax
 
 ```csharp
-// ❌ Error: Multi-character option needs double-dash
-builder.Map("build -verbose", handler);
-
 // ✅ Correct: Double-dash for long options
 builder.Map("build --verbose", handler);
 
-// ✅ Correct: Single dash for single character
+// ✅ Correct: Single dash, single character
 builder.Map("build -v", handler);
 
-// ✅ Best: Provide both
+// ✅ Correct: Single dash, multi-character (dotnet/msbuild style)
+builder.Map("build -bl", handler);
+
+// ✅ Best: Provide both long and short forms
 builder.Map("build --verbose,-v", handler);
 ```
+
+Single-dash options support multi-character names (`-bl`, `-verbosity`) to model
+real-world tools like dotnet and msbuild. Matching is exact, so POSIX-style flag
+grouping (`-la` meaning `-l -a`) is not supported.
 
 ### NURU_P004: Invalid Type Constraint
 

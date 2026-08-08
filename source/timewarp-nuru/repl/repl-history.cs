@@ -114,6 +114,9 @@ internal sealed class ReplHistory
       return;
     }
 
+    // Replace, don't append: a second Load must not duplicate the already-loaded entries.
+    Items.Clear();
+
     try
     {
       string[] lines = File.ReadAllLines(historyPath);
@@ -152,7 +155,36 @@ internal sealed class ReplHistory
         Directory.CreateDirectory(directory);
       }
 
-      File.WriteAllLines(historyPath, Items);
+      // Merge with whatever is on disk now so a concurrent instance's entries are not
+      // clobbered by this writer. File entries first (baseline), then our in-memory items
+      // not already present; dedup by exact line and cap to MaxHistorySize.
+      List<string> merged = [];
+      HashSet<string> seen = new(StringComparer.Ordinal);
+      if (File.Exists(historyPath))
+      {
+        foreach (string line in File.ReadAllLines(historyPath))
+        {
+          if (!string.IsNullOrWhiteSpace(line) && seen.Add(line))
+          {
+            merged.Add(line);
+          }
+        }
+      }
+
+      foreach (string item in Items)
+      {
+        if (!string.IsNullOrWhiteSpace(item) && seen.Add(item))
+        {
+          merged.Add(item);
+        }
+      }
+
+      if (merged.Count > Options.MaxHistorySize)
+      {
+        merged.RemoveRange(0, merged.Count - Options.MaxHistorySize);
+      }
+
+      File.WriteAllLines(historyPath, merged);
     }
     catch (IOException ex)
     {

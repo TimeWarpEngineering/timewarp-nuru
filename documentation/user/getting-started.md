@@ -111,7 +111,7 @@ Both approaches:
 ```
 "{count:int}"          - Integer
 "{amount:double}"      - Floating point
-"{enabled:bool}"       - Boolean (true/false)
+"{enabled:bool}"       - Boolean (true/false, yes/no, 1/0, on/off, enabled/disabled)
 "{when:datetime}"      - DateTime
 "{id:guid}"            - GUID
 ```

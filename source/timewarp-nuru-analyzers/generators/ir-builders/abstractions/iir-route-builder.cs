@@ -61,4 +61,9 @@ public interface IIrRouteBuilder
   /// </summary>
   /// <returns>The parent builder (boxed as object for polymorphic dispatch).</returns>
   object Done();
+
+  /// <summary>
+  /// Gets the parent builder for error recovery (skip this route, keep the chain).
+  /// </summary>
+  object DoneParent { get; }
 }

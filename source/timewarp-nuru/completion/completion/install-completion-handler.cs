@@ -83,60 +83,6 @@ public static class InstallCompletionHandler
     return 0;
   }
 
-  /// <summary>
-  /// Auto-detects the current shell from environment variables.
-  /// Checks shell-specific variables first, then falls back to $SHELL.
-  /// </summary>
-  private static string DetectShell()
-  {
-    // Check for PowerShell-specific environment variables first
-    // These are set when running inside PowerShell
-    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PSModulePath")))
-    {
-      return "pwsh";
-    }
-
-    // Check for Zsh-specific variable
-    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ZSH_VERSION")))
-    {
-      return "zsh";
-    }
-
-    // Check for Fish-specific variable
-    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FISH_VERSION")))
-    {
-      return "fish";
-    }
-
-    // Check for Bash-specific variable
-    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BASH_VERSION")))
-    {
-      return "bash";
-    }
-
-    // Fall back to $SHELL (login shell, not necessarily current shell)
-    string? shellPath = Environment.GetEnvironmentVariable("SHELL");
-    if (string.IsNullOrEmpty(shellPath))
-    {
-      // On Windows without $SHELL, assume PowerShell
-      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-      {
-        return "pwsh";
-      }
-
-      return string.Empty;
-    }
-
-    string shellName = Path.GetFileName(shellPath);
-    return shellName switch
-    {
-      "bash" => "bash",
-      "zsh" => "zsh",
-      "fish" => "fish",
-      _ => shellName
-    };
-  }
-
   private static int InstallBash(ITerminal terminal, string appName, bool dryRun)
   {
     // Use XDG-compliant location that bash-completion auto-loads from

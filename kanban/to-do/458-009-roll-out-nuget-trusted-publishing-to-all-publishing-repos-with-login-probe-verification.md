@@ -80,16 +80,25 @@ policies as failures (that is correct behavior, not noise).
       001 — all marked done with plans/reviews/results in their repos).
       Verified from this session: all six use `nuget/login`, zero residual
       `PUBLISH_TO_NUGET_ORG`/`NUGET_API_KEY` references.
-- [ ] **Follow-up (race artifact): rename publish workflows to canonical
-      `workflow.yml`** — the fleet migrated in-place on legacy filenames
-      before the canonical-name ruling landed, so all six would fail
-      `nuget/login` against the workflow.yml-only policies. Rename tasks
-      filed+committed in each repo (2026-08-08): state **078**, fixie **002**,
-      multiavatar **002** (must consolidate — it now has both a workflow.yml
-      and a publishing release.yml), mediator **002**, quickbooks **010**
-      (consolidate ci-build/release-build), build-tasks **002** (consolidate
-      build/release). Name-only fix; the 458 conversion later replaces the
-      content.
+- [ ] **ORG-WIDE single-workflow consolidation (operator ruling 2026-08-08:
+      ONE workflow.yml for ALL CI/CD, params passed in; nuru verified as the
+      clean reference).** 21 deviating repos identified from the audit data;
+      tasks filed in every one:
+      - Six migration repos — rename tasks **broadened in place to full
+        consolidation** before the fleet grabbed them: state 078, fixie 002,
+        multiavatar 002 (3 files → 1), mediator 002 (+4 .disabled + sync),
+        quickbooks 010 (+claude.yml decision), build-tasks 002.
+      - Five cloned publishers/apps with cruft: amuru **108** (stray sync
+        md), architecture **173** (fold skill-lint + template-smoke or record
+        exception), options-validation **003** (delete .bak), timewarp-ai
+        **001** (publish-extension → workflow.yml; claude decisions),
+        timewarp-software **024** (fold rebuild.yml).
+      - Ten uncloned repos (sync-cruft-only + gambit/github.io single-file
+        renames + .github [future reusable-workflow host — zero workflows is
+        correct interim]): clone + task filing delegated to background agent
+        2026-08-08; verify its report.
+      All commits LOCAL — push per repo when work starts (fleet executes from
+      local worktrees anyway, as demonstrated).
 - [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
 - [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)
 - [ ] After all repos flip: revoke every long-lived NuGet API key on nuget.org; delete `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets

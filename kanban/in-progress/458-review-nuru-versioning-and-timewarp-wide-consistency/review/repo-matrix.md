@@ -107,16 +107,17 @@ package. No public API to enumerate policies; the automatable check is a
 `nuget/login` probe (OIDC exchange succeeds iff an active policy matches) —
 see task 458-009.
 
-- **Configured (13):** simple-icons, ganda, source-generators, flexbox,
-  architecture, components, options-validation, builder, state, amuru, jaribu,
-  terminal, nuru. Note: state's policy is inert until its workflow migrates off
-  the `PUBLISH_TO_NUGET_ORG` secret.
-- **Missing, workflow already OIDC (3):** heroicons, health,
-  [redacted-private-repo] — releases fail at login until policies exist.
-  Private repos among them: policies start temporarily active for 7 days and
-  lapse without a publish; arm just before releasing.
-- **Missing + workflow still on stored secrets (5):** build-tasks, mediator,
-  fixie, multiavatar, quickbooks.
+- **Update 2026-08-08 (operator):** TP policies now exist for **all repos that
+  actually publish NuGet packages**. Classification correction: **health and
+  [redacted-private-repo] do NOT currently publish** — their OIDC
+  workflows predate real publishing; N/A for TP until a first publish (create
+  the policy just before it; private-repo policies lapse after 7 days without
+  a publish). Ganda: stop-publishing decided (458-010) — its policy should be
+  deleted, not maintained.
+- Policies alone are inert for the 5 secret-key repos (state, build-tasks,
+  mediator, fixie, multiavatar, quickbooks) until their workflows migrate to
+  `nuget/login` — that migration remains the open work, followed by
+  long-lived key revocation.
 - **Cleanup once flipped:** revoke long-lived keys on nuget.org, delete
   `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets.
 - **Orphaned packages, no active repo:** TimeWarp.Cli (0.6.0-rc9),

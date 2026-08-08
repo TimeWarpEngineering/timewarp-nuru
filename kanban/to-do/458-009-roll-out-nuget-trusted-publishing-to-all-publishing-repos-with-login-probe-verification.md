@@ -50,7 +50,14 @@ policies as failures (that is correct behavior, not noise).
 
 ## Checklist
 
-- [ ] Add policies for the 8 missing repos (owner TimeWarp.Enterprises; workflow file name only, e.g. `workflow.yml`)
+- [x] Add policies for the missing repos — **DONE (operator, 2026-08-08): TP
+      policies exist on NuGet.org for all repos that actually publish
+      packages.** Classification correction from the same report:
+      **timewarp-health and [redacted-private-repo] do NOT currently
+      publish NuGets** — their `nuget/login` workflows predate any actual
+      publishing, so they are N/A for TP until they first publish (when they
+      do: create the policy just before the first release — private-repo
+      policies lapse after 7 days without a publish).
 - [ ] Migrate secret-key workflows to `nuget/login`: state (`PUBLISH_TO_NUGET_ORG`), mediator, fixie, multiavatar, quickbooks, build-tasks, quickbooks (`PUBLISH_TO_NUGET_ORG`)
 - [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
 - [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)

@@ -176,3 +176,13 @@ the review deliverable itself is complete.
   **Remaining children:** 458-009 (TP rollout — NuGet.org UI + cross-repo
   workflow migrations) and 458-010 (attestation — ganda-side implementation);
   both are cross-repo/operator phases outside this repo's wave.
+- Endgame session (2026-08-08): **458-009 DONE** (zero stored credentials
+  org-wide; 18/18 publishers probe-verified; org consolidation complete —
+  21 repos, one workflow.yml each; rollout pushed everywhere safely
+  pushable). **dev merged to master (PR #219, ci=pass, a49442c9); required
+  status check `ci` LIVE on master (D8 PUT applied+verified).** 459 fixed
+  (64/64 samples; generator keyword bug split to 460). Remaining in the
+  program: 458-010 rollout items (warn→require flips; org remediation rides
+  the conversion wave; Layer-1 reusable workflow in the .github repo), and
+  the single operator act: props bump → `dev release` — the first release
+  where every gate, promotion step, attestation, and OIDC policy runs live.

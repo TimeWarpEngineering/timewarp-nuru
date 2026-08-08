@@ -27,7 +27,7 @@ only incoherent one:
 ## Checklist
 
 - [x] Decided 2026-08-08 (operator): **Design B — build-once / promote**. Design A not chosen.
-- [ ] Enable required status checks on master (green CI enforced at merge) — **operator
+- [x] Required status checks enabled on master — PUT applied 2026-08-08 post-merge (context `ci`, strict false, settings preserved; verified via API) — **operator
       post-merge step, not run by this implementation session**: PUT
       `repos/TimeWarpEngineering/timewarp-nuru/branches/master/protection` with
       `required_status_checks` context `ci`, `strict: false`, preserving

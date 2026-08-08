@@ -39,8 +39,8 @@ builder.Map("enabled {feature} {state:bool}")
   .WithHandler((string feature, bool state) => Console.WriteLine($"🎚️  Feature '{feature}' is {(state ? "enabled" : "disabled")}"))
   .AsIdempotentCommand().Done();
 
-builder.Map("schedule {event} {when:DateTime}")
-  .WithHandler((string @event, DateTime when) => Console.WriteLine($"📅 Event '{@event}' scheduled for {when:yyyy-MM-dd HH:mm:ss}"))
+builder.Map("schedule {name} {at:DateTime}")
+  .WithHandler((string name, DateTime at) => Console.WriteLine($"📅 Event '{name}' scheduled for {at:yyyy-MM-dd HH:mm:ss}"))
   .AsCommand().Done();
 
 builder.Map("id {value:Guid}")
@@ -73,7 +73,7 @@ builder.Map("open-url {url:uri}")
 // FileInfo Type
 // ============================================================================
 
-builder.Map("read {path:FileInfo}")
+builder.Map("read {file:FileInfo}")
   .WithHandler((FileInfo file) =>
   {
     Console.WriteLine($"📄 File: {file.Name}");
@@ -102,7 +102,7 @@ builder.Map("edit {file:fileinfo} --backup {backup:FileInfo?}")
 // DirectoryInfo Type
 // ============================================================================
 
-builder.Map("list {path:DirectoryInfo}")
+builder.Map("list {dir:DirectoryInfo}")
   .WithHandler((DirectoryInfo dir) =>
   {
     Console.WriteLine($"📁 Directory: {dir.Name}");

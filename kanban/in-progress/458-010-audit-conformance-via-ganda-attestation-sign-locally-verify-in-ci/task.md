@@ -191,6 +191,20 @@ One-off remediation still precedes turn-on: operator runs
 
 - [ ] Clone the 3 publisher repos missing locally (needed for remediation): `ganda repo clone git@github.com:TimeWarpEngineering/timewarp-fixie.git`, `…/timewarp-quickbooks.git`, `…/timewarp-build-tasks.git` (verified vs `ganda repo list` 2026-08-08 — all other 18 publishers already cloned)
 - [ ] One-off remediation: `ganda repo audit --fix` across all active repos; record before/after here
+  - [x] **timewarp-nuru (2026-08-08): PASSES ALL CHECKS.** Before: 3 Errors +
+    1 Warning (48 non-kebab paths, 94 missing exec bits, 262 non-standard
+    shebangs, memsearch scaffold). Fixed: shebangs → `#!/usr/bin/env -S
+    dotnet --`, exec bits, scaffold, 5 renames; kebab prune config added for
+    legitimate exceptions (workspace/presentations timestamped reports,
+    generator-emitted dirs, NuGet build/ convention files — renaming those
+    would break consumers). Verified: build clean, CI 0 failed; one
+    PRE-EXISTING sample failure found and filed as task 459.
+  - [x] **First live end-to-end attestation (2026-08-08):** the commit hook
+    attested tree `e84bc0e9` (audit passed → signed → note pushed), and
+    `dev workflow --mode pr` Step 1/5 reported **"Attestation valid:
+    check_set a8d1483 ts 2026-08-08T02:39:24Z"** — signer → notes → verifier
+    proven on real data. (Status-post warning expected: commit not yet on
+    remote.)
 - [ ] Waiver mechanism for repos where the attestation requirement is N/A (dormant/sites), so they don't red forever
 - [x] Sweep — decided 2026-08-08 (operator): **dropped**. No detection-only sweep; revisit only if out-of-band drift (branch protection, lapsed TP policies) actually bites.
 - [x] TimeWarp.Ganda public NuGet — decided 2026-08-08 (operator): **stop publishing**. Install from private repo on operator machines; remove ganda from the 458-009 TP roster and delete its existing TP policy. (Existing public versions up to beta.15 remain on nuget.org — NuGet does not truly delete; unlist them.)

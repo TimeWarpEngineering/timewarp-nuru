@@ -124,10 +124,9 @@ policies as failures (that is correct behavior, not noise).
       timewarp-components** ("No matching trust policy owned by user
       'TimeWarp.Enterprises' was found") — two rows from the recreate were
       skipped or misconfigured; the probe caught them exactly as designed.
-- [ ] Operator: fix the builder + components policies on NuGet.org
-      (repo names exact, workflow `workflow.yml`, env blank) → re-probe both
-      (`gh workflow run workflow.yml --repo TimeWarpEngineering/<r> -f mode=probe`)
-      → expect 18/18.
+- [x] Operator fixed the builder + components policies; both re-probed
+      2026-08-08: **SUCCESS. Final scoreboard: 18/18 — every publishing repo's
+      trusted publishing policy verified live via the probe.**
 - [x] Revoke long-lived NuGet API keys — **DONE (operator, 2026-08-08): all
       keys killed.** Safe because every publisher is consolidated onto OIDC;
       no fallback remains, so each repo's next release is its live

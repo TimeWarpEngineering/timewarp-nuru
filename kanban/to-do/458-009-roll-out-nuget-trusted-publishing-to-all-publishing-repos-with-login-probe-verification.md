@@ -106,9 +106,17 @@ policies as failures (that is correct behavior, not noise).
       claude*.yml in quickbooks/timewarp-ai), YAML valid, nuget/login
       preserved everywhere, state's draft-release trigger fixed to
       published, multiavatar's tag-push publish removed, architecture's
-      skill-lint/template-smoke folded as jobs. Remaining executions: the
-      ten small cruft tasks just filed (fleet/grok candidates).
-      All commits LOCAL — push per repo when ready.
+      skill-lint/template-smoke folded as jobs.
+      **COMPLETE 2026-08-08:** the nine cruft tasks executed directly (8 sync
+      deletions + gambit rename [pre-existing invalid YAML noted]; github.io
+      task withdrawn to architecture 174; hub duplicate archived). Rollout
+      pushes: 6 migration repos' defaults (incl. state PRs 572-574) + 15
+      clean fast-forward repos + ganda dev. Eight repos with DIVERGED
+      defaults (components, flexbox, jaribu, options-validation,
+      source-generators, software, architecture, terminal) keep their
+      committed work riding each repo's normal merge flow — concurrent
+      activity on their mainlines makes merging them not this program's
+      call.
 - [x] **Login probe BUILT and rolled out to all 18 repos (2026-08-08):**
       `workflow_dispatch` `mode=probe` runs only the nuget/login OIDC exchange
       and stops (nuru reference implementation + 17 repos via per-repo
@@ -133,10 +141,16 @@ policies as failures (that is correct behavior, not noise).
       verification. Residual cosmetic cleanup: dead `NUGET_API_KEY` /
       `PUBLISH_TO_NUGET_ORG` entries may linger in repos' GitHub secrets
       settings — nothing references them; delete at leisure.
-- [ ] Verify package ownership: every published package must have TimeWarp.Enterprises as owner (policies act on the owner account's packages)
+- [x] Package ownership — verified to the limit of public API (2026-08-08):
+      owner search shows 18 TimeWarp.Enterprises-owned packages (all
+      search-visible ones). Unlisted packages (prerelease-only lines like
+      Jaribu/Nuru.Analyzers) cannot be enumerated publicly; their functional
+      proof is the 18/18 probe pass (policies owned by TimeWarp.Enterprises
+      exchanged tokens successfully) and each repo's next publish is the
+      per-package confirmation.
 - [x] Orphans — **TimeWarp.AspNetCore.Blazor.Templates deprecated (operator, 2026-08-08)**; TimeWarp.Cli left alone (revisit later)
 - [x] Ganda: fully off public NuGet — publish workflow removed (grok), versions **unlisted + all previous deprecated (operator)**, TP policy deleted and not recreated. timewarp-ganda 201 DONE.
-- [ ] Record the TP roster in 458 `review/repo-matrix.md`
+- [x] TP roster recorded in 458 `review/repo-matrix.md` (updated through the incident + recreate + 18/18 verification)
 
 ## Notes
 

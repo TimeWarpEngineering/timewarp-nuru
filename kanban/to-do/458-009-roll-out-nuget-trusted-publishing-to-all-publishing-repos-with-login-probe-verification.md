@@ -50,8 +50,10 @@ policies as failures (that is correct behavior, not noise).
 
 ## Checklist
 
-- [ ] **INCIDENT 2026-08-08: all TP policies accidentally deleted on
-      NuGet.org** (mistaken for API keys — UX). **Recreate ALL 18 uniformly —
+- [x] **INCIDENT 2026-08-08: all TP policies accidentally deleted on
+      NuGet.org** (mistaken for API keys — UX) — **RESOLVED same day:
+      operator recreated all 18 uniformly with `workflow.yml`.** Original
+      recreate spec kept below for the record. **Recreate ALL 18 uniformly —
       one canonical workflow name, per operator ruling: policies encode the
       convention (`workflow.yml`), never legacy filenames; repos conform to
       policy.** Owner TimeWarp.Enterprises, repo owner TimeWarpEngineering,

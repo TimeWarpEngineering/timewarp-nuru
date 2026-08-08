@@ -116,8 +116,8 @@ policies as failures (that is correct behavior, not noise).
       `PUBLISH_TO_NUGET_ORG` entries may linger in repos' GitHub secrets
       settings — nothing references them; delete at leisure.
 - [ ] Verify package ownership: every published package must have TimeWarp.Enterprises as owner (policies act on the owner account's packages)
-- [ ] Orphans — decided 2026-08-08 (operator): **deprecate TimeWarp.AspNetCore.Blazor.Templates**; **leave TimeWarp.Cli alone for now** (revisit later)
-- [ ] Ganda: delete its existing TP policy and remove its publish workflow (per 458-010 stop-publishing decision) — **tracked as timewarp-ganda kanban 201** (filed 2026-08-08)
+- [x] Orphans — **TimeWarp.AspNetCore.Blazor.Templates deprecated (operator, 2026-08-08)**; TimeWarp.Cli left alone (revisit later)
+- [x] Ganda: fully off public NuGet — publish workflow removed (grok), versions **unlisted + all previous deprecated (operator)**, TP policy deleted and not recreated. timewarp-ganda 201 DONE.
 - [ ] Record the TP roster in 458 `review/repo-matrix.md`
 
 ## Notes

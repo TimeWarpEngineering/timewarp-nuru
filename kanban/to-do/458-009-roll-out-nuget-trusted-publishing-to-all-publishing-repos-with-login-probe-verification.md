@@ -93,12 +93,20 @@ policies as failures (that is correct behavior, not noise).
         exception), options-validation **003** (delete .bak), timewarp-ai
         **001** (publish-extension → workflow.yml; claude decisions),
         timewarp-software **024** (fold rebuild.yml).
-      - Ten uncloned repos (sync-cruft-only + gambit/github.io single-file
-        renames + .github [future reusable-workflow host — zero workflows is
-        correct interim]): clone + task filing delegated to background agent
-        2026-08-08; verify its report.
-      All commits LOCAL — push per repo when work starts (fleet executes from
-      local worktrees anyway, as demonstrated).
+      - Ten formerly-uncloned repos: **all cloned + tasks filed/committed
+        2026-08-08** (crunchit, gambit, kahini, kivinjari, amina, financial,
+        os, uml-mcp via background agent; `.github` and the github.io site
+        filed directly — note ganda clone normalizes their dotted names to
+        worktree dirs `hub/` and `timewarpengineeringhub.io/`).
+      **EXECUTION 2026-08-08: the 11 substantial consolidations + ganda
+      200/201 were run by four Grok Build delegates and ALL VERIFIED** —
+      every repo now has exactly one workflow.yml (plus deliberately-kept
+      claude*.yml in quickbooks/timewarp-ai), YAML valid, nuget/login
+      preserved everywhere, state's draft-release trigger fixed to
+      published, multiavatar's tag-push publish removed, architecture's
+      skill-lint/template-smoke folded as jobs. Remaining executions: the
+      ten small cruft tasks just filed (fleet/grok candidates).
+      All commits LOCAL — push per repo when ready.
 - [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
 - [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)
 - [ ] After all repos flip: revoke every long-lived NuGet API key on nuget.org; delete `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets

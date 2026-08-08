@@ -109,8 +109,25 @@ policies as failures (that is correct behavior, not noise).
       skill-lint/template-smoke folded as jobs. Remaining executions: the
       ten small cruft tasks just filed (fleet/grok candidates).
       All commits LOCAL — push per repo when ready.
-- [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
-- [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)
+- [x] **Login probe BUILT and rolled out to all 18 repos (2026-08-08):**
+      `workflow_dispatch` `mode=probe` runs only the nuget/login OIDC exchange
+      and stops (nuru reference implementation + 17 repos via per-repo
+      micro-tasks; four workflow shapes handled). Release-event runs already
+      hit login before the pipeline (step order), satisfying the fail-fast
+      intent.
+- [x] **ALL 18 REPOS PROBED LIVE (2026-08-08). Scoreboard: 16 PASS / 2 FAIL.**
+      PASS: nuru, amuru, architecture, build-tasks, fixie, flexbox, heroicons,
+      jaribu, mediator, multiavatar, options-validation, quickbooks,
+      simple-icons, source-generators, state (after fixing its leaky
+      release-job gating — PRs #572/573/574), terminal.
+      **FAIL — policies missing on NuGet.org: timewarp-builder,
+      timewarp-components** ("No matching trust policy owned by user
+      'TimeWarp.Enterprises' was found") — two rows from the recreate were
+      skipped or misconfigured; the probe caught them exactly as designed.
+- [ ] Operator: fix the builder + components policies on NuGet.org
+      (repo names exact, workflow `workflow.yml`, env blank) → re-probe both
+      (`gh workflow run workflow.yml --repo TimeWarpEngineering/<r> -f mode=probe`)
+      → expect 18/18.
 - [x] Revoke long-lived NuGet API keys — **DONE (operator, 2026-08-08): all
       keys killed.** Safe because every publisher is consolidated onto OIDC;
       no fallback remains, so each repo's next release is its live

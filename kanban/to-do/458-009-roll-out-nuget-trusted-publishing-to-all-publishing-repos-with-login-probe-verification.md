@@ -74,15 +74,22 @@ policies as failures (that is correct behavior, not noise).
       publishing, so they are N/A for TP until they first publish (when they
       do: create the policy just before the first release — private-repo
       policies lapse after 7 days without a publish).
-- [ ] Migrate secret-key workflows to `nuget/login` — **per-repo tasks filed and
-      committed in each repo (2026-08-08); all six repos cloned locally**:
-      state **077**, multiavatar **001**, quickbooks **009**, mediator **001**,
-      fixie **001**, build-tasks **001** (kanban skeletons bootstrapped in
-      mediator/fixie/build-tasks, which had none). Each task carries its
-      repo-specific audit facts (state's draft-release trigger, multiavatar's
-      ungated tag-push publish, etc.) and notes the full 458 conversion
-      supersedes it if imminent. Commits are LOCAL — push each repo (or PR
-      where master requires it) when starting the work.
+- [x] Migrate secret-key workflows to `nuget/login` — **DONE 2026-08-08, executed
+      by the agent fleet within minutes of the tasks being filed** (state 077,
+      multiavatar 001, quickbooks 009, mediator 001, fixie 001, build-tasks
+      001 — all marked done with plans/reviews/results in their repos).
+      Verified from this session: all six use `nuget/login`, zero residual
+      `PUBLISH_TO_NUGET_ORG`/`NUGET_API_KEY` references.
+- [ ] **Follow-up (race artifact): rename publish workflows to canonical
+      `workflow.yml`** — the fleet migrated in-place on legacy filenames
+      before the canonical-name ruling landed, so all six would fail
+      `nuget/login` against the workflow.yml-only policies. Rename tasks
+      filed+committed in each repo (2026-08-08): state **078**, fixie **002**,
+      multiavatar **002** (must consolidate — it now has both a workflow.yml
+      and a publishing release.yml), mediator **002**, quickbooks **010**
+      (consolidate ci-build/release-build), build-tasks **002** (consolidate
+      build/release). Name-only fix; the 458 conversion later replaces the
+      content.
 - [ ] Login-probe step: `dev` command or reusable-workflow input that runs `nuget/login` without pushing; clear failure message "trusted publishing not configured/lapsed for this repo+workflow"
 - [ ] Release mode runs the probe up front — fail fast before build, not at push; sequence it with the 458-010 attestation verify (both are seconds-cheap pre-build gates)
 - [ ] After all repos flip: revoke every long-lived NuGet API key on nuget.org; delete `NUGET_API_KEY` / `PUBLISH_TO_NUGET_ORG` GitHub secrets

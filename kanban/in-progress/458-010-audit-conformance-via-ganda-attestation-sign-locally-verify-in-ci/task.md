@@ -205,6 +205,24 @@ One-off remediation still precedes turn-on: operator runs
     reasons, not forced; partial-progress-with-findings is a legitimate
     outcome; no wholesale dev-cli scaffolding without recording it as a
     decision.
+  - **WAVE RESULT (2026-08-09, four grok batches, all verified):**
+    **13/20 DONE** — audit-clean on DevCli 3.0.0-beta.72 with self-installed
+    binaries carrying `dev release`: amuru, architecture, builder,
+    components, ganda, health, heroicons, jaribu, options-validation,
+    simple-icons, software, source-generators, terminal.
+    **7/20 honest partials, needing operator rulings:**
+    (a) five repos with CUSTOM/local dev CLIs that never adopted the shared
+    DevCli package (bannamtalay.com, crunchit, timewarp-flow,
+    timewarp.enterprises, the redacted private repo) — adopting shared
+    DevCli there is an architecture decision per repo, not a bump; mostly
+    non-publishers, so exemption is a legitimate ruling;
+    (b) flexbox — beta.72 adopted + self-installed, but 16 PascalCase
+    source/test directories remain (renaming = namespace-touching refactor;
+    decide rename vs kebab-prune exception);
+    (c) multiavatar — legacy structure without shared dev-cli; safe fixes
+    applied; full DevCli adoption is a larger conversion.
+    All work committed locally in each repo; tasks left in-progress with
+    findings recorded.
   - [x] **timewarp-nuru (2026-08-08): PASSES ALL CHECKS.** Before: 3 Errors +
     1 Warning (48 non-kebab paths, 94 missing exec bits, 262 non-standard
     shebangs, memsearch scaffold). Fixed: shebangs → `#!/usr/bin/env -S

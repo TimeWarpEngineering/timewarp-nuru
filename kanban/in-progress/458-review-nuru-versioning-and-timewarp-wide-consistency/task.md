@@ -186,3 +186,14 @@ the review deliverable itself is complete.
   the conversion wave; Layer-1 reusable workflow in the .github repo), and
   the single operator act: props bump → `dev release` — the first release
   where every gate, promotion step, attestation, and OIDC policy runs live.
+- **RELEASE v3.0.0-beta.72 SHIPPED (2026-08-08, run 31266668921, SUCCESS):**
+  operator ran `dev release` (8/8 guards green, dry-run first); promotion
+  pipeline executed end-to-end LIVE — tag assertion ✓, tag-pin ✓,
+  **attestation valid** (hook-attested master tree), packable set derived
+  (5), CI run 31265573461 located, `Packages-49` downloaded, package set
+  verified, all five packages pushed via OIDC. The first release in org
+  history where every byte is CI-tested, tag-pinned, attestation-gated, and
+  published with zero stored credentials. The 458 program's design is now
+  production-proven. (Also: stale `bin/dev` AOT snapshot bit during the cut —
+  `self-install` required for new commands; staleness check is a follow-up
+  candidate.)

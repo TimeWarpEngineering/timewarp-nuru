@@ -35,23 +35,23 @@ Unrecognized non-blank mode: keep current PR behavior (warn + surface typo); for
 
 ## Requirements
 
-- [ ] Extend `AttestationMode` / `AttestationConfigResolver` with **`Off`**
-- [ ] Resolver documents **context-sensitive default**: blank → Warn for PR/merge callers, Require for release callers — *or* resolve blank to a sentinel and let callers apply default (prefer pure resolver + caller default to keep unit tests clear)
-- [ ] `RunReleaseWorkflowAsync` uses resolved mode instead of unconditional hard gate
-- [ ] `RunPrAttestationStepAsync` treats `off` as skip (no advisory spam required; one line “attestation skipped (mode=off)” is fine)
-- [ ] `dev workflow --attestation off|warn|require` (wire through workflow command options)
-- [ ] Update DevCli readme migration notes + any releasing guide mentions of “always enforced in release”
-- [ ] Unit tests for resolver (`off`, blank+context, typo, case-insensitivity)
-- [ ] No change to ganda signing; this is verify/skip policy only
+- [x] Extend `AttestationMode` / `AttestationConfigResolver` with **`Off`**
+- [x] Resolver documents **context-sensitive default**: blank → Warn for PR/merge callers, Require for release callers — *or* resolve blank to a sentinel and let callers apply default (prefer pure resolver + caller default to keep unit tests clear)
+- [x] `RunReleaseWorkflowAsync` uses resolved mode instead of unconditional hard gate
+- [x] `RunPrAttestationStepAsync` treats `off` as skip (no advisory spam required; one line “attestation skipped (mode=off)” is fine)
+- [x] `dev workflow --attestation off|warn|require` (wire through workflow command options)
+- [x] Update DevCli readme migration notes + any releasing guide mentions of “always enforced in release”
+- [x] Unit tests for resolver (`off`, blank+context, typo, case-insensitivity)
+- [x] No change to ganda signing; this is verify/skip policy only
 
 ## Checklist
 
-- [ ] Implement resolver + mode enum
-- [ ] Wire release + PR paths
-- [ ] CLI override on workflow command
-- [ ] Docs (readme / releasing guide if it says release always requires attestation)
-- [ ] Tests
-- [ ] Note for consumers: TimeWarp repos should set `"mode": "require"` explicitly if they want require on **both** PR and release; blank already require-only on release
+- [x] Implement resolver + mode enum
+- [x] Wire release + PR paths
+- [x] CLI override on workflow command
+- [x] Docs (readme / releasing guide if it says release always requires attestation)
+- [x] Tests
+- [x] Note for consumers: TimeWarp repos should set `"mode": "require"` explicitly if they want require on **both** PR and release; blank already require-only on release
 
 ## Notes
 
@@ -106,3 +106,4 @@ No ganda signing changes; no separate prMode/releaseMode; no org-wide off flip.
 
 - Created: 2026-08-09 — product decisions: TimeWarp-first default require on release when unset; single mode key; CLI override; config in dev.jsonc
 - Orchestration/plan: grok (2026-08-09) — plan finalized: pure ResolveMode + EffectiveMode defaults; Off mode; release honors mode; CLI --attestation
+- Implementation: grok (2026-08-09) — AttestationMode.Off + nullable ResolveMode + EffectiveMode; shared RunAttestationPolicyStepAsync for PR+release; --attestation CLI; tests 18/18 pass; docs/jsonc comments updated

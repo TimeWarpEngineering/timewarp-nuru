@@ -191,3 +191,40 @@ Recommended defense in depth:
 - [ ] Publish **3.0.0-beta.73** (or newer) complete nupkg.
 - [ ] Clean-cache smoke; notify consumers (ganda, etc.) to bump pin.
 - [ ] Optional: deprecate/yank incomplete beta.72 if policy allows.
+
+---
+
+## Independent verification (Claude session, 2026-08-09)
+
+Every load-bearing claim re-verified from primary sources:
+
+| Claim | Evidence | Verdict |
+|---|---|---|
+| nuget beta.72 incomplete | Downloaded from flatcontainer: 671,946 B, `build/` contains ONLY the .targets — zero `build/net10.0` entries | **CONFIRMED** |
+| nuget beta.71 complete | 4,953,951 B, full `build/net10.0/*` payload incl. task deps | **CONFIRMED** |
+| Merge artifact incomplete for beta.72 | `Packages-49` (run 31265573461, the promote source): Nuru nupkg 658,848 B, zero `build/net10.0` | **CONFIRMED** |
+| Merge artifact incomplete for beta.71 TOO | `Packages-42` (run 27553073284): Nuru nupkg 645,787 B, zero `build/net10.0` — while nuget's beta.71 is the complete 4.95 MB package | **CONFIRMED — the decisive comparison** |
+| Wildcard include is the vector | `timewarp-nuru.csproj:112` `<None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/*.dll" Pack="true" .../>` (evaluation-time glob); analyzers use a concrete-path include and their package IS complete in the same artifact | **CONFIRMED** |
+| Build order enables side-effect pack | build-command.cs: analyzers → nuru-build → **mcp** → nuru → search → devcli; MCP ProjectReferences Nuru + GeneratePackageOnBuild ⇒ Nuru packs during the MCP step | **CONFIRMED** |
+
+**Residual nondeterminism honestly noted:** the microscopic reason the glob
+reliably evaluates empty in CI (despite nuru-build building one step earlier)
+is not 100% pinned — grok's own repro table says pre-building nuru-build makes
+local packs "often" complete, implying timing/incremental sensitivity. The
+class-fix (pack-time item collection + fail-loud + explicit post-build repack +
+nupkg layout gate) is correct REGARDLESS of that microscopic detail, so
+resolving it is not a blocker.
+
+**Systemic lesson for the 458 promote pipeline:** "publish only tested bytes"
+held — but the bytes were never tested AS A PACKAGE. Tests exercise project
+references; nothing anywhere validated nupkg CONTENTS, and the promote
+pipeline's VerifyPackageSet checks package names/versions, not payload layout.
+The old rebuild-at-release was silently HEALING this latent bug (fresh pack
+evaluation after full build → globs resolved); 458-002 removed the heal and
+faithfully promoted what CI had always been producing. The durable fix is a
+**package layout gate** (assert critical payload files inside each nupkg) in
+merge CI before artifact upload — extending exactly the fail-loud family the
+458 program established.
+
+**Root cause: DETERMINED and verified. Grok's three-layer analysis stands in
+full.**

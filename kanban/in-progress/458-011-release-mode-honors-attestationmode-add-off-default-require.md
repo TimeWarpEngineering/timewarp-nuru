@@ -74,6 +74,35 @@ Unrecognized non-blank mode: keep current PR behavior (warn + surface typo); for
 - Rolling `off` into all non-TimeWarp repos (consumer choice)
 - Removing attestation entirely
 
+### Implementation plan (Phase 2)
+
+#### Design choices
+- **Pure resolver + caller default:** `ResolveMode` returns `AttestationMode? Mode` null when blank/absent OR unrecognized; `EffectiveMode(resolution, whenUnset)` applies context default. Constants: `DefaultPrMode = Warn`, `DefaultReleaseMode = Require`.
+- **Blank ≠ explicit warn:** critical so release blank→require while explicit `"warn"`→advisory on release.
+- **Release typo policy:** fail closed to Require + surface typo warning; never treat typos as Off. PR keeps fail-open to Warn.
+- **CLI:** `dev workflow --attestation off|warn|require`; precedence CLI > config > context default.
+- **Optional shared helper:** `RunAttestationPolicyStepAsync` for PR + release to avoid dual-path drift.
+
+#### File changes
+1. `source/timewarp-nuru-devcli/content/any/services/attestation-config.cs` — Off enum; nullable Mode; EffectiveMode; design region rewrite
+2. `tools/dev-cli/endpoints/workflow-command.cs` — --attestation option; PR off skip; release uses resolved mode not hard gate
+3. `tests/timewarp-nuru-tests/devcli/attestation-03-mode-resolution.cs` — rewrite matrix for new contract + EffectiveMode cases
+4. `source/timewarp-nuru-devcli/readme.md` — migration notes (release honors mode)
+5. `documentation/developer/guides/releasing.md` — Step 1/6 attestation gate docs
+6. `.timewarp/dev.jsonc` — comment accuracy
+
+#### Ordered steps
+1. Resolver first + unit tests
+2. CLI option + plumb
+3. PR path (off/warn/require)
+4. Release path replace hard gate
+5. Docs
+6. Smoke
+
+#### Non-goals
+No ganda signing changes; no separate prMode/releaseMode; no org-wide off flip.
+
 ## Session
 
 - Created: 2026-08-09 — product decisions: TimeWarp-first default require on release when unset; single mode key; CLI override; config in dev.jsonc
+- Orchestration/plan: grok (2026-08-09) — plan finalized: pure ResolveMode + EffectiveMode defaults; Off mode; release honors mode; CLI --attestation

@@ -27,8 +27,8 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `CiRunPromotion` | Pure logic for release-mode artifact promotion: orders candidate CI runs for a commit, selects a run's `Packages-*` artifact (including expiry handling), and verifies a downloaded `.nupkg` set against the derived packable set — no process execution |
 | `ReleaseGuard` (`GuardVerdict`) | Pure per-guard classifiers for the `release` gate: working tree clean, on master, synced with origin, tag `v{Version}` available (neither local nor remote), and publish state (none/partial/all) — no process execution |
 | `AttestationVerifier` (`AttestationNoteDto`, `AttestationEvaluation`, `AttestationVerificationStatus`) | Pure verifier for ganda-audit attestation notes (kanban task 458-010): parses the frozen v1 note JSON, rebuilds the canonical signed payload, decodes the unpadded-base64url signature, resolves `key_id` against a baked-in key registry (or a test-only `keyOverride`), and compares the note's tree against the tree being verified — no process execution; the actual Ed25519 verify (via `openssl pkeyutl -verify -rawin`) runs in `workflow-command.cs`, not here |
-| `AttestationConfig` | Config model for the attestation verify step's `mode` (`"warn"`\|`"require"`, default `warn`) |
-| `AttestationConfigResolver` (`AttestationMode`, `AttestationModeResolution`) | Pure resolver for `attestation.mode`: blank/absent and "warn"/"require" (case-insensitive) resolve exactly; any other non-blank value resolves to `Warn` but also returns the offending raw value so the caller can warn about a typo (e.g. `"requiree"`) instead of silently falling back |
+| `AttestationConfig` | Config model for the attestation verify step's `mode` (`"off"`\|`"warn"`\|`"require"`; blank uses a context-sensitive default) |
+| `AttestationConfigResolver` (`AttestationMode`, `AttestationModeResolution`) | Pure resolver for `attestation.mode`: blank/absent → `(null, null)`; `"off"`/`"warn"`/`"require"` (case-insensitive) → enum; unrecognized non-blank → `(null, trimmed)` so callers can warn about a typo. `EffectiveMode(resolution, whenUnset)` applies context defaults (`DefaultPrMode` = Warn, `DefaultReleaseMode` = Require). Typos never silently become Off |
 
 ## Configuration
 
@@ -96,29 +96,56 @@ await app.RunAsync(args);
 
 ### 3.0.0-beta.72+: attestation verify step (`attestation-verifier.cs`, `attestation-config.cs`)
 
-`dev workflow` now includes an attestation verify step (kanban task 458-010) — the DevCli/public
-half of "sign locally in ganda, verify in CI." Ganda (private, operator-only) audits a repo and
-signs evidence over `(tree sha, check-set hash, timestamp)` into `refs/notes/ganda-audit`; this
-package's `AttestationVerifier` rebuilds that evidence and `workflow-command.cs` shells out to
-`openssl pkeyutl -verify -rawin` to check the Ed25519 signature — no BCL Ed25519 verify exists,
-and a crypto NuGet dependency was rejected for this source-only package's posture, so `openssl`
-must be on PATH (runners and operator machines) or the step reports `VerifierUnavailable`.
+`dev workflow` includes an attestation verify step (kanban tasks 458-010, 458-011) — the
+DevCli/public half of "sign locally in ganda, verify in CI." Ganda (private, operator-only)
+audits a repo and signs evidence over `(tree sha, check-set hash, timestamp)` into
+`refs/notes/ganda-audit`; this package's `AttestationVerifier` rebuilds that evidence and
+`workflow-command.cs` shells out to `openssl pkeyutl -verify -rawin` to check the Ed25519
+signature — no BCL Ed25519 verify exists, and a crypto NuGet dependency was rejected for this
+source-only package's posture, so `openssl` must be on PATH (runners and operator machines) or
+the step reports `VerifierUnavailable`.
 
-Pipeline shape by mode:
+#### `attestation.mode` policy (458-011)
 
-- **PR/merge mode**: new Step 1 ("Attestation"), before Clean — Steps renumber from `1/4..4/4` to
-  `1/5..5/5`. Governed by `.timewarp/dev.jsonc` `attestation.mode`, resolved by the pure
-  `AttestationConfigResolver.ResolveMode`: `"warn"` (default — nothing is attested org-wide yet)
-  prints a loud advisory on any non-`Valid` outcome but never fails the pipeline (the advisory
-  repeats once more immediately before the `SUCCEEDED` banner so it survives scrollback);
-  `"require"` fails the pipeline on any non-`Valid` outcome. An unrecognized non-blank value (a
-  typo like `"requiree"`) still resolves to `warn` — it never silently becomes `require` — but
-  prints `Warning: unrecognized attestation.mode '<value>' — treating as 'warn'. Valid values:
-  warn, require.` so the operator does not believe enforcement is on when it is not.
-- **Release mode**: hard gate, always — inserted into the existing Step 1/6 gate block
-  immediately after the ancestor-of-master check, and **ignores** `attestation.mode` entirely. A
-  release with no verifiable audit evidence must never ship; the runner never signs, so a missing
-  or invalid attestation aborts with "pull master locally so ganda can attest."
+One key for all pipeline modes. Precedence: CLI `--attestation off|warn|require` >
+`.timewarp/dev.jsonc` `attestation.mode` > context default.
+
+| `attestation.mode` | PR/merge | Release |
+|--------------------|----------|---------|
+| unset / blank | warn (advisory) | **require** (hard fail) |
+| `off` | skip verify | skip verify |
+| `warn` | advisory, do not fail | advisory, do not fail |
+| `require` | hard fail if invalid | hard fail if invalid |
+
+Unset release → `require` is the TimeWarp-first default: repos that never set the key keep a
+safe release gate. Explicit `"warn"` is advisory on release too (blank ≠ explicit warn).
+`"off"` skips verify on both paths (portable/no-ganda consumers). An unrecognized non-blank
+value (e.g. `"requiree"`) never silently becomes `off`: PR fail-open treats it as `warn`,
+release fail-closed treats it as `require`, and both print
+`Warning: unrecognized attestation.mode '<value>' — treating as '<default>'. Valid values:
+off, warn, require.`
+
+TimeWarp repos that want **require on both PR and release** should set `"mode": "require"`
+explicitly; blank is require-only on release.
+
+#### Pipeline shape by mode
+
+- **PR/merge mode**: Step 1 ("Attestation"), before Clean (`1/5..5/5`). Shared policy helper
+  applies the table above (`DefaultPrMode` = Warn). In `warn`, the advisory repeats once more
+  immediately before the `SUCCEEDED` banner so it survives scrollback. In `off`, one line
+  `Attestation skipped (mode=off).` and no verify.
+- **Release mode**: same policy helper in the Step 1/6 gate block after the ancestor-of-master
+  check (`DefaultReleaseMode` = Require). **Honors** `attestation.mode` (no longer an
+  unconditional hard gate). The runner never signs; when mode is `require` (including the
+  unset default), a missing or invalid attestation aborts with "pull master locally so ganda
+  can attest."
+
+CLI break-glass without editing jsonc:
+
+```bash
+dev workflow --mode release --attestation off
+dev workflow --attestation require
+```
 
 Outcomes and their operator-facing messages: `Valid` (check_set + ts printed); `NoNote` /
 `RefMissing` ("tree `<short>` is unattested — pull master locally so ganda can attest (`ganda repo
@@ -137,7 +164,7 @@ on the underlying `git fetch`/`git notes show` calls so the English-substring ma
 stderr is locale-stable rather than assuming the runner's locale.
 
 `.timewarp/dev.jsonc` example (see this repo's own `.timewarp/dev.jsonc` for a live, commented
-one — default `warn`, nothing to configure until you want to flip to `require`):
+one):
 
 ```jsonc
 {

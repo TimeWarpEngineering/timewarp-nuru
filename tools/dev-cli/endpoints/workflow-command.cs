@@ -33,6 +33,9 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   [Option("api-key", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
   public string? ApiKey { get; set; }
 
+  [Option("attestation", Description = "Attestation mode override for this run: off, warn, or require (overrides .timewarp/dev.jsonc attestation.mode)")]
+  public string? Attestation { get; set; }
+
   internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
   {
     private readonly ITerminal Terminal;
@@ -69,11 +72,11 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       if (mode == CiMode.Release)
       {
-        await RunReleaseWorkflowAsync(command.ApiKey);
+        await RunReleaseWorkflowAsync(command.ApiKey, command.Attestation);
       }
       else
       {
-        await RunPrWorkflowAsync();
+        await RunPrWorkflowAsync(command.Attestation);
       }
 
       return Unit.Value;
@@ -93,7 +96,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       return mode;
     }
 
-    private async Task RunPrWorkflowAsync()
+    private async Task RunPrWorkflowAsync(string? cliAttestationMode)
     {
       Terminal.WriteLine("Pipeline: attestation -> clean -> build -> verify-samples -> test");
       Terminal.WriteLine("");
@@ -104,7 +107,10 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Step 1/5: Attestation");
       Terminal.WriteLine("===============================================================================");
-      AttestationStepResult attestationResult = await RunPrAttestationStepAsync(repoRoot).ConfigureAwait(false);
+      AttestationStepResult attestationResult = await RunAttestationPolicyStepAsync(
+        repoRoot,
+        cliAttestationMode,
+        AttestationConfigResolver.DefaultPrMode).ConfigureAwait(false);
 
       if (attestationResult.ShouldAbort)
       {
@@ -159,27 +165,38 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
     }
 
-    // Runs the attestation verify step for PR/merge mode and reports the
-    // outcome per .timewarp/dev.jsonc `attestation.mode` (default "warn" —
-    // nothing is enforced org-wide until repos opt in; see
-    // attestation-config.cs Design region). "require" fails the pipeline on
-    // any non-Valid outcome; "warn" prints a loud advisory but never aborts.
-    // Mode interpretation itself is delegated to the pure
-    // AttestationConfigResolver.ResolveMode (round-1 review Fix 3) so a
-    // typo'd mode value (e.g. "requiree") is unit-tested rather than only
-    // exercisable end-to-end — it still resolves to Warn, but this prints a
-    // warning naming the bad value instead of silently doing so.
-    private async Task<AttestationStepResult> RunPrAttestationStepAsync(string repoRoot)
+    // Shared attestation policy for PR/merge and release (kanban task 458-011).
+    // Precedence: CLI --attestation (is not null so empty still overrides) >
+    // config attestation.mode > context default (whenUnset: DefaultPrMode /
+    // DefaultReleaseMode). Mode interpretation is pure in
+    // AttestationConfigResolver; this method only applies the switch:
+    // Off → skip verify; Require → verify + abort on non-Valid; Warn → verify
+    // + advisory, never abort (RepeatAdvisory set so PR can re-print before
+    // SUCCEEDED). Unrecognized non-blank raw values surface a typo warning
+    // then EffectiveMode(whenUnset) — never silently Off.
+    private async Task<AttestationStepResult> RunAttestationPolicyStepAsync(
+      string repoRoot,
+      string? cliAttestationMode,
+      AttestationMode whenUnset)
     {
       RepoConfig config = await ConfigService.GetConfigAsync(CancellationToken.None).ConfigureAwait(false);
-      AttestationModeResolution modeResolution = AttestationConfigResolver.ResolveMode(config.Attestation?.Mode);
+      string? rawMode = cliAttestationMode is not null
+        ? cliAttestationMode
+        : config.Attestation?.Mode;
+      AttestationModeResolution resolution = AttestationConfigResolver.ResolveMode(rawMode);
+      AttestationMode mode = AttestationConfigResolver.EffectiveMode(resolution, whenUnset);
 
-      if (modeResolution.UnrecognizedValue is not null)
+      if (resolution.UnrecognizedValue is not null)
       {
-        Terminal.WriteLine($"Warning: unrecognized attestation.mode '{modeResolution.UnrecognizedValue}' — treating as 'warn'. Valid values: warn, require.".Yellow());
+        string defaultLabel = whenUnset.ToString().ToLowerInvariant();
+        Terminal.WriteLine($"Warning: unrecognized attestation.mode '{resolution.UnrecognizedValue}' — treating as '{defaultLabel}'. Valid values: off, warn, require.".Yellow());
       }
 
-      bool requireMode = modeResolution.Mode == AttestationMode.Require;
+      if (mode == AttestationMode.Off)
+      {
+        Terminal.WriteLine("Attestation skipped (mode=off).");
+        return new AttestationStepResult(ShouldAbort: false, RepeatAdvisory: null);
+      }
 
       AttestationVerifyOutcome outcome = await VerifyAttestationAsync(repoRoot).ConfigureAwait(false);
 
@@ -191,7 +208,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       string message = DescribeAttestationOutcome(outcome);
 
-      if (requireMode)
+      if (mode == AttestationMode.Require)
       {
         Terminal.WriteErrorLine($"Attestation required (mode=require): {message}");
         return new AttestationStepResult(ShouldAbort: true, RepeatAdvisory: null);
@@ -201,14 +218,14 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("");
       Terminal.WriteLine("*******************************************************************************".Yellow());
       Terminal.WriteLine($"  {advisory}".Yellow());
-      Terminal.WriteLine("  Set attestation.mode = \"require\" in .timewarp/dev.jsonc once org rollout".Yellow());
-      Terminal.WriteLine("  completes to enforce this in CI (kanban task 458-010).".Yellow());
+      Terminal.WriteLine("  Set attestation.mode = \"require\" in .timewarp/dev.jsonc (or pass".Yellow());
+      Terminal.WriteLine("  --attestation require) to enforce this in CI (kanban task 458-011).".Yellow());
       Terminal.WriteLine("*******************************************************************************".Yellow());
 
       return new AttestationStepResult(ShouldAbort: false, RepeatAdvisory: advisory);
     }
 
-    private async Task RunReleaseWorkflowAsync(string? apiKey)
+    private async Task RunReleaseWorkflowAsync(string? apiKey, string? cliAttestationMode)
     {
       Terminal.WriteLine("Pipeline: tag-gate -> check-version -> locate-run -> download-artifact -> verify -> push");
       Terminal.WriteLine("");
@@ -307,22 +324,20 @@ internal sealed class WorkflowCommand : ICommand<Unit>
           return;
       }
 
-      // Attestation gate — ALWAYS enforced in release mode, regardless of
-      // .timewarp/dev.jsonc `attestation.mode` (that config only governs
-      // PR/merge mode's advisory-vs-required behavior; a release with no
-      // verifiable audit evidence must never ship — kanban task 458-010).
-      // The runner never signs; a missing/invalid attestation fails with
-      // guidance to pull master locally so ganda can attest.
-      AttestationVerifyOutcome attestationOutcome = await VerifyAttestationAsync(repoRoot).ConfigureAwait(false);
+      // Attestation gate — honors attestation.mode (and --attestation CLI
+      // override). Unset default is Require (TimeWarp-first: preserves the
+      // pre-458-011 hard gate when the key is absent). Explicit off/warn/
+      // require follow the shared policy helper; typos fail closed to Require.
+      AttestationStepResult attestationResult = await RunAttestationPolicyStepAsync(
+        repoRoot,
+        cliAttestationMode,
+        AttestationConfigResolver.DefaultReleaseMode).ConfigureAwait(false);
 
-      if (attestationOutcome.Status != AttestationVerificationStatus.Valid)
+      if (attestationResult.ShouldAbort)
       {
-        Terminal.WriteErrorLine($"Release gate failed: {DescribeAttestationOutcome(attestationOutcome)}");
-        AbortPipeline("attestation missing or invalid");
+        AbortPipeline("attestation required (mode=require) and not valid");
         return;
       }
-
-      Terminal.WriteLine($"Attestation valid: check_set {ShortSha(attestationOutcome.CheckSet)} ts {attestationOutcome.Ts}");
 
       // Step 2: Check Version
       Terminal.WriteLine("");
@@ -633,11 +648,11 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     }
 
     // Single source of truth for the operator-facing message per outcome —
-    // shared by PR/merge mode (advisory or required-failure text) and
-    // release mode (hard-gate failure text). Messages match kanban task
-    // 458-010's frozen guidance verbatim ("pull master locally so ganda can
-    // attest" / "update TimeWarp.Nuru.DevCli" / "install openssl" /
-    // "re-attest via ganda").
+    // shared by PR/merge and release policy steps (advisory or
+    // required-failure text). Messages match kanban task 458-010's frozen
+    // guidance verbatim ("pull master locally so ganda can attest" /
+    // "update TimeWarp.Nuru.DevCli" / "install openssl" / "re-attest via
+    // ganda").
     private static string DescribeAttestationOutcome(AttestationVerifyOutcome outcome)
     {
       string shortTree = ShortSha(outcome.Tree);
@@ -1046,10 +1061,11 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     // so failure messages can still cite them when useful.
     private sealed record AttestationVerifyOutcome(AttestationVerificationStatus Status, string? Tree, string? CheckSet, string? Ts, string? Detail);
 
-    // Outcome of RunPrAttestationStepAsync — whether PR/merge mode must abort
-    // the pipeline (mode=require + non-Valid) and, when in mode=warn with a
-    // non-Valid outcome, the advisory line to repeat just before the
+    // Outcome of RunAttestationPolicyStepAsync — whether the pipeline must
+    // abort (mode=require + non-Valid) and, when in mode=warn with a
+    // non-Valid outcome, the advisory line PR/merge repeats just before the
     // SUCCEEDED banner so it survives scrollback from the later steps.
+    // Release mode ignores RepeatAdvisory (gate is early; one print is enough).
     private sealed record AttestationStepResult(bool ShouldAbort, string? RepeatAdvisory);
   }
 }

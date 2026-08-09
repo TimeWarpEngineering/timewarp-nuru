@@ -6,12 +6,15 @@
     // here only to override the derived set.
   }
 
-  // Attestation verify step (kanban task 458-010). Uncomment to opt this
-  // repo's PR/merge-mode `dev workflow` into "require" once ganda has
-  // attested this repo at least once (default is "warn": prints a loud
-  // advisory when the tree is unattested but never fails the pipeline).
-  // Release mode ALWAYS hard-gates on attestation regardless of this
-  // setting — this only controls PR/merge-mode enforcement.
+  // Attestation verify step (kanban tasks 458-010, 458-011). Values:
+  // off | warn | require. One key for all pipeline modes.
+  // Defaults when unset/blank: PR/merge → warn; release → require
+  // (TimeWarp-first: release still hard-gates unless you set mode).
+  // Explicit "warn" is advisory on release too; "off" skips verify entirely.
+  // CLI override: dev workflow --attestation off|warn|require
+  // Uncomment and set once ganda has attested this repo (or set "require"
+  // explicitly if you want require on both PR and release — blank is
+  // require-only on release).
   // "attestation": {
   //   "mode": "warn"
   // }

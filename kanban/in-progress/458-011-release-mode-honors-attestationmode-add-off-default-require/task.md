@@ -107,3 +107,88 @@ No ganda signing changes; no separate prMode/releaseMode; no org-wide off flip.
 - Created: 2026-08-09 — product decisions: TimeWarp-first default require on release when unset; single mode key; CLI override; config in dev.jsonc
 - Orchestration/plan: grok (2026-08-09) — plan finalized: pure ResolveMode + EffectiveMode defaults; Off mode; release honors mode; CLI --attestation
 - Implementation: grok (2026-08-09) — AttestationMode.Off + nullable ResolveMode + EffectiveMode; shared RunAttestationPolicyStepAsync for PR+release; --attestation CLI; tests 18/18 pass; docs/jsonc comments updated
+- Review: grok (2026-08-09) — effort 1 general; round-1 clean disposition under `review/`
+
+## Results
+
+### What was implemented
+
+Release (and PR) attestation policy now follows `.timewarp/dev.jsonc` `attestation.mode` with context-sensitive defaults and a CLI override.
+
+| Mode | PR/merge | Release |
+|------|----------|---------|
+| unset / blank | warn | **require** |
+| `off` | skip verify | skip verify |
+| `warn` | advisory | advisory |
+| `require` | hard fail | hard fail |
+
+- `AttestationMode.Off` added; `ResolveMode` returns nullable Mode (blank/typo → null); `EffectiveMode` + `DefaultPrMode` / `DefaultReleaseMode`
+- Shared `RunAttestationPolicyStepAsync` for PR + release (no dual-path drift)
+- `dev workflow --attestation off|warn|require` — precedence CLI > config > context default
+- Typos: never Off; PR fail-open Warn; release fail-closed Require; one warning line surfaces the raw value
+- Docs: DevCli readme migration, releasing.md Step 1/6, `.timewarp/dev.jsonc` comments
+
+### Files changed
+
+- `source/timewarp-nuru-devcli/content/any/services/attestation-config.cs`
+- `tools/dev-cli/endpoints/workflow-command.cs`
+- `tests/timewarp-nuru-tests/devcli/attestation-03-mode-resolution.cs`
+- `source/timewarp-nuru-devcli/readme.md`
+- `documentation/developer/guides/releasing.md`
+- `.timewarp/dev.jsonc`
+
+### Key decisions
+
+- Pure resolver + caller default (blank ≠ explicit `"warn"`)
+- Shared policy helper for both pipeline modes
+- Release require abort reason aligned with PR: `attestation required (mode=require) and not valid`
+
+### Review (Phase 4b)
+
+- **Rounds:** 1
+- **Effort / roster:** 1 — general only
+- **Final counts:** 0 open / 0 fixed / 0 wontfix (all severities)
+- **Disposition:** `clean` — no issues found
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
+### Test outcomes
+
+- `attestation-03-mode-resolution.cs`: 18/18 passed
+- `attestation-01-verifier.cs`: 30/30 passed (regression)
+- `dotnet build tools/dev-cli/dev.cs` success; `--attestation` visible on `workflow --help`
+
+### How to validate
+
+**Automated gate**
+
+```bash
+cd /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/dev
+dotnet run -- tests/timewarp-nuru-tests/devcli/attestation-03-mode-resolution.cs
+# expect: Total: 18  Passed: 18
+
+dotnet run -- tests/timewarp-nuru-tests/devcli/attestation-01-verifier.cs
+# expect: all passed (regression on verifier; no policy change)
+```
+
+**Smoke**
+
+```bash
+# CLI surface
+dotnet run --file tools/dev-cli/dev.cs -- workflow --help
+# expect: option --attestation documented
+
+# Skip path (PR) — should log skip and not require a valid note
+dotnet run --file tools/dev-cli/dev.cs -- workflow --mode pr --attestation off
+# expect: line containing "Attestation skipped (mode=off)" (or equivalent) and pipeline continues past attestation
+```
+
+**Expect**
+
+- Blank config (this repo’s `attestation` often commented out): release still **requires** valid attestation; PR defaults to **warn**.
+- Explicit `"mode": "off"` or `--attestation off` skips verify on both paths.
+- Typo modes never behave as `off`.
+
+**Not in scope**
+
+- Rebuilding published AOT `./bin/dev` (runfile / `dotnet run --file tools/dev-cli/dev.cs` picks up changes)
+- End-to-end full release ship without a note (policy unit-covered; live release still needs tag/gates)

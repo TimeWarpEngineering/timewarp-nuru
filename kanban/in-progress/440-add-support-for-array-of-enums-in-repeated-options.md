@@ -22,75 +22,64 @@ Currently, single enum parameters work correctly via `EnumTypeConverter<T>`, but
 
 ## Notes
 
-### Current State
+# Implementation Plan: Task 440 — Array of Enums in Repeated Options
 
-**What works:**
-- Single enum as positional parameter: `deploy {env}` ✅
-- Single enum as option: `--env {value}` ✅
-- Nullable enum (`MyEnum?`) ✅
+## Summary
 
-**What doesn't work:**
-- Array of enums (`MyEnum[]`) ❌ - falls back to `string[]`
+**Problem.** Single enum options work via `EnumTypeConverter<T>` and `ParameterBinding.IsEnumType`. Repeated options (`--env Dev --env Staging`) collect values into `List<string>`, then `EmitRepeatedOptionTypeConversion` only converts built-in primitives from `option.TypeConstraint`. Enum element types fall through to `string[]`.
 
-### Key Code Locations
+**Root causes:**
+1. `IsEnumOrNullableEnum` does not unwrap arrays/collections — `MyEnum[]` gets `IsEnumType = false`
+2. `EmitRepeatedOptionTypeConversion` ignores handler types — only uses TypeConstraint + built-ins; route discarded
+3. Endpoint option bindings never set `IsEnumType` / `IsArray`
+4. `IEnumerable<MyEnum>` is classified as a DI service today
 
-1. **`EmitRepeatedOptionTypeConversion`** (route-matcher-emitter.cs ~line 1104)
-   - Handles type conversion for repeated options
-   - Only handles built-in primitives via `TypeConversionMap.GetBuiltInTryConversion()`
-   - Unknown types (including enums) fall through to `string[]` fallback
-   - Has TODO comment: `// TODO: Add custom converter support for arrays`
+**Approach.** Fix enum-element detection at extraction; use binding in repeated-option emission with same error UX as single enum options; unwrap array/collection type names for metadata. Prefer `MyEnum[]` primary; support `IEnumerable<MyEnum>` via service classification fix + assign `MyEnum[]` into handler param.
 
-2. **`EmitRepeatedValueOptionParsingWithIndexTracking`** (route-matcher-emitter.cs ~line 610)
-   - Entry point for repeated option parsing
-   - Line 617 explicitly notes: `// Note: route parameter is available for future enum support in repeated options`
-   - The `route` parameter is discarded (`_ = route;`) as a placeholder
+## Implementation steps
 
-3. **`EmitOptionEnumTypeConversion`** (route-matcher-emitter.cs ~line 1449)
-   - Handles single enum option conversion using `EnumTypeConverter<T>`
-   - Can be used as reference for enum-specific error messages
+### A — Detect enum element types (handler-extractor.cs)
+- Extend `IsEnumOrNullableEnum` → `IsEnumBindableType`: unwrap Nullable, arrays, IEnumerable/IList/ICollection; true if element is enum
+- `IsServiceType`: collection interface is service only if element is service-like
+- Update `ParameterBinding.IsEnumType` docs: means element uses EnumTypeConverter
 
-### Reference: Single Enum Implementation
+### B — Endpoint option bindings (endpoint-extractor.cs)
+- At FromOption sites: set `isArray = IsRepeatedOptionType`, `isEnumType` from enum-element helper
 
-For single enums, the generator emits:
-```csharp
-var __enumConverter_env_0 = new global::TimeWarp.Nuru.EnumTypeConverter<MyEnum>();
-if (!__enumConverter_env_0.TryConvert(rawValue, out object? __temp))
-{
-  app.Terminal.WriteLine($"Error: Invalid value '{rawValue}' for option '--env'. {__enumConverter_env_0.GetValidValuesMessage()}");
-  return 1;
-}
-MyEnum env = (MyEnum)__temp!;
+### C — Emit enum conversion (route-matcher-emitter.cs)
+- Pass route into `EmitRepeatedOptionTypeConversion`; remove `_ = route;`
+- After built-in TypeConstraint path, lookup handler param with `IsEnumType` for option
+- New `EmitRepeatedOptionEnumTypeConversion`: for-loop + TryConvert + GetValidValuesMessage (match single-enum UX, NOT Select+throw with weak catch message)
+- Emit `ElementType[]` local always; `IEnumerable<MyEnum>` accepts `MyEnum[]`
+
+### D — Enum metadata unwrap
+- `enum-info-extractor.cs` + `capabilities-emitter.cs`: strip `[]` and collection wrappers for AllowedValues
+
+### E — Tests
+New: `tests/timewarp-nuru-tests/routing/routing-32-enum-repeated-options.cs`
+Cases: `MyEnum[]` multi/single/empty, case-insensitive, invalid+valid list, invalid among valid, short alias, `IEnumerable<MyEnum>`, `MyEnum[]?`, mixed options, optional endpoint stretch
+
+### Out of scope
+Custom converters for arrays; bare `{id}*` without constraint; catch-all `MyEnum[]` positionals; full option-value shell completion overhaul
+
+## Validation
+```
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/routing/routing-32-enum-repeated-options.cs
+dotnet run tests/timewarp-nuru-tests/routing/routing-06-repeated-options.cs
+dotnet run tests/timewarp-nuru-tests/routing/routing-24-enum-option-parameters.cs
+dotnet run tests/ci-tests/run-ci-tests.cs
 ```
 
-### Suggested Implementation Approach
+## Sequence
+1. Failing tests first
+2. IsEnum detection + service fix
+3. Emitter
+4. Endpoint flags
+5. Metadata unwrap
+6. IEnumerable + nullable tests
+7. Clear cache + full CI
 
-For enum arrays, emit something like:
-```csharp
-var __enumConverter_envs_0 = new global::TimeWarp.Nuru.EnumTypeConverter<MyEnum>();
-MyEnum[] envs;
-try
-{
-  envs = __envs_list_0.Select(s =>
-  {
-    if (!__enumConverter_envs_0.TryConvert(s, out object? temp))
-      throw new FormatException($"Invalid enum value '{s}'. {__enumConverter_envs_0.GetValidValuesMessage()}");
-    return (MyEnum)temp!;
-  }).ToArray();
-}
-catch (FormatException)
-{
-  app.Terminal.WriteLine($"Error: Invalid value in option '--env'. Expected: MyEnum");
-  return 1;
-}
-```
+## Session
 
-### Test File Pattern
-
-Follow existing test patterns from:
-- `tests/timewarp-nuru-tests/routing/routing-24-enum-option-parameters.cs` (single enum options)
-- Tests for repeated options (search for `IsRepeated` or `IsArray`)
-
-### Related
-
-- `ParameterBinding.IsEnumType` - flag indicating enum type parameter
-- `EnumTypeConverter<T>` - runtime converter in `source/timewarp-nuru/type-conversion/converters/enum-type-converter.cs`
+- Orchestrator: grok (2026-08-10) — Phase 2 plan finalized

@@ -129,6 +129,18 @@ Install a **complete** local nupkg into the machine cache (as done for ganda ope
 
 CI cannot use this; republish is required.
 
+### Review (2026-08-10)
+
+Commit `6f8c932d` reviewed (single reviewer, sonnet): **VERDICT: clean**. Verified: include
+list ↔ gate list consistency (all 12 entries), gate runs in PR *and* merge modes, gate failure
+blocks promotion (release only promotes `--status success` runs, so the `if: always()` debug
+artifact upload is not reachable by promote), all fail-closed paths, package naming/paths, build
+reorder, test coverage. One non-blocking suggestion carried as follow-up: the required-payload
+list is hand-duplicated in `timewarp-nuru.csproj` and `NuruRequiredPackageEntries`
+(workflow-command.cs) — if a future timewarp-nuru-build dependency is added to one list but not
+the other, the gate silently stops covering the new file. Follow-up idea: derive the gate list
+from the csproj items or add a test that diffs them.
+
 ### Related
 
 - Nuru kanban **389** (same missing-DLL class; build-list fix)

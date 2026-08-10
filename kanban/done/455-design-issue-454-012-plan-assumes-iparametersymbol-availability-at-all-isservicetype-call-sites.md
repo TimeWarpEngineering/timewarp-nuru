@@ -81,3 +81,10 @@ one-line call-site edits (option A). Only escalate if we choose option B and wan
 lambda-parameter symbol-binding — and even that is ~8 lines, not an architectural rewrite.
 The `isRepeated` half of M8 (endpoint-extractor) was never blocked: `property.Type` is
 already an `ITypeSymbol` there.
+
+## Results
+
+Closed 2026-08-10 board audit: the blocked task 454-012 is in kanban/done, implemented per this task's recommended Option A — design issue resolved.
+
+### How to validate
+Smoke: ls kanban/done/ | grep 454-012 — Expect: present.

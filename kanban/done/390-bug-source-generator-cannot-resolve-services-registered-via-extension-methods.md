@@ -157,3 +157,10 @@ The following services from `Crunchit.CCCOne.Client` all have constructor depend
 | `ServiceHttpClient` | `HttpClient`, `ILogger<T>`, `IOptions<ClientOptions>` |
 
 This is a typical pattern for any non-trivial service library.
+
+## Results
+
+Closed 2026-08-10 board audit: superseded by DI epic #391 phases 1-3 (done: runtime DI via UseMicrosoftDependencyInjection #392, DI diagnostics, constructor resolution). Remaining extension-method-following work tracked under #391/#395.
+
+### How to validate
+Smoke: ls kanban/done/ | grep -E "392|393|394" — Expect: phases present.

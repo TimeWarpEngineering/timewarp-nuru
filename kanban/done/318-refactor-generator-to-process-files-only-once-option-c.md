@@ -38,3 +38,10 @@ The current generator architecture processes the source file **once per RunAsync
 - See also task #319 for related bug with multiple apps in same block
 - Current deduplication: `allInterceptSites.DistinctBy(site => site.GetAttributeSyntax())`
 - This is a performance/architectural improvement, not a bug fix
+
+## Results
+
+Closed 2026-08-10 board audit: superseded by #363 (commit 8c8dbf55) which moved the generator to Build()-based single extraction, fixing the per-RunAsync duplication this task describes.
+
+### How to validate
+Smoke: git show 8c8dbf55 --stat — Expect: generator extraction refactor.

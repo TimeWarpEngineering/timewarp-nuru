@@ -79,3 +79,10 @@ The diagnostic descriptor was already added in task #273, but the validation log
 | `NURU_H003` | Error | Unsupported handler expression type |
 | `NURU_H004` | Warning | Private method handler not accessible |
 | `NURU_H005` | Error | Handler parameter name doesn't match route segment (THIS TASK) |
+
+## Results
+
+Closed 2026-08-10 board audit: NURU_H005 already implemented — descriptor in diagnostic-descriptors.handler.cs, documented in AnalyzerReleases.Unshipped.md, validation live in dsl-interpreter.cs, covered by generator-31/generator-35 tests.
+
+### How to validate
+Smoke: grep -rn "NURU_H005" source/timewarp-nuru-analyzers/ — Expect: descriptor + validation hits.

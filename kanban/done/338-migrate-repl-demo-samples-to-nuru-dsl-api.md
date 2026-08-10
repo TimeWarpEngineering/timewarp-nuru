@@ -36,3 +36,10 @@ All samples currently reference:
 - `.ConfigureServices(services => services.AddMediator())`
 
 These need to be removed and replaced with Nuru patterns.
+
+## Results
+
+Closed 2026-08-10 board audit: repl-demo samples migrated to the Nuru DSL API (commit a9172494); samples use CreateBuilder().Map().WithHandler().Done().
+
+### How to validate
+Smoke: grep -rl "CreateBuilder()" samples/ | head — Expect: migrated samples listed.

@@ -34,3 +34,10 @@ The aspire-host-otel sample uses:
 - OpenTelemetry exports
 
 This is a more complex migration that requires multiple library updates.
+
+## Results
+
+Closed 2026-08-10 board audit: aspire telemetry samples migrated (aspire-host-otel → aspire-otel, commits 2026-01-19/20), using UseTelemetry().DiscoverEndpoints().
+
+### How to validate
+Smoke: ls samples/aspire-otel/ — Expect: migrated sample present.

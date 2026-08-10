@@ -67,3 +67,10 @@ catch (OptionsValidationException ex)
 ## Priority
 
 Low - Workarounds exist, and this is a language/compiler limitation
+
+## Results
+
+Closed 2026-08-10 board audit: accepted architectural limitation of C# interceptors (cannot intercept inside lambdas); previously-failing tests use the documented workaround, none skipped.
+
+### How to validate
+Smoke: grep -rn "367" tests/ — Expect: no skipped tests referencing this.

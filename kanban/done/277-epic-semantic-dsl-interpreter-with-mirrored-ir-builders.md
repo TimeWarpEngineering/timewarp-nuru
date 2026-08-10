@@ -72,3 +72,10 @@ We researched whether we could compile and execute the DSL at generator time. An
 - Performance implications
 
 The interpreter approach gives us the benefits of mirroring the DSL execution without actually executing it.
+
+## Results
+
+Closed 2026-08-10 board audit: epic complete. Children 278-282 all in done/; DslInterpreter and IrRouteBuilder/IrAppBuilder/IrGroupBuilder shipped in source/timewarp-nuru-analyzers.
+
+### How to validate
+Smoke: grep -r "class DslInterpreter\|IrRouteBuilder" source/timewarp-nuru-analyzers/ — Expect: types exist; ls kanban/done/ shows 278-282.

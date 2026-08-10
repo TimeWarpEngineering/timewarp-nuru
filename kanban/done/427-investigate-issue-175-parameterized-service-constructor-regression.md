@@ -102,3 +102,10 @@ But it seems **Singleton/Scoped** services with parameterized constructors were 
 - [ ] Fix the root cause
 - [ ] Add test coverage for Singleton/Scoped with parameterized constructors
 - [ ] Verify fix works in timewarp-ganda context
+
+## Results
+
+Closed 2026-08-10 board audit: fixed by done/426 (service-resolver-emitter rewritten to static fields), covering test includes the exact Lazy<T> parameterized-constructor scenario.
+
+### How to validate
+Smoke: ls kanban/done/ | grep 426 — Expect: present; covering test passes in CI.

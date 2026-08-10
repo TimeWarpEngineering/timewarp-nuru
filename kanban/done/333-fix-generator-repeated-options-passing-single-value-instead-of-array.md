@@ -29,3 +29,10 @@ Discovered during task #332 when refactoring `routing-06-repeated-options.cs` te
 - Related to V2 Generator epic (#265)
 - The DSL correctly parses the `*` modifier, but the generator doesn't handle it properly
 - May need to look at how parameter collection works in the interceptor generation
+
+## Results
+
+Closed 2026-08-10 board audit: repeated options return arrays correctly; fixed alongside #349. Verified by running the covering test file.
+
+### How to validate
+Smoke: dotnet run tests/timewarp-nuru-tests/routing/routing-06-repeated-options.cs — Expect: 6/6 pass.

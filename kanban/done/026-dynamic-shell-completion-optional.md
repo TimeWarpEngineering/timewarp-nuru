@@ -378,3 +378,10 @@ App generates static completion files at runtime, shell reloads them.
 - Testing requires real shell environments
 - Documentation must clearly explain trade-offs
 
+## Results
+
+Closed 2026-08-10 board audit: implemented long ago as done/029-implement-enabledynamiccompletion.md.
+
+### How to validate
+Smoke: ls kanban/done/ | grep 029 — Expect: present.
+

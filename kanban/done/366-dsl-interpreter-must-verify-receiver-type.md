@@ -61,3 +61,10 @@ if (receiverType?.Name != "NuruCoreAppBuilder" &&
 ## Priority
 
 Medium - Tests are failing but functionality works when patterns aren't ambiguous
+
+## Results
+
+Closed 2026-08-10 board audit: IsDslBuilderMethod() receiver-type verification added (commit 075692c8) and used at every dispatch site in dsl-interpreter.cs.
+
+### How to validate
+Smoke: grep -n "IsDslBuilderMethod" source/timewarp-nuru-analyzers/**/dsl-interpreter.cs — Expect: guard at dispatch sites; dotnet run tests/timewarp-nuru-tests/repl/repl-24-custom-key-bindings.cs — Expect: 26/26 pass.

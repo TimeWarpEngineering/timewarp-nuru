@@ -118,3 +118,10 @@ When testing changes, remember to clear the runfile cache:
 ```bash
 ganda runfile cache --clear
 ```
+
+## Results
+
+Closed 2026-08-10 board audit: all 7 subtasks (293-001..007) in done/. EndpointBuilder DSL methods are no-ops; ~2200 lines dead code removed.
+
+### How to validate
+Smoke: ls kanban/done/ | grep 293- — Expect: 7 children present.

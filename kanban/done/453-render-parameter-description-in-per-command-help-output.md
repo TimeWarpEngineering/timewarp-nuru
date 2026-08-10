@@ -119,3 +119,10 @@ omit the column (or show empty cells) when no descriptions are present.
   a follow-up task if desired.
 - Related: #434 (review/clean up help-model.cs — notes "No support exists for ... parameter
   descriptions"), #436 (add Examples support to help output).
+
+## Results
+
+Closed 2026-08-10 board audit: parameter descriptions already rendered in per-command help (route-help-emitter.cs ~117-146); the task's own checklist was fully checked.
+
+### How to validate
+Smoke: grep -n "Description" source/timewarp-nuru-analyzers/**/route-help-emitter.cs — Expect: description emission.

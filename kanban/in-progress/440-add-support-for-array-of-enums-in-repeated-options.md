@@ -8,17 +8,19 @@ Currently, single enum parameters work correctly via `EnumTypeConverter<T>`, but
 
 ## Checklist
 
-- [ ] Investigate `EmitRepeatedOptionTypeConversion` in route-matcher-emitter.cs (~line 1104)
-- [ ] Add `RouteDefinition route` parameter usage (currently discarded with `_ = route;`)
-- [ ] Check `route.Handler.Parameters` for `IsEnumType` matching the option name
-- [ ] Emit `.Select(s => enumConverter.Convert(s)).ToArray()` style code for enum arrays
-- [ ] Handle error cases (invalid enum values in array)
-- [ ] Add unit tests for `MyEnum[]` in option position
-- [ ] Add unit tests for `IEnumerable<MyEnum>` in option position
-- [ ] Add unit tests for nullable enum arrays (`MyEnum[]?`)
-- [ ] Add unit tests for error messages showing valid enum values
-- [ ] Verify CI tests pass (clear runfile cache first)
+- [x] Investigate `EmitRepeatedOptionTypeConversion` in route-matcher-emitter.cs (~line 1104)
+- [x] Add `RouteDefinition route` parameter usage (currently discarded with `_ = route;`)
+- [x] Check `route.Handler.Parameters` for `IsEnumType` matching the option name
+- [x] Emit enum conversion for enum arrays (for-loop + TryConvert + GetValidValuesMessage; not Select+throw)
+- [x] Handle error cases (invalid enum values in array)
+- [x] Add unit tests for `MyEnum[]` in option position
+- [x] Add unit tests for `IEnumerable<MyEnum>` in option position
+- [x] Add unit tests for nullable enum arrays (`MyEnum[]?`)
+- [x] Add unit tests for error messages showing valid enum values
+- [x] Verify related routing tests pass (clear runfile cache first)
+- [ ] Verify full CI tests pass
 - [ ] Update completion/REPL support if needed
+- [ ] Mark done / commit (orchestrator)
 
 ## Notes
 
@@ -83,3 +85,10 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 ## Session
 
 - Orchestrator: grok (2026-08-10) — Phase 2 plan finalized
+- Implementer: grok (2026-08-10) — Implemented A–E:
+  - `IsEnumBindableType` + collection-aware `IsServiceType` in handler-extractor
+  - Endpoint FromOption sets `isArray`/`isEnumType`
+  - `EmitRepeatedOptionEnumTypeConversion` (for-loop + TryConvert + GetValidValuesMessage)
+  - `EnumInfoExtractor.Normalize` unwraps `[]`/collections (capabilities via Normalize)
+  - Tests: routing-32 (11/11 pass); routing-06, 24, 29 pass
+  - Full CI not run by implementer; leave dirty tree for orchestrator commit

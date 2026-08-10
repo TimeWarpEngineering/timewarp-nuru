@@ -14,7 +14,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="RequiresConversion">Whether type conversion is needed</param>
 /// <param name="ConverterTypeName">Custom converter type, if specified</param>
 /// <param name="ValidatorTypeName">For IOptions&lt;T&gt;, the validator type implementing IValidateOptions&lt;T&gt;</param>
-/// <param name="IsEnumType">Whether the parameter type is an enum (uses EnumTypeConverter)</param>
+/// <param name="IsEnumType">Whether the parameter element type uses EnumTypeConverter (enum, nullable enum, or array/collection of either)</param>
 public sealed record ParameterBinding(
   string ParameterName,
   string ParameterTypeName,

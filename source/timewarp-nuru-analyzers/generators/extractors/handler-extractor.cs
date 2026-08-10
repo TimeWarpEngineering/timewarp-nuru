@@ -398,7 +398,7 @@ internal static class HandlerExtractor
       {
         bool isOptional = param.IsOptional || param.NullableAnnotation == NullableAnnotation.Annotated;
         string? defaultValue = param.HasExplicitDefaultValue ? param.ExplicitDefaultValue?.ToString() : null;
-        bool isEnumType = IsEnumOrNullableEnum(param.Type);
+        bool isEnumType = IsEnumBindableType(param.Type);
 
         parameters.Add(ParameterBinding.FromParameter(
           parameterName: param.Name,
@@ -454,7 +454,7 @@ internal static class HandlerExtractor
       {
         bool isOptional = param.IsOptional || param.NullableAnnotation == NullableAnnotation.Annotated;
         string? defaultValue = param.HasExplicitDefaultValue ? param.ExplicitDefaultValue?.ToString() : null;
-        bool isEnumType = IsEnumOrNullableEnum(param.Type);
+        bool isEnumType = IsEnumBindableType(param.Type);
 
         parameters.Add(ParameterBinding.FromParameter(
           parameterName: param.Name,
@@ -594,21 +594,32 @@ internal static class HandlerExtractor
   }
 
   /// <summary>
-  /// Checks if a type is an enum or a nullable enum (Nullable&lt;TEnum&gt;).
+  /// Checks whether a type binds with <c>EnumTypeConverter</c>: a direct enum,
+  /// <c>Nullable&lt;TEnum&gt;</c>, an array of either, or a collection interface
+  /// (<c>IEnumerable&lt;T&gt;</c>/<c>IList&lt;T&gt;</c>/<c>ICollection&lt;T&gt;</c>) whose
+  /// element type is enum-bindable. Used for both single and repeated options.
   /// </summary>
-  private static bool IsEnumOrNullableEnum(ITypeSymbol type)
+  internal static bool IsEnumBindableType(ITypeSymbol type)
   {
-    // Direct enum type
+    // Unwrap Nullable<T>
+    if (type is INamedTypeSymbol nullableType &&
+        nullableType.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T &&
+        nullableType.TypeArguments.Length == 1)
+    {
+      type = nullableType.TypeArguments[0];
+    }
+
     if (type.TypeKind == TypeKind.Enum)
       return true;
 
-    // Check for Nullable<TEnum>
+    if (type is IArrayTypeSymbol arrayType)
+      return IsEnumBindableType(arrayType.ElementType);
+
     if (type is INamedTypeSymbol namedType &&
-        namedType.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T &&
-        namedType.TypeArguments.Length == 1 &&
-        namedType.TypeArguments[0].TypeKind == TypeKind.Enum)
+        IsCollectionInterface(namedType) &&
+        namedType.TypeArguments.Length == 1)
     {
-      return true;
+      return IsEnumBindableType(namedType.TypeArguments[0]);
     }
 
     return false;
@@ -626,6 +637,16 @@ internal static class HandlerExtractor
     // These should NEVER be treated as services even if they are interfaces (e.g. IList<T>)
     if (IsBuiltInRouteBindableType(type))
       return false;
+
+    // Collection interfaces bind from the route when the element is not itself a service
+    // (e.g. IEnumerable<MyEnum>, IList<string>). Only treat as DI when the element is
+    // service-like (e.g. IEnumerable<IGreeter>).
+    if (type is INamedTypeSymbol namedCollection &&
+        IsCollectionInterface(namedCollection) &&
+        namedCollection.TypeArguments.Length == 1)
+    {
+      return IsServiceType(namedCollection.TypeArguments[0]);
+    }
 
     // Known service namespaces (Microsoft.Extensions.*), checked by symbol namespace
     // rather than string prefix matching. Covers non-interface DI types too.
@@ -646,11 +667,26 @@ internal static class HandlerExtractor
 
     // Any other interface is treated as a user-defined service (IGreeter, IData, etc.).
     // Scalar route-bindable types (IPAddress, primitives) were excluded above via
-    // IsBuiltInRouteBindableType. Collection interfaces (IEnumerable<T>/IList<T>) are NOT
-    // excluded and so land here as services — which is harmless because route collections
-    // bind through array parameters (string[]), never a bare collection interface, so this
-    // shape does not occur for a genuine route parameter.
+    // IsBuiltInRouteBindableType.
     return type.TypeKind == TypeKind.Interface;
+  }
+
+  /// <summary>
+  /// Checks whether a type is IEnumerable&lt;T&gt;, IList&lt;T&gt;, or ICollection&lt;T&gt;
+  /// from System.Collections.Generic, matched by OriginalDefinition.
+  /// </summary>
+  private static bool IsCollectionInterface(INamedTypeSymbol type)
+  {
+    if (type.TypeKind != TypeKind.Interface)
+      return false;
+
+    if (type.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T)
+      return true;
+
+    if (type.OriginalDefinition.ContainingNamespace?.ToDisplayString() != "System.Collections.Generic")
+      return false;
+
+    return type.OriginalDefinition.Name is "IList" or "ICollection";
   }
 
   /// <summary>

@@ -85,17 +85,73 @@ internal static class EnumInfoExtractor
   }
 
   /// <summary>
-  /// Normalizes a type name for metadata lookup: strips the <c>global::</c> prefix and a trailing
-  /// nullable <c>?</c>. Must match the normalization the emitters apply to their lookup keys.
+  /// Normalizes a type name for metadata lookup: strips the <c>global::</c> prefix, trailing
+  /// nullable <c>?</c>, array suffixes (<c>[]</c>), and collection wrappers
+  /// (<c>IEnumerable&lt;T&gt;</c>/<c>IList&lt;T&gt;</c>/<c>ICollection&lt;T&gt;</c>) so
+  /// <c>MyEnum[]</c> and <c>IEnumerable&lt;MyEnum&gt;</c> resolve to the element enum.
+  /// Must match the normalization the emitters apply to their lookup keys.
   /// </summary>
   public static string Normalize(string typeName)
   {
     if (typeName.StartsWith("global::", StringComparison.Ordinal))
       typeName = typeName[8..];
-    if (typeName.EndsWith('?'))
-      typeName = typeName[..^1];
+
+    while (true)
+    {
+      if (typeName.EndsWith('?'))
+      {
+        typeName = typeName[..^1];
+        continue;
+      }
+
+      if (typeName.EndsWith("[]", StringComparison.Ordinal))
+      {
+        typeName = typeName[..^2];
+        continue;
+      }
+
+      if (TryUnwrapCollectionTypeArgument(typeName, out string elementType))
+      {
+        typeName = elementType;
+        if (typeName.StartsWith("global::", StringComparison.Ordinal))
+          typeName = typeName[8..];
+        continue;
+      }
+
+      break;
+    }
 
     return typeName;
+  }
+
+  /// <summary>
+  /// If <paramref name="typeName"/> is IEnumerable&lt;T&gt;, IList&lt;T&gt;, or ICollection&lt;T&gt;,
+  /// returns the type argument T.
+  /// </summary>
+  private static bool TryUnwrapCollectionTypeArgument(string typeName, out string elementType)
+  {
+    elementType = "";
+
+    string[] prefixes =
+    [
+      "System.Collections.Generic.IEnumerable<",
+      "System.Collections.Generic.IList<",
+      "System.Collections.Generic.ICollection<",
+      "IEnumerable<",
+      "IList<",
+      "ICollection<"
+    ];
+
+    foreach (string prefix in prefixes)
+    {
+      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>'))
+      {
+        elementType = typeName[prefix.Length..^1];
+        return elementType.Length > 0;
+      }
+    }
+
+    return false;
   }
 
   private static void AddCandidate(HashSet<string> candidates, string? typeName)

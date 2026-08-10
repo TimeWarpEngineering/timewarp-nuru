@@ -859,6 +859,7 @@ internal static class HandlerInvokerEmitter
 
   /// <summary>
   /// Builds the argument list for handler invocation (used by method handlers).
+  /// Escapes keyword identifiers so they match capture variables from route-matcher-emitter.
   /// </summary>
   private static string BuildArgumentList(HandlerDefinition handler)
   {
@@ -872,13 +873,13 @@ internal static class HandlerInvokerEmitter
         case BindingSource.Option:
         case BindingSource.Flag:
         case BindingSource.CatchAll:
-          // Route parameters use their captured variable name
-          args.Add(param.ParameterName);
+          // Route parameters use their captured variable name (escaped if keyword)
+          args.Add(CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName));
           break;
 
         case BindingSource.Service:
-          // Service parameters use the resolved service variable
-          args.Add(param.ParameterName);
+          // Service parameters use the resolved service variable (escaped if keyword)
+          args.Add(CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName));
           break;
 
         case BindingSource.CancellationToken:

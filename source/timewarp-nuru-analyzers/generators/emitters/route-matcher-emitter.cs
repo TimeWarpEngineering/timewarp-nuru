@@ -180,9 +180,7 @@ internal static class RouteMatcherEmitter
 
         case ParameterDefinition param when param.IsCatchAll:
           // Catch-all: slice from current position to end
-          string catchAllVar = (param.HasTypeConstraint || param.IsCatchAll)
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string catchAllVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string[] {catchAllVar} = __positionalArgs_{routeIndex}[{positionalIndex}..];");
           // Don't increment - catch-all consumes remaining
@@ -190,9 +188,7 @@ internal static class RouteMatcherEmitter
 
         case ParameterDefinition param when param.IsOptional:
           // Optional param: conditional extraction
-          string optVar = param.HasTypeConstraint
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string optVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string? {optVar} = __positionalArgs_{routeIndex}.Length > {positionalIndex} ? __positionalArgs_{routeIndex}[{positionalIndex}] : null;");
           positionalIndex++;
@@ -200,9 +196,7 @@ internal static class RouteMatcherEmitter
 
         case ParameterDefinition param:
           // Required param: direct extraction
-          string reqVar = param.HasTypeConstraint
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string reqVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string {reqVar} = __positionalArgs_{routeIndex}[{positionalIndex}];");
           positionalIndex++;
@@ -305,26 +299,20 @@ internal static class RouteMatcherEmitter
           break;
 
         case ParameterDefinition param when param.IsCatchAll:
-          string catchAllVar = (param.HasTypeConstraint || param.IsCatchAll)
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string catchAllVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string[] {catchAllVar} = __positionalArgs_{routeIndex}[{positionalIndex}..];");
           break;
 
         case ParameterDefinition param when param.IsOptional:
-          string optVar = param.HasTypeConstraint
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string optVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string? {optVar} = __positionalArgs_{routeIndex}.Length > {positionalIndex} ? __positionalArgs_{routeIndex}[{positionalIndex}] : null;");
           positionalIndex++;
           break;
 
         case ParameterDefinition param:
-          string reqVar = param.HasTypeConstraint
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string reqVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string {reqVar} = __positionalArgs_{routeIndex}[{positionalIndex}];");
           positionalIndex++;
@@ -410,35 +398,16 @@ internal static class RouteMatcherEmitter
   }
 
   /// <summary>
-  /// Emits code to extract parameter values from the positional args array.
+  /// Variable name for a positional parameter capture before type conversion.
+  /// Typed and catch-all params use a unique temp name; untyped params use the
+  /// final identifier (escaped if it is a C# keyword/contextual keyword).
   /// </summary>
-  private static void EmitParameterExtractionFromPositionalArgs(StringBuilder sb, RouteDefinition route, int routeIndex, int startIndex)
+  private static string PositionalCaptureVar(ParameterDefinition param, int routeIndex)
   {
-    int paramIndex = startIndex;
-    foreach (ParameterDefinition param in route.Parameters)
-    {
-      string varName = (param.HasTypeConstraint || param.IsCatchAll)
-        ? $"__{param.CamelCaseName}_{routeIndex}"
-        : param.CamelCaseName;
+    if (param.HasTypeConstraint || param.IsCatchAll)
+      return $"__{param.CamelCaseName}_{routeIndex}";
 
-      if (param.IsCatchAll)
-      {
-        sb.AppendLine(
-          $"      string[] {varName} = __positionalArgs_{routeIndex}[{paramIndex}..];");
-      }
-      else if (param.IsOptional)
-      {
-        sb.AppendLine(
-          $"      string? {varName} = __positionalArgs_{routeIndex}.Length > {paramIndex} ? __positionalArgs_{routeIndex}[{paramIndex}] : null;");
-        paramIndex++;
-      }
-      else
-      {
-        sb.AppendLine(
-          $"      string {varName} = __positionalArgs_{routeIndex}[{paramIndex}];");
-        paramIndex++;
-      }
-    }
+    return CSharpIdentifierUtils.EscapeIfKeyword(param.CamelCaseName);
   }
 
   /// <summary>
@@ -627,8 +596,6 @@ internal static class RouteMatcherEmitter
     ImmutableArray<CustomConverterDefinition> customConverters,
     RouteDefinition route)
   {
-    // Note: route parameter is available for future enum support in repeated options
-    _ = route;
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
     string listVarName = $"__{varName}_list_{routeIndex}";
@@ -683,31 +650,7 @@ internal static class RouteMatcherEmitter
     sb.AppendLine("      }");
 
     // Emit type conversion and array creation
-    EmitRepeatedOptionTypeConversion(sb, option, escapedVarName, listVarName, routeIndex, customConverters);
-  }
-
-  /// <summary>
-  /// Emits variable aliases from route-unique names to handler-expected names.
-  /// This is needed for untyped string parameters.
-  /// </summary>
-  private static void EmitVariableAliases(StringBuilder sb, RouteDefinition route, int routeIndex, int indent)
-  {
-    string indentStr = new(' ', indent);
-
-    foreach (ParameterDefinition param in route.Parameters)
-    {
-      // Skip typed parameters - they get aliases via type conversion
-      if (param.HasTypeConstraint)
-        continue;
-
-      string varName = param.CamelCaseName;
-      string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
-      string uniqueVarName = $"__{varName}_{routeIndex}";
-
-      // Create alias from unique name to handler-expected name
-      sb.AppendLine(
-        $"{indentStr}string {escapedVarName} = {uniqueVarName};");
-    }
+    EmitRepeatedOptionTypeConversion(sb, option, escapedVarName, listVarName, routeIndex, customConverters, route);
   }
 
   /// <summary>
@@ -1112,7 +1055,7 @@ internal static class RouteMatcherEmitter
 
   /// <summary>
   /// Emits type conversion code for a repeated option.
-  /// Converts List&lt;string&gt; to typed array using Select().ToArray().
+  /// Converts List&lt;string&gt; to a typed array (built-in primitives or enum elements).
   /// </summary>
   private static void EmitRepeatedOptionTypeConversion(
     StringBuilder sb,
@@ -1120,46 +1063,160 @@ internal static class RouteMatcherEmitter
     string varName,
     string listVarName,
     int routeIndex,
-    ImmutableArray<CustomConverterDefinition> customConverters)
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    RouteDefinition route)
   {
+    _ = customConverters; // Custom converters for arrays are not yet supported
+
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
+    string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
 
-    if (string.IsNullOrEmpty(baseType))
+    // Built-in typed conversion when a type constraint is present (int, double, etc.)
+    if (!string.IsNullOrEmpty(baseType))
     {
-      // No type constraint - just convert to string[]
-      sb.AppendLine($"      string[] {varName} = {listVarName}.ToArray();");
+      (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, "__item", "__parsed");
+
+      if (conversion is var (clrType, _))
+      {
+        string parseExpr = GetParseExpression(baseType, "__s");
+
+        sb.AppendLine($"      {clrType}[] {varName};");
+        sb.AppendLine("      try");
+        sb.AppendLine("      {");
+        sb.AppendLine($"        {varName} = {listVarName}.Select(__s => {parseExpr}).ToArray();");
+        sb.AppendLine("      }");
+        sb.AppendLine("      catch (global::System.FormatException)");
+        sb.AppendLine("      {");
+        sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value in option '{optionDisplay}'. Expected: {baseType}\");");
+        sb.AppendLine("        return 1;");
+        sb.AppendLine("      }");
+        return;
+      }
+    }
+
+    // Enum element type from handler parameter (MyEnum[], IEnumerable<MyEnum>, etc.)
+    string optionName = option.LongForm ?? option.ShortForm!;
+    ParameterBinding? handlerParam = route.Handler.Parameters
+      .FirstOrDefault(p =>
+        string.Equals(p.SourceName, optionName, StringComparison.OrdinalIgnoreCase) &&
+        p.IsEnumType);
+
+    if (handlerParam is not null)
+    {
+      EmitRepeatedOptionEnumTypeConversion(
+        sb,
+        option,
+        handlerParam.ParameterTypeName,
+        varName,
+        listVarName,
+        routeIndex);
       return;
     }
 
+    // No type constraint / unknown type / custom converter arrays: string[]
+    sb.AppendLine($"      string[] {varName} = {listVarName}.ToArray();");
+  }
+
+  /// <summary>
+  /// Emits enum conversion for a repeated option using EnumTypeConverter per element.
+  /// Always emits ElementType[] so IEnumerable&lt;MyEnum&gt; parameters accept the array.
+  /// Matches single-enum option error UX (invalid value + GetValidValuesMessage).
+  /// </summary>
+  private static void EmitRepeatedOptionEnumTypeConversion(
+    StringBuilder sb,
+    OptionDefinition option,
+    string parameterTypeName,
+    string varName,
+    string listVarName,
+    int routeIndex)
+  {
+    string baseEnumType = GetEnumElementTypeName(parameterTypeName);
+    string converterVarName = $"__enumConverter_{varName}_{routeIndex}";
+    string tempVarName = $"__temp_{varName}_{routeIndex}";
     string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
+    string indexVarName = $"__i_{varName}_{routeIndex}";
 
-    // Use shared type conversion mapping
-    (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, "__item", "__parsed");
+    sb.AppendLine($"      var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
+    sb.AppendLine($"      {baseEnumType}[] {varName} = new {baseEnumType}[{listVarName}.Count];");
+    sb.AppendLine($"      for (int {indexVarName} = 0; {indexVarName} < {listVarName}.Count; {indexVarName}++)");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        if (!{converterVarName}.TryConvert({listVarName}[{indexVarName}], out object? {tempVarName}))");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{listVarName}[{indexVarName}]}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+    sb.AppendLine("          return 1;");
+    sb.AppendLine("        }");
+    sb.AppendLine($"        {varName}[{indexVarName}] = ({baseEnumType}){tempVarName}!;");
+    sb.AppendLine("      }");
+  }
 
-    if (conversion is var (clrType, _))
+  /// <summary>
+  /// Extracts the enum element type name from a handler parameter type name.
+  /// Strips nullable markers, array suffixes, and collection wrappers
+  /// (IEnumerable/IList/ICollection) so EnumTypeConverter&lt;T&gt; receives a scalar enum.
+  /// </summary>
+  private static string GetEnumElementTypeName(string parameterTypeName)
+  {
+    string typeName = parameterTypeName;
+
+    while (true)
     {
-      // Get the parse expression for this type
-      string parseExpr = GetParseExpression(baseType, "__s");
+      if (typeName.EndsWith('?'))
+      {
+        typeName = typeName[..^1];
+        continue;
+      }
 
-      // Emit array conversion with error handling
-      sb.AppendLine($"      {clrType}[] {varName};");
-      sb.AppendLine("      try");
-      sb.AppendLine("      {");
-      sb.AppendLine($"        {varName} = {listVarName}.Select(__s => {parseExpr}).ToArray();");
-      sb.AppendLine("      }");
-      sb.AppendLine("      catch (global::System.FormatException)");
-      sb.AppendLine("      {");
-      sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value in option '{optionDisplay}'. Expected: {baseType}\");");
-      sb.AppendLine("        return 1;");
-      sb.AppendLine("      }");
+      if (typeName.EndsWith("[]", StringComparison.Ordinal))
+      {
+        typeName = typeName[..^2];
+        continue;
+      }
+
+      if (TryUnwrapCollectionTypeArgument(typeName, out string elementType))
+      {
+        typeName = elementType;
+        continue;
+      }
+
+      break;
     }
-    else
+
+    return typeName;
+  }
+
+  /// <summary>
+  /// If <paramref name="typeName"/> is IEnumerable&lt;T&gt;, IList&lt;T&gt;, or ICollection&lt;T&gt;,
+  /// returns the type argument T.
+  /// </summary>
+  private static bool TryUnwrapCollectionTypeArgument(string typeName, out string elementType)
+  {
+    elementType = "";
+
+    // Match fully-qualified and short collection interface names with a single type argument.
+    string[] prefixes =
+    [
+      "global::System.Collections.Generic.IEnumerable<",
+      "global::System.Collections.Generic.IList<",
+      "global::System.Collections.Generic.ICollection<",
+      "System.Collections.Generic.IEnumerable<",
+      "System.Collections.Generic.IList<",
+      "System.Collections.Generic.ICollection<",
+      "IEnumerable<",
+      "IList<",
+      "ICollection<"
+    ];
+
+    foreach (string prefix in prefixes)
     {
-      // Try custom converter - for now just fall back to string[]
-      // TODO: Add custom converter support for arrays
-      sb.AppendLine($"      string[] {varName} = {listVarName}.ToArray();");
+      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>'))
+      {
+        elementType = typeName[prefix.Length..^1];
+        return elementType.Length > 0;
+      }
     }
+
+    return false;
   }
 
   /// <summary>

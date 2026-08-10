@@ -591,7 +591,9 @@ internal static class EndpointExtractor
               typeName: typeName,
               optionName: optionLongForm,
               isOptional: true,
-              requiresConversion: typeName != "global::System.String"));
+              isArray: IsRepeatedOptionType(property.Type),
+              requiresConversion: typeName != "global::System.String",
+              isEnumType: HandlerExtractor.IsEnumBindableType(property.Type)));
           }
 
           break;
@@ -1043,7 +1045,9 @@ internal static class EndpointExtractor
               typeName: typeName,
               optionName: optionLongForm,
               isOptional: true,
-              requiresConversion: typeName != "global::System.String"));
+              isArray: IsRepeatedOptionType(property.Type),
+              requiresConversion: typeName != "global::System.String",
+              isEnumType: HandlerExtractor.IsEnumBindableType(property.Type)));
           }
 
           break;

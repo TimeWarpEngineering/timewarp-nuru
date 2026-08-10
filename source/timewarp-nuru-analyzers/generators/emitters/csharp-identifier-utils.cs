@@ -6,49 +6,41 @@ namespace TimeWarp.Nuru.Generators;
 internal static class CSharpIdentifierUtils
 {
   /// <summary>
-  /// C# keywords that require @ prefix when used as identifiers.
-  /// </summary>
-  private static readonly HashSet<string> CSharpKeywords = new(StringComparer.Ordinal)
-  {
-    // Keywords
-    "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char",
-    "checked", "class", "const", "continue", "decimal", "default", "delegate",
-    "do", "double", "else", "enum", "event", "explicit", "extern", "false",
-    "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit",
-    "in", "int", "interface", "internal", "is", "lock", "long", "namespace",
-    "new", "null", "object", "operator", "out", "override", "params", "private",
-    "protected", "public", "readonly", "ref", "return", "sbyte", "sealed",
-    "short", "sizeof", "stackalloc", "static", "string", "struct", "switch",
-    "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked",
-    "unsafe", "ushort", "using", "virtual", "void", "volatile", "while",
-
-    // Contextual keywords (some can be used as identifiers, but safer to escape)
-    "add", "alias", "ascending", "async", "await", "by", "descending", "dynamic",
-    "equals", "from", "get", "global", "group", "into", "join", "let", "nameof",
-    "on", "orderby", "partial", "remove", "select", "set", "value", "var",
-    "when", "where", "yield"
-  };
-
-  /// <summary>
-  /// Escapes a C# keyword by prefixing with @.
-  /// If the identifier is not a keyword, returns it unchanged.
+  /// Escapes a C# keyword or contextual keyword by prefixing with @.
+  /// Strips any existing leading @ before checking so the result is idempotent.
+  /// If the identifier is not a keyword, returns it without an @ prefix.
   /// </summary>
   /// <param name="identifier">The identifier to potentially escape.</param>
-  /// <returns>The escaped identifier (with @ prefix) if it's a keyword, otherwise the original.</returns>
+  /// <returns>The escaped identifier (with @ prefix) if it's a keyword, otherwise the bare name.</returns>
   public static string EscapeIfKeyword(string identifier)
   {
     if (string.IsNullOrEmpty(identifier))
       return identifier;
 
-    return CSharpKeywords.Contains(identifier) ? $"@{identifier}" : identifier;
+    // Idempotent: strip any existing @ before classifying
+    string name = identifier[0] == '@' ? identifier[1..] : identifier;
+    if (name.Length == 0)
+      return identifier;
+
+    return IsKeyword(name) ? $"@{name}" : name;
   }
 
   /// <summary>
-  /// Checks if the given identifier is a C# keyword.
+  /// Checks if the given identifier is a C# reserved or contextual keyword.
+  /// Strips a leading @ before checking.
   /// </summary>
   public static bool IsKeyword(string identifier)
   {
-    return !string.IsNullOrEmpty(identifier) && CSharpKeywords.Contains(identifier);
+    if (string.IsNullOrEmpty(identifier))
+      return false;
+
+    string name = identifier[0] == '@' ? identifier[1..] : identifier;
+    if (name.Length == 0)
+      return false;
+
+    // Prefer Roslyn's maintained keyword tables over a hand-rolled set
+    return SyntaxFacts.GetKeywordKind(name) != SyntaxKind.None
+        || SyntaxFacts.GetContextualKeywordKind(name) != SyntaxKind.None;
   }
 
   /// <summary>

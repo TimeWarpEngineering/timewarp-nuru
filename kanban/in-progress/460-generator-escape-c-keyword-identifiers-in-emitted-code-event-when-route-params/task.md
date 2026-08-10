@@ -67,5 +67,72 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 
 ## Session
 
-Orchestrator: grok (2026-08-10) — Phase 2 plan finalized
-Implementer: grok (2026-08-10) — EscapeIfKeyword via SyntaxFacts; PositionalCaptureVar; BuildArgumentList escape; generator-39 + sample restored
+- Orchestrator: grok (2026-08-10) — Phase 2 plan finalized
+- Implementer: grok (2026-08-10) — EscapeIfKeyword via SyntaxFacts; PositionalCaptureVar; BuildArgumentList escape; generator-39 + sample restored
+- Review: grok general round-1 (2026-08-10) — no issues; disposition clean
+- Orchestrator: grok (2026-08-10) — Phase 4b + Results + done
+
+## Results
+
+### What was implemented
+
+NuruGenerator now `@`-escapes C# reserved and contextual keyword identifiers wherever route/handler parameter names are emitted as C# identifiers.
+
+- `CSharpIdentifierUtils.EscapeIfKeyword` / `IsKeyword` use Roslyn `SyntaxFacts` (idempotent: strip leading `@` before classify)
+- Untyped positional captures (primary + alias match) use `PositionalCaptureVar` → `EscapeIfKeyword`
+- Method-handler `BuildArgumentList` escapes all binding kinds
+- Handler extractor syntax path stores `Identifier.ValueText` (no `@` in storage)
+- Deleted dead unescaped helpers `EmitParameterExtractionFromPositionalArgs` / `EmitVariableAliases`
+- Restored sample `schedule {event} {when:DateTime}` as living regression
+- New `generator-39-keyword-param-identifiers.cs` (event/when + class/ref/for)
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `source/.../csharp-identifier-utils.cs` | SyntaxFacts-based escape |
+| `source/.../route-matcher-emitter.cs` | PositionalCaptureVar; remove dead helpers |
+| `source/.../handler-invoker-emitter.cs` | Escape in BuildArgumentList |
+| `source/.../handler-extractor.cs` | ValueText |
+| `samples/.../fluent-type-converters-builtin.cs` | Restore keyword params |
+| `tests/.../generator-39-keyword-param-identifiers.cs` | New |
+
+### Key decisions / deviations
+
+- SyntaxFacts only (dropped hand HashSet). Bare `value` is a legal identifier and is **not** escaped (old list over-escaped it); tests use `class`/`ref`/`for` instead.
+- Completes incomplete work from archived task 323.
+
+### Test outcomes
+
+| Check | Result |
+|-------|--------|
+| `generator-39-keyword-param-identifiers.cs` | 2/2 pass |
+| `fluent-type-converters-builtin.cs -- schedule Standup 2024-12-25T14:30:00` | prints scheduled event line |
+| Analyzers project build | 0 errors |
+
+### Phase 4b review
+
+- **Effort:** 1 (general only)
+- **Rounds:** 1
+- **Final counts:** 0 open
+- **Disposition:** `clean`
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
+### How to validate
+
+**Automated**
+```bash
+ganda runfile cache --clear
+dotnet build source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj -c Debug
+dotnet run tests/timewarp-nuru-tests/generator/generator-39-keyword-param-identifiers.cs
+# expect: Total 2, Passed 2
+```
+
+**Smoke**
+```bash
+dotnet run samples/fluent/08-type-converters/fluent-type-converters-builtin.cs -- schedule Standup 2024-12-25T14:30:00
+# expect: 📅 Event 'Standup' scheduled for 2024-12-25 14:30:00
+# and clean compile (no CS0065 on event)
+```
+
+**Not in scope:** forbidding keyword param names; rewriting user lambda bodies; help-string content.

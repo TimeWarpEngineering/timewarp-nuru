@@ -1,93 +1,118 @@
 #region Purpose
 // Configuration model for the ganda-audit attestation verify step
-// (kanban task 458-010). Deserialized from .timewarp/dev.jsonc under the
-// "attestation" key. AttestationConfigResolver.ResolveMode is the pure,
-// testable piece of mode interpretation — kept out of workflow-command.cs
-// so a typo'd mode value has unit-test coverage instead of only being
-// exercisable end-to-end.
+// (kanban tasks 458-010, 458-011). Deserialized from .timewarp/dev.jsonc under
+// the "attestation" key. AttestationConfigResolver is the pure, testable piece
+// of mode interpretation — kept out of workflow-command.cs so a typo'd mode
+// value has unit-test coverage instead of only being exercisable end-to-end.
+// ResolveMode never applies a context default; EffectiveMode does, so PR/merge
+// and release can share one resolver with different unset defaults.
 #endregion
 #region Design
-// Mode has exactly two meaningful values, both case-insensitive:
-//   - "warn" (default, including when Mode is null/absent/blank):
-//     `dev workflow --mode pr` prints a loud advisory when the tree is not
-//     Valid but does not fail the pipeline. Nothing is enforced org-wide
-//     until repos opt in.
-//   - "require": a non-Valid outcome fails `dev workflow --mode pr`
-//     (Environment.ExitCode = 1, pipeline aborted).
-// Release mode ignores this setting entirely — the attestation gate is
-// ALWAYS a hard, unconditional check in release mode regardless of config
-// (see workflow-command.cs RunReleaseWorkflowAsync), because a release
-// with no verifiable audit evidence must never ship, config or no config.
+// Mode has three meaningful values, all case-insensitive, one key for every
+// pipeline mode (no separate prMode/releaseMode):
+//   - "off": skip verify entirely (PR and release). One log line; no advisory
+//     spam. For portable/no-ganda consumers and break-glass CLI override.
+//   - "warn": run verify; non-Valid prints a loud advisory but never aborts
+//     (PR may RepeatAdvisory before SUCCEEDED; release logs once).
+//   - "require": run verify; non-Valid aborts the pipeline.
 //
-// Unrecognized values (round-1 review Fix 3): a blank/absent Mode silently
-// resolves to Warn — that is the documented default, not a mistake. But a
-// NON-blank value that is neither "warn" nor "require" (a typo like
-// "requiree") is a real operator error: falling back to Warn silently would
-// leave the operator believing enforcement is on when it is not.
-// AttestationModeResolution.UnrecognizedValue carries the original
-// (trimmed) string in that case so the caller can print exactly one
-// warning line naming it, while STILL falling back to Warn (fail-open on
-// PR/merge-mode config parsing, not fail-closed — the hard release-mode
-// gate is what actually enforces attestation; see the Purpose region
-// above). UnrecognizedValue is null for every other input (blank/absent,
-// "warn", "require" in any casing) — that null-ness is itself the "should
-// I warn" signal, not a separate flag.
+// Context-sensitive defaults when mode is blank/absent (TimeWarp-first):
+//   - PR/merge: DefaultPrMode = Warn (nothing enforced org-wide until opt-in)
+//   - release:  DefaultReleaseMode = Require (safe default for TimeWarp repos
+//     that never set the key — preserves pre-458-011 release hard-gate
+//     behavior without every repo editing jsonc)
+// Blank is NOT the same as explicit "warn": release blank → Require, while
+// explicit "warn" → advisory on release too. That is why ResolveMode returns
+// Mode = null for blank/absent and callers pass whenUnset to EffectiveMode.
+//
+// Unrecognized non-blank values (typos like "requiree"): Mode stays null so
+// EffectiveMode still applies the context default — PR fail-open to Warn,
+// release fail-closed to Require. UnrecognizedValue carries the trimmed raw
+// string so the caller prints one warning naming it. Never silently Off
+// (would disable the release gate by accident). Valid values message lists
+// off, warn, require.
+//
+// CLI --attestation off|warn|require overrides config for that run only
+// (precedence: CLI > config > context default). Empty CLI still overrides
+// config (is not null check) and then resolves as blank → context default.
+//
+// Verify I/O (git notes, openssl) stays in workflow-command.cs; this file is
+// pure mode policy only — no change to ganda signing or note format.
 #endregion
 
 namespace DevCli;
 
 /// <summary>
-/// Per-repo configuration for the attestation verify step in PR/merge mode.
+/// Per-repo configuration for the attestation verify step.
 /// </summary>
 public sealed class AttestationConfig
 {
   /// <summary>
-  /// "warn" (default) or "require". Only consulted in PR/merge mode —
-  /// release mode always hard-gates regardless of this value.
+  /// <c>off</c>, <c>warn</c>, or <c>require</c>. Blank/absent uses a
+  /// context-sensitive default (PR/merge: warn; release: require). See
+  /// <see cref="AttestationConfigResolver"/>.
   /// </summary>
   public string? Mode { get; set; }
 }
 
-/// <summary>Resolved attestation mode for PR/merge mode (see attestation-config.cs Design region).</summary>
+/// <summary>
+/// Resolved attestation enforcement level for a pipeline run.
+/// </summary>
 public enum AttestationMode
 {
+  /// <summary>Skip attestation verify entirely.</summary>
+  Off,
+
+  /// <summary>Verify; non-Valid is advisory only (no abort).</summary>
   Warn,
+
+  /// <summary>Verify; non-Valid aborts the pipeline.</summary>
   Require
 }
 
 /// <summary>
 /// Result of <see cref="AttestationConfigResolver.ResolveMode"/>:
-/// the mode to actually use, plus (when non-null) the unrecognized raw
-/// value the caller should warn about before falling back to
-/// <see cref="AttestationMode.Warn"/>.
+/// <see cref="Mode"/> is null when the raw value is blank/absent or
+/// unrecognized; <see cref="UnrecognizedValue"/> is non-null only for an
+/// unrecognized non-blank raw value (callers should warn, then apply
+/// <see cref="AttestationConfigResolver.EffectiveMode"/>).
 /// </summary>
-public readonly record struct AttestationModeResolution(AttestationMode Mode, string? UnrecognizedValue);
+public readonly record struct AttestationModeResolution(
+  AttestationMode? Mode,
+  string? UnrecognizedValue);
 
 /// <summary>
 /// Pure resolver for <c>attestation.mode</c> — no process execution, no I/O.
 /// </summary>
 public static class AttestationConfigResolver
 {
+  /// <summary>Default when mode is unset in PR/merge pipeline mode.</summary>
+  public const AttestationMode DefaultPrMode = AttestationMode.Warn;
+
+  /// <summary>Default when mode is unset in release pipeline mode.</summary>
+  public const AttestationMode DefaultReleaseMode = AttestationMode.Require;
+
   /// <summary>
-  /// Resolve a raw <c>attestation.mode</c> config value. Blank/absent
-  /// resolves to <see cref="AttestationMode.Warn"/> with no warning;
-  /// "warn"/"require" (case-insensitive) resolve exactly; anything else
-  /// resolves to <see cref="AttestationMode.Warn"/> WITH
-  /// <see cref="AttestationModeResolution.UnrecognizedValue"/> set to the
-  /// trimmed raw value, so the caller can surface a one-line warning.
+  /// Resolve a raw <c>attestation.mode</c> (or CLI override) value.
+  /// Blank/absent → <c>(null, null)</c>;
+  /// <c>off</c>/<c>warn</c>/<c>require</c> (case-insensitive, trimmed) →
+  /// <c>(enum, null)</c>;
+  /// any other non-blank value → <c>(null, trimmed)</c> so the caller can
+  /// surface a typo warning and apply a context default via
+  /// <see cref="EffectiveMode"/> (never silently <see cref="AttestationMode.Off"/>).
   /// </summary>
   public static AttestationModeResolution ResolveMode(string? rawMode)
   {
     if (string.IsNullOrWhiteSpace(rawMode))
     {
-      return new AttestationModeResolution(AttestationMode.Warn, null);
+      return new AttestationModeResolution(null, null);
     }
 
     string trimmed = rawMode.Trim();
 
-    if (string.Equals(trimmed, "require", StringComparison.OrdinalIgnoreCase))
+    if (string.Equals(trimmed, "off", StringComparison.OrdinalIgnoreCase))
     {
-      return new AttestationModeResolution(AttestationMode.Require, null);
+      return new AttestationModeResolution(AttestationMode.Off, null);
     }
 
     if (string.Equals(trimmed, "warn", StringComparison.OrdinalIgnoreCase))
@@ -95,6 +120,20 @@ public static class AttestationConfigResolver
       return new AttestationModeResolution(AttestationMode.Warn, null);
     }
 
-    return new AttestationModeResolution(AttestationMode.Warn, trimmed);
+    if (string.Equals(trimmed, "require", StringComparison.OrdinalIgnoreCase))
+    {
+      return new AttestationModeResolution(AttestationMode.Require, null);
+    }
+
+    return new AttestationModeResolution(null, trimmed);
   }
+
+  /// <summary>
+  /// Apply a context-sensitive default when <see cref="AttestationModeResolution.Mode"/>
+  /// is null (blank/absent or unrecognized raw input).
+  /// </summary>
+  public static AttestationMode EffectiveMode(
+    AttestationModeResolution resolution,
+    AttestationMode whenUnset)
+    => resolution.Mode ?? whenUnset;
 }

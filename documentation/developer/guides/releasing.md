@@ -105,8 +105,8 @@ anything; it promotes the exact bytes CI already built and tested in step 1:
 
 `tag-gate → check-version → locate-run → download-artifact → verify → push`
 
-**Step 1/6 — Release Gate (tag assertions).** Three checks, each a distinct
-failure class:
+**Step 1/6 — Release Gate (tag assertions + attestation).** Four checks, each a
+distinct failure class:
 
 - *Tag assertion* (only on a real `release` event): `GITHUB_REF_NAME` must equal
   `v{Version}` from props exactly. Refusal message: **"release tag does not match
@@ -120,6 +120,17 @@ failure class:
   (a real non-ancestor) or **"master ref unresolvable"** (neither
   `origin/master` nor `master` could be resolved — usually a shallow checkout;
   this is exactly why `workflow.yml` uses `fetch-depth: 0`).
+- *Attestation*: verifies the ganda-audit note on `HEAD`'s tree
+  (`refs/notes/ganda-audit`, via `openssl`). Policy comes from
+  `.timewarp/dev.jsonc` `attestation.mode` (or `dev workflow --attestation
+  off|warn|require` for a one-off override). **Unset/blank defaults to
+  `require` on release** (TimeWarp-first: preserves a hard gate without every
+  repo editing jsonc). Explicit `require` aborts on any non-Valid outcome;
+  `warn` prints an advisory and continues; `off` skips verify entirely (for
+  portable/no-ganda consumers). A typo'd mode value is treated as `require`
+  with a warning (fail-closed — never silently `off`). Refusal when enforced:
+  **"attestation required (mode=require) and not valid"** with guidance such as
+  "pull master locally so ganda can attest."
 
 **Step 2/6 — Check Version.** Runs the standalone `check-version` gate directly
 (not the stricter `ReleaseGuard.CheckPublishState` guard 7 uses) — here `None` and

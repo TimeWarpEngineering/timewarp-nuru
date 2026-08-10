@@ -191,6 +191,38 @@ One-off remediation still precedes turn-on: operator runs
 
 - [ ] Clone the 3 publisher repos missing locally (needed for remediation): `ganda repo clone git@github.com:TimeWarpEngineering/timewarp-fixie.git`, `…/timewarp-quickbooks.git`, `…/timewarp-build-tasks.git` (verified vs `ganda repo list` 2026-08-08 — all other 18 publishers already cloned)
 - [ ] One-off remediation: `ganda repo audit --fix` across all active repos; record before/after here
+  - **WAVE LAUNCHED 2026-08-08 (merged with DevCli 3.0.0-beta.72 adoption —
+    same wave: the audit's `nuru` check went red org-wide when beta.72
+    shipped, by design).** Per-repo "audit-clean on beta.72" tasks filed and
+    committed in 20 repos (nuru excluded — already the clean reference):
+    bannamtalay.com 002, crunchit 245, [redacted-private-repo] 007,
+    amuru 110, architecture 176, builder 007, components 003, flexbox 151,
+    timewarp-flow 100, ganda 202, health 002, heroicons 002, jaribu 033,
+    multiavatar 004, options-validation 005, simple-icons 004, software 025,
+    source-generators 022, terminal 025, timewarp.enterprises 001.
+    Operator caution honored in execution instructions: effort varies
+    widely; assess-first; structurally-unfixable checks get recorded with
+    reasons, not forced; partial-progress-with-findings is a legitimate
+    outcome; no wholesale dev-cli scaffolding without recording it as a
+    decision.
+  - **WAVE RESULT (2026-08-09, four grok batches, all verified):**
+    **13/20 DONE** — audit-clean on DevCli 3.0.0-beta.72 with self-installed
+    binaries carrying `dev release`: amuru, architecture, builder,
+    components, ganda, health, heroicons, jaribu, options-validation,
+    simple-icons, software, source-generators, terminal.
+    **7/20 honest partials, needing operator rulings:**
+    (a) five repos with CUSTOM/local dev CLIs that never adopted the shared
+    DevCli package (bannamtalay.com, crunchit, timewarp-flow,
+    timewarp.enterprises, the redacted private repo) — adopting shared
+    DevCli there is an architecture decision per repo, not a bump; mostly
+    non-publishers, so exemption is a legitimate ruling;
+    (b) flexbox — beta.72 adopted + self-installed, but 16 PascalCase
+    source/test directories remain (renaming = namespace-touching refactor;
+    decide rename vs kebab-prune exception);
+    (c) multiavatar — legacy structure without shared dev-cli; safe fixes
+    applied; full DevCli adoption is a larger conversion.
+    All work committed locally in each repo; tasks left in-progress with
+    findings recorded.
   - [x] **timewarp-nuru (2026-08-08): PASSES ALL CHECKS.** Before: 3 Errors +
     1 Warning (48 non-kebab paths, 94 missing exec bits, 262 non-standard
     shebangs, memsearch scaffold). Fixed: shebangs → `#!/usr/bin/env -S

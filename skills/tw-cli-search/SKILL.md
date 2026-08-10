@@ -1,5 +1,5 @@
 ---
-name: cli-search
+name: tw-cli-search
 description: Search for CLI commands and tools installed on your system. Use when you need to find specific functionality, discover available commands, or explore what CLI tools are available.
 ---
 

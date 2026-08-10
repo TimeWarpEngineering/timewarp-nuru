@@ -136,3 +136,13 @@ dotnet run samples/fluent/08-type-converters/fluent-type-converters-builtin.cs -
 ```
 
 **Not in scope:** forbidding keyword param names; rewriting user lambda bodies; help-string content.
+
+### Post-done review finding (2026-08-10, fixed)
+
+Full-CI review found generator-39-keyword-param-identifiers.cs broke the CI multi-mode
+compile (CS0433: Lexer/Token exist in both TimeWarp.Nuru.Analyzers and TimeWarp.Nuru).
+It follows the Roslyn-hosted generator-test pattern (references the analyzers csproj as a
+library) that is documented in tests/ci-tests/Directory.Build.props as requiring exclusion
+from multi-mode + standalone execution — same as generator-28/30/34-38 — but was added to
+neither list. Fixed: added to CiTestExcludes and to the standaloneTests list in
+run-ci-tests.cs; full CI green (multi-mode + standalone 2/2).

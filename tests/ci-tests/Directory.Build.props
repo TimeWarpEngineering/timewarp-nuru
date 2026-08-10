@@ -46,6 +46,7 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-36-m8-typeconverter-fqn.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-37-incrementality-caching.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-38-h002-sole-identifier-body.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-39-keyword-param-identifiers.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

@@ -101,7 +101,11 @@ payload; re-check pack layout for the next ship even if “we just fixed CI.”
       merge c9a0f035, tag v3.0.0-beta.73, CI run 31353054071 promoted by release run 31353385089)
 - [x] Clean-cache restore smoke (temp `NUGET_PACKAGES`): fresh cache, nuget.org-only source,
       minimal consumer restored + built (no MSB4062; generator + interceptors ran) + app executed
-- [ ] Notify consumers (ganda, etc.) to bump pin to beta.73 when ready — operator/follow-up
+- [x] Notify consumers (ganda, etc.) to bump pin to beta.73 when ready —
+      **ganda** `Directory.Packages.props`: TimeWarp.Nuru + TimeWarp.Nuru.DevCli →
+      **3.0.0-beta.73** (commit `7321fea` on `dev`); clean-cache self-install/build/test
+      465/465 + audit 23/23; PR **#66** re-ran CI green and **merged** to master
+      (`454de807`, 2026-08-10). Other consumers still on beta.72 should bump similarly.
 - [ ] Optional: deprecate incomplete beta.72 on nuget.org — operator (NuGet UI)
 
 ## Notes

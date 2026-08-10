@@ -101,3 +101,5 @@ Routes with options should be checked AFTER routes with exact pattern matches. T
 The issue is likely in the route ordering. The generator places `workfile search` (length-based check) before `auth status` (exact pattern check), so when processing options, even though none match, something goes wrong in the positional arg reconstruction.
 
 Need to trace through lines 903-913 to see how `__positionalArgs_42` is built after option parsing.
+
+Archived 2026-08-10 board audit: unreproducible on the V2 generator; specificity ordering + NURU_R003 unreachable-route diagnostic cover this class of issue.

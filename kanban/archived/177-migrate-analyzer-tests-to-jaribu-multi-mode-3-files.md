@@ -33,3 +33,5 @@ For each test file:
 - Tests stay in `timewarp-nuru-analyzers-tests/auto/` (not moved)
 - Use namespace `TimeWarp.Nuru.Tests.Analyzers` for all files
 - May need to check if analyzers can run in multi-mode without conflicts
+
+Archived 2026-08-10 board audit: the three target test files never came to exist; described analyzer test structure was never created.

@@ -76,3 +76,5 @@ Already published: TimeWarp.Nuru, TimeWarp.Nuru.Analyzers
 - Service returns data only, command handles all display
 - Amuru service should stop writing to terminal
 - Display should state strategy upfront so developer knows which check ran
+
+Archived 2026-08-10 board audit: CheckVersionStrategy/GitTagCheckService were deliberately deleted in the beta.72 release rework (see readme); strategy-aware display has no target.

@@ -168,3 +168,5 @@ docker.Map("run {image}", handler);  // NURU003: Cannot resolve group context
 ### Releasable
 
 Yes - advanced consumer API for complex CLIs.
+
+Archived 2026-08-10 board audit: depends on phase 3 (152) which never landed and is now archived.

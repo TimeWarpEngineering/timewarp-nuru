@@ -86,3 +86,5 @@ public interface IFluentBuilder<TSelf> where TSelf : IFluentBuilder<TSelf>
     TSelf Clear();
 }
 ```
+
+Archived 2026-08-10 board audit: premises stale — NuruCoreAppBuilder/CRTP inheritance no longer exist, and TimeWarp.Builder is an external package this repo cannot extend.

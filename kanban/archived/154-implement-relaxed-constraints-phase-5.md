@@ -116,3 +116,5 @@ Data flow analysis in Roslyn:
 ### Releasable
 
 Yes - quality of life improvement for `MapGroup()` users. No breaking changes.
+
+Archived 2026-08-10 board audit: depends on phases 3-4 (152/153), both archived.

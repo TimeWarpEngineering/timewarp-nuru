@@ -31,3 +31,5 @@ From `endpoint-collection.cs` comment:
 > "Thread-safety is not needed as routes are configured once at startup in CLI apps."
 
 This change makes the "configured once at startup" design intent explicit in the API.
+
+Archived 2026-08-10 board audit: target types (EndpointCollection, NuruCoreApp, etc.) no longer exist after the architecture rewrite.

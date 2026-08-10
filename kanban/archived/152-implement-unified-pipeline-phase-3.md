@@ -137,3 +137,5 @@ No delegates exist at runtime. Only commands through the pipeline.
 After this phase: **Delegates are developer convenience; commands are the runtime reality.**
 
 But first: **Fix the 132ms cold-start problem!**
+
+Archived 2026-08-10 board audit: phase 3 of a chain where only phases 1-2 landed; architecture has moved on (V2 generator), unified-pipeline plan no longer applies.

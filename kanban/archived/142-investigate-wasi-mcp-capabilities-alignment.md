@@ -118,3 +118,5 @@ This investigation should consider how to surface query/command semantics in the
 - WASI GitHub: https://github.com/WebAssembly/WASI
 - Wassette: https://github.com/microsoft/wassette
 - MCP Specification: https://modelcontextprotocol.io
+
+Archived 2026-08-10 board audit: speculative research targeting the frozen/deprecated MCP server.

@@ -18,3 +18,5 @@ Navigate the Docker container approval process for nuru-mcp. This involves ensur
 ## Notes
 
 This task covers the administrative/approval process. The actual Dockerfile creation and containerization work should be tracked separately if not yet completed.
+
+Archived 2026-08-10 board audit: targets the MCP server, frozen/deprecated 2026-07-14 — no new MCP work planned.

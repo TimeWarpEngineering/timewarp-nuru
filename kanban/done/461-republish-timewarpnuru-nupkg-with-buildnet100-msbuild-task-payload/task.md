@@ -189,8 +189,9 @@ noted (payload list duplicated between csproj and gate — derive or diff-test l
 31353054071 (layout gate printed `Package layout verified: … all 12 required payload entries`);
 release run 31353385089 succeeded (tag-pin, attestation, promote, OIDC push).
 
-**Left for operator:** notify consumers to bump pins to beta.73; deprecate beta.72 in the
-NuGet UI.
+**Consumer notify (2026-08-10):** ganda bumped to beta.73 (`7321fea`), validated with temp
+`NUGET_PACKAGES` (no MSB4062), PR #66 CI green, merged to master. **Still open:** deprecate
+hollow beta.72 on nuget.org UI if desired.
 
 ### How to validate
 
@@ -227,3 +228,4 @@ dotnet run --file tools/dev-cli/dev.cs -- workflow --mode pr           # expect 
 - Created: Grok Build (2026-08-09) from ganda CI investigation + clean nupkg listing
 - Root-cause analysis: Grok Build (2026-08-09) — folderized task; kitchen write-up; local repro + beta.71/72 artifact comparison
 - Implementation: Claude (2026-08-10) — explicit includes + build reorder + layout gate + tests; targeting 3.0.0-beta.73
+- Consumer bump (ganda): Grok Build (2026-08-10) — pin beta.73, clean-cache prove, PR #66 merge; checklist notify closed

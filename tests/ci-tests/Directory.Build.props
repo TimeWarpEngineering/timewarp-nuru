@@ -77,6 +77,7 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/attestation-verifier.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-mode.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/tag-assertion.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nupkg-layout-check.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/publish-state.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/release-guard.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config-service.cs" />

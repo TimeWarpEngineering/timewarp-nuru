@@ -134,6 +134,37 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       BuildCommand.Handler buildHandler = new(Terminal);
       await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
 
+      // Package layout gate (kanban 461): the nupkgs this run uploads are the
+      // exact bytes a future release promotes — verify the critical payload is
+      // inside them, because pack can silently produce hollow packages and
+      // tests never look inside a nupkg.
+      string layoutRepoRoot = ResolveRepoRoot();
+      string? layoutVersion = ReadPropsVersion(layoutRepoRoot);
+      if (string.IsNullOrWhiteSpace(layoutVersion))
+      {
+        Terminal.WriteErrorLine("Package layout gate failed: could not read package version from directory.build.props — cannot locate the TimeWarp.Nuru nupkg to verify.");
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      string nuruNupkg = Path.Combine(layoutRepoRoot, "artifacts", "packages", $"TimeWarp.Nuru.{layoutVersion}.nupkg");
+      if (!File.Exists(nuruNupkg))
+      {
+        Terminal.WriteErrorLine($"Package layout gate failed: expected {nuruNupkg} to exist after build (GeneratePackageOnBuild).");
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(nuruNupkg, NuruRequiredPackageEntries);
+      if (missing.Count > 0)
+      {
+        Terminal.WriteErrorLine($"Package layout gate failed: TimeWarp.Nuru.{layoutVersion}.nupkg is missing required entries: {string.Join(", ", missing)}. Pack produced a hollow package (kanban 461 class) — do not ship this artifact.");
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      Terminal.WriteLine($"Package layout verified: TimeWarp.Nuru.{layoutVersion}.nupkg contains all {NuruRequiredPackageEntries.Length} required payload entries.");
+
       // Step 4: Verify Samples
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
@@ -486,6 +517,25 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Environment.ExitCode = 1;
     }
+
+    // Critical payload the TimeWarp.Nuru nupkg must contain (kanban 461).
+    // Mirrors the explicit Pack includes in timewarp-nuru.csproj — update BOTH
+    // when timewarp-nuru-build's dependency set changes.
+    private static readonly string[] NuruRequiredPackageEntries =
+    [
+      "build/TimeWarp.Nuru.targets",
+      "build/net10.0/TimeWarp.Nuru.Build.dll",
+      "build/net10.0/TimeWarp.Nuru.Analyzers.dll",
+      "build/net10.0/Microsoft.Build.Framework.dll",
+      "build/net10.0/Microsoft.Build.Utilities.Core.dll",
+      "build/net10.0/Microsoft.CodeAnalysis.dll",
+      "build/net10.0/Microsoft.CodeAnalysis.CSharp.dll",
+      "build/net10.0/Microsoft.NET.StringTools.dll",
+      "build/net10.0/System.Configuration.ConfigurationManager.dll",
+      "build/net10.0/System.Diagnostics.EventLog.dll",
+      "build/net10.0/System.Security.Cryptography.ProtectedData.dll",
+      "lib/net10.0/TimeWarp.Nuru.dll"
+    ];
 
     // Repo root heuristic shared by both pipeline modes: prefer the
     // AOT-published binary's on-disk layout (bin/<rid>/ -> repo root is four

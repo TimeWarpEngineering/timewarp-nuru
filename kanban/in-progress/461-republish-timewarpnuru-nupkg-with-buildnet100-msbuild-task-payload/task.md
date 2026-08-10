@@ -81,9 +81,22 @@ payload; re-check pack layout for the next ship even if “we just fixed CI.”
 - [x] Repro: download nuget.org beta.72 nupkg; `unzip -l` shows no `build/net10.0/`
 - [x] Locate pack definition for TimeWarp.Nuru + Build task (csproj / nuspec / targets)
 - [x] Audit why beta.72 nupkg lost `build/net10.0` (see kitchen root-cause analysis)
-- [ ] Fix pack so Build task payload is included (pack-time collection + fail-loud)
-- [ ] Ensure merge CI artifacts are complete before upload (post-build pack and/or layout gate)
-- [ ] Local pack → inspect nupkg listing includes `build/net10.0/TimeWarp.Nuru.Build.dll`
+- [x] Fix pack so Build task payload is included: replaced the eval-time `*.dll` glob in
+      `source/timewarp-nuru/timewarp-nuru.csproj` with 10 **explicit** `None Include` entries
+      (from beta.71's complete manifest) — concrete paths create pack items regardless of
+      evaluation timing and fail loudly at pack if a file is missing
+- [x] Reorder `dev build` curated list (nuru before mcp) so Nuru's first
+      `GeneratePackageOnBuild` pack runs in its own step with payload present (belt-and-braces)
+- [x] Ensure merge CI artifacts are complete before upload: package **layout gate** in
+      `dev workflow` (PR + merge) — `NupkgLayoutCheck.FindMissing` verifies the Nuru nupkg
+      contains `build/TimeWarp.Nuru.targets`, all 10 `build/net10.0/*.dll`, and
+      `lib/net10.0/TimeWarp.Nuru.dll`; aborts the run on any missing entry
+- [x] Tests: `tests/timewarp-nuru-tests/devcli/nupkg-layout-01-check.cs` (4 cases: pass,
+      missing-reported-by-name, ordinal case sensitivity, empty-required) wired into both
+      test props files
+- [x] Local pack → inspect nupkg listing includes `build/net10.0/TimeWarp.Nuru.Build.dll`
+      (clean `dev build`: nupkg 5,067,541 B with all 10 build/net10.0 entries vs hollow
+      658,848 B before the fix)
 - [ ] Cut release / publish fixed version (prefer **3.0.0-beta.73**)
 - [ ] Clean-cache restore smoke (temp `NUGET_PACKAGES`)
 - [ ] Notify consumers (ganda, etc.) to bump pin when ready
@@ -128,3 +141,4 @@ CI cannot use this; republish is required.
 
 - Created: Grok Build (2026-08-09) from ganda CI investigation + clean nupkg listing
 - Root-cause analysis: Grok Build (2026-08-09) — folderized task; kitchen write-up; local repro + beta.71/72 artifact comparison
+- Implementation: Claude (2026-08-10) — explicit includes + build reorder + layout gate + tests; targeting 3.0.0-beta.73

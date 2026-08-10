@@ -108,10 +108,26 @@
           Pack="true"
           PackagePath="build/TimeWarp.Nuru.targets" />
 
-    <!-- Build task DLL and all dependencies -->
-    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/*.dll"
-          Pack="true"
-          PackagePath="build/net10.0" />
+    <!-- Build task DLL and all dependencies — EXPLICIT paths, never wildcards.
+         A wildcard here expands at project EVALUATION and silently packs an
+         empty set when the files don't exist yet (kanban 461: nuget beta.72
+         shipped without build/net10.0 because GeneratePackageOnBuild packed
+         this project as a side effect of the MCP build before the glob could
+         see these files; same class as kanban 389). Concrete includes create
+         the item regardless of evaluation timing and FAIL LOUDLY at pack time
+         if a file is missing. When timewarp-nuru-build gains or drops a
+         dependency, update this list — the CI package-layout gate and a
+         clean-cache consumer restore are the backstops. -->
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/TimeWarp.Nuru.Build.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/TimeWarp.Nuru.Analyzers.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/Microsoft.Build.Framework.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/Microsoft.Build.Utilities.Core.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/Microsoft.CodeAnalysis.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/Microsoft.CodeAnalysis.CSharp.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/Microsoft.NET.StringTools.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/System.Configuration.ConfigurationManager.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/System.Diagnostics.EventLog.dll" Pack="true" PackagePath="build/net10.0" />
+    <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/System.Security.Cryptography.ProtectedData.dll" Pack="true" PackagePath="build/net10.0" />
   </ItemGroup>
 
 </Project>

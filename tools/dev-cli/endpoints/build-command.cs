@@ -89,8 +89,13 @@ internal sealed class BuildCommand : ICommand<Unit>
       [
         "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
         "source/timewarp-nuru-build/timewarp-nuru-build.csproj",
-        "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
+        // nuru builds BEFORE mcp so its first (GeneratePackageOnBuild) pack
+        // happens in its own step with the build-task payload present —
+        // previously mcp's ProjectReference side-effect-packed nuru first,
+        // producing hollow nupkgs (kanban 461). Belt-and-braces alongside the
+        // explicit payload includes in timewarp-nuru.csproj.
         "source/timewarp-nuru/timewarp-nuru.csproj",
+        "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
         "source/timewarp-nuru-search/timewarp-nuru-search.csproj",
         "source/timewarp-nuru-devcli/timewarp-nuru-devcli.csproj"
       ];

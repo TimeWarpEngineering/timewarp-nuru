@@ -180,9 +180,7 @@ internal static class RouteMatcherEmitter
 
         case ParameterDefinition param when param.IsCatchAll:
           // Catch-all: slice from current position to end
-          string catchAllVar = (param.HasTypeConstraint || param.IsCatchAll)
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string catchAllVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string[] {catchAllVar} = __positionalArgs_{routeIndex}[{positionalIndex}..];");
           // Don't increment - catch-all consumes remaining
@@ -190,9 +188,7 @@ internal static class RouteMatcherEmitter
 
         case ParameterDefinition param when param.IsOptional:
           // Optional param: conditional extraction
-          string optVar = param.HasTypeConstraint
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string optVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string? {optVar} = __positionalArgs_{routeIndex}.Length > {positionalIndex} ? __positionalArgs_{routeIndex}[{positionalIndex}] : null;");
           positionalIndex++;
@@ -200,9 +196,7 @@ internal static class RouteMatcherEmitter
 
         case ParameterDefinition param:
           // Required param: direct extraction
-          string reqVar = param.HasTypeConstraint
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string reqVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string {reqVar} = __positionalArgs_{routeIndex}[{positionalIndex}];");
           positionalIndex++;
@@ -305,26 +299,20 @@ internal static class RouteMatcherEmitter
           break;
 
         case ParameterDefinition param when param.IsCatchAll:
-          string catchAllVar = (param.HasTypeConstraint || param.IsCatchAll)
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string catchAllVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string[] {catchAllVar} = __positionalArgs_{routeIndex}[{positionalIndex}..];");
           break;
 
         case ParameterDefinition param when param.IsOptional:
-          string optVar = param.HasTypeConstraint
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string optVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string? {optVar} = __positionalArgs_{routeIndex}.Length > {positionalIndex} ? __positionalArgs_{routeIndex}[{positionalIndex}] : null;");
           positionalIndex++;
           break;
 
         case ParameterDefinition param:
-          string reqVar = param.HasTypeConstraint
-            ? $"__{param.CamelCaseName}_{routeIndex}"
-            : param.CamelCaseName;
+          string reqVar = PositionalCaptureVar(param, routeIndex);
           sb.AppendLine(
             $"      string {reqVar} = __positionalArgs_{routeIndex}[{positionalIndex}];");
           positionalIndex++;
@@ -410,35 +398,16 @@ internal static class RouteMatcherEmitter
   }
 
   /// <summary>
-  /// Emits code to extract parameter values from the positional args array.
+  /// Variable name for a positional parameter capture before type conversion.
+  /// Typed and catch-all params use a unique temp name; untyped params use the
+  /// final identifier (escaped if it is a C# keyword/contextual keyword).
   /// </summary>
-  private static void EmitParameterExtractionFromPositionalArgs(StringBuilder sb, RouteDefinition route, int routeIndex, int startIndex)
+  private static string PositionalCaptureVar(ParameterDefinition param, int routeIndex)
   {
-    int paramIndex = startIndex;
-    foreach (ParameterDefinition param in route.Parameters)
-    {
-      string varName = (param.HasTypeConstraint || param.IsCatchAll)
-        ? $"__{param.CamelCaseName}_{routeIndex}"
-        : param.CamelCaseName;
+    if (param.HasTypeConstraint || param.IsCatchAll)
+      return $"__{param.CamelCaseName}_{routeIndex}";
 
-      if (param.IsCatchAll)
-      {
-        sb.AppendLine(
-          $"      string[] {varName} = __positionalArgs_{routeIndex}[{paramIndex}..];");
-      }
-      else if (param.IsOptional)
-      {
-        sb.AppendLine(
-          $"      string? {varName} = __positionalArgs_{routeIndex}.Length > {paramIndex} ? __positionalArgs_{routeIndex}[{paramIndex}] : null;");
-        paramIndex++;
-      }
-      else
-      {
-        sb.AppendLine(
-          $"      string {varName} = __positionalArgs_{routeIndex}[{paramIndex}];");
-        paramIndex++;
-      }
-    }
+    return CSharpIdentifierUtils.EscapeIfKeyword(param.CamelCaseName);
   }
 
   /// <summary>
@@ -682,30 +651,6 @@ internal static class RouteMatcherEmitter
 
     // Emit type conversion and array creation
     EmitRepeatedOptionTypeConversion(sb, option, escapedVarName, listVarName, routeIndex, customConverters, route);
-  }
-
-  /// <summary>
-  /// Emits variable aliases from route-unique names to handler-expected names.
-  /// This is needed for untyped string parameters.
-  /// </summary>
-  private static void EmitVariableAliases(StringBuilder sb, RouteDefinition route, int routeIndex, int indent)
-  {
-    string indentStr = new(' ', indent);
-
-    foreach (ParameterDefinition param in route.Parameters)
-    {
-      // Skip typed parameters - they get aliases via type conversion
-      if (param.HasTypeConstraint)
-        continue;
-
-      string varName = param.CamelCaseName;
-      string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
-      string uniqueVarName = $"__{varName}_{routeIndex}";
-
-      // Create alias from unique name to handler-expected name
-      sb.AppendLine(
-        $"{indentStr}string {escapedVarName} = {uniqueVarName};");
-    }
   }
 
   /// <summary>

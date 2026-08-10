@@ -92,7 +92,8 @@ internal static class HandlerExtractor
     // Fallback to syntax-only analysis
     foreach (RoslynParameterSyntax param in lambda.ParameterList.Parameters)
     {
-      string paramName = param.Identifier.Text;
+      // ValueText strips a leading @ so ParameterName never stores the escape prefix
+      string paramName = param.Identifier.ValueText;
       string typeName = NormalizeTypeName(param.Type?.ToString() ?? "object");
 
       if (IsCancellationTokenType(typeName))
@@ -183,8 +184,8 @@ internal static class HandlerExtractor
       };
     }
 
-    // Fallback to syntax-only
-    string paramName = lambda.Parameter.Identifier.Text;
+    // Fallback to syntax-only — ValueText strips leading @ from escaped identifiers
+    string paramName = lambda.Parameter.Identifier.ValueText;
 
     ImmutableArray<ParameterBinding> parameters =
     [
@@ -255,7 +256,8 @@ internal static class HandlerExtractor
     {
       foreach (RoslynParameterSyntax param in anonymousMethod.ParameterList.Parameters)
       {
-        string paramName = param.Identifier.Text;
+        // ValueText strips a leading @ so ParameterName never stores the escape prefix
+        string paramName = param.Identifier.ValueText;
         string typeName = NormalizeTypeName(param.Type?.ToString() ?? "object");
 
         if (IsCancellationTokenType(typeName))

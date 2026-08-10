@@ -39,8 +39,10 @@ builder.Map("enabled {feature} {state:bool}")
   .WithHandler((string feature, bool state) => Console.WriteLine($"🎚️  Feature '{feature}' is {(state ? "enabled" : "disabled")}"))
   .AsIdempotentCommand().Done();
 
-builder.Map("schedule {name} {at:DateTime}")
-  .WithHandler((string name, DateTime at) => Console.WriteLine($"📅 Event '{name}' scheduled for {at:yyyy-MM-dd HH:mm:ss}"))
+// Route param names may be C# keywords; handler uses @event and when (contextual).
+// Generator must emit escaped identifiers (task 460).
+builder.Map("schedule {event} {when:DateTime}")
+  .WithHandler((string @event, DateTime when) => Console.WriteLine($"📅 Event '{@event}' scheduled for {when:yyyy-MM-dd HH:mm:ss}"))
   .AsCommand().Done();
 
 builder.Map("id {value:Guid}")

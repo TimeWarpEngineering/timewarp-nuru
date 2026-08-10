@@ -18,9 +18,9 @@ Repro: restore `{event}`/`{when:DateTime}` param names in
 
 ## Checklist
 
-- [ ] Generator escapes identifiers that are C# keywords/contextual keywords (`@`-prefix) everywhere parameter names are emitted
-- [ ] Analyzer or generator test covering keyword-named route params (event, when, class, ref, ...)
-- [ ] Restore a keyword-named param somewhere in samples as a living regression check (or add a dedicated test)
+- [x] Generator escapes identifiers that are C# keywords/contextual keywords (`@`-prefix) everywhere parameter names are emitted
+- [x] Analyzer or generator test covering keyword-named route params (event, when, class, ref, ...)
+- [x] Restore a keyword-named param somewhere in samples as a living regression check (or add a dedicated test)
 
 ## Notes
 
@@ -68,3 +68,4 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 ## Session
 
 Orchestrator: grok (2026-08-10) — Phase 2 plan finalized
+Implementer: grok (2026-08-10) — EscapeIfKeyword via SyntaxFacts; PositionalCaptureVar; BuildArgumentList escape; generator-39 + sample restored

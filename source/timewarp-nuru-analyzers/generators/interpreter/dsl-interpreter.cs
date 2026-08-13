@@ -607,6 +607,8 @@ public sealed class DslInterpreter
 
       "WithAlias" => DispatchWithAlias(invocation, receiver),
 
+      "WithExample" => DispatchWithExample(invocation, receiver),
+
       "Implements" => DispatchImplements(invocation, receiver),
 
       "DiscoverEndpoints" => DispatchDiscoverEndpoints(invocation, receiver),
@@ -1554,6 +1556,31 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
+  /// Dispatches WithExample() call to IIrRouteBuilder.
+  /// </summary>
+  private object? DispatchWithExample(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (!IsDslBuilderMethod(invocation)) return null;
+
+    if (receiver is not IIrRouteBuilder routeBuilder)
+    {
+      throw new InvalidOperationException(
+        $"WithExample() must be called on a route builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? command = ExtractStringArgumentAt(invocation, 0);
+    if (command is null)
+    {
+      throw new InvalidOperationException(
+        $"WithExample() requires a command string. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? description = ExtractStringArgumentAt(invocation, 1);
+
+    return routeBuilder.WithExample(command, description);
+  }
+
+  /// <summary>
   /// Dispatches Implements&lt;T&gt;() call to IIrRouteBuilder.
   /// Extracts the interface type and property assignments from the expression.
   /// </summary>
@@ -1749,13 +1776,21 @@ public sealed class DslInterpreter
   /// <summary>
   /// Extracts the first string argument from a method invocation.
   /// </summary>
-  private static string? ExtractStringArgument(InvocationExpressionSyntax invocation)
+  private static string? ExtractStringArgument(InvocationExpressionSyntax invocation) =>
+    ExtractStringArgumentAt(invocation, 0);
+
+  /// <summary>
+  /// Extracts a positional string argument at the given index from a method invocation.
+  /// Returns null when the argument is absent (e.g., an optional trailing parameter wasn't
+  /// supplied) or is not a string literal.
+  /// </summary>
+  private static string? ExtractStringArgumentAt(InvocationExpressionSyntax invocation, int index)
   {
     ArgumentListSyntax? args = invocation.ArgumentList;
-    if (args is null || args.Arguments.Count == 0)
+    if (args is null || args.Arguments.Count <= index)
       return null;
 
-    ExpressionSyntax argExpression = args.Arguments[0].Expression;
+    ExpressionSyntax argExpression = args.Arguments[index].Expression;
 
     return argExpression switch
     {

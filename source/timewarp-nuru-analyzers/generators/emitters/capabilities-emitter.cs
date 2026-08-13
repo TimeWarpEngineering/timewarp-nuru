@@ -221,7 +221,25 @@ internal static class CapabilitiesEmitter
       EmitOptionCapability(sb, option, optionIsLast, enumValues, handlerTypeName);
     }
 
-    sb.AppendLine("        ]");
+    // Options array closes with a trailing comma only when an Examples block follows -
+    // routes with no examples must emit byte-identical code to before this feature existed.
+    sb.AppendLine(route.HasExamples ? "        ]," : "        ]");
+
+    // Examples (omitted entirely when the route has none)
+    if (route.HasExamples)
+    {
+      sb.AppendLine("        Examples =");
+      sb.AppendLine("        [");
+      IReadOnlyList<ExampleDefinition> examples = [.. route.Examples];
+      for (int i = 0; i < examples.Count; i++)
+      {
+        bool exampleIsLast = i == examples.Count - 1;
+        EmitExampleCapability(sb, examples[i], exampleIsLast);
+      }
+
+      sb.AppendLine("        ]");
+    }
+
     sb.AppendLine("      });");
   }
 
@@ -328,6 +346,31 @@ internal static class CapabilitiesEmitter
       }
 
       sb.AppendLine("],");
+    }
+
+    string comma = isLast ? "" : ",";
+    sb.AppendLine($"            }}{comma}");
+  }
+
+  /// <summary>
+  /// Emits a single ExampleCapability initializer.
+  /// </summary>
+  private static void EmitExampleCapability(StringBuilder sb, ExampleDefinition example, bool isLast)
+  {
+    string command = EmitterStringUtils.EscapeForStringLiteral(example.Command);
+
+    sb.AppendLine("            new global::TimeWarp.Nuru.ExampleCapability");
+    sb.AppendLine("            {");
+
+    if (example.Description is not null)
+    {
+      string description = EmitterStringUtils.EscapeForStringLiteral(example.Description);
+      sb.AppendLine($"              Command = \"{command}\",");
+      sb.AppendLine($"              Description = \"{description}\"");
+    }
+    else
+    {
+      sb.AppendLine($"              Command = \"{command}\"");
     }
 
     string comma = isLast ? "" : ",";

@@ -78,6 +78,22 @@ public sealed class GoodbyeCommand : ICommand<Unit> { }
 
 All three patterns (`goodbye`, `bye`, `cya`) invoke the same handler.
 
+### [NuruRouteExample]
+
+Declares a concrete usage example, shown in the command's `--help` output (an "Examples:"
+section after Options) and in the `--capabilities` JSON. Apply multiple times to declare
+several examples; they render in the order declared:
+
+```csharp
+[NuruRoute("deploy", Description = "Deploy to an environment")]
+[NuruRouteExample("deploy prod", Description = "Deploy to production")]
+[NuruRouteExample("deploy staging --dry-run")]
+public sealed class DeployCommand : ICommand<Unit> { }
+```
+
+The command text is verbatim - write it exactly as a user would type it after the executable
+name. `Description` is optional.
+
 ### [NuruRouteGroup]
 
 Applied to base classes to provide a shared prefix for derived commands:

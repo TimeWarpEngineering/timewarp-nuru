@@ -21,6 +21,9 @@ using System.Text;
 /// Used for delegate routes to declare filter interfaces for behaviors.
 /// </param>
 /// <param name="GroupTypeHierarchy">Type hierarchy for group filtering in subset CLI editions</param>
+/// <param name="Examples">
+/// Usage examples declared via <c>[NuruRouteExample]</c> or <c>.WithExample()</c>, in declaration order.
+/// </param>
 public sealed record RouteDefinition(
   string OriginalPattern,
   EquatableArray<SegmentDefinition> Segments,
@@ -33,7 +36,8 @@ public sealed record RouteDefinition(
   int ComputedSpecificity,
   int Order,
   EquatableArray<InterfaceImplementationDefinition> Implements = default,
-  EquatableArray<string> GroupTypeHierarchy = default)
+  EquatableArray<string> GroupTypeHierarchy = default,
+  EquatableArray<ExampleDefinition> Examples = default)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
@@ -50,7 +54,8 @@ public sealed record RouteDefinition(
     int computedSpecificity = 0,
     int order = 0,
     EquatableArray<InterfaceImplementationDefinition>? implements = null,
-    EquatableArray<string>? groupTypeHierarchy = null)
+    EquatableArray<string>? groupTypeHierarchy = null,
+    EquatableArray<ExampleDefinition>? examples = null)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,
@@ -64,7 +69,8 @@ public sealed record RouteDefinition(
       ComputedSpecificity: computedSpecificity,
       Order: order,
       Implements: implements ?? [],
-      GroupTypeHierarchy: groupTypeHierarchy ?? []);
+      GroupTypeHierarchy: groupTypeHierarchy ?? [],
+      Examples: examples ?? []);
   }
 
   /// <summary>
@@ -235,4 +241,9 @@ public sealed record RouteDefinition(
   /// Gets whether this route has any interface implementations.
   /// </summary>
   public bool HasImplements => !Implements.IsDefaultOrEmpty && Implements.Length > 0;
+
+  /// <summary>
+  /// Gets whether this route has any usage examples.
+  /// </summary>
+  public bool HasExamples => !Examples.IsDefaultOrEmpty && Examples.Length > 0;
 }

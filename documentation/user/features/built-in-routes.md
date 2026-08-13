@@ -104,6 +104,8 @@ See [REPL Key Bindings](repl-key-bindings.md) for keyboard shortcuts and customi
 ## Help Route (`--help`, `-h`)
 
 Displays help information for your application. See [Auto-Help](auto-help.md) for details on customizing help output.
+Per-route help (`<command> --help`) also renders an "Examples:" section when the route declares
+usage examples via `[NuruRouteExample]` or `.WithExample()`.
 
 ## Disabling Built-in Routes
 

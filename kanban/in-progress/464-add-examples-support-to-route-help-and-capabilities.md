@@ -43,15 +43,15 @@ clear in truncated table cells — timewarp-ganda task 211 annotates it once thi
 
 ## Checklist
 
-- [ ] NuruRouteExampleAttribute (runtime package) with XML docs
-- [ ] ExampleDefinition model + RouteDefinition.Examples (EquatableArray) + Create param
-- [ ] EndpointExtractor: extract multiple [NuruRouteExample] attributes
-- [ ] Fluent DSL: WithExample no-op, DslInterpreter dispatch, IrRouteBuilder + RouteDefinitionBuilder
-- [ ] route-help-emitter: Examples section after Options (escaped literals, .Dim() descriptions)
-- [ ] capabilities: ExampleCapability DTO + nullable Examples property + serializer context + emitter
-- [ ] Tests: help-08-route-examples.cs + capabilities-06-examples.cs (0/1/N, fluent, escaping, omission)
-- [ ] No-regression: unannotated sample --help/--capabilities byte-identical; full CI test sweep green
-- [ ] Docs: readme, tw-nuru skill, auto-help/built-in-routes/endpoints feature docs
+- [x] NuruRouteExampleAttribute (runtime package) with XML docs
+- [x] ExampleDefinition model + RouteDefinition.Examples (EquatableArray) + Create param
+- [x] EndpointExtractor: extract multiple [NuruRouteExample] attributes
+- [x] Fluent DSL: WithExample no-op, DslInterpreter dispatch, IrRouteBuilder + RouteDefinitionBuilder
+- [x] route-help-emitter: Examples section after Options (escaped literals, .Dim() descriptions)
+- [x] capabilities: ExampleCapability DTO + nullable Examples property + serializer context + emitter
+- [x] Tests: help-08-route-examples.cs + capabilities-06-examples.cs (0/1/N, fluent, escaping, omission)
+- [x] No-regression: unannotated sample --help/--capabilities byte-identical; full CI test sweep green
+- [x] Docs: readme, tw-nuru skill, auto-help/built-in-routes/endpoints feature docs
 
 ## Notes
 
@@ -87,3 +87,10 @@ Resolved forks: description lines use .Dim() (first color in per-route help, acc
 
 - Created: 0f730c83-90e5-4a4c-8bb2-3020fdd469d6 (2026-08-13)
 - Planning: 0f730c83-90e5-4a4c-8bb2-3020fdd469d6 (2026-08-13)
+- Implementation: 0f730c83-90e5-4a4c-8bb2-3020fdd469d6 (2026-08-13) — implemented per plan;
+  all checklist items done. `timewarp-nuru-analyzers`/`timewarp-nuru` build clean
+  (warnings-as-errors), help-08 (7/7) and capabilities-06 (4/4) pass, full CI sweep
+  (`tests/ci-tests/run-ci-tests.cs`, exit 0, 1595 total/1588 passed/7 skipped in multi-mode
+  plus all standalone phases green) unaffected. No-regression verified by running
+  `samples/endpoints/02-calculator` `--help`, `add --help`, and `--capabilities` before
+  (git stash) and after the change: outputs byte-identical. Not committed per instructions.

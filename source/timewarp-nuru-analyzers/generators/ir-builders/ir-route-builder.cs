@@ -123,6 +123,16 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   }
 
   /// <summary>
+  /// Adds a usage example for this route.
+  /// Mirrors: RouteBuilder.WithExample()
+  /// </summary>
+  public IrRouteBuilder<TParent> WithExample(string command, string? description)
+  {
+    Builder.WithExample(new ExampleDefinition(command, description));
+    return this;
+  }
+
+  /// <summary>
   /// Completes the route and returns to the parent builder.
   /// Mirrors: RouteBuilder.Done()
   /// </summary>
@@ -146,6 +156,7 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   IIrRouteBuilder IIrRouteBuilder.AsCommand() => AsCommand();
   IIrRouteBuilder IIrRouteBuilder.AsIdempotentCommand() => AsIdempotentCommand();
   IIrRouteBuilder IIrRouteBuilder.AddImplementation(InterfaceImplementationDefinition implementation) => AddImplementation(implementation);
+  IIrRouteBuilder IIrRouteBuilder.WithExample(string command, string? description) => WithExample(command, description);
   object IIrRouteBuilder.Done() => Done()!;
   object IIrRouteBuilder.DoneParent => Parent!;
 }

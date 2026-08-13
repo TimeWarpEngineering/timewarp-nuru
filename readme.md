@@ -56,6 +56,9 @@ NuruApp app = NuruApp.CreateBuilder()
 return await app.RunAsync(args);
 ```
 
+Add `[NuruRouteExample("add 2 3", Description = "Add two numbers")]` (repeatable) to a
+command class to show concrete usage in `add --help` and in `--capabilities` JSON.
+
 ### Fluent DSL
 
 Define routes inline with a fluent builder API:

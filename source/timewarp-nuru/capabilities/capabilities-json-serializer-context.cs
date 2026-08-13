@@ -10,9 +10,11 @@ namespace TimeWarp.Nuru;
 [JsonSerializable(typeof(EndpointKind))]
 [JsonSerializable(typeof(ParameterCapability))]
 [JsonSerializable(typeof(OptionCapability))]
+[JsonSerializable(typeof(ExampleCapability))]
 [JsonSerializable(typeof(IReadOnlyList<EndpointCapability>))]
 [JsonSerializable(typeof(IReadOnlyList<ParameterCapability>))]
 [JsonSerializable(typeof(IReadOnlyList<OptionCapability>))]
+[JsonSerializable(typeof(IReadOnlyList<ExampleCapability>))]
 [JsonSerializable(typeof(IReadOnlyList<string>))]
 [JsonSourceGenerationOptions(
   WriteIndented = true,

@@ -94,3 +94,43 @@ Resolved forks: description lines use .Dim() (first color in per-route help, acc
   plus all standalone phases green) unaffected. No-regression verified by running
   `samples/endpoints/02-calculator` `--help`, `add --help`, and `--capabilities` before
   (git stash) and after the change: outputs byte-identical. Not committed per instructions.
+- Review + disposition: 0f730c83-90e5-4a4c-8bb2-3020fdd469d6 (2026-08-13)
+
+## Results
+
+### What was done
+
+- New `[NuruRouteExample("...", Description = "...")]` attribute (AllowMultiple) and fluent `.WithExample(command, description?)` on both EndpointBuilder and GroupEndpointBuilder — commit a1ae675d.
+- Examples thread through `RouteDefinition` as `EquatableArray<ExampleDefinition>` (incremental-generator cache-safe) via EndpointExtractor (attribute path) and DslInterpreter/RouteDefinitionBuilder (fluent path).
+- Per-route `--help` renders an `Examples:` section after Options: full-width lines, escaped literals, `.Dim()` descriptions (route-help-emitter.cs). App-level and group help unchanged.
+- `--capabilities` emits `"examples": [{"command", "description"}]` per endpoint, declared last on EndpointCapability and omitted entirely when a route has none — JSON byte-identical for unannotated routes (verified via stash-diff on the calculator sample).
+- Review fixes: fluent named-argument resolution (NameColon-preferred; was silently swapping `.WithExample(description: ..., command: ...)`), empty-command/-description normalization consistent across both DSL paths, and non-literal command arguments now fail the build with NURU_S999 instead of being silently dropped — commits 6c7ac49a, f8c3936b.
+- Bonus latent-bug fix (f8c3936b): `AppExtractor.ExtractFromBuildCall`'s no-model fallback returned `Empty`, discarding all diagnostics collected before an aborted fluent chain — such apps compiled clean and failed at runtime ("RunAsync was not intercepted"). Now returns `Failure(diagnostics)` so NURU_S999/H005/etc. surface at build time.
+- Tests: help-08-route-examples (8), capabilities-06-examples (4), generator-40-with-example-non-literal-command (Roslyn-hosted, pins S999 + H005 surviving together). Docs: readme, tw-nuru skill, auto-help/built-in-routes/endpoints feature docs.
+- Follow-up task created: 465 (escape U+0085/U+2028/U+2029 in generated string literals — pre-existing systemic gap found in review).
+
+### Review (Phase 4b)
+
+- Rounds: 3; roster: general (effort 1); artifacts under `review/`.
+- Findings: 1 bug, 1 suggestion, 3 nits. Fixed: M1 (bug), M2, M3 (nits), M5 (suggestion). Wontfix: M4 (nit) → follow-up task 465. Final: 0 open.
+- Disposition: **accepted-exceptions** (`review/disposition.md`). No escalations.
+
+### How to validate
+
+Smoke:
+```bash
+cd <repo>
+dotnet build timewarp-nuru.slnx                 # clean, warnings-as-errors
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/help/help-08-route-examples.cs            # 8/8
+dotnet run tests/timewarp-nuru-tests/capabilities/capabilities-06-examples.cs  # 4/4
+dotnet run tests/timewarp-nuru-tests/generator/generator-40-with-example-non-literal-command.cs  # 1/1
+```
+
+Manual eyeball: annotate any sample endpoint with `[NuruRouteExample("demo run --verbose", Description = "Run verbosely")]`, then `dotnet <sample>.cs demo --help` shows an `Examples:` section after Options, and `dotnet <sample>.cs --capabilities` shows an `examples` array on that endpoint (and no `examples` key on unannotated endpoints).
+
+Expect: all commands green as annotated; unannotated routes' help/capabilities output unchanged from before this feature.
+
+Automated gate: `dotnet run tests/ci-tests/run-ci-tests.cs` (full sweep — 1596 tests, exit 0).
+
+Depends on: nothing. Not in scope: escaping gap for U+0085/U+2028/U+2029 (task 465); consuming this feature in ganda `skills add` (timewarp-ganda task 211, blocked on the next Nuru release containing this).

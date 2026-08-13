@@ -309,8 +309,16 @@ internal static class AppExtractor
       return new ExtractionResult(modelWithMetadata, [.. diagnostics]);
     }
 
-    // No model produced.
-    return ExtractionResult.Empty;
+    // No model produced. Preserve any diagnostics collected before extraction aborted (e.g. an
+    // uncaught InvalidOperationException from a Dispatch* method converted to NURU_S999) - by
+    // this point BuildLocator.IsConfirmedBuildCall has already semantically confirmed this IS a
+    // genuine NuruApp.Build() call, so returning Empty here silently dropped real diagnostics
+    // (kanban 464 round-2 M5): the app compiled with no error/warning but crashed at runtime
+    // with "RunAsync was not intercepted" since no interceptor was ever emitted for it.
+    // CreateGeneratorModelWithValidation (nuru-generator.cs) already collects result.Diagnostics
+    // from every ExtractionResult regardless of Model nullness and reports them via Stage A's
+    // RegisterSourceOutput even when uniqueApps is empty - Failure() is what wires into that.
+    return ExtractionResult.Failure(result.Diagnostics);
   }
 
   /// <summary>

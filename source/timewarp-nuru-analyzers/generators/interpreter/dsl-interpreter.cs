@@ -1568,15 +1568,32 @@ public sealed class DslInterpreter
         $"WithExample() must be called on a route builder. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
-    // Resolve by name first (handles reordered named args, e.g. .WithExample(description: "d", command: "c")),
-    // falling back to position. Silently skip null/empty commands - mirrors the attribute
-    // extraction path (EndpointExtractor.ExtractNuruRouteExampleAttributes), which never throws.
-    string? command = ExtractStringArgumentAt(invocation, 0, "command");
-    if (string.IsNullOrEmpty(command))
+    // Resolve the command ARGUMENT first (not just its string value) so "missing" (throw),
+    // "present but not a string literal" (throw, consistent with WithAlias below), and
+    // "literal but empty" (silent skip, mirroring the attribute extraction path's
+    // skip-on-empty in EndpointExtractor.ExtractNuruRouteExampleAttributes) are distinguished
+    // rather than all collapsing to null.
+    ArgumentSyntax? commandArgument = ResolveArgumentAt(invocation, 0, "command");
+    if (commandArgument is null)
+    {
+      throw new InvalidOperationException(
+        $"WithExample() requires a command string. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? command = ExtractLiteralStringValue(commandArgument.Expression);
+    if (command is null)
+    {
+      throw new InvalidOperationException(
+        $"WithExample() requires a command string literal. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    if (command.Length == 0)
     {
       return routeBuilder;
     }
 
+    // Description keeps the existing lenient behavior (non-literal/absent -> null),
+    // consistent with WithDescription's precedent.
     string? description = ExtractStringArgumentAt(invocation, 1, "description");
 
     // Normalize "" to null so both emitters (help / capabilities) see the same absent-vs-present
@@ -1807,6 +1824,20 @@ public sealed class DslInterpreter
   /// <returns>The string value, or null when absent or not a string literal.</returns>
   private static string? ExtractStringArgumentAt(InvocationExpressionSyntax invocation, int index, string? parameterName = null)
   {
+    ArgumentSyntax? argument = ResolveArgumentAt(invocation, index, parameterName);
+    return argument is null ? null : ExtractLiteralStringValue(argument.Expression);
+  }
+
+  /// <summary>
+  /// Resolves the <see cref="ArgumentSyntax"/> at the given position from a method invocation,
+  /// same name/position rules as <see cref="ExtractStringArgumentAt"/> (see its docs), but
+  /// returns the argument itself rather than its literal string value - callers that need to
+  /// distinguish "argument absent" from "argument present but not a string literal" (e.g.
+  /// WithExample's command, which must throw on the latter but tolerate the former differently)
+  /// use this directly instead of the value-only helper.
+  /// </summary>
+  private static ArgumentSyntax? ResolveArgumentAt(InvocationExpressionSyntax invocation, int index, string? parameterName = null)
+  {
     ArgumentListSyntax? args = invocation.ArgumentList;
     if (args is null)
       return null;
@@ -1816,14 +1847,11 @@ public sealed class DslInterpreter
       foreach (ArgumentSyntax candidate in args.Arguments)
       {
         if (candidate.NameColon?.Name.Identifier.Text == parameterName)
-          return ExtractLiteralStringValue(candidate.Expression);
+          return candidate;
       }
     }
 
-    if (args.Arguments.Count <= index)
-      return null;
-
-    return ExtractLiteralStringValue(args.Arguments[index].Expression);
+    return args.Arguments.Count <= index ? null : args.Arguments[index];
   }
 
   /// <summary>

@@ -43,14 +43,15 @@ clear in truncated table cells — timewarp-ganda task 211 annotates it once thi
 
 ## Checklist
 
-- [ ] Design attribute surface (`NuruRouteExampleAttribute` with AllowMultiple vs array property); confirm with analyzer conventions
-- [ ] Extend `RouteDefinition` model + `EndpointExtractor` extraction
-- [ ] Render `Examples:` section in `route-help-emitter.cs` after Options
-- [ ] Emit `examples` array in `capabilities-emitter.cs` (omitted when empty)
-- [ ] Fluent DSL support or documented exclusion
-- [ ] Tests: help output snapshots + capabilities JSON shape for 0/1/N examples
-- [ ] Verify no-regression: existing sample CLIs produce unchanged help/capabilities
-- [ ] Docs: README + skill doc updated
+- [ ] NuruRouteExampleAttribute (runtime package) with XML docs
+- [ ] ExampleDefinition model + RouteDefinition.Examples (EquatableArray) + Create param
+- [ ] EndpointExtractor: extract multiple [NuruRouteExample] attributes
+- [ ] Fluent DSL: WithExample no-op, DslInterpreter dispatch, IrRouteBuilder + RouteDefinitionBuilder
+- [ ] route-help-emitter: Examples section after Options (escaped literals, .Dim() descriptions)
+- [ ] capabilities: ExampleCapability DTO + nullable Examples property + serializer context + emitter
+- [ ] Tests: help-08-route-examples.cs + capabilities-06-examples.cs (0/1/N, fluent, escaping, omission)
+- [ ] No-regression: unannotated sample --help/--capabilities byte-identical; full CI test sweep green
+- [ ] Docs: readme, tw-nuru skill, auto-help/built-in-routes/endpoints feature docs
 
 ## Notes
 
@@ -62,6 +63,27 @@ clear in truncated table cells — timewarp-ganda task 211 annotates it once thi
 - Downstream consumer task: timewarp-ganda 211 (annotate `skills add`); ganda 210
   (well-known discovery) will add a fifth example form later.
 
+### Implementation plan (2026-08-13)
+
+Attribute surface: new `NuruRouteExampleAttribute` (source/timewarp-nuru/attributes/nuru-route-example-attribute.cs), AttributeUsage Class + AllowMultiple, ctor (string command) + named Description — modeled on NuruRouteAliasAttribute (extraction precedent is symbol-based name matching in EndpointExtractor).
+
+Model: new `ExampleDefinition(string Command, string? Description)` record (generators/models/example-definition.cs); RouteDefinition gains trailing `EquatableArray<ExampleDefinition> Examples = default` (EquatableArray preserves incremental-generator caching — guarded by generator-37-incrementality-caching test) + `HasExamples` helper; RouteDefinition.Create gains optional examples param.
+
+Endpoint DSL extraction: EndpointExtractor gains ExtractNuruRouteExampleAttributes modeled on the alias extraction but accumulating across all matches (AllowMultiple, source order preserved); skips null/empty commands.
+
+Fluent DSL: `.WithExample(command, description?)` — declarative no-op on EndpointBuilder + GroupEndpointBuilder; DslInterpreter dispatch case (modeled on DispatchWithAlias) with new ExtractStringArgumentAt helper for the optional second arg; IIrRouteBuilder/IrRouteBuilder members; RouteDefinitionBuilder accumulator.
+
+Help: route-help-emitter.cs EmitRouteHelpContent, after the Options block (~line 197): blank line, "Examples:" header, per example a two-space-indented command line and (if present) a four-space-indented `.Dim()` description line; plain string literals via EmitterStringUtils.EscapeForStringLiteral (safe for quotes/braces — help-07 regression class). App-level help-emitter.cs and group help unchanged; examples are per-route help only.
+
+Capabilities: capabilities-response.cs gains `ExampleCapability { Command, Description? }` and EndpointCapability gains `IReadOnlyList<ExampleCapability>? Examples` as LAST property defaulting to null (WhenWritingNull omits it — JSON byte-identical for unannotated routes); serializer context registrations added; capabilities-emitter.cs EmitEndpointCapabilityAdd conditionally emits the Examples initializer.
+
+Tests (Jaribu runfiles, .Map<T>(), unique literals, ganda runfile cache --clear after generator changes): tests/timewarp-nuru-tests/help/help-08-route-examples.cs (attribute + fluent + no-examples negative + special-chars escaping) and tests/timewarp-nuru-tests/capabilities/capabilities-06-examples.cs (DTO shape, integration, omission when none). CI picks both up via glob; full sweep via dotnet run tests/ci-tests/run-ci-tests.cs.
+
+Docs: readme.md attribute snippet, skills/tw-nuru/SKILL.md (attribute + .WithExample), documentation/user/features/auto-help.md + built-in-routes.md + endpoints.md.
+
+Resolved forks: description lines use .Dim() (first color in per-route help, accepted per task intent); example text is verbatim (what the user types after the executable — document this); examples key emitted last in capabilities JSON; [NuruRouteExample] on group base classes is out of scope (silently ignored — noted as possible follow-up); no new analyzer (empty commands silently skipped).
+
 ## Session
 
 - Created: 0f730c83-90e5-4a4c-8bb2-3020fdd469d6 (2026-08-13)
+- Planning: 0f730c83-90e5-4a4c-8bb2-3020fdd469d6 (2026-08-13)

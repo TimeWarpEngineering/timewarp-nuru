@@ -310,6 +310,11 @@ internal static class EndpointExtractor
         }
       }
 
+      // Normalize "" to null so both emitters (help / capabilities) see the same absent-vs-present
+      // signal - capabilities' `is not null` guard would otherwise emit an empty "description": "".
+      if (string.IsNullOrEmpty(description))
+        description = null;
+
       examples.Add(new ExampleDefinition(command, description));
     }
 

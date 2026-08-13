@@ -107,6 +107,31 @@ public class RouteExamplesTests
     terminal.OutputContains("h08-fluent-nodesc").ShouldBeTrue();
   }
 
+  public static async Task Should_show_example_via_fluent_with_out_of_order_named_args()
+  {
+    // Regression for round-1 review M1: .WithExample(description: ..., command: ...) - both
+    // arguments named and reordered - must not swap command and description in rendering.
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("h08-fluent-namedargs")
+        .WithHandler(() => "ok")
+        .WithExample(description: "Run verbosely", command: "h08-fluent-namedargs --verbose")
+        .Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["h08-fluent-namedargs", "--help"]);
+
+    // Assert - command line must be the command text, not the description, and vice versa
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("Examples:").ShouldBeTrue();
+    terminal.OutputContains("  h08-fluent-namedargs --verbose").ShouldBeTrue("Command should render on the example line, unswapped");
+    terminal.OutputContains("Run verbosely".Dim()).ShouldBeTrue("Description should render as the dimmed line, unswapped");
+    terminal.OutputContains("  Run verbosely").ShouldBeFalse("Description must not render as the (undimmed) command line");
+  }
+
   public static async Task Should_show_examples_via_fluent_in_group()
   {
     // Arrange - GroupEndpointBuilder.WithExample() (Fluent DSL routes within a group)

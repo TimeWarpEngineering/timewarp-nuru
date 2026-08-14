@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <!-- Import parent Directory.Build.props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
@@ -16,6 +17,7 @@
     <Version>3.0.0-beta.75</Version>
     <Authors>Steven T. Cramer</Authors>
     <RepositoryUrl>https://github.com/TimeWarpEngineering/timewarp-nuru</RepositoryUrl>
+    <PackageProjectUrl>https://timewarp.software/projects/timewarp-nuru/</PackageProjectUrl>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>

@@ -25,10 +25,10 @@ command/description text (added by task 464). Surfaced during task 464's review
 
 ## Checklist
 
-- [ ] Extend EscapeForStringLiteral with the three characters
-- [ ] Audit emitters for user-text paths that bypass the helper
-- [ ] Regression test with U+2028/U+0085 in description + example text
-- [ ] Full CI test sweep green
+- [x] Extend EscapeForStringLiteral with the three characters
+- [x] Audit emitters for user-text paths that bypass the helper
+- [x] Regression test with U+2028/U+0085 in description + example text
+- [x] Full CI test sweep green
 
 ## Notes
 
@@ -96,4 +96,82 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 ## Session
 
 - Created: 0f730c83-90e5-4a4c-8bb2-3020fdd469d6 (2026-08-13)
-- Orchestration: grok (2026-08-13) — Phase 1–3; plan agent 01a0004d-2aa7-75c2-a642-81959f7a0d82
+- Orchestration: grok (2026-08-14) — full phases 1–5
+- Plan: 01a0004d-2aa7-75c2-a642-81959f7a0d82
+- Implementer: 01a0004f-dbd3-7613-b8ff-a2242d74e823
+- Review (round 1 general): 01a00053-acfa-7672-a54c-0825bd4304a0
+
+## Results
+
+### What was implemented
+
+Extended `EmitterStringUtils.EscapeForStringLiteral` so U+0085 (NEL), U+2028 (LINE SEPARATOR),
+and U+2029 (PARAGRAPH SEPARATOR) are escaped as `\u0085` / `\u2028` / `\u2029` before embedding
+into generated C# string literals. All free-text emitter call sites inherit the fix via the
+shared helper. Added Jaribu regression tests covering fluent and Endpoint DSL paths for
+`--help` and `--capabilities`.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `source/timewarp-nuru-analyzers/generators/emitters/emitter-string-utils.cs` | Three Replace calls + XML doc |
+| `tests/timewarp-nuru-tests/help/help-09-unicode-newline-escapes.cs` | New regression (4 tests) |
+
+### Key decisions / deviations
+
+- Single production change on the shared helper; no per-emitter edits.
+- Residual unescaped identifier embeds (enum members, option forms, param names, config
+  section keys) left out of scope — not free-text description/example paths.
+- No deviations from the written plan.
+
+### Test outcomes
+
+| Command | Result |
+|---------|--------|
+| `dotnet run tests/timewarp-nuru-tests/help/help-09-unicode-newline-escapes.cs` | 4/4 pass |
+| `dotnet run tests/timewarp-nuru-tests/help/help-07-description-special-chars.cs` | 3/3 pass |
+| `dotnet run tests/timewarp-nuru-tests/help/help-08-route-examples.cs` | 8/8 pass |
+| `dotnet run tests/timewarp-nuru-tests/capabilities/capabilities-06-examples.cs` | 4/4 pass |
+| `dotnet run tests/ci-tests/run-ci-tests.cs` | 1593 passed, 7 skipped, 0 failed |
+
+### Review (Phase 4b)
+
+- **Effort:** 1 (general only)
+- **Rounds:** 1
+- **Final counts:** 0 open / 0 fixed / 0 wontfix across bug/suggestion/nit
+- **Disposition:** `clean` — `review/disposition.md`
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd /path/to/timewarp-nuru
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/help/help-09-unicode-newline-escapes.cs
+```
+
+**Expect**
+
+- All 4 tests pass.
+- Successful run proves the generator produced compilable code for descriptions/examples
+  containing U+0085/U+2028/U+2029 and that `--help` / `--capabilities` retain the raw characters
+  at runtime.
+
+**Automated gate**
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/help/help-09-unicode-newline-escapes.cs
+dotnet run tests/timewarp-nuru-tests/help/help-07-description-special-chars.cs
+dotnet run tests/timewarp-nuru-tests/help/help-08-route-examples.cs
+dotnet run tests/timewarp-nuru-tests/capabilities/capabilities-06-examples.cs
+dotnet run tests/ci-tests/run-ci-tests.cs
+```
+
+**Depends on:** analyzer rebuild (clear runfile cache after analyzer source changes).
+
+**Not in scope:** hardening identifier embeds in completion/repl; escaping other control chars;
+display/layout of U+2028 in terminals.

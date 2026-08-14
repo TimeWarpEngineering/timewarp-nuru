@@ -88,6 +88,30 @@ public class EndpointBuilder<TBuilder>
   }
 
   /// <summary>
+  /// Declares a usage example for this endpoint (shown in per-route help output and the
+  /// <c>--capabilities</c> JSON). Call multiple times to declare several examples.
+  /// </summary>
+  /// <param name="command">The example invocation, verbatim as typed after the executable name.</param>
+  /// <param name="description">Optional description of what the example demonstrates.</param>
+  /// <returns>This configurator for further endpoint configuration.</returns>
+  /// <example>
+  /// <code>
+  /// app.Map("deploy {env}")
+  ///    .WithHandler((string env) => Deploy(env))
+  ///    .WithExample("deploy prod", "Deploy to production")
+  ///    .WithExample("deploy staging --dry-run")
+  ///    .Done();
+  /// </code>
+  /// </example>
+  public EndpointBuilder<TBuilder> WithExample(string command, string? description = null)
+  {
+    // Source generator extracts the example at compile time
+    _ = command;
+    _ = description;
+    return this;
+  }
+
+  /// <summary>
   /// Marks this route as a query operation (no state change - safe to run and retry freely).
   /// </summary>
   /// <returns>This configurator for further route configuration.</returns>

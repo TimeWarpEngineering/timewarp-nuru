@@ -195,6 +195,23 @@ internal static class RouteHelpEmitter
 
       sb.AppendLine($"{indentStr});");
     }
+
+    // Examples section (full-width lines, not a table - help tables truncate cells)
+    if (route.HasExamples)
+    {
+      sb.AppendLine($"{indentStr}app.Terminal.WriteLine();");
+      sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"Examples:\");");
+
+      foreach (ExampleDefinition example in route.Examples)
+      {
+        sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"  {EmitterStringUtils.EscapeForStringLiteral(example.Command)}\");");
+
+        if (!string.IsNullOrEmpty(example.Description))
+        {
+          sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"    \" + \"{EmitterStringUtils.EscapeForStringLiteral(example.Description)}\".Dim());");
+        }
+      }
+    }
   }
 
   /// <summary>

@@ -188,6 +188,28 @@ Format: `"pattern|description"`
 .Map("version|Show application version", handler)
 ```
 
+### Command Examples
+
+The "Examples:" section shown above (under [Generated Help Output](#generated-help-output))
+comes from `[NuruRouteExample]` (Endpoint DSL) or `.WithExample()` (Fluent DSL), not from the
+description syntax. Examples render as full-width lines rather than a table, since help tables
+truncate cell text:
+
+```csharp
+// Endpoint DSL
+[NuruRoute("deploy", Description = "Deploy to an environment")]
+[NuruRouteExample("deploy prod", Description = "Deploy to production")]
+public sealed class DeployCommand : ICommand<Unit> { }
+
+// Fluent DSL
+.Map("deploy {env}")
+  .WithHandler((string env) => Deploy(env))
+  .WithExample("deploy prod", "Deploy to production")
+  .Done()
+```
+
+A route with no examples declared omits the "Examples:" section entirely.
+
 ## Customizing Help Output
 
 ### Custom Help Text

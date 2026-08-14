@@ -607,6 +607,8 @@ public sealed class DslInterpreter
 
       "WithAlias" => DispatchWithAlias(invocation, receiver),
 
+      "WithExample" => DispatchWithExample(invocation, receiver),
+
       "Implements" => DispatchImplements(invocation, receiver),
 
       "DiscoverEndpoints" => DispatchDiscoverEndpoints(invocation, receiver),
@@ -1554,6 +1556,55 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
+  /// Dispatches WithExample() call to IIrRouteBuilder.
+  /// </summary>
+  private object? DispatchWithExample(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (!IsDslBuilderMethod(invocation)) return null;
+
+    if (receiver is not IIrRouteBuilder routeBuilder)
+    {
+      throw new InvalidOperationException(
+        $"WithExample() must be called on a route builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    // Resolve the command ARGUMENT first (not just its string value) so "missing" (throw),
+    // "present but not a string literal" (throw, consistent with WithAlias below), and
+    // "literal but empty" (silent skip, mirroring the attribute extraction path's
+    // skip-on-empty in EndpointExtractor.ExtractNuruRouteExampleAttributes) are distinguished
+    // rather than all collapsing to null.
+    ArgumentSyntax? commandArgument = ResolveArgumentAt(invocation, 0, "command");
+    if (commandArgument is null)
+    {
+      throw new InvalidOperationException(
+        $"WithExample() requires a command string. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? command = ExtractLiteralStringValue(commandArgument.Expression);
+    if (command is null)
+    {
+      throw new InvalidOperationException(
+        $"WithExample() requires a command string literal. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    if (command.Length == 0)
+    {
+      return routeBuilder;
+    }
+
+    // Description keeps the existing lenient behavior (non-literal/absent -> null),
+    // consistent with WithDescription's precedent.
+    string? description = ExtractStringArgumentAt(invocation, 1, "description");
+
+    // Normalize "" to null so both emitters (help / capabilities) see the same absent-vs-present
+    // signal - capabilities' `is not null` guard would otherwise emit an empty "description": "".
+    if (string.IsNullOrEmpty(description))
+      description = null;
+
+    return routeBuilder.WithExample(command, description);
+  }
+
+  /// <summary>
   /// Dispatches Implements&lt;T&gt;() call to IIrRouteBuilder.
   /// Extracts the interface type and property assignments from the expression.
   /// </summary>
@@ -1749,21 +1800,70 @@ public sealed class DslInterpreter
   /// <summary>
   /// Extracts the first string argument from a method invocation.
   /// </summary>
-  private static string? ExtractStringArgument(InvocationExpressionSyntax invocation)
+  private static string? ExtractStringArgument(InvocationExpressionSyntax invocation) =>
+    ExtractStringArgumentAt(invocation, 0);
+
+  /// <summary>
+  /// Extracts a string argument from a method invocation, at the given position.
+  /// </summary>
+  /// <param name="invocation">The method invocation.</param>
+  /// <param name="index">
+  /// The positional slot to fall back to when no argument is named <paramref name="parameterName"/>
+  /// (or <paramref name="parameterName"/> is null). Matches plain <c>args.Arguments[index]</c>
+  /// indexing - existing single-string callers (WithDescription/WithAlias/WithName, via
+  /// <see cref="ExtractStringArgument"/>) rely on this to resolve a lone named argument
+  /// (e.g. <c>.WithDescription(description: "x")</c>), which always sits at index 0 regardless
+  /// of naming.
+  /// </param>
+  /// <param name="parameterName">
+  /// When non-null, an argument whose <c>NameColon</c> matches this name is preferred over the
+  /// positional slot, wherever it appears in the argument list. This is what makes reordered
+  /// named arguments resolve correctly (e.g. <c>.WithExample(description: "d", command: "c")</c>
+  /// must bind "c" to command even though it's the second argument syntactically).
+  /// </param>
+  /// <returns>The string value, or null when absent or not a string literal.</returns>
+  private static string? ExtractStringArgumentAt(InvocationExpressionSyntax invocation, int index, string? parameterName = null)
+  {
+    ArgumentSyntax? argument = ResolveArgumentAt(invocation, index, parameterName);
+    return argument is null ? null : ExtractLiteralStringValue(argument.Expression);
+  }
+
+  /// <summary>
+  /// Resolves the <see cref="ArgumentSyntax"/> at the given position from a method invocation,
+  /// same name/position rules as <see cref="ExtractStringArgumentAt"/> (see its docs), but
+  /// returns the argument itself rather than its literal string value - callers that need to
+  /// distinguish "argument absent" from "argument present but not a string literal" (e.g.
+  /// WithExample's command, which must throw on the latter but tolerate the former differently)
+  /// use this directly instead of the value-only helper.
+  /// </summary>
+  private static ArgumentSyntax? ResolveArgumentAt(InvocationExpressionSyntax invocation, int index, string? parameterName = null)
   {
     ArgumentListSyntax? args = invocation.ArgumentList;
-    if (args is null || args.Arguments.Count == 0)
+    if (args is null)
       return null;
 
-    ExpressionSyntax argExpression = args.Arguments[0].Expression;
+    if (parameterName is not null)
+    {
+      foreach (ArgumentSyntax candidate in args.Arguments)
+      {
+        if (candidate.NameColon?.Name.Identifier.Text == parameterName)
+          return candidate;
+      }
+    }
 
-    return argExpression switch
+    return args.Arguments.Count <= index ? null : args.Arguments[index];
+  }
+
+  /// <summary>
+  /// Extracts the string value from an expression when it is a string literal, null otherwise.
+  /// </summary>
+  private static string? ExtractLiteralStringValue(ExpressionSyntax expression) =>
+    expression switch
     {
       LiteralExpressionSyntax literal when literal.IsKind(SyntaxKind.StringLiteralExpression)
         => literal.Token.ValueText,
       _ => null
     };
-  }
 
   /// <summary>
   /// Creates a diagnostic from an exception that occurred during interpretation.

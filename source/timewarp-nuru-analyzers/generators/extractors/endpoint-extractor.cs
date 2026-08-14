@@ -30,6 +30,7 @@ internal static class EndpointExtractor
   private const string NuruRouteAttributeName = "NuruRoute";
   private const string NuruRouteGroupAttributeName = "NuruRouteGroup";
   private const string NuruRouteAliasAttributeName = "NuruRouteAlias";
+  private const string NuruRouteExampleAttributeName = "NuruRouteExample";
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
   private const string GroupOptionAttributeName = "GroupOption";
@@ -113,6 +114,12 @@ internal static class EndpointExtractor
       pattern,
       cancellationToken);
 
+    // Extract usage examples (all [NuruRouteExample] attributes, in source order)
+    ImmutableArray<ExampleDefinition> examples = ExtractNuruRouteExampleAttributes(
+      classDeclaration,
+      semanticModel,
+      cancellationToken);
+
     RouteDefinition route = RouteDefinition.Create(
       originalPattern: pattern,
       segments: mergedSegments,
@@ -123,7 +130,8 @@ internal static class EndpointExtractor
       groupTypeHierarchy: groupInfo.TypeHierarchy,
       computedSpecificity: specificity,
       aliases: aliases,
-      implements: filterInterfaces);
+      implements: filterInterfaces,
+      examples: examples);
 
     return EndpointExtractionResult.Success(route);
   }
@@ -261,6 +269,56 @@ internal static class EndpointExtractor
     }
 
     return [];
+  }
+
+  /// <summary>
+  /// Extracts usage examples from all <c>[NuruRouteExample]</c> attributes on the command class.
+  /// Unlike aliases, examples use <c>AllowMultiple = true</c>, so every matching attribute is
+  /// accumulated (not just the first), preserving source declaration order. Attributes with a
+  /// null or empty command are silently skipped.
+  /// </summary>
+  private static ImmutableArray<ExampleDefinition> ExtractNuruRouteExampleAttributes(
+    ClassDeclarationSyntax classDeclaration,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken)
+  {
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol is null)
+      return [];
+
+    List<ExampleDefinition> examples = [];
+
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      string? attributeName = attribute.AttributeClass?.Name;
+      if (attributeName != NuruRouteExampleAttributeName && attributeName != $"{NuruRouteExampleAttributeName}Attribute")
+        continue;
+
+      if (attribute.ConstructorArguments.Length == 0 ||
+          attribute.ConstructorArguments[0].Value is not string command ||
+          string.IsNullOrEmpty(command))
+      {
+        continue;
+      }
+
+      string? description = null;
+      foreach (KeyValuePair<string, TypedConstant> namedArg in attribute.NamedArguments)
+      {
+        if (namedArg.Key == "Description")
+        {
+          description = namedArg.Value.Value as string;
+        }
+      }
+
+      // Normalize "" to null so both emitters (help / capabilities) see the same absent-vs-present
+      // signal - capabilities' `is not null` guard would otherwise emit an empty "description": "".
+      if (string.IsNullOrEmpty(description))
+        description = null;
+
+      examples.Add(new ExampleDefinition(command, description));
+    }
+
+    return [.. examples];
   }
 
   /// <summary>

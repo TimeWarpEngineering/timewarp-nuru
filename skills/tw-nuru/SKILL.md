@@ -89,6 +89,17 @@ public sealed class GreetQuery : IQuery<Unit>
 }
 ```
 
+### Route Examples
+
+`[NuruRouteExample("command", Description = "...")]` (repeatable, `Description` optional) declares a usage example. It renders in an "Examples:" section after Options in `<command> --help`, and as an `examples` array in `--capabilities` JSON. The command text is verbatim - write it exactly as a user would type it after the executable name.
+
+```csharp
+[NuruRoute("deploy", Description = "Deploy to an environment")]
+[NuruRouteExample("deploy prod", Description = "Deploy to production")]
+[NuruRouteExample("deploy staging --dry-run")]
+public sealed class DeployCommand : ICommand<Unit> { /* ... */ }
+```
+
 ### Parameters
 
 When a command has **multiple `[Parameter]` attributes**, each **must** specify an explicit `Order` value (enforced by analyzer NURU_A002). A single parameter does not need `Order`.
@@ -390,6 +401,18 @@ In the Fluent DSL, the full route pattern including parameters, options, and sub
 | Option alias | `"build --config,-c {mode}"` | Long and short form |
 | Repeated option | `"run --env {var}*"` | Collects multiple values into array |
 | Description | `"{env\|Target environment}"` | Inline help text via `\|` |
+
+### Route Examples
+
+`.WithExample(command, description = null)` (chainable, call multiple times) declares a usage example for a `Map()` route - same rendering as `[NuruRouteExample]` in the Endpoint DSL.
+
+```csharp
+.Map("deploy {env}")
+  .WithHandler((string env) => Deploy(env))
+  .WithExample("deploy prod", "Deploy to production")
+  .WithExample("deploy staging --dry-run")
+  .Done()
+```
 
 ## Dependency Injection
 

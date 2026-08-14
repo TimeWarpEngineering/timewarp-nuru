@@ -26,6 +26,7 @@ internal sealed class RouteDefinitionBuilder
   private int Specificity;
   private int Order;
   private ImmutableArray<InterfaceImplementationDefinition> Implements = [];
+  private ImmutableArray<ExampleDefinition> Examples = [];
 
   /// <summary>
   /// Sets the original pattern string.
@@ -146,6 +147,15 @@ internal sealed class RouteDefinitionBuilder
   }
 
   /// <summary>
+  /// Adds a single usage example (from .WithExample() fluent call).
+  /// </summary>
+  public RouteDefinitionBuilder WithExample(ExampleDefinition example)
+  {
+    Examples = Examples.Add(example);
+    return this;
+  }
+
+  /// <summary>
   /// Builds the immutable RouteDefinition.
   /// </summary>
   /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
@@ -178,7 +188,8 @@ internal sealed class RouteDefinitionBuilder
       GroupPrefix: GroupPrefix,
       ComputedSpecificity: Specificity,
       Order: Order,
-      Implements: Implements
+      Implements: Implements,
+      Examples: Examples
     );
   }
 

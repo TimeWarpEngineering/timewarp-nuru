@@ -33,6 +33,8 @@
          collision applies. Run standalone instead. -->
     <!-- generator-34/35/36: same Roslyn-hosted generator test pattern as generator-28
          (kanban 454-012 / M8); CS0433 collision applies. Run standalone instead. -->
+    <!-- generator-40: same Roslyn-hosted generator test pattern as generator-28
+         (kanban 464 round-2 M5); CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/completion/engine/engine-01-input-tokenizer.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
@@ -47,6 +49,7 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-37-incrementality-caching.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-38-h002-sole-identifier-body.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-39-keyword-param-identifiers.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-40-with-example-non-literal-command.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

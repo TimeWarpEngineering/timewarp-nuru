@@ -57,6 +57,14 @@ public interface IIrRouteBuilder
   IIrRouteBuilder AddImplementation(InterfaceImplementationDefinition implementation);
 
   /// <summary>
+  /// Adds a usage example for this route.
+  /// </summary>
+  /// <param name="command">The example invocation, verbatim as typed after the executable name.</param>
+  /// <param name="description">Optional description of what the example demonstrates.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrRouteBuilder WithExample(string command, string? description);
+
+  /// <summary>
   /// Completes the route configuration and returns to the parent builder.
   /// </summary>
   /// <returns>The parent builder (boxed as object for polymorphic dispatch).</returns>

@@ -33,6 +33,10 @@ public sealed class EndpointCapability
   public required EndpointKind Kind { get; init; }
   public required IReadOnlyList<ParameterCapability> Parameters { get; init; }
   public required IReadOnlyList<OptionCapability> Options { get; init; }
+
+  // Last property: routes without examples must serialize byte-identically to before this
+  // feature existed (DefaultIgnoreCondition.WhenWritingNull on the serializer context omits it).
+  public IReadOnlyList<ExampleCapability>? Examples { get; init; }
 }
 
 /// <summary>
@@ -83,4 +87,14 @@ public sealed class OptionCapability
   public string? Description { get; init; }
   public string? DefaultValue { get; init; }
   public IReadOnlyList<string>? AllowedValues { get; init; }
+}
+
+/// <summary>
+/// A concrete usage example for an endpoint, declared via <c>[NuruRouteExample]</c>
+/// (Endpoint DSL) or <c>.WithExample()</c> (Fluent DSL).
+/// </summary>
+public sealed class ExampleCapability
+{
+  public required string Command { get; init; }
+  public string? Description { get; init; }
 }

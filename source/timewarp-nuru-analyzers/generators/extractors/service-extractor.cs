@@ -3,13 +3,14 @@
 // Handles:
 // - .ConfigureServices(services => { ... })           - inline lambda
 // - .ConfigureServices(ConfigureServices)             - method group reference
-// - Services registered via AddTransient, AddScoped, AddSingleton
+// - Services registered via AddTransient, AddScoped, AddSingleton, TryAdd*
+// - In-project AddX via syntax and referenced AddX via decompile (task 395)
 //
 // Also detects:
 // - Factory delegate registrations (NURU053)
 // - Constructor dependencies of implementation types (NURU051)
 // - Internal types (NURU054)
-// - Extension method calls like AddLogging (NURU052)
+// - Opaque extension method calls (NURU052) after lowering fails
 // - Multiple constructors (chooses one with most parameters)
 // - Optional parameters with default values
 
@@ -23,11 +24,18 @@ using System.Globalization;
 internal static class ServiceExtractor
 {
   /// <summary>
-  /// Standard service registration methods that we can fully analyze.
-  /// Other method calls are tracked as extension methods.
+  /// Standard service registration methods that we can fully analyze without lowering.
+  /// Other method calls are lowered or tracked as extension methods (NURU052).
   /// </summary>
   private static readonly HashSet<string> AnalyzableMethods =
-    ["AddTransient", "AddScoped", "AddSingleton"];
+  [
+    "AddTransient",
+    "AddScoped",
+    "AddSingleton",
+    "TryAddTransient",
+    "TryAddScoped",
+    "TryAddSingleton"
+  ];
 
   /// <summary>
   /// Extracts service definitions from a ConfigureServices() invocation.
@@ -134,104 +142,109 @@ internal static class ServiceExtractor
     CancellationToken cancellationToken
   )
   {
-    ImmutableArray<ServiceDefinition>.Builder services = ImmutableArray.CreateBuilder<ServiceDefinition>();
-    ImmutableArray<ExtensionMethodCall>.Builder extensionMethods = ImmutableArray.CreateBuilder<ExtensionMethodCall>();
+    List<ServiceDefinition> services = [];
+    List<ExtensionMethodCall> extensionMethods = [];
 
-    // Handle expression body
     if (body is ExpressionSyntax expression)
     {
-      (ServiceDefinition? service, ExtensionMethodCall? extMethod) = ExtractFromExpression(expression, semanticModel, cancellationToken);
-      if (service is not null)
-        services.Add(service);
-      if (extMethod is not null)
-        extensionMethods.Add(extMethod);
-
-      return new ServiceExtractionResult(services.ToImmutable(), extensionMethods.ToImmutable(), []);
+      ExtractFromExpression(expression, semanticModel, services, extensionMethods, cancellationToken);
+      return new ServiceExtractionResult([.. services], [.. extensionMethods], []);
     }
 
-    // Handle block body
     if (body is BlockSyntax block)
     {
       foreach (StatementSyntax statement in block.Statements)
       {
-        if (statement is ExpressionStatementSyntax expressionStatement)
+        ExpressionSyntax? statementExpression = statement switch
         {
-          (ServiceDefinition? service, ExtensionMethodCall? extMethod) = ExtractFromExpression(expressionStatement.Expression, semanticModel, cancellationToken);
-          if (service is not null)
-            services.Add(service);
-          if (extMethod is not null)
-            extensionMethods.Add(extMethod);
-        }
+          ExpressionStatementSyntax expressionStatement => expressionStatement.Expression,
+          ReturnStatementSyntax returnStatement => returnStatement.Expression,
+          _ => null
+        };
+
+        if (statementExpression is not null)
+          ExtractFromExpression(statementExpression, semanticModel, services, extensionMethods, cancellationToken);
       }
     }
 
-    return new ServiceExtractionResult(services.ToImmutable(), extensionMethods.ToImmutable(), []);
+    return new ServiceExtractionResult([.. services], [.. extensionMethods], []);
   }
 
   /// <summary>
-  /// Extracts a service definition from an expression.
-  /// Returns either a ServiceDefinition (for analyzable registrations) or
-  /// an ExtensionMethodCall (for opaque extension methods).
+  /// Extracts registrations from an expression, including chained calls.
   /// </summary>
-  private static (ServiceDefinition? Service, ExtensionMethodCall? ExtensionMethod) ExtractFromExpression
+  private static void ExtractFromExpression
   (
     ExpressionSyntax expression,
     SemanticModel semanticModel,
+    List<ServiceDefinition> services,
+    List<ExtensionMethodCall> extensionMethods,
     CancellationToken cancellationToken
   )
   {
-    // Handle chained method calls by walking up to the first registration
-    if (expression is InvocationExpressionSyntax invocation)
-    {
-      return ExtractFromInvocation(invocation, semanticModel, cancellationToken);
-    }
+    if (expression is not InvocationExpressionSyntax)
+      return;
 
-    return (null, null);
+    foreach (InvocationExpressionSyntax invocation in ExtensionMethodLowerer.FlattenChain(expression))
+      ExtractFromInvocation(invocation, semanticModel, services, extensionMethods, cancellationToken);
   }
 
   /// <summary>
   /// Extracts a service definition from an invocation expression.
-  /// Returns either a ServiceDefinition (for analyzable registrations) or
-  /// an ExtensionMethodCall (for opaque extension methods).
+  /// Lifetime Add*/TryAdd* are analyzed directly. Other calls are lowered or
+  /// recorded as opaque extension methods (NURU052).
   /// </summary>
-  private static (ServiceDefinition? Service, ExtensionMethodCall? ExtensionMethod) ExtractFromInvocation
+  private static void ExtractFromInvocation
   (
     InvocationExpressionSyntax invocation,
     SemanticModel semanticModel,
+    List<ServiceDefinition> services,
+    List<ExtensionMethodCall> extensionMethods,
     CancellationToken cancellationToken
   )
   {
     string? methodName = GetMethodName(invocation);
     if (methodName is null)
-      return (null, null);
+      return;
 
-    // Check if this is an extension method we can't analyze
-    if (!AnalyzableMethods.Contains(methodName))
+    if (ServiceRegistrationMethods.IsSpecialCased(methodName))
     {
-      // Track as extension method call for NURU052 warning
-      return (null, new ExtensionMethodCall(methodName, invocation.GetLocation()));
+      extensionMethods.Add(new ExtensionMethodCall(methodName, invocation.GetLocation()));
+      return;
     }
 
-    // Determine lifetime from method name
-    ServiceLifetime lifetime = methodName switch
+    if (!AnalyzableMethods.Contains(methodName))
     {
-      "AddTransient" => ServiceLifetime.Transient,
-      "AddScoped" => ServiceLifetime.Scoped,
-      "AddSingleton" => ServiceLifetime.Singleton,
-      _ => ServiceLifetime.Transient // Should not happen due to AnalyzableMethods check
-    };
+      if (ExtensionMethodLowerer.TryLower(
+        invocation,
+        semanticModel,
+        services,
+        invocation.GetLocation(),
+        cancellationToken,
+        out ImmutableArray<ServiceDefinition> lowered))
+      {
+        services.AddRange(lowered);
+        return;
+      }
 
-    // Check for factory delegate registration (NURU053)
+      extensionMethods.Add(new ExtensionMethodCall(methodName, invocation.GetLocation()));
+      return;
+    }
+
+    if (!ServiceRegistrationMethods.TryGetLifetime(methodName, out ServiceLifetime lifetime, out bool isTryAdd))
+      return;
+
     bool isFactoryRegistration = IsFactoryRegistration(invocation);
 
-    // Get type arguments or arguments
     (string? serviceTypeName, string? implementationTypeName, INamedTypeSymbol? implementationSymbol) =
       ExtractServiceTypesWithSymbol(invocation, semanticModel, cancellationToken);
 
     if (serviceTypeName is null)
-      return (null, null);
+      return;
 
-    // Extract constructor dependencies (NURU051)
+    if (isTryAdd && !isFactoryRegistration && IsServiceTypeRegistered(services, serviceTypeName))
+      return;
+
     ImmutableArray<string> constructorDeps = [];
     ImmutableArray<ConstructorParameter> constructorParams = [];
     bool isInternalType = false;
@@ -243,7 +256,7 @@ internal static class ServiceExtractor
       isInternalType = IsInternalType(implementationSymbol);
     }
 
-    ServiceDefinition service = new(
+    services.Add(new ServiceDefinition(
       ServiceTypeName: serviceTypeName,
       ImplementationTypeName: implementationTypeName ?? serviceTypeName,
       Lifetime: lifetime,
@@ -251,10 +264,33 @@ internal static class ServiceExtractor
       ConstructorParameters: constructorParams,
       IsFactoryRegistration: isFactoryRegistration,
       IsInternalType: isInternalType,
-      RegistrationLocation: LocationInfo.CreateFrom(invocation.GetLocation()));
-
-    return (service, null);
+      RegistrationLocation: LocationInfo.CreateFrom(invocation.GetLocation())));
   }
+
+  private static bool IsServiceTypeRegistered(List<ServiceDefinition> services, string serviceTypeName)
+  {
+    string normalized = serviceTypeName.StartsWith("global::", StringComparison.Ordinal)
+      ? serviceTypeName[8..]
+      : serviceTypeName;
+
+    foreach (ServiceDefinition service in services)
+    {
+      string existing = service.ServiceTypeName.StartsWith("global::", StringComparison.Ordinal)
+        ? service.ServiceTypeName[8..]
+        : service.ServiceTypeName;
+      if (string.Equals(existing, normalized, StringComparison.Ordinal))
+        return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Detects if an invocation uses a factory delegate.
+  /// Factory delegates: services.AddSingleton&lt;IFoo&gt;(sp => new Foo(...))
+  /// </summary>
+  internal static bool IsFactoryDelegate(InvocationExpressionSyntax invocation)
+    => IsFactoryRegistration(invocation);
 
   /// <summary>
   /// Detects if an invocation uses a factory delegate.
@@ -279,6 +315,13 @@ internal static class ServiceExtractor
   /// Extracts constructor dependencies from an implementation type.
   /// Supports multiple constructors - chooses the one with most parameters.
   /// </summary>
+  internal static ImmutableArray<string> GetConstructorDependencyTypes(INamedTypeSymbol implementationType)
+    => ExtractConstructorDependencies(implementationType);
+
+  /// <summary>
+  /// Extracts constructor dependencies from an implementation type.
+  /// Supports multiple constructors - chooses the one with most parameters.
+  /// </summary>
   private static ImmutableArray<string> ExtractConstructorDependencies(INamedTypeSymbol implementationType)
   {
     // Find the best constructor (most parameters)
@@ -290,6 +333,13 @@ internal static class ServiceExtractor
     return [.. constructor.Parameters
       .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))];
   }
+
+  /// <summary>
+  /// Extracts detailed constructor parameters from an implementation type.
+  /// Supports multiple constructors, optional parameters, and built-in type detection.
+  /// </summary>
+  internal static ImmutableArray<ConstructorParameter> GetConstructorParameters(INamedTypeSymbol implementationType)
+    => ExtractConstructorParameters(implementationType);
 
   /// <summary>
   /// Extracts detailed constructor parameters from an implementation type.
@@ -391,6 +441,18 @@ internal static class ServiceExtractor
 
     return false;
   }
+
+  /// <summary>
+  /// Extracts service and implementation type names and symbol from an invocation.
+  /// The symbol is needed to extract constructor dependencies and check accessibility.
+  /// Falls back to syntactic extraction if semantic resolution fails.
+  /// </summary>
+  internal static (string? ServiceType, string? ImplementationType, INamedTypeSymbol? ImplementationSymbol) GetServiceTypesWithSymbol
+  (
+    InvocationExpressionSyntax invocation,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  ) => ExtractServiceTypesWithSymbol(invocation, semanticModel, cancellationToken);
 
   /// <summary>
   /// Extracts service and implementation type names and symbol from an invocation.
@@ -553,6 +615,12 @@ internal static class ServiceExtractor
     (string? typeName, INamedTypeSymbol? _) = ExtractTypeOfArgumentWithSymbol(expression, semanticModel, cancellationToken);
     return typeName;
   }
+
+  /// <summary>
+  /// Gets the method name from an invocation expression.
+  /// </summary>
+  internal static string? GetInvocationMethodName(InvocationExpressionSyntax invocation)
+    => GetMethodName(invocation);
 
   /// <summary>
   /// Gets the method name from an invocation expression.

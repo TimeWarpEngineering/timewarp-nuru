@@ -84,6 +84,8 @@
   <ItemGroup Label="Roslyn Analyzer Dependencies">
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.6.0" />
+    <!-- ILSpy engine: decompile referenced AddX method bodies for source-gen DI lowering (task 395). -->
+    <PackageVersion Include="ICSharpCode.Decompiler" Version="10.1.1.8388" />
   </ItemGroup>
   <ItemGroup Label="MSBuild Task Dependencies">
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.7.1" />

@@ -128,6 +128,8 @@ internal static class ServiceResolverEmitter
     // Try exact match first
     foreach (ServiceDefinition service in services)
     {
+      if (service.IsInternalType)
+        continue;
       if (service.ServiceTypeName == typeName)
         return service;
     }
@@ -136,6 +138,8 @@ internal static class ServiceResolverEmitter
     string normalizedTypeName = NormalizeTypeName(typeName);
     foreach (ServiceDefinition service in services)
     {
+      if (service.IsInternalType)
+        continue;
       if (NormalizeTypeName(service.ServiceTypeName) == normalizedTypeName)
         return service;
     }

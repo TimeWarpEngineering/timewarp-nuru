@@ -39,11 +39,11 @@ internal static partial class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor ExtensionMethodRegistration = new(
     id: "NURU052",
     title: "Extension method registration not analyzable",
-    messageFormat: "Cannot analyze registrations inside '{0}()'. Services registered there may not be visible to source-gen DI. Consider using .UseMicrosoftDependencyInjection().",
+    messageFormat: "Nuru did not instantiate anything '{0}()' registered. Call .UseMicrosoftDependencyInjection() or register the injected types with AddSingleton<,> yourself.",
     category: ServiceCategory,
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
-    description: "Extension methods like AddLogging() or AddHttpClient() register services internally. Source-gen DI cannot see these registrations. Consider using .UseMicrosoftDependencyInjection() for full runtime DI support.");
+    description: "Nuru lowers pure IServiceCollection AddX scripts of public closed types. Cannot-decompile, impurity, builders, factories, and unlowerable APIs leave the invocation opaque. Call .UseMicrosoftDependencyInjection() or register the injected types with AddSingleton<,> yourself.");
 
   /// <summary>
   /// NURU053: Factory delegate registration not supported.

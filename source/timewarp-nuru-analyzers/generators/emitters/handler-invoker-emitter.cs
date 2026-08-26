@@ -418,7 +418,7 @@ internal static class HandlerInvokerEmitter
 
     // Source-gen DI path: static instantiation via Lazy<T> fields
     // Find matching service registration
-    ServiceDefinition? service = services.FirstOrDefault(s => s.ServiceTypeName == serviceTypeName);
+    ServiceDefinition? service = services.FirstOrDefault(s => !s.IsInternalType && s.ServiceTypeName == serviceTypeName);
     if (service is null)
     {
       // Try without global:: prefix
@@ -499,7 +499,7 @@ internal static class HandlerInvokerEmitter
       return "default!";
 
     // Find matching service registration
-    ServiceDefinition? service = services.FirstOrDefault(s => s.ServiceTypeName == serviceTypeName);
+    ServiceDefinition? service = services.FirstOrDefault(s => !s.IsInternalType && s.ServiceTypeName == serviceTypeName);
     if (service is not null)
     {
       if (service.HasConstructorDependencies && service.Lifetime == ServiceLifetime.Transient)

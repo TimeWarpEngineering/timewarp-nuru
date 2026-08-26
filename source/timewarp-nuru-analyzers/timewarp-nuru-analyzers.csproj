@@ -39,6 +39,11 @@
       <PrivateAssets>all</PrivateAssets>
       <GeneratePathProperty>true</GeneratePathProperty>
     </PackageReference>
+    <!-- Decompile referenced AddX method bodies (lib/ implementation, not ref/). -->
+    <PackageReference Include="ICSharpCode.Decompiler">
+      <PrivateAssets>all</PrivateAssets>
+      <GeneratePathProperty>true</GeneratePathProperty>
+    </PackageReference>
   </ItemGroup>
 
 
@@ -56,6 +61,13 @@
     <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <!-- Include Microsoft.Extensions.Logging.Abstractions in the analyzer package -->
     <None Include="$(PkgMicrosoft_Extensions_Logging_Abstractions)/lib/$(AnalyzerDependencyTfm)/Microsoft.Extensions.Logging.Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <!-- ILSpy engine must sit next to the analyzer so the compiler load context can resolve it.
+         CopyToOutputDirectory: timewarp-nuru packs this DLL from the analyzer output path. -->
+    <None Include="$(PkgICSharpCode_Decompiler)/lib/netstandard2.0/ICSharpCode.Decompiler.dll"
+          CopyToOutputDirectory="PreserveNewest"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

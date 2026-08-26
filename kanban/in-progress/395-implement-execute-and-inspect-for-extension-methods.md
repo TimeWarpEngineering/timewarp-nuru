@@ -156,37 +156,37 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 
 ### Same-compilation
 
-- [ ] Follow in-project `AddX` via syntax (no decompiler)
+- [x] Follow in-project `AddX` via syntax (no decompiler)
 
 ### Decompile
 
-- [ ] `ICSharpCode.Decompiler` (or equivalent ILSpy library) on referenced methods
-- [ ] Resolve **lib/** implementation assembly, not `ref/`
-- [ ] Cannot-decompile / no real body → NURU052
-- [ ] Cache by (MVID, method token)
+- [x] `ICSharpCode.Decompiler` (or equivalent ILSpy library) on referenced methods
+- [x] Resolve **lib/** implementation assembly, not `ref/`
+- [x] Cannot-decompile / no real body → NURU052
+- [x] Cache by (MVID, method token)
 
 ### Purity + lower
 
-- [ ] Recurse same-assembly helpers
-- [ ] Fail closed: any non-lowerable effect aborts the whole user-facing `AddX`
-- [ ] Lower closed public `Add{Lifetime}` type mappings into `ServiceDefinition`
-- [ ] `TryAdd*` in order against the accumulated model
-- [ ] Merge into existing Phase 3 emit (`new` / `Lazy<T>`)
-- [ ] Do not emit `IServiceCollection` calls; do not `Invoke` at compile time
+- [x] Recurse same-assembly helpers
+- [x] Fail closed: any non-lowerable effect aborts the whole user-facing `AddX`
+- [x] Lower closed public `Add{Lifetime}` type mappings into `ServiceDefinition`
+- [x] `TryAdd*` in order against the accumulated model
+- [x] Merge into existing Phase 3 emit (`new` / `Lazy<T>`)
+- [x] Do not emit `IServiceCollection` calls; do not `Invoke` at compile time
 
 ### Diagnostics + tests
 
-- [ ] NURU052 on failed decompile, purity fail, builder, unlowerable API
-- [ ] NURU054 still fires for internal impls (do not attempt to emit them)
-- [ ] Simple public `AddX` wrapping `AddSingleton<IFoo, Foo>`
-- [ ] Nested same-assembly helpers (A → B → `AddScoped`)
-- [ ] Mix of inline `AddSingleton` and lowerable `AddX` (order / `TryAdd`)
-- [ ] Generic `AddX<T>()` that registers `T` as public closed type
-- [ ] Cannot-decompile / `ref/`-only body → 052
-- [ ] Non-collection side effect in `AddX` → 052 (not a partial lower)
-- [ ] Builder-returning `AddX` → 052
-- [ ] Internal impl inside `AddX` → 054 or 052 (hatch), never `new Internal`
-- [ ] Factory inside `AddX` → 052/053, not lowered in v1
+- [x] NURU052 on failed decompile, purity fail, builder, unlowerable API
+- [x] NURU054 still fires for internal impls (do not attempt to emit them)
+- [x] Simple public `AddX` wrapping `AddSingleton<IFoo, Foo>`
+- [x] Nested same-assembly helpers (A → B → `AddScoped`)
+- [x] Mix of inline `AddSingleton` and lowerable `AddX` (order / `TryAdd`)
+- [x] Generic `AddX<T>()` that registers `T` as public closed type
+- [x] Cannot-decompile / `ref/`-only body → 052
+- [x] Non-collection side effect in `AddX` → 052 (not a partial lower)
+- [x] Builder-returning `AddX` → 052
+- [x] Internal impl inside `AddX` → 054 or 052 (hatch), never `new Internal`
+- [x] Factory inside `AddX` → 052/053, not lowered in v1
 
 ## Out of scope (v1)
 
@@ -215,3 +215,38 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 
 - Created: 2026-03-23 — execute-and-inspect sketch (never implemented)
 - Rewrite: grok (2026-08-27) — decompile + purity + lower; execute/replay rejected
+- Implementer launch: host=herdr profile=implementer-grok provider=grok worktree=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-395-implement-execute-and-inspect-for-extension-method workspace=w7 pane=w7:p1 agent=task395 (2026-08-26 UTC)
+- Implementation: grok (2026-08-27) — in-project follow + ILSpy lib/ decompile + fail-closed lower into Phase 3 emit
+
+## Results
+
+Phase 4 lowers **pure** `IServiceCollection` `AddX` scripts into the existing source-gen DI model. In-project methods are followed via syntax. Referenced methods are decompiled from the **lib/** implementation DLL (not NuGet `ref/` stubs) with ICSharpCode.Decompiler 10.1.1.8388, cached by (MVID, method token). ILSpy static-call form (`ServiceCollectionServiceExtensions.AddSingleton<T>(services)`) is accepted. Impure / builder / factory / no-body invocations stay NURU052 on the whole user-facing call; internal impls fire NURU054 and are not emitted as `new Internal`. `.UseMicrosoftDependencyInjection()` is unchanged. No compile-time `Invoke`.
+
+Files: `extension-method-lowerer.cs`, `referenced-method-decompiler.cs`, `service-registration-methods.cs`; `service-extractor.cs` (TryAdd, chains, lower); NURU052 message; analyzer + main package pack of `ICSharpCode.Decompiler.dll`; `generator-41` (runtime) and `generator-42` (Roslyn-hosted).
+
+### How to validate
+
+**Automated**
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/generator/generator-41-extension-method-lowering.cs
+# expect: Total 4, Passed 4
+
+dotnet run tests/timewarp-nuru-tests/generator/generator-42-extension-method-lowering-diagnostics.cs
+# expect: Total 7, Passed 7
+```
+
+**Smoke**
+```bash
+# In a Nuru app (no UseMicrosoftDependencyInjection):
+#   public static IServiceCollection AddAppServices(this IServiceCollection s)
+#   { s.AddSingleton<IFoo, Foo>(); return s; }
+#   ConfigureServices(s => s.AddAppServices())
+#   Map("ping").WithHandler((IFoo foo) => foo.Ping())
+# Args: ping
+# expect: handler runs; generated interceptor contains `new ...Foo(` (or a static field assigned from it), not IServiceCollection.Add*
+# A builder-returning AddX (returns something other than IServiceCollection) or a side-effecting AddX
+# expect: NURU052 warning naming that method; injected types from it are NOT constructed
+```
+
+**Not in scope:** factory lowering, builder special-cases beyond existing AddLogging/AddHttpClient, open generics, hosted services, execute-and-inspect.

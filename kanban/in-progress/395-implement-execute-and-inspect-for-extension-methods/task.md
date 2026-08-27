@@ -197,10 +197,9 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - [x] `review/round-1/merged.md` (M1 bug + M2 suggestion, both **open**, selected to fix)
 - [x] Fix M1 (`ResolveServiceForCommand` `global::` fallback must skip `IsInternalType`; generator-42 Command-handler coverage)
 - [x] Fix M2 (`FindLibSibling` TFM-nearest, not lexicographic path)
-- [ ] Round 2 re-review (`review/round-2/`) after fixes
-- [ ] `review/disposition.md` (`clean` or `accepted-exceptions`)
-- [ ] Results cover review (rounds, counts, disposition, `review/` paths)
-- [ ] **Do not** `ganda kanban done` until disposition exists
+- [x] Round 2 re-review (`review/round-2/general.md`)
+- [x] `review/disposition.md` — **clean**, 0 open
+- [x] Results cover review (rounds, counts, disposition, `review/` paths)
 
 ## Out of scope (v1)
 
@@ -237,12 +236,23 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - Review round 1: general (2026-08-27) — `review/round-1/general.md`; merged M1+M2 open, both selected to fix
 - Review fix pass: `b034c788` (M1+M2); round 2 opening
 - Review fix loop: grok (2026-08-27) — M1 Command-handler internal skip; M2 TFM-nearest lib/ sibling
+- Review round 2: general (2026-08-27) — `review/round-2/general.md`; M1+M2 re-verified, no new issues
+- Disposition: grok cockpit (2026-08-27) — **clean**
 
 ## Results
 
 Phase 4 lowers **pure** `IServiceCollection` `AddX` scripts into the existing source-gen DI model. In-project methods are followed via syntax. Referenced methods are decompiled from the **lib/** implementation DLL (not NuGet `ref/` stubs) with ICSharpCode.Decompiler 10.1.1.8388, cached by (MVID, method token). ILSpy static-call form (`ServiceCollectionServiceExtensions.AddSingleton<T>(services)`) is accepted. Impure / builder / factory / no-body invocations stay NURU052 on the whole user-facing call; internal impls fire NURU054 and are not emitted as `new Internal`. `.UseMicrosoftDependencyInjection()` is unchanged. No compile-time `Invoke`.
 
-Files: `extension-method-lowerer.cs`, `referenced-method-decompiler.cs`, `service-registration-methods.cs`; `service-extractor.cs` (TryAdd, chains, lower); NURU052 message; analyzer + main package pack of `ICSharpCode.Decompiler.dll`; `generator-41` (runtime) and `generator-42` (Roslyn-hosted).
+Files: `extension-method-lowerer.cs`, `referenced-method-decompiler.cs`, `service-registration-methods.cs`; `service-extractor.cs` (TryAdd, chains, lower); NURU052 message; analyzer + main package pack of `ICSharpCode.Decompiler.dll`; `generator-41` (runtime) and `generator-42` (Roslyn-hosted). Fix pass `b034c788`: `handler-invoker-emitter.cs` fallback skips `IsInternalType`; `FindLibSibling` nearest-TFM.
+
+### Review
+
+- Rounds: 2. Roster: `general`. Effort 1.
+- Round 1: M1 bug + M2 suggestion, both open then fixed.
+- Round 2: M1 and M2 re-verified; 0 new findings.
+- Final counts: bug 0 open / 1 fixed; suggestion 0 open / 1 fixed; nit 0.
+- Disposition: **clean** (`review/disposition.md`).
+- Paths: `review/review-framework.md`, `review/round-1/`, `review/round-2/`.
 
 ### How to validate
 

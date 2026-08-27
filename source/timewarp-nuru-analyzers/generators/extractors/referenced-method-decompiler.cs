@@ -7,6 +7,7 @@
 // decompile of that is garbage, so we resolve lib/ before ILSpy runs. No real body, metadata-only,
 // or throw-null IL → treat as cannot-decompile (NURU052). Cache is process-wide for agent rebuild loops.
 // File I/O is required to open PE images of compilation references; that is the point of this type.
+// lib/ fallback ranks TFMs by closeness to the compile stub (then compilation TFM), not path order.
 #endregion
 
 #pragma warning disable RS1035 // Analyzer may not use banned APIs — PE open / lib-vs-ref resolution
@@ -16,6 +17,7 @@
 namespace TimeWarp.Nuru.Generators;
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
@@ -51,7 +53,7 @@ internal static class ReferencedMethodDecompiler
     if (token == 0)
       return new CachedDecompile(false, null);
 
-    string? implementationPath = ResolveImplementationAssemblyPath(compilation, definition.ContainingAssembly);
+    string? implementationPath = ResolveImplementationAssemblyPath(compilation, definition.ContainingAssembly, token);
     if (implementationPath is null)
       return new CachedDecompile(false, null);
 
@@ -117,7 +119,7 @@ internal static class ReferencedMethodDecompiler
   /// <summary>
   /// Prefers the NuGet <c>lib/</c> implementation over a <c>ref/</c> compile stub.
   /// </summary>
-  internal static string? ResolveImplementationAssemblyPath(Compilation compilation, IAssemblySymbol assemblySymbol)
+  internal static string? ResolveImplementationAssemblyPath(Compilation compilation, IAssemblySymbol assemblySymbol, int methodToken)
   {
     MetadataReference? metadataReference = compilation.GetMetadataReference(assemblySymbol);
     if (metadataReference is not PortableExecutableReference peReference || string.IsNullOrEmpty(peReference.FilePath))
@@ -125,10 +127,10 @@ internal static class ReferencedMethodDecompiler
 
     string path = peReference.FilePath;
     if (IsReferenceAssemblyPath(path))
-      return FindLibSibling(path);
+      return FindLibSibling(path, compilation, methodToken);
 
     if (HasReferenceAssemblyAttribute(path))
-      return FindLibSibling(path) ?? path;
+      return FindLibSibling(path, compilation, methodToken);
 
     return path;
   }
@@ -139,7 +141,7 @@ internal static class ReferencedMethodDecompiler
     return normalized.Contains("/ref/", StringComparison.OrdinalIgnoreCase);
   }
 
-  private static string? FindLibSibling(string referencePath)
+  private static string? FindLibSibling(string referencePath, Compilation compilation, int methodToken)
   {
     string? tfmDirectory = Path.GetDirectoryName(referencePath);
     string? refDirectory = tfmDirectory is null ? null : Path.GetDirectoryName(tfmDirectory);
@@ -155,13 +157,171 @@ internal static class ReferencedMethodDecompiler
     if (!Directory.Exists(libRoot))
       return null;
 
-    string sameTfm = Path.Combine(libRoot, Path.GetFileName(tfmDirectory), fileName);
-    if (File.Exists(sameTfm))
+    string stubTfm = Path.GetFileName(tfmDirectory);
+    string sameTfm = Path.Combine(libRoot, stubTfm, fileName);
+    if (File.Exists(sameTfm) && !HasNoRealBody(sameTfm, methodToken))
       return sameTfm;
 
     string[] matches = Directory.GetFiles(libRoot, fileName, SearchOption.AllDirectories);
-    return matches.Length == 0 ? null : matches.OrderByDescending(static p => p, StringComparer.OrdinalIgnoreCase).First();
+    if (matches.Length == 0)
+      return null;
+
+    string? compilationTfm = GetCompilationTargetFrameworkMoniker(compilation);
+    string targetTfm = TryParseTfm(stubTfm) is not null
+      ? stubTfm
+      : compilationTfm ?? stubTfm;
+
+    foreach (string candidate in matches.OrderBy(path => RankLibCandidate(path, targetTfm)))
+    {
+      if (string.Equals(candidate, sameTfm, StringComparison.OrdinalIgnoreCase))
+        continue;
+
+      if (!HasNoRealBody(candidate, methodToken))
+        return candidate;
+    }
+
+    return null;
   }
+
+  private static int RankLibCandidate(string libraryPath, string targetTfm)
+  {
+    string? folder = Path.GetDirectoryName(libraryPath);
+    string candidateTfm = folder is null ? string.Empty : Path.GetFileName(folder);
+    ParsedTfm? target = TryParseTfm(targetTfm);
+    ParsedTfm? candidate = TryParseTfm(candidateTfm);
+    if (target is null || candidate is null)
+      return int.MaxValue;
+
+    int targetRank = FrameworkRank(target.Value);
+    int candidateRank = FrameworkRank(candidate.Value);
+    if (candidateRank <= targetRank)
+      return targetRank - candidateRank;
+
+    // Newer than the compile stub: last resort, still nearest-higher rather than path order.
+    return 10_000 + (candidateRank - targetRank);
+  }
+
+  private static int FrameworkRank(ParsedTfm tfm)
+  {
+    return tfm.Family switch
+    {
+      "netstandard" => (tfm.Major * 100) + tfm.Minor,
+      "netcoreapp" => 1000 + (tfm.Major * 100) + tfm.Minor,
+      "net" => 2000 + (tfm.Major * 100) + tfm.Minor,
+      "netfx" => 500 + (tfm.Major * 100) + tfm.Minor,
+      _ => 0
+    };
+  }
+
+  private static ParsedTfm? TryParseTfm(string folderName)
+  {
+    if (string.IsNullOrEmpty(folderName))
+      return null;
+
+    string name = folderName;
+    int dash = name.IndexOf('-', StringComparison.Ordinal);
+    if (dash >= 0)
+      name = name[..dash];
+
+    if (name.StartsWith("netstandard", StringComparison.OrdinalIgnoreCase))
+      return ParseDottedVersion("netstandard", name["netstandard".Length..]);
+
+    if (name.StartsWith("netcoreapp", StringComparison.OrdinalIgnoreCase))
+      return ParseDottedVersion("netcoreapp", name["netcoreapp".Length..]);
+
+    if (name.StartsWith("net", StringComparison.OrdinalIgnoreCase) && name.Length > 3 && char.IsDigit(name[3]))
+    {
+      string rest = name[3..];
+      if (rest.Contains('.', StringComparison.Ordinal))
+        return ParseDottedVersion("net", rest);
+
+      return ParseNetFrameworkVersion(rest);
+    }
+
+    return null;
+  }
+
+  private static ParsedTfm? ParseDottedVersion(string family, string versionText)
+  {
+    string[] parts = versionText.Split('.');
+    if (parts.Length < 1
+        || !int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int major))
+    {
+      return null;
+    }
+
+    int minor = 0;
+    if (parts.Length > 1)
+      _ = int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out minor);
+
+    return new ParsedTfm(family, major, minor);
+  }
+
+  private static ParsedTfm? ParseNetFrameworkVersion(string compact)
+  {
+    // net462 → 4.6.2 (major=4, minor=62 packed as 6*10+2 for ranking)
+    if (compact.Length < 2
+        || !int.TryParse(compact, NumberStyles.Integer, CultureInfo.InvariantCulture, out int packed))
+    {
+      return null;
+    }
+
+    int major = packed / 100;
+    int minor = packed % 100;
+    if (major == 0 && compact.Length >= 2)
+    {
+      major = packed / 10;
+      minor = packed % 10;
+    }
+
+    return new ParsedTfm("netfx", major, minor);
+  }
+
+  private static string? GetCompilationTargetFrameworkMoniker(Compilation compilation)
+  {
+    foreach (AttributeData attribute in compilation.Assembly.GetAttributes())
+    {
+      if (attribute.AttributeClass?.Name != "TargetFrameworkAttribute")
+        continue;
+
+      if (attribute.ConstructorArguments.Length == 0)
+        continue;
+
+      if (attribute.ConstructorArguments[0].Value is not string frameworkName)
+        continue;
+
+      return FrameworkDisplayNameToTfm(frameworkName);
+    }
+
+    return null;
+  }
+
+  private static string? FrameworkDisplayNameToTfm(string frameworkName)
+  {
+    const string NetCorePrefix = ".NETCoreApp,Version=v";
+    const string NetStandardPrefix = ".NETStandard,Version=v";
+    const string NetFrameworkPrefix = ".NETFramework,Version=v";
+
+    if (frameworkName.StartsWith(NetCorePrefix, StringComparison.OrdinalIgnoreCase))
+    {
+      string version = frameworkName[NetCorePrefix.Length..];
+      string parseText = version.Contains('.', StringComparison.Ordinal) ? version : version + ".0";
+      if (Version.TryParse(parseText, out Version? parsed) && parsed.Major >= 5)
+        return "net" + version;
+
+      return "netcoreapp" + version;
+    }
+
+    if (frameworkName.StartsWith(NetStandardPrefix, StringComparison.OrdinalIgnoreCase))
+      return "netstandard" + frameworkName[NetStandardPrefix.Length..];
+
+    if (frameworkName.StartsWith(NetFrameworkPrefix, StringComparison.OrdinalIgnoreCase))
+      return "net" + frameworkName[NetFrameworkPrefix.Length..].Replace(".", "", StringComparison.Ordinal);
+
+    return null;
+  }
+
+  private readonly record struct ParsedTfm(string Family, int Major, int Minor);
 
   private static bool HasReferenceAssemblyAttribute(string path)
   {

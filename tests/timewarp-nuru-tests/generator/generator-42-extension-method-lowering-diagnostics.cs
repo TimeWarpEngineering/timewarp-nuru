@@ -304,6 +304,64 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen42ExtensionMethodLoweringDiagnostics
       await Task.CompletedTask;
     }
 
+    public static async Task Should_not_emit_new_or_field_for_internal_impl_on_command_handler()
+    {
+      const string Library = """
+        using Microsoft.Extensions.DependencyInjection;
+
+        public interface IEm42HiddenCmd { }
+
+        internal sealed class Em42HiddenCmdImpl : IEm42HiddenCmd { }
+
+        public static class Em42HiddenCmdExtensions
+        {
+          public static IServiceCollection AddEm42HiddenCmd(this IServiceCollection services)
+          {
+            services.AddSingleton<IEm42HiddenCmd, Em42HiddenCmdImpl>();
+            return services;
+          }
+        }
+        """;
+
+      MetadataReference library = EmitLibrary(Library, "Em42HiddenCmdLib", metadataOnly: false);
+
+      const string App = AppPreamble + """
+        NuruApp app = NuruApp.CreateBuilder()
+          .ConfigureServices(static services => services.AddEm42HiddenCmd())
+          .Map<Em42HiddenCmdApp.HiddenCommand>()
+          .Build();
+        return await app.RunAsync([]);
+
+        namespace Em42HiddenCmdApp
+        {
+          [NuruRoute("em42-hidden-cmd")]
+          public sealed class HiddenCommand : ICommand<Unit>
+          {
+            public sealed class Handler : ICommandHandler<HiddenCommand, Unit>
+            {
+              public Handler(IEm42HiddenCmd hidden)
+              {
+                _ = hidden;
+              }
+
+              public ValueTask<Unit> Handle(HiddenCommand command, CancellationToken ct) => default;
+            }
+          }
+        }
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(App, library);
+      result.Results[0].Exception.ShouldBeNull();
+      result.Diagnostics.ShouldContain(static d => d.Id == "NURU054");
+
+      string generated = string.Join("\n", result.Results[0].GeneratedSources.Select(static g => g.SourceText.ToString()));
+      generated.ShouldNotContain("new global::Em42HiddenCmdImpl");
+      generated.ShouldNotContain("new Em42HiddenCmdImpl");
+      generated.ShouldNotContain("__svc_Em42HiddenCmdImpl");
+
+      await Task.CompletedTask;
+    }
+
     public static async Task Should_include_hatch_guidance_in_nuru052_message()
     {
       const string App = AppPreamble + """

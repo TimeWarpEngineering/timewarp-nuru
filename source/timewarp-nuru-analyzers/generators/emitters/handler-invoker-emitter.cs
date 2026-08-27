@@ -426,8 +426,9 @@ internal static class HandlerInvokerEmitter
         ? serviceTypeName[8..]
         : serviceTypeName;
       service = services.FirstOrDefault(s =>
-        s.ServiceTypeName == normalizedTypeName ||
-        (s.ServiceTypeName.StartsWith("global::", StringComparison.Ordinal) && s.ServiceTypeName[8..] == normalizedTypeName));
+        !s.IsInternalType &&
+        (s.ServiceTypeName == normalizedTypeName ||
+         (s.ServiceTypeName.StartsWith("global::", StringComparison.Ordinal) && s.ServiceTypeName[8..] == normalizedTypeName)));
     }
 
     if (service is not null)

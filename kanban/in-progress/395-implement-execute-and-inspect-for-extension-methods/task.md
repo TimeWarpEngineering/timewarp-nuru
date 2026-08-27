@@ -188,6 +188,17 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - [x] Internal impl inside `AddX` → 054 or 052 (hatch), never `new Internal`
 - [x] Factory inside `AddX` → 052/053, not lowered in v1
 
+### Implementation review (reopened 2026-08-27)
+
+`kanban done` was premature: `ganda task work` never ran 4b. Same task through disposition.
+
+- [ ] `review/review-framework.md`
+- [ ] Round 1 `review/round-1/general.md`
+- [ ] `review/round-1/merged.md`
+- [ ] Fix loop / further rounds as needed
+- [ ] `review/disposition.md` (`clean` or `accepted-exceptions`)
+- [ ] Results cover review (rounds, counts, disposition, `review/` paths)
+
 ## Out of scope (v1)
 
 - Execute-and-inspect / compile-time `ServiceCollection`
@@ -210,6 +221,8 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - Epic #391 still says "Execute ServiceCollection at compile time" on Phase 4;
   that line is stale after this rewrite (fold in when 395 lands or in the epic
   close-out, do not sneak a 391 edit through this branch unless asked).
+- **Review (2026-08-27):** folderized; moved done → in-progress; effort 1 general
+  against PR #227. Artifacts: `review/review-framework.md`. Round 1 launching.
 
 ## Session
 
@@ -217,6 +230,7 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - Rewrite: grok (2026-08-27) — decompile + purity + lower; execute/replay rejected
 - Implementer launch: host=herdr profile=implementer-grok provider=grok worktree=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-395-implement-execute-and-inspect-for-extension-method workspace=w7 pane=w7:p1 agent=task395 (2026-08-26 UTC)
 - Implementation: grok (2026-08-27) — in-project follow + ILSpy lib/ decompile + fail-closed lower into Phase 3 emit
+- Review reopen: grok cockpit (2026-08-27) — folderize + framework; board was done without `review/`
 
 ## Results
 

@@ -235,6 +235,7 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - Implementation: grok (2026-08-27) — in-project follow + ILSpy lib/ decompile + fail-closed lower into Phase 3 emit
 - Review reopen: grok cockpit (2026-08-27) — folderize + framework; board was done without `review/`
 - Review round 1: general (2026-08-27) — `review/round-1/general.md`; merged M1+M2 open, both selected to fix
+- Review fix pass: `b034c788` (M1+M2); round 2 opening
 - Review fix loop: grok (2026-08-27) — M1 Command-handler internal skip; M2 TFM-nearest lib/ sibling
 
 ## Results

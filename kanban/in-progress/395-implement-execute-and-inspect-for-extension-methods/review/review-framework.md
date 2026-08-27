@@ -6,11 +6,11 @@
 **Plan / brief:** `task.md` — decompile `lib/` (not `ref/`), purity-fail the whole user-facing `AddX` if anything is not a lowerable `IServiceCollection` call, merge public closed `Add*` into Phase 3 `new`/`Lazy<T>`. No execute-and-inspect. No `IServiceCollection` replay. Hatch unchanged.
 **Effort:** 1 (general only)
 **Reviewer roster:** general
-**Session IDs:** cockpit grok (folderize + framework, 2026-08-27); round-1 general (launching)
+**Session IDs:** cockpit grok (folderize + framework, 2026-08-27); round-1 general (Herdr `launch` / w8); fix pass implementer `task395` / w7 (`b034c788`); round-2 launching
 
 ## Ground rules
 
-- Reviewers are read-only on product code; they write only under `review/round-1/`
+- Reviewers are read-only on product code; they write only under the **current** round directory (`review/round-2/` now)
 - Severity: bug | suggestion | nit — Status starts as open
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
@@ -31,3 +31,12 @@
 - Epic 391 Phase 5, task 444 ServiceGen
 - Factory lowering, new HttpClient/logging special-cases, open generics
 - Rewriting `ganda task work` to include review by default (flow/ganda 011)
+
+## Round 2
+
+**Date:** 2026-08-27
+**Prior round:** `review/round-1/` is **frozen**. Do not edit it.
+**Diff scope:** post-fix delta `b034c788` (kitchen `04656763`) on PR #227; also re-verify M1/M2 on HEAD vs `origin/master`.
+**Write:** `review/round-2/general.md` only.
+
+Re-verify prior IDs **M1** and **M2** (ledger says `fixed`). May raise **new** findings on the fix delta. Carry stable `M#` IDs; new issues get new IDs.

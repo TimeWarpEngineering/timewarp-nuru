@@ -195,8 +195,8 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - [x] `review/review-framework.md`
 - [x] Round 1 `review/round-1/general.md`
 - [x] `review/round-1/merged.md` (M1 bug + M2 suggestion, both **open**, selected to fix)
-- [ ] Fix M1 (`ResolveServiceForCommand` `global::` fallback must skip `IsInternalType`; generator-42 Command-handler coverage)
-- [ ] Fix M2 (`FindLibSibling` TFM-nearest, not lexicographic path)
+- [x] Fix M1 (`ResolveServiceForCommand` `global::` fallback must skip `IsInternalType`; generator-42 Command-handler coverage)
+- [x] Fix M2 (`FindLibSibling` TFM-nearest, not lexicographic path)
 - [ ] Round 2 re-review (`review/round-2/`) after fixes
 - [ ] `review/disposition.md` (`clean` or `accepted-exceptions`)
 - [ ] Results cover review (rounds, counts, disposition, `review/` paths)
@@ -235,6 +235,7 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - Implementation: grok (2026-08-27) — in-project follow + ILSpy lib/ decompile + fail-closed lower into Phase 3 emit
 - Review reopen: grok cockpit (2026-08-27) — folderize + framework; board was done without `review/`
 - Review round 1: general (2026-08-27) — `review/round-1/general.md`; merged M1+M2 open, both selected to fix
+- Review fix loop: grok (2026-08-27) — M1 Command-handler internal skip; M2 TFM-nearest lib/ sibling
 
 ## Results
 
@@ -251,7 +252,7 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-41-extension-method-low
 # expect: Total 4, Passed 4
 
 dotnet run tests/timewarp-nuru-tests/generator/generator-42-extension-method-lowering-diagnostics.cs
-# expect: Total 7, Passed 7
+# expect: Total 8, Passed 8
 ```
 
 **Smoke**

@@ -192,12 +192,15 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 
 `kanban done` was premature: `ganda task work` never ran 4b. Same task through disposition.
 
-- [ ] `review/review-framework.md`
-- [ ] Round 1 `review/round-1/general.md`
-- [ ] `review/round-1/merged.md`
-- [ ] Fix loop / further rounds as needed
+- [x] `review/review-framework.md`
+- [x] Round 1 `review/round-1/general.md`
+- [x] `review/round-1/merged.md` (M1 bug + M2 suggestion, both **open**, selected to fix)
+- [ ] Fix M1 (`ResolveServiceForCommand` `global::` fallback must skip `IsInternalType`; generator-42 Command-handler coverage)
+- [ ] Fix M2 (`FindLibSibling` TFM-nearest, not lexicographic path)
+- [ ] Round 2 re-review (`review/round-2/`) after fixes
 - [ ] `review/disposition.md` (`clean` or `accepted-exceptions`)
 - [ ] Results cover review (rounds, counts, disposition, `review/` paths)
+- [ ] **Do not** `ganda kanban done` until disposition exists
 
 ## Out of scope (v1)
 
@@ -231,6 +234,7 @@ Not plausible: Nuru apps never ship a container (`AddDbContext`, a real
 - Implementer launch: host=herdr profile=implementer-grok provider=grok worktree=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-395-implement-execute-and-inspect-for-extension-method workspace=w7 pane=w7:p1 agent=task395 (2026-08-26 UTC)
 - Implementation: grok (2026-08-27) — in-project follow + ILSpy lib/ decompile + fail-closed lower into Phase 3 emit
 - Review reopen: grok cockpit (2026-08-27) — folderize + framework; board was done without `review/`
+- Review round 1: general (2026-08-27) — `review/round-1/general.md`; merged M1+M2 open, both selected to fix
 
 ## Results
 

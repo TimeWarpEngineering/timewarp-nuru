@@ -526,6 +526,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       "build/TimeWarp.Nuru.targets",
       "build/net10.0/TimeWarp.Nuru.Build.dll",
       "build/net10.0/TimeWarp.Nuru.Analyzers.dll",
+      "build/net10.0/ICSharpCode.Decompiler.dll",
       "build/net10.0/Microsoft.Build.Framework.dll",
       "build/net10.0/Microsoft.Build.Utilities.Core.dll",
       "build/net10.0/Microsoft.CodeAnalysis.dll",

@@ -50,6 +50,9 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-38-h002-sole-identifier-body.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-39-keyword-param-identifiers.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-40-with-example-non-literal-command.cs" />
+    <!-- generator-42: same Roslyn-hosted generator test pattern as generator-28
+         (task 395 decompile/NURU052); CS0433 collision applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-42-extension-method-lowering-diagnostics.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

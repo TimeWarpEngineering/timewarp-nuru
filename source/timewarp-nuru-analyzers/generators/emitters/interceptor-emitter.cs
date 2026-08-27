@@ -39,6 +39,7 @@ internal static class InterceptorEmitter
     IEnumerable<ServiceDefinition> sourceGenServices = model.Apps
       .Where(a => !a.UseMicrosoftDependencyInjection)
       .SelectMany(a => a.Services)
+      .Where(s => !s.IsInternalType)
       .DistinctBy(s => s.ImplementationTypeName);
     IEnumerable<ServiceDefinition> runtimeDIServices = model.Apps
       .Where(a => a.UseMicrosoftDependencyInjection)

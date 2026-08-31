@@ -1,71 +1,49 @@
-# 443 - Extract Mediator Abstractions to TimeWarp.Mediator with Source-Generated Dispatch
+# 443 - Consume TimeWarp.Mediator in Nuru
 
 ## Description
 
-Three-package architecture for source-generated, AOT-friendly infrastructure. Extracts reusable concerns from Nuru into independent libraries that compose through shared abstractions.
+Nuru **consumes** the rewritten TimeWarp.Mediator. It does **not** own the rewrite, the source generator, or `ISender<TScope>`.
 
-### Package Architecture
+Those live in timewarp-mediator:
 
-```
-TimeWarp.ServiceGen          (source-generated DI container)
-├── Service registration API (AddSingleton<T>, AddTransient<T>, AddScoped<T>)
-├── Source generator: scans registrations, emits factory methods
-├── Constructor dependency resolution at compile time
-├── Optional bridge to Microsoft.Extensions.DependencyInjection
+- **004** epic — source-gen rewrite + named pipelines
+- **004-001** M1 — generated `Mediator` + analyzer (this task waits on M1 existing as a package)
+- **004-002** M2 — `ISender<TScope>` (optional follow-on for Nuru; do not implement here)
 
-TimeWarp.Mediator            (depends on ServiceGen)
-├── ISender<TScope>, IPublisher<TScope>, INotification
-├── Handler/message abstractions
-├── Source generator: emits typed dispatch, uses ServiceGen for handler DI
-
-TimeWarp.Nuru                (depends on Mediator, which brings in ServiceGen)
-├── CLI routing, behaviors, NuruApp
-├── Source generator: emits interceptors, route matching
-├── Uses ServiceGen for all service resolution (replaces current ServiceResolverEmitter)
-```
-
-Depends on: task 444 (TimeWarp.ServiceGen)
+This task used to be “extract Nuru abstractions and rewrite Mediator.” That work moved. This card is the Nuru adoption slice only.
 
 ## Requirements
 
-### Phase 1: TimeWarp.Mediator Abstractions
+- Do not start until timewarp-mediator **004-001** has shipped a usable package (or project reference equivalent)
+- Add TimeWarp.Mediator as a package dependency
+- Nuru generator emits `global::TimeWarp.Mediator.*` for message/handler/sender types
+- Remove Nuru-local copies of extracted types (`IMessage`, `IQuery<T>`, `ICommand<T>`, `IIdempotentCommand<T>`, `Unit`, matching handler interfaces) once the Mediator package provides them
+- Unscoped `ISender` / `IPublisher` work on both Nuru static DI and Microsoft DI paths
+- Existing Nuru tests pass against abstractions sourced from TimeWarp.Mediator
 
-- [ ] Extract from Nuru: IMessage, IIdempotent, IQuery<T>, ICommand<T>, IIdempotentCommand<T>, Unit
-- [ ] Extract handler interfaces: IQueryHandler<,>, ICommandHandler<,>, IIdempotentCommandHandler<,>
-- [ ] Add ISender<TScope> interface (Send for commands, queries, idempotent commands)
-- [ ] Add unscoped ISender interface (default pipeline, no scope marker needed)
-- [ ] Add INotification marker interface
-- [ ] Add INotificationHandler<T> interface
-- [ ] Add IPublisher<TScope> and unscoped IPublisher interfaces
+## Checklist
 
-### Phase 2: Source Generator for Dispatch
+- [ ] Confirm 004-001 is available (package or agreed project reference)
+- [ ] Reference TimeWarp.Mediator; stop treating Mediator as something Nuru generates
+- [ ] Point Nuru generator at TimeWarp.Mediator types
+- [ ] Delete extracted duplicates from Nuru source
+- [ ] Both DI paths resolve `ISender` / `IPublisher`
+- [ ] Tests pass
 
-- [ ] Generator scans compilation for handler implementations
-- [ ] Emit concrete Sender class per TScope with type-switched dispatch (no reflection)
-- [ ] Emit concrete Publisher class per TScope with fan-out to all INotificationHandler<T> implementations
-- [ ] Use Unsafe.As for generic return type bridging (AOT-safe, generator guarantees type match)
-- [ ] Use TimeWarp.ServiceGen for handler constructor dependency resolution
-- [ ] Optional Microsoft DI integration path (via ServiceGen bridge)
+## Out of scope
 
-### Phase 3: Update Nuru
-
-- [ ] Add TimeWarp.Mediator as package dependency (brings in ServiceGen transitively)
-- [ ] Update Nuru generator to emit `global::TimeWarp.Mediator.*` type references
-- [ ] Remove extracted abstractions from Nuru source (IMessage, IQuery, ICommand, handlers, Unit, IIdempotent)
-- [ ] Replace Nuru's ServiceResolverEmitter with TimeWarp.ServiceGen
-- [ ] Ensure Nuru's static DI and Microsoft DI paths both resolve ISender/IPublisher
-- [ ] Verify all existing tests pass with abstractions sourced from TimeWarp.Mediator
-
-## Design Decisions Needed
-
-- **Handler discovery**: Assembly-wide scan vs explicit registration (explicit avoids cross-contamination in multi-project compilations)
-- **Handler lifetime**: Singleton (like Nuru), Transient, or Scoped — ServiceGen handles this uniformly
-- **Pipeline behaviors**: Should TimeWarp.Mediator have its own behavior pipeline (independent of Nuru's INuruBehavior)?
-- **Typed/scoped pipelines**: Support `ISender<TScope>` so different contexts get isolated pipelines with their own handlers and behaviors. Solves the problem where a single shared IMediator (e.g., in TimeWarp.State Blazor apps) forces every behavior to filter for the types it cares about. With `ISender<TScope>`, the generator emits separate dispatch implementations per scope — zero runtime filtering (e.g., `ISender<ClientPipeline>`, `ISender<ServerPipeline>`).
-- **Namespace**: `TimeWarp.Mediator` for all extracted types
+- Rewriting TimeWarp.Mediator (004 / 004-001)
+- Implementing `ISender<TScope>` (004-002)
+- TimeWarp.ServiceGen / replacing `ServiceResolverEmitter` (**444** — independent; not a blocker for this consume slice)
+- TimeWarp.State switch (file in timewarp-state after 004-001 exists)
 
 ## Notes
 
-- TimeWarp.Mediator repo already exists as a fork of MediatR before it went commercial — will be rewritten with source-gen approach
-- Three source generators (ServiceGen + Mediator + Nuru) coexist fine: each generator's inputs are regular compiled types (interfaces, attributes), not other generators' output
-- Build order: ServiceGen first → Mediator on top → Nuru migration last
+- Filename still says “extract … with source-generated dispatch.” Treat the H1 as the title.
+- Named pipelines (`ISender<ClientPipeline>` / `ISender<ServerPipeline>`) are Mediator M2. Nuru may use them later; it must not invent a second implementation.
+- 444 remains the ServiceGen extraction. Mediator Host/State default is MS.DI; ServiceGen is the AOT/CLI profile.
+
+## Session
+
+- Created: (original 443)
+- Retargeted: 2438044 (2026-08-31) — rewrite ownership moved to timewarp-mediator 004

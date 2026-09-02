@@ -62,9 +62,9 @@ them in Notes (fix those in follow-up tasks; this id is nuru).
 
 - [x] Master protection no longer blocks admin/operator `kanban/**` push (`enforce_admins` false or equivalent bypass)
 - [x] `ci` still required on PRs
-- [ ] `ganda kanban publish` succeeds on a kanban-only kitchen (paste CLI output in Notes)
+- [x] `ganda kanban publish` succeeds on a kanban-only kitchen (paste CLI output in Notes)
 - [x] Other-repo scan table in Notes
-- [ ] 467/468 no longer need kanban-only PRs as the default inbox path
+- [x] 467/468 no longer need kanban-only PRs as the default inbox path
 
 ## Session
 
@@ -117,7 +117,14 @@ No product code.
 ### Test outcomes
 
 - After DELETE: `enforce_admins: false`, `status: ["ci"]`, `allow_force: false`, `allow_deletions: false`.
-- `ganda kanban publish 468` output recorded below after this commit.
+- `ganda kanban publish 468` (2026-09-02, after `enforce_admins` off):
+
+```
+Published task 468 to origin/master
+Pushed:   361a628
+Released claim
+468 is in kanban/to-do/ on origin-home.
+```
 
 ### How to validate
 

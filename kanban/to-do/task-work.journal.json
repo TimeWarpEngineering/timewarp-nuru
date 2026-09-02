@@ -1,0 +1,29 @@
+[
+  {
+    "nodeId": "claim",
+    "kind": "Compute",
+    "resultKind": "host-state",
+    "enumName": null,
+    "hostState": {
+      "taskId": "467",
+      "repo": "timewarp-nuru",
+      "noReview": false,
+      "kitchenContent": "# Spike Aspire 13.5 WithTerminal for the Nuru REPL in the aspire-otel sample\n\n## Description\n\n\u0060samples/aspire-otel/apphost.cs\u0060 pins \u0060#:sdk Aspire.AppHost.Sdk@13.1.0\u0060 and runs the client as\n\u0060AddCSharpApp(\u0022nuruclient\u0022, \u0022./nuru-client.cs\u0022).WithArgs(\u0022status\u0022)\u0060 with the comment\n\u0022REPL requires interactive console which Aspire doesn\u0027t provide\u0022. Aspire 13.5 added the\nexperimental \u0060WithTerminal()\u0060 (\u0060ASPIRETERMINAL001\u0060): the resource runs under a real\npseudo-terminal (PTY) with attached stdin, a live Terminal view in the dashboard, and\n\u0060aspire terminal attach\u0060 behind \u0060features.terminalCommandsEnabled\u0060. That is the interactive\nconsole the comment says Aspire lacked. This spike proves or disproves that the Nuru REPL runs\nunder it.\n\nOrigin: timewarp-architecture task 209 (Aspire 13.5 update / WithTerminal vs Nuru verdict).\nDocs: https://aspire.dev/app-host/with-terminal/ and\nhttps://aspire.dev/whats-new/aspire-13-5/.\n\n## Requirements\n\n- Bump the sample to the **13.5 train as a whole** (\u0060#:sdk Aspire.AppHost.Sdk@13.5.x\u0060 plus every\n  \u0060Aspire.Hosting.*\u0060 package the sample restores). Do not mix 13.4 and 13.5 packages\n  (\u0060MissingMethodException\u0060 / \u0060TypeLoadException\u0060 known issue).\n- Add \u0060.WithTerminal()\u0060 to the \u0060nuruclient\u0060 resource and pass \u0060--interactive\u0060 (or enable\n  \u0060ReplOptions.AutoStartWhenEmpty\u0060) instead of \u0060WithArgs(\u0022status\u0022)\u0060. Suppress\n  \u0060ASPIRETERMINAL001\u0060 (and the existing \u0060ASPIRECSHARPAPPS001\u0060) with a pragma or \u0060NoWarn\u0060.\n- Prove in the dashboard Terminal view and via \u0060aspire terminal attach\u0060 (after\n  \u0060aspire config set features.terminalCommandsEnabled true\u0060) that the REPL prompt appears,\n  accepts keystrokes, and that arrow-key history, tab completion, and ANSI colouring survive\n  the PTY.\n- Record the outcome in Notes. If it works, replace the stale \u0022Aspire doesn\u0027t provide\u0022 comment\n  and keep the sample on \u0060WithTerminal()\u0060. If it does not, record the exact failure (PTY not\n  attached, \u0060AddCSharpApp\u0060 not accepting \u0060WithTerminal\u0060, \u0060Console.ReadKey\u0060 behaviour) and revert\n  the sample to \u0060WithArgs(\u0022status\u0022)\u0060 on 13.5.\n- Do not conflate with backlog task 083 (Blazor WASM terminal REPL over SignalR): that is a\n  browser terminal, this is Aspire\u0027s own PTY attach. 083 stays as is.\n\n## Checklist\n\n- [ ] Sample on one 13.5 train (SDK \u002B all \u0060Aspire.Hosting.*\u0060); no 13.1/13.4 leftovers\n- [ ] \u0060WithTerminal()\u0060 \u002B \u0060--interactive\u0060 wired; experimental diagnostics suppressed\n- [ ] Dashboard Terminal view shows the REPL prompt and accepts input\n- [ ] \u0060aspire terminal attach\u0060 works with \u0060features.terminalCommandsEnabled\u0060\n- [ ] Verdict (works / does not work, with evidence) recorded in Notes\n- [ ] Stale \u0022Aspire doesn\u0027t provide\u0022 comment updated or failure documented\n\n## Session\n\n- Created: ganda session 691380 (2026-09-02), reserved from timewarp-architecture task 209\n  (Aspire 13.5 update / WithTerminal vs Nuru investigation)\n\n## Notes\n\nUnknowns to resolve (not documented by Aspire as of 13.5.3):\n\n- Whether \u0060WithTerminal()\u0060 is callable on the \u0060AddCSharpApp\u0060 builder; docs only show\n  \u0060AddExecutable\u0060 and \u0060AddContainer\u0060.\n- Whether the PTY presents to .NET \u0060Console\u0060 APIs the way Nuru\u0027s REPL reader expects\n  (\u0060Console.ReadKey(intercept: true)\u0060, resize).\n- Debugger does not auto-attach to a \u0060WithTerminal()\u0060 resource (documented DCP limitation).\n",
+      "worktreePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-467-spike-aspire-135-withterminal-for-the-nuru-repl-in",
+      "originHomePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/master",
+      "branchName": "task/467-spike-aspire-135-withterminal-for-the-nuru-repl-in",
+      "error": null,
+      "task": {
+        "id": "467",
+        "title": "spike-aspire-135-withterminal-for-the-nuru-repl-in-the-aspire-otel-sample",
+        "filePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/master/kanban/to-do/467-spike-aspire-135-withterminal-for-the-nuru-repl-in-the-aspire-otel-sample.md",
+        "relativePath": "to-do/467-spike-aspire-135-withterminal-for-the-nuru-repl-in-the-aspire-otel-sample.md",
+        "contentFilePath": "/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/master/kanban/to-do/467-spike-aspire-135-withterminal-for-the-nuru-repl-in-the-aspire-otel-sample.md",
+        "column": "to-do",
+        "isFolder": false
+      }
+    },
+    "setState": null,
+    "nestPath": ""
+  }
+]

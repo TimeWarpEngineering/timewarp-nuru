@@ -12,9 +12,12 @@
 //
 // To run:
 //   cd samples/aspire-otel
-//   aspire config set features.terminalCommandsEnabled true
 //   aspire run
-//   (Dashboard Terminal view, or: aspire terminal attach nuruclient)
+//   (or: ./apphost.cs)
+//   Dashboard Terminal view needs no extra config.
+//   CLI attach only:
+//     aspire config set features.terminalCommandsEnabled true
+//     aspire terminal attach nuruclient
 
 // Type is for evaluation purposes only and is subject to change or
 // removal in future updates. Suppress this diagnostic to proceed.

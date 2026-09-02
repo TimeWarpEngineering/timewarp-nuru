@@ -7,25 +7,22 @@ This sample demonstrates a Nuru CLI/REPL application sending telemetry (traces, 
 Both the AppHost and NuruClient are implemented as **.NET 10 file-based apps** (runfiles) - single `.cs` files that run directly without a `.csproj`:
 
 ```bash
-cd samples/_aspire-host-otel
+cd samples/aspire-otel
 
-# Run the AppHost using Aspire CLI
+# Run the AppHost (discovers apphost.cs in this directory, or use --apphost ./apphost.cs)
 aspire run
 
-# Run the NuruClient (in separate terminal)
-./nuru-client.cs
+# Run the NuruClient standalone (in a separate terminal)
+./nuru-client.cs --interactive
 ```
 
-The `aspire run` command uses the `.aspire/settings.json` configuration to locate the AppHost.
+Both runfiles use the same shebang (no launch profile):
 
-Each runfile specifies its launch profile in the shebang:
-
-```csharp
-#!/usr/bin/env -S dotnet run --launch-profile http --      # apphost.cs
-#!/usr/bin/env -S dotnet run --launch-profile AppHost --   # nuru-client.cs
+```
+#!/usr/bin/env -S dotnet --
 ```
 
-Both runfiles share a single `Properties/launchSettings.json` with multiple profiles.
+`Properties/launchSettings.json` is an optional helper for standalone OTLP via `dotnet run --launch-profile …` (see Shared Launch Settings).
 
 ## IHostApplicationBuilder Integration
 
@@ -76,8 +73,9 @@ This means any extension method targeting `IHostApplicationBuilder` (like Aspire
 ### Step 1: Start Aspire Host
 
 ```bash
-cd samples/_aspire-host-otel
+cd samples/aspire-otel
 aspire run
+# or: ./apphost.cs
 ```
 
 Output:
@@ -94,19 +92,14 @@ This:
 - Launches NuruClient in REPL mode under a PTY (`WithTerminal` + `--interactive`)
 - Opens OTLP receiver on port 19034
 
-Enable CLI attach once:
+### Step 2: Attach to the REPL
+
+Dashboard: open `nuruclient` Console Logs and switch to **Terminal** (default while Running). No extra config required.
+
+CLI attach (`aspire terminal attach` / `ps`) needs the feature flag once:
 
 ```bash
 aspire config set features.terminalCommandsEnabled true
-```
-
-### Step 2: Attach to the REPL
-
-Dashboard: open `nuruclient` Console Logs and switch to **Terminal** (default while Running).
-
-CLI:
-
-```bash
 aspire terminal attach nuruclient
 ```
 
@@ -114,7 +107,7 @@ Standalone (no AppHost) still works:
 
 ```bash
 cd samples/aspire-otel
-./nuru-client.cs -- --interactive
+./nuru-client.cs --interactive
 ```
 
 ### Step 3: Interact with the REPL
@@ -129,7 +122,7 @@ otel> config
 Each command sends telemetry to the AppHost dashboard. Check:
 - **Traces**: See command execution spans with timing
 - **Structured Logs**: See log entries with semantic properties
-- **Resources**: See `nuruclient` (Aspire-launched REPL). A standalone `./nuru-client.cs` session still shows as `nuru-repl-client` if you run one.
+- **Resources**: See `nuruclient` (Aspire-launched REPL; OTLP injected by AppHost). A standalone session shows as `nuru-repl-client` only when started with `dotnet run --launch-profile AppHost`.
 
 ---
 
@@ -167,7 +160,12 @@ On Aspire's Hex1b PTY, Nuru's line redraw calls `Terminal.GetCursorPosition()` (
 
 ### Shared Launch Settings
 
-Both runfiles use a single `Properties/launchSettings.json` with multiple profiles:
+`Properties/launchSettings.json` is an optional helper for standalone runs. The runfile shebangs do not select a profile; Aspire also launches `nuruclient` with `--no-launch-profile` and injects OTLP itself. Use a profile explicitly when you want those env vars outside AppHost:
+
+```bash
+dotnet run --launch-profile http ./apphost.cs
+dotnet run --launch-profile AppHost ./nuru-client.cs
+```
 
 ```json
 {
@@ -188,9 +186,8 @@ Both runfiles use a single `Properties/launchSettings.json` with multiple profil
 }
 ```
 
-The shebang in each runfile specifies which profile to use:
-- `apphost.cs` uses `--launch-profile http`
-- `nuru-client.cs` uses `--launch-profile AppHost`
+- `http` — AppHost dashboard/OTLP URLs for a standalone AppHost launch
+- `AppHost` — sets `OTEL_SERVICE_NAME=nuru-repl-client` for a standalone client; unused by the Aspire-managed `nuruclient` resource
 
 ### Dual Output Pattern (Console + Telemetry)
 

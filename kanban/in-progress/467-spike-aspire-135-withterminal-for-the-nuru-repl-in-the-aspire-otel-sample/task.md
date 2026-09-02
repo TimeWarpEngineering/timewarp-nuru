@@ -42,12 +42,14 @@ https://aspire.dev/whats-new/aspire-13-5/.
 - [x] `aspire terminal attach` works with `features.terminalCommandsEnabled`
 - [x] Verdict (works / does not work, with evidence) recorded in Notes
 - [x] Stale "Aspire doesn't provide" comment updated or failure documented
+- [x] Implementation review (effort 1, general): 3 rounds, disposition clean
 
 ## Session
 
 - Created: ganda session 691380 (2026-09-02), reserved from timewarp-architecture task 209
   (Aspire 13.5 update / WithTerminal vs Nuru investigation)
 - Implementer: grok task-work implement oracle (2026-09-02)
+- Review: grok task-work review oracle (2026-09-02), effort 1 general, 3 rounds
 
 ## Notes
 
@@ -112,6 +114,9 @@ Task 083 (Blazor WASM terminal) is unrelated and unchanged.
 - Updated `nuru-client.cs`, `readme.md`, and `overview.md` for Terminal attach and the `--`
   separator.
 - Proved dashboard Terminal view + `aspire terminal attach` against Aspire CLI 13.5.3.
+- Review follow-up: corrected sample docs (stale `_aspire-host-otel` paths, standalone REPL
+  invocation, shebang/launch-profile claims, `terminalCommandsEnabled` vs dashboard, cwd-relative
+  standalone `dotnet run`).
 
 Files changed:
 
@@ -125,6 +130,16 @@ Key decisions:
 - Keep `WithTerminal()` (verdict: works). Do not revert to `WithArgs("status")`.
 - Pass `--` before `--interactive` so `dotnet run` does not swallow the flag.
 - Record the `GetCursorPosition` / DSR leak as a Nuru-on-Hex1b caveat, not a sample revert.
+- Dashboard Terminal needs no feature flag; `features.terminalCommandsEnabled` is CLI attach only.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1, general only
+- **Rounds:** 3 (`review/round-1/` … `review/round-3/`)
+- **Final counts:** 4 bug fixed, 4 suggestion fixed, 0 nit, 0 open, 0 wontfix
+- **Paths:** `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`
+- No sibling apply-review task; fixes stayed on 467.
 
 Test outcomes:
 
@@ -142,19 +157,25 @@ Test outcomes:
 
 ```bash
 cd samples/aspire-otel
-aspire config set features.terminalCommandsEnabled true --global
 aspire start --isolated --non-interactive --format Json --apphost ./apphost.cs
 aspire wait nuruclient
-aspire terminal ps
 ```
 
 Then either:
 
 1. Open the printed dashboard URL → Console → resource `nuruclient` (page
    `/consolelogs/resource/nuruclient`). Expect the **terminal** pane (not only console
-   logs), welcome banner, and green `otel>` prompt.
-2. `aspire terminal attach nuruclient --replica 0` — expect PRIMARY attach, same prompt,
-   Ctrl+B D to detach.
+   logs), welcome banner, and green `otel>` prompt. No `terminalCommandsEnabled` flag
+   required for this path.
+2. CLI attach only:
+
+```bash
+aspire config set features.terminalCommandsEnabled true --global
+aspire terminal ps
+aspire terminal attach nuruclient --replica 0
+```
+
+Expect PRIMARY attach, same prompt, Ctrl+B D to detach.
 
 **Expect**
 

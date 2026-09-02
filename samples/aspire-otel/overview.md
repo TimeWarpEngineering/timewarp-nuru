@@ -50,16 +50,16 @@ This means any extension method targeting `IHostApplicationBuilder` (like Aspire
 ┌─────────────────────────────────────────────────┐
 │ Aspire AppHost (apphost.cs)                     │
 │  └─ Dashboard (http://localhost:15186)          │
-│       └─ OTLP receiver (port 19034)             │
-│            └─ Shows ALL telemetry               │
+│       ├─ OTLP receiver (port 19034)             │
+│       └─ Terminal view (WithTerminal PTY)       │
 └─────────────────────────────────────────────────┘
           ▲                         ▲
-          │ OTLP                    │ OTLP
+          │ OTLP                    │ PTY attach
           │                         │
 ┌─────────────────────┐   ┌─────────────────────┐
-│ Aspire-launched     │   │ Interactive REPL    │
-│ (runs "status")     │   │ (your terminal)     │
-│ source: nuruclient  │   │ source: nuru-repl   │
+│ Aspire-launched     │   │ aspire terminal     │
+│ nuruclient REPL     │   │ attach nuruclient   │
+│ --interactive       │   │ (or dashboard)      │
 └─────────────────────┘   └─────────────────────┘
 ```
 
@@ -71,7 +71,7 @@ This means any extension method targeting `IHostApplicationBuilder` (like Aspire
 
 - .NET 10 SDK
 - Aspire CLI (`dotnet tool install -g aspire`)
-- Aspire 13.0+
+- Aspire 13.5+ (SDK + hosting packages on the same train; do not mix 13.4)
 
 ### Step 1: Start Aspire Host
 
@@ -91,14 +91,30 @@ Output:
 
 This:
 - Starts the Aspire Dashboard (URL shown with auth token)
-- Launches NuruClient with `status` command (demonstrates managed telemetry)
+- Launches NuruClient in REPL mode under a PTY (`WithTerminal` + `--interactive`)
 - Opens OTLP receiver on port 19034
 
-### Step 2: Run Interactive REPL (separate terminal)
+Enable CLI attach once:
 
 ```bash
-cd samples/_aspire-host-otel
-./nuru-client.cs
+aspire config set features.terminalCommandsEnabled true
+```
+
+### Step 2: Attach to the REPL
+
+Dashboard: open `nuruclient` Console Logs and switch to **Terminal** (default while Running).
+
+CLI:
+
+```bash
+aspire terminal attach nuruclient
+```
+
+Standalone (no AppHost) still works:
+
+```bash
+cd samples/aspire-otel
+./nuru-client.cs -- --interactive
 ```
 
 ### Step 3: Interact with the REPL
@@ -113,7 +129,7 @@ otel> config
 Each command sends telemetry to the AppHost dashboard. Check:
 - **Traces**: See command execution spans with timing
 - **Structured Logs**: See log entries with semantic properties
-- **Resources**: See both `nuruclient` (Aspire-launched) and `nuru-repl-client` (interactive)
+- **Resources**: See `nuruclient` (Aspire-launched REPL). A standalone `./nuru-client.cs` session still shows as `nuru-repl-client` if you run one.
 
 ---
 
@@ -124,23 +140,30 @@ Each command sends telemetry to the AppHost dashboard. Check:
 The AppHost registers NuruClient as a managed C# file-based app:
 
 ```csharp
-#!/usr/bin/env -S dotnet run --launch-profile http --
-#:sdk Aspire.AppHost.Sdk@13.0.0
+#!/usr/bin/env -S dotnet --
+#:sdk Aspire.AppHost.Sdk@13.5.3
+#:property NoWarn=ASPIRE004;ASPIRECSHARPAPPS001;ASPIRETERMINAL001
 
 #pragma warning disable ASPIRECSHARPAPPS001
+#pragma warning disable ASPIRETERMINAL001
 
-var builder = DistributedApplication.CreateBuilder(args);
+var builder = DistributedApplication.CreateBuilder();
 
 builder.AddCSharpApp("nuruclient", "./nuru-client.cs")
-  .WithArgs("status");
+  .WithArgs("--", "--interactive")
+  .WithTerminal();
 
 await builder.Build().RunAsync();
 ```
 
 Aspire automatically:
+- Allocates a PTY (`WithTerminal`) and shows a live **Terminal** view on the Console page
 - Injects `OTEL_EXPORTER_OTLP_ENDPOINT` pointing to the dashboard
 - Shows the resource in the dashboard
-- Correlates telemetry from both managed and interactive sessions
+
+`AddCSharpApp` launches with `dotnet run --file …`. Pass `--` before app flags so `dotnet run` does not swallow `--interactive` (that name is a `dotnet run` option).
+
+On Aspire's Hex1b PTY, Nuru's line redraw calls `Terminal.GetCursorPosition()` (Unix `ESC[6n`). Delayed DSR replies can leak into `ReadKey` as typed text (`[11;10R` then "Unknown command"). Prompt, ANSI colour, and attach still work; command submit is noisier than a local TTY.
 
 ### Shared Launch Settings
 
@@ -243,6 +266,7 @@ Duration > 1000
 
 ## See Also
 
+- [Aspire 13.5 WithTerminal](https://aspire.dev/app-host/with-terminal/)
 - [Aspire 13 File-Based App Support](https://aspire.dev/whats-new/aspire-13/#c-file-based-app-support)
 - [REPL Demo](../13-repl/) - REPL features without telemetry
 - [Telemetry Source Generator](../../source/timewarp-nuru-analyzers/generators/emitters/telemetry-emitter.cs) - Source-generated telemetry infrastructure

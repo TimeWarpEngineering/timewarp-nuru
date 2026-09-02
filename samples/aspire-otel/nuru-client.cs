@@ -15,8 +15,9 @@ using Microsoft.Extensions.Logging;
 // Run standalone with OTLP endpoint:
 //   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 ./nuru-client.cs greet Alice
 //
-// Run via AppHost (telemetry auto-configured):
-//   ./apphost.cs
+// Run via AppHost (telemetry auto-configured, REPL under WithTerminal):
+//   aspire run
+//   aspire terminal attach nuruclient
 
 using TimeWarp.Nuru;
 
@@ -43,7 +44,8 @@ NuruApp app = NuruApp.CreateBuilder()
   })
   .Build();
 
-// Run the app - use -i or --interactive to enter REPL mode
+// AppHost passes --interactive so this process enters REPL under the PTY.
+// Standalone: use -i or --interactive, or pass a command (e.g. greet Alice).
 // Telemetry is automatically flushed by NuruApp.RunAsync()
 return await app.RunAsync(args);
 

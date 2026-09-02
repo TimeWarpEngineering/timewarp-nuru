@@ -24,9 +24,12 @@ There are **no GitHub rulesets** on this repo (`GET /repos/.../rulesets` → `[]
 | timewarp-state | false | yes, 0 approvals | none | works |
 | timewarp-amuru | unprotected | — | — | works |
 
-Nuru is the outlier among the repos we compared: **Include administrators** is on, so even an
-org admin cannot push `kanban/**` to `master`. Architecture still "requires a PR" on paper but
-does not enforce it for admins, which is how publish succeeds there.
+Nuru **was** the outlier: **Include administrators** was on, so even an org admin could not
+push `kanban/**` to `master`. Architecture still "requires a PR" on paper but does not enforce
+it for admins, which is how publish succeeds there.
+
+**Changed 2026-09-02:** `DELETE .../protection/enforce_admins` → `enforce_admins: false`.
+Required PR reviews (0) and `ci` unchanged. Force-push and deletions still off.
 
 ## Requirements
 
@@ -57,10 +60,10 @@ them in Notes (fix those in follow-up tasks; this id is nuru).
 
 ## Checklist
 
-- [ ] Master protection no longer blocks admin/operator `kanban/**` push (`enforce_admins` false or equivalent bypass)
-- [ ] `ci` still required on PRs
+- [x] Master protection no longer blocks admin/operator `kanban/**` push (`enforce_admins` false or equivalent bypass)
+- [x] `ci` still required on PRs
 - [ ] `ganda kanban publish` succeeds on a kanban-only kitchen (paste CLI output in Notes)
-- [ ] Other-repo scan table in Notes
+- [x] Other-repo scan table in Notes
 - [ ] 467/468 no longer need kanban-only PRs as the default inbox path
 
 ## Session
@@ -71,5 +74,69 @@ them in Notes (fix those in follow-up tasks; this id is nuru).
 
 ## Notes
 
-This task’s own first landing may be a PR because publish is still blocked — that is expected.
-The **result** is that later nuru to-dos use `ganda kanban publish`, not `gh pr create`.
+First landing was PR [#231](https://github.com/TimeWarpEngineering/timewarp-nuru/pull/231) because
+publish was still blocked. Operator then `DELETE`d `enforce_admins` (2026-09-02). This commit is
+the proof publish: `ganda kanban publish 468` from this kitchen.
+
+### Other-repo scan (public TimeWarpEngineering, master protection, 2026-09-02)
+
+`enforce_admins: true` + require PR (same trap, follow-up not this id):
+
+- **timewarp-terminal**
+
+Already `enforce_admins: false` (publish-capable if the operator is admin):
+
+- timewarp-nuru (after this change)
+- timewarp-architecture
+- timewarp-state
+- timewarp-mediator (`pr: false`)
+
+Unprotected / no master protection among the 24 public repos listed: amuru, jaribu, netclaw,
+fluentui-blazor, and the rest of the `gh repo list` public set.
+
+## Results
+
+### What was implemented
+
+Classic branch protection on `TimeWarpEngineering/timewarp-nuru` `master`: turned off
+**Include administrators** (`gh api -X DELETE .../protection/enforce_admins`). Left required
+PR reviews (0 approvals) and required status check `ci`. Did not enable force-push or deletions.
+No product code.
+
+### Files changed
+
+- `kanban/to-do/468-…/task.md` (this file) — Notes / Results
+- GitHub branch protection (not in git)
+
+### Key decisions
+
+- Match architecture/state (`enforce_admins: false`) rather than dropping require-PR or `ci`.
+- No ganda PR-fallback (ganda 221).
+- **timewarp-terminal** has the same admin-enforced require-PR; out of scope here.
+
+### Test outcomes
+
+- After DELETE: `enforce_admins: false`, `status: ["ci"]`, `allow_force: false`, `allow_deletions: false`.
+- `ganda kanban publish 468` output recorded below after this commit.
+
+### How to validate
+
+**Smoke**
+
+```bash
+gh api repos/TimeWarpEngineering/timewarp-nuru/branches/master/protection --jq '.enforce_admins.enabled, .required_status_checks.contexts'
+# expect: false
+# expect: ["ci"]
+
+# from a claimed nuru kitchen with only kanban/** vs origin/master:
+ganda kanban publish <id>
+# expect: Published task … to origin/master
+```
+
+**Expect**
+
+- Admin/operator can push `kanban/**` to `master`.
+- PRs still run `ci`.
+- Product branches still go through PRs for non-admins.
+
+**Not in scope:** timewarp-terminal protection; inventing a publish PR fallback.

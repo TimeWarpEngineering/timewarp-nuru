@@ -5,12 +5,18 @@ Demonstrates OpenTelemetry integration with .NET Aspire for traces, metrics, and
 ## Run It
 
 ```bash
-# Run via AppHost (telemetry auto-configured)
-dotnet run samples/aspire-otel/apphost.cs
+# Run via AppHost (telemetry auto-configured; REPL under WithTerminal)
+cd samples/aspire-otel
+aspire run
+# or: ./apphost.cs
+# Dashboard Terminal view works with no extra config.
+# CLI attach only:
+aspire config set features.terminalCommandsEnabled true
+aspire terminal attach nuruclient
 
 # Run standalone with OTLP endpoint
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
-  dotnet run samples/aspire-otel/nuru-client.cs -- greet Alice
+  ./nuru-client.cs greet Alice
 ```
 
 ## What's Demonstrated

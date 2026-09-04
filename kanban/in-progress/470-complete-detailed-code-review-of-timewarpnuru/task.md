@@ -72,7 +72,7 @@ Severity: `bug` · `suggestion` · `nit`. Status starts `open`. Prefer strongest
 
 - [x] Folder task created (`ganda kanban reserve` + `claim --repo timewarp-nuru`)
 - [x] `review/review-framework.md` scaffolded with scope, roster, prior-art notes
-- [ ] Worker re-pins SHA at review start if `origin/master` moved
+- [x] Worker re-pins SHA at implement start (`origin/master` `38480f57`; product still `648369f6`)
 
 ### Round 1
 
@@ -101,6 +101,14 @@ Severity: `bug` · `suggestion` · `nit`. Status starts `open`. Prefer strongest
 - Package version: `3.0.0-beta.77` (`source/Directory.Build.props`)
 - Other open work that may overlap: **391** (epic full DI support, in-progress), **454-019**, **458-010**
 
+### Snapshot at implement start (2026-09-04)
+
+- Origin-home SHA: `38480f5721518b61ed33beef7bd9174225c0c7c8` (`publish kanban 470`)
+- Product tree: still `648369f6` (only kanban 470 files landed after PR #232)
+- Package version: `3.0.0-beta.77`
+- **454-019** still `to-do` (long-line REPL redraw) — reviewers note status only, do not duplicate as a new M#
+- Host `review` node owns round 1 (7 area files), merge, parsing crash-safety note, and disposition. Implement oracle did not spawn reviewers.
+
 ### Related skills
 
 - `tw-implementation-review` — procedure, templates, severity, disposition
@@ -118,3 +126,68 @@ ganda task work 470 --repo timewarp-nuru --host herdr
 
 - Created: Grok cockpit `01a06a77-1631-7543-b181-07ddc524f9fe` (2026-09-04) — reserved/claimed 470, wrote inbound brief
 - Ganda claim: cramer@TWE-001 session 3277544 (2026-09-04)
+- Implementer: Grok `01a06a90-5daf-7851-b2e5-6c9130f2b437` (2026-09-04) — re-pinned SHA, moved in-progress; did not run `tw-implementation-review`
+- Ganda claim (implement): cramer@TWE-001 session 3295430 (2026-09-04)
+
+## Results
+
+Implement pass only (host `implement` oracle). Round 1, merge, child-task split, and `review/disposition.md` are the next host `review` node (`tw-implementation-review`, elevated 7-area roster, whole-repo scope — not effort-1 on this kitchen delta).
+
+### What was implemented
+
+- Re-pinned `review/review-framework.md` to `origin/master` `38480f5721518b61ed33beef7bd9174225c0c7c8` (`38480f57 publish kanban 470`). Kitchen-create pin `648369f6` kept as history; no product-code commits between those SHAs.
+- Recorded implement-start snapshot, **454-019** still-open note, and session IDs on this kitchen.
+- Moved 470 to `in-progress`.
+- Did **not** spawn area reviewers, write `review/round-1/`, merge, or disposition (forbidden on the implement oracle).
+
+### Files changed
+
+- `kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/task.md`
+- `kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/review/review-framework.md`
+
+### Key decisions
+
+- Product work before review is kitchen prep only. Independent product fixes wait on round-1 `merged.md` (child tasks `--parent 470`, or nits on this branch).
+- Reviewers must judge the current origin-home tree (`38480f57` / product `648369f6`), not the implement kitchen commit.
+
+### Review trail (pending host review node)
+
+| Field | Value |
+|-------|--------|
+| Rounds | 0 (round 1 not started) |
+| Roster / effort | core-runtime, repl-completion, analyzers-generators, parsing, aux, tests-infra, security — elevated, not effort-1 |
+| Counts | n/a until `review/round-1/merged.md` |
+| Disposition | not written |
+
+### Test outcomes
+
+No product-code change; no test run required for this pass.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-470-complete-detailed-code-review-of-timewarpnuru
+git fetch origin
+git rev-parse origin/master
+git log -1 --oneline origin/master
+ganda kanban show 470
+```
+
+**Expect**
+
+- `git rev-parse origin/master` prints `38480f5721518b61ed33beef7bd9174225c0c7c8`
+- `git log -1 --oneline origin/master` is `38480f57 publish kanban 470`
+- `ganda kanban show 470` column is `in-progress`
+- `review/review-framework.md` **Pinned SHA at implement start** is that same full SHA
+- `review/round-1/` does not exist yet (review node owns it)
+- `review/disposition.md` does not exist yet
+
+**Automated gate**
+
+None for this kitchen-prep pass (no product compile/test surface).
+
+**Not in scope**
+
+Round-1 findings, child-task creation, product fixes, `kanban done`, and `gh pr create` (later host nodes).

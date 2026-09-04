@@ -1,16 +1,18 @@
 # Review framework — task 470
 
 **Date:** 2026-09-04
-**Host task:** `kanban/to-do/470-complete-detailed-code-review-of-timewarpnuru/`
-**Diff scope:** whole-repo review of origin-home `master` (not a PR delta)
-**Pinned SHA at kitchen create:** `648369f6a32737aa64037e4ed3ffb6c115764aa3`
-**Pinned version:** `3.0.0-beta.77`
+**Host task:** `kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/`
+**Diff scope:** whole-repo review of origin-home `master` (not a PR delta, not the implement kitchen commit)
+**Pinned SHA at kitchen create:** `648369f6a32737aa64037e4ed3ffb6c115764aa3` (`Merge pull request #232`)
+**Pinned SHA at implement start (`git rev-parse origin/master`):** `38480f5721518b61ed33beef7bd9174225c0c7c8`
+**Pinned origin/master at implement start:** `38480f57 publish kanban 470` (merge of `648369f6` + kitchen-only `f2fb2c9f`; product tree is still PR #232)
+**Pinned version:** `3.0.0-beta.77` (`source/Directory.Build.props`)
 **Plan / brief:** `task.md` — successor to 454 (2026-07-06); re-review current tree for new defects, 454 regressions, and uncovered areas
-**Effort:** elevated — 7 area reviewers (not default effort-1)
+**Effort:** elevated — 7 area reviewers (not default effort-1). Host `review` oracle must keep this roster even though the default review body says effort 1.
 **Reviewer roster:** core-runtime, repl-completion, analyzers-generators, parsing, aux, tests-infra, security
-**Session IDs:** kitchen created Grok `01a06a77-1631-7543-b181-07ddc524f9fe` / ganda claim 3277544; review-round sessions TBD
+**Session IDs:** kitchen created Grok `01a06a77-1631-7543-b181-07ddc524f9fe` / ganda claim 3277544; implement Grok `01a06a90-5daf-7851-b2e5-6c9130f2b437` / ganda claim 3295430; review-round sessions TBD
 
-**Re-pin before round 1:** if `origin/master` has moved, update **Pinned SHA** here and record the new `git rev-parse origin/master` / `git log -1 --oneline`.
+**Re-pin at implement start:** `origin/master` moved from kitchen-create `648369f6` to `38480f57` (`publish kanban 470`). No product-code commits between those SHAs. Reviewers judge `38480f57` (equivalently product `648369f6`).
 
 ## Ground rules
 

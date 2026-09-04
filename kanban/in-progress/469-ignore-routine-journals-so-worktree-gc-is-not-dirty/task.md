@@ -91,6 +91,8 @@ clean; host unstage-all (ganda).
 - Pattern: `*.journal.json` (cockpit, 2026-09-03) — one glob, not six names
 - Implementer: grok (2026-09-04) `ganda task work` implement oracle on
   `task/469-ignore-routine-journals-so-worktree-gc-is-not-dirt`
+- Review oracle: grok (2026-09-04) `ganda task work` review body, effort 1
+  (general). Artifacts under `review/`. Disposition: **clean**.
 
 ## Results
 
@@ -145,3 +147,13 @@ Same four commands as Smoke. No product test suite for a gitignore line.
 
 **Not in scope:** changing `WorktreeGcService` to treat untracked journals as
 clean; host unstage-all (ganda); memsearch gitignore / `bin/dev` audit FAILs.
+
+**Review disposition**
+- Rounds: 1 · Effort: 1 · Roster: general
+- Counts (final): bug 0 / suggestion 0 / nit 0 — all open=0, fixed=0, wontfix=0
+- Outcome: **clean** (no findings; no fix loop)
+- Paths:
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`

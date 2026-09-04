@@ -446,3 +446,6 @@ repl-*-history.txt
 # Language server cache
 *.lscache
 .memsearch/
+
+# Routine journals beside kitchens (local; not product)
+*.journal.json

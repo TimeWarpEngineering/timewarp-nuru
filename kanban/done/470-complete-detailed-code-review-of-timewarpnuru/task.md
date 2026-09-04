@@ -72,20 +72,20 @@ Severity: `bug` · `suggestion` · `nit`. Status starts `open`. Prefer strongest
 
 - [x] Folder task created (`ganda kanban reserve` + `claim --repo timewarp-nuru`)
 - [x] `review/review-framework.md` scaffolded with scope, roster, prior-art notes
-- [ ] Worker re-pins SHA at review start if `origin/master` moved
+- [x] Worker re-pins SHA at implement start (`origin/master` `38480f57`; product still `648369f6`)
 
 ### Round 1
 
-- [ ] Area reviewers write `review/round-1/<area>.md` (7 files)
-- [ ] Merge → `review/round-1/merged.md` (counts + stable `M#`)
-- [ ] Parsing crash-safety: either fuzz malformed patterns or document why not (454 ran 200k with zero uncaught exceptions)
+- [x] Area reviewers write `review/round-1/<area>.md` (7 files)
+- [x] Merge → `review/round-1/merged.md` (counts + stable `M#`)
+- [x] Parsing crash-safety: 50k malformed patterns, seed `470001`, 0 uncaught exceptions
 
 ### Disposition / follow-through
 
-- [ ] Child tasks for independent product fixes (`--parent 470`), or same-task nits committed here
-- [ ] `review/disposition.md`
-- [ ] `## Results` + `### How to validate`
-- [ ] Do not `kanban done` from the implementer; host lifecycle / human gate
+- [x] Child tasks for independent product fixes (`--parent 470` 470-001…015); nits folded into those children
+- [x] `review/disposition.md` (`accepted-exceptions`; M20 → epic 391)
+- [x] `## Results` + `### How to validate`
+- [ ] Do not `kanban done` from the implementer; host lifecycle / human gate (parent stays in-progress until children land)
 
 ## Notes
 
@@ -100,6 +100,14 @@ Severity: `bug` · `suggestion` · `nit`. Status starts `open`. Prefer strongest
 - Origin-home SHA: `648369f6` (`Merge pull request #232` — Aspire 13.5 `WithTerminal` spike, task 467)
 - Package version: `3.0.0-beta.77` (`source/Directory.Build.props`)
 - Other open work that may overlap: **391** (epic full DI support, in-progress), **454-019**, **458-010**
+
+### Snapshot at implement start (2026-09-04)
+
+- Origin-home SHA: `38480f5721518b61ed33beef7bd9174225c0c7c8` (`publish kanban 470`)
+- Product tree: still `648369f6` (only kanban 470 files landed after PR #232)
+- Package version: `3.0.0-beta.77`
+- **454-019** still `to-do` (long-line REPL redraw) — reviewers note status only, do not duplicate as a new M#
+- Host `review` node owns round 1 (7 area files), merge, parsing crash-safety note, and disposition. Implement oracle did not spawn reviewers.
 
 ### Related skills
 
@@ -118,3 +126,79 @@ ganda task work 470 --repo timewarp-nuru --host herdr
 
 - Created: Grok cockpit `01a06a77-1631-7543-b181-07ddc524f9fe` (2026-09-04) — reserved/claimed 470, wrote inbound brief
 - Ganda claim: cramer@TWE-001 session 3277544 (2026-09-04)
+- Implementer: Grok `01a06a90-5daf-7851-b2e5-6c9130f2b437` (2026-09-04) — re-pinned SHA, moved in-progress; did not run `tw-implementation-review`
+- Ganda claim (implement): cramer@TWE-001 session 3295430 (2026-09-04)
+- Review oracle: Grok `01a06a9a-68a0-7f43-bf01-1e7391582be2` (2026-09-04) — host `review` node, elevated 7-area roster, round 1
+
+## Results
+
+Review oracle (`tw-implementation-review`) completed round 1, merge, child split, and disposition on this id. Parent stays in-progress until children 470-001…015 land. No `kanban done` / `gh pr create` from this node.
+
+### What was implemented
+
+- Round 1: seven area reviewers wrote `review/round-1/{core-runtime,repl-completion,analyzers-generators,parsing,aux,tests-infra,security}.md`.
+- Merge: `review/round-1/merged.md` with stable M1–M44.
+- Parsing crash-safety: 50k malformed patterns, seed `470001`, 0 uncaught exceptions.
+- Independent product fixes filed as `--parent 470` children 470-001…015 (nits folded into the child that already touches the same files).
+- `review/disposition.md`: **accepted-exceptions** (M20 wontfix → epic 391; remaining opens filed as children).
+- **454-019** noted only (still present at `repl-console-reader.cs:279`, `:310`); not duplicated as an M#.
+
+### Files changed
+
+- `kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/task.md`
+- `kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/review/review-framework.md`
+- `kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/review/round-1/*.md` (7 area + merged)
+- `kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/review/disposition.md`
+- Child kitchens 470-001…015 on origin-home `kanban/to-do/` (published separately)
+
+### Key decisions
+
+- Host default effort-1 overridden by this kitchen’s elevated 7-area roster (task brief + framework).
+- Whole-repo review (not the implement kitchen delta). Product tree judged at `648369f6` / origin-home `38480f57`.
+- Same-task disposition: no sibling “apply 470 findings” task. Children are 454-style product batches.
+- M20 (source-gen `IEnumerable<T>` DI) wontfix on 470 — owned by epic 391.
+
+### Review trail
+
+| Field | Value |
+|-------|--------|
+| Rounds | 1 |
+| Roster / effort | elevated: core-runtime, repl-completion, analyzers-generators, parsing, aux, tests-infra, security |
+| Counts (final ledger) | bug 17 open, 0 fixed, 0 wontfix; suggestion 15 open, 0 fixed, 1 wontfix (M20); nit 11 open, 0 fixed, 0 wontfix |
+| Disposition | **accepted-exceptions** — M20 → 391; all other opens filed as 470-001…015 |
+| Paths | `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md` |
+
+### Test outcomes
+
+No product-code change on the 470 branch. Parsing fuzz (50k, seed 470001) ran against current sources: 0 uncaught exceptions. Area reviewers re-verified 454-done items against current file:line.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-470-complete-detailed-code-review-of-timewarpnuru
+git fetch origin
+ganda kanban show 470
+ls kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/review/round-1/
+test -f kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/review/disposition.md && grep -E 'Outcome:|accepted-exceptions' kanban/in-progress/470-complete-detailed-code-review-of-timewarpnuru/review/disposition.md
+ganda kanban show 470-001
+ganda kanban show 470-015
+```
+
+**Expect**
+
+- 470 column is `in-progress`
+- `review/round-1/` contains the seven area files plus `merged.md`
+- `review/disposition.md` **Outcome:** `accepted-exceptions`
+- `merged.md` counts table: 17/15/11 open by severity plus M20 wontfix
+- 470-001 and 470-015 exist under `kanban/to-do/` on origin-home (inbox)
+- `review/round-1/parsing.md` crash-safety: 50k, seed 470001, 0 uncaught
+
+**Automated gate**
+
+None on this review branch (no product compile/test surface). Children own their test gates.
+
+**Not in scope**
+
+Product fixes (children), `kanban done` on 470, `gh pr create` (later host nodes).

@@ -30,16 +30,17 @@
 // tiebreaker for any remaining tie (two runs can share a createdAt second).
 //
 // SelectPackagesArtifact: workflow.yml uploads the nupkg set as
-// `Packages-{run_number}` (upload step, always-run). "Packages-" is an Ordinal
-// prefix match — GitHub Actions artifacts expire (default/repo retention), and
-// an expired artifact is still listed by the REST API with expired=true and
-// cannot be downloaded. Multiple non-expired matches (should not normally
-// happen for one run, but the type does not forbid it) resolve to the
+// `Packages-{run_number}` (green master push only). "Packages-" is an Ordinal
+// prefix match — GitHub Actions artifacts expire (retention-days: 7) or are
+// deleted by keep-last-two prune of older Packages-*. An expired artifact is
+// still listed by the REST API with expired=true and cannot be downloaded; a
+// pruned artifact is simply gone. Multiple non-expired matches (should not
+// normally happen for one run, but the type does not forbid it) resolve to the
 // highest-Id artifact deterministically. If every "Packages-*" match is
 // expired, that is a distinct outcome (Expired, with the names) from no match
 // at all (NoneMatching) — the caller's abort message differs (expiry needs
-// "re-run CI" guidance; NoneMatching means this run never uploaded one, so the
-// caller should keep walking candidates).
+// "re-run CI" guidance; NoneMatching means this run never uploaded one or the
+// blob was pruned, so the caller should keep walking candidates).
 //
 // VerifyPackageSet: mirrors the push step's existing cross-check
 // (PushPackagesAsync) but runs against the DOWNLOADED artifact contents rather

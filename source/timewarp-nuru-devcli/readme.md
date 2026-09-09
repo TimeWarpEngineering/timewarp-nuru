@@ -304,8 +304,8 @@ The package also now ships the new public `TagAssertion` / `TagAssertionResult` 
 Release mode (`dev workflow --mode release`) no longer rebuilds from source. The pipeline was
 `tag-gate -> check-version -> clean -> build -> pack -> push`; it is now `tag-gate ->
 check-version -> locate-run -> download-artifact -> verify -> push`. Master-merge CI already
-builds, tests, and uploads the `.nupkg` set (`Packages-{run_number}`, always-run upload step in
-`workflow.yml`); release now locates the successful `workflow.yml` run at the release commit
+builds, tests, and uploads the `.nupkg` set (`Packages-{run_number}`, green-master
+upload step in `workflow.yml`); release now locates the successful `workflow.yml` run at the release commit
 (push-event preferred over a same-commit release-event run, then newest), downloads that run's
 `Packages-*` artifact, verifies the downloaded file names against the derived packable set at the
 source version, and pushes those exact bytes. There is no local `dotnet pack` in release mode
@@ -318,7 +318,8 @@ source").
 
 Locating and downloading the run uses the `gh` CLI (`gh run list`, `gh api
 repos/{owner}/{repo}/actions/runs/{id}/artifacts`, `gh run download`) — `workflow.yml` sets
-`GH_TOKEN: ${{ github.token }}` and grants the job `actions: read` for CI runners; a local or
+`GH_TOKEN: ${{ github.token }}` and grants the job `actions: write` for CI runners
+(keep-last-two prune; release-mode list/download still works); a local or
 break-glass release needs `gh` installed and `gh auth login` run first, or the pipeline aborts
 with that guidance before attempting anything.
 

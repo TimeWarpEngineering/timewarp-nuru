@@ -198,6 +198,7 @@ public sealed partial class ReplConsoleReader
 
   internal Task HandleTabCompletionAsync(bool reverse)
   {
+    ClearSelection();
     (UserInput, CursorPosition, bool displayedCandidates) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
     if (displayedCandidates)
       AdoptPhysicalCursorAsNewSingleLineAnchor();
@@ -237,8 +238,9 @@ public sealed partial class ReplConsoleReader
     // If there's a selection, replace it with the typed character
     if (SelectionState.IsActive)
     {
-      int start = SelectionState.Start;
-      int end = SelectionState.End;
+      // Clamp against the current buffer — history, kill, and undo can leave a stale
+      // selection whose End is past UserInput.Length.
+      (int start, int end) = SelectionState.GetClampedBounds(UserInput.Length);
       UserInput = UserInput[..start] + charToInsert + UserInput[end..];
       CursorPosition = start + 1;
       SelectionState.Clear();

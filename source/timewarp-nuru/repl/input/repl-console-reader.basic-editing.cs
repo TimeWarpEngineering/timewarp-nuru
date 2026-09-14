@@ -82,40 +82,4 @@ public sealed partial class ReplConsoleReader
     // For now, just toggle the state - the HandleCharacter method will use it
     return Task.CompletedTask;
   }
-
-  /// <summary>
-  /// Handles character insertion with overwrite mode support.
-  /// </summary>
-  /// <param name="charToInsert">The character to insert or overwrite.</param>
-  internal void HandleCharacterWithOverwrite(char charToInsert)
-  {
-    SaveUndoState(isCharacterInput: true);
-
-    // If there's a selection, replace it regardless of mode
-    if (SelectionState.IsActive)
-    {
-      int start = SelectionState.Start;
-      int end = SelectionState.End;
-      UserInput = UserInput[..start] + charToInsert + UserInput[end..];
-      CursorPosition = start + 1;
-      SelectionState.Clear();
-    }
-    else if (IsOverwriteMode && CursorPosition < UserInput.Length)
-    {
-      // Overwrite mode: replace character at cursor
-      UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[(CursorPosition + 1)..];
-      CursorPosition++;
-    }
-    else
-    {
-      // Insert mode (default): insert at cursor
-      UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
-      CursorPosition++;
-    }
-
-    PrefixSearchString = null;
-    CompletionHandler.Reset();
-    ResetKillTracking();
-    RedrawLine();
-  }
 }

@@ -13,6 +13,7 @@ public sealed partial class ReplConsoleReader
     if (HistoryIndex > 0)
     {
       HistoryIndex--;
+      ClearSelection();
       UserInput = History[HistoryIndex];
       CursorPosition = UserInput.Length;
       PrefixSearchString = null;  // Clear prefix search when using normal history nav
@@ -30,6 +31,7 @@ public sealed partial class ReplConsoleReader
     if (HistoryIndex < History.Count - 1)
     {
       HistoryIndex++;
+      ClearSelection();
       UserInput = History[HistoryIndex];
       CursorPosition = UserInput.Length;
       PrefixSearchString = null;  // Clear prefix search when using normal history nav
@@ -38,6 +40,7 @@ public sealed partial class ReplConsoleReader
     else if (HistoryIndex == History.Count - 1)
     {
       HistoryIndex = History.Count;
+      ClearSelection();
       UserInput = string.Empty;
       CursorPosition = 0;
       PrefixSearchString = null;  // Clear prefix search
@@ -55,6 +58,7 @@ public sealed partial class ReplConsoleReader
     if (History.Count > 0)
     {
       HistoryIndex = 0;
+      ClearSelection();
       UserInput = History[HistoryIndex];
       CursorPosition = UserInput.Length;
       PrefixSearchString = null;  // Clear prefix search
@@ -70,6 +74,7 @@ public sealed partial class ReplConsoleReader
   internal Task HandleEndOfHistoryAsync()
   {
     HistoryIndex = History.Count;
+    ClearSelection();
     UserInput = string.Empty;
     CursorPosition = 0;
     PrefixSearchString = null;  // Clear prefix search
@@ -95,6 +100,7 @@ public sealed partial class ReplConsoleReader
       if (History[searchIndex].StartsWith(PrefixSearchString, StringComparison.OrdinalIgnoreCase))
       {
         HistoryIndex = searchIndex;
+        ClearSelection();
         UserInput = History[HistoryIndex];
         CursorPosition = UserInput.Length;
         RedrawLine();
@@ -126,6 +132,7 @@ public sealed partial class ReplConsoleReader
       if (History[searchIndex].StartsWith(PrefixSearchString, StringComparison.OrdinalIgnoreCase))
       {
         HistoryIndex = searchIndex;
+        ClearSelection();
         UserInput = History[HistoryIndex];
         CursorPosition = UserInput.Length;
         RedrawLine();

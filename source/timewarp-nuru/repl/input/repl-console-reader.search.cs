@@ -70,6 +70,7 @@ public sealed partial class ReplConsoleReader
   private void ExitSearchMode(bool acceptMatch)
   {
     CurrentMode = EditMode.Normal;
+    ClearSelection();
 
     if (acceptMatch && SearchMatchIndex >= 0 && SearchMatchIndex < History.Count)
     {

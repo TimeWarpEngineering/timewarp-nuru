@@ -160,6 +160,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("repl-40-reader-state-desync")]
 [assembly: InternalsVisibleTo("repl-41-lowsev-sweep")]
 [assembly: InternalsVisibleTo("repl-42-ctrl-c-cancellation")]
+[assembly: InternalsVisibleTo("repl-43-wrapped-line-redraw")]
 [assembly: InternalsVisibleTo("routing-01-basic-matching")]
 [assembly: InternalsVisibleTo("routing-02-parameter-binding")]
 [assembly: InternalsVisibleTo("routing-03-optional-parameters")]

@@ -15,6 +15,7 @@ public sealed partial class ReplConsoleReader
     if (CursorPosition >= UserInput.Length)
       return Task.CompletedTask;
 
+    ClearSelection();
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
     string killedText = UserInput[CursorPosition..];
@@ -44,6 +45,7 @@ public sealed partial class ReplConsoleReader
     if (CursorPosition == 0)
       return Task.CompletedTask;
 
+    ClearSelection();
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
     string killedText = UserInput[..CursorPosition];
@@ -74,6 +76,7 @@ public sealed partial class ReplConsoleReader
     if (CursorPosition == 0)
       return Task.CompletedTask;
 
+    ClearSelection();
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
     int startPos = CursorPosition;
@@ -113,6 +116,7 @@ public sealed partial class ReplConsoleReader
     if (CursorPosition >= UserInput.Length)
       return Task.CompletedTask;
 
+    ClearSelection();
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
     int startPos = CursorPosition;
@@ -153,6 +157,7 @@ public sealed partial class ReplConsoleReader
     if (CursorPosition == 0)
       return Task.CompletedTask;
 
+    ClearSelection();
     SaveUndoState(isCharacterInput: false);  // Save state before kill
 
     int endPos = CursorPosition;
@@ -192,6 +197,7 @@ public sealed partial class ReplConsoleReader
     if (text is null)
       return Task.CompletedTask;
 
+    ClearSelection();
     SaveUndoState(isCharacterInput: false);  // Save state before yank
 
     // Track yank position for YankPop
@@ -221,6 +227,7 @@ public sealed partial class ReplConsoleReader
     if (text is null)
       return Task.CompletedTask;
 
+    ClearSelection();
     SaveUndoState(isCharacterInput: false);  // Save state before yank pop
 
     // Remove the previously yanked text

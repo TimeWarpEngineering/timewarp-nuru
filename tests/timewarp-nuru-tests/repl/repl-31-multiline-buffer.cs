@@ -207,6 +207,125 @@ public class MultilineBufferTests
   }
 
   // ============================================================================
+  // InsertText Tests (kanban 470-003 / M36)
+  // ============================================================================
+
+  public static async Task Should_insert_single_line_text_at_cursor()
+  {
+    MultilineBuffer buffer = new();
+    buffer.SetText("hello");
+    buffer.SetCursor(0, 5);
+
+    buffer.InsertText(" world");
+
+    buffer.LineCount.ShouldBe(1);
+    buffer.Lines[0].ShouldBe("hello world");
+    buffer.Cursor.Line.ShouldBe(0);
+    buffer.Cursor.Column.ShouldBe(11);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_insert_lf_multiline_without_blank_line()
+  {
+    MultilineBuffer buffer = new();
+
+    buffer.InsertText("line one\nline two");
+
+    buffer.LineCount.ShouldBe(2, "LF is one break");
+    buffer.Lines[0].ShouldBe("line one");
+    buffer.Lines[1].ShouldBe("line two");
+    buffer.Cursor.Line.ShouldBe(1);
+    buffer.Cursor.Column.ShouldBe(8);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_insert_crlf_as_one_break_not_blank_line()
+  {
+    // Old InsertText treated every \r and every \n as AddLine(), so \r\n made a blank line.
+    MultilineBuffer buffer = new();
+
+    buffer.InsertText("line one\r\nline two");
+
+    buffer.LineCount.ShouldBe(2, "CRLF must split like SetText, not insert a blank line");
+    buffer.Lines[0].ShouldBe("line one");
+    buffer.Lines[1].ShouldBe("line two");
+    buffer.IsMultiline.ShouldBeTrue();
+    buffer.GetFullText().ShouldBe("line one\nline two");
+    buffer.Cursor.Line.ShouldBe(1);
+    buffer.Cursor.Column.ShouldBe(8);
+    buffer.CursorToPosition(buffer.Cursor).ShouldBe(buffer.TotalLength);
+    buffer.TotalLength.ShouldBe(buffer.GetFullText().Length);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_insert_bare_cr_as_one_break()
+  {
+    MultilineBuffer buffer = new();
+
+    buffer.InsertText("line one\rline two");
+
+    buffer.LineCount.ShouldBe(2, "Bare CR is one break");
+    buffer.Lines[0].ShouldBe("line one");
+    buffer.Lines[1].ShouldBe("line two");
+    buffer.GetFullText().ShouldBe("line one\nline two");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_insert_crlf_in_middle_of_line_keeping_remainder()
+  {
+    MultilineBuffer buffer = new();
+    buffer.SetText("hello world");
+    buffer.SetCursor(0, 5);
+
+    buffer.InsertText("A\r\nB");
+
+    buffer.LineCount.ShouldBe(2);
+    buffer.Lines[0].ShouldBe("helloA");
+    buffer.Lines[1].ShouldBe("B world");
+    buffer.Cursor.Line.ShouldBe(1);
+    buffer.Cursor.Column.ShouldBe(1);
+    buffer.GetFullText().ShouldBe("helloA\nB world");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_insert_trailing_crlf_without_extra_blank_line()
+  {
+    MultilineBuffer buffer = new();
+
+    buffer.InsertText("line\r\n");
+
+    buffer.LineCount.ShouldBe(2, "Trailing CRLF adds one empty line, not two");
+    buffer.Lines[0].ShouldBe("line");
+    buffer.Lines[1].ShouldBe("");
+    buffer.Cursor.Line.ShouldBe(1);
+    buffer.Cursor.Column.ShouldBe(0);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_keep_linear_domain_in_sync_after_crlf_insert()
+  {
+    MultilineBuffer buffer = new();
+    buffer.SetText("prefix");
+    buffer.SetCursor(0, 6);
+
+    buffer.InsertText("a\r\nb\r\nc");
+
+    string fullText = buffer.GetFullText();
+    fullText.ShouldBe("prefixa\nb\nc");
+    buffer.TotalLength.ShouldBe(fullText.Length);
+    buffer.CursorToPosition(buffer.Cursor).ShouldBe(fullText.Length, "Cursor must sit at end of inserted text in the \\n domain");
+    fullText.Contains('\r').ShouldBeFalse("GetFullText must not retain CR after CRLF insert");
+
+    await Task.CompletedTask;
+  }
+
+  // ============================================================================
   // DeleteCharacterBefore (Backspace) Tests
   // ============================================================================
 

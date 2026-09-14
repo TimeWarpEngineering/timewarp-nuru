@@ -449,3 +449,7 @@ repl-*-history.txt
 
 # Routine journals beside kitchens (local; not product)
 *.journal.json
+
+# Memsearch memory auto-writes (plugin daily notes; local until promoted).
+# Deliberate promote of distilled memory: git add -f .memsearch/memory/<file>.md
+.memsearch/memory/

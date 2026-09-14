@@ -40,8 +40,8 @@ internal sealed class TabCompletionHandler
   /// <param name="currentInput">The current user input.</param>
   /// <param name="currentCursor">The current cursor position.</param>
   /// <param name="reverse">True to cycle backward through completions, false to cycle forward.</param>
-  /// <returns>A tuple containing the new input string and new cursor position.</returns>
-  public (string NewInput, int NewCursor) HandleTab(
+  /// <returns>New input, cursor, and whether a multi-candidate dump was written.</returns>
+  public (string NewInput, int NewCursor, bool DisplayedCandidates) HandleTab(
     string currentInput,
     int currentCursor,
     bool reverse)
@@ -56,10 +56,13 @@ internal sealed class TabCompletionHandler
     List<CompletionCandidate> candidates = GetCandidates(currentInput, currentCursor);
 
     if (candidates.Count == 0)
-      return (currentInput, currentCursor);
+      return (currentInput, currentCursor, false);
 
     if (candidates.Count == 1)
-      return ApplySingleCompletion(currentInput, currentCursor, candidates[0]);
+    {
+      (string newInput, int newCursor) = ApplySingleCompletion(currentInput, currentCursor, candidates[0]);
+      return (newInput, newCursor, false);
+    }
 
     return HandleMultipleCompletions(currentInput, currentCursor, candidates, reverse);
   }
@@ -69,11 +72,17 @@ internal sealed class TabCompletionHandler
   /// </summary>
   /// <param name="currentInput">The current user input.</param>
   /// <param name="currentCursor">The current cursor position.</param>
-  public void ShowPossibleCompletions(string currentInput, int currentCursor)
+  /// <returns>True when a candidate dump was written to the terminal.</returns>
+  public bool ShowPossibleCompletions(string currentInput, int currentCursor)
   {
     List<CompletionCandidate> candidates = GetCandidates(currentInput, currentCursor);
     if (candidates.Count > 0)
+    {
       DisplayCandidates(candidates, currentInput);
+      return true;
+    }
+
+    return false;
   }
 
   /// <summary>
@@ -124,7 +133,7 @@ internal sealed class TabCompletionHandler
     return (newInput, newCursor);
   }
 
-  private (string, int) HandleMultipleCompletions(
+  private (string, int, bool) HandleMultipleCompletions(
     string input,
     int cursor,
     List<CompletionCandidate> candidates,
@@ -141,7 +150,7 @@ internal sealed class TabCompletionHandler
       State.Candidates.AddRange(candidateValues);
       State.Index = -1;
       DisplayCandidates(candidates, input);
-      return (input, cursor);
+      return (input, cursor, true);
     }
 
     // Same completion set - cycle through them
@@ -151,7 +160,8 @@ internal sealed class TabCompletionHandler
 
     ReplLoggerMessages.CompletionCycling(Logger, State.Index, candidates.Count, null);
 
-    return ApplySingleCompletion(input, cursor, candidates[State.Index], resetState: false);
+    (string newInput, int newCursor) = ApplySingleCompletion(input, cursor, candidates[State.Index], resetState: false);
+    return (newInput, newCursor, false);
   }
 
   private void DisplayCandidates(
@@ -183,10 +193,6 @@ internal sealed class TabCompletionHandler
 
     if (candidates.Count % columns != 0)
       Terminal.WriteLine();
-
-    // Redraw the prompt and current line
-    Terminal.Write(PromptFormatter.Format(ReplOptions));
-    Terminal.Write(currentInput);
   }
 
   private static int FindWordStart(string line, int position)

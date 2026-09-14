@@ -13,6 +13,7 @@ public sealed partial class ReplConsoleReader
     UndoUnit? undoUnit = UndoManager.Undo(UserInput, CursorPosition);
     if (undoUnit.HasValue)
     {
+      ClearSelection();
       UserInput = undoUnit.Value.Text;
       CursorPosition = undoUnit.Value.CursorPosition;
       RedrawLine();
@@ -29,6 +30,7 @@ public sealed partial class ReplConsoleReader
     UndoUnit? redoUnit = UndoManager.Redo(UserInput, CursorPosition);
     if (redoUnit.HasValue)
     {
+      ClearSelection();
       UserInput = redoUnit.Value.Text;
       CursorPosition = redoUnit.Value.CursorPosition;
       RedrawLine();
@@ -47,6 +49,7 @@ public sealed partial class ReplConsoleReader
     // Save current state for potential undo
     UndoManager.SaveState(UserInput, CursorPosition, isCharacterInput: false);
 
+    ClearSelection();
     UserInput = initialState.Text;
     CursorPosition = initialState.CursorPosition;
     RedrawLine();

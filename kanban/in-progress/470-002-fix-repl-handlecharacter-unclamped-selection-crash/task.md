@@ -22,14 +22,19 @@ Repro: select a suffix (`Shift+Left`), `Ctrl+K` (End now past `UserInput.Length`
 - [x] Clear selection on buffer-replacing commands
 - [x] Regression test
 - [x] Do not duplicate 454-019 (wrapped-line redraw)
+- [x] Implementation review under `review/` (effort 1, disposition clean)
 
 ## Notes
 
 Evidence: parent 470 `review/round-1/merged.md` M4. Area file `review/round-1/repl-completion.md` Issue 1.
 
+Review kitchen: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 1, general only. Round 1 raised 0 findings. Disposition `clean`.
+
 ## Session
 
 - Implementer: grok session 01a0a092-35ca-71f0-8288-0d7ef6017da3 (2026-09-14)
+- Review oracle: grok session 01a0a09d-54e4-7ae0-8f1d-c59cf3465e38 (2026-09-14)
+- Reviewer (general, round 1): 01a0a09f-822f-7e70-b7ce-4ab1feac9583
 
 ## Results
 
@@ -53,7 +58,16 @@ Evidence: parent 470 `review/round-1/merged.md` M4. Area file `review/round-1/re
 - Yank-arg and i-search exit are the same class of buffer replace as yank/history, so they clear too. Word case/transpose keep length and were left alone.
 - New `repl-44-*` file on purpose: does not touch `repl-43-wrapped-line-redraw.cs` (454-019).
 
-**Tests** — `repl-44-stale-selection-character-insert.cs`: **3/3 passed**. Related green: repl-28 (19), repl-26 (17), repl-27 (15), repl-40 (4), repl-03 (8), repl-33 (20), repl-25 (14), repl-06 (8).
+**Tests** — `repl-44-stale-selection-character-insert.cs`: **3/3 passed**. Related green: repl-28 (19), repl-26 (17), repl-27 (15), repl-40 (4), repl-03 (8), repl-33 (20), repl-25 (14), repl-06 (8). Review oracle re-ran `repl-44`: **3/3 passed**.
+
+### Review disposition
+
+- **Outcome:** `clean`
+- **Effort / roster:** 1, general only
+- **Rounds:** 1 (`review/round-1/`)
+- **Final counts:** 0 open / 0 fixed / 0 wontfix across bug, suggestion, nit
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- No sibling apply-review task; no fix loop (zero findings).
 
 ### How to validate
 

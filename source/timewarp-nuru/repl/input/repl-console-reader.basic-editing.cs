@@ -60,20 +60,13 @@ public sealed partial class ReplConsoleReader
   {
     // Clear screen using ANSI escape codes: clear screen + cursor home
     Terminal.Write("\u001b[2J\u001b[H");
+    Terminal.SetCursorPosition(0, 0);
+    InputStartRow = 0;
+    LastCursorVisualIndex = 0;
+    LastDrawnDisplayLength = 0;
 
-    // Redraw prompt and current input
-    Terminal.Write(PromptFormatter.Format(ReplOptions));
-
-    if (ReplOptions.EnableColors)
-    {
-      Terminal.Write(SyntaxHighlighter.Highlight(UserInput));
-    }
-    else
-    {
-      Terminal.Write(UserInput);
-    }
-
-    // Position cursor correctly
+    WriteSingleLinePromptAndInput();
+    LastDrawnDisplayLength = ReplOptions.Prompt.Length + UserInput.Length;
     UpdateCursorPosition();
     return Task.CompletedTask;
   }

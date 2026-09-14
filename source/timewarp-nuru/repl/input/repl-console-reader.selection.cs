@@ -299,15 +299,8 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   private void RedrawLineWithSelection()
   {
-    // Move cursor to beginning of line
-    (int _, int top) = Terminal.GetCursorPosition();
-    Terminal.SetCursorPosition(0, top);
-
-    // Clear line
-    Terminal.Write(new string(' ', Terminal.WindowWidth));
-
-    // Move back to beginning
-    Terminal.SetCursorPosition(0, top);
+    int displayLength = ReplOptions.Prompt.Length + UserInput.Length;
+    ClearOccupiedDisplayRows(displayLength);
 
     // Redraw the prompt
     Terminal.Write(PromptFormatter.Format(ReplOptions));
@@ -358,7 +351,7 @@ public sealed partial class ReplConsoleReader
       }
     }
 
-    // Update cursor position
+    LastDrawnDisplayLength = displayLength;
     UpdateCursorPosition();
   }
 }

@@ -22,14 +22,19 @@ M36: public `InsertText` treats every `\r` and every `\n` as a separate `AddLine
 - [x] Paste newline normalization
 - [x] InsertText \r\n (M36)
 - [x] Tests
+- [x] Implementation review under `review/` (effort 1, disposition clean)
 
 ## Notes
 
 Evidence: parent 470 `review/round-1/merged.md` M5, M36.
 
+Review kitchen: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 1, general only. Round 1 raised 0 findings. Disposition `clean`.
+
 ## Session
 
 - Implementer: grok session 01a0a0ab-c78d-7230-90b6-c39767bf01cf (2026-09-14)
+- Review oracle: grok session 01a0a0b5-d92d-7d53-add7-6f39a6e9942d (2026-09-14)
+- Reviewer (general, round 1): 01a0a0b7-d03d-7480-9ead-4fbfcb681066
 
 ## Results
 
@@ -49,7 +54,16 @@ Clipboard paste no longer splices raw clipboard bytes into `UserInput` or advanc
 - New `repl-45-*` file for the paste command path; CRLF splitting stays in `repl-31` (buffer unit tests). Does not touch `repl-43` (454-019).
 - Windows TTY paste of `Get-Clipboard` CRLF is still a human check; batch with 454-019 as the brief allows.
 
-**Tests** — `repl-31-multiline-buffer.cs`: **37/37 passed** (7 new InsertText cases). `repl-45-crlf-clipboard-paste.cs`: **4/4 passed**. Related green: repl-32 (9), repl-28 (19), repl-26 (17).
+**Tests** — `repl-31-multiline-buffer.cs`: **37/37 passed** (7 new InsertText cases). `repl-45-crlf-clipboard-paste.cs`: **4/4 passed**. Related green: repl-32 (9), repl-28 (19), repl-26 (17). Review oracle re-ran `repl-31` **37/37** and `repl-45` **4/4**.
+
+### Review disposition
+
+- **Outcome:** `clean`
+- **Effort / roster:** 1, general only
+- **Rounds:** 1 (`review/round-1/`)
+- **Final counts:** 0 open / 0 fixed / 0 wontfix across bug, suggestion, nit
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- No sibling apply-review task; no fix loop (zero findings).
 
 ### How to validate
 

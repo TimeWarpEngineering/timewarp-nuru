@@ -198,7 +198,10 @@ public sealed partial class ReplConsoleReader
 
   internal Task HandleTabCompletionAsync(bool reverse)
   {
-    (UserInput, CursorPosition) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
+    (UserInput, CursorPosition, bool displayedCandidates) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
+    if (displayedCandidates)
+      AdoptPhysicalCursorAsNewSingleLineAnchor();
+
     RedrawLine();
     return Task.CompletedTask;
   }
@@ -216,7 +219,12 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   internal Task HandlePossibleCompletionsAsync()
   {
-    CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition);
+    if (CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition))
+    {
+      AdoptPhysicalCursorAsNewSingleLineAnchor();
+      RedrawLine();
+    }
+
     return Task.CompletedTask;
   }
 
@@ -282,6 +290,14 @@ public sealed partial class ReplConsoleReader
     WriteSingleLinePromptAndInput();
     LastDrawnDisplayLength = displayLength;
     UpdateCursorPosition();
+  }
+
+  private void AdoptPhysicalCursorAsNewSingleLineAnchor()
+  {
+    (int _, int top) = Terminal.GetCursorPosition();
+    InputStartRow = top < 0 ? 0 : top;
+    LastCursorVisualIndex = 0;
+    LastDrawnDisplayLength = 0;
   }
 
   private void InitializeSingleLineDisplay()

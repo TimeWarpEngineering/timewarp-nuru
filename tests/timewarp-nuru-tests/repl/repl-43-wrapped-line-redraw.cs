@@ -80,7 +80,26 @@ public class WrappedLineRedrawTests
     public bool IsKnownCommand(string token) => false;
   }
 
-  private static ReplConsoleReader CreateReader(TestTerminal terminal)
+  private sealed class PrefixSRouteProvider : IReplRouteProvider
+  {
+    public IReadOnlyList<string> GetCommandPrefixes() => ["status", "start"];
+
+    public IEnumerable<CompletionCandidate> GetCompletions(string[] args, bool hasTrailingSpace)
+    {
+      string prefix = args.Length == 0 ? string.Empty : args[^1];
+      if (!prefix.StartsWith('s'))
+        yield break;
+
+      yield return new CompletionCandidate("status", null, CompletionType.Command);
+      yield return new CompletionCandidate("start", null, CompletionType.Command);
+    }
+
+    public bool IsKnownCommand(string token) =>
+      token.Equals("status", StringComparison.OrdinalIgnoreCase) ||
+      token.Equals("start", StringComparison.OrdinalIgnoreCase);
+  }
+
+  private static ReplConsoleReader CreateReader(TestTerminal terminal, IReplRouteProvider? routeProvider = null)
   {
     ReplOptions options = new()
     {
@@ -91,7 +110,7 @@ public class WrappedLineRedrawTests
 
     return new(
       history: [],
-      routeProvider: new EmptyRouteProvider(),
+      routeProvider: routeProvider ?? new EmptyRouteProvider(),
       replOptions: options,
       loggerFactory: null,
       terminal: terminal);
@@ -225,6 +244,40 @@ public class WrappedLineRedrawTests
     await app.RunAsync(["--interactive"]);
 
     terminal.OutputContains("ECHO:xxxx").ShouldBeTrue("shortened wrapped input must still execute");
+  }
+
+  public static async Task Home_after_alt_equals_on_wrapped_line_parks_at_prompt_column()
+  {
+    using TestTerminal terminal = new();
+    terminal.WindowWidth = 20;
+    terminal.QueueKeys("s" + new string('a', 24));
+    terminal.QueueKey(ConsoleKey.Oem7, alt: true);
+    terminal.QueueKey(ConsoleKey.Home);
+    terminal.QueueKey(ConsoleKey.Enter);
+
+    ReplConsoleReader reader = CreateReader(terminal, new PrefixSRouteProvider());
+    string? line = await reader.ReadLineAsync("> ");
+
+    line.ShouldBe("s" + new string('a', 24));
+    terminal.OutputContains("Available completions").ShouldBeTrue();
+    terminal.CursorLeft.ShouldBe(2);
+  }
+
+  public static async Task Home_after_alt_equals_on_non_wrapped_line_parks_at_prompt_column()
+  {
+    using TestTerminal terminal = new();
+    terminal.WindowWidth = 80;
+    terminal.QueueKeys("s");
+    terminal.QueueKey(ConsoleKey.Oem7, alt: true);
+    terminal.QueueKey(ConsoleKey.Home);
+    terminal.QueueKey(ConsoleKey.Enter);
+
+    ReplConsoleReader reader = CreateReader(terminal, new PrefixSRouteProvider());
+    string? line = await reader.ReadLineAsync("> ");
+
+    line.ShouldBe("s");
+    terminal.OutputContains("Available completions").ShouldBeTrue();
+    terminal.CursorLeft.ShouldBe(2);
   }
 }
 

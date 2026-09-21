@@ -241,6 +241,7 @@ One-off remediation still precedes turn-on: operator runs
 - [x] Sweep — decided 2026-08-08 (operator): **dropped**. No detection-only sweep; revisit only if out-of-band drift (branch protection, lapsed TP policies) actually bites.
 - [x] TimeWarp.Ganda public NuGet — decided 2026-08-08 (operator): **stop publishing**. Install from private repo on operator machines; remove ganda from the 458-009 TP roster and delete its existing TP policy. (Existing public versions up to beta.15 remain on nuget.org — NuGet does not truly delete; unlist them.)
 - [x] Update `review/convention.md` Layer 3 wording to the attestation model — also restated in `review/repo-matrix.md` Layer 3 + rollout item 5 (sweep dropped; warn→require after remediation)
+- [x] Implementation review under `review/` (effort 1, round 2, disposition accepted-exceptions)
 
 ## Notes
 
@@ -250,11 +251,19 @@ consistency program. This model answers "how do you use a private tool with
 public repos": you don't run the tool in public — it emits verifiable evidence
 and the public side verifies evidence. Checks and fixers never leave ganda.
 
+Review kitchen: `review/review-framework.md`, `review/round-1/` (verifier half,
+frozen), `review/round-2/` (Layer 3 docs), `review/disposition.md`. Effort 1,
+general. Disposition `accepted-exceptions` (carried M4 wontfix; round 2 raised
+none).
+
 ## Session
 
 - Implementer: grok session (2026-09-21) — remaining product work on 458-010:
   Layer 3 convention wording, public-side rotation procedure, waiver recorded
   as `attestation.mode: off`, checklist close-out of shipped halves.
+- Review oracle: grok session 01a0c4c8-3cbd-7181-9b2d-6080b404b2ef (2026-09-21)
+  — effort 1, general; round 2 of `review/` on commit `db9c6a3a`.
+- Reviewer (general, round 2): 01a0c4ca-e645-7301-8c35-af65a6a5bdd5
 
 ## Results
 
@@ -285,9 +294,25 @@ closed the waiver item on the existing `off` mode.
 - One-off `ganda repo audit --fix` wave stands at **13/20 DONE, 7 honest partials** needing operator rulings (custom DevCli repos, flexbox kebab, multiavatar conversion). Not re-run from this worktree.
 - Per-repo PR `warn` → `require` flips wait on those rulings.
 
-### Review (prior)
+### Review disposition
 
-- Verifier half: 2 rounds, security-elevated; disposition **accepted-exceptions** (`review/disposition.md`).
+- **Outcome:** `accepted-exceptions` (0 open). Round 2 of this implement raised
+  **0** findings (`clean` for `db9c6a3a`). Task-level exception is the frozen
+  round-1 verifier **wontfix** M4 (UnknownKey-before-TreeMismatch diagnostic
+  order; first-failing-check).
+- **Effort / roster:** 1, general only (round 2). Round 1 was the verifier half
+  (security-elevated, 1 MED + 2 LOW fixed).
+- **Rounds:** 2 (`review/round-1/` verifier, frozen; `review/round-2/` Layer 3
+  docs).
+- **Final counts:** 0 open. Round 2: 0/0/0 bug/suggestion/nit. Carried: M1–M3
+  fixed, M4 nit wontfix.
+- **Paths:** `review/review-framework.md`, `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
+- No sibling apply-review task; disposition stayed on this id. No fix loop
+  this round (zero new findings).
+- Review oracle re-ran attestation-01 **30/30**, attestation-02 **1/1**,
+  attestation-03 **18/18**; smoke 1–2 `rg` matches; smoke 4 PR `warn` advisory
+  contains `pull master locally so ganda can attest` and did not abort.
 
 ### How to validate
 

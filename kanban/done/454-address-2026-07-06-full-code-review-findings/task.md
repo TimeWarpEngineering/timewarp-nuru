@@ -214,17 +214,17 @@ HIGH:
 MEDIUM:
 - [x] 454-008 Reject undefined enum values in enum type converter (M1) — done by agent, reviewed OK
 - [x] 454-009 Align runtime type converters with invariant culture path (M2, M3 + dead converters) — done by agent, reviewed OK
-- [ ] 454-010 Restore generator incrementality (M4, M5)
-- [ ] 454-011 Harden DSL interpreter against invalid user code (M6, M7, M9)
-- [ ] 454-012 Replace string type heuristics with SemanticModel checks (M8 + property defaults)
+- [x] 454-010 Restore generator incrementality (M4, M5)
+- [x] 454-011 Harden DSL interpreter against invalid user code (M6, M7, M9)
+- [x] 454-012 Replace string type heuristics with SemanticModel checks (M8 + property defaults)
 - [x] 454-013 Fix false NURU R003 unreachable route warning (M10) — done; bound flags optional, unbound flags required discriminators, IsFlagBound + skip guard + required signature, PatternSyntax fix, 10 tests
 - [x] 454-014 Fix grouped short option over matching (M11) — resolved by 454-005 (heuristic removed)
 - [x] 454-015 Fix lexer whitespace and end of options handling (M12, M14) — done; char.IsWhiteSpace for --, AdjacentParametersError for {a}{b}, 11 tests
 - [x] 454-016 Validate duplicate long form options (M13) — done; short+long form dup detection, dead OptionAliases removed, 5 tests
-- [ ] 454-017 Wire Ctrl C cancellation into REPL command execution (M15)
-- [ ] 454-018 Fix Windows clipboard set in REPL (M16)
-- [ ] 454-019 Fix redraw of lines longer than terminal width (M17)
-- [ ] 454-020 Fix REPL reader state desync bugs (M18, M19, M20)
+- [x] 454-017 Wire Ctrl C cancellation into REPL command execution (M15)
+- [x] 454-018 Fix Windows clipboard set in REPL (M16)
+- [x] 454-019 Fix redraw of lines longer than terminal width (M17)
+- [x] 454-020 Fix REPL reader state desync bugs (M18, M19, M20)
 - [x] 454-021 Fix enum completion overflow for wide underlying types (M21) — done; Convert.ToInt32 → value.ToString("D"), 3 regression tests added
 - [x] 454-022 Fix release gate already published version check (M22 + CompareVersions) — done; full SemVer 2.0 §11 CompareVersions, IsVersionPublished full-list check, 5 service files wired into CI (not endpoint), 11 tests
 - [x] 454-023 Fix FTS query sanitizer malformed match expressions (M23 + LIKE wildcards) — done; FTS5 double-quoted tokens, empty-query guard, EscapeLikePattern + ESCAPE clause, 13 tests
@@ -233,22 +233,22 @@ MEDIUM:
 - [x] 454-026 Unify analyzer packaging TFM for logging abstractions (M26) — done; net9.0→net10.0 in timewarp-nuru.csproj, SHA-256 confirmed both nupkg ship identical DLL
 
 MEDIUM (discovered during 454-001):
-- [ ] 454-033 Fix MCP examples manifest drift and endpoint syntax regions
+- [x] 454-033 Fix MCP examples manifest drift and endpoint syntax regions
 
 Cross-cutting:
-- [ ] Human REPL verification session (single batch, after 454-017/018/019/020 land):
+- [x] Human REPL verification session (single batch, after 454-017/018/019/020 land):
       Ctrl+C cancels in-flight command; Windows clipboard cut/copy; long-line redraw;
       Alt+. cycling past last args entry; i-search extension; stale-selection ops;
       Windows Shift+Enter multiline cursor (454-007 leftover). Each task's Results
       lists its exact manual steps.
 
 LOW sweeps:
-- [ ] 454-027 Sweep core runtime low severity findings
-- [ ] 454-028 Sweep analyzer low severity findings
-- [ ] 454-029 Sweep parsing low severity findings
-- [ ] 454-030 Sweep REPL and completion low severity findings
-- [ ] 454-031 Sweep aux project low severity findings (mostly verification of folded items)
-- [ ] 454-032 Sweep infrastructure low severity findings
+- [x] 454-027 Sweep core runtime low severity findings
+- [x] 454-028 Sweep analyzer low severity findings
+- [x] 454-029 Sweep parsing low severity findings
+- [x] 454-030 Sweep REPL and completion low severity findings
+- [x] 454-031 Sweep aux project low severity findings (mostly verification of folded items)
+- [x] 454-032 Sweep infrastructure low severity findings
 
 ## Notes
 
@@ -292,3 +292,8 @@ The remaining backlog was re-assessed against how this framework is actually con
 ## Session
 
 - Created: 2026-07-06 (full-repo review session)
+
+## Results
+### Kitchen hygiene (2026-09-21)
+Parent checklist reconciled against done children (incl. overnight 454-019 and sweeps 027–032). 454-033 archived. Column closed — no open 454-* children remain.
+

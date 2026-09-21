@@ -58,7 +58,7 @@ Execute ServiceCollection at compile time to see extension method registrations.
 - [x] Users can opt into full MS DI with single method call
 - [x] Source-gen DI provides clear errors for unsupported patterns (Phase 2)
 - [x] Constructor dependencies work in source-gen DI (Phase 3)
-- [ ] Extension methods work in source-gen DI (Phase 4)
+- [x] Extension methods work in source-gen DI (Phase 4)
 - [x] AOT compatibility maintained for default path
 - [x] No breaking changes to existing API
 
@@ -72,7 +72,7 @@ Execute ServiceCollection at compile time to see extension method registrations.
 - [x] Phase 1: UseMicrosoftDependencyInjection (#392) - DONE
 - [x] Phase 2: DI Diagnostics (#393) - DONE
 - [x] Phase 3: Constructor Dependency Resolution (#394) - DONE
-- [ ] Phase 4: Execute and Inspect (#395)
+- [x] Phase 4: Execute and Inspect (#395)
 - [ ] Phase 5: Per-App ServiceProvider Isolation (future)
 - [ ] Documentation updates
 - [ ] Migration guide for users hitting limitations
@@ -99,3 +99,8 @@ When testing runtime DI features:
 - Use unique type names per test (e.g., `IRdi15TransientCounter`, `IRdi15SingletonCounter`)
 - Clear runfile cache (`dotnet clean <runfile>`) when changing service registrations
 - Static counters need `Reset()` methods but won't help if ServiceProvider is cached
+
+## Results
+### Kitchen hygiene (2026-09-21)
+Phases 1–4 complete (#392–#395 done). Phase 5 (per-app ServiceProvider isolation) and docs/migration guide left unchecked as **future / out of this epic** — not active implement work. Epic closed; reopen or file a new child if Phase 5 is scheduled.
+

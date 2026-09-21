@@ -197,3 +197,6 @@ the review deliverable itself is complete.
   production-proven. (Also: stale `bin/dev` AOT snapshot bit during the cut —
   `self-install` required for new commands; staleness check is a follow-up
   candidate.)
+### Kitchen hygiene (2026-09-21)
+Nuru convention children 458-001…009 and 458-011 are done. Cross-repo migration Requirements bullets remain deferred (operator 2026-08-06). **458-010 stays in-progress** as the attestation rollout follow-on — not closed by this hygiene. Parent review epic closed as complete for its Nuru scope.
+

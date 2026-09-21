@@ -11,9 +11,15 @@ mechanism, DevCli usage, `.timewarp/dev.jsonc`, branch protection, latest tag.
    branch protection is **not enforceable on private repos** — 46 of 144 repos are
    private, including publishers (ganda, health, [redacted-private-repo]).
    Upgrading to Team (~$4/user/mo) would enable it; nothing below requires that.
-2. **Zero repos in the org have required status checks.** Only 4 have any branch
-   protection at all (nuru, architecture, state, terminal: PR required; mediator:
-   protection object exists, no PR requirement). All CI everywhere is advisory.
+2. **Zero repos in the org have required status checks** (audit-day snapshot).
+   Only 4 have any branch protection at all (nuru, architecture, state,
+   terminal: PR required; mediator: protection object exists, no PR
+   requirement). All CI everywhere is advisory.
+   **Update 2026-08-08 (458-002):** timewarp-nuru master has required status
+   check `ci` (strict false). Sample of other public publishers
+   (amuru, jaribu, flexbox, builder: unprotected; terminal, architecture:
+   PR required, no required checks) is unchanged — org-wide flips remain
+   operator work, same enabler as 458-002 Design B.
 3. **File-sync as a consistency mechanism was already tried and abandoned** — the
    `sync-configurable-files` workflow exists `.disabled` in timewarp-state and
    timewarp-quickbooks. Copying files N times produced N divergent copies. Any new
@@ -49,13 +55,17 @@ Branch protection with required checks then becomes optional defense-in-depth on
 public repos (and on private ones if the org ever moves to Team) — useful, never
 load-bearing.
 
-**Layer 3 — drift detection is automated, not manual.** A `dev audit-convention`
-check (or `ganda repo audit` extension) validates the repo against the convention
-(props SSOT present, caller workflow matches the canonical shape, `v`-prefixed
-tags, no rogue release workflows, OIDC not secret keys) and runs in every CI merge
-build — a deviating repo fails its own CI. Plus one scheduled org sweep (in the
-`.github` repo) that regenerates this deviation table so it never has to be
-hand-built again.
+**Layer 3 — attestation (458-010).** The audit — all
+checks and all fixers — stays in ganda (private). Ganda signs evidence over
+`(tree hash, check-set hash, timestamp)` into `refs/notes/ganda-audit`; public
+CI (`dev workflow` Step 1) only verifies the signature against the baked-in
+public key. A public `dev audit-convention` subset and a scheduled detection
+sweep were considered and rejected: the former fragments one convention across
+two tools; the latter observes and prohibits nothing. PR/merge default is
+`warn`; release default is `require`. Waiver for dormant/sites/no-ganda:
+`attestation.mode: off`. Required status check `ci` is defense-in-depth on
+public repos (live on timewarp-nuru as of 458-002); the release-mode verify is
+the plan-independent hard gate.
 
 **Answer to the paid-plan question:** you do not need to pay to be correct. Team
 only adds GitHub-side merge blocking on private repos; publish-time enforcement
@@ -167,7 +177,11 @@ sync`), which is a separate, working mechanism — do not merge the two.
 4. Migrate the 6 nonconforming publishers (state, mediator, fixie, multiavatar,
    quickbooks, build-tasks) — each is a real migration; state first (its
    `release: created` draft-trigger and secret-key auth are the worst live risks).
-5. Turn on `dev audit-convention` in merge mode org-wide + the scheduled sweep.
+5. After per-repo remediation is green, flip `attestation.mode` to `require` on
+   PR/merge where the operator wants the PR check to prohibit (release is
+   already `require` when unset). Org-wide required status check `ci` on public
+   publishers is the same 458-002 Design B enabler. Sweep: dropped
+   (operator 2026-08-08).
 
 Raw audit data: session scratchpad `audit-results.json` (regenerate any time with
-the same API queries; Layer 3's sweep makes this automatic).
+the same API queries). Layer 3 is attestation, not a scheduled sweep.

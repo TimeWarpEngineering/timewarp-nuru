@@ -1,8 +1,8 @@
-# TimeWarp versioning + release convention (proposed)
+# TimeWarp versioning + release convention
 
-Status: **proposed** by task 458 review (2026-08-06). Becomes canonical when the 458
-follow-up tasks land in Nuru. Other TimeWarp package-publishing repos copy this
-verbatim; deviations require a written reason in that repo.
+Status: **canonical** (458 review 2026-08-06; Layer 3 restated as attestation by
+458-010). Other TimeWarp package-publishing repos copy this verbatim; deviations
+require a written reason in that repo.
 
 ## The convention
 
@@ -78,17 +78,45 @@ file-syncing workflows into repos was already tried and abandoned
    release mode, identically on public and private repos, independent of GitHub
    plan. Branch protection / required status checks are defense-in-depth where
    available — never load-bearing.
-3. **Automated drift audit.** `dev audit-convention` runs in every merge build
-   (deviating repos fail their own CI) plus a scheduled org sweep regenerating
-   the deviation matrix. Consistency is checked by machines, not by memory.
+3. **Attestation.** The audit — all checks and all
+   fixers — stays in ganda (private). Ganda signs evidence that the audit
+   passed; public CI only verifies the signature. Private key signs on operator
+   machines; public key verifies anywhere. The tool never travels — only proofs
+   do. A scheduled sweep and a public `dev audit-convention` subset were
+   considered and rejected (458-010).
+
+   - **Evidence:** Ed25519 signature over `(tree hash, check-set hash,
+     timestamp)` stored in `refs/notes/ganda-audit`, keyed by **tree SHA**
+     (a merge commit whose tree equals the PR head inherits the head's
+     attestation). Frozen v1 note body:
+     `{v:1, alg:"ed25519", tree, check_set, ts, key_id, sig}`.
+   - **Signer:** `ganda repo attest` on operator machines (`post-merge` +
+     `post-checkout` hooks). Nothing else on the machine signs. Private key:
+     `~/.timewarp/ganda/keys/` — touch only via `ganda repo attest`.
+   - **Verifier:** DevCli `dev workflow` Step 1 — fetch notes, compute the
+     commit's tree hash, verify against the baked-in public key registry
+     (`AttestationVerifier.KnownKeys`). No convention knowledge in CI.
+   - **Policy:** `.timewarp/dev.jsonc` `attestation.mode` (`off` | `warn` |
+     `require`); CLI `--attestation` overrides one run. Unset defaults:
+     PR/merge → `warn`; release → `require` (TimeWarp-first hard gate).
+   - **Waiver:** `"attestation": { "mode": "off" }` for dormant/sites/no-ganda
+     consumers so they do not fail forever.
+   - **Rotation (public half):** add the new `key_id` → hex to
+     `AttestationVerifier.KnownKeys` (keep the old key during the grace
+     window), bump DevCli, then ganda starts signing with the new key.
+     `tw-audit-1` is the post-rotation (2026-08-08) production public key.
+   - **PR prohibit:** required status check `ci` where GitHub Free allows it
+     (public repos). Release-mode verify is the plan-independent hard gate.
 
 ## Shared implementation surface
 
 Repos should share, not re-implement:
 
 - `TimeWarp.Nuru.DevCli` content endpoints: `check-version` (gate semantics above),
-  `workflow` shape (mode matrix below), `release` (tag/Release cutter).
-- `.timewarp/dev.jsonc` for per-repo config (package list only until rule 8 lands).
+  `workflow` (attestation verify + mode matrix below), `release` (tag/Release cutter).
+- `.timewarp/dev.jsonc` for per-repo config (`attestation.mode`; optional
+  `checkVersionConfig.packages` override — packable set is derived from
+  `IsPackable`).
 - Thin `workflow.yml`: checkout (fetch-depth 0 for tag history), setup, OIDC login
   gated on release condition, `dev workflow`.
 
@@ -96,9 +124,9 @@ Repos should share, not re-implement:
 
 | Event | Mode | Publishes |
 |-------|------|-----------|
-| `pull_request` | pr: clean → build → verify → test | no |
-| `push` (master) | merge: clean → build → verify → test | no |
-| `release: published` | release: full gate + pipeline (rule 7) | yes |
+| `pull_request` | pr: attestation → clean → build → verify → test | no |
+| `push` (master) | merge: attestation → clean → build → verify → test | no |
+| `release: published` | release: full gate + pipeline (rule 7), attestation hard by default | yes |
 | `workflow_dispatch` (default) | merge | no |
 | `workflow_dispatch` (`mode: release` + confirm) | release | yes (break-glass) |
 | local (no `GITHUB_EVENT_NAME`) | pr | no |

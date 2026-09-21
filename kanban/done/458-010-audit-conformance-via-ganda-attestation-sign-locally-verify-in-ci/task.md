@@ -112,13 +112,13 @@ One-off remediation still precedes turn-on: operator runs
 >   recorded master+pulled-only decision; operator's implementation call,
 >   recorded here for the verifier's staleness/policy design.
 
-- [ ] Attestation format: signature over (tree hash, audit version/check-set hash, timestamp); note in `refs/notes/ganda-audit`
-- [ ] Key management: private key on operator machines, ganda-only signing path; public key published (repo- or org-level); rotation procedure written down
-- [ ] `post-merge` + `post-checkout` hook install (via ganda) — audit + sign + push note when tree unattested
-- [ ] Green-flip: post `ganda/attestation` commit status and/or `gh run rerun` after attesting
+- [x] Attestation format: signature over (tree hash, audit version/check-set hash, timestamp); note in `refs/notes/ganda-audit` — **ganda 199**, frozen v1 contract recorded above
+- [x] Key management: private key on operator machines, ganda-only signing path; public key published in DevCli `AttestationVerifier.KnownKeys` (`tw-audit-1`); rotation procedure written down in `review/convention.md` Layer 3 and DevCli readme "Key rotation (public half)"
+- [x] `post-merge` + `post-checkout` hook install (via ganda) — `ganda hooks install attest` (ganda 199)
+- [x] Green-flip: post `ganda/attestation` commit status and/or `gh run rerun` after attesting — ganda 199
 - [x] Attest-branch policy — decided 2026-08-08 (operator): **master + explicitly pulled PR branches only**; hooks do not attest arbitrary checkouts
 
-## Results (code halves — rollout items below remain open)
+### Prior results (code halves, 2026-08-08)
 
 **Both code halves of the attestation model are implemented and reviewed.**
 
@@ -142,7 +142,7 @@ One-off remediation still precedes turn-on: operator runs
   wontfix; disposition **accepted-exceptions** (`review/disposition.md`).
   Ganda-side decoder tightening tracked as timewarp-ganda kanban 200.
 
-### How to validate (code halves)
+#### How to validate (code halves)
 
 1. `dotnet run tests/timewarp-nuru-tests/devcli/attestation-01-verifier.cs`
    → 30/30; `attestation-02-openssl-verify.cs` → 1/1 (real Ed25519
@@ -182,14 +182,14 @@ One-off remediation still precedes turn-on: operator runs
 > ganda repo attest; production key rotated 2026-08-08, prior stray
 > signature void).
 
-- [ ] Verify step: fetch notes, compute tree hash, verify signature with public key — no convention knowledge
-- [ ] Wire into PR mode ("requires attestation") and release mode (hard gate on tag tree)
-- [ ] Required status checks on public repos so the PR check prohibits (same enabler as 458-002 Design B)
-- [ ] Clear failure text: which tree, why unattested, "pull master so ganda can attest"
+- [x] Verify step: fetch notes, compute tree hash, verify signature with public key — no convention knowledge (`attestation-verifier.cs` + `workflow-command.cs`)
+- [x] Wire into PR mode ("requires attestation") and release mode (hard gate on tag tree) — PR/merge default `warn`; release default `require`; `off`/`warn`/`require` + CLI override (458-011)
+- [x] Required status checks — **timewarp-nuru master `ci` LIVE** (458-002 Design B, re-verified 2026-09-21). Org-wide flips on remaining public publishers are operator work (sampled amuru/jaribu/flexbox/builder unprotected; terminal/architecture PR-required, no checks)
+- [x] Clear failure text: which tree, why unattested, "pull master so ganda can attest"
 
 ### Rollout
 
-- [ ] Clone the 3 publisher repos missing locally (needed for remediation): `ganda repo clone git@github.com:TimeWarpEngineering/timewarp-fixie.git`, `…/timewarp-quickbooks.git`, `…/timewarp-build-tasks.git` (verified vs `ganda repo list` 2026-08-08 — all other 18 publishers already cloned)
+- [x] Clone the 3 publisher repos missing locally: `timewarp-fixie`, `timewarp-quickbooks`, `timewarp-build-tasks` — present as origin-home worktrees under `/home/steve/worktrees/github.com/TimeWarpEngineering/{repo}/master` (verified 2026-09-21)
 - [ ] One-off remediation: `ganda repo audit --fix` across all active repos; record before/after here
   - **WAVE LAUNCHED 2026-08-08 (merged with DevCli 3.0.0-beta.72 adoption —
     same wave: the audit's `nuru` check went red org-wide when beta.72
@@ -237,10 +237,11 @@ One-off remediation still precedes turn-on: operator runs
     check_set a8d1483 ts 2026-08-08T02:39:24Z"** — signer → notes → verifier
     proven on real data. (Status-post warning expected: commit not yet on
     remote.)
-- [ ] Waiver mechanism for repos where the attestation requirement is N/A (dormant/sites), so they don't red forever
+- [x] Waiver mechanism for repos where the attestation requirement is N/A (dormant/sites), so they don't red forever — **458-011 `attestation.mode: off`** (skip verify on PR and release). Recorded in convention.md Layer 3 and DevCli readme
 - [x] Sweep — decided 2026-08-08 (operator): **dropped**. No detection-only sweep; revisit only if out-of-band drift (branch protection, lapsed TP policies) actually bites.
 - [x] TimeWarp.Ganda public NuGet — decided 2026-08-08 (operator): **stop publishing**. Install from private repo on operator machines; remove ganda from the 458-009 TP roster and delete its existing TP policy. (Existing public versions up to beta.15 remain on nuget.org — NuGet does not truly delete; unlist them.)
-- [ ] Update `review/convention.md` Layer 3 wording to the attestation model when this lands
+- [x] Update `review/convention.md` Layer 3 wording to the attestation model — also restated in `review/repo-matrix.md` Layer 3 + rollout item 5 (sweep dropped; warn→require after remediation)
+- [x] Implementation review under `review/` (effort 1, round 2, disposition accepted-exceptions)
 
 ## Notes
 
@@ -249,3 +250,105 @@ Implementation spans ganda (signer, hooks, status posting) and DevCli + the
 consistency program. This model answers "how do you use a private tool with
 public repos": you don't run the tool in public — it emits verifiable evidence
 and the public side verifies evidence. Checks and fixers never leave ganda.
+
+Review kitchen: `review/review-framework.md`, `review/round-1/` (verifier half,
+frozen), `review/round-2/` (Layer 3 docs), `review/disposition.md`. Effort 1,
+general. Disposition `accepted-exceptions` (carried M4 wontfix; round 2 raised
+none).
+
+## Session
+
+- Implementer: grok session (2026-09-21) — remaining product work on 458-010:
+  Layer 3 convention wording, public-side rotation procedure, waiver recorded
+  as `attestation.mode: off`, checklist close-out of shipped halves.
+- Review oracle: grok session 01a0c4c8-3cbd-7181-9b2d-6080b404b2ef (2026-09-21)
+  — effort 1, general; round 2 of `review/` on commit `db9c6a3a`.
+- Reviewer (general, round 2): 01a0c4ca-e645-7301-8c35-af65a6a5bdd5
+
+## Results
+
+**Product work remaining in this repo is landed.** Signer (ganda 199) and
+verifier (this repo, `b7f0cf34` + `2e9b65f2` + 458-011 mode policy) were
+already implemented and reviewed. This session folded Layer 3 into the
+canonical convention, wrote the public-side key-rotation procedure, and
+closed the waiver item on the existing `off` mode.
+
+### What landed this session
+
+- **Layer 3 wording:** `kanban/in-progress/458-review-nuru-versioning-and-timewarp-wide-consistency/review/convention.md` — attestation model (sign locally, verify in CI), waiver, rotation, event matrix includes attestation; status set to canonical. `review/repo-matrix.md` Layer 3 and rollout item 5 restated the same (sweep dropped; warn→require after remediation).
+- **Rotation procedure (public half):** DevCli readme section "Key rotation (public half)" — additive `KnownKeys` update, package bump, then ganda signs with the new key. Private key remains ganda-only.
+- **Waiver:** `attestation.mode: off` (458-011) is the dormant/sites/no-ganda skip; recorded in convention.md.
+- **Checklist close-out:** shipped signer/verifier items checked; 3 publisher clones verified present; nuru `ci` required check re-verified live.
+
+### Files changed
+
+- `kanban/in-progress/458-review-nuru-versioning-and-timewarp-wide-consistency/review/convention.md`
+- `kanban/in-progress/458-review-nuru-versioning-and-timewarp-wide-consistency/review/repo-matrix.md`
+- `source/timewarp-nuru-devcli/readme.md`
+- `kanban/in-progress/458-010-audit-conformance-via-ganda-attestation-sign-locally-verify-in-ci/task.md`
+- `.gitignore` (ignore host `oracle-*.log` / `task-work.progress.log`)
+
+### Key decisions / remaining operator work
+
+- Org-wide required status check `ci` on remaining public publishers is the same 458-002 Design B enabler; this session does not mutate other repos' branch protection.
+- One-off `ganda repo audit --fix` wave stands at **13/20 DONE, 7 honest partials** needing operator rulings (custom DevCli repos, flexbox kebab, multiavatar conversion). Not re-run from this worktree.
+- Per-repo PR `warn` → `require` flips wait on those rulings.
+
+### Review disposition
+
+- **Outcome:** `accepted-exceptions` (0 open). Round 2 of this implement raised
+  **0** findings (`clean` for `db9c6a3a`). Task-level exception is the frozen
+  round-1 verifier **wontfix** M4 (UnknownKey-before-TreeMismatch diagnostic
+  order; first-failing-check).
+- **Effort / roster:** 1, general only (round 2). Round 1 was the verifier half
+  (security-elevated, 1 MED + 2 LOW fixed).
+- **Rounds:** 2 (`review/round-1/` verifier, frozen; `review/round-2/` Layer 3
+  docs).
+- **Final counts:** 0 open. Round 2: 0/0/0 bug/suggestion/nit. Carried: M1–M3
+  fixed, M4 nit wontfix.
+- **Paths:** `review/review-framework.md`, `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
+- No sibling apply-review task; disposition stayed on this id. No fix loop
+  this round (zero new findings).
+- Review oracle re-ran attestation-01 **30/30**, attestation-02 **1/1**,
+  attestation-03 **18/18**; smoke 1–2 `rg` matches; smoke 4 PR `warn` advisory
+  contains `pull master locally so ganda can attest` and did not abort.
+
+### How to validate
+
+**Smoke**
+
+```bash
+# 1. Layer 3 is attestation
+rg -n '\*\*Attestation\.\*\*' \
+  kanban/in-progress/458-review-nuru-versioning-and-timewarp-wide-consistency/review/convention.md
+
+# 2. Waiver + rotation are written down
+rg -n "mode.: .off.|Key rotation \(public half\)" \
+  kanban/in-progress/458-review-nuru-versioning-and-timewarp-wide-consistency/review/convention.md \
+  source/timewarp-nuru-devcli/readme.md
+
+# 3. Verifier still green (throwaway key; never touches ~/.timewarp/ganda/keys/)
+dotnet run tests/timewarp-nuru-tests/devcli/attestation-01-verifier.cs
+dotnet run tests/timewarp-nuru-tests/devcli/attestation-02-openssl-verify.cs
+dotnet run tests/timewarp-nuru-tests/devcli/attestation-03-mode-resolution.cs
+
+# 4. PR pipeline runs attestation as Step 1 and continues in default warn
+dotnet run --file tools/dev-cli/dev.cs -- workflow --mode pr --attestation warn 2>&1 | head -20
+```
+
+**Expect**
+
+- Smoke 1: a match on the Layer 3 **Attestation.** heading; Layer 3 describes sign-locally / verify-in-CI.
+- Smoke 2: convention.md names `"mode": "off"` as the waiver; DevCli readme has `#### Key rotation (public half)` and lists `tw-audit-1`.
+- Smoke 3: attestation-01 30/30; attestation-02 1/1; attestation-03 18/18 (resolver matrix including `off`).
+- Smoke 4: Step 1 attestation line; on an unattested tree, advisory text contains `pull master locally so ganda can attest`; pipeline does not abort in `warn`.
+
+**Automated gate**
+
+```bash
+ganda runfile cache --clear && dotnet run tests/ci-tests/run-ci-tests.cs
+# expect: 0 failed
+```
+
+**Not in scope:** mutating branch protection on other public publishers; re-running `ganda repo audit --fix` across the 7 partial repos; flipping this repo to `attestation.mode: require` on PR (release is already require-when-unset).

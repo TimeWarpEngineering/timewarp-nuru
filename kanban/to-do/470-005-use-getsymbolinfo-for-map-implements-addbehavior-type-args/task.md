@@ -24,14 +24,18 @@ Same pattern without GetSymbolInfo fallback:
 - [x] GetSymbolInfo fallback at all cited sites
 - [x] Tests
 - [x] `ganda runfile cache --clear` + CI tests
+- [x] Review round 1 (general, effort 1) and disposition on this id
 
 ## Notes
 
 Evidence: parent 470 `review/round-1/merged.md` M7.
 
+Review trail: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Implementer: grok session 01a0c854-9d49-7e03-a6cf-e76ec33db687 (2026-09-22)
+- Review: Grok session 01a0c869-08f1-71f2-b76f-8299fdd0c2fc (2026-09-22)
 
 ## Results
 
@@ -83,3 +87,12 @@ ganda runfile cache --clear
 dotnet run tests/ci-tests/run-ci-tests.cs
 # expect: exit 0; multi-mode 1643 passed, 7 skipped, 0 failed; standalone phase includes generator-44 (2 passed) and generator-36 (2 passed)
 ```
+
+### Review disposition
+
+- **Outcome:** `clean`
+- **Effort / roster:** 1, general only
+- **Rounds:** 1 (`review/round-1/`)
+- **Final counts:** 0 open / 0 fixed / 0 wontfix (bug 0, suggestion 0, nit 0)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- No sibling apply-review task. No wontfix and no escalation.

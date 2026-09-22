@@ -59,12 +59,11 @@ internal static class ImplementsExtractor
       return null;
 
     TypeSyntax typeArg = typeArgs.Arguments[0];
-    TypeInfo typeInfo = semanticModel.GetTypeInfo(typeArg);
-
-    if (typeInfo.Type is null)
+    ITypeSymbol? typeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, typeArg);
+    if (typeSymbol is null)
       return null;
 
-    return typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    return typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
   }
 
   /// <summary>
@@ -196,9 +195,9 @@ internal static class ImplementsExtractor
           {
             // Get the interface type
             TypeSyntax interfaceTypeSyntax = genericName.TypeArgumentList.Arguments[0];
-            TypeInfo interfaceTypeInfo = semanticModel.GetTypeInfo(interfaceTypeSyntax);
+            ITypeSymbol? interfaceTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, interfaceTypeSyntax);
 
-            if (interfaceTypeInfo.Type is INamedTypeSymbol interfaceType)
+            if (interfaceTypeSymbol is INamedTypeSymbol interfaceType)
             {
               // Find the property on the interface
               string propertyName = memberAccess.Name.Identifier.Text;

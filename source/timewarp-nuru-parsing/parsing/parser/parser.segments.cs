@@ -10,6 +10,8 @@
 // The trade-off: POSIX-style flag grouping (-la == -l -a) is deliberately NOT
 // supported — grouping and multi-char shorts are mutually exclusive conventions,
 // and grouping would require interpreting undeclared tokens (kanban 454-005/454-014).
+// Parameter names use IsValidIdentifierFormat (letter or underscore, then letters, digits,
+// and underscores). Hyphens stay legal on option names only (--dry-run).
 #endregion
 
 namespace TimeWarp.Nuru;
@@ -57,8 +59,8 @@ internal sealed partial class Parser
     Token nameToken = Consume(RouteTokenType.Identifier, "Expected parameter name");
     string paramName = nameToken.Value;
 
-    // Validate identifier starts with letter or underscore
-    if (!IsValidIdentifier(paramName))
+    // Reject names that cannot be C# identifiers. Option names are not checked here.
+    if (!IsValidIdentifierFormat(paramName))
     {
       AddParseError
       (

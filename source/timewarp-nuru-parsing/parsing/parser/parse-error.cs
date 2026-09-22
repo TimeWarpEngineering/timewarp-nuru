@@ -60,11 +60,9 @@ public record InvalidTypeConstraintError(
   string InvalidType
 ) : ParseError(Position, Length)
 {
-  private const string SupportedTypes = "string, int, double, bool, DateTime, Guid, long, decimal, TimeSpan, Uri, FileInfo, DirectoryInfo, IPAddress, DateOnly, TimeOnly";
-
   public override string ToString() =>
     $"Error at position {Position}: Invalid type constraint '{InvalidType}'. " +
-    $"Built-in types: {SupportedTypes}. " +
+    $"Built-in types: {BuiltInTypeNames.SupportedList}. " +
     "For custom types, ensure you register an IRouteTypeConverter and use a valid identifier name (e.g., 'fileinfo', 'MyType').";
 }
 
@@ -108,7 +106,7 @@ public record NullPatternError(
 }
 
 /// <summary>
-/// Invalid identifier error (e.g., identifier starting with a digit).
+/// Invalid identifier error (e.g., a name that starts with a digit or contains a hyphen).
 /// </summary>
 public record InvalidIdentifierError(
   int Position,
@@ -117,7 +115,7 @@ public record InvalidIdentifierError(
 ) : ParseError(Position, Length)
 {
   public override string ToString() =>
-    $"Error at position {Position}: Invalid identifier '{InvalidIdentifier}' - identifiers must start with a letter or underscore";
+    $"Error at position {Position}: Invalid identifier '{InvalidIdentifier}' - identifiers must start with a letter or underscore and contain only letters, digits, and underscores";
 }
 
 /// <summary>

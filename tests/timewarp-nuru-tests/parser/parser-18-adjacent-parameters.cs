@@ -27,6 +27,10 @@ public class AdjacentParametersTests
     exception.ParseErrors.Count.ShouldBeGreaterThan(0);
     exception.ParseErrors.ShouldContain(e => e is AdjacentParametersError);
 
+    AdjacentParametersError adjacent = exception.ParseErrors.OfType<AdjacentParametersError>().Single();
+    adjacent.Position.ShouldBe(7);
+    adjacent.Length.ShouldBe(3);
+
     await Task.CompletedTask;
   }
 
@@ -58,6 +62,13 @@ public class AdjacentParametersTests
     int adjacentErrorCount = exception.ParseErrors.Count(e => e is AdjacentParametersError);
     adjacentErrorCount.ShouldBeGreaterThanOrEqualTo(2);
 
+    AdjacentParametersError[] adjacentErrors = exception.ParseErrors.OfType<AdjacentParametersError>().ToArray();
+    adjacentErrors.Length.ShouldBe(2);
+    adjacentErrors[0].Position.ShouldBe(7);
+    adjacentErrors[0].Length.ShouldBe(3);
+    adjacentErrors[1].Position.ShouldBe(10);
+    adjacentErrors[1].Length.ShouldBe(3);
+
     await Task.CompletedTask;
   }
 
@@ -71,6 +82,10 @@ public class AdjacentParametersTests
     // Assert
     exception.ParseErrors.ShouldNotBeNull();
     exception.ParseErrors.ShouldContain(e => e is AdjacentParametersError);
+
+    AdjacentParametersError adjacent = exception.ParseErrors.OfType<AdjacentParametersError>().Single();
+    adjacent.Position.ShouldBe(13);
+    adjacent.Length.ShouldBe(3);
 
     await Task.CompletedTask;
   }

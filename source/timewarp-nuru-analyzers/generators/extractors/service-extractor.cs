@@ -538,9 +538,9 @@ internal static class ServiceExtractor
 
     // Get service type from first type argument
     TypeSyntax serviceTypeSyntax = typeArgs.Arguments[0];
-    TypeInfo serviceTypeInfo = semanticModel.GetTypeInfo(serviceTypeSyntax, cancellationToken);
+    ITypeSymbol? serviceTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, serviceTypeSyntax, cancellationToken);
 
-    string? serviceType = serviceTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    string? serviceType = serviceTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     if (serviceType is null)
       return (null, null, null);
 
@@ -551,14 +551,14 @@ internal static class ServiceExtractor
     if (typeArgs.Arguments.Count > 1)
     {
       TypeSyntax implTypeSyntax = typeArgs.Arguments[1];
-      TypeInfo implTypeInfo = semanticModel.GetTypeInfo(implTypeSyntax, cancellationToken);
-      implType = implTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-      implSymbol = implTypeInfo.Type as INamedTypeSymbol;
+      ITypeSymbol? implTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, implTypeSyntax, cancellationToken);
+      implType = implTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      implSymbol = implTypeSymbol as INamedTypeSymbol;
     }
     else
     {
       // Single type argument: service and impl are the same
-      implSymbol = serviceTypeInfo.Type as INamedTypeSymbol;
+      implSymbol = serviceTypeSymbol as INamedTypeSymbol;
     }
 
     return (serviceType, implType, implSymbol);
@@ -1024,16 +1024,16 @@ internal static class ServiceExtractor
 
     // Get service type from first type argument
     TypeSyntax serviceTypeSyntax = typeArgs.Arguments[0];
-    TypeInfo serviceTypeInfo = semanticModel.GetTypeInfo(serviceTypeSyntax, cancellationToken);
-    string? serviceTypeName = serviceTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    ITypeSymbol? serviceTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, serviceTypeSyntax, cancellationToken);
+    string? serviceTypeName = serviceTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
     // Get implementation type from second type argument (if present)
     string? implTypeName = null;
     if (typeArgs.Arguments.Count > 1)
     {
       TypeSyntax implTypeSyntax = typeArgs.Arguments[1];
-      TypeInfo implTypeInfo = semanticModel.GetTypeInfo(implTypeSyntax, cancellationToken);
-      implTypeName = implTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      ITypeSymbol? implTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, implTypeSyntax, cancellationToken);
+      implTypeName = implTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     }
 
     return (serviceTypeName, implTypeName);

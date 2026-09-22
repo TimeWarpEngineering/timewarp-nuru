@@ -761,7 +761,7 @@ public sealed class DslInterpreter
       return null;
 
     TypeSyntax typeSyntax = typeArgs.Arguments[0];
-    ITypeSymbol? typeSymbol = SemanticModel.GetTypeInfo(typeSyntax).Type;
+    ITypeSymbol? typeSymbol = TypeSyntaxResolver.ResolveType(SemanticModel, typeSyntax, CancellationToken);
 
     return typeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
   }
@@ -1294,8 +1294,7 @@ public sealed class DslInterpreter
     ExpressionSyntax argExpression = args.Arguments[0].Expression;
     if (argExpression is TypeOfExpressionSyntax typeofExpr)
     {
-      TypeInfo typeInfo = SemanticModel.GetTypeInfo(typeofExpr.Type);
-      ITypeSymbol? behaviorType = typeInfo.Type;
+      ITypeSymbol? behaviorType = TypeSyntaxResolver.ResolveType(SemanticModel, typeofExpr.Type, CancellationToken);
       if (behaviorType is INamedTypeSymbol namedType)
       {
         string typeName = namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -1497,22 +1496,12 @@ public sealed class DslInterpreter
     ArgumentSyntax? arg = invocation.ArgumentList.Arguments.FirstOrDefault();
     if (arg?.Expression is ObjectCreationExpressionSyntax objectCreation)
     {
-      // Use semantic model to get fully qualified converter type name
-      SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(objectCreation.Type);
+      // Fully qualified name: GetSymbolInfo, then GetTypeInfo; TypeKind.Error is unresolved.
       string converterTypeName;
       string targetTypeName = "";
 
-      INamedTypeSymbol? resolvedType = symbolInfo.Symbol as INamedTypeSymbol;
-
-      // GetSymbolInfo can miss types that GetTypeInfo resolves, and vice versa — try harder
-      // semantically before giving up (repo convention, see nuru-specific.md).
-      resolvedType ??= SemanticModel.GetTypeInfo(objectCreation.Type).Type as INamedTypeSymbol;
-
-      // A genuinely unresolvable type (e.g. missing namespace) still produces a non-null
-      // symbol from Roslyn's error recovery, but its TypeKind is Error and its display
-      // string is not usable as a real type name (no "global::" qualification is possible).
-      if (resolvedType?.TypeKind == TypeKind.Error)
-        resolvedType = null;
+      INamedTypeSymbol? resolvedType =
+        TypeSyntaxResolver.ResolveType(SemanticModel, objectCreation.Type, CancellationToken) as INamedTypeSymbol;
 
       if (resolvedType is not null)
       {

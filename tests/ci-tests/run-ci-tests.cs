@@ -33,6 +33,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-40-with-example-non-literal-command.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-42-extension-method-lowering-diagnostics.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-43-telemetry-options.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-44-referenced-type-arguments.cs"),
 ];
 
 int standaloneFailures = 0;

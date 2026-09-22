@@ -18,17 +18,25 @@ internal static class TelemetryEmitter
   /// <summary>
   /// Emits the telemetry infrastructure fields (ActivitySource, Meter, counters, histograms).
   /// </summary>
-  public static void EmitTelemetryFields(StringBuilder sb)
+  public static void EmitTelemetryFields(StringBuilder sb, bool enableTracing, bool enableMetrics)
   {
+    if (!enableTracing && !enableMetrics)
+      return;
+
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // TELEMETRY INFRASTRUCTURE (generated because UseTelemetry() was called)");
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine();
-    sb.AppendLine("  private static readonly global::System.Diagnostics.ActivitySource __activitySource = new(\"TimeWarp.Nuru\", \"1.0.0\");");
-    sb.AppendLine("  private static readonly global::System.Diagnostics.Metrics.Meter __meter = new(\"TimeWarp.Nuru\", \"1.0.0\");");
-    sb.AppendLine("  private static readonly global::System.Diagnostics.Metrics.Counter<int> __commandsInvoked = __meter.CreateCounter<int>(\"nuru.commands.invoked\", \"{commands}\", \"Number of commands executed\");");
-    sb.AppendLine("  private static readonly global::System.Diagnostics.Metrics.Counter<int> __commandsErrored = __meter.CreateCounter<int>(\"nuru.commands.errors\", \"{errors}\", \"Number of failed commands\");");
-    sb.AppendLine("  private static readonly global::System.Diagnostics.Metrics.Histogram<double> __commandDuration = __meter.CreateHistogram<double>(\"nuru.commands.duration\", \"ms\", \"Command execution duration in milliseconds\");");
+    if (enableTracing)
+    {
+      sb.AppendLine("  private static readonly global::System.Diagnostics.ActivitySource __activitySource = new(\"TimeWarp.Nuru\", \"1.0.0\");");
+    }
+
+    if (enableMetrics)
+    {
+      sb.AppendLine("  private static readonly global::System.Diagnostics.Metrics.Meter __meter = new(\"TimeWarp.Nuru\", \"1.0.0\");");
+    }
+
     sb.AppendLine();
   }
 
@@ -36,46 +44,92 @@ internal static class TelemetryEmitter
   /// Emits the telemetry provider setup code.
   /// This should be called at the start of RunAsync_Intercepted to set up OTLP exporters.
   /// </summary>
-  public static void EmitTelemetrySetup(StringBuilder sb)
+  public static void EmitTelemetrySetup(StringBuilder sb, TelemetryModel options)
   {
-    sb.AppendLine("    // Setup telemetry providers if OTEL endpoint is configured");
-    sb.AppendLine("    string? __otlpEndpoint = global::System.Environment.GetEnvironmentVariable(\"OTEL_EXPORTER_OTLP_ENDPOINT\");");
+    if (!options.EnableTracing && !options.EnableMetrics && !options.EnableLogging)
+    {
+      return;
+    }
+
+    sb.AppendLine("    // Setup telemetry providers if an OTLP endpoint is configured");
+    if (!string.IsNullOrEmpty(options.OtlpEndpoint))
+    {
+      sb.AppendLine($"    string? __otlpEndpoint = \"{EmitterStringUtils.EscapeForStringLiteral(options.OtlpEndpoint)}\";");
+    }
+    else
+    {
+      sb.AppendLine("    string? __otlpEndpoint = global::System.Environment.GetEnvironmentVariable(\"OTEL_EXPORTER_OTLP_ENDPOINT\");");
+    }
+
     sb.AppendLine("    if (!string.IsNullOrEmpty(__otlpEndpoint))");
     sb.AppendLine("    {");
-    sb.AppendLine("      string __serviceName = global::System.Environment.GetEnvironmentVariable(\"OTEL_SERVICE_NAME\")");
-    sb.AppendLine("        ?? global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name");
-    sb.AppendLine("        ?? \"nuru-app\";");
-    sb.AppendLine("      string? __serviceVersion = global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString();");
+
+    if (!string.IsNullOrEmpty(options.ServiceName))
+    {
+      sb.AppendLine("      string __serviceName = global::System.Environment.GetEnvironmentVariable(\"OTEL_SERVICE_NAME\")");
+      sb.AppendLine($"        ?? \"{EmitterStringUtils.EscapeForStringLiteral(options.ServiceName)}\";");
+    }
+    else
+    {
+      sb.AppendLine("      string __serviceName = global::System.Environment.GetEnvironmentVariable(\"OTEL_SERVICE_NAME\")");
+      sb.AppendLine("        ?? global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name");
+      sb.AppendLine("        ?? \"nuru-app\";");
+    }
+
+    if (!string.IsNullOrEmpty(options.ServiceVersion))
+    {
+      sb.AppendLine("      string? __serviceVersion = global::System.Environment.GetEnvironmentVariable(\"OTEL_SERVICE_VERSION\")");
+      sb.AppendLine($"        ?? \"{EmitterStringUtils.EscapeForStringLiteral(options.ServiceVersion)}\";");
+    }
+    else
+    {
+      sb.AppendLine("      string? __serviceVersion = global::System.Environment.GetEnvironmentVariable(\"OTEL_SERVICE_VERSION\")");
+      sb.AppendLine("        ?? global::System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString();");
+    }
+
     sb.AppendLine();
     sb.AppendLine("      global::OpenTelemetry.Resources.ResourceBuilder __resource = global::OpenTelemetry.Resources.ResourceBuilder.CreateDefault()");
     sb.AppendLine("        .AddService(serviceName: __serviceName, serviceVersion: __serviceVersion);");
     sb.AppendLine();
     sb.AppendLine("      global::System.Uri __endpoint = new(__otlpEndpoint);");
     sb.AppendLine();
-    sb.AppendLine("      app.TracerProvider = global::OpenTelemetry.Sdk.CreateTracerProviderBuilder()");
-    sb.AppendLine("        .SetResourceBuilder(__resource)");
-    sb.AppendLine("        .AddSource(__activitySource.Name)");
-    sb.AppendLine("        .AddSource(\"TimeWarp.Nuru.Behavior\") // For TelemetryBehavior");
-    sb.AppendLine("        .AddOtlpExporter(o => o.Endpoint = __endpoint)");
-    sb.AppendLine("        .Build();");
-    sb.AppendLine();
-    sb.AppendLine("      app.MeterProvider = global::OpenTelemetry.Sdk.CreateMeterProviderBuilder()");
-    sb.AppendLine("        .SetResourceBuilder(__resource)");
-    sb.AppendLine("        .AddMeter(__meter.Name)");
-    sb.AppendLine("        .AddMeter(\"TimeWarp.Nuru.Behavior\") // For TelemetryBehavior");
-    sb.AppendLine("        .AddOtlpExporter(o => o.Endpoint = __endpoint)");
-    sb.AppendLine("        .Build();");
-    sb.AppendLine();
-    sb.AppendLine("      // Logging: Export structured logs to OTLP");
-    sb.AppendLine("      app.LoggerFactory = global::Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>");
-    sb.AppendLine("      {");
-    sb.AppendLine("        builder.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Information);");
-    sb.AppendLine("        builder.AddOpenTelemetry(options =>");
-    sb.AppendLine("        {");
-    sb.AppendLine("          options.SetResourceBuilder(__resource);");
-    sb.AppendLine("          options.AddOtlpExporter(o => o.Endpoint = __endpoint);");
-    sb.AppendLine("        });");
-    sb.AppendLine("      });");
+
+    if (options.EnableTracing)
+    {
+      sb.AppendLine("      app.TracerProvider = global::OpenTelemetry.Sdk.CreateTracerProviderBuilder()");
+      sb.AppendLine("        .SetResourceBuilder(__resource)");
+      sb.AppendLine("        .AddSource(__activitySource.Name)");
+      sb.AppendLine("        .AddSource(\"TimeWarp.Nuru.Behavior\") // For TelemetryBehavior");
+      sb.AppendLine("        .AddOtlpExporter(o => o.Endpoint = __endpoint)");
+      sb.AppendLine("        .Build();");
+      sb.AppendLine();
+    }
+
+    if (options.EnableMetrics)
+    {
+      sb.AppendLine("      app.MeterProvider = global::OpenTelemetry.Sdk.CreateMeterProviderBuilder()");
+      sb.AppendLine("        .SetResourceBuilder(__resource)");
+      sb.AppendLine("        .AddMeter(__meter.Name)");
+      sb.AppendLine("        .AddMeter(\"TimeWarp.Nuru.Behavior\") // For TelemetryBehavior");
+      sb.AppendLine("        .AddOtlpExporter(o => o.Endpoint = __endpoint)");
+      sb.AppendLine("        .Build();");
+      sb.AppendLine();
+    }
+
+    if (options.EnableLogging)
+    {
+      sb.AppendLine("      // Logging: Export structured logs to OTLP");
+      sb.AppendLine("      app.LoggerFactory = global::Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>");
+      sb.AppendLine("      {");
+      sb.AppendLine("        builder.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Information);");
+      sb.AppendLine("        builder.AddOpenTelemetry(options =>");
+      sb.AppendLine("        {");
+      sb.AppendLine("          options.SetResourceBuilder(__resource);");
+      sb.AppendLine("          options.AddOtlpExporter(o => o.Endpoint = __endpoint);");
+      sb.AppendLine("        });");
+      sb.AppendLine("      });");
+    }
+
     sb.AppendLine("    }");
     sb.AppendLine();
   }

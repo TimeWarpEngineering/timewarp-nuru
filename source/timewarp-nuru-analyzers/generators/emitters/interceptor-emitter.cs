@@ -62,7 +62,9 @@ internal static class InterceptorEmitter
     // Emit telemetry infrastructure if any app has telemetry enabled
     if (model.HasTelemetry)
     {
-      TelemetryEmitter.EmitTelemetryFields(sb);
+      bool enableTracing = model.Apps.Any(a => a.HasTelemetry && (a.TelemetryOptions?.EnableTracing ?? true));
+      bool enableMetrics = model.Apps.Any(a => a.HasTelemetry && (a.TelemetryOptions?.EnableMetrics ?? true));
+      TelemetryEmitter.EmitTelemetryFields(sb, enableTracing, enableMetrics);
     }
 
     // Determine the logger factory source for ILogger<T> injection
@@ -124,7 +126,7 @@ internal static class InterceptorEmitter
     // Emit telemetry setup if this app has telemetry enabled
     if (app.HasTelemetry)
     {
-      TelemetryEmitter.EmitTelemetrySetup(sb);
+      TelemetryEmitter.EmitTelemetrySetup(sb, app.TelemetryOptions ?? TelemetryModel.Default);
       sb.AppendLine("    try");
       sb.AppendLine("    {");
       sb.AppendLine($"      return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
@@ -843,8 +845,8 @@ internal static class InterceptorEmitter
       }
     }
 
-    // Fall back to runtime path for telemetry (OTEL endpoint is runtime config)
-    if (model.HasTelemetry)
+    // Fall back to runtime path for telemetry logging (OTEL endpoint is runtime config)
+    if (model.Apps.Any(a => a.HasTelemetry && (a.TelemetryOptions?.EnableLogging ?? true)))
     {
       return "app.LoggerFactory";
     }

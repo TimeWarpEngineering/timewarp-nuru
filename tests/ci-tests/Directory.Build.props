@@ -53,6 +53,9 @@
     <!-- generator-42: same Roslyn-hosted generator test pattern as generator-28
          (task 395 decompile/NURU052); CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-42-extension-method-lowering-diagnostics.cs" />
+    <!-- generator-43: same Roslyn-hosted generator test pattern as generator-28
+         (task 470-001 telemetry options emit); CS0433 collision applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-43-telemetry-options.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

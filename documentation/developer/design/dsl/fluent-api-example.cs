@@ -61,7 +61,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
   #region Help
   // Enable auto-generated help route
   // This should generate the help invoker based on registered routes
-  .AddHelp(options => { options.ShowPerCommandHelpRoutes = false; })  
+  .ConfigureHelp(options => { options.ShowPerCommandHelpRoutes = false; })  
   #endregion
   #region REPL Support
   // Enable REPL support with custom options 

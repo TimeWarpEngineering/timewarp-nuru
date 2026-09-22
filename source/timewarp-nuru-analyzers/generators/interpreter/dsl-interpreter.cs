@@ -583,7 +583,7 @@ public sealed class DslInterpreter
 
       "WithAiPrompt" => DispatchWithAiPrompt(invocation, receiver),
 
-      "AddHelp" => DispatchAddHelp(invocation, receiver),
+      "ConfigureHelp" => DispatchConfigureHelp(invocation, receiver),
 
       "AddRepl" => DispatchAddRepl(invocation, receiver),
 
@@ -597,7 +597,7 @@ public sealed class DslInterpreter
 
       "UseTerminal" => DispatchUseTerminal(receiver),
 
-      "UseTelemetry" => DispatchUseTelemetry(receiver),
+      "UseTelemetry" => DispatchUseTelemetry(invocation, receiver),
 
       "UseMicrosoftDependencyInjection" => DispatchUseMicrosoftDependencyInjection(receiver),
 
@@ -1019,20 +1019,28 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Dispatches AddHelp() call to IIrAppBuilder.
-  /// For now, we just enable help with defaults. Options extraction is Phase 5+.
+  /// Dispatches ConfigureHelp() call to IIrAppBuilder.
+  /// Extracts options from the lambda when present.
   /// </summary>
-  private static object? DispatchAddHelp(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchConfigureHelp(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
       throw new InvalidOperationException(
-        $"AddHelp() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+        $"ConfigureHelp() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
-    // For now, just enable help with defaults
-    // TODO: Phase 5+ - extract options from lambda if present
-    return appBuilder.AddHelp();
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args?.Arguments.Count > 0)
+    {
+      HelpModel? customOptions = HelpOptionsExtractor.Extract(invocation, SemanticModel, CancellationToken);
+      if (customOptions is not null)
+      {
+        return appBuilder.ConfigureHelp(customOptions);
+      }
+    }
+
+    return appBuilder.ConfigureHelp(HelpModel.Default);
   }
 
   /// <summary>
@@ -1422,13 +1430,23 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches UseTelemetry() call to IIrAppBuilder.
-  /// This is a no-op - telemetry is runtime only.
+  /// Extracts options from the lambda when the Action overload is used.
   /// </summary>
-  private static object? DispatchUseTelemetry(object? receiver)
+  private object? DispatchUseTelemetry(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
       throw new InvalidOperationException("UseTelemetry() must be called on an app builder.");
+    }
+
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args?.Arguments.Count > 0)
+    {
+      TelemetryModel? customOptions = TelemetryOptionsExtractor.Extract(invocation, SemanticModel, CancellationToken);
+      if (customOptions is not null)
+      {
+        return appBuilder.UseTelemetry(customOptions);
+      }
     }
 
     return appBuilder.UseTelemetry();

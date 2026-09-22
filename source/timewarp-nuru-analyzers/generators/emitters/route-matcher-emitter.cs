@@ -17,6 +17,11 @@
 // EXACT LENGTH: Routes without options, optional params, or catch-all enforce exact positional
 // arg count. Routes WITH options cannot enforce exact length because unknown options become
 // extra positionals.
+//
+// FILE/DIRECTORY INFO: FileInfo and DirectoryInfo constructors throw
+// ArgumentException, PathTooLongException, NotSupportedException,
+// UnauthorizedAccessException, and SecurityException. Catch Exception so any of
+// those stay on the invalid-value exit instead of escaping the route.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -772,7 +777,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}  {{");
             sb.AppendLine($"{indentStr}    {escapedVarName} = new global::System.IO.FileInfo({uniqueVarName});");
             sb.AppendLine($"{indentStr}  }}");
-            sb.AppendLine($"{indentStr}  catch (global::System.ArgumentException)");
+            sb.AppendLine($"{indentStr}  catch (global::System.Exception)");
             sb.AppendLine($"{indentStr}  {{");
             sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: FileInfo\");");
             sb.AppendLine($"{indentStr}    return 1;");
@@ -786,7 +791,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}{{");
             sb.AppendLine($"{indentStr}  {escapedVarName} = new global::System.IO.FileInfo({uniqueVarName});");
             sb.AppendLine($"{indentStr}}}");
-            sb.AppendLine($"{indentStr}catch (global::System.ArgumentException)");
+            sb.AppendLine($"{indentStr}catch (global::System.Exception)");
             sb.AppendLine($"{indentStr}{{");
             sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: FileInfo\");");
             sb.AppendLine($"{indentStr}  return 1;");
@@ -808,7 +813,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}  {{");
             sb.AppendLine($"{indentStr}    {escapedVarName} = new global::System.IO.DirectoryInfo({uniqueVarName});");
             sb.AppendLine($"{indentStr}  }}");
-            sb.AppendLine($"{indentStr}  catch (global::System.ArgumentException)");
+            sb.AppendLine($"{indentStr}  catch (global::System.Exception)");
             sb.AppendLine($"{indentStr}  {{");
             sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: DirectoryInfo\");");
             sb.AppendLine($"{indentStr}    return 1;");
@@ -822,7 +827,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}{{");
             sb.AppendLine($"{indentStr}  {escapedVarName} = new global::System.IO.DirectoryInfo({uniqueVarName});");
             sb.AppendLine($"{indentStr}}}");
-            sb.AppendLine($"{indentStr}catch (global::System.ArgumentException)");
+            sb.AppendLine($"{indentStr}catch (global::System.Exception)");
             sb.AppendLine($"{indentStr}{{");
             sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: DirectoryInfo\");");
             sb.AppendLine($"{indentStr}  return 1;");
@@ -1356,7 +1361,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("        {");
           sb.AppendLine($"          {varName} = new global::System.IO.FileInfo({rawVarName});");
           sb.AppendLine("        }");
-          sb.AppendLine("        catch (global::System.ArgumentException)");
+          sb.AppendLine("        catch (global::System.Exception)");
           sb.AppendLine("        {");
           sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: FileInfo\");");
           sb.AppendLine("          return 1;");
@@ -1375,7 +1380,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("      {");
           sb.AppendLine($"        {varName} = new global::System.IO.FileInfo({rawVarName});");
           sb.AppendLine("      }");
-          sb.AppendLine("      catch (global::System.ArgumentException)");
+          sb.AppendLine("      catch (global::System.Exception)");
           sb.AppendLine("      {");
           sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: FileInfo\");");
           sb.AppendLine("        return 1;");
@@ -1397,7 +1402,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("        {");
           sb.AppendLine($"          {varName} = new global::System.IO.DirectoryInfo({rawVarName});");
           sb.AppendLine("        }");
-          sb.AppendLine("        catch (global::System.ArgumentException)");
+          sb.AppendLine("        catch (global::System.Exception)");
           sb.AppendLine("        {");
           sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: DirectoryInfo\");");
           sb.AppendLine("          return 1;");
@@ -1416,7 +1421,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("      {");
           sb.AppendLine($"        {varName} = new global::System.IO.DirectoryInfo({rawVarName});");
           sb.AppendLine("      }");
-          sb.AppendLine("      catch (global::System.ArgumentException)");
+          sb.AppendLine("      catch (global::System.Exception)");
           sb.AppendLine("      {");
           sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: DirectoryInfo\");");
           sb.AppendLine("        return 1;");

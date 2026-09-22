@@ -22,14 +22,18 @@ M21: emitted `FileInfo` / `DirectoryInfo` conversions catch only `ArgumentExcept
 - [x] FileInfo/DirectoryInfo catch (M21)
 - [x] Tests
 - [x] `ganda runfile cache --clear` + CI tests
+- [x] Review round 1 (general, effort 1) and disposition on this id
 
 ## Notes
 
 Evidence: parent 470 `review/round-1/merged.md` M8, M21.
 
+Review trail: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Implementer: grok session 01a0c887-e9be-70a2-9c90-e33d2f4642c1 (2026-09-22)
+- Review: Grok session 01a0c897-3b40-7ec3-8305-0294d4448f04 (2026-09-22)
 
 ## Results
 
@@ -75,3 +79,12 @@ ganda runfile cache --clear
 dotnet run tests/ci-tests/run-ci-tests.cs
 # expect: exit 0; multi-mode 1643 passed, 7 skipped, 0 failed; standalone phase includes generator-45 (2 passed)
 ```
+
+### Review disposition
+
+- **Outcome:** `clean`
+- **Effort / roster:** 1, general only
+- **Rounds:** 1 (`review/round-1/`)
+- **Final counts:** 0 open / 0 fixed / 0 wontfix (bug 0, suggestion 0, nit 0)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- No sibling apply-review task. No wontfix and no escalation.

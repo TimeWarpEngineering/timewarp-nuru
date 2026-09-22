@@ -722,7 +722,7 @@ The Parser converts token streams into structured representations (CompiledRoute
 
 **Syntax:** `:` followed by type name (e.g., `:int`, `:string`)
 
-**Supported Types:** `string`, `int`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`
+**Supported Types:** `string`, `int`, `byte`, `sbyte`, `short`, `ushort`, `uint`, `ulong`, `long`, `float`, `double`, `decimal`, `bool`, `char`, `DateTime`, `Guid`, `TimeSpan`, `uri`/`Uri`, `fileinfo`/`FileInfo`, `directoryinfo`/`DirectoryInfo`, `ipaddress`/`IPAddress`, `dateonly`/`DateOnly`, `timeonly`/`TimeOnly`
 
 **Effect:**
 - Validates input can convert to type

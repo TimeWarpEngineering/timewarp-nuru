@@ -47,17 +47,11 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder WithAiPrompt(string aiPrompt);
 
   /// <summary>
-  /// Enables help with default options.
-  /// </summary>
-  /// <returns>This builder for chaining.</returns>
-  IIrAppBuilder AddHelp();
-
-  /// <summary>
-  /// Enables help with custom options.
+  /// Configures help output filtering.
   /// </summary>
   /// <param name="helpOptions">The configured help options.</param>
   /// <returns>This builder for chaining.</returns>
-  IIrAppBuilder AddHelp(HelpModel helpOptions);
+  IIrAppBuilder ConfigureHelp(HelpModel helpOptions);
 
   /// <summary>
   /// Enables REPL with default options.
@@ -127,10 +121,17 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseTerminal();
 
   /// <summary>
-  /// No-op for UseTelemetry (runtime only).
+  /// Enables telemetry with default options.
   /// </summary>
   /// <returns>This builder for chaining.</returns>
   IIrAppBuilder UseTelemetry();
+
+  /// <summary>
+  /// Enables telemetry with custom options extracted from UseTelemetry(Action&lt;&gt;).
+  /// </summary>
+  /// <param name="telemetryOptions">The configured telemetry options.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseTelemetry(TelemetryModel telemetryOptions);
 
   /// <summary>
   /// Enables runtime Microsoft.Extensions.DependencyInjection instead of source-gen DI.

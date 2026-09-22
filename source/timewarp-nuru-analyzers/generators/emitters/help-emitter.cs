@@ -5,6 +5,7 @@ namespace TimeWarp.Nuru.Generators;
 
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Emits code to generate help text from routes.
@@ -36,7 +37,7 @@ internal static class HelpEmitter
 
     EmitHeader(sb, model);
     EmitUsage(sb);
-    EmitOptions(sb);          // ← OPTIONS first (Aspire style)
+    EmitOptions(sb, model);   // ← OPTIONS first (Aspire style)
     EmitCommands(sb, model);  // ← Then COMMANDS
 
     sb.AppendLine("  }");
@@ -78,13 +79,18 @@ internal static class HelpEmitter
   /// </summary>
   private static void EmitCommands(StringBuilder sb, AppModel model)
   {
-    if (!model.HasRoutes)
+    HelpModel helpOptions = model.HelpOptions ?? HelpModel.Default;
+    List<RouteDefinition> visibleRoutes = [.. model.Routes.Where(r => ShouldListRoute(r, helpOptions))];
+
+    bool hasUserCommands = visibleRoutes.Count > 0;
+    bool showReplCommands = helpOptions.ShowReplCommandsInCli && model.HasRepl;
+    if (!hasUserCommands && !showReplCommands)
     {
       return;
     }
 
     // Group routes by GroupPrefix
-    IEnumerable<IGrouping<string, RouteDefinition>> groups = model.Routes
+    IEnumerable<IGrouping<string, RouteDefinition>> groups = visibleRoutes
       .GroupBy(r => r.GroupPrefix ?? "") // Empty string for no group
       .OrderBy(g => g.Key); // Ungrouped first, then alphabetically
 
@@ -113,11 +119,39 @@ internal static class HelpEmitter
         string commandName = GetCommandName(route);
         string description = route.Description ?? "";
         sb.AppendLine($"      .AddRow(\"{EmitterStringUtils.EscapeForStringLiteral(commandName)}\", \"{EmitterStringUtils.EscapeForStringLiteral(description)}\")");
+
+        if (helpOptions.ShowPerCommandHelpRoutes)
+        {
+          sb.AppendLine($"      .AddRow(\"{EmitterStringUtils.EscapeForStringLiteral(commandName)} --help\", \"Show help for this command\")");
+        }
       }
 
       sb.AppendLine("      .HideHeaders()         // ← Remove headers");
       sb.AppendLine("    );");
       firstGroup = false;
+    }
+
+    if (showReplCommands)
+    {
+      if (!firstGroup)
+      {
+        sb.AppendLine("    terminal.WriteLine();");
+      }
+
+      sb.AppendLine("    terminal.WriteLine(\"REPL:\".Cyan().Bold());");
+      sb.AppendLine("    terminal.WriteTable(table => table");
+      sb.AppendLine("      .AddColumn(\"Command\")");
+      sb.AppendLine("      .AddColumn(\"Description\")");
+      sb.AppendLine("      .AddRow(\"exit\", \"Exit the REPL\")");
+      sb.AppendLine("      .AddRow(\"quit\", \"Exit the REPL\")");
+      sb.AppendLine("      .AddRow(\"q\", \"Exit the REPL\")");
+      sb.AppendLine("      .AddRow(\"clear\", \"Clear the screen\")");
+      sb.AppendLine("      .AddRow(\"cls\", \"Clear the screen\")");
+      sb.AppendLine("      .AddRow(\"clear-history\", \"Clear command history\")");
+      sb.AppendLine("      .AddRow(\"history\", \"Show command history\")");
+      sb.AppendLine("      .AddRow(\"help\", \"Show REPL help\")");
+      sb.AppendLine("      .HideHeaders()");
+      sb.AppendLine("    );");
     }
   }
 
@@ -146,8 +180,10 @@ internal static class HelpEmitter
   /// <summary>
   /// Emits the global options section as a table.
   /// </summary>
-  private static void EmitOptions(StringBuilder sb)
+  private static void EmitOptions(StringBuilder sb, AppModel model)
   {
+    HelpModel helpOptions = model.HelpOptions ?? HelpModel.Default;
+
     sb.AppendLine("    terminal.WriteLine(\"Options:\".Cyan().Bold());");
     sb.AppendLine("    terminal.WriteTable(table => table");
     sb.AppendLine("      .AddColumn(\"Option\")");
@@ -157,8 +193,69 @@ internal static class HelpEmitter
     sb.AppendLine("      .AddRow(\"--capabilities\", \"Show capabilities for AI tools\")");
     sb.AppendLine("      .AddRow(\"--capabilities --group-filter <group>\", \"Filter capabilities by group prefix\")");
     sb.AppendLine("      .AddRow(\"--capabilities --search <query>\", \"Search capabilities using nuru\")");
+    if (helpOptions.ShowCompletionRoutes && model.HasCompletion)
+    {
+      sb.AppendLine("      .AddRow(\"__complete\", \"Shell completion callback\")");
+      sb.AppendLine("      .AddRow(\"--generate-completion\", \"Generate a shell completion script\")");
+      sb.AppendLine("      .AddRow(\"--install-completion\", \"Install shell completion\")");
+    }
+
     sb.AppendLine("      .HideHeaders()         // ← Remove headers");
     sb.AppendLine("    );");
+  }
+
+  /// <summary>
+  /// Returns true when a user route should appear in CLI help listings.
+  /// </summary>
+  private static bool ShouldListRoute(RouteDefinition route, HelpModel helpOptions)
+  {
+    if (!helpOptions.ShowPerCommandHelpRoutes && IsPerCommandHelpRoute(route))
+    {
+      return false;
+    }
+
+    string commandName = GetCommandName(route);
+    foreach (string pattern in helpOptions.ExcludePatterns)
+    {
+      if (MatchesWildcard(commandName, pattern) || MatchesWildcard(route.FullPattern, pattern) || MatchesWildcard(route.OriginalPattern, pattern))
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static bool IsPerCommandHelpRoute(RouteDefinition route)
+  {
+    if (route.OriginalPattern.Contains("--help", StringComparison.Ordinal)
+      || route.FullPattern.Contains("--help", StringComparison.Ordinal))
+    {
+      return true;
+    }
+
+    foreach (SegmentDefinition segment in route.Segments)
+    {
+      if (segment is OptionDefinition option
+        && !option.ExpectsValue
+        && option.LongForm is "help")
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static bool MatchesWildcard(string value, string pattern)
+  {
+    if (string.IsNullOrEmpty(pattern))
+    {
+      return false;
+    }
+
+    string regex = "^" + Regex.Escape(pattern).Replace("\\*", ".*", StringComparison.Ordinal) + "$";
+    return Regex.IsMatch(value, regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
   }
 
 }

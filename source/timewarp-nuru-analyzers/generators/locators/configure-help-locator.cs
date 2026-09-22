@@ -1,15 +1,19 @@
-// Locator for .AddHelp(...) calls.
+// Locator for .ConfigureHelp(...) calls.
 
 namespace TimeWarp.Nuru.Generators;
 
 using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 
+#region Purpose
+// Identifies ConfigureHelp invocations for DSL interpretation.
+#endregion
+
 /// <summary>
-/// Locates .AddHelp(...) calls that enable help output.
+/// Locates .ConfigureHelp(...) calls that configure help output filtering.
 /// </summary>
-internal static class AddHelpLocator
+internal static class ConfigureHelpLocator
 {
-  private const string MethodName = "AddHelp";
+  private const string MethodName = "ConfigureHelp";
 
   public static bool IsPotentialMatch(RoslynSyntaxNode node)
   {

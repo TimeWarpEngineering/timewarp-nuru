@@ -32,14 +32,18 @@ Folded:
 - [x] M22 parameter-name validation
 - [x] M38 / M39 error UX
 - [x] Preserve no-throw fuzz guarantee
+- [x] Review round 1 (general, effort 1) and disposition on this id
 
 ## Notes
 
 Evidence: parent 470 `review/round-1/merged.md` M6, M22, M38, M39. Fuzz note in `review/round-1/parsing.md`.
 
+Review trail: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Implementer: Grok session 01a0c764-7616-7f92-8acc-29005b4b41eb (2026-09-22)
+- Review: Grok session 01a0c773-b874-7471-86fa-34ae5dbd670f (2026-09-22)
 
 ## Results
 
@@ -104,3 +108,12 @@ dotnet run tests/timewarp-nuru-tests/parser/parser-15-custom-type-constraints.cs
 **Not in scope**
 
 The original review fuzz harness is not in the repo. The 50k run reused seed 470001 and the same public API, with a metacharacter-biased generator. Success and failure counts will not match the review's 4166/45834. Uncaught exceptions are the guarantee.
+
+### Review disposition
+
+- **Outcome:** `clean`
+- **Effort / roster:** 1, general only
+- **Rounds:** 1 (`review/round-1/`)
+- **Final counts:** 0 open / 0 fixed / 0 wontfix (bug 0, suggestion 0, nit 0)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- No sibling apply-review task. No wontfix and no escalation.

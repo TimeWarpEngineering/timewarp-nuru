@@ -33,15 +33,21 @@ Several public `NuruAppBuilder` configure APIs document runtime behavior that is
 - [x] M35 dead DI leftover types
 - [x] Tests
 - [x] `ganda runfile cache --clear` + CI tests if generator emit changes
+- [x] Implementation review under `review/` (effort 1, disposition clean)
 
 ## Notes
 
 Evidence and merge IDs: parent 470 `review/round-1/merged.md` (M1–M3, M34, M35).
 
+Review kitchen: `review/review-framework.md`, `review/round-1/`, `review/round-2/`, `review/disposition.md`. Effort 1, general only. Round 1 raised M1 (`IsPerCommandHelpRoute` substring). Fixed on this id. Round 2 re-verified; 0 open. Disposition `clean`.
+
 ## Session
 
 - Created: ganda claim 3385166 (2026-09-04)
 - Implementer: grok session 01a0c70a-96e6-7c81-a2af-2f0b22a63099 (2026-09-22)
+- Review oracle: grok session 01a0c727-75be-7e52-979a-c9b318b5b028 (2026-09-22)
+- Reviewer (general, round 1): 01a0c729-5178-7a83-a336-2374b4a10aca
+- Reviewer (general, round 2): 01a0c735-66c2-7672-b3f5-c861261f0354
 
 ## Results
 
@@ -73,7 +79,7 @@ Wired the stub builder configure APIs that were advertised as live, and obsolete
 ### Test outcomes
 
 - `builder-01-services-property.cs`: 1 passed
-- `help-10-configure-help-filtering.cs`: 6 passed
+- `help-10-configure-help-filtering.cs`: 7 passed (includes `--helper` regression after review M1)
 - `telemetry-01-use-telemetry-options.cs`: 1 passed
 - `generator-43-telemetry-options.cs`: 2 passed
 - `help-02-table-formatting.cs` (regression): 9 passed
@@ -94,7 +100,7 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-43-telemetry-options.cs
 
 **Expect**
 
-- help-10: 6 passed (`ExcludePatterns` hides `h10-secret-debug`; default `--help` omits `h10-status --help` and `__complete`; opt-in lists those rows plus REPL `clear-history`)
+- help-10: 7 passed (`ExcludePatterns` hides `h10-secret-debug`; default `--help` omits `h10-status --help` and `__complete`; opt-in lists those rows plus REPL `clear-history`; `h10-run --helper` still lists)
 - telemetry-01: 1 passed (`TracerProvider` set, `MeterProvider` null when metrics disabled and `OtlpEndpoint` is set)
 - builder-01: 1 passed (`InvalidOperationException` message contains `ConfigureServices` and `UseMicrosoftDependencyInjection`)
 - generator-43: 2 passed (generated source contains `tel43-cli` and `http://127.0.0.1:4318`; tracing-disabled source has no `app.TracerProvider`)
@@ -106,3 +112,12 @@ ganda runfile cache --clear
 dotnet run tests/ci-tests/run-ci-tests.cs
 # expect: multi-mode + standalone generator tests pass, including generator-43
 ```
+
+### Review disposition
+
+- **Outcome:** `clean`
+- **Effort / roster:** 1, general only
+- **Rounds:** 2 (`review/round-1/`, `review/round-2/`)
+- **Final counts:** 0 open / 1 fixed / 0 wontfix (bug M1: `IsPerCommandHelpRoute` substring); 0 suggestion; 0 nit
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
+- No sibling apply-review task; M1 fixed on this id (LongForm-only classification + help-10 regression).

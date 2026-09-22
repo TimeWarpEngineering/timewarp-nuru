@@ -123,6 +123,21 @@ public class ConfigureHelpFilteringTests
     terminal.OutputContains("--generate-completion").ShouldBeFalse();
     terminal.OutputContains("--install-completion").ShouldBeFalse();
   }
+
+  public static async Task Should_list_helper_option_that_is_not_a_help_route()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("h10-run --helper").WithHandler(() => "ok").WithDescription("Run helper tool").Done()
+      .Build();
+
+    int exitCode = await app.RunAsync(["--help"]);
+
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("h10-run").ShouldBeTrue();
+    terminal.OutputContains("Run helper tool").ShouldBeTrue();
+  }
 }
 
 }

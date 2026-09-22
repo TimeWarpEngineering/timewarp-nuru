@@ -228,12 +228,6 @@ internal static class HelpEmitter
 
   private static bool IsPerCommandHelpRoute(RouteDefinition route)
   {
-    if (route.OriginalPattern.Contains("--help", StringComparison.Ordinal)
-      || route.FullPattern.Contains("--help", StringComparison.Ordinal))
-    {
-      return true;
-    }
-
     foreach (SegmentDefinition segment in route.Segments)
     {
       if (segment is OptionDefinition option

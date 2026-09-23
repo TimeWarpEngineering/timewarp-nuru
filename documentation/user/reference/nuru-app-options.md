@@ -56,7 +56,7 @@ NuruApp.CreateBuilder(args, new NuruAppOptions
 | `WelcomeMessage` | `string?` | Standard message | Message shown when REPL starts |
 | `GoodbyeMessage` | `string?` | `"Goodbye!"` | Message shown when REPL exits |
 | `PersistHistory` | `bool` | `true` | Save history across sessions |
-| `HistoryFilePath` | `string?` | `null` | Custom history file location |
+| `HistoryFilePath` | `string?` | `null` | Custom path; default `~/.nuru/history/<app>` (Unix: dirs `0700`, file `0600`; Windows: profile ACLs) |
 | `MaxHistorySize` | `int` | `1000` | Maximum commands in history |
 | `ContinueOnError` | `bool` | `true` | Continue after command failures |
 | `ShowExitCode` | `bool` | `false` | Display exit code after each command |
@@ -64,7 +64,7 @@ NuruApp.CreateBuilder(args, new NuruAppOptions
 | `PromptColor` | `string` | `"\x1b[32m"` | ANSI color for prompt (default: green) |
 | `ShowTiming` | `bool` | `true` | Show execution time |
 | `EnableArrowHistory` | `bool` | `true` | Arrow key history navigation |
-| `HistoryIgnorePatterns` | `IList<string>?` | Sensitive patterns | Patterns to exclude from history |
+| `HistoryIgnorePatterns` | `IList<string>?` | Sensitive patterns | Best-effort patterns to exclude from history |
 | `KeyBindingProfileName` | `string` | `"Default"` | Key binding profile name |
 | `KeyBindingProfile` | `object?` | `null` | Custom key binding profile instance |
 

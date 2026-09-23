@@ -34,11 +34,17 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistorySecurity
     ReplOptions options = new();
     List<string> testCommands =
     [
-    "login --password secret123",
+      "login --password secret123",
       "set apikey=ABC",
       "deploy --token xyz",
       "export SECRET_KEY=value",
-      "configure --credential admin"
+      "configure --credential admin",
+      // M32: shapes that miss *apikey* / *token* alone
+      "curl -H 'Authorization: Bearer eyJhbGciOi'",
+      "export Authorization=secret-value",
+      "set api_key=ABC123",
+      "set api-key=ABC123",
+      "openai sk-proj-abcdefghijklmnopqrstuvwxyz"
     ];
 
     // Act & Assert
@@ -277,7 +283,20 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistorySecurity
   {
     // Arrange
     ReplOptions defaultOptions = new();
-    string[] expectedDefaults = ["*password*", "*secret*", "*token*", "*apikey*", "*credential*", "clear-history"];
+    string[] expectedDefaults =
+    [
+      "*password*",
+      "*secret*",
+      "*token*",
+      "*apikey*",
+      "*api_key*",
+      "*api-key*",
+      "*credential*",
+      "*bearer*",
+      "*authorization*",
+      "*sk-*",
+      "clear-history"
+    ];
 
     // Act & Assert
     defaultOptions.HistoryIgnorePatterns.ShouldNotBeNull("Default patterns should not be null");
@@ -305,6 +324,58 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistorySecurity
 
     await Task.CompletedTask;
   }
+
+  // 470-011 (M17): Save must create parent dirs 0700 and the history file 0600 on Unix.
+  // Uses a temp tree so the real ~/.nuru is never touched. Windows relies on profile ACLs.
+  public static async Task Should_save_history_file_owner_only_on_unix()
+  {
+    if (OperatingSystem.IsWindows())
+    {
+      return;
+    }
+
+    const UnixFileMode ownerOnlyDirectory =
+      UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+    const UnixFileMode ownerOnlyFile =
+      UnixFileMode.UserRead | UnixFileMode.UserWrite;
+
+    string root = Path.Combine(Path.GetTempPath(), $"nuru-repl-03b-{Guid.NewGuid():N}");
+    string nuruDir = Path.Combine(root, ".nuru");
+    string historyDir = Path.Combine(nuruDir, "history");
+    string historyPath = Path.Combine(historyDir, "test-app");
+
+    try
+    {
+      ReplOptions options = new()
+      {
+        HistoryFilePath = historyPath,
+        HistoryIgnorePatterns = []
+      };
+      ReplHistory history = new(options, Helper!.Terminal);
+      history.Add("echo hello");
+      history.Save();
+
+      Directory.Exists(nuruDir).ShouldBeTrue();
+      Directory.Exists(historyDir).ShouldBeTrue();
+      File.Exists(historyPath).ShouldBeTrue();
+      File.GetUnixFileMode(nuruDir).ShouldBe(ownerOnlyDirectory);
+      File.GetUnixFileMode(historyDir).ShouldBe(ownerOnlyDirectory);
+      File.GetUnixFileMode(historyPath).ShouldBe(ownerOnlyFile);
+
+      // Replace of an existing permissive file must also harden to 0600.
+      File.SetUnixFileMode(historyPath, UnixFileMode.UserRead | UnixFileMode.UserWrite |
+        UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+      history.Add("echo again");
+      history.Save();
+      File.GetUnixFileMode(historyPath).ShouldBe(ownerOnlyFile);
+    }
+    finally
+    {
+      if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+    }
+
+    await Task.CompletedTask;
+  }
   }
 
   // Helper class to test ReplSession's ShouldIgnoreCommand method
@@ -313,9 +384,11 @@ namespace TimeWarp.Nuru.Tests.ReplTests.HistorySecurity
     private readonly NuruApp App;
     private readonly ILoggerFactory LoggerFactoryInstance;
 
+    public ITerminal Terminal => App.Terminal;
+
     public ReplSessionHelper()
     {
-      App =NuruApp.CreateBuilder().Build();
+      App = NuruApp.CreateBuilder().Build();
       LoggerFactoryInstance = LoggerFactory.Create(_ => { });
     }
 

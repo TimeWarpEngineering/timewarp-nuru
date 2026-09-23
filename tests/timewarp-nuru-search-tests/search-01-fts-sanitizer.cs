@@ -97,6 +97,58 @@ public class FtsSanitizerTests
     await Task.CompletedTask;
   }
 
+  // ==========================================================================
+  // 470-008 (M12): control characters. An embedded U+0000 reaches SQLite as a C-string
+  // terminator, so FTS5 sees an unterminated quoted string and throws. Every control
+  // character is treated as a token separator.
+  // ==========================================================================
+
+  public static async Task Should_treat_nul_as_token_separator()
+  {
+    string result = SearchIndex.SanitizeFtsQuery("hello\0world");
+
+    result.ShouldBe("\"hello\"* \"world\"*");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_treat_c0_controls_as_token_separators()
+  {
+    string result = SearchIndex.SanitizeFtsQuery("hello\u0001\u001fworld\tagain\r\nlast");
+
+    result.ShouldBe("\"hello\"* \"world\"* \"again\"* \"last\"*");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_treat_c1_controls_and_delete_as_token_separators()
+  {
+    string result = SearchIndex.SanitizeFtsQuery("hello\u007fworld\u0085last");
+
+    result.ShouldBe("\"hello\"* \"world\"* \"last\"*");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_return_empty_for_control_only_query()
+  {
+    string result = SearchIndex.SanitizeFtsQuery("\0\0\u0001");
+
+    result.ShouldBe("");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_leave_query_without_controls_unchanged()
+  {
+    string input = "hello world";
+    string result = SearchIndex.SanitizeFtsQuery(input);
+
+    result.ShouldBe("\"hello\"* \"world\"*");
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Should_escape_percent_in_like_pattern()
   {
     string result = SearchIndex.EscapeLikePattern("100%");
@@ -161,6 +213,15 @@ public class FtsSanitizerTests
 
   public static async Task Should_execute_fts_query_for_punctuation_soup() =>
     await AssertFtsQueryExecutes("^ [ ] ( ) : - \" '");
+
+  public static async Task Should_execute_fts_query_for_embedded_nul() =>
+    await AssertFtsQueryExecutes("hello\0world");
+
+  public static async Task Should_execute_fts_query_for_leading_and_trailing_nul() =>
+    await AssertFtsQueryExecutes("\0hello\0");
+
+  public static async Task Should_execute_fts_query_for_control_soup() =>
+    await AssertFtsQueryExecutes("\u0001\u0002hello\u001f\u007f\u0085world\0");
 
   public static async Task Should_escape_underscore_in_like_pattern()
   {

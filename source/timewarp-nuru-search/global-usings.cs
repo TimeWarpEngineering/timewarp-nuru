@@ -8,6 +8,7 @@ global using System.IO;
 global using System.Linq;
 global using System.Text;
 global using System.Text.Json;
+global using System.Text.Json.Serialization;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using TimeWarp.Amuru;
@@ -17,4 +18,7 @@ global using TimeWarp.Terminal;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("timewarp-nuru-search-tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-01-fts-sanitizer")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-02-version-formatter")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-03-search-index")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-04-database-path")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("run-ci-tests")]

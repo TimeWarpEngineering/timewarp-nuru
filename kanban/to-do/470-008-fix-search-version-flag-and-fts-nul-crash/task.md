@@ -34,6 +34,8 @@ Evidence: parent 470 `review/round-1/merged.md` M11, M12, M30.
   worktree `task/470-008-fix-search-version-flag-and-fts-nul-crash`. Implemented M11, M12, M30 plus
   one latent AOT bug found by the new end-to-end test (see Results). All four search test files
   green locally; full CI multi-mode run recorded below.
+- 2026-09-23 — review oracle (`ganda task work`, body `tw-implementation-review`, effort 1).
+  General reviewer via Task tool (agent `9e75b481-73e6-4da2-b309-628c9befa0d7`). Disposition: clean.
 
 ## Results
 
@@ -114,4 +116,11 @@ dotnet run tests/ci-tests/run-ci-tests.cs
   (a version string, never `command`/`query`). Both control-character searches print
   `No results found.` and exit 0 — no `SqliteException` / `unterminated string`.
 - Step 3: CI exits 0 with no new failures.
+
+### Review disposition
+
+- Rounds: 1. Roster: general (effort 1). Reviewer: Task sub-agent spawned by the review oracle (Composer / ganda task work).
+- Final counts: bug 0 / suggestion 0 / nit 0; 0 open.
+- Disposition: **clean**. No issues raised; M11, M12, M30 and the AOT JSON context re-verified against the product diff and search-01..04.
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/disposition.md`.
 

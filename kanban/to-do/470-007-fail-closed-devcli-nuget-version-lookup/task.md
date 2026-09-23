@@ -89,3 +89,4 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 ## Session
 
 - 2026-09-23: implementer (ganda task work, oracle implement). Product fix `cb9c566d`, tests `ea8c2aa6`. Full CI green. Kanban folderize committed on the task branch. Next host nodes: review, open-pr.
+- 2026-09-23: `7c6be22e` sets the executable bit on the three new test runfiles (flagged by `ganda repo audit` runfile-executable). Remaining audit failures are pre-existing on master and out of scope here: `bin/dev` missing, global-usings-analyzer pins, five older test runfiles without exec bit, `documentation/developer/design/dsl/fluent-api-example.cs` shebang, and the gitignored `oracle-*.log` kebab-path hit beside this kitchen.

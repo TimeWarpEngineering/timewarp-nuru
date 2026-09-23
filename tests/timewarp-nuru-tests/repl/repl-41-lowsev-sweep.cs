@@ -99,11 +99,13 @@ public class LowSevSweepTests
   {
     string pwsh = DynamicCompletionScriptGenerator.GeneratePowerShell("myapp");
     string fish = DynamicCompletionScriptGenerator.GenerateFish("myapp");
+    string zsh = DynamicCompletionScriptGenerator.GenerateZsh("myapp");
 
     // Only the ':' directive line is stripped; a standalone number is a valid candidate.
     pwsh.Contains("^\\d+$").ShouldBeFalse("pwsh must not skip standalone-number completion candidates");
     fish.Contains("^0$").ShouldBeFalse("fish must not drop the '0' completion candidate");
     fish.ShouldContain("string match -v -r '^:'");
+    zsh.Contains("^[0-9]+$").ShouldBeFalse("zsh must not strip a trailing bare numeric line (M37)");
 
     await Task.CompletedTask;
   }

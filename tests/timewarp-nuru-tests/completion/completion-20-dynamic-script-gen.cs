@@ -204,6 +204,53 @@ public class DynamicScriptGenTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Bash_template_avoids_unquoted_compgen_wordlist()
+  {
+    string script = DynamicCompletionScriptGenerator.GenerateBash("myapp");
+
+    // M19: must not feed suggestions through unquoted $(compgen -W "${suggestions[*]}")
+    script.Contains("compgen -W \"${suggestions[*]}\"").ShouldBeFalse(
+      "bash must not join suggestions with IFS then word-split via unquoted compgen -W"
+    );
+    script.Contains("COMPREPLY=($(compgen").ShouldBeFalse(
+      "bash must not assign COMPREPLY from unquoted command substitution"
+    );
+    script.ShouldContain("COMPREPLY+=(\"$s\")");
+    script.ShouldContain("[[ \"$s\" == \"$cur\"* ]]");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Zsh_template_does_not_strip_numeric_exit_code_line()
+  {
+    string script = DynamicCompletionScriptGenerator.GenerateZsh("myapp");
+
+    // M37: dead exit-code strip removed; keep :directive handling only
+    script.Contains("^[0-9]+$").ShouldBeFalse(
+      "zsh must not strip a trailing bare numeric line (handler never emits an exit code on stdout)"
+    );
+    script.ShouldContain("== :*");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Pwsh_app_path_is_single_quoted_and_apostrophes_escaped()
+  {
+    string script = DynamicCompletionScriptGenerator.GeneratePowerShell("myapp");
+    string appPath = Environment.ProcessPath ?? "myapp";
+    string escaped = DynamicCompletionScriptGenerator.EscapePowerShellSingleQuoted(appPath);
+
+    script.ShouldContain($"$psi.FileName = '{escaped}'");
+    script.Contains($"$psi.FileName = \"{appPath}\"").ShouldBeFalse(
+      "APP_PATH must not sit unescaped inside a double-quoted PowerShell string"
+    );
+
+    DynamicCompletionScriptGenerator.EscapePowerShellSingleQuoted("O'Brien/app")
+      .ShouldBe("O''Brien/app");
+
+    await Task.CompletedTask;
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Completion.DynamicScriptGen

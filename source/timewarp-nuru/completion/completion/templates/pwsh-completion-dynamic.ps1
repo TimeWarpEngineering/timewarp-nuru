@@ -11,7 +11,8 @@ Register-ArgumentCompleter -Native -CommandName {{APP_NAME}} -ScriptBlock {
     })
     $position = if ($wordToComplete -ne '') { $words.Count - 1 } else { $words.Count }
     $psi = [System.Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = "{{APP_PATH}}"
+    # Single-quoted so path metacharacters ($ ` ") stay literal; generator doubles any '.
+    $psi.FileName = '{{APP_PATH}}'
     # Re-quote each token into the Arguments string so spaces survive. Uses .Arguments (not
     # .ArgumentList) because ArgumentList is unavailable on Windows PowerShell 5.1 (.NET
     # Framework); this path works on both 5.1 and PowerShell Core.

@@ -30,7 +30,7 @@ Evidence: parent 470 `review/round-1/merged.md` M9, M10, M31. 458 policy is out 
 
 ## Results
 
-`NuGetVersionService.GetPackageVersionsAsync` now maps only HTTP 404 to an empty list. Every other non-success status throws `HttpRequestException` carrying the status code, and a 200 whose body deserializes to no index object also throws. The `HttpResponseMessage` is disposed. `check-version` and `release` catch `HttpRequestException`, print `Error: NuGet lookup for '<pkg>' failed: ...` plus a refusing-to-report-safe line, set exit code 1, and return before the publish-state classification, so a NuGet outage can no longer clear the already-released gate (M9).
+`NuGetVersionService.GetPackageVersionsAsync` now maps only HTTP 404 to an empty list. Every other non-success status throws `HttpRequestException` carrying the status code. A 200 whose body is not JSON, deserializes to no index object, or carries a missing/empty `versions` array also throws `HttpRequestException` (review round 1, M1/M2), and an `HttpClient` timeout is wrapped the same way while caller cancellation still propagates. The `HttpResponseMessage` is disposed. `check-version` and `release` catch `HttpRequestException`, print `Error: NuGet lookup for '<pkg>' failed: ...` plus a refusing-to-report-safe line, set exit code 1, and return before the publish-state classification, so a NuGet outage can no longer clear the already-released gate (M9).
 
 Package ids are validated with `NuGetVersionService.IsValidPackageId` (ASCII letters, digits, underscore, single `.`/`-` separators, no leading/trailing/consecutive separators, max 100 chars, mirroring NuGet's `PackageIdValidator`). `GetIndexUrl` throws `ArgumentException` for an invalid id and escapes the lowercased path segment. Both endpoints reject invalid `--package`/config ids up front with `Error: invalid NuGet package id(s): ...` and exit code 1, before any HTTP call (M31).
 
@@ -51,13 +51,13 @@ The test seam is an `internal NuGetVersionService(HttpMessageHandler)` construct
 
 ### Test outcomes
 
-- `check-version-05-fail-closed-lookup.cs`: 10 passed
+- `check-version-05-fail-closed-lookup.cs`: 15 passed (10 original + 5 from review round 1: `{}` body, empty versions array, HTML body, client timeout, caller cancellation)
 - `check-version-06-props-version-reader.cs`: 7 passed
 - `check-version-07-endpoint-fail-closed.cs`: 3 passed
 - Existing `check-version-01` (14), `check-version-03` (15), `check-version-04` (1): all passed
 - `dotnet build tools/dev-cli/dev.cs`: succeeded
 - Live smoke: `dev check-version --package TimeWarp.Nuru` reports 3.0.0-beta.77 new, latest 3.0.0-beta.76, exit 0; `--package ../evil` prints the invalid-id error, exit 1
-- `dotnet run tests/ci-tests/run-ci-tests.cs` after `ganda runfile cache --clear` (2026-09-23): exit 0, grand total 199 classes, 1641 passed, 0 failed; `FailClosedLookup` (10) and `PropsVersionReader` (7) present in the multi-mode grand total
+- `dotnet run tests/ci-tests/run-ci-tests.cs` after `ganda runfile cache --clear` (2026-09-23, post-review-fix `8cd05197`): exit 0, multi-mode grand total 1672 (1665 passed, 7 skipped, 0 failed); `FailClosedLookup` (15) and `PropsVersionReader` (7) present in the grand total
 
 ### How to validate
 
@@ -73,7 +73,7 @@ dotnet run tools/dev-cli/dev.cs -- check-version --package "../evil"; echo "exit
 
 **Expect**
 
-- 05: 10 passed. `Service_unavailable_throws_with_status` gets `HttpRequestException` with `StatusCode == ServiceUnavailable`; `Not_found_yields_empty_list` returns an empty list; `Invalid_id_throws_before_request` throws `ArgumentException` with zero requests sent; request URL is `https://api.nuget.org/v3-flatcontainer/timewarp.nuru/index.json`.
+- 05: 15 passed. `Empty_object_body_on_success_throws` and `Non_json_body_on_success_throws_http_request_exception` get `HttpRequestException` with `StatusCode == OK`; `Client_timeout_throws_http_request_exception` gets `RequestTimeout`; `Service_unavailable_throws_with_status` gets `HttpRequestException` with `StatusCode == ServiceUnavailable`; `Not_found_yields_empty_list` returns an empty list; `Invalid_id_throws_before_request` throws `ArgumentException` with zero requests sent; request URL is `https://api.nuget.org/v3-flatcontainer/timewarp.nuru/index.json`.
 - 06: 7 passed. `<Version>\n  1.2.3-beta.4\n</Version>` reads as `1.2.3-beta.4`; blank element reads as null.
 - 07: 3 passed. With a stub returning 503, the handler writes `NuGet lookup for 'TimeWarp.Nuru' failed` and `refusing to report it as safe to release` to stderr, never prints `safe to release`, exit code 1. `../evil` is rejected with zero requests. 404 for every package still prints `safe to release` with exit code 0.
 - `check-version --package "../evil"` prints `Error: invalid NuGet package id(s): ../evil` and exits 1.
@@ -83,10 +83,19 @@ dotnet run tools/dev-cli/dev.cs -- check-version --package "../evil"; echo "exit
 ```bash
 ganda runfile cache --clear
 dotnet run tests/ci-tests/run-ci-tests.cs
-# expect: exit 0, 0 failed; multi-mode includes check-version-05 (10) and check-version-06 (7); check-version-07 is standalone only
+# expect: exit 0, 0 failed; multi-mode includes check-version-05 (15) and check-version-06 (7); check-version-07 is standalone only
 ```
+
+### Review disposition
+
+- Rounds: 2. Roster: general (effort 1). Reviewer: Claude sub-agent (opus) spawned by the review oracle (Claude Fable 5.1, ganda task work).
+- Final counts: bug 1 fixed / suggestion 1 fixed + 1 wontfix / nit 1 fixed; 0 open.
+- Disposition: **accepted-exceptions**. M3 (suggestion) wontfix: no release-side endpoint test for the id validation and fail-closed catch in `release-command.cs`, because release step 7 sits behind git-state preconditions that need a git fixture and extracting the shared lookup loop is out of scope. The service-level failure contract both endpoints depend on is tested directly. Candidate follow-up when release-command is next refactored.
+- Fix commit: `8cd05197` (M1 bug: `{}` / empty `versions` 200 now throws; M2: JsonException and client timeout wrapped as `HttpRequestException`; M4: exit-code reset in check-version-07 tests).
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`.
 
 ## Session
 
 - 2026-09-23: implementer (ganda task work, oracle implement). Product fix `cb9c566d`, tests `ea8c2aa6`. Full CI green. Kanban folderize committed on the task branch. Next host nodes: review, open-pr.
 - 2026-09-23: `7c6be22e` sets the executable bit on the three new test runfiles (flagged by `ganda repo audit` runfile-executable). Remaining audit failures are pre-existing on master and out of scope here: `bin/dev` missing, global-usings-analyzer pins, five older test runfiles without exec bit, `documentation/developer/design/dsl/fluent-api-example.cs` shebang, and the gitignored `oracle-*.log` kebab-path hit beside this kitchen.
+- 2026-09-23: review oracle (ganda task work, Claude Fable 5.1). Round 1 general review raised M1 bug (empty `{}` 200 cleared the gate), M2/M3 suggestions, M4 nit. Fixed M1/M2/M4 in `8cd05197`; M3 wontfix with rationale. Round 2 re-review clean, disposition accepted-exceptions. Post-fix CI rerun green (1665 passed, 0 failed). Review artifacts committed. Next host nodes: open-pr.

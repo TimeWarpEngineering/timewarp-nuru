@@ -96,7 +96,8 @@ namespace TimeWarp.Nuru;
 ///     }
 ///     catch (Exception ex)
 ///     {
-///       activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+///       activity?.SetStatus(ActivityStatusCode.Error);
+///       activity?.SetTag("error.type", ex.GetType().Name);
 ///       throw;
 ///     }
 ///   }

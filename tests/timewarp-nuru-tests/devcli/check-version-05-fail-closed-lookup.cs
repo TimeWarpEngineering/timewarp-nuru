@@ -8,6 +8,7 @@ namespace TimeWarp.Nuru.Tests.DevCli
 {
 
 using System.Text;
+using System.Text.Json;
 using global::DevCli;
 
 /// <summary>
@@ -93,6 +94,79 @@ public class FailClosedLookupTests
 
     await Should.ThrowAsync<HttpRequestException>(async () =>
       await service.GetPackageVersionsAsync("TimeWarp.Nuru", CancellationToken.None).ConfigureAwait(false));
+  }
+
+  public static async Task Empty_object_body_on_success_throws()
+  {
+    // M1 (review round 1): NuGetVersionIndex.Versions defaults to [], so "{}"
+    // used to deserialize to an empty list and read as "never published".
+    StubHandler handler = new(_ => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+      Content = new StringContent("{}", Encoding.UTF8, "application/json")
+    });
+    using NuGetVersionService service = new(handler);
+
+    HttpRequestException exception = await Should.ThrowAsync<HttpRequestException>(async () =>
+      await service.GetPackageVersionsAsync("TimeWarp.Nuru", CancellationToken.None).ConfigureAwait(false));
+
+    exception.StatusCode.ShouldBe(HttpStatusCode.OK);
+  }
+
+  public static async Task Empty_versions_array_on_success_throws()
+  {
+    StubHandler handler = new(_ => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+      Content = new StringContent("{\"versions\":[]}", Encoding.UTF8, "application/json")
+    });
+    using NuGetVersionService service = new(handler);
+
+    await Should.ThrowAsync<HttpRequestException>(async () =>
+      await service.GetPackageVersionsAsync("TimeWarp.Nuru", CancellationToken.None).ConfigureAwait(false));
+  }
+
+  public static async Task Non_json_body_on_success_throws_http_request_exception()
+  {
+    // M2 (review round 1): a captive-portal / proxy HTML page must reach the
+    // callers' fail-closed catch (HttpRequestException), not escape as JsonException.
+    StubHandler handler = new(_ => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+      Content = new StringContent("<html><body>Sign in</body></html>", Encoding.UTF8, "text/html")
+    });
+    using NuGetVersionService service = new(handler);
+
+    HttpRequestException exception = await Should.ThrowAsync<HttpRequestException>(async () =>
+      await service.GetPackageVersionsAsync("TimeWarp.Nuru", CancellationToken.None).ConfigureAwait(false));
+
+    exception.StatusCode.ShouldBe(HttpStatusCode.OK);
+    exception.InnerException.ShouldBeOfType<JsonException>();
+  }
+
+  public static async Task Client_timeout_throws_http_request_exception()
+  {
+    // HttpClient surfaces its own timeout as TaskCanceledException while the
+    // caller's token is untouched; that must become HttpRequestException.
+    StubHandler handler = new(_ => throw new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout"));
+    using NuGetVersionService service = new(handler);
+
+    HttpRequestException exception = await Should.ThrowAsync<HttpRequestException>(async () =>
+      await service.GetPackageVersionsAsync("TimeWarp.Nuru", CancellationToken.None).ConfigureAwait(false));
+
+    exception.StatusCode.ShouldBe(HttpStatusCode.RequestTimeout);
+    exception.InnerException.ShouldBeOfType<TaskCanceledException>();
+  }
+
+  public static async Task Caller_cancellation_propagates()
+  {
+    using CancellationTokenSource cts = new();
+    StubHandler handler = new(_ =>
+    {
+      cts.Cancel();
+      throw new OperationCanceledException(cts.Token);
+    });
+    using NuGetVersionService service = new(handler);
+
+    await Should.ThrowAsync<OperationCanceledException>(async () =>
+      await service.GetPackageVersionsAsync("TimeWarp.Nuru", cts.Token).ConfigureAwait(false));
   }
 
   public static async Task Invalid_id_throws_before_request()

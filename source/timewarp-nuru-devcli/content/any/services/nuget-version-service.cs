@@ -121,7 +121,7 @@ public sealed class NuGetVersionService : IDisposable
   )
   {
     Uri url = GetIndexUrl(packageId);
-    using HttpResponseMessage response = await HttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+    using HttpResponseMessage response = await SendAsync(url, packageId, cancellationToken).ConfigureAwait(false);
 
     // 404 is the flat container's "no such package" — the only status that
     // legitimately means "nothing published". Anything else is unknown state
@@ -144,13 +144,47 @@ public sealed class NuGetVersionService : IDisposable
     Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
     await using (stream.ConfigureAwait(false))
     {
-      NuGetVersionIndex? index = await JsonSerializer
-        .DeserializeAsync(stream, DevCliJsonContext.Default.NuGetVersionIndex, cancellationToken)
-        .ConfigureAwait(false);
+      NuGetVersionIndex? index;
+      try
+      {
+        index = await JsonSerializer
+          .DeserializeAsync(stream, DevCliJsonContext.Default.NuGetVersionIndex, cancellationToken)
+          .ConfigureAwait(false);
+      }
+      catch (JsonException ex)
+      {
+        // A non-JSON 200 (captive portal, proxy error page) is a failed lookup,
+        // not "never published"; surface it through the same fail-closed path.
+        throw new HttpRequestException($"NuGet version lookup for '{packageId}' returned HTTP 200 with a non-JSON body from {url}: {ex.Message}", ex, response.StatusCode);
+      }
 
-      // A 200 with no index object is a malformed response, not "never published".
-      return index?.Versions
-        ?? throw new HttpRequestException($"NuGet version lookup for '{packageId}' returned HTTP 200 with no versions index from {url}.", inner: null, response.StatusCode);
+      // A 200 with no index object, or an index with no versions, is a malformed
+      // response, not "never published": the flat container answers 404 for an
+      // unknown id and never returns an empty versions array for a known one.
+      if (index?.Versions is not { Count: > 0 } versions)
+      {
+        throw new HttpRequestException($"NuGet version lookup for '{packageId}' returned HTTP 200 with no versions index from {url}.", inner: null, response.StatusCode);
+      }
+
+      return versions;
+    }
+  }
+
+  /// <summary>
+  /// Sends the index request, converting an HttpClient timeout (an
+  /// <see cref="OperationCanceledException"/> while the caller's token is NOT
+  /// cancelled) into <see cref="HttpRequestException"/> so every lookup failure
+  /// reaches the callers' fail-closed catch. Caller cancellation propagates as is.
+  /// </summary>
+  private async Task<HttpResponseMessage> SendAsync(Uri url, string packageId, CancellationToken cancellationToken)
+  {
+    try
+    {
+      return await HttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+    }
+    catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+    {
+      throw new HttpRequestException($"NuGet version lookup for '{packageId}' timed out requesting {url}.", ex, System.Net.HttpStatusCode.RequestTimeout);
     }
   }
 

@@ -35,6 +35,8 @@ public class CheckVersionEndpointFailClosedTests
 
     try
     {
+      Environment.ExitCode = 0;
+
       using TestTerminal terminal = new();
       using NuGetVersionService nuGetVersionService = new(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)));
       RepoConfigService configService = new();
@@ -66,6 +68,8 @@ public class CheckVersionEndpointFailClosedTests
 
     try
     {
+      Environment.ExitCode = 0;
+
       using TestTerminal terminal = new();
       StubHandler stubHandler = new(_ => new HttpResponseMessage(HttpStatusCode.OK));
       using NuGetVersionService nuGetVersionService = new(stubHandler);

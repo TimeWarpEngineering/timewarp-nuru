@@ -21,8 +21,7 @@
 //   - command.type: Type name of the command
 //   - command.name: Route pattern
 //   - correlation.id: Request correlation ID
-//   - error.type: Exception type (on failure)
-//   - error.message: Exception message (on failure)
+//   - error.type: Exception type (on failure; no error.message — avoid leaking argv/secrets)
 //
 // BEHAVIOR EXECUTION ORDER:
 //   TelemetryBehavior wraps LoggingBehavior wraps Handler
@@ -112,10 +111,9 @@ public sealed class TelemetryBehavior : INuruBehavior
     }
     catch (Exception ex)
     {
-      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      activity?.SetStatus(ActivityStatusCode.Error);
       activity?.SetTag("error.type", ex.GetType().Name);
-      activity?.SetTag("error.message", ex.Message);
-      WriteLine($"[TELEMETRY] Activity failed for {context.CommandName}: {ex.Message}");
+      WriteLine($"[TELEMETRY] Activity failed for {context.CommandName}: {ex.GetType().Name}");
       throw;
     }
   }

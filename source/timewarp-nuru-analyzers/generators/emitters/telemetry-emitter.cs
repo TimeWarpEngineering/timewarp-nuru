@@ -169,9 +169,9 @@ internal static class TelemetryEmitter
     sb.AppendLine("      catch (global::System.Exception __telemetryEx)");
     sb.AppendLine("      {");
     sb.AppendLine("        __sw.Stop();");
-    sb.AppendLine("        __activity?.SetStatus(global::System.Diagnostics.ActivityStatusCode.Error, __telemetryEx.Message);");
+    // Prefer error.type only — exception messages can embed argv/secrets (parity with TelemetryBehavior).
+    sb.AppendLine("        __activity?.SetStatus(global::System.Diagnostics.ActivityStatusCode.Error);");
     sb.AppendLine("        __activity?.SetTag(\"error.type\", __telemetryEx.GetType().Name);");
-    sb.AppendLine("        __activity?.SetTag(\"error.message\", __telemetryEx.Message);");
     sb.AppendLine("        __commandsErrored.Add(1,");
     sb.AppendLine($"          new global::System.Collections.Generic.KeyValuePair<string, object?>(\"command\", \"{escapedPattern}\"),");
     sb.AppendLine("          new global::System.Collections.Generic.KeyValuePair<string, object?>(\"error.type\", __telemetryEx.GetType().Name));");

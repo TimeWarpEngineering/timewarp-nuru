@@ -120,7 +120,9 @@ public sealed class TelemetryBehavior : INuruBehavior
     }
     catch (Exception ex)
     {
-      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      // Prefer error.type only when exporting — Exception.Message may embed argv/secrets
+      activity?.SetStatus(ActivityStatusCode.Error);
+      activity?.SetTag("error.type", ex.GetType().Name);
       throw;
     }
   }

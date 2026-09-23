@@ -80,6 +80,10 @@ namespace TimeWarp.Nuru;
 ///   <term>Enter</term>
 ///   <description>Submit command</description>
 /// </item>
+/// <item>
+///   <term>Shift+Enter</term>
+///   <description>Add a new line without executing (multiline)</description>
+/// </item>
 /// </list>
 /// <para>
 /// Future enhancements could include full modal editing where Escape switches to
@@ -101,6 +105,7 @@ public sealed class ViKeyBindingProfile : IKeyBindingProfile
     {
       // === Enter/Submit ===
       [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnterAsync,
+      [(ConsoleKey.Enter, ConsoleModifiers.Shift)] = reader.HandleAddLineAsync,  // Shift+Enter adds new line without executing
 
       // === Tab Completion ===
       [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletionAsync(reverse: false),

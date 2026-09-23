@@ -416,6 +416,136 @@ public class KeyBindingProfileTests
   }
 
   // ============================================================================
+  // Shift+Enter (AddLine) on all profiles — M18 / 470-013
+  // ============================================================================
+
+  public static async Task Emacs_profile_should_support_shift_enter_add_line()
+  {
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("line1");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("line2");
+    terminal.QueueKey(ConsoleKey.Enter);
+    terminal.QueueLine("exit");
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("line1 line2")
+        .WithHandler(ShiftEnterEmacs)
+        .AsCommand()
+        .Done()
+      .AddRepl(options =>
+      {
+        options.KeyBindingProfileName = "Emacs";
+        options.EnableColors = false;
+        options.WelcomeMessage = null;
+        options.PersistHistory = false;
+      })
+      .Build();
+
+    await app.RunAsync(["--interactive"]);
+
+    terminal.OutputContains("SHIFT-ENTER-Emacs")
+      .ShouldBeTrue("Emacs profile must bind Shift+Enter to AddLine (not swallow the chord)");
+  }
+
+  public static async Task Vi_profile_should_support_shift_enter_add_line()
+  {
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("line1");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("line2");
+    terminal.QueueKey(ConsoleKey.Enter);
+    terminal.QueueLine("exit");
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("line1 line2")
+        .WithHandler(ShiftEnterVi)
+        .AsCommand()
+        .Done()
+      .AddRepl(options =>
+      {
+        options.KeyBindingProfileName = "Vi";
+        options.EnableColors = false;
+        options.WelcomeMessage = null;
+        options.PersistHistory = false;
+      })
+      .Build();
+
+    await app.RunAsync(["--interactive"]);
+
+    terminal.OutputContains("SHIFT-ENTER-Vi")
+      .ShouldBeTrue("Vi profile must bind Shift+Enter to AddLine (not swallow the chord)");
+  }
+
+  public static async Task VSCode_profile_should_support_shift_enter_add_line()
+  {
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("line1");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("line2");
+    terminal.QueueKey(ConsoleKey.Enter);
+    terminal.QueueLine("exit");
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("line1 line2")
+        .WithHandler(ShiftEnterVSCode)
+        .AsCommand()
+        .Done()
+      .AddRepl(options =>
+      {
+        options.KeyBindingProfileName = "VSCode";
+        options.EnableColors = false;
+        options.WelcomeMessage = null;
+        options.PersistHistory = false;
+      })
+      .Build();
+
+    await app.RunAsync(["--interactive"]);
+
+    terminal.OutputContains("SHIFT-ENTER-VSCode")
+      .ShouldBeTrue("VSCode profile must bind Shift+Enter to AddLine (not swallow the chord)");
+  }
+
+  public static async Task Default_profile_should_support_shift_enter_add_line()
+  {
+    using TestTerminal terminal = new();
+    terminal.QueueKeys("line1");
+    terminal.QueueKey(ConsoleKey.Enter, shift: true);
+    terminal.QueueKeys("line2");
+    terminal.QueueKey(ConsoleKey.Enter);
+    terminal.QueueLine("exit");
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("line1 line2")
+        .WithHandler(ShiftEnterDefault)
+        .AsCommand()
+        .Done()
+      .AddRepl(options =>
+      {
+        options.KeyBindingProfileName = "Default";
+        options.EnableColors = false;
+        options.WelcomeMessage = null;
+        options.PersistHistory = false;
+      })
+      .Build();
+
+    await app.RunAsync(["--interactive"]);
+
+    terminal.OutputContains("SHIFT-ENTER-Default")
+      .ShouldBeTrue("Default profile must bind Shift+Enter to AddLine (not swallow the chord)");
+  }
+
+  // internal (not private) so the source-generated interceptor can reference the method group.
+  internal static string ShiftEnterEmacs() => "SHIFT-ENTER-Emacs";
+  internal static string ShiftEnterVi() => "SHIFT-ENTER-Vi";
+  internal static string ShiftEnterVSCode() => "SHIFT-ENTER-VSCode";
+  internal static string ShiftEnterDefault() => "SHIFT-ENTER-Default";
+
+  // ============================================================================
   // Profile Factory/Resolution Tests
   // ============================================================================
 

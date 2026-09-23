@@ -4,6 +4,10 @@
 #region Design
 // One methodology: props-version membership in the published NuGet versions
 // (NuGetVersionService, HttpClient-based — no NuGet.Protocol dependency).
+// The props version comes from the shared PropsVersionReader (trimmed, same
+// reader as release-command) and a NuGet lookup that fails for any reason
+// other than 404 aborts the gate with exit code 1 rather than being counted
+// as "not published" (kanban task 470-007, findings M9/M10/M31).
 // Package set precedence (kanban task 458-004): --package overrides everything
 // for a single ad-hoc run; else .timewarp/dev.jsonc's checkVersionConfig.packages
 // (an explicit, repo-level override); else the derived set of packable projects
@@ -16,7 +20,6 @@
 
 namespace DevCli;
 
-using System.Xml.Linq;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -94,7 +97,17 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         Terminal.WriteLine("Using configured package override; delete checkVersionConfig.packages to derive the set from IsPackable.");
       }
 
-      string? version = GetVersionFromSource(repoRoot);
+      // M31 (470-007): --package is user input that becomes a URL path segment;
+      // reject anything outside NuGet id grammar before any HTTP call.
+      List<string> invalidPackages = [.. packages.Where(p => !NuGetVersionService.IsValidPackageId(p))];
+      if (invalidPackages.Count > 0)
+      {
+        Terminal.WriteErrorLine($"Error: invalid NuGet package id(s): {string.Join(", ", invalidPackages)}");
+        Environment.ExitCode = 1;
+        return Value;
+      }
+
+      string? version = PropsVersionReader.Read(repoRoot);
       if (version is null)
       {
         Terminal.WriteErrorLine("Error: could not read Version from source/Directory.Build.props");
@@ -110,9 +123,23 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       {
         checkedPackages.Add(pkg);
 
-        IReadOnlyList<string> versions = await NuGetVersionService
-          .GetPackageVersionsAsync(pkg, cancellationToken)
-          .ConfigureAwait(false);
+        IReadOnlyList<string> versions;
+        try
+        {
+          versions = await NuGetVersionService
+            .GetPackageVersionsAsync(pkg, cancellationToken)
+            .ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex)
+        {
+          // M9 (470-007): fail closed. An empty list means "never published"
+          // downstream, so a 429/5xx/network failure must NOT be reported as
+          // "safe to release" — refuse to answer instead.
+          Terminal.WriteErrorLine($"Error: NuGet lookup for '{pkg}' failed: {ex.Message}");
+          Terminal.WriteErrorLine("  Cannot determine whether this version is already published; refusing to report it as safe to release. Retry when NuGet is reachable.");
+          Environment.ExitCode = 1;
+          return Value;
+        }
 
         if (versions.Count == 0)
         {
@@ -172,35 +199,6 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       }
 
       return Value;
-    }
-
-    private static string? GetVersionFromSource(string? repoRoot)
-    {
-      if (repoRoot is null)
-      {
-        return null;
-      }
-
-      string sourceDir = Path.Combine(repoRoot, "source");
-      if (!Directory.Exists(sourceDir))
-      {
-        return null;
-      }
-
-      string[] buildPropsFiles = Directory.GetFiles(sourceDir, "Directory.Build.props", SearchOption.TopDirectoryOnly);
-      if (buildPropsFiles is not { Length: > 0 })
-      {
-        return null;
-      }
-
-      string xml = File.ReadAllText(buildPropsFiles[0]);
-#pragma warning disable IDE0007
-      XDocument doc = XDocument.Parse(xml);
-#pragma warning restore IDE0007
-      XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003";
-
-      XElement? versionElement = doc.Descendants(ns + "Version").FirstOrDefault();
-      return (versionElement ?? doc.Descendants("Version").FirstOrDefault())?.Value;
     }
   }
 }

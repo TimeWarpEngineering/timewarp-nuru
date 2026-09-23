@@ -7,6 +7,16 @@
 // Calls https://api.nuget.org/v3-flatcontainer/{id}/index.json
 // which returns a simple JSON object with a "versions" array.
 // No NuGet.Protocol, no NuGet.Packaging, no Newtonsoft.Json — fully AOT-compatible.
+//
+// Fail-closed lookup (kanban task 470-007, parent-470 findings M9/M31): this
+// service feeds the already-released gate, whose callers treat an empty list
+// as "never published". Only HTTP 404 (the flat container's answer for an
+// unknown id) maps to empty; every other non-success status (429, 5xx, auth)
+// throws HttpRequestException carrying the status code so a NuGet outage can
+// never clear the gate. The package id is validated against NuGet id grammar
+// (ASCII word chars with single '.'/'-' separators, max 100 chars) and the
+// path segment is escaped, so a --package like "../evil" cannot walk off
+// v3-flatcontainer. The HttpMessageHandler constructor exists for tests.
 #endregion
 
 namespace DevCli;
@@ -18,16 +28,91 @@ public sealed class NuGetVersionService : IDisposable
 {
   private readonly HttpClient HttpClient;
 
+  public const int MaxPackageIdLength = 100;
+
   public NuGetVersionService()
-  {
-    HttpClient = new HttpClient
+    : this
     (
       new HttpClientHandler
       {
         AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
       }
-    );
+    )
+  {
   }
+
+  /// <summary>
+  /// Test seam: build the service over a caller-supplied handler (e.g. a stub that
+  /// returns a fixed status code). The handler is disposed with the service.
+  /// Internal on purpose: the Nuru DI generator resolves the PUBLIC constructor with
+  /// the most parameters, so a public overload would make it demand a registered
+  /// HttpMessageHandler (NURU051). Test runfiles compile this file into their own
+  /// assembly, so internal is visible there.
+  /// </summary>
+  internal NuGetVersionService(HttpMessageHandler handler)
+  {
+    ArgumentNullException.ThrowIfNull(handler);
+    HttpClient = new HttpClient(handler);
+  }
+
+  /// <summary>
+  /// Builds the flat-container index URL for <paramref name="packageId"/>. Throws
+  /// <see cref="ArgumentException"/> when the id fails <see cref="IsValidPackageId"/>.
+  /// </summary>
+  public static Uri GetIndexUrl(string packageId)
+  {
+    ArgumentNullException.ThrowIfNull(packageId);
+
+    if (!IsValidPackageId(packageId))
+    {
+      throw new ArgumentException($"'{packageId}' is not a valid NuGet package id (letters, digits, '_', with single '.' or '-' separators; max {MaxPackageIdLength} chars).", nameof(packageId));
+    }
+
+    string segment = Uri.EscapeDataString(packageId.ToLowerInvariant());
+    return new Uri($"https://api.nuget.org/v3-flatcontainer/{segment}/index.json");
+  }
+
+  /// <summary>
+  /// NuGet package id grammar (mirrors NuGet.Packaging's PackageIdValidator):
+  /// one or more ASCII letters/digits/underscores, optionally joined by single
+  /// '.' or '-' separators; no leading/trailing/consecutive separators; at most
+  /// <see cref="MaxPackageIdLength"/> characters.
+  /// </summary>
+  public static bool IsValidPackageId(string? packageId)
+  {
+    if (string.IsNullOrEmpty(packageId) || packageId.Length > MaxPackageIdLength)
+    {
+      return false;
+    }
+
+    bool previousWasSeparator = true; // disallow a leading separator
+
+    foreach (char c in packageId)
+    {
+      if (IsWordChar(c))
+      {
+        previousWasSeparator = false;
+      }
+      else if (c is '.' or '-')
+      {
+        if (previousWasSeparator)
+        {
+          return false;
+        }
+
+        previousWasSeparator = true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+
+    return !previousWasSeparator; // disallow a trailing separator
+  }
+
+  private static bool IsWordChar(char c) =>
+    c is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or (>= '0' and <= '9') or '_';
 
   public async Task<IReadOnlyList<string>> GetPackageVersionsAsync
   (
@@ -35,14 +120,25 @@ public sealed class NuGetVersionService : IDisposable
     CancellationToken cancellationToken
   )
   {
-    ArgumentNullException.ThrowIfNull(packageId);
+    Uri url = GetIndexUrl(packageId);
+    using HttpResponseMessage response = await HttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
-    Uri url = new($"https://api.nuget.org/v3-flatcontainer/{packageId.ToLowerInvariant()}/index.json");
-    HttpResponseMessage response = await HttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+    // 404 is the flat container's "no such package" — the only status that
+    // legitimately means "nothing published". Anything else is unknown state
+    // and must fail closed: callers treat [] as "safe to release".
+    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+    {
+      return [];
+    }
 
     if (!response.IsSuccessStatusCode)
     {
-      return [];
+      throw new HttpRequestException
+      (
+        $"NuGet version lookup for '{packageId}' failed with HTTP {(int)response.StatusCode} ({response.StatusCode}) from {url}.",
+        inner: null,
+        response.StatusCode
+      );
     }
 
     Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -52,7 +148,9 @@ public sealed class NuGetVersionService : IDisposable
         .DeserializeAsync(stream, DevCliJsonContext.Default.NuGetVersionIndex, cancellationToken)
         .ConfigureAwait(false);
 
-      return index?.Versions ?? [];
+      // A 200 with no index object is a malformed response, not "never published".
+      return index?.Versions
+        ?? throw new HttpRequestException($"NuGet version lookup for '{packageId}' returned HTTP 200 with no versions index from {url}.", inner: null, response.StatusCode);
     }
   }
 

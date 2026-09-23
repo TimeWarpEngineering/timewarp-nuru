@@ -28,8 +28,6 @@
          CheckVersionCommand, which is not compiled into the multi assembly (454-022 A2).
          Without this exclude the file is a silently empty include under JARIBU_MULTI.
          Run standalone via run-ci-tests.cs second phase (task 470-010 / M15). -->
-    <!-- engine-01: references ParsedInput/InputTokenizer, types removed from source in the
-         #360 refactor; does not compile standalone either. Delete or rewrite (task 454-001 notes). -->
     <!-- generator-28: Roslyn-hosted generator test; references timewarp-nuru-analyzers as a
          LIBRARY, whose shared parsing types (Lexer/Token) collide with timewarp-nuru's in one
          compilation (CS0433). Run standalone by run-ci-tests.cs as a second phase instead. -->
@@ -41,7 +39,6 @@
          (kanban 464 round-2 M5); CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs" />
-    <CiTestExcludes Include="../timewarp-nuru-tests/completion/engine/engine-01-input-tokenizer.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs" />
@@ -72,14 +69,16 @@
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />
     <!-- Search tests (timewarp-nuru-search: FTS index) -->
-    <Compile Include="../timewarp-nuru-search-tests/*.cs" />
+    <Compile
+      Include="../timewarp-nuru-search-tests/**/*.cs"
+      Exclude="../timewarp-nuru-search-tests/**/obj/**;../timewarp-nuru-search-tests/**/bin/**" />
     <!-- MCP server tests -->
     <!-- mcp-02: GetSyntaxTool's default (endpoint) path asserts MCP:endpoint-* regions
          that exist nowhere — only the fluent syntax file is embedded. Product bug tracked
          in kanban task 454-033; re-include this file when fixed. -->
     <Compile
-      Include="../timewarp-nuru-mcp-tests/*.cs"
-      Exclude="../timewarp-nuru-mcp-tests/mcp-02-syntax-documentation.cs" />
+      Include="../timewarp-nuru-mcp-tests/**/*.cs"
+      Exclude="../timewarp-nuru-mcp-tests/**/obj/**;../timewarp-nuru-mcp-tests/**/bin/**;../timewarp-nuru-mcp-tests/mcp-02-syntax-documentation.cs" />
   </ItemGroup>
 
   <ItemGroup>

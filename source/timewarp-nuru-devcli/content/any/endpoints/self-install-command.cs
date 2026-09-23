@@ -5,6 +5,9 @@
 // Uses dotnet publish to create the binary in ./bin
 // Standalone - no external service dependencies
 // CA1031 suppressed: catch-all is needed for rollback on any failure.
+// Windows: rename running dev.exe -> dev.exe.old before publish so the new
+// binary can replace it; on success best-effort delete the .old (470 M41);
+// on publish failure move .old back.
 #endregion
 
 namespace DevCli;
@@ -102,6 +105,13 @@ public sealed class SelfInstallCommand : ICommand<Unit>
         Terminal.WriteErrorLine("Self-install failed!".Red());
         Environment.ExitCode = 1;
         return Unit.Value;
+      }
+
+      // Best-effort cleanup of the renamed previous binary (470 M41). Windows
+      // may still hold a brief lock; leaving .old is harmless but litter.
+      if (renamed && oldExe is not null)
+      {
+        WindowsExeReplace.TryDeleteOldExecutable(oldExe, Terminal);
       }
 
       Terminal.WriteLine($"Successfully installed dev CLI to {outputDir}".Green());

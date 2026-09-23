@@ -192,8 +192,8 @@ namespace TimeWarp.Nuru.Tests.Generator.GroupFiltering
     /// Includes both grouped and ungrouped commands with full prefixes.
     /// STANDALONE ONLY: unfiltered .DiscoverEndpoints() is global in the CI multi-mode
     /// compilation, so this app picks up every other test file's endpoints (route
-    /// collisions, unregistered services). Run standalone to exercise it:
-    /// dotnet run tests/timewarp-nuru-tests/generator/generator-19-group-filtering.cs
+    /// collisions, unregistered services). Exercised by run-ci-tests.cs second phase
+    /// (task 470-010 / M29); also: dotnet run …/generator-19-group-filtering.cs
     /// </summary>
 #if !JARIBU_MULTI
     public static async Task NoFilter_IncludesAll()

@@ -23,7 +23,11 @@
          with a reason; do not switch back to hand-enumerated includes. -->
     <!-- generator-17: tests local functions in TOP-LEVEL STATEMENTS by design; it cannot
          exist inside the multi-mode assembly (the runner owns the entry point). Run it
-         standalone: dotnet run tests/timewarp-nuru-tests/generator/generator-17-local-function-config.cs -->
+         standalone via run-ci-tests.cs second phase (task 470-010 / M14). -->
+    <!-- check-version-04: entire body is #if !JARIBU_MULTI because it references
+         CheckVersionCommand, which is not compiled into the multi assembly (454-022 A2).
+         Without this exclude the file is a silently empty include under JARIBU_MULTI.
+         Run standalone via run-ci-tests.cs second phase (task 470-010 / M15). -->
     <!-- engine-01: references ParsedInput/InputTokenizer, types removed from source in the
          #360 refactor; does not compile standalone either. Delete or rewrite (task 454-001 notes). -->
     <!-- generator-28: Roslyn-hosted generator test; references timewarp-nuru-analyzers as a
@@ -36,6 +40,7 @@
     <!-- generator-40: same Roslyn-hosted generator test pattern as generator-28
          (kanban 464 round-2 M5); CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/completion/engine/engine-01-input-tokenizer.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />

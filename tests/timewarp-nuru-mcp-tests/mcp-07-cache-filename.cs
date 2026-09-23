@@ -59,6 +59,19 @@ public class CacheFileNameTests
 
     await Task.CompletedTask;
   }
+
+  public static async Task Should_hash_when_dotdot_survives_separator_replace()
+  {
+    string result = GitHubCacheService.GetSafeCacheFileName("../outside");
+
+    result.ShouldNotContain('/');
+    result.ShouldNotContain('\\');
+    result.Contains("..", StringComparison.Ordinal).ShouldBeFalse();
+    // SHA256 hex is 64 chars
+    result.Length.ShouldBe(64);
+
+    await Task.CompletedTask;
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Mcp

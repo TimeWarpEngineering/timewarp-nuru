@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru.Mcp.Tools;
 
+using TimeWarp.Nuru.Mcp.Services;
+
 /// <summary>
 /// MCP tool that provides TimeWarp.Nuru code examples from GitHub with caching.
 /// </summary>
@@ -11,6 +13,7 @@ internal sealed class GetExampleTool
   private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, CachedExample> MemoryCache = [];
   private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
   private static readonly TimeSpan ManifestCacheTtl = TimeSpan.FromHours(24);
+  private static readonly string[] ExamplePathPrefixes = ["samples/"];
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
   {
     TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()
@@ -75,6 +78,10 @@ internal sealed class GetExampleTool
 
       return result;
     }
+    catch (InvalidOperationException ex)
+    {
+      return $"Error getting example: {ex.Message}";
+    }
     catch (HttpRequestException ex)
     {
       // Try disk cache as fallback
@@ -104,7 +111,11 @@ internal sealed class GetExampleTool
 
   private static async Task<string> FetchFromGitHubAsync(string path)
   {
-    Uri url = new($"https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-nuru/master/{path}");
+    if (!GitHubCacheService.TryResolveRawContentUri(path, out Uri? url, ExamplePathPrefixes))
+    {
+      throw new InvalidOperationException($"Refusing to fetch disallowed example path: {path}");
+    }
+
     HttpResponseMessage response = await HttpClient.GetAsync(url);
     response.EnsureSuccessStatusCode();
     return await response.Content.ReadAsStringAsync();
@@ -114,19 +125,20 @@ internal sealed class GetExampleTool
   {
     try
     {
-      string cacheFile = Path.Combine(CacheDirectory, $"{name}.cache");
+      string safeName = GitHubCacheService.GetSafeCacheFileName(name);
+      string cacheFile = Path.Combine(CacheDirectory, $"{safeName}.cache");
       if (!File.Exists(cacheFile))
         return null;
 
-      string metaFile = Path.Combine(CacheDirectory, $"{name}.meta");
+      string metaFile = Path.Combine(CacheDirectory, $"{safeName}.meta");
       if (!File.Exists(metaFile))
         return null;
 
       // Check TTL
       string metaContent = await File.ReadAllTextAsync(metaFile);
-      if (DateTime.TryParse(metaContent, out DateTime cachedTime))
+      if (DateTime.TryParse(metaContent, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime cachedTime))
       {
-        if (DateTime.UtcNow - cachedTime < CacheTtl)
+        if (DateTime.UtcNow - cachedTime.ToUniversalTime() < CacheTtl)
         {
           return await File.ReadAllTextAsync(cacheFile);
         }
@@ -150,11 +162,12 @@ internal sealed class GetExampleTool
     {
       Directory.CreateDirectory(CacheDirectory);
 
-      string cacheFile = Path.Combine(CacheDirectory, $"{name}.cache");
-      string metaFile = Path.Combine(CacheDirectory, $"{name}.meta");
+      string safeName = GitHubCacheService.GetSafeCacheFileName(name);
+      string cacheFile = Path.Combine(CacheDirectory, $"{safeName}.cache");
+      string metaFile = Path.Combine(CacheDirectory, $"{safeName}.meta");
 
       await File.WriteAllTextAsync(cacheFile, content);
-      await File.WriteAllTextAsync(metaFile, DateTime.UtcNow.ToString("O"));
+      await File.WriteAllTextAsync(metaFile, DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
     }
     catch (IOException)
     {
@@ -278,17 +291,28 @@ internal sealed class GetExampleTool
     if (manifest?.Examples is null)
       return null;
 
-    return manifest.Examples.ToDictionary(
-        e => e.Id,
-        e => new ExampleInfo(e.Path, e.Description)
-    );
+    Dictionary<string, ExampleInfo> examples = [];
+    foreach (ExampleEntry entry in manifest.Examples)
+    {
+      // Drop poisoned manifest rows before they can drive fetch or disk-cache keys.
+      if (!GitHubCacheService.IsSafeCacheId(entry.Id))
+        continue;
+
+      if (!GitHubCacheService.TryResolveRawContentUri(entry.Path, out _, ExamplePathPrefixes))
+        continue;
+
+      examples[entry.Id] = new ExampleInfo(entry.Path, entry.Description);
+    }
+
+    return examples.Count > 0 ? examples : null;
   }
 
   private static async Task<Dictionary<string, ExampleInfo>?> TryLoadManifestFromDiskAsync()
   {
     try
     {
-      string cacheFile = Path.Combine(CacheDirectory, "manifest.cache");
+      string safeName = GitHubCacheService.GetSafeCacheFileName("manifest");
+      string cacheFile = Path.Combine(CacheDirectory, $"{safeName}.cache");
       if (!File.Exists(cacheFile))
         return null;
 

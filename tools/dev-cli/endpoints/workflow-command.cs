@@ -155,7 +155,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         return;
       }
 
-      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(nuruNupkg, NuruRequiredPackageEntries);
+      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(nuruNupkg, NupkgLayoutCheck.NuruRequiredPackageEntries);
       if (missing.Count > 0)
       {
         Terminal.WriteErrorLine($"Package layout gate failed: TimeWarp.Nuru.{layoutVersion}.nupkg is missing required entries: {string.Join(", ", missing)}. Pack produced a hollow package (kanban 461 class) — do not ship this artifact.");
@@ -163,7 +163,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
         return;
       }
 
-      Terminal.WriteLine($"Package layout verified: TimeWarp.Nuru.{layoutVersion}.nupkg contains all {NuruRequiredPackageEntries.Length} required payload entries.");
+      Terminal.WriteLine($"Package layout verified: TimeWarp.Nuru.{layoutVersion}.nupkg contains all {NupkgLayoutCheck.NuruRequiredPackageEntries.Length} required payload entries.");
 
       // Step 4: Verify Samples
       Terminal.WriteLine("");
@@ -517,26 +517,6 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Environment.ExitCode = 1;
     }
-
-    // Critical payload the TimeWarp.Nuru nupkg must contain (kanban 461).
-    // Mirrors the explicit Pack includes in timewarp-nuru.csproj — update BOTH
-    // when timewarp-nuru-build's dependency set changes.
-    private static readonly string[] NuruRequiredPackageEntries =
-    [
-      "build/TimeWarp.Nuru.targets",
-      "build/net10.0/TimeWarp.Nuru.Build.dll",
-      "build/net10.0/TimeWarp.Nuru.Analyzers.dll",
-      "build/net10.0/ICSharpCode.Decompiler.dll",
-      "build/net10.0/Microsoft.Build.Framework.dll",
-      "build/net10.0/Microsoft.Build.Utilities.Core.dll",
-      "build/net10.0/Microsoft.CodeAnalysis.dll",
-      "build/net10.0/Microsoft.CodeAnalysis.CSharp.dll",
-      "build/net10.0/Microsoft.NET.StringTools.dll",
-      "build/net10.0/System.Configuration.ConfigurationManager.dll",
-      "build/net10.0/System.Diagnostics.EventLog.dll",
-      "build/net10.0/System.Security.Cryptography.ProtectedData.dll",
-      "lib/net10.0/TimeWarp.Nuru.dll"
-    ];
 
     // Repo root heuristic shared by both pipeline modes: prefer the
     // AOT-published binary's on-disk layout (bin/<rid>/ -> repo root is four

@@ -93,7 +93,9 @@
     <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <!-- Include the analyzer in the main package as a development dependency -->
+  <!-- Include the analyzer in the main package as a development dependency.
+       Pack paths under analyzers/ must stay in NupkgLayoutCheck.NuruRequiredPackageEntries
+       (kanban 462: nupkg-layout-02-csproj-gate-parity). -->
   <ItemGroup>
     <!-- Include analyzer DLL in the package -->
     <None Include="../timewarp-nuru-analyzers/bin/$(Configuration)/$(TargetFramework)/TimeWarp.Nuru.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
@@ -119,8 +121,9 @@
          see these files; same class as kanban 389). Concrete includes create
          the item regardless of evaluation timing and FAIL LOUDLY at pack time
          if a file is missing. When timewarp-nuru-build gains or drops a
-         dependency, update this list — the CI package-layout gate and a
-         clean-cache consumer restore are the backstops. -->
+         dependency, update this list AND NupkgLayoutCheck.NuruRequiredPackageEntries
+         (kanban 462: nupkg-layout-02-csproj-gate-parity diffs them). The CI
+         package-layout gate and a clean-cache consumer restore are the backstops. -->
     <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/TimeWarp.Nuru.Build.dll" Pack="true" PackagePath="build/net10.0" />
     <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/TimeWarp.Nuru.Analyzers.dll" Pack="true" PackagePath="build/net10.0" />
     <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/ICSharpCode.Decompiler.dll" Pack="true" PackagePath="build/net10.0" />

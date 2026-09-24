@@ -6,7 +6,8 @@
 
 // Refuse pushes that update home branches (master/main) while HEAD is master or main.
 // Allow other dests (feature/*, etc.) so origin-home can publish a missing --into ref.
-// Allow refs/ganda/* updates (claims CAS) even when HEAD is home.
+// Allow refs/tags/* (release tags) and refs/ganda/* (claims CAS) when every dest is one of those.
+// Mixed tag + branch batches stay refused while HEAD is home.
 // Commits on master stay blocked by pre-commit. Escape hatch: git push --no-verify
 using TimeWarp.Amuru;
 
@@ -29,8 +30,7 @@ while ((line = Console.In.ReadLine()) is not null)
     remoteRefs.Add(parts[2]);
 }
 
-if (remoteRefs.Count > 0
-    && remoteRefs.All(r => r.StartsWith("refs/ganda/", StringComparison.Ordinal)))
+if (remoteRefs.Count > 0 && remoteRefs.All(IsExemptDest))
 {
   return 0;
 }
@@ -46,7 +46,8 @@ if (branch is "master" or "main")
 {
   bool updatesHome = remoteRefs.Count == 0
     || remoteRefs.Any(IsHomeBranchDest);
-  if (updatesHome)
+  bool mixesTagAndBranch = remoteRefs.Any(IsTagDest) && remoteRefs.Any(IsBranchDest);
+  if (updatesHome || mixesTagAndBranch)
   {
 #pragma warning disable RS0030, CA1849 // hook runfile: stderr to git, no ITerminal host
     Console.Error.WriteLine($"Refusing push while HEAD is '{branch}'.");
@@ -58,6 +59,16 @@ if (branch is "master" or "main")
 }
 
 return 0;
+
+static bool IsExemptDest(string remoteRef) =>
+  IsTagDest(remoteRef)
+  || remoteRef.StartsWith("refs/ganda/", StringComparison.Ordinal);
+
+static bool IsTagDest(string remoteRef) =>
+  remoteRef.StartsWith("refs/tags/", StringComparison.Ordinal);
+
+static bool IsBranchDest(string remoteRef) =>
+  remoteRef.StartsWith("refs/heads/", StringComparison.Ordinal);
 
 static bool IsHomeBranchDest(string remoteRef) =>
   remoteRef is "refs/heads/master" or "refs/heads/main";

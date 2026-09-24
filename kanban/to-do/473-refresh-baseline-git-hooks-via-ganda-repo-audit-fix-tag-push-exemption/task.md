@@ -20,10 +20,12 @@ stale copies.
 - [x] audit --fix applied and committed
 - [x] audit clean
 - [x] pre-push exempts tags
+- [x] Review disposition (`clean`, round 1 general)
 
 ## Notes
 
 - Implementer: **commit and push your changes before reporting done.**
+- Implementation review: `review/` (effort 1, round 1 general, disposition `clean`).
 
 ## Results
 
@@ -32,6 +34,14 @@ stale copies.
 - Committed and pushed: `36a7cbd0` — `fix(hooks): refresh pre-push for tag-only release pushes`
 - Re-ran `ganda repo audit`: exit 0, 28 passed / 0 failed
 - `.githooks/pre-push.cs` includes `IsTagDest` / `IsExemptDest` so tag-only pushes from master/main are allowed; mixed tag+branch batches still refused
+
+### Review disposition
+
+- **Outcome:** `clean`
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1 (`review/round-1/`)
+- **Final counts:** bug/suggestion/nit all 0 open, 0 fixed, 0 wontfix
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
 
 ### How to validate
 

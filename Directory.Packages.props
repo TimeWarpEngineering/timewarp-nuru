@@ -29,6 +29,7 @@
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.13" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.11" />
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="Shouldly" Version="4.3.0" />

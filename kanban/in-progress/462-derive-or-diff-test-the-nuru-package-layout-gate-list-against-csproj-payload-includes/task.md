@@ -91,3 +91,17 @@ dotnet run tests/timewarp-nuru-tests/devcli/nupkg-layout-01-check.cs
 - Layout check file: 4 passed (461 fail-closed matrix unchanged)
 - Removing one analyzer line from `NuruRequiredPackageEntries` (or adding a Pack item without
   updating the gate) makes the parity test fail naming the drifted entry
+
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Final counts:** bug/suggestion/nit all 0 open, 0 fixed, 0 wontfix
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Re-verified smoke: nupkg-layout-01 4 passed, nupkg-layout-02 3 passed
+
+## Session
+
+- 2026-09-24: implementer (ganda task work). Gate list + analyzer entries + parity test; CI multi-mode; pushed product commits.
+- 2026-09-24: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — disposition clean. Next host nodes: open-pr (no apply-review sibling).

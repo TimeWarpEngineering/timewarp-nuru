@@ -1,4 +1,4 @@
-#!/usr/bin/env dotnet run
+#!/usr/bin/env -S dotnet --
 // GOAL: Generate ALL deterministic code at compile-time via source generators
 // Nondeterministic items: 
 //  args passed at runtime only

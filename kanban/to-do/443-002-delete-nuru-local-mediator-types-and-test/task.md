@@ -104,6 +104,23 @@ Expect:
 - Both Mediator packages are shown at `14.0.0-beta.3`.
 - Audit prints "Repository passes all audit checks."
 
+### Implementation review
+
+- **Disposition:** `accepted-exceptions`. 1 round, effort 1, roster: general.
+- **Final counts:** bug 0; suggestion 1 wontfix; nit 2 wontfix; 0 open.
+- **Exceptions:**
+  - M1 (suggestion): the source-gen mediator bridge does not register `IOptions<T>` or typed `HttpClient`
+    services. Replacing the source-gen service graph belongs to task 444, which is out of scope here.
+    Runtime DI covers this case today.
+  - M2 (nit): the dropped bridge provider is not disposed. Disposing it would also dispose instances the
+    app owns (the terminal and singletons).
+  - M3 (nit): the comment layout in `repl-session.cs` is set by the formatter.
+- **Re-verified by review:** Release build 0 warnings / 0 errors. capabilities-07 7/7, generator-46 7/7,
+  `run-ci-tests.cs` exit 0, and `ganda repo audit` passes.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ## Session
 
 - Created: 158299 (2026-09-01)
+- Review: ganda task-work review oracle, general reviewer, effort 1 (2026-09-25)

@@ -38,7 +38,17 @@ public static class DynamicCompletionScriptGenerator
     string appPath = Environment.ProcessPath ?? appName;
     return template
       .Replace("{{APP_NAME}}", appName, StringComparison.Ordinal)
-      .Replace("{{APP_PATH}}", appPath, StringComparison.Ordinal);
+      .Replace("{{APP_PATH}}", EscapePowerShellSingleQuoted(appPath), StringComparison.Ordinal);
+  }
+
+  /// <summary>
+  /// Escapes a path for embedding inside a PowerShell single-quoted string.
+  /// In single-quoted PowerShell literals only <c>'</c> is special (doubled as <c>''</c>).
+  /// </summary>
+  internal static string EscapePowerShellSingleQuoted(string value)
+  {
+    ArgumentNullException.ThrowIfNull(value);
+    return value.Replace("'", "''", StringComparison.Ordinal);
   }
 
   /// <summary>

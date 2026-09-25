@@ -10,13 +10,17 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Version">Assembly version (from AssemblyInformationalVersionAttribute or AssemblyVersion)</param>
 /// <param name="CommitHash">Git commit hash (from TimeWarp.Build.Tasks, may be null)</param>
 /// <param name="CommitDate">Git commit date (from TimeWarp.Build.Tasks, may be null)</param>
+/// <param name="HasGeneratedMediator">
+/// True when the TimeWarp.Mediator generator emits <c>AddGeneratedMediator()</c> into this compilation.
+/// </param>
 public sealed record GeneratorModel(
   EquatableArray<AppModel> Apps,
   EquatableArray<string> UserUsings,
   EquatableArray<RouteDefinition> Endpoints,
   string? Version,
   string? CommitHash,
-  string? CommitDate)
+  string? CommitDate,
+  bool HasGeneratedMediator = false)
 {
   /// <summary>
   /// Gets whether any app has help enabled.

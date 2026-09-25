@@ -42,6 +42,10 @@ public sealed class NuruTelemetryOptions
   /// If not set, reads from OTEL_EXPORTER_OTLP_ENDPOINT environment variable.
   /// If neither is set, telemetry export is disabled.
   /// </summary>
+  /// <remarks>
+  /// OTLP sinks receive process telemetry and must be treated as a trust boundary.
+  /// Point this only at collectors you control or otherwise trust.
+  /// </remarks>
   public string? OtlpEndpoint { get; set; }
 
   /// <summary>

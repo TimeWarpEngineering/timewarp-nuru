@@ -53,7 +53,7 @@ internal static class InterceptorEmitter
     // Each app gets its own __ConfigureServices and GetServiceProvider methods
     if (model.UsesMicrosoftDependencyInjection)
     {
-      EmitRuntimeDIInfrastructure(sb, model.Apps);
+      EmitRuntimeDIInfrastructure(sb, model.Apps, model.HasGeneratedMediator);
     }
 
     EmitLoggingFactoryFields(sb, model);
@@ -62,7 +62,9 @@ internal static class InterceptorEmitter
     // Emit telemetry infrastructure if any app has telemetry enabled
     if (model.HasTelemetry)
     {
-      TelemetryEmitter.EmitTelemetryFields(sb);
+      bool enableTracing = model.Apps.Any(a => a.HasTelemetry && (a.TelemetryOptions?.EnableTracing ?? true));
+      bool enableMetrics = model.Apps.Any(a => a.HasTelemetry && (a.TelemetryOptions?.EnableMetrics ?? true));
+      TelemetryEmitter.EmitTelemetryFields(sb, enableTracing, enableMetrics);
     }
 
     // Determine the logger factory source for ILogger<T> injection
@@ -124,7 +126,7 @@ internal static class InterceptorEmitter
     // Emit telemetry setup if this app has telemetry enabled
     if (app.HasTelemetry)
     {
-      TelemetryEmitter.EmitTelemetrySetup(sb);
+      TelemetryEmitter.EmitTelemetrySetup(sb, app.TelemetryOptions ?? TelemetryModel.Default);
       sb.AppendLine("    try");
       sb.AppendLine("    {");
       sb.AppendLine($"      return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
@@ -596,7 +598,8 @@ internal static class InterceptorEmitter
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="apps">All app models (will filter to those using runtime DI).</param>
-  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps)
+  /// <param name="hasGeneratedMediator">Whether to register the TimeWarp.Mediator generated mediator.</param>
+  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps, bool hasGeneratedMediator)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE (UseMicrosoftDependencyInjection was called)");
@@ -642,6 +645,13 @@ internal static class InterceptorEmitter
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, app.Terminal);");
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
       sb.AppendLine();
+
+      if (hasGeneratedMediator)
+      {
+        sb.AppendLine("    // Register the TimeWarp.Mediator source-generated IMediator / ISender / IPublisher");
+        sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions.AddGeneratedMediator(services);");
+        sb.AppendLine();
+      }
 
       if (!string.IsNullOrEmpty(lambdaBody))
       {
@@ -843,8 +853,8 @@ internal static class InterceptorEmitter
       }
     }
 
-    // Fall back to runtime path for telemetry (OTEL endpoint is runtime config)
-    if (model.HasTelemetry)
+    // Fall back to runtime path for telemetry logging (OTEL endpoint is runtime config)
+    if (model.Apps.Any(a => a.HasTelemetry && (a.TelemetryOptions?.EnableLogging ?? true)))
     {
       return "app.LoggerFactory";
     }

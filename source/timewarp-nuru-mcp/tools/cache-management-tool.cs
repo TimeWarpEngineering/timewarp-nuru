@@ -107,9 +107,9 @@ internal sealed class CacheManagementTool
           if (File.Exists(metaFile))
           {
             string metaContent = File.ReadAllText(metaFile);
-            if (DateTime.TryParse(metaContent, out DateTime cachedTime))
+            if (DateTime.TryParse(metaContent, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime cachedTime))
             {
-              TimeSpan age = DateTime.UtcNow - cachedTime;
+              TimeSpan age = DateTime.UtcNow - cachedTime.ToUniversalTime();
               if (age >= TimeSpan.FromHours(1))
               {
                 status = "Expired";

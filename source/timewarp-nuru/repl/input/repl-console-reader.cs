@@ -57,6 +57,11 @@ public sealed partial class ReplConsoleReader
   // Exit signal for DeleteCharOrExit
   private bool ShouldExitRepl;
 
+  // Single-line wrap layout: prompt row, last cursor visual index, last drawn visible length.
+  private int InputStartRow;
+  private int LastCursorVisualIndex;
+  private int LastDrawnDisplayLength;
+
   /// <summary>
   /// Creates a new REPL console reader.
   /// </summary>
@@ -116,6 +121,7 @@ public sealed partial class ReplConsoleReader
     UndoManager.Clear();
     UndoManager.SetInitialState(string.Empty, 0);
     MultilineInput.Clear();    // Reset multiline buffer for new input
+    InitializeSingleLineDisplay();
 
     while (true)
     {
@@ -192,7 +198,11 @@ public sealed partial class ReplConsoleReader
 
   internal Task HandleTabCompletionAsync(bool reverse)
   {
-    (UserInput, CursorPosition) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
+    ClearSelection();
+    (UserInput, CursorPosition, bool displayedCandidates) = CompletionHandler.HandleTab(UserInput, CursorPosition, reverse);
+    if (displayedCandidates)
+      AdoptPhysicalCursorAsNewSingleLineAnchor();
+
     RedrawLine();
     return Task.CompletedTask;
   }
@@ -210,7 +220,12 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   internal Task HandlePossibleCompletionsAsync()
   {
-    CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition);
+    if (CompletionHandler.ShowPossibleCompletions(UserInput, CursorPosition))
+    {
+      AdoptPhysicalCursorAsNewSingleLineAnchor();
+      RedrawLine();
+    }
+
     return Task.CompletedTask;
   }
 
@@ -223,8 +238,9 @@ public sealed partial class ReplConsoleReader
     // If there's a selection, replace it with the typed character
     if (SelectionState.IsActive)
     {
-      int start = SelectionState.Start;
-      int end = SelectionState.End;
+      // Clamp against the current buffer — history, kill, and undo can leave a stale
+      // selection whose End is past UserInput.Length.
+      (int start, int end) = SelectionState.GetClampedBounds(UserInput.Length);
       UserInput = UserInput[..start] + charToInsert + UserInput[end..];
       CursorPosition = start + 1;
       SelectionState.Clear();
@@ -271,46 +287,73 @@ public sealed partial class ReplConsoleReader
 
     ReplLoggerMessages.LineRedrawn(Logger, UserInput, null);
 
-    // Move cursor to beginning of line
+    int displayLength = ReplOptions.Prompt.Length + UserInput.Length;
+    ClearOccupiedDisplayRows(displayLength);
+    WriteSingleLinePromptAndInput();
+    LastDrawnDisplayLength = displayLength;
+    UpdateCursorPosition();
+  }
+
+  private void AdoptPhysicalCursorAsNewSingleLineAnchor()
+  {
     (int _, int top) = Terminal.GetCursorPosition();
-    Terminal.SetCursorPosition(0, top);
+    InputStartRow = top < 0 ? 0 : top;
+    LastCursorVisualIndex = 0;
+    LastDrawnDisplayLength = 0;
+  }
 
-    // Clear line
-    Terminal.Write(new string(' ', Terminal.WindowWidth));
+  private void InitializeSingleLineDisplay()
+  {
+    int promptLength = ReplOptions.Prompt.Length;
+    int windowWidth = WrappedLineLayout.EffectiveWindowWidth(Terminal.WindowWidth);
+    (int _, int top) = Terminal.GetCursorPosition();
+    InputStartRow = WrappedLineLayout.StartRow(top, promptLength, windowWidth);
+    LastCursorVisualIndex = promptLength;
+    LastDrawnDisplayLength = promptLength;
+  }
 
-    // Move back to beginning
-    Terminal.SetCursorPosition(0, top);
+  private void ClearOccupiedDisplayRows(int nextDisplayLength)
+  {
+    int windowWidth = WrappedLineLayout.EffectiveWindowWidth(Terminal.WindowWidth);
+    (int _, int currentTop) = Terminal.GetCursorPosition();
+    int startRow = WrappedLineLayout.StartRow(currentTop, LastCursorVisualIndex, windowWidth);
+    int rowsToClear = WrappedLineLayout.RowsToClear(LastDrawnDisplayLength, nextDisplayLength, windowWidth);
+    string blankRow = new(' ', windowWidth);
 
-    // Redraw the prompt and current line
+    for (int rowOffset = 0; rowOffset < rowsToClear; rowOffset++)
+    {
+      Terminal.SetCursorPosition(0, startRow + rowOffset);
+      Terminal.Write(blankRow);
+    }
+
+    Terminal.SetCursorPosition(0, startRow);
+    InputStartRow = startRow;
+  }
+
+  private void WriteSingleLinePromptAndInput()
+  {
     Terminal.Write(PromptFormatter.Format(ReplOptions));
 
     if (ReplOptions.EnableColors)
     {
-      string highlightedText = SyntaxHighlighter.Highlight(UserInput);
-      Terminal.Write(highlightedText);
+      Terminal.Write(SyntaxHighlighter.Highlight(UserInput));
     }
     else
     {
       Terminal.Write(UserInput);
     }
-
-    // Update cursor position
-    UpdateCursorPosition();
   }
 
   private void UpdateCursorPosition()
   {
-    // Calculate desired cursor position (after prompt)
-    int promptLength = ReplOptions.Prompt.Length; // Use actual prompt length
-    int desiredLeft = promptLength + CursorPosition;
+    int promptLength = ReplOptions.Prompt.Length;
+    int visualIndex = promptLength + CursorPosition;
+    int windowWidth = WrappedLineLayout.EffectiveWindowWidth(Terminal.WindowWidth);
+    (int column, int rowOffset) = WrappedLineLayout.MapCursor(visualIndex, windowWidth);
 
     ReplLoggerMessages.CursorPositionUpdated(Logger, promptLength, CursorPosition, null);
 
-    // Set cursor position if within bounds
-    if (desiredLeft < Terminal.WindowWidth)
-    {
-      (int _, int top) = Terminal.GetCursorPosition();
-      Terminal.SetCursorPosition(desiredLeft, top);
-    }
+    Terminal.SetCursorPosition(column, InputStartRow + rowOffset);
+    LastCursorVisualIndex = visualIndex;
   }
 }

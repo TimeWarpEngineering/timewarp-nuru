@@ -218,20 +218,21 @@ public sealed partial class ReplConsoleReader
 
     SaveUndoState(isCharacterInput: false);
 
-    // If there's a selection, replace it (clamp against the current buffer)
+    // Replace an active selection first so InsertText lands at the splice point.
     if (SelectionState.IsActive)
     {
       (int start, int end) = SelectionState.GetClampedBounds(UserInput.Length);
-      UserInput = UserInput[..start] + clipboardText + UserInput[end..];
-      CursorPosition = start + clipboardText.Length;
+      UserInput = UserInput[..start] + UserInput[end..];
+      CursorPosition = start;
       ClearSelection();
     }
-    else
-    {
-      // Insert at cursor position
-      UserInput = UserInput[..CursorPosition] + clipboardText + UserInput[CursorPosition..];
-      CursorPosition += clipboardText.Length;
-    }
+
+    // Clipboard text (Windows Get-Clipboard in particular) may contain CRLF. Insert via
+    // the multiline buffer so \r\n is one break, then adopt GetFullText()'s \n contract
+    // and CursorToPosition for UserInput/CursorPosition (kanban 470-003).
+    SyncToMultilineBuffer();
+    MultilineInput.InsertText(clipboardText);
+    SyncFromMultilineBuffer();
 
     ResetKillTracking();
     RedrawLine();
@@ -299,15 +300,8 @@ public sealed partial class ReplConsoleReader
   /// </summary>
   private void RedrawLineWithSelection()
   {
-    // Move cursor to beginning of line
-    (int _, int top) = Terminal.GetCursorPosition();
-    Terminal.SetCursorPosition(0, top);
-
-    // Clear line
-    Terminal.Write(new string(' ', Terminal.WindowWidth));
-
-    // Move back to beginning
-    Terminal.SetCursorPosition(0, top);
+    int displayLength = ReplOptions.Prompt.Length + UserInput.Length;
+    ClearOccupiedDisplayRows(displayLength);
 
     // Redraw the prompt
     Terminal.Write(PromptFormatter.Format(ReplOptions));
@@ -358,7 +352,7 @@ public sealed partial class ReplConsoleReader
       }
     }
 
-    // Update cursor position
+    LastDrawnDisplayLength = displayLength;
     UpdateCursorPosition();
   }
 }

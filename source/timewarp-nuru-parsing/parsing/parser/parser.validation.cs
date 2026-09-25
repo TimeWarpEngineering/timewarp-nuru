@@ -7,33 +7,7 @@ internal sealed partial class Parser
 {
   private static bool IsBuiltInType(string type)
   {
-    return type switch
-    {
-      "string" => true,
-      "int" => true,
-      "byte" => true,
-      "sbyte" => true,
-      "short" => true,
-      "ushort" => true,
-      "uint" => true,
-      "ulong" => true,
-      "float" => true,
-      "char" => true,
-      "long" => true,
-      "double" => true,
-      "decimal" => true,
-      "bool" => true,
-      "DateTime" => true,
-      "Guid" => true,
-      "TimeSpan" => true,
-      "uri" or "Uri" => true,
-      "fileinfo" or "FileInfo" => true,
-      "directoryinfo" or "DirectoryInfo" => true,
-      "ipaddress" or "IPAddress" => true,
-      "dateonly" or "DateOnly" => true,
-      "timeonly" or "TimeOnly" => true,
-      _ => false
-    };
+    return BuiltInTypeNames.Contains(type);
   }
 
   private static bool IsValidTypeConstraint(string type)
@@ -70,17 +44,5 @@ internal sealed partial class Parser
     }
 
     return true;
-  }
-
-  private static bool IsValidIdentifier(string identifier)
-  {
-    if (string.IsNullOrEmpty(identifier))
-    {
-      return false;
-    }
-
-    // First character must be letter or underscore
-    char first = identifier[0];
-    return char.IsLetter(first) || first == '_';
   }
 }

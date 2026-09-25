@@ -43,7 +43,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Logging" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Microsoft.Extensions.Options" />
@@ -53,7 +53,25 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <!-- Process execution -->
     <PackageReference Include="TimeWarp.Amuru" />
+    <!-- Source-generated mediator. Generators must flow to consuming apps
+         (analyzers + buildTransitive props), so PrivateAssets is cleared; the app compilation
+         is the mediator host and emits AddGeneratedMediator(). -->
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="none" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <!-- TimeWarp.Nuru owns no mediator handlers; it is not a mediator graph member. -->
+    <TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>
+  </PropertyGroup>
+
+  <!-- The mediator generator emits a public AddGeneratedMediator() into every compilation it runs in.
+       Running it here would put a second copy in TimeWarp.Nuru.dll and make the call ambiguous in apps. -->
+  <Target Name="RemoveTimeWarpMediatorGenerator" BeforeTargets="CoreCompile" AfterTargets="ResolveLockFileAnalyzers">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(Filename)' == 'TimeWarp.Mediator.Generators'" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <!-- Include analyzers and source generators for AOT-compatible routing -->
@@ -93,7 +111,9 @@
     <None Include="$(RepositoryRoot)readme.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
-  <!-- Include the analyzer in the main package as a development dependency -->
+  <!-- Include the analyzer in the main package as a development dependency.
+       Pack paths under analyzers/ must stay in NupkgLayoutCheck.NuruRequiredPackageEntries
+       (kanban 462: nupkg-layout-02-csproj-gate-parity). -->
   <ItemGroup>
     <!-- Include analyzer DLL in the package -->
     <None Include="../timewarp-nuru-analyzers/bin/$(Configuration)/$(TargetFramework)/TimeWarp.Nuru.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
@@ -119,8 +139,9 @@
          see these files; same class as kanban 389). Concrete includes create
          the item regardless of evaluation timing and FAIL LOUDLY at pack time
          if a file is missing. When timewarp-nuru-build gains or drops a
-         dependency, update this list — the CI package-layout gate and a
-         clean-cache consumer restore are the backstops. -->
+         dependency, update this list AND NupkgLayoutCheck.NuruRequiredPackageEntries
+         (kanban 462: nupkg-layout-02-csproj-gate-parity diffs them). The CI
+         package-layout gate and a clean-cache consumer restore are the backstops. -->
     <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/TimeWarp.Nuru.Build.dll" Pack="true" PackagePath="build/net10.0" />
     <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/TimeWarp.Nuru.Analyzers.dll" Pack="true" PackagePath="build/net10.0" />
     <None Include="../timewarp-nuru-build/bin/$(Configuration)/net10.0/ICSharpCode.Decompiler.dll" Pack="true" PackagePath="build/net10.0" />

@@ -39,6 +39,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool IsBuilt;
   private bool DiscoverEndpointsEnabled;
   private bool TelemetryEnabled;
+  private TelemetryModel? TelemetryOptions;
   private bool CompletionEnabled;
   private bool MicrosoftDependencyInjectionEnabled;
   private string? ConfigureServicesBody;
@@ -88,22 +89,11 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
-  /// Enables help with default options.
-  /// Mirrors: NuruAppBuilder.AddHelp()
-  /// </summary>
-  public TSelf AddHelp()
-  {
-    HasHelp = true;
-    HelpOptions = HelpModel.Default;
-    return (TSelf)this;
-  }
-
-  /// <summary>
-  /// Enables help with custom options.
-  /// Mirrors: NuruAppBuilder.AddHelp(Action&lt;HelpOptions&gt;)
+  /// Configures help output filtering.
+  /// Mirrors: NuruAppBuilder.ConfigureHelp(Action&lt;HelpOptions&gt;)
   /// </summary>
   /// <param name="helpOptions">The configured help options.</param>
-  public TSelf AddHelp(HelpModel helpOptions)
+  public TSelf ConfigureHelp(HelpModel helpOptions)
   {
     HasHelp = true;
     HelpOptions = helpOptions;
@@ -218,12 +208,25 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
-  /// Enables telemetry (OpenTelemetry instrumentation).
+  /// Enables telemetry (OpenTelemetry instrumentation) with default options.
   /// Mirrors: NuruAppBuilder.UseTelemetry()
   /// </summary>
   public TSelf UseTelemetry()
   {
     TelemetryEnabled = true;
+    TelemetryOptions = TelemetryModel.Default;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables telemetry with custom options.
+  /// Mirrors: NuruAppBuilder.UseTelemetry(Action&lt;NuruTelemetryOptions&gt;)
+  /// </summary>
+  /// <param name="telemetryOptions">The configured telemetry options.</param>
+  public TSelf UseTelemetry(TelemetryModel telemetryOptions)
+  {
+    TelemetryEnabled = true;
+    TelemetryOptions = telemetryOptions;
     return (TSelf)this;
   }
 
@@ -391,6 +394,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       DiscoverEndpoints: DiscoverEndpointsEnabled,
       ExplicitEndpointTypes: [.. ExplicitEndpointTypes],
       HasTelemetry: TelemetryEnabled,
+      TelemetryOptions: TelemetryOptions,
       HasCompletion: CompletionEnabled,
       UseMicrosoftDependencyInjection: MicrosoftDependencyInjectionEnabled,
       ConfigureServicesLambdaBody: ConfigureServicesBody,
@@ -417,8 +421,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.WithName(string name) => WithName(name);
   IIrAppBuilder IIrAppBuilder.WithDescription(string description) => WithDescription(description);
   IIrAppBuilder IIrAppBuilder.WithAiPrompt(string aiPrompt) => WithAiPrompt(aiPrompt);
-  IIrAppBuilder IIrAppBuilder.AddHelp() => AddHelp();
-  IIrAppBuilder IIrAppBuilder.AddHelp(HelpModel helpOptions) => AddHelp(helpOptions);
+  IIrAppBuilder IIrAppBuilder.ConfigureHelp(HelpModel helpOptions) => ConfigureHelp(helpOptions);
   IIrAppBuilder IIrAppBuilder.AddRepl() => AddRepl();
   IIrAppBuilder IIrAppBuilder.AddRepl(ReplModel replOptions) => AddRepl(replOptions);
   IIrAppBuilder IIrAppBuilder.AddConfiguration() => AddConfiguration();
@@ -430,6 +433,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.AddExtensionMethodCall(ExtensionMethodCall extensionMethod) => AddExtensionMethodCall(extensionMethod);
   IIrAppBuilder IIrAppBuilder.UseTerminal() => UseTerminal();
   IIrAppBuilder IIrAppBuilder.UseTelemetry() => UseTelemetry();
+  IIrAppBuilder IIrAppBuilder.UseTelemetry(TelemetryModel telemetryOptions) => UseTelemetry(telemetryOptions);
   IIrAppBuilder IIrAppBuilder.UseMicrosoftDependencyInjection() => UseMicrosoftDependencyInjection();
   IIrAppBuilder IIrAppBuilder.SetConfigureServicesBody(string lambdaBody) => SetConfigureServicesBody(lambdaBody);
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);

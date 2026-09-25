@@ -63,13 +63,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
 
       foreach (SearchResult result in results)
       {
-        string fullPattern = string.IsNullOrEmpty(result.GroupPath)
-          ? result.Pattern
-          : $"{result.GroupPath} {result.Pattern}".Trim();
-
-        string versionInfo = query.Version ? $" [{result.CliName}@{result.Endpoint.Kind}]" : $" [{result.CliName}]";
-
-        await terminal.WriteLineAsync($"  {fullPattern}{versionInfo}").ConfigureAwait(false);
+        await terminal.WriteLineAsync(FormatResultHeader(result, query.Version)).ConfigureAwait(false);
 
         if (!string.IsNullOrEmpty(result.Description))
         {
@@ -118,6 +112,25 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
         cancellationToken).ConfigureAwait(false);
 
       await terminal.WriteLineAsync($"Auto-indexed {capabilities.Name} v{capabilities.Version} ({capabilities.Endpoints.Count} endpoints)").ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Formats the first line of a result: the full route pattern followed by the owning CLI in
+    /// brackets, with <c>@version</c> appended when <paramref name="showVersion"/> is set.
+    /// </summary>
+    internal static string FormatResultHeader(SearchResult result, bool showVersion)
+    {
+      ArgumentNullException.ThrowIfNull(result);
+
+      string fullPattern = string.IsNullOrEmpty(result.GroupPath)
+        ? result.Pattern
+        : $"{result.GroupPath} {result.Pattern}".Trim();
+
+      string cliInfo = showVersion
+        ? $"{result.CliName}@{result.CliVersion ?? "unknown"}"
+        : result.CliName;
+
+      return $"  {fullPattern} [{cliInfo}]";
     }
 
     private static string BuildSearchQuery(SearchQuery query)

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING: `--capabilities` JSON structure**: The capabilities endpoint now outputs hierarchical JSON reflecting route groups. Grouped commands appear only within their respective `groups` array (not duplicated at top level). Ungrouped commands remain in the top-level `commands` array.
 
 ### Added
+- **TimeWarp.Mediator 14.0.0-beta.2**: TimeWarp.Nuru now depends on `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators`. The generator flows into consuming apps, so each app compilation emits its own source-generated `IMediator` / `ISender` / `IPublisher`. Apps using `.UseMicrosoftDependencyInjection()` get `AddGeneratedMediator()` called automatically, so handlers can inject `ISender` / `IPublisher`. Nuru's own `ICommand` / `IQuery` / `Unit` types are unchanged for now.
 - **GroupCapability class**: New `groups` array in capabilities JSON output containing nested groups with their commands
 - **GroupHierarchyBuilder**: Internal utility for building hierarchical group structures from routes
 

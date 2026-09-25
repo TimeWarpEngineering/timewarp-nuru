@@ -12,6 +12,9 @@ using System.Diagnostics.Metrics;
 /// This behavior creates its own ActivitySource and Meter instances for telemetry.
 /// When used with UseTelemetry(), the generated code will configure OTLP exporters
 /// that automatically pick up these sources.
+/// On failure it records <c>error.type</c> only — not <c>error.message</c> or status
+/// detail from <see cref="Exception.Message"/> — so argv/secrets in exception text
+/// are not exported. OTLP sinks must be trusted (see <see cref="NuruTelemetryOptions.OtlpEndpoint"/>).
 /// </remarks>
 public sealed class TelemetryBehavior : INuruBehavior
 {
@@ -54,10 +57,10 @@ public sealed class TelemetryBehavior : INuruBehavior
     {
       stopwatch.Stop();
 
-      // Record error in trace
-      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      // Record error in trace. Prefer error.type only — exception messages can embed
+      // argv or secrets and must not leave the process via OTLP by default.
+      activity?.SetStatus(ActivityStatusCode.Error);
       activity?.SetTag("error.type", ex.GetType().Name);
-      activity?.SetTag("error.message", ex.Message);
 
       // Record error metrics
       CommandsErrored.Add(1,

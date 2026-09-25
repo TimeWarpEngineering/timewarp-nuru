@@ -86,6 +86,10 @@ namespace TimeWarp.Nuru;
 ///   <term>Enter</term>
 ///   <description>Submit command</description>
 /// </item>
+/// <item>
+///   <term>Shift+Enter</term>
+///   <description>Add a new line without executing (multiline)</description>
+/// </item>
 /// </list>
 /// <para>
 /// Note: Some advanced VSCode features like Ctrl+K (delete-to-end), Ctrl+Backspace (delete-word-backward)
@@ -106,6 +110,7 @@ public sealed class VSCodeKeyBindingProfile : IKeyBindingProfile
     {
       // === Enter/Submit ===
       [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnterAsync,
+      [(ConsoleKey.Enter, ConsoleModifiers.Shift)] = reader.HandleAddLineAsync,  // Shift+Enter adds new line without executing
 
       // === Tab Completion ===
       [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletionAsync(reverse: false),

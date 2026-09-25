@@ -53,7 +53,6 @@
 namespace DevCli;
 
 using System.Text.Json;
-using System.Xml.Linq;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -90,7 +89,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
 
       // --- Step 1: props version -----------------------------------------
       string? repoRoot = Git.FindRoot();
-      string? version = GetVersionFromSource(repoRoot);
+      string? version = PropsVersionReader.Read(repoRoot);
 
       if (version is null)
       {
@@ -301,12 +300,33 @@ public sealed class ReleaseCommand : ICommand<Unit>
         return Value;
       }
 
+      List<string> invalidPackages = [.. packages.Where(p => !NuGetVersionService.IsValidPackageId(p))];
+      if (invalidPackages.Count > 0)
+      {
+        Terminal.WriteErrorLine($"Error: invalid NuGet package id(s): {string.Join(", ", invalidPackages)}");
+        Environment.ExitCode = 1;
+        return Value;
+      }
+
       List<string> alreadyPublished = [];
       foreach (string pkg in packages)
       {
-        IReadOnlyList<string> versions = await NuGetVersionService
-          .GetPackageVersionsAsync(pkg, cancellationToken)
-          .ConfigureAwait(false);
+        IReadOnlyList<string> versions;
+        try
+        {
+          versions = await NuGetVersionService
+            .GetPackageVersionsAsync(pkg, cancellationToken)
+            .ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex)
+        {
+          // Fail closed (470-007 M9): an unreachable/erroring NuGet must not
+          // be read as "not yet published".
+          Terminal.WriteErrorLine($"Error: NuGet lookup for '{pkg}' failed: {ex.Message}");
+          Terminal.WriteErrorLine("  Cannot determine whether this version is already published; refusing to release. Retry when NuGet is reachable.");
+          Environment.ExitCode = 1;
+          return Value;
+        }
 
         if (NuGetVersionService.IsVersionPublished(version, versions))
         {
@@ -435,34 +455,5 @@ public sealed class ReleaseCommand : ICommand<Unit>
     }
 
     private static string ShortSha(string sha) => sha.Length > 7 ? sha[..7] : sha;
-
-    private static string? GetVersionFromSource(string? repoRoot)
-    {
-      if (repoRoot is null)
-      {
-        return null;
-      }
-
-      string sourceDir = Path.Combine(repoRoot, "source");
-      if (!Directory.Exists(sourceDir))
-      {
-        return null;
-      }
-
-      string[] buildPropsFiles = Directory.GetFiles(sourceDir, "Directory.Build.props", SearchOption.TopDirectoryOnly);
-      if (buildPropsFiles is not { Length: > 0 })
-      {
-        return null;
-      }
-
-      string xml = File.ReadAllText(buildPropsFiles[0]);
-#pragma warning disable IDE0007
-      XDocument doc = XDocument.Parse(xml);
-#pragma warning restore IDE0007
-      XNamespace ns = "http://schemas.microsoft.com/developer/msbuild/2003";
-
-      XElement? versionElement = doc.Descendants(ns + "Version").FirstOrDefault();
-      return (versionElement ?? doc.Descendants("Version").FirstOrDefault())?.Value.Trim();
-    }
   }
 }

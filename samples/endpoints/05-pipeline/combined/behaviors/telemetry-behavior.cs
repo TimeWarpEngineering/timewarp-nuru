@@ -23,9 +23,9 @@ public sealed class DistributedTelemetryBehavior : INuruBehavior
       await proceed();
       activity?.SetStatus(ActivityStatusCode.Ok);
     }
-    catch (Exception ex)
+    catch (Exception)
     {
-      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      activity?.SetStatus(ActivityStatusCode.Error);
       throw;
     }
   }

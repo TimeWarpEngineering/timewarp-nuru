@@ -40,8 +40,14 @@ public class ReplOptions
   public bool PersistHistory { get; set; } = true;
 
   /// <summary>
-  /// Path to the history file. If null, uses default location in user's home directory.
+  /// Path to the history file. If null, uses default location
+  /// (<c>~/.nuru/history/&lt;app&gt;</c>).
   /// </summary>
+  /// <remarks>
+  /// On Unix, newly created <c>~/.nuru</c> / <c>history</c> directories are mode 0700 and
+  /// the history file is written owner-only (0600). On Windows, the file inherits
+  /// user-profile ACLs (other users are already excluded).
+  /// </remarks>
   public string? HistoryFilePath { get; set; }
 
   /// <summary>
@@ -89,13 +95,23 @@ public class ReplOptions
   /// Set to null or empty to save all commands to history.
   /// Default includes common sensitive patterns and history management commands.
   /// </summary>
+  /// <remarks>
+  /// Ignore patterns are best-effort: they catch common secret shapes but are not a
+  /// guarantee. For hard control over persistence, set <see cref="PersistHistory"/> to
+  /// <c>false</c> or point <see cref="HistoryFilePath"/> at a path with appropriate ACLs.
+  /// </remarks>
   public IList<string>? HistoryIgnorePatterns { get; init; } =
   [
     "*password*",
     "*secret*",
     "*token*",
     "*apikey*",
+    "*api_key*",
+    "*api-key*",
     "*credential*",
+    "*bearer*",
+    "*authorization*",
+    "*sk-*",
     "clear-history"  // Don't add history management commands to history
   ];
 

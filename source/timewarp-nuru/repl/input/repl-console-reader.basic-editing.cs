@@ -60,20 +60,13 @@ public sealed partial class ReplConsoleReader
   {
     // Clear screen using ANSI escape codes: clear screen + cursor home
     Terminal.Write("\u001b[2J\u001b[H");
+    Terminal.SetCursorPosition(0, 0);
+    InputStartRow = 0;
+    LastCursorVisualIndex = 0;
+    LastDrawnDisplayLength = 0;
 
-    // Redraw prompt and current input
-    Terminal.Write(PromptFormatter.Format(ReplOptions));
-
-    if (ReplOptions.EnableColors)
-    {
-      Terminal.Write(SyntaxHighlighter.Highlight(UserInput));
-    }
-    else
-    {
-      Terminal.Write(UserInput);
-    }
-
-    // Position cursor correctly
+    WriteSingleLinePromptAndInput();
+    LastDrawnDisplayLength = ReplOptions.Prompt.Length + UserInput.Length;
     UpdateCursorPosition();
     return Task.CompletedTask;
   }
@@ -88,41 +81,5 @@ public sealed partial class ReplConsoleReader
     // Visual indicator: could change cursor shape, but that's terminal-dependent
     // For now, just toggle the state - the HandleCharacter method will use it
     return Task.CompletedTask;
-  }
-
-  /// <summary>
-  /// Handles character insertion with overwrite mode support.
-  /// </summary>
-  /// <param name="charToInsert">The character to insert or overwrite.</param>
-  internal void HandleCharacterWithOverwrite(char charToInsert)
-  {
-    SaveUndoState(isCharacterInput: true);
-
-    // If there's a selection, replace it regardless of mode
-    if (SelectionState.IsActive)
-    {
-      int start = SelectionState.Start;
-      int end = SelectionState.End;
-      UserInput = UserInput[..start] + charToInsert + UserInput[end..];
-      CursorPosition = start + 1;
-      SelectionState.Clear();
-    }
-    else if (IsOverwriteMode && CursorPosition < UserInput.Length)
-    {
-      // Overwrite mode: replace character at cursor
-      UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[(CursorPosition + 1)..];
-      CursorPosition++;
-    }
-    else
-    {
-      // Insert mode (default): insert at cursor
-      UserInput = UserInput[..CursorPosition] + charToInsert + UserInput[CursorPosition..];
-      CursorPosition++;
-    }
-
-    PrefixSearchString = null;
-    CompletionHandler.Reset();
-    ResetKillTracking();
-    RedrawLine();
   }
 }

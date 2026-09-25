@@ -90,4 +90,9 @@
     <PackageReference Include="TimeWarp.Build.Tasks" PrivateAssets="all" />
   </ItemGroup>
 
+  <!-- TW0007: file-level usings must live in global-usings.cs -->
+  <ItemGroup Label="Source Generators">
+    <PackageReference Include="TimeWarp.SourceGenerators" PrivateAssets="all" />
+  </ItemGroup>
+
 </Project>

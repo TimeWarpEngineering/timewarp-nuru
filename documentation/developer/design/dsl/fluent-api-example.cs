@@ -1,4 +1,4 @@
-#!/usr/bin/env dotnet run
+#!/usr/bin/env -S dotnet --
 // GOAL: Generate ALL deterministic code at compile-time via source generators
 // Nondeterministic items: 
 //  args passed at runtime only
@@ -61,7 +61,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
   #region Help
   // Enable auto-generated help route
   // This should generate the help invoker based on registered routes
-  .AddHelp(options => { options.ShowPerCommandHelpRoutes = false; })  
+  .ConfigureHelp(options => { options.ShowPerCommandHelpRoutes = false; })  
   #endregion
   #region REPL Support
   // Enable REPL support with custom options 

@@ -10,7 +10,9 @@ namespace TimeWarp.Nuru.Tests.Routing
 // Tests for Uri, FileInfo, and DirectoryInfo type constraints in source-generated code.
 // These types don't have TryParse methods and require special handling:
 // - Uri: uses Uri.TryCreate
-// - FileInfo/DirectoryInfo: use constructor with try/catch for ArgumentException
+// - FileInfo/DirectoryInfo: use constructor with try/catch for Exception
+//   (ArgumentException, PathTooLongException, NotSupportedException, and the
+//   other documented constructor failures)
 //
 // Issue #381: Source generator was not emitting conversion code for these types,
 // causing CS0103 errors (undefined variables) at compile time.

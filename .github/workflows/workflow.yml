@@ -30,7 +30,9 @@ jobs:
     permissions:
       contents: read
       id-token: write  # Required for NuGet Trusted Publishing (OIDC)
-      actions: read  # Release mode lists CI runs and downloads their package artifacts
+      # write: keep-last-two prune deletes older Packages-* artifacts.
+      # Release-mode list/download still works with write (superset of read).
+      actions: write
 
     steps:
       - name: Checkout repository
@@ -74,13 +76,50 @@ jobs:
           fi
 
       - name: Upload Artifacts
-        # Skip in release mode: release no longer builds/packs locally — it
-        # downloads and pushes an already-uploaded CI artifact (458-002), so
-        # re-uploading artifacts/packages here would just re-upload the same
-        # bytes the run just downloaded (harmless but wasteful).
-        if: always() && github.event_name != 'release' && !(github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
+        # Green master only: 458-002 promotes Packages-* from a push run at the
+        # tag SHA. PR / always() uploads filled the org quota. Skip failed runs,
+        # probe (no nupkgs), and release-mode re-upload (the run just downloaded
+        # the same bytes).
+        id: upload-packages
+        if: >-
+          success() &&
+          github.ref == 'refs/heads/master' &&
+          github.event_name != 'release' &&
+          !(github.event_name == 'workflow_dispatch' && (inputs.mode == 'release' || inputs.mode == 'probe'))
         uses: actions/upload-artifact@v4
         with:
           name: Packages-${{ github.run_number }}
           path: artifacts/packages/*.nupkg
-          if-no-files-found: ignore
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Keep last two Packages artifacts
+        if: success() && steps.upload-packages.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_ARTIFACT: Packages-${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp)"
+          trap 'rm -f "$tmp"' EXIT
+          gh api --paginate \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select((.name | startswith("Packages-")) and (.expired == false)) | [.created_at, (.id | tostring), .name] | @tsv' \
+            | LC_ALL=C sort -r > "$tmp"
+          if ! cut -f3 "$tmp" | grep -qxF "$EXPECTED_ARTIFACT"; then
+            echo "Just-uploaded artifact ${EXPECTED_ARTIFACT} is not listed yet; skipping prune (keep-last-2 runs on the next green master push)."
+            exit 0
+          fi
+          keep=2
+          n=0
+          while IFS=$'\t' read -r created_at id name; do
+            [ -n "$id" ] || continue
+            n=$((n + 1))
+            if [ "$n" -le "$keep" ]; then
+              echo "Keeping ${name} (id=${id}, created=${created_at})"
+              continue
+            fi
+            echo "Deleting ${name} (id=${id}, created=${created_at})"
+            gh api --method DELETE "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}"
+          done < "$tmp"

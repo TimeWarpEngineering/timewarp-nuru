@@ -10,15 +10,19 @@ namespace TimeWarp.Nuru.Tests.DevCli
 using global::DevCli;
 
 /// <summary>
-/// Pure-parse matrix for PackableProjectService.ParseGetPropertyOutput — the
-/// stdout of `dotnet msbuild &lt;csproj&gt; -getProperty:IsPackable,PackageId`
-/// (kanban task 458-004). Covers the tolerances the parser must have: leading
-/// non-JSON log noise before the JSON payload — INCLUDING noise that itself
-/// contains a brace (round-1 review finding #1a: anchoring on the first '{'
-/// in stdout, rather than on the '{' immediately preceding "Properties",
+/// Pure-parse matrix for PackableProjectService.ParseGetPropertyOutput /
+/// TryParseGetPropertyOutput — the stdout of
+/// `dotnet msbuild &lt;csproj&gt; -getProperty:IsPackable,PackageId`
+/// (kanban task 458-004; 470 M23). Covers the tolerances the parser must have:
+/// leading non-JSON log noise before the JSON payload — INCLUDING noise that
+/// itself contains a brace (round-1 review finding #1a: anchoring on the first
+/// '{' in stdout, rather than on the '{' immediately preceding "Properties",
 /// silently mis-locates the payload when a log line has a stray brace before
 /// the real JSON) — case-insensitive boolean parsing, and malformed/missing
-/// shape all resolving to a sensible (false, null) rather than throwing.
+/// shape. Unparseable stdout makes TryParse return false so
+/// GetPackableProjectsAsync can fail-loud (470 M23) instead of treating it as
+/// IsPackable=false; ParseGetPropertyOutput still maps that to (false, null)
+/// for callers that only need a soft read.
 /// </summary>
 [TestTag("DevCli")]
 public class PackableProjectParseTests
@@ -151,12 +155,15 @@ public class PackableProjectParseTests
     await Task.CompletedTask;
   }
 
-  public static async Task Missing_properties_key_returns_not_packable_null_id()
+  public static async Task Missing_properties_key_is_unparseable()
   {
+    // `{}` deserializes but Properties is null — same silent-drop class as
+    // missing JSON (470 M23). TryParse must return false so derivation throws.
     const string stdout = "{}";
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
 
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
 
@@ -235,50 +242,85 @@ public class PackableProjectParseTests
     await Task.CompletedTask;
   }
 
-  public static async Task No_properties_marker_returns_not_packable_null_id()
+  public static async Task No_properties_marker_is_unparseable()
   {
     const string stdout = "MSBuild failed to run for an unrelated reason.";
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
 
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
 
     await Task.CompletedTask;
   }
 
-  public static async Task Properties_marker_with_no_preceding_brace_returns_not_packable_null_id()
+  public static async Task Properties_marker_with_no_preceding_brace_is_unparseable()
   {
     // "Properties" text present, but nothing but non-whitespace precedes it —
     // the backward scan must not find a '{' and must fail closed.
     const string stdout = "not json at all \"Properties\": \"whatever\"";
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
 
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
 
     await Task.CompletedTask;
   }
 
-  public static async Task Invalid_json_after_opening_brace_returns_not_packable_null_id()
+  public static async Task Invalid_json_after_opening_brace_is_unparseable()
   {
     const string stdout = "{\"Properties\": this is not valid json ";
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
 
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
 
     await Task.CompletedTask;
   }
 
-  public static async Task Empty_string_returns_not_packable_null_id()
+  public static async Task Empty_string_is_unparseable()
   {
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput("");
+    PackableProjectService.TryParseGetPropertyOutput("", out _, out _).ShouldBeFalse();
 
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput("");
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Successful_not_packable_parse_is_distinguishable_from_unparseable()
+  {
+    // IsPackable=false with a Properties object is a successful parse — TryParse
+    // true — and must NOT be confused with the unparseable path that derivation
+    // fails-loud on (470 M23).
+    const string stdout = """
+    {
+      "Properties": {
+        "IsPackable": "false",
+        "PackageId": "TimeWarp.Nuru.Parsing"
+      }
+    }
+    """;
+
+    PackableProjectService.TryParseGetPropertyOutput(stdout, out bool isPackable, out string? packageId)
+      .ShouldBeTrue();
+    isPackable.ShouldBeFalse();
+    packageId.ShouldBe("TimeWarp.Nuru.Parsing");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Null_properties_object_json_is_unparseable()
+  {
+    const string stdout = """{"Properties":null}""";
+
+    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
 
     await Task.CompletedTask;
   }

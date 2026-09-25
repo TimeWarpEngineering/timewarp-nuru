@@ -6,7 +6,9 @@
 // but deliberately NOT compiled into the tests/ci-tests multi-mode assembly (endpoints
 // are collected GLOBALLY by .DiscoverEndpoints() there — task 454-022 decision A2). Without
 // this guard, the multi-mode compile would fail with CS0246 (CheckVersionCommand not found).
-// Run standalone only: dotnet run tests/timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs
+// Listed in CiTestExcludes (so multi-mode does not silently compile an empty file) and
+// run by run-ci-tests.cs second phase (task 470-010 / M15). Manual:
+//   dotnet run tests/timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs
 
 #if !JARIBU_MULTI
 return await RunAllTests();

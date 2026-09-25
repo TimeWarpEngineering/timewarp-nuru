@@ -139,25 +139,37 @@ internal sealed partial class Parser : IParser
     Token token = Peek();
 
     // M14: Detect adjacent parameter blocks with no whitespace separator (e.g., "{a}{b}")
-    if (token.Type == RouteTokenType.LeftBrace
+    bool isAdjacentParameter = token.Type == RouteTokenType.LeftBrace
         && CurrentIndex > 0
         && Previous().Type == RouteTokenType.RightBrace
-        && Previous().EndPosition == token.Position)
+        && Previous().EndPosition == token.Position;
+
+    SegmentSyntax? segment = null;
+    try
     {
-      AddParseError(new AdjacentParametersError(token.Position, token.Length));
-      // Continue parsing the parameter — emit diagnostic, don't throw (preserve fuzz guarantee)
+      segment = token.Type switch
+      {
+        RouteTokenType.LeftBrace => ParseParameter(),
+        RouteTokenType.DoubleDash or RouteTokenType.SingleDash => ParseOption(),
+        RouteTokenType.EndOfOptions => ParseEndOfOptions(),
+        RouteTokenType.Identifier => ParseLiteral(),
+        RouteTokenType.Invalid => ParseInvalidToken(),
+        RouteTokenType.RightBrace => HandleUnexpectedRightBrace(),
+        _ => HandleUnexpectedToken()
+      };
+    }
+    finally
+    {
+      if (isAdjacentParameter)
+      {
+        // Span the full second parameter (e.g. "{b}" not just "{") so analyzer squiggles cover the segment.
+        // Record the diagnostic even when parsing throws, and do not throw from this check.
+        int length = segment is not null ? segment.Length : token.Length;
+        AddParseError(new AdjacentParametersError(token.Position, length));
+      }
     }
 
-    return token.Type switch
-    {
-      RouteTokenType.LeftBrace => ParseParameter(),
-      RouteTokenType.DoubleDash or RouteTokenType.SingleDash => ParseOption(),
-      RouteTokenType.EndOfOptions => ParseEndOfOptions(),
-      RouteTokenType.Identifier => ParseLiteral(),
-      RouteTokenType.Invalid => ParseInvalidToken(),
-      RouteTokenType.RightBrace => HandleUnexpectedRightBrace(),
-      _ => HandleUnexpectedToken()
-    };
+    return segment;
   }
 
   private string ConsumeDescription(bool stopAtRightBrace)
@@ -177,7 +189,7 @@ internal sealed partial class Parser : IParser
       if (!stopAtRightBrace)
       {
         // For option descriptions, stop at new segment indicators
-        if (token.Type is RouteTokenType.DoubleDash or RouteTokenType.SingleDash or RouteTokenType.LeftBrace)
+        if (token.Type is RouteTokenType.DoubleDash or RouteTokenType.SingleDash or RouteTokenType.LeftBrace or RouteTokenType.EndOfOptions)
         {
           break;
         }

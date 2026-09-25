@@ -127,7 +127,7 @@ public sealed class Issue152WorkspaceCommitsCommand : Issue152WorkspaceGroupBase
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue152WorkspaceCommitsCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Issue152WorkspaceCommitsCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Issue152WorkspaceCommitsCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Showing commits from last {command.Days} days").ConfigureAwait(false);
@@ -155,7 +155,7 @@ public sealed class Issue152RepoSetupCommand : Issue152RepoGroupBase, ICommand<U
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue152RepoSetupCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Issue152RepoSetupCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Issue152RepoSetupCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Setting up repo (dry-run: {command.DryRun})").ConfigureAwait(false);

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -11,7 +12,7 @@ public sealed class ConfigShowQuery : IQuery<Unit>
     IOptions<ApiSettings> apiOptions,
     IConfiguration config) : IQueryHandler<ConfigShowQuery, Unit>
   {
-    public ValueTask<Unit> Handle(ConfigShowQuery query, CancellationToken ct)
+    public Task<Unit> Handle(ConfigShowQuery query, CancellationToken ct)
     {
       WriteLine("\n=== Configuration Values ===");
       WriteLine($"App Name: {config["AppName"]}");
@@ -28,7 +29,7 @@ public sealed class ConfigShowQuery : IQuery<Unit>
       WriteLine($"  Timeout: {apiOptions.Value.TimeoutSeconds}s");
       WriteLine($"  Retry Count: {apiOptions.Value.RetryCount}");
 
-      return default;
+      return Unit.Task;
     }
   }
 }

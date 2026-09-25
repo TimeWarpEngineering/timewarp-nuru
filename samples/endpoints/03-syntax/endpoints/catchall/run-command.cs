@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("run", Description = "Run a script with parameters")]
@@ -18,10 +19,10 @@ public sealed class RunCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<RunCommand, Unit>
   {
-    public ValueTask<Unit> Handle(RunCommand command, CancellationToken ct)
+    public Task<Unit> Handle(RunCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Running {command.Script} with params: {string.Join(" ", command.Params)}");
-      return default;
+      return Unit.Task;
     }
   }
 }

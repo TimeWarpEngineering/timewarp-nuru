@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("docker", Description = "Run docker command with arbitrary arguments")]
@@ -15,10 +16,10 @@ public sealed class DockerCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DockerCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DockerCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DockerCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Docker args: {string.Join(" ", command.Args)}");
-      return default;
+      return Unit.Task;
     }
   }
 }

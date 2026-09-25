@@ -356,7 +356,7 @@ public sealed class Task419BasicStatusCommand : Task419BasicGroupBase, ICommand<
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419BasicStatusCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Task419BasicStatusCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Task419BasicStatusCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Status: verbose={command.Verbose}").ConfigureAwait(false);
@@ -384,7 +384,7 @@ public sealed class Task419MultiDeployCommand : Task419MultiGroupBase, ICommand<
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419MultiDeployCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Task419MultiDeployCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Task419MultiDeployCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Deploy: verbose={command.Verbose}, dryRun={command.DryRun}").ConfigureAwait(false);
@@ -412,7 +412,7 @@ public sealed class Task419MixedCommitCommand : Task419MixedGroupBase, ICommand<
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419MixedCommitCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Task419MixedCommitCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Task419MixedCommitCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Commit: verbose={command.Verbose}, message={command.Message}").ConfigureAwait(false);
@@ -444,7 +444,7 @@ public sealed class Task419GrandchildCommand : Task419ChildGroupBase, ICommand<U
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419GrandchildCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Task419GrandchildCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Task419GrandchildCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Grandchild: verbose={command.Verbose}, dryRun={command.DryRun}").ConfigureAwait(false);
@@ -478,7 +478,7 @@ public sealed class Task419TypedConfigCommand : Task419TypedGroupBase, ICommand<
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419TypedConfigCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Task419TypedConfigCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Task419TypedConfigCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       string countStr = command.Count?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "(null)";

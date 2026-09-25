@@ -203,7 +203,7 @@ public sealed class H08DeployEndpoint : ICommand<Unit>
 {
   public sealed class Handler : ICommandHandler<H08DeployEndpoint, Unit>
   {
-    public ValueTask<Unit> Handle(H08DeployEndpoint command, CancellationToken cancellationToken) => default;
+    public Task<Unit> Handle(H08DeployEndpoint command, CancellationToken cancellationToken) => Unit.Task;
   }
 }
 
@@ -216,7 +216,7 @@ public sealed class H08BuildEndpoint : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<H08BuildEndpoint, Unit>
   {
-    public ValueTask<Unit> Handle(H08BuildEndpoint command, CancellationToken cancellationToken) => default;
+    public Task<Unit> Handle(H08BuildEndpoint command, CancellationToken cancellationToken) => Unit.Task;
   }
 }
 
@@ -226,7 +226,7 @@ public sealed class H08SpecialCharsEndpoint : ICommand<Unit>
 {
   public sealed class Handler : ICommandHandler<H08SpecialCharsEndpoint, Unit>
   {
-    public ValueTask<Unit> Handle(H08SpecialCharsEndpoint command, CancellationToken cancellationToken) => default;
+    public Task<Unit> Handle(H08SpecialCharsEndpoint command, CancellationToken cancellationToken) => Unit.Task;
   }
 }
 

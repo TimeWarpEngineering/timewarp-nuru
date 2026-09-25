@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -6,7 +7,7 @@ public sealed class HelpOverridesQuery : IQuery<Unit>
 {
   public sealed class Handler : IQueryHandler<HelpOverridesQuery, Unit>
   {
-    public ValueTask<Unit> Handle(HelpOverridesQuery query, CancellationToken ct)
+    public Task<Unit> Handle(HelpOverridesQuery query, CancellationToken ct)
     {
       WriteLine(@"Command-Line Configuration Overrides
  =====================================
@@ -26,7 +27,7 @@ public sealed class HelpOverridesQuery : IQuery<Unit>
    ./overrides.cs --Database:Host=prod-db config-show
  ");
 
-      return default;
+      return Unit.Task;
     }
   }
 }

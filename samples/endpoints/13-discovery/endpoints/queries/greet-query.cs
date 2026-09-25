@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -23,10 +24,10 @@ public sealed class GreetQuery : IQuery<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Terminal.WriteLine($"Hello, {query.Name}!");
-      return default;
+      return Unit.Task;
     }
   }
 }

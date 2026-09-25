@@ -8,10 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **BREAKING: message and handler contracts moved to `TimeWarp.Mediator`**: TimeWarp.Nuru no longer defines `IMessage`, `IQuery<T>`, `ICommand<T>`, `IIdempotentCommand<T>`, `IIdempotent`, `IQueryHandler<,>`, `ICommandHandler<,>`, `IIdempotentCommandHandler<,>`, or `Unit`. Endpoints use the `TimeWarp.Mediator` 14.0.0-beta types instead. Migration:
+  - Add `using TimeWarp.Mediator;` next to `using TimeWarp.Nuru;` (or a global `<Using Include="TimeWarp.Mediator" />`).
+  - Handlers return `Task<T>` instead of `ValueTask<T>` (`public Task<Unit> Handle(...)`). Replace `return default;` in non-async `Task<Unit>` handlers with `return Unit.Task;`, and `new ValueTask<T>(value)` with `Task.FromResult(value)`.
+  - Drop `using static TimeWarp.Nuru.Unit;`. `TimeWarp.Mediator.Unit` has a static `Task` property, so a static using of it hides `System.Threading.Tasks.Task`. Use `Unit.Value` / `Unit.Task`.
+  - `[NuruRoute]` endpoint classes must be `public` for now: the Mediator generator emits public `Send(TRequest)` overloads, so `internal` requests fail with CS0051 ([timewarp-mediator#64](https://github.com/TimeWarpEngineering/timewarp-mediator/issues/64)).
+- **Endpoint kind classification**: `[NuruRoute]` endpoints are classified from `TimeWarp.Mediator` interfaces with explicit precedence: Query, then IdempotentCommand (`IIdempotentCommand<T>`, or `ICommand<T>` plus `IIdempotent`), then Command. Previously the first matching interface won, so an idempotent command could be reported as a plain Command.
 - **BREAKING: `--capabilities` JSON structure**: The capabilities endpoint now outputs hierarchical JSON reflecting route groups. Grouped commands appear only within their respective `groups` array (not duplicated at top level). Ungrouped commands remain in the top-level `commands` array.
 
 ### Added
-- **TimeWarp.Mediator 14.0.0-beta.2**: TimeWarp.Nuru now depends on `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators`. The generator flows into consuming apps, so each app compilation emits its own source-generated `IMediator` / `ISender` / `IPublisher`. Apps using `.UseMicrosoftDependencyInjection()` get `AddGeneratedMediator()` called automatically, so handlers can inject `ISender` / `IPublisher`. Nuru's own `ICommand` / `IQuery` / `Unit` types are unchanged for now.
+- **TimeWarp.Mediator 14.0.0-beta.3**: TimeWarp.Nuru now depends on `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators`. The generator flows into consuming apps, so each app compilation emits its own source-generated `IMediator` / `ISender` / `IPublisher`. Apps using `.UseMicrosoftDependencyInjection()` get `AddGeneratedMediator()` called automatically, so handlers can inject `ISender` / `IPublisher`.
+- **`ISender` / `IPublisher` / `IMediator` under source-generated DI**: handlers, services, and behaviors in apps without `.UseMicrosoftDependencyInjection()` can inject the generated mediator. Nuru builds a small container on first use holding `AddGeneratedMediator()`, Nuru's `ITerminal` / `NuruApp` / `IConfiguration` / logging, and the services registered in `ConfigureServices`, so mediator handlers resolve their dependencies. Apps that never inject a mediator type get no container code.
 - **GroupCapability class**: New `groups` array in capabilities JSON output containing nested groups with their commands
 - **GroupHierarchyBuilder**: Internal utility for building hierarchical group structures from routes
 

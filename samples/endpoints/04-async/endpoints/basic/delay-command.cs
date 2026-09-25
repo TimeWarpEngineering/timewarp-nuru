@@ -5,6 +5,7 @@
 
 namespace AsyncExamples.Endpoints.Basic;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("delay", Description = "Async delay command with milliseconds")]
@@ -15,7 +16,7 @@ public sealed class DelayCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DelayCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(DelayCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DelayCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Starting {command.Ms}ms delay...");
       await Task.Delay(command.Ms, ct);

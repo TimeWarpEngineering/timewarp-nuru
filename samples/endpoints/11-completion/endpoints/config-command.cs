@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -15,10 +16,10 @@ public sealed class ConfigCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ConfigCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ConfigCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ConfigCommand c, CancellationToken ct)
     {
       WriteLine($"Config {c.Action}: {c.Key} = {c.Value ?? "(null)"}");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -7,7 +8,7 @@ public sealed class ConfigShowQuery : IQuery<Unit>
 {
   public sealed class Handler(IConfiguration config) : IQueryHandler<ConfigShowQuery, Unit>
   {
-    public ValueTask<Unit> Handle(ConfigShowQuery query, CancellationToken ct)
+    public Task<Unit> Handle(ConfigShowQuery query, CancellationToken ct)
     {
       WriteLine("\n=== Effective Configuration ===");
       WriteLine("(Values may be overridden via command line)\n");
@@ -25,7 +26,7 @@ public sealed class ConfigShowQuery : IQuery<Unit>
       WriteLine("\nLogging Settings:");
       WriteLine($"  Level: {config["Logging:LogLevel:Default"] ?? "(not set)"}");
 
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -5,6 +5,7 @@
 
 namespace PipelineTelemetry.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("db-query", Description = "Simulate database query with telemetry")]
@@ -18,7 +19,7 @@ public sealed class DbQuery : IQuery<string[]>
 
   public sealed class Handler : IQueryHandler<DbQuery, string[]>
   {
-    public async ValueTask<string[]> Handle(DbQuery query, CancellationToken ct)
+    public async Task<string[]> Handle(DbQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Querying {query.Table} (limit: {query.Limit})");
       await Task.Delay(50, ct);

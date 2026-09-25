@@ -305,10 +305,10 @@ public sealed class KanbanAddCommand : TestKanbanGroup, ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<KanbanAddCommand, Unit>
   {
-    public ValueTask<Unit> Handle(KanbanAddCommand command, CancellationToken ct)
+    public Task<Unit> Handle(KanbanAddCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Added: {command.Name}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -322,10 +322,10 @@ public sealed class KanbanListCommand : TestKanbanGroup, ICommand<Unit>
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<KanbanListCommand, Unit>
   {
-    public ValueTask<Unit> Handle(KanbanListCommand command, CancellationToken ct)
+    public Task<Unit> Handle(KanbanListCommand command, CancellationToken ct)
     {
       terminal.WriteLine("Kanban list");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -346,10 +346,10 @@ public sealed class GitCommitCommand : TestGitGroup, ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<GitCommitCommand, Unit>
   {
-    public ValueTask<Unit> Handle(GitCommitCommand command, CancellationToken ct)
+    public Task<Unit> Handle(GitCommitCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Committed: {command.Message}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -368,10 +368,10 @@ public sealed class UngroupedCommand : ICommand<Unit>
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<UngroupedCommand, Unit>
   {
-    public ValueTask<Unit> Handle(UngroupedCommand command, CancellationToken ct)
+    public Task<Unit> Handle(UngroupedCommand command, CancellationToken ct)
     {
       terminal.WriteLine("Ungrouped command executed");
-      return default;
+      return Unit.Task;
     }
   }
 }

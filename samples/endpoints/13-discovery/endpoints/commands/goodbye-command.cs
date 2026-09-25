@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -23,11 +24,11 @@ public sealed class GoodbyeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(GoodbyeCommand command, CancellationToken ct)
+    public Task<Unit> Handle(GoodbyeCommand command, CancellationToken ct)
     {
       Terminal.WriteLine("Goodbye! Thanks for using endpoints.");
       Environment.Exit(0);
-      return default;
+      return Unit.Task;
     }
   }
 }

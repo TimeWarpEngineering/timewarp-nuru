@@ -5,6 +5,7 @@
 
 namespace PipelineTelemetry.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("workflow", Description = "Multi-step workflow with nested telemetry")]
@@ -15,7 +16,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Starting workflow: {command.Name}");
 

@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -27,11 +28,11 @@ public sealed class DockerRunCommand : DockerGroupBase, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(DockerRunCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DockerRunCommand command, CancellationToken ct)
     {
       string mode = command.Detach ? " (detached)" : "";
       Terminal.WriteLine($"Running container from image: {command.Image}{mode}");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("exec", Description = "Execute a command")]
@@ -18,10 +19,10 @@ public sealed class ExecCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ExecCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
+    public Task<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Executing {command.Command} {string.Join(" ", command.Args)}");
-      return default;
+      return Unit.Task;
     }
   }
 }

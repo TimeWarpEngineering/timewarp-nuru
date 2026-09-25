@@ -192,10 +192,10 @@ public sealed class GreetCommand : ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<GreetCommand, Unit>
   {
-    public ValueTask<Unit> Handle(GreetCommand command, CancellationToken ct)
+    public Task<Unit> Handle(GreetCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Hello, {command.Name}!");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -220,13 +220,13 @@ public sealed class DeployCommand : ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<DeployCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Deploying to {command.Env}...");
       terminal.WriteLine($"  Force: {command.Force}");
       terminal.WriteLine($"  Config: {command.ConfigFile ?? "(default)"}");
       terminal.WriteLine($"  Replicas: {command.Replicas}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -248,12 +248,12 @@ public sealed class BuildCommand : ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<BuildCommand, Unit>
   {
-    public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public Task<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       string tagInfo = command.Tag != null ? $" -t {command.Tag}" : "";
       string cacheInfo = command.NoCache ? " --no-cache" : "";
       terminal.WriteLine($"Building: {command.Path}{tagInfo}{cacheInfo}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -269,10 +269,10 @@ public sealed class ExecCommand : ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<ExecCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
+    public Task<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Executing: exec {string.Join(" ", command.Args)}");
-      return default;
+      return Unit.Task;
     }
   }
 }

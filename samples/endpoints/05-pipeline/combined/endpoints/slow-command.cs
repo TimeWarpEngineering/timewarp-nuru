@@ -5,6 +5,7 @@
 
 namespace PipelineCombined.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("slow", Description = "Slow operation (triggers performance warning)")]
@@ -14,7 +15,7 @@ public sealed class SlowCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<SlowCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(SlowCommand c, CancellationToken ct)
+    public async Task<Unit> Handle(SlowCommand c, CancellationToken ct)
     {
       await Task.Delay(c.Ms, ct);
       Console.WriteLine("Slow operation complete");

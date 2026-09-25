@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("process", Description = "Process an item with logging")]
@@ -8,7 +9,7 @@ public sealed class ProcessCommand : ICommand<Unit>
 
   public sealed class Handler(ILogger<ProcessCommand> Logger) : ICommandHandler<ProcessCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ProcessCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ProcessCommand c, CancellationToken ct)
     {
       Logger.LogInformation("Starting processing of {Item}", c.Item);
 
@@ -33,7 +34,7 @@ public sealed class ProcessCommand : ICommand<Unit>
         throw;
       }
 
-      return default;
+      return Unit.Task;
     }
   }
 }

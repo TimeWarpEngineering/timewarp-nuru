@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,7 +9,7 @@ public sealed class ShowSettingsQuery : IQuery<Unit>
 {
   public sealed class Handler(IOptions<ValidatedSettings> settings) : IQueryHandler<ShowSettingsQuery, Unit>
   {
-    public ValueTask<Unit> Handle(ShowSettingsQuery query, CancellationToken ct)
+    public Task<Unit> Handle(ShowSettingsQuery query, CancellationToken ct)
     {
       ValidatedSettings s = settings.Value;
 
@@ -20,7 +21,7 @@ public sealed class ShowSettingsQuery : IQuery<Unit>
       WriteLine($"  Environment: {s.Environment}");
       WriteLine($"  Tags: [{string.Join(", ", s.Tags)}]");
 
-      return default;
+      return Unit.Task;
     }
   }
 }

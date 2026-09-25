@@ -7,6 +7,29 @@ namespace TimeWarp.Nuru.Generators;
 internal static class FrameworkServices
 {
   /// <summary>
+  /// Expression that resolves the generated TimeWarp.Mediator <c>IMediator</c> under source-gen DI.
+  /// Emitted by <see cref="InterceptorEmitter"/> alongside the static service fields.
+  /// </summary>
+  public const string MediatorExpression = "__GetMediator()";
+
+  /// <summary>
+  /// Checks if a type name is <c>TimeWarp.Mediator.ISender</c>, <c>IPublisher</c>, or <c>IMediator</c>.
+  /// </summary>
+  /// <param name="typeName">The type name to check, with or without the <c>global::</c> prefix.</param>
+  /// <returns>True if the type is resolved from the generated mediator.</returns>
+  public static bool IsMediatorServiceType(string? typeName)
+  {
+    if (typeName is null)
+      return false;
+
+    string normalized = typeName.StartsWith("global::", StringComparison.Ordinal) ? typeName[8..] : typeName;
+
+    return normalized is "TimeWarp.Mediator.ISender"
+        or "TimeWarp.Mediator.IPublisher"
+        or "TimeWarp.Mediator.IMediator";
+  }
+
+  /// <summary>
   /// Checks if a type name represents a framework service type.
   /// Framework services are always available without explicit registration.
   /// </summary>

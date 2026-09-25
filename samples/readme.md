@@ -26,10 +26,10 @@ public sealed class GreetCommand : IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<GreetCommand, Unit>
   {
-    public ValueTask<Unit> Handle(GreetCommand c, CancellationToken ct)
+    public Task<Unit> Handle(GreetCommand c, CancellationToken ct)
     {
       Console.WriteLine($"Hello, {c.Name}!");
-      return default;
+      return Unit.Task;
     }
   }
 }

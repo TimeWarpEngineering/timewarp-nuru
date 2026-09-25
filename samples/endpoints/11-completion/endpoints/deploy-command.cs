@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -15,13 +16,13 @@ public sealed class DeployCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DeployCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DeployCommand c, CancellationToken ct)
+    public Task<Unit> Handle(DeployCommand c, CancellationToken ct)
     {
       WriteLine($"Deploying to {c.Env}");
       if (c.Version != null)
         WriteLine($"  Version: {c.Version}");
       WriteLine($"  Force: {c.Force}");
-      return default;
+      return Unit.Task;
     }
   }
 }

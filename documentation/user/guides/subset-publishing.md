@@ -59,6 +59,7 @@ Inherit from group bases to assign commands to groups:
 ```csharp
 // shared/AdminCommands.cs
 using MyApp.Shared;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 namespace MyApp.Shared;
@@ -71,10 +72,10 @@ public sealed class DeployCommand : AdminGroupBase, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DeployCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deploying to {command.Env}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -85,10 +86,10 @@ public sealed class ProfileQuery : UserGroupBase, IQuery<Unit>
 {
   public sealed class Handler : IQueryHandler<ProfileQuery, Unit>
   {
-    public ValueTask<Unit> Handle(ProfileQuery query, CancellationToken ct)
+    public Task<Unit> Handle(ProfileQuery query, CancellationToken ct)
     {
       Console.WriteLine("User profile data");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -278,10 +279,10 @@ public sealed class KanbanAddCommand : KanbanGroupBase, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<KanbanAddCommand, Unit>
   {
-    public ValueTask<Unit> Handle(KanbanAddCommand command, CancellationToken ct)
+    public Task<Unit> Handle(KanbanAddCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Added task: {command.Title}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -365,10 +366,10 @@ public sealed class CloudListQuery : CloudGroupBase, IQuery<Unit>
 {
   public sealed class Handler : IQueryHandler<CloudListQuery, Unit>
   {
-    public ValueTask<Unit> Handle(CloudListQuery query, CancellationToken ct)
+    public Task<Unit> Handle(CloudListQuery query, CancellationToken ct)
     {
       Console.WriteLine("All cloud resources");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -378,10 +379,10 @@ public sealed class Ec2StatusQuery : Ec2GroupBase, IQuery<Unit>
 {
   public sealed class Handler : IQueryHandler<Ec2StatusQuery, Unit>
   {
-    public ValueTask<Unit> Handle(Ec2StatusQuery query, CancellationToken ct)
+    public Task<Unit> Handle(Ec2StatusQuery query, CancellationToken ct)
     {
       Console.WriteLine("EC2 instances: running");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -394,10 +395,10 @@ public sealed class S3UploadCommand : S3GroupBase, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<S3UploadCommand, Unit>
   {
-    public ValueTask<Unit> Handle(S3UploadCommand command, CancellationToken ct)
+    public Task<Unit> Handle(S3UploadCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Uploading {command.File} to S3");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,12 +9,12 @@ public sealed class PingCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<PingCommand, Unit>
   {
-    public ValueTask<Unit> Handle(PingCommand c, CancellationToken ct)
+    public Task<Unit> Handle(PingCommand c, CancellationToken ct)
     {
       System.Net.IPAddress addr = System.Net.IPAddress.Parse(c.Addr);
       WriteLine($"Pinging: {addr}");
       WriteLine($"  AddressFamily: {addr.AddressFamily}");
-      return default;
+      return Unit.Task;
     }
   }
 }

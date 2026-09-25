@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru.Search.Endpoints;
 
+using TimeWarp.Mediator;
+
 [NuruRoute("", Description = "Search indexed CLI endpoints")]
 public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
 {
@@ -27,7 +29,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
     ITerminal terminal,
     ILogger<Handler> logger) : IQueryHandler<SearchQuery, SearchResult[]>
   {
-    public async ValueTask<SearchResult[]> Handle(SearchQuery query, CancellationToken cancellationToken)
+    public async Task<SearchResult[]> Handle(SearchQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
 

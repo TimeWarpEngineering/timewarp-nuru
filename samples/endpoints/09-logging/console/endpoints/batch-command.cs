@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("batch", Description = "Process multiple items with batch logging")]
@@ -8,7 +9,7 @@ public sealed class BatchCommand : ICommand<Unit>
 
   public sealed class Handler(ILogger<BatchCommand> Logger) : ICommandHandler<BatchCommand, Unit>
   {
-    public ValueTask<Unit> Handle(BatchCommand c, CancellationToken ct)
+    public Task<Unit> Handle(BatchCommand c, CancellationToken ct)
     {
       Logger.LogInformation("Starting batch processing of {Count} items", c.Items.Length);
 
@@ -37,7 +38,7 @@ public sealed class BatchCommand : ICommand<Unit>
         failCount
       );
 
-      return default;
+      return Unit.Task;
     }
   }
 }

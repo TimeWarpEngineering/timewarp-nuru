@@ -6,6 +6,7 @@
 namespace EndpointCalculator.Endpoints;
 
 using EndpointCalculator.Services;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -19,7 +20,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
 
   public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FibonacciCommand, Unit>
   {
-    public ValueTask<Unit> Handle(FibonacciCommand command, CancellationToken cancellationToken)
+    public Task<Unit> Handle(FibonacciCommand command, CancellationToken cancellationToken)
     {
       try
       {
@@ -31,7 +32,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
         Console.WriteLine($"Error: {ex.Message}");
       }
 
-      return default;
+      return Unit.Task;
     }
   }
 }

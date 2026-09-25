@@ -84,6 +84,14 @@ internal static class ServiceResolverEmitter
       return;
     }
 
+    // Source-gen DI path: ISender / IPublisher / IMediator come from the generated mediator
+    if (FrameworkServices.IsMediatorServiceType(typeName))
+    {
+      sb.AppendLine(
+        $"{indent}{typeName} {varName} = {FrameworkServices.MediatorExpression};");
+      return;
+    }
+
     // Source-gen DI path: static instantiation or static fields
     // Look up service in registered services
     ServiceDefinition? service = FindService(typeName, services);
@@ -345,6 +353,9 @@ internal static class ServiceResolverEmitter
       return FrameworkServices.GetFieldName(param.TypeName);
     }
 
+    if (FrameworkServices.IsMediatorServiceType(param.TypeName))
+      return FrameworkServices.MediatorExpression;
+
     // Check if this is a registered service
     ServiceDefinition? depService = FindService(param.TypeName, services);
     if (depService is not null)
@@ -388,6 +399,9 @@ internal static class ServiceResolverEmitter
     {
       return FrameworkServices.GetFieldName(depType);
     }
+
+    if (FrameworkServices.IsMediatorServiceType(depType))
+      return FrameworkServices.MediatorExpression;
 
     // Registered service - resolve by looking up in registered services
     ServiceDefinition? depService = FindService(depType, services);

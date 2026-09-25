@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -27,10 +28,10 @@ public sealed class SetConfigCommand : ConfigGroupBase, IIdempotentCommand<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(SetConfigCommand command, CancellationToken ct)
+    public Task<Unit> Handle(SetConfigCommand command, CancellationToken ct)
     {
       Terminal.WriteLine($"Setting config: {command.Key} = {command.Value}");
-      return default;
+      return Unit.Task;
     }
   }
 }

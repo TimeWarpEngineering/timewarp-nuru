@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("error", Description = "Simulate and log an error")]
@@ -8,7 +9,7 @@ public sealed class ErrorCommand : ICommand<Unit>
 
   public sealed class Handler(ILogger<ErrorCommand> Logger) : ICommandHandler<ErrorCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ErrorCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ErrorCommand c, CancellationToken ct)
     {
       try
       {

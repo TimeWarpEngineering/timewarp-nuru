@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("git", Description = "Git commit with message and options")]
@@ -21,10 +22,10 @@ public sealed class GitCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<GitCommand, Unit>
   {
-    public ValueTask<Unit> Handle(GitCommand command, CancellationToken ct)
+    public Task<Unit> Handle(GitCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Commit: {command.Message} (amend: {command.Amend}, no-verify: {command.NoVerify})");
-      return default;
+      return Unit.Task;
     }
   }
 }

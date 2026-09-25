@@ -18,6 +18,7 @@
 // See hybrid-migration-start-fluent.cs for the starting point.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
@@ -55,10 +56,10 @@ public sealed class AddCommand : IQuery<double>
 
   public sealed class Handler : IQueryHandler<AddCommand, double>
   {
-    public ValueTask<double> Handle(AddCommand c, CancellationToken ct)
+    public Task<double> Handle(AddCommand c, CancellationToken ct)
     {
       WriteLine($"{c.X} + {c.Y} = {c.X + c.Y}");
-      return new ValueTask<double>(c.X + c.Y);
+      return Task.FromResult<double>(c.X + c.Y);
     }
   }
 }
@@ -71,10 +72,10 @@ public sealed class SubtractCommand : IQuery<double>
 
   public sealed class Handler : IQueryHandler<SubtractCommand, double>
   {
-    public ValueTask<double> Handle(SubtractCommand c, CancellationToken ct)
+    public Task<double> Handle(SubtractCommand c, CancellationToken ct)
     {
       WriteLine($"{c.X} - {c.Y} = {c.X - c.Y}");
-      return new ValueTask<double>(c.X - c.Y);
+      return Task.FromResult<double>(c.X - c.Y);
     }
   }
 }
@@ -87,10 +88,10 @@ public sealed class MultiplyCommand : IQuery<double>
 
   public sealed class Handler : IQueryHandler<MultiplyCommand, double>
   {
-    public ValueTask<double> Handle(MultiplyCommand c, CancellationToken ct)
+    public Task<double> Handle(MultiplyCommand c, CancellationToken ct)
     {
       WriteLine($"{c.X} × {c.Y} = {c.X * c.Y}");
-      return new ValueTask<double>(c.X * c.Y);
+      return Task.FromResult<double>(c.X * c.Y);
     }
   }
 }
@@ -103,11 +104,11 @@ public sealed class DivideCommand : IQuery<double>
 
   public sealed class Handler : IQueryHandler<DivideCommand, double>
   {
-    public ValueTask<double> Handle(DivideCommand c, CancellationToken ct)
+    public Task<double> Handle(DivideCommand c, CancellationToken ct)
     {
       if (c.Y == 0) throw new DivideByZeroException("Cannot divide by zero");
       WriteLine($"{c.X} ÷ {c.Y} = {c.X / c.Y}");
-      return new ValueTask<double>(c.X / c.Y);
+      return Task.FromResult<double>(c.X / c.Y);
     }
   }
 }
@@ -119,7 +120,7 @@ public sealed class FactorialCommand : ICommand<Unit>
 
   public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FactorialCommand, Unit>
   {
-    public ValueTask<Unit> Handle(FactorialCommand c, CancellationToken ct)
+    public Task<Unit> Handle(FactorialCommand c, CancellationToken ct)
     {
       try
       {
@@ -130,7 +131,7 @@ public sealed class FactorialCommand : ICommand<Unit>
       {
         WriteLine($"Error: {ex.Message}");
       }
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -142,11 +143,11 @@ public sealed class PrimeCheckCommand : ICommand<Unit>
 
   public sealed class Handler(IScientificCalculator calc) : ICommandHandler<PrimeCheckCommand, Unit>
   {
-    public ValueTask<Unit> Handle(PrimeCheckCommand c, CancellationToken ct)
+    public Task<Unit> Handle(PrimeCheckCommand c, CancellationToken ct)
     {
       bool result = calc.IsPrime(c.N);
       WriteLine($"{c.N} is {(result ? "prime" : "not prime")}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -158,7 +159,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
 
   public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FibonacciCommand, Unit>
   {
-    public ValueTask<Unit> Handle(FibonacciCommand c, CancellationToken ct)
+    public Task<Unit> Handle(FibonacciCommand c, CancellationToken ct)
     {
       try
       {
@@ -169,7 +170,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
       {
         WriteLine($"Error: {ex.Message}");
       }
-      return default;
+      return Unit.Task;
     }
   }
 }

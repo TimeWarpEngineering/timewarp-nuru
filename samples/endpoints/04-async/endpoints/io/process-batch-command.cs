@@ -6,6 +6,7 @@
 
 namespace AsyncExamples.Endpoints.IO;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("process-batch", Description = "Process items in batches asynchronously")]
@@ -19,7 +20,7 @@ public sealed class ProcessBatchCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ProcessBatchCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(ProcessBatchCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(ProcessBatchCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Processing {command.Items.Length} items...");
 

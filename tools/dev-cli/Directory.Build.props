@@ -34,7 +34,7 @@
     <Using Include="System.Xml.Linq" />
 
     <Using Include="TimeWarp.Nuru" />
-    <Using Include="TimeWarp.Nuru.Unit" Static="true" />
+    <Using Include="TimeWarp.Mediator" />
     <Using Include="TimeWarp.Amuru" />
     <Using Include="TimeWarp.Terminal" />
     <Using Include="DevCli" />

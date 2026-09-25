@@ -14,7 +14,7 @@ namespace DevCli;
 /// Run the CI test suite.
 /// </summary>
 [NuruRoute("test", Description = "Run the CI test suite")]
-internal sealed class TestCommand : ICommand<Unit>
+public sealed class TestCommand : ICommand<Unit>
 {
   internal sealed class Handler : ICommandHandler<TestCommand, Unit>
   {
@@ -25,7 +25,7 @@ internal sealed class TestCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(TestCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(TestCommand command, CancellationToken ct)
     {
       // Get repo root using Git.FindRoot
       string? repoRoot = Git.FindRoot();

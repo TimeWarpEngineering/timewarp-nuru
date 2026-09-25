@@ -5,6 +5,7 @@
 
 namespace PipelineFilteredAuth.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -13,10 +14,10 @@ public sealed class StatusQuery : IQuery<Unit>
 {
   public sealed class Handler : IQueryHandler<StatusQuery, Unit>
   {
-    public ValueTask<Unit> Handle(StatusQuery query, CancellationToken ct)
+    public Task<Unit> Handle(StatusQuery query, CancellationToken ct)
     {
       WriteLine("System status: ✓ OK");
-      return default;
+      return Unit.Task;
     }
   }
 }

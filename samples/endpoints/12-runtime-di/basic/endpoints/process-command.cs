@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,7 +9,7 @@ public sealed class ProcessCommand : ICommand<string>
 
   public sealed class Handler(IProcessingService Processor) : ICommandHandler<ProcessCommand, string>
   {
-    public async ValueTask<string> Handle(ProcessCommand c, CancellationToken ct)
+    public async Task<string> Handle(ProcessCommand c, CancellationToken ct)
     {
       WriteLine("=== Process Command ===");
       string result = await Processor.ProcessAsync(c.Input);

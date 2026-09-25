@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("calc", Description = "Simple calculator")]
@@ -9,7 +10,7 @@ public sealed class CalcCommand : ICommand<double>
 
   public sealed class Handler : ICommandHandler<CalcCommand, double>
   {
-    public ValueTask<double> Handle(CalcCommand c, CancellationToken ct)
+    public Task<double> Handle(CalcCommand c, CancellationToken ct)
     {
       double result = c.Operation.ToLower() switch
       {
@@ -21,7 +22,7 @@ public sealed class CalcCommand : ICommand<double>
       };
 
       Console.WriteLine($"Result: {result}");
-      return new ValueTask<double>(result);
+      return Task.FromResult<double>(result);
     }
   }
 }

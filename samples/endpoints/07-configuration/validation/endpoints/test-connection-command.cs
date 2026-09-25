@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -7,7 +8,7 @@ public sealed class TestConnectionCommand : ICommand<Unit>
 {
   public sealed class Handler(IOptions<ValidatedSettings> settings) : ICommandHandler<TestConnectionCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(TestConnectionCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(TestConnectionCommand command, CancellationToken ct)
     {
       ValidatedSettings s = settings.Value;
 

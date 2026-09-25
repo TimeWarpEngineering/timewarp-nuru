@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("big-number", Description = "Work with large numbers (long)")]
@@ -7,7 +8,7 @@ public sealed class BigNumberCommand : IQuery<long>
 
   public sealed class Handler : IQueryHandler<BigNumberCommand, long>
   {
-    public ValueTask<long> Handle(BigNumberCommand c, CancellationToken ct) =>
-      new ValueTask<long>(c.N * c.N);
+    public Task<long> Handle(BigNumberCommand c, CancellationToken ct) =>
+      Task.FromResult<long>(c.N * c.N);
   }
 }

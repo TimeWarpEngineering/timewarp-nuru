@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -30,12 +31,12 @@ public sealed class DockerBuildCommand : DockerGroupBase, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
     {
       string tagInfo = command.Tag != null ? $" -t {command.Tag}" : "";
       string cacheInfo = command.NoCache ? " --no-cache" : "";
       Terminal.WriteLine($"Building image from: {command.Path}{tagInfo}{cacheInfo}");
-      return default;
+      return Unit.Task;
     }
   }
 }

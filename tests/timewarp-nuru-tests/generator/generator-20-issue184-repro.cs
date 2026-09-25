@@ -67,10 +67,10 @@ public sealed class RepoBaseSyncCommand : RepoBaseGroupBase, ICommand<Unit>
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<RepoBaseSyncCommand, Unit>
   {
-    public ValueTask<Unit> Handle(RepoBaseSyncCommand command, CancellationToken ct)
+    public Task<Unit> Handle(RepoBaseSyncCommand command, CancellationToken ct)
     {
       terminal.WriteLine("Syncing base branch...");
-      return default;
+      return Unit.Task;
     }
   }
 }

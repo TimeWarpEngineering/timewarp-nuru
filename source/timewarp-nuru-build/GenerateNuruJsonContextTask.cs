@@ -325,7 +325,7 @@ public class GenerateNuruJsonContextTask : Task
     return typeName switch
     {
       // Unit = no output (void equivalent)
-      "global::TimeWarp.Nuru.Unit" or "TimeWarp.Nuru.Unit" or "Unit" => false,
+      "global::TimeWarp.Mediator.Unit" or "TimeWarp.Mediator.Unit" or "Unit" => false,
 
       // String = raw output
       "global::System.String" or "System.String" or "string" => false,

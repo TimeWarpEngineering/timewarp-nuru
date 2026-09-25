@@ -1,5 +1,6 @@
 namespace GroupOptionsSample.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -18,7 +19,7 @@ public sealed class CommitCommand : GitGroupBase, ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<CommitCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(CommitCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(CommitCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

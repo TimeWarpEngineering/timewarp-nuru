@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -36,10 +37,10 @@ public sealed class AzureStorageUploadCommand : AzureStorageGroupBase, ICommand<
 
   public sealed class Handler : ICommandHandler<AzureStorageUploadCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
+    public Task<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Uploading file to Azure storage: {command.File}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -63,10 +64,10 @@ public sealed class AzureVmStartCommand : AzureVmGroupBase, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<AzureVmStartCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AzureVmStartCommand command, CancellationToken ct)
+    public Task<Unit> Handle(AzureVmStartCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Starting Azure VM: {command.Name}");
-      return default;
+      return Unit.Task;
     }
   }
 }

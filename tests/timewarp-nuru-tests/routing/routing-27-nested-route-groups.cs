@@ -147,7 +147,7 @@ public sealed class Issue160TwoLevelCommand : Issue160Level1Group, ICommand<Unit
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue160TwoLevelCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Issue160TwoLevelCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Issue160TwoLevelCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync("Two-level action executed").ConfigureAwait(false);
@@ -174,7 +174,7 @@ public sealed class Issue160PeekCommand : Issue160QueueGroup, ICommand<Unit>
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue160PeekCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Issue160PeekCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Issue160PeekCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync("Peeking at queue").ConfigureAwait(false);
@@ -208,7 +208,7 @@ public sealed class Issue160UploadCommand : Issue160StorageGroup, ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue160UploadCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Issue160UploadCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Issue160UploadCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Uploading: {command.File}").ConfigureAwait(false);
@@ -234,7 +234,7 @@ public sealed class Issue160MixedCommand : Issue160MiddleNoGroup, ICommand<Unit>
 {
   public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue160MixedCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(Issue160MixedCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(Issue160MixedCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync("Mixed inheritance action executed").ConfigureAwait(false);

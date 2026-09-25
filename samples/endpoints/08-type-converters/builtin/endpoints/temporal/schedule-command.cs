@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,10 +9,10 @@ public sealed class ScheduleCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ScheduleCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ScheduleCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ScheduleCommand c, CancellationToken ct)
     {
       WriteLine($"Scheduled for: {c.Date:yyyy-MM-dd HH:mm:ss}");
-      return default;
+      return Unit.Task;
     }
   }
 }

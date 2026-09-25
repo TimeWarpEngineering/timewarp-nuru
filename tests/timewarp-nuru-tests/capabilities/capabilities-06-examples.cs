@@ -152,7 +152,7 @@ public sealed class Cap06DeployEndpoint : ICommand<Unit>
 {
   public sealed class Handler : ICommandHandler<Cap06DeployEndpoint, Unit>
   {
-    public ValueTask<Unit> Handle(Cap06DeployEndpoint command, CancellationToken cancellationToken) => default;
+    public Task<Unit> Handle(Cap06DeployEndpoint command, CancellationToken cancellationToken) => Unit.Task;
   }
 }
 

@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 //   aspire run
 //   aspire terminal attach nuruclient
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 // Build the Nuru app with auto-wired telemetry and REPL support
@@ -65,7 +66,7 @@ public sealed class GreetCommand : ICommand<Unit>
 
   public sealed class Handler(ILogger<GreetCommand> logger) : ICommandHandler<GreetCommand,Unit>
   {
-    public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
+    public Task<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
     {
       // Console.WriteLine for user feedback (visible in terminal)
       Console.WriteLine($"Hello, {request.Name}!");
@@ -73,7 +74,7 @@ public sealed class GreetCommand : ICommand<Unit>
       // ILogger for telemetry (flows to Aspire Dashboard via OTLP)
       logger.LogInformation("Greeting {Name} at {Timestamp}", request.Name, DateTime.UtcNow);
 
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -86,7 +87,7 @@ public sealed class StatusCommand : IQuery<Unit>
 {
   public sealed class Handler(ILogger<StatusCommand> logger) : IQueryHandler<StatusCommand, Unit>
   {
-    public ValueTask<Unit> Handle(StatusCommand request, CancellationToken cancellationToken)
+    public Task<Unit> Handle(StatusCommand request, CancellationToken cancellationToken)
     {
       // Console.WriteLine for user feedback (visible in terminal)
       Console.WriteLine($"Machine: {Environment.MachineName}");
@@ -102,7 +103,7 @@ public sealed class StatusCommand : IQuery<Unit>
         Environment.Version
       );
 
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -118,7 +119,7 @@ public sealed class WorkCommand : ICommand<Unit>
 
   public sealed class Handler(ILogger<WorkCommand> logger) : ICommandHandler<WorkCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(WorkCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(WorkCommand request, CancellationToken cancellationToken)
     {
       // Console.WriteLine for user feedback (visible in terminal)
       Console.WriteLine($"Starting work for {request.Duration}ms...");
@@ -147,7 +148,7 @@ public sealed class ConfigCommand : IQuery<Unit>
 {
   public sealed class Handler(ILogger<ConfigCommand> logger) : IQueryHandler<ConfigCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ConfigCommand request, CancellationToken cancellationToken)
+    public Task<Unit> Handle(ConfigCommand request, CancellationToken cancellationToken)
     {
       string? otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
       string serviceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "nuru-client";
@@ -167,7 +168,7 @@ public sealed class ConfigCommand : IQuery<Unit>
         serviceName
       );
 
-      return default;
+      return Unit.Task;
     }
   }
 }

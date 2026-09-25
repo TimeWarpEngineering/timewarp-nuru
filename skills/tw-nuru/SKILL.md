@@ -80,10 +80,10 @@ public sealed class GreetQuery : IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<GreetQuery, Unit>
   {
-    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Hello {query.Name}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -117,10 +117,10 @@ public sealed class DeployCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DeployCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deploying to {command.Env}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -143,10 +143,10 @@ public sealed class BuildCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<BuildCommand, Unit>
   {
-    public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public Task<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Building {command.Project} ({command.Mode}, verbose: {command.Verbose})");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -165,10 +165,10 @@ public sealed class ExecCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ExecCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
+    public Task<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Args: {string.Join(" ", command.Args)}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -199,10 +199,10 @@ public sealed class DockerBuildCommand : DockerGroupBase, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DockerBuildCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Building image from: {command.Path}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -229,10 +229,10 @@ public sealed class AzureStorageUploadCommand : AzureStorageGroupBase, ICommand<
 
   public sealed class Handler : ICommandHandler<AzureStorageUploadCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
+    public Task<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Uploading: {command.File}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -327,7 +327,7 @@ Handler return values and exit codes are **independent concerns**:
 ```csharp
 public sealed class Handler : ICommandHandler<DeployCommand, Unit>
 {
-  public async ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
+  public async Task<Unit> Handle(DeployCommand command, CancellationToken ct)
   {
     if (failed)
     {
@@ -449,7 +449,7 @@ Then in the handler:
 ```csharp
 public sealed class Handler(IWeatherService weatherService) : IQueryHandler<WeatherQuery, string>
 {
-  public async ValueTask<string> Handle(WeatherQuery query, CancellationToken ct)
+  public async Task<string> Handle(WeatherQuery query, CancellationToken ct)
   {
     return await weatherService.GetWeatherAsync(query.City, ct);
   }

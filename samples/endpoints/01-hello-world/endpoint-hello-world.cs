@@ -8,6 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 // DiscoverEndpoints() enables automatic discovery of [NuruRoute] classes
@@ -30,9 +31,9 @@ public sealed class HelloWorldQuery : IQuery<string>
 {
   public sealed class Handler : IQueryHandler<HelloWorldQuery, string>
   {
-    public ValueTask<string> Handle(HelloWorldQuery query, CancellationToken ct)
+    public Task<string> Handle(HelloWorldQuery query, CancellationToken ct)
     {
-      return new ValueTask<string>("Hello World");
+      return Task.FromResult<string>("Hello World");
     }
   }
 }
@@ -48,10 +49,10 @@ public sealed class GreetQuery : IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<GreetQuery, Unit>
   {
-    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Hello, {query.Name}!");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("echo", Description = "Echo text back")]
@@ -7,10 +8,10 @@ public sealed class EchoCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<EchoCommand, Unit>
   {
-    public ValueTask<Unit> Handle(EchoCommand c, CancellationToken ct)
+    public Task<Unit> Handle(EchoCommand c, CancellationToken ct)
     {
       Console.WriteLine(c.Text);
-      return default;
+      return Unit.Task;
     }
   }
 }

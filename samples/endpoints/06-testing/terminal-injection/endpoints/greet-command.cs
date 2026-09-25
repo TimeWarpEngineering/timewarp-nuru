@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -9,10 +10,10 @@ public sealed class GreetCommand : ICommand<Unit>
 
   public sealed class Handler(ITerminal Terminal) : ICommandHandler<GreetCommand, Unit>
   {
-    public ValueTask<Unit> Handle(GreetCommand c, CancellationToken ct)
+    public Task<Unit> Handle(GreetCommand c, CancellationToken ct)
     {
       Terminal.WriteLine($"Hello, {c.Name}!");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -136,7 +136,7 @@ public sealed class H09UnicodeEndpoint : ICommand<Unit>
 {
   public sealed class Handler : ICommandHandler<H09UnicodeEndpoint, Unit>
   {
-    public ValueTask<Unit> Handle(H09UnicodeEndpoint command, CancellationToken cancellationToken) => default;
+    public Task<Unit> Handle(H09UnicodeEndpoint command, CancellationToken cancellationToken) => Unit.Task;
   }
 }
 

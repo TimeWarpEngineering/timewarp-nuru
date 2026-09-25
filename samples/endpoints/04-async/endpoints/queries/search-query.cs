@@ -5,6 +5,7 @@
 
 namespace AsyncExamples.Endpoints.Queries;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -27,7 +28,7 @@ public sealed class SearchQuery : IQuery<SearchResult[]>
 
   public sealed class Handler : IQueryHandler<SearchQuery, SearchResult[]>
   {
-    public async ValueTask<SearchResult[]> Handle(SearchQuery query, CancellationToken ct)
+    public async Task<SearchResult[]> Handle(SearchQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Searching for: {query.Query}");
       await Task.Delay(100, ct); // Simulate search

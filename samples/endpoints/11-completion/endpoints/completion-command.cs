@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -9,7 +10,7 @@ public sealed class CompletionCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<CompletionCommand, Unit>
   {
-    public ValueTask<Unit> Handle(CompletionCommand c, CancellationToken ct)
+    public Task<Unit> Handle(CompletionCommand c, CancellationToken ct)
     {
       string script = c.Shell.ToLower() switch
       {
@@ -21,7 +22,7 @@ public sealed class CompletionCommand : ICommand<Unit>
       };
 
       WriteLine(script);
-      return default;
+      return Unit.Task;
     }
 
     private static string GenerateBashCompletion() => """

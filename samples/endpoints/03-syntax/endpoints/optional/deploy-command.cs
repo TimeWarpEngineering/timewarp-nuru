@@ -6,6 +6,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("deploy", Description = "Deploy to an environment")]
@@ -19,7 +20,7 @@ public sealed class DeployCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DeployCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       string message = $"Deploying to {command.Env}";
       if (!string.IsNullOrEmpty(command.Tag))
@@ -27,7 +28,7 @@ public sealed class DeployCommand : ICommand<Unit>
         message += $" with tag {command.Tag}";
       }
       Console.WriteLine(message);
-      return default;
+      return Unit.Task;
     }
   }
 }

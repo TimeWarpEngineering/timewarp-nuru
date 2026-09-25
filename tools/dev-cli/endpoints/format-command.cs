@@ -13,7 +13,7 @@ namespace DevCli;
 /// Check or fix code formatting.
 /// </summary>
 [NuruRoute("format", Description = "Check or fix code formatting")]
-internal sealed class FormatCommand : ICommand<Unit>
+public sealed class FormatCommand : ICommand<Unit>
 {
   [Option("fix", "f", Description = "Fix formatting issues instead of just checking")]
   public bool Fix { get; set; }
@@ -30,7 +30,7 @@ internal sealed class FormatCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(FormatCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(FormatCommand command, CancellationToken ct)
     {
       // Get repo root using Git.FindRoot
       string? repoRoot = Git.FindRoot();

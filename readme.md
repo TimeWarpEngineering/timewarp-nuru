@@ -30,6 +30,7 @@ Start with the Endpoint DSL for structured apps, or Fluent DSL for quick scripts
 Define routes as classes with `[NuruRoute]` attributes:
 
 ```csharp
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("add", Description = "Add two numbers together")]
@@ -40,10 +41,10 @@ public sealed class AddCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<AddCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AddCommand command, CancellationToken ct)
+    public Task<Unit> Handle(AddCommand command, CancellationToken ct)
     {
       Console.WriteLine($"{command.X} + {command.Y} = {command.X + command.Y}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -149,10 +150,10 @@ public sealed class AddCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<AddCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AddCommand c, CancellationToken ct)
+    public Task<Unit> Handle(AddCommand c, CancellationToken ct)
     {
       Console.WriteLine($"{c.X} + {c.Y} = {c.X + c.Y}");
-      return default;
+      return Unit.Task;
     }
   }
 }

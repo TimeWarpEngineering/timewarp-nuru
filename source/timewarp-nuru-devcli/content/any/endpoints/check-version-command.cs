@@ -20,6 +20,7 @@
 
 namespace DevCli;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -50,7 +51,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       PackableProjectService = packableProjectService;
     }
 
-    public async ValueTask<Unit> Handle(CheckVersionCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(CheckVersionCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 
@@ -85,7 +86,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("Error: no packable projects found under source/ and no packages configured. Use --package or checkVersionConfig.packages.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       // Round-1 review finding #2: a repo hand-maintaining checkVersionConfig
@@ -104,7 +105,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: invalid NuGet package id(s): {string.Join(", ", invalidPackages)}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       string? version = PropsVersionReader.Read(repoRoot);
@@ -112,7 +113,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("Error: could not read Version from source/Directory.Build.props");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       List<string> checkedPackages = [];
@@ -138,7 +139,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
           Terminal.WriteErrorLine($"Error: NuGet lookup for '{pkg}' failed: {ex.Message}");
           Terminal.WriteErrorLine("  Cannot determine whether this version is already published; refusing to report it as safe to release. Retry when NuGet is reachable.");
           Environment.ExitCode = 1;
-          return Value;
+          return Unit.Value;
         }
 
         if (versions.Count == 0)
@@ -198,7 +199,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
           throw new InvalidOperationException($"Unknown publish state '{publishState}'.");
       }
 
-      return Value;
+      return Unit.Value;
     }
   }
 }

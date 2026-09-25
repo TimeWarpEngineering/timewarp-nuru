@@ -1,5 +1,6 @@
 namespace Editions.GroupFiltering;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("commit", Description = "Commit changes")]
@@ -10,10 +11,10 @@ public sealed class GitCommitCommand : GitGroup, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<GitCommitCommand, Unit>
   {
-    public ValueTask<Unit> Handle(GitCommitCommand command, CancellationToken cancellationToken)
+    public Task<Unit> Handle(GitCommitCommand command, CancellationToken cancellationToken)
     {
       Console.WriteLine($"[GIT] Committed: {command.Message}");
-      return default;
+      return Unit.Task;
     }
   }
 }

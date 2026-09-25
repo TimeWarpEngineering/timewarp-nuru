@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru.Search.Endpoints;
 
+using TimeWarp.Mediator;
+
 [NuruRoute("clear", Description = "Clear the search index")]
 public sealed class IndexClearCommand : IndexGroup, ICommand<Unit>
 {
@@ -13,7 +15,7 @@ public sealed class IndexClearCommand : IndexGroup, ICommand<Unit>
     SearchIndex searchIndex,
     ITerminal terminal) : ICommandHandler<IndexClearCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(IndexClearCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(IndexClearCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

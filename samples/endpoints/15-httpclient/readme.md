@@ -80,7 +80,7 @@ public sealed class CurrentWeatherQuery : IQuery<string>
   {
     private readonly IOpenMeteoService OpenMeteo = openMeteo;
 
-    public async ValueTask<string> Handle(CurrentWeatherQuery query, CancellationToken ct)
+    public async Task<string> Handle(CurrentWeatherQuery query, CancellationToken ct)
     {
       var weather = await OpenMeteo.GetCurrentWeatherAsync(query.City, ct);
       // Format and return result

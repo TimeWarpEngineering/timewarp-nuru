@@ -100,7 +100,7 @@ public sealed class GreetCommand : ICommand<Unit>
   public sealed class Handler(ILogger<GreetCommand> logger) 
     : ICommandHandler<GreetCommand, Unit>
   {
-    public ValueTask<Unit> Handle(GreetCommand cmd, CancellationToken ct)
+    public Task<Unit> Handle(GreetCommand cmd, CancellationToken ct)
     {
       // User sees this in terminal
       Console.WriteLine($"Hello, {cmd.Name}!");
@@ -108,7 +108,7 @@ public sealed class GreetCommand : ICommand<Unit>
       // This flows to Aspire Dashboard / OTLP collector
       logger.LogInformation("Greeted {Name}", cmd.Name);
       
-      return default;
+      return Unit.Task;
     }
   }
 }

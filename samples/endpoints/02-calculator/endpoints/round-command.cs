@@ -5,6 +5,7 @@
 
 namespace EndpointCalculator.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -21,7 +22,7 @@ public sealed class RoundCommand : IQuery<double>
 
   public sealed class Handler : IQueryHandler<RoundCommand, double>
   {
-    public ValueTask<double> Handle(RoundCommand command, CancellationToken ct)
+    public Task<double> Handle(RoundCommand command, CancellationToken ct)
     {
       double result = command.Mode.ToLower() switch
       {
@@ -32,7 +33,7 @@ public sealed class RoundCommand : IQuery<double>
         _ => throw new ArgumentException($"Unknown rounding mode: {command.Mode}")
       };
 
-      return new ValueTask<double>(result);
+      return Task.FromResult<double>(result);
     }
   }
 }

@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 using static System.Console;
@@ -9,7 +10,7 @@ public sealed class ValidateTypesCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ValidateTypesCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ValidateTypesCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ValidateTypesCommand c, CancellationToken ct)
     {
       WriteLine("Validating values...\n");
 
@@ -28,7 +29,7 @@ public sealed class ValidateTypesCommand : ICommand<Unit>
         WriteLine($"  {value,-30} -> {type}");
       }
 
-      return default;
+      return Unit.Task;
     }
   }
 }

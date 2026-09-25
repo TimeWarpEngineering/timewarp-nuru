@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -27,10 +28,10 @@ public sealed class DockerTagCommand : DockerGroupBase, IIdempotentCommand<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(DockerTagCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DockerTagCommand command, CancellationToken ct)
     {
       Terminal.WriteLine($"Tagging {command.Source} as {command.Target}");
-      return default;
+      return Unit.Task;
     }
   }
 }

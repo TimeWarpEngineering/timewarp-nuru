@@ -325,8 +325,8 @@ public sealed class ReplSession : IDisposable
       return 130;
     }
 #pragma warning disable CA1031 // Do not catch general exception types — the REPL is a command
-                               // boundary; an unexpected exception thrown by a user command must
-                               // not tear down the whole interactive session.
+    // boundary; an unexpected exception thrown by a user command must
+    // not tear down the whole interactive session.
     catch (Exception ex)
     {
       return HandleCommandException(stopwatch, ex);

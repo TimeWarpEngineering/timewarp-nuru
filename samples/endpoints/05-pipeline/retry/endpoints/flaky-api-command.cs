@@ -6,6 +6,7 @@
 namespace PipelineRetry.Endpoints;
 
 using PipelineRetry.Behaviors;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("flaky-api", Description = "Simulate flaky API call with auto-retry")]
@@ -20,7 +21,7 @@ public sealed class FlakyApiCommand : ICommand<Unit>, IRetryable
   {
     private static int FailureCount = 0;
 
-    public ValueTask<Unit> Handle(FlakyApiCommand command, CancellationToken ct)
+    public Task<Unit> Handle(FlakyApiCommand command, CancellationToken ct)
     {
       FailureCount++;
 
@@ -31,7 +32,7 @@ public sealed class FlakyApiCommand : ICommand<Unit>, IRetryable
 
       Console.WriteLine($"✓ API call to {command.Endpoint} succeeded after {FailureCount} attempts");
       FailureCount = 0;
-      return default;
+      return Unit.Task;
     }
   }
 }

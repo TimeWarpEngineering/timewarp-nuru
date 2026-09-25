@@ -53,6 +53,7 @@
 namespace DevCli;
 
 using System.Text.Json;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -83,7 +84,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       PackableProjectService = packableProjectService;
     }
 
-    public async ValueTask<Unit> Handle(ReleaseCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(ReleaseCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 
@@ -95,7 +96,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("Error: could not read <Version> from source/Directory.Build.props");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       string tag = $"v{version}";
@@ -114,14 +115,14 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("Error: gh CLI not found — install gh, then run 'gh auth login'.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       if (ghAuthResult.ExitCode != 0)
       {
         Terminal.WriteErrorLine($"Error: gh is not authenticated — run 'gh auth login'.\n{ghAuthResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("✓ gh authenticated".Green());
@@ -138,7 +139,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: {treeVerdict.Reason}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("✓ working tree clean".Green());
@@ -157,7 +158,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: {branchVerdict.Reason}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("✓ on master".Green());
@@ -173,7 +174,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: git fetch origin master failed.\n{fetchResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       CommandOutput aheadResult = await Shell.Builder("git")
@@ -195,7 +196,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
         string detail = aheadResult.ExitCode != 0 ? aheadResult.Stderr.Trim() : behindResult.Stderr.Trim();
         Terminal.WriteErrorLine($"Error: could not determine sync status with origin/master.\n{detail}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       GuardVerdict syncVerdict = ReleaseGuard.CheckSync(aheadCount, behindCount);
@@ -203,7 +204,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: {syncVerdict.Reason}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("✓ in sync with origin/master".Green());
@@ -218,7 +219,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: could not resolve HEAD commit.\n{headShaResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       string headSha = headShaResult.Stdout.Trim();
@@ -243,7 +244,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: could not check for local tag {tag}.\n{localTagResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       CommandOutput remoteTagResult = await Shell.Builder("git")
@@ -256,7 +257,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: could not check for remote tag {tag}.\n{remoteTagResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       bool existsOnRemote = !string.IsNullOrWhiteSpace(remoteTagResult.Stdout);
@@ -266,7 +267,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: {tagVerdict.Reason}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"✓ tag {tag} available".Green());
@@ -297,7 +298,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("Error: no packable projects found under source/ and no packages configured. Use checkVersionConfig.packages in .timewarp/dev.jsonc.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       List<string> invalidPackages = [.. packages.Where(p => !NuGetVersionService.IsValidPackageId(p))];
@@ -305,7 +306,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: invalid NuGet package id(s): {string.Join(", ", invalidPackages)}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       List<string> alreadyPublished = [];
@@ -325,7 +326,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
           Terminal.WriteErrorLine($"Error: NuGet lookup for '{pkg}' failed: {ex.Message}");
           Terminal.WriteErrorLine("  Cannot determine whether this version is already published; refusing to release. Retry when NuGet is reachable.");
           Environment.ExitCode = 1;
-          return Value;
+          return Unit.Value;
         }
 
         if (NuGetVersionService.IsVersionPublished(version, versions))
@@ -341,7 +342,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: {publishVerdict.Reason}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"✓ version {version} not yet published".Green());
@@ -357,7 +358,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: gh run list failed.\n{runListResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       List<CiRunSummary>? runs = JsonSerializer.Deserialize(runListResult.Stdout, DevCliJsonContext.Default.ListCiRunSummary);
@@ -367,7 +368,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: no successful CI run of workflow.yml exists for {headSha}. The Release event would fail at locate-run — wait for CI on this commit or rerun it (gh run rerun <id>).");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"✓ successful CI run found ({candidateRuns[0].DatabaseId})".Green());
@@ -389,7 +390,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
         Terminal.WriteLine($"  {tagCommand}");
         Terminal.WriteLine($"  {pushCommand}");
         Terminal.WriteLine($"  {releaseCommand}");
-        return Value;
+        return Unit.Value;
       }
 
       // --- Step 10: execute — tag, push, gh release create --------------------
@@ -403,7 +404,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Error: failed to create tag {tag}.\n{tagCreateResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"Created tag {tag} at {ShortSha(headSha)}.");
@@ -428,7 +429,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
 
         Terminal.WriteErrorLine($"Error: failed to push tag {tag} to origin — {cleanupNote}\n{pushResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"Pushed tag {tag} to origin.");
@@ -445,13 +446,13 @@ public sealed class ReleaseCommand : ICommand<Unit>
         Terminal.WriteErrorLine($"Recover with: {releaseCommand}");
         Terminal.WriteErrorLine("Re-running 'dev release' will refuse at the tag-availability guard by design — the tag now exists.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine(releaseCreateResult.Stdout.Trim());
       Terminal.WriteLine($"✓ Released {tag}".Green());
 
-      return Value;
+      return Unit.Value;
     }
 
     private static string ShortSha(string sha) => sha.Length > 7 ? sha[..7] : sha;

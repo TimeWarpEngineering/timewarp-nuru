@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("build", Description = "Build a project")]
@@ -21,10 +22,10 @@ public sealed class BuildCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<BuildCommand, Unit>
   {
-    public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public Task<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Building {command.Project} ({command.Mode}, verbose: {command.Verbose})");
-      return default;
+      return Unit.Task;
     }
   }
 }

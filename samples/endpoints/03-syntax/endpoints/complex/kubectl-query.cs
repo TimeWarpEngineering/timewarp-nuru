@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("kubectl", Description = "Kubectl get command")]
@@ -21,10 +22,10 @@ public sealed class KubectlQuery : IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<KubectlQuery, Unit>
   {
-    public ValueTask<Unit> Handle(KubectlQuery query, CancellationToken ct)
+    public Task<Unit> Handle(KubectlQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Get {query.Resource} in namespace {query.Ns ?? "default"}");
-      return default;
+      return Unit.Task;
     }
   }
 }

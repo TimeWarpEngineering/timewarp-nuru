@@ -14,7 +14,7 @@ namespace DevCli;
 /// Build all TimeWarp.Nuru projects in dependency order.
 /// </summary>
 [NuruRoute("build", Description = "Build all TimeWarp.Nuru projects")]
-internal sealed class BuildCommand : ICommand<Unit>
+public sealed class BuildCommand : ICommand<Unit>
 {
   [Option("clean", "c", Description = "Clean before building")]
   public bool Clean { get; set; }
@@ -31,7 +31,7 @@ internal sealed class BuildCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       // Get repo root using Git.FindRoot
       string? repoRoot = Git.FindRoot();

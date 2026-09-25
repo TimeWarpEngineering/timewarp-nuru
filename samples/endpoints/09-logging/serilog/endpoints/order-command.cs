@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Serilog;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("order", Description = "Process an order with structured logging")]
@@ -10,7 +11,7 @@ public sealed class OrderCommand : ICommand<Unit>
 
   public sealed class Handler(ILogger<OrderCommand> Logger) : ICommandHandler<OrderCommand, Unit>
   {
-    public ValueTask<Unit> Handle(OrderCommand c, CancellationToken ct)
+    public Task<Unit> Handle(OrderCommand c, CancellationToken ct)
     {
       using IDisposable? scope = Logger.BeginScope(new Dictionary<string, object>
       {
@@ -28,7 +29,7 @@ public sealed class OrderCommand : ICommand<Unit>
 
       Logger.LogInformation("Order {OrderId} completed successfully", c.OrderId);
 
-      return default;
+      return Unit.Task;
     }
   }
 }

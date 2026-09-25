@@ -6,6 +6,7 @@
 namespace PipelineCombined.Endpoints;
 
 using PipelineCombined.Behaviors;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("admin-config", Description = "Set config (admin only)")]
@@ -16,10 +17,10 @@ public sealed class AdminConfigCommand : ICommand<Unit>, IRequireAuthorization
 
   public sealed class Handler : ICommandHandler<AdminConfigCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AdminConfigCommand c, CancellationToken ct)
+    public Task<Unit> Handle(AdminConfigCommand c, CancellationToken ct)
     {
       Console.WriteLine($"Set {c.Key} = {c.Value}");
-      return default;
+      return Unit.Task;
     }
   }
 }

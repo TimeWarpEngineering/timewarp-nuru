@@ -13,6 +13,7 @@
 namespace DevCli;
 
 using TimeWarp.Amuru;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -33,7 +34,7 @@ public sealed class SelfInstallCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(SelfInstallCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(SelfInstallCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

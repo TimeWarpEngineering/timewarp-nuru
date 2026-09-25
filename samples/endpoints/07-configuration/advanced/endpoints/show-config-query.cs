@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 using static System.Console;
@@ -8,7 +9,7 @@ public sealed class ShowConfigQuery : IQuery<Unit>
 {
   public sealed class Handler(IOptions<AppConfiguration> config) : IQueryHandler<ShowConfigQuery, Unit>
   {
-    public ValueTask<Unit> Handle(ShowConfigQuery query, CancellationToken ct)
+    public Task<Unit> Handle(ShowConfigQuery query, CancellationToken ct)
     {
       AppConfiguration app = config.Value;
 
@@ -37,7 +38,7 @@ public sealed class ShowConfigQuery : IQuery<Unit>
         WriteLine($"  {meta.Key}: {meta.Value}");
       }
 
-      return default;
+      return Unit.Task;
     }
   }
 }

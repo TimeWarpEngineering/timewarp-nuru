@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -24,7 +25,7 @@ public sealed class DockerPsQuery : DockerGroupBase, IQuery<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(DockerPsQuery query, CancellationToken ct)
+    public Task<Unit> Handle(DockerPsQuery query, CancellationToken ct)
     {
       string scope = query.All ? "all" : "running";
       Terminal.WriteLine($"Listing {scope} containers...");
@@ -35,7 +36,7 @@ public sealed class DockerPsQuery : DockerGroupBase, IQuery<Unit>
         Terminal.WriteLine("def456         redis:7        Exited (0) 1 day ago");
       }
 
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -8,7 +9,7 @@ public sealed class ErrorCommand : ICommand<Unit>
 
   public sealed class Handler(ITerminal T) : ICommandHandler<ErrorCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ErrorCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ErrorCommand c, CancellationToken ct)
     {
       T.WriteErrorLine($"{"✗".Red()} Error: {c.Message}".Red());
       throw new InvalidOperationException(c.Message);

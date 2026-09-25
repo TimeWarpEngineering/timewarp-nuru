@@ -275,7 +275,7 @@ public sealed class FetchQuery : IQuery<string>
 
   public sealed class Handler(IFetchService fetchService) : IQueryHandler<FetchQuery, string>
   {
-    public async ValueTask<string> Handle(FetchQuery query, CancellationToken ct)
+    public async Task<string> Handle(FetchQuery query, CancellationToken ct)
     {
       return await fetchService.FetchAsync(query.Url, ct);
     }

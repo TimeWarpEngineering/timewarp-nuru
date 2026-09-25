@@ -25,10 +25,13 @@ internal static class ServiceValidator
   /// <param name="app">The app model to validate.</param>
   /// <param name="routeLocations">Map from route pattern to source location, used to anchor
   /// unregistered-service diagnostics at the offending route.</param>
+  /// <param name="hasGeneratedMediator">True when the TimeWarp.Mediator generated mediator is available,
+  /// which makes ISender / IPublisher / IMediator resolvable without registration.</param>
   /// <returns>Diagnostics for any issues found.</returns>
   public static ImmutableArray<Diagnostic> Validate(
     AppModel app,
-    IReadOnlyDictionary<string, Location>? routeLocations = null)
+    IReadOnlyDictionary<string, Location>? routeLocations = null,
+    bool hasGeneratedMediator = false)
   {
     // Skip ALL validation when runtime DI is enabled
     if (app.UseMicrosoftDependencyInjection)
@@ -38,6 +41,9 @@ internal static class ServiceValidator
 
     // Build a set of registered service type names for lookup
     HashSet<string> registeredServices = BuildRegisteredServiceSet(app.Services);
+
+    if (hasGeneratedMediator)
+      AddMediatorServices(registeredServices);
 
     // Add HttpClient-registered service types
     if (!app.HttpClientConfigurations.IsDefaultOrEmpty)
@@ -169,6 +175,18 @@ internal static class ServiceValidator
     set.Add("global::System.Threading.CancellationToken");
     set.Add("System.Threading.CancellationToken");
     set.Add("CancellationToken");
+  }
+
+  /// <summary>
+  /// Adds the TimeWarp.Mediator services resolved from the generated mediator.
+  /// </summary>
+  private static void AddMediatorServices(HashSet<string> set)
+  {
+    foreach (string name in (string[])["ISender", "IPublisher", "IMediator"])
+    {
+      set.Add($"global::TimeWarp.Mediator.{name}");
+      set.Add($"TimeWarp.Mediator.{name}");
+    }
   }
 
   /// <summary>

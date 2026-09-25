@@ -391,6 +391,9 @@ internal static class BehaviorEmitter
       return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
     }
 
+    if (FrameworkServices.IsMediatorServiceType(serviceTypeName))
+      return FrameworkServices.MediatorExpression;
+
     // Find matching service registration
     ServiceDefinition? service = services.FirstOrDefault(s =>
       s.ServiceTypeName == serviceTypeName ||

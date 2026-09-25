@@ -5,6 +5,7 @@
 
 namespace HttpClientSample.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 using HttpClientSample.Services;
@@ -27,7 +28,7 @@ public sealed class CurrentWeatherCommand : ICommand<Unit>
   {
     private readonly IOpenMeteoService OpenMeteo = openMeteo;
 
-    public async ValueTask<Unit> Handle(CurrentWeatherCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(CurrentWeatherCommand command, CancellationToken ct)
     {
       try
       {

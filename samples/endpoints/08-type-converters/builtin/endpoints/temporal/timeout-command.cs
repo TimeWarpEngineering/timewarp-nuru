@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,10 +9,10 @@ public sealed class TimeoutCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<TimeoutCommand, Unit>
   {
-    public ValueTask<Unit> Handle(TimeoutCommand c, CancellationToken ct)
+    public Task<Unit> Handle(TimeoutCommand c, CancellationToken ct)
     {
       WriteLine($"Timeout set to: {c.Duration.TotalSeconds} seconds");
-      return default;
+      return Unit.Task;
     }
   }
 }

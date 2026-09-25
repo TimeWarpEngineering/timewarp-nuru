@@ -6,6 +6,7 @@
 namespace PipelineFilteredAuth.Endpoints;
 
 using PipelineFilteredAuth.Behaviors;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("config-set", Description = "Set configuration value (admin only)")]
@@ -19,10 +20,10 @@ public sealed class ConfigSetCommand : ICommand<Unit>, IRequireAuthorization
 
   public sealed class Handler : ICommandHandler<ConfigSetCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ConfigSetCommand command, CancellationToken ct)
+    public Task<Unit> Handle(ConfigSetCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Setting {command.Key} = {command.Value}");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -6,6 +6,7 @@
 namespace PipelineFilteredAuth.Endpoints;
 
 using PipelineFilteredAuth.Behaviors;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("delete", Description = "Delete an item (admin only)")]
@@ -19,10 +20,10 @@ public sealed class DeleteCommand : ICommand<Unit>, IRequireAuthorization
 
   public sealed class Handler : ICommandHandler<DeleteCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DeleteCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DeleteCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deleting item {command.Id} (force: {command.Force})");
-      return default;
+      return Unit.Task;
     }
   }
 }

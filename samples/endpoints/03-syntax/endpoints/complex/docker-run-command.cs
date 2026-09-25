@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("docker-run", Description = "Run docker container")]
@@ -24,10 +25,10 @@ public sealed class DockerRunCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DockerRunCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DockerRunCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Running {command.Image} with {command.E.Length} env vars, {command.Port.Length} ports");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Serilog;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("audit", Description = "Log audit event with full context")]
@@ -10,7 +11,7 @@ public sealed class AuditCommand : ICommand<Unit>
 
   public sealed class Handler(ILogger<AuditCommand> Logger) : ICommandHandler<AuditCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AuditCommand c, CancellationToken ct)
+    public Task<Unit> Handle(AuditCommand c, CancellationToken ct)
     {
       Logger.LogInformation(
         "Audit: User performed {Action} on {Resource} at {Timestamp}",
@@ -31,7 +32,7 @@ public sealed class AuditCommand : ICommand<Unit>
         }
       );
 
-      return default;
+      return Unit.Task;
     }
   }
 }

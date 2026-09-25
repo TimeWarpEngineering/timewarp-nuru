@@ -6,6 +6,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("wait", Description = "Wait for specified seconds")]
@@ -16,7 +17,7 @@ public sealed class WaitCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<WaitCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(WaitCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(WaitCommand command, CancellationToken ct)
     {
       int seconds = command.Seconds ?? 5;
       Console.WriteLine($"Waiting {seconds} seconds");

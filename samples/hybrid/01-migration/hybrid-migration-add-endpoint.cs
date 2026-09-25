@@ -18,6 +18,7 @@
 // Next step: hybrid-migration-complete.cs for full Endpoint conversion
 // ═══════════════════════════════════════════════════════════════════════════════
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Console;
@@ -72,7 +73,7 @@ public sealed class FactorialCommand : ICommand<Unit>
 
   public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FactorialCommand, Unit>
   {
-    public ValueTask<Unit> Handle(FactorialCommand c, CancellationToken ct)
+    public Task<Unit> Handle(FactorialCommand c, CancellationToken ct)
     {
       try
       {
@@ -83,7 +84,7 @@ public sealed class FactorialCommand : ICommand<Unit>
       {
         WriteLine($"Error: {ex.Message}");
       }
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -95,11 +96,11 @@ public sealed class PrimeCheckCommand : ICommand<Unit>
 
   public sealed class Handler(IScientificCalculator calc) : ICommandHandler<PrimeCheckCommand, Unit>
   {
-    public ValueTask<Unit> Handle(PrimeCheckCommand c, CancellationToken ct)
+    public Task<Unit> Handle(PrimeCheckCommand c, CancellationToken ct)
     {
       bool result = calc.IsPrime(c.N);
       WriteLine($"{c.N} is {(result ? "prime" : "not prime")}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -111,7 +112,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
 
   public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FibonacciCommand, Unit>
   {
-    public ValueTask<Unit> Handle(FibonacciCommand c, CancellationToken ct)
+    public Task<Unit> Handle(FibonacciCommand c, CancellationToken ct)
     {
       try
       {
@@ -122,7 +123,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
       {
         WriteLine($"Error: {ex.Message}");
       }
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -9,6 +9,7 @@
 namespace DevCli;
 
 using TimeWarp.Amuru;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -29,7 +30,7 @@ public sealed class CleanCommand : ICommand<Unit>
       RepoCleanService = repoCleanService;
     }
 
-    public async ValueTask<Unit> Handle(CleanCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(CleanCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

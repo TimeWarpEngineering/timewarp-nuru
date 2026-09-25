@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -20,10 +21,10 @@ public sealed class PingQuery : IQuery<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(PingQuery query, CancellationToken ct)
+    public Task<Unit> Handle(PingQuery query, CancellationToken ct)
     {
       Terminal.WriteLine("pong");
-      return default;
+      return Unit.Task;
     }
   }
 }

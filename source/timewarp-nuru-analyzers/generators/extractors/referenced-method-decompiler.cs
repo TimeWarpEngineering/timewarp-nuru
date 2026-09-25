@@ -16,14 +16,14 @@
 
 namespace TimeWarp.Nuru.Generators;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Metadata;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
-using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.Metadata;
 
 /// <summary>
 /// Decompiles a referenced method's implementation body for registration-script lowering.

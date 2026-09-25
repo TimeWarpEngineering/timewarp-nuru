@@ -5,6 +5,7 @@
 
 namespace PipelineBasic.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -16,7 +17,7 @@ public sealed class SlowCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<SlowCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(SlowCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(SlowCommand command, CancellationToken ct)
     {
       WriteLine($"Starting slow operation ({command.Delay}ms)...");
       await Task.Delay(command.Delay, ct);

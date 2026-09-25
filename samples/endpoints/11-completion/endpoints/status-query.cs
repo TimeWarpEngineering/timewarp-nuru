@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -9,7 +10,7 @@ public sealed class StatusQuery : IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<StatusQuery, Unit>
   {
-    public ValueTask<Unit> Handle(StatusQuery q, CancellationToken ct)
+    public Task<Unit> Handle(StatusQuery q, CancellationToken ct)
     {
       WriteLine("System Status: OK");
       if (q.Verbose)
@@ -18,7 +19,7 @@ public sealed class StatusQuery : IQuery<Unit>
         WriteLine("  Memory: 2.1GB");
         WriteLine("  Disk: 78%");
       }
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -47,13 +47,13 @@ internal static class InterceptorEmitter
       .DistinctBy(s => s.ImplementationTypeName);
 
     // Emit static Lazy<T> fields for source-gen DI apps
-    EmitServiceFields(sb, sourceGenServices);
+    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.HasGeneratedMediator, GetFirstLoggerFactoryFieldName(model));
 
     // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     // Each app gets its own __ConfigureServices and GetServiceProvider methods
     if (model.UsesMicrosoftDependencyInjection)
     {
-      EmitRuntimeDIInfrastructure(sb, model.Apps);
+      EmitRuntimeDIInfrastructure(sb, model.Apps, model.HasGeneratedMediator);
     }
 
     EmitLoggingFactoryFields(sb, model);
@@ -330,7 +330,7 @@ internal static class InterceptorEmitter
   /// These are initialized lazily in EnsureServicesInitialized.
   /// Services are sorted topologically to ensure dependencies are emitted first.
   /// </summary>
-  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services)
+  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, bool hasGeneratedMediator, string? loggerFactoryFieldName)
   {
     // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
     ImmutableArray<ServiceDefinition> allServices = [.. services];
@@ -379,7 +379,69 @@ internal static class InterceptorEmitter
     sb.AppendLine();
 
     // Emit EnsureServicesInitialized method
-    EmitEnsureServicesInitialized(sb, sortedServices, allServices, frameworkServiceTypes);
+    EmitEnsureServicesInitialized(sb, sortedServices, allServices, frameworkServiceTypes, requiresMediator);
+
+    if (requiresMediator)
+      EmitSourceGenMediator(sb, allServices, hasGeneratedMediator, loggerFactoryFieldName);
+  }
+
+  /// <summary>
+  /// Emits <c>__GetMediator()</c>, which resolves the TimeWarp.Mediator generated <c>IMediator</c>
+  /// for source-gen DI apps. The generated mediator resolves handlers through an
+  /// <see cref="System.IServiceProvider"/>, so this builds a small container per app holding
+  /// <c>AddGeneratedMediator()</c> plus Nuru's framework services and the statically registered services.
+  /// </summary>
+  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, bool hasGeneratedMediator, string? loggerFactoryFieldName)
+  {
+    const string Sce = "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions";
+
+    sb.AppendLine("  // Source-gen DI: ISender / IPublisher / IMediator from the TimeWarp.Mediator generated mediator");
+    sb.AppendLine("  private static global::Microsoft.Extensions.Configuration.IConfigurationRoot? __mediatorConfiguration;");
+    sb.AppendLine("  private static global::System.IServiceProvider? __mediatorServiceProvider;");
+    sb.AppendLine();
+    sb.AppendLine("  private static global::TimeWarp.Mediator.IMediator __GetMediator()");
+    sb.AppendLine("  {");
+
+    if (!hasGeneratedMediator)
+    {
+      sb.AppendLine("    throw new global::System.InvalidOperationException(\"The TimeWarp.Mediator generated mediator is not available in this compilation.\");");
+      sb.AppendLine("  }");
+      sb.AppendLine();
+      return;
+    }
+
+    sb.AppendLine("    if (__mediatorServiceProvider is null)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
+    sb.AppendLine($"      {Sce}.AddTransient<global::TimeWarp.Terminal.ITerminal>(services, static _ => __fw_ITerminal!);");
+    sb.AppendLine($"      {Sce}.AddTransient<global::TimeWarp.Nuru.NuruApp>(services, static _ => __fw_NuruApp!);");
+    sb.AppendLine($"      {Sce}.AddTransient<global::Microsoft.Extensions.Configuration.IConfigurationRoot>(services, static _ => __mediatorConfiguration!);");
+    sb.AppendLine($"      {Sce}.AddTransient<global::Microsoft.Extensions.Configuration.IConfiguration>(services, static _ => __mediatorConfiguration!);");
+
+    string loggerFactoryExpression = loggerFactoryFieldName switch
+    {
+      null => "global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance",
+      "app.LoggerFactory" => "__fw_NuruApp?.LoggerFactory ?? global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance",
+      _ => loggerFactoryFieldName
+    };
+    sb.AppendLine($"      {Sce}.AddTransient<global::Microsoft.Extensions.Logging.ILoggerFactory>(services, static _ => {loggerFactoryExpression});");
+    sb.AppendLine($"      {Sce}.AddSingleton(services, typeof(global::Microsoft.Extensions.Logging.ILogger<>), typeof(global::Microsoft.Extensions.Logging.Logger<>));");
+
+    foreach (ServiceDefinition service in allServices.DistinctBy(s => s.ServiceTypeName))
+    {
+      string factory = service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped
+        ? $"{GetServiceFieldName(service.ImplementationTypeName)}!"
+        : $"new {service.ImplementationTypeName}({ServiceResolverEmitter.ResolveConstructorArguments(service, allServices)})";
+      sb.AppendLine($"      {Sce}.AddTransient<{service.ServiceTypeName}>(services, static _ => {factory});");
+    }
+
+    sb.AppendLine("      global::Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions.AddGeneratedMediator(services);");
+    sb.AppendLine("      __mediatorServiceProvider = global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+    sb.AppendLine("    return global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::TimeWarp.Mediator.IMediator>(__mediatorServiceProvider);");
+    sb.AppendLine("  }");
+    sb.AppendLine();
   }
 
   /// <summary>
@@ -423,7 +485,7 @@ internal static class InterceptorEmitter
   /// Uses app instance check instead of boolean flag to support multiple app instances
   /// in the same process (e.g., CI multi-mode tests).
   /// </summary>
-  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, ImmutableArray<ServiceDefinition> allServices, HashSet<string> frameworkServiceTypes)
+  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, ImmutableArray<ServiceDefinition> allServices, HashSet<string> frameworkServiceTypes, bool requiresMediator)
   {
     sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
     sb.AppendLine("  {");
@@ -435,6 +497,11 @@ internal static class InterceptorEmitter
     sb.AppendLine("    // Framework services");
     sb.AppendLine("    __fw_NuruApp = app;");
     sb.AppendLine("    __fw_ITerminal = app.Terminal;");
+    if (requiresMediator)
+    {
+      sb.AppendLine("    __mediatorConfiguration = configuration;");
+      sb.AppendLine("    __mediatorServiceProvider = null;");
+    }
 
     // Initialize additional framework services
     foreach (string frameworkType in frameworkServiceTypes)
@@ -501,6 +568,9 @@ internal static class InterceptorEmitter
       return FrameworkServices.GetFieldName(param.TypeName);
     }
 
+    if (FrameworkServices.IsMediatorServiceType(param.TypeName))
+      return FrameworkServices.MediatorExpression;
+
     // Check if this is a registered service
     ServiceDefinition? depService = FindServiceForInit(param.TypeName, allServices);
     if (depService is not null)
@@ -538,6 +608,9 @@ internal static class InterceptorEmitter
     {
       return FrameworkServices.GetFieldName(depType);
     }
+
+    if (FrameworkServices.IsMediatorServiceType(depType))
+      return FrameworkServices.MediatorExpression;
 
     // Registered service
     ServiceDefinition? depService = FindServiceForInit(depType, allServices);
@@ -598,7 +671,8 @@ internal static class InterceptorEmitter
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="apps">All app models (will filter to those using runtime DI).</param>
-  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps)
+  /// <param name="hasGeneratedMediator">Whether to register the TimeWarp.Mediator generated mediator.</param>
+  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps, bool hasGeneratedMediator)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE (UseMicrosoftDependencyInjection was called)");
@@ -644,6 +718,13 @@ internal static class InterceptorEmitter
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, app.Terminal);");
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
       sb.AppendLine();
+
+      if (hasGeneratedMediator)
+      {
+        sb.AppendLine("    // Register the TimeWarp.Mediator source-generated IMediator / ISender / IPublisher");
+        sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions.AddGeneratedMediator(services);");
+        sb.AppendLine();
+      }
 
       if (!string.IsNullOrEmpty(lambdaBody))
       {

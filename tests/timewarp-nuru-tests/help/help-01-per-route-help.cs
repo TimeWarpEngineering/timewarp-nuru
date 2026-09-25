@@ -270,14 +270,14 @@ public static class StaticFlags
 
 // Issue #215 / kanban #453: Endpoint DSL endpoint with a described parameter.
 [NuruRoute("fork", Description = "Fork a repository")]
-internal sealed class ForkEndpoint : ICommand<Unit>
+public sealed class ForkEndpoint : ICommand<Unit>
 {
   [Parameter(Description = "Source repository identifier")]
   public required string Source { get; set; }
 
   internal sealed class Handler(ITerminal terminal) : ICommandHandler<ForkEndpoint, Unit>
   {
-    public async ValueTask<Unit> Handle(ForkEndpoint command, CancellationToken ct)
+    public async Task<Unit> Handle(ForkEndpoint command, CancellationToken ct)
     {
       await terminal.WriteLineAsync($"forked {command.Source}").ConfigureAwait(false);
       return default;

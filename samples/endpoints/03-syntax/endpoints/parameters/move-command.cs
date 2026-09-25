@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("move", Description = "Move a file from source to destination")]
@@ -18,10 +19,10 @@ public sealed class MoveCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<MoveCommand, Unit>
   {
-    public ValueTask<Unit> Handle(MoveCommand command, CancellationToken ct)
+    public Task<Unit> Handle(MoveCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Moving {command.Source} to {command.Destination}");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("tail", Description = "Tail a file")]
@@ -18,10 +19,10 @@ public sealed class TailCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<TailCommand, Unit>
   {
-    public ValueTask<Unit> Handle(TailCommand command, CancellationToken ct)
+    public Task<Unit> Handle(TailCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Tailing {command.File} with {command.Args.Length} extra args");
-      return default;
+      return Unit.Task;
     }
   }
 }

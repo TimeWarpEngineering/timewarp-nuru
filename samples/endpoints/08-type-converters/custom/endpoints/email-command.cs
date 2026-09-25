@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -9,14 +10,14 @@ public sealed class EmailCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<EmailCommand, Unit>
   {
-    public ValueTask<Unit> Handle(EmailCommand c, CancellationToken ct)
+    public Task<Unit> Handle(EmailCommand c, CancellationToken ct)
     {
       EmailAddress email = new EmailAddress(c.Address);
       WriteLine($"Sending email to: {email}");
       WriteLine($"  Domain: {email.Domain}");
       WriteLine($"  Message: {c.Message}");
       WriteLine("✓ Email sent (simulated)");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -7,7 +8,7 @@ public sealed class ValidateConfigQuery : IQuery<Unit>
 {
   public sealed class Handler(IOptions<ValidatedSettings> settings) : IQueryHandler<ValidateConfigQuery, Unit>
   {
-    public ValueTask<Unit> Handle(ValidateConfigQuery query, CancellationToken ct)
+    public Task<Unit> Handle(ValidateConfigQuery query, CancellationToken ct)
     {
       ValidatedSettings s = settings.Value;
 
@@ -20,7 +21,7 @@ public sealed class ValidateConfigQuery : IQuery<Unit>
       WriteLine($"  Endpoint: {s.EndpointUrl}");
       WriteLine($"  Tags: {string.Join(", ", s.Tags)}");
 
-      return default;
+      return Unit.Task;
     }
 
     private static string MaskApiKey(string apiKey)

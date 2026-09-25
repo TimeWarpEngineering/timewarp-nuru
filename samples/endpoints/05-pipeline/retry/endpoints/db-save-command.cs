@@ -6,6 +6,7 @@
 namespace PipelineRetry.Endpoints;
 
 using PipelineRetry.Behaviors;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("db-save", Description = "Save to database with retry on failure")]
@@ -20,7 +21,7 @@ public sealed class DbSaveCommand : ICommand<Unit>, IRetryable
   {
     private static int FailureCount = 0;
 
-    public ValueTask<Unit> Handle(DbSaveCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DbSaveCommand command, CancellationToken ct)
     {
       FailureCount++;
 
@@ -31,7 +32,7 @@ public sealed class DbSaveCommand : ICommand<Unit>, IRetryable
 
       Console.WriteLine($"✓ Saved '{command.Data}' to database after {FailureCount} attempts");
       FailureCount = 0;
-      return default;
+      return Unit.Task;
     }
   }
 }

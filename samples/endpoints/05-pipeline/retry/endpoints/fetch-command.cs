@@ -6,6 +6,7 @@
 namespace PipelineRetry.Endpoints;
 
 using PipelineRetry.Behaviors;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("fetch", Description = "Fetch data with retry on network errors")]
@@ -20,7 +21,7 @@ public sealed class FetchCommand : ICommand<string>, IRetryable
   {
     private static int FailureCount = 0;
 
-    public ValueTask<string> Handle(FetchCommand command, CancellationToken ct)
+    public Task<string> Handle(FetchCommand command, CancellationToken ct)
     {
       FailureCount++;
 
@@ -32,7 +33,7 @@ public sealed class FetchCommand : ICommand<string>, IRetryable
       string result = $"Data from {command.Url}";
       Console.WriteLine($"✓ Fetched successfully after {FailureCount} attempts");
       FailureCount = 0;
-      return new ValueTask<string>(result);
+      return Task.FromResult<string>(result);
     }
   }
 }

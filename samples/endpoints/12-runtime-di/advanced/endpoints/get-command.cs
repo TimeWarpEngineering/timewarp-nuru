@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,7 +9,7 @@ public sealed class GetCommand : ICommand<string>
 
   public sealed class Handler(IRepository Repo) : ICommandHandler<GetCommand, string>
   {
-    public async ValueTask<string> Handle(GetCommand c, CancellationToken ct)
+    public async Task<string> Handle(GetCommand c, CancellationToken ct)
     {
       WriteLine("=== First call (cache miss expected) ===");
       string result1 = await Repo.GetAsync(c.Key);

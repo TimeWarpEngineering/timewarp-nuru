@@ -6,6 +6,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("backup", Description = "Backup a source directory")]
@@ -19,11 +20,11 @@ public sealed class BackupCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<BackupCommand, Unit>
   {
-    public ValueTask<Unit> Handle(BackupCommand command, CancellationToken ct)
+    public Task<Unit> Handle(BackupCommand command, CancellationToken ct)
     {
       string dest = command.Destination ?? "default location";
       Console.WriteLine($"Backing up {command.Source} to {dest}");
-      return default;
+      return Unit.Task;
     }
   }
 }

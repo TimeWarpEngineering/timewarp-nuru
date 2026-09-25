@@ -153,10 +153,10 @@ public sealed class Gen20KanbanQuery : IQuery<Unit>
 {
   public sealed class Handler(ITerminal terminal, IKanbanService kanbanService) : IQueryHandler<Gen20KanbanQuery, Unit>
   {
-    public ValueTask<Unit> Handle(Gen20KanbanQuery query, CancellationToken cancellationToken)
+    public Task<Unit> Handle(Gen20KanbanQuery query, CancellationToken cancellationToken)
     {
       terminal.WriteLine(kanbanService.ListTasks());
-      return default;
+      return Unit.Task;
     }
   }
 }

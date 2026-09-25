@@ -10,13 +10,17 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Version">Assembly version (from AssemblyInformationalVersionAttribute or AssemblyVersion)</param>
 /// <param name="CommitHash">Git commit hash (from TimeWarp.Build.Tasks, may be null)</param>
 /// <param name="CommitDate">Git commit date (from TimeWarp.Build.Tasks, may be null)</param>
+/// <param name="HasGeneratedMediator">
+/// True when the TimeWarp.Mediator generator emits <c>AddGeneratedMediator()</c> into this compilation.
+/// </param>
 public sealed record GeneratorModel(
   EquatableArray<AppModel> Apps,
   EquatableArray<string> UserUsings,
   EquatableArray<RouteDefinition> Endpoints,
   string? Version,
   string? CommitHash,
-  string? CommitDate)
+  string? CommitDate,
+  bool HasGeneratedMediator = false)
 {
   /// <summary>
   /// Gets whether any app has help enabled.
@@ -47,6 +51,37 @@ public sealed record GeneratorModel(
   /// Gets whether any app uses runtime Microsoft DI instead of source-gen DI.
   /// </summary>
   public bool UsesMicrosoftDependencyInjection => Apps.Any(a => a.UseMicrosoftDependencyInjection);
+
+  /// <summary>
+  /// Gets whether a source-gen DI app injects <c>ISender</c>, <c>IPublisher</c>, or <c>IMediator</c>
+  /// into a handler, service, or behavior.
+  /// </summary>
+  public bool SourceGenDIRequiresMediator
+  {
+    get
+    {
+      AppModel[] sourceGenApps = [.. Apps.Where(a => !a.UseMicrosoftDependencyInjection)];
+      if (sourceGenApps.Length == 0)
+        return false;
+
+      IEnumerable<string> handlerTypes = sourceGenApps
+        .SelectMany(a => a.Routes)
+        .Concat(Endpoints)
+        .SelectMany(r => r.Handler.ServiceParameters.Concat(r.Handler.ConstructorDependencies))
+        .Select(p => p.ParameterTypeName);
+
+      IEnumerable<string> serviceTypes = sourceGenApps
+        .SelectMany(a => a.Services)
+        .SelectMany(s => s.ConstructorParameters.Select(p => p.TypeName).Concat(s.ConstructorDependencyTypes));
+
+      IEnumerable<string> behaviorTypes = sourceGenApps
+        .SelectMany(a => a.Behaviors)
+        .SelectMany(b => b.ConstructorDependencies)
+        .Select(p => p.ParameterTypeName);
+
+      return handlerTypes.Concat(serviceTypes).Concat(behaviorTypes).Any(FrameworkServices.IsMediatorServiceType);
+    }
+  }
 
   /// <summary>
   /// Gets all behaviors from all apps (deduplicated).

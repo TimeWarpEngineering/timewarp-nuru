@@ -27,6 +27,7 @@ Parent: **443**. Add **TimeWarp.Mediator 14.0.0-beta.2** and register the genera
 ## Session
 
 - Created: 158299 (2026-09-01)
+- Implementation review (2026-09-25): cursor review oracle under `ganda task work`, effort 1, roster `general`
 
 ## Results
 
@@ -89,6 +90,21 @@ provider setup, so handlers can inject `ISender` / `IPublisher` / `IMediator`.
 - Pre-existing, unrelated: `bin/dev format` reports whitespace/import violations in files this task
   did not touch (`repl-session.cs`, `endpoint-extractor.cs`, `referenced-method-decompiler.cs`,
   `handler-parameter-mismatch-exception.cs`).
+
+### Review disposition
+
+- **Outcome:** `clean`. 1 round, effort 1, roster `general`.
+- **Final counts:** bug 0, suggestion 0, nit 0 (0 open / 0 fixed / 0 wontfix).
+- The reviewer re-checked these claims:
+  - `GeneratedMediatorDetector` matches the mediator generator's own rule: it registers unless the
+    profile is `Aot` or `Link`, and the profile defaults to `Host`.
+  - A duplicate user call to `AddGeneratedMediator()` is harmless, because dispatch resolves handlers
+    by concrete type.
+  - TimeWarp.Nuru's own compilation is not a mediator host.
+  - Static-DI registration belongs to 443-002.
+  - Build is clean, generator-46 passes 3/3 and runs in CI, and `ganda repo audit` passes.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 

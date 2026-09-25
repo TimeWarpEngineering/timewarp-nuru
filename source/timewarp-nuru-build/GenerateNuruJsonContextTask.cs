@@ -63,10 +63,14 @@ public class GenerateNuruJsonContextTask : Task
     }
     catch (Exception ex)
     {
-      Log.LogWarning($"TimeWarp.Nuru.Build: Failed to generate JSON context: {ex.Message}");
-      Log.LogMessage(MessageImportance.Low, $"Stack trace: {ex.StackTrace}");
+      // Unexpected extraction/generation bugs must not silently fall back to
+      // ToString() (470 M24). Expected "no DSL in this compilation unit" cases
+      // are handled inside ExecuteCore / ExtractFromDelegateRoutes as fail-soft
+      // LogMessage paths — they do not reach this catch.
+      Log.LogError($"TimeWarp.Nuru.Build: Failed to generate JSON context: {ex.GetType().Name}: {ex.Message}");
+      Log.LogMessage(MessageImportance.High, $"TimeWarp.Nuru.Build: Stack trace: {ex.StackTrace}");
       GeneratedFiles = [];
-      return true; // Don't fail the build - fallback to ToString() will work
+      return false;
     }
   }
 

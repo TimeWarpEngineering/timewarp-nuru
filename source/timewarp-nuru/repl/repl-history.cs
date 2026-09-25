@@ -5,6 +5,14 @@ namespace TimeWarp.Nuru;
 /// </summary>
 internal sealed class ReplHistory
 {
+  // ~/.nuru and ~/.nuru/history are private trust directories. Owner-only on Unix;
+  // Windows relies on user-profile ACLs, which already exclude other users.
+  private const UnixFileMode OwnerOnlyDirectoryMode =
+    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+
+  private const UnixFileMode OwnerOnlyFileMode =
+    UnixFileMode.UserRead | UnixFileMode.UserWrite;
+
   private readonly List<string> Items = [];
   private readonly ReplOptions Options;
   private readonly ITerminal Terminal;
@@ -143,6 +151,10 @@ internal sealed class ReplHistory
   /// <summary>
   /// Saves history to persistent storage if configured.
   /// </summary>
+  /// <remarks>
+  /// On Unix, the history file is written with owner-only mode (0600). On Windows,
+  /// the file inherits user-profile ACLs (other users are already excluded).
+  /// </remarks>
   public void Save()
   {
     string historyPath = GetHistoryFilePath();
@@ -150,9 +162,9 @@ internal sealed class ReplHistory
     try
     {
       string? directory = Path.GetDirectoryName(historyPath);
-      if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+      if (!string.IsNullOrEmpty(directory))
       {
-        Directory.CreateDirectory(directory);
+        EnsureOwnerOnlyDirectory(directory);
       }
 
       // Merge with whatever is on disk now so a concurrent instance's entries are not
@@ -184,7 +196,7 @@ internal sealed class ReplHistory
         merged.RemoveRange(0, merged.Count - Options.MaxHistorySize);
       }
 
-      File.WriteAllLines(historyPath, merged);
+      WriteOwnerOnlyLines(historyPath, merged);
     }
     catch (IOException ex)
     {
@@ -216,11 +228,77 @@ internal sealed class ReplHistory
     );
     string historyDir = Path.Combine(nuruDir, "history");
 
-    // Ensure directory exists
-    Directory.CreateDirectory(historyDir);
+    // Ensure directory exists with owner-only mode when creating (0700 on Unix).
+    EnsureOwnerOnlyDirectory(historyDir);
 
     // Use consistent app name detection
     string appName = AppNameDetector.GetEffectiveAppName();
     return Path.Combine(historyDir, appName);
+  }
+
+  /// <summary>
+  /// Creates <paramref name="directory"/> (and missing parents) with owner-only mode on Unix
+  /// when they do not already exist. Existing directories are left unchanged.
+  /// </summary>
+  /// <remarks>
+  /// <see cref="Directory.CreateDirectory(string, UnixFileMode)"/> only applies the mode to
+  /// the leaf directory; parents created in the same call keep the process umask. Walk
+  /// ancestors so each newly created segment (e.g. <c>~/.nuru</c> then <c>history</c>) is 0700.
+  /// </remarks>
+  private static void EnsureOwnerOnlyDirectory(string directory)
+  {
+    if (Directory.Exists(directory))
+    {
+      return;
+    }
+
+    if (OperatingSystem.IsWindows())
+    {
+      Directory.CreateDirectory(directory);
+      return;
+    }
+
+    // Create missing ancestors first so each new segment receives OwnerOnlyDirectoryMode.
+    string? parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(directory));
+    if (!string.IsNullOrEmpty(parent) && !Directory.Exists(parent))
+    {
+      EnsureOwnerOnlyDirectory(parent);
+    }
+
+    Directory.CreateDirectory(directory, OwnerOnlyDirectoryMode);
+  }
+
+  /// <summary>
+  /// Writes history lines with owner-only file mode on Unix (0600). On Windows, relies on
+  /// user-profile ACLs. Also hardens an existing file that may have been created under a
+  /// permissive umask (FileMode.Create truncates in place and keeps the prior mode).
+  /// </summary>
+  private static void WriteOwnerOnlyLines(string historyPath, IEnumerable<string> lines)
+  {
+    FileStreamOptions options = new()
+    {
+      Mode = FileMode.Create,
+      Access = FileAccess.Write,
+      Share = FileShare.None
+    };
+
+    if (!OperatingSystem.IsWindows())
+    {
+      options.UnixCreateMode = OwnerOnlyFileMode;
+    }
+
+    using (FileStream stream = new(historyPath, options))
+    using (StreamWriter writer = new(stream))
+    {
+      foreach (string line in lines)
+      {
+        writer.WriteLine(line);
+      }
+    }
+
+    if (!OperatingSystem.IsWindows())
+    {
+      File.SetUnixFileMode(historyPath, OwnerOnlyFileMode);
+    }
   }
 }

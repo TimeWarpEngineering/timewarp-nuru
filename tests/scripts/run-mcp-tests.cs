@@ -3,88 +3,21 @@
 
 using TimeWarp.Amuru;
 
-// Get script directory to build correct paths
-string scriptDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
-  ?? throw new InvalidOperationException("Could not get entry point directory");
+// Legacy entry point — delegates to the official CI runner (task 470-012 / M27).
+// Prefer: dotnet run tests/ci-tests/run-ci-tests.cs
+// MCP tests (mcp-01..08, excluding mcp-02 until 454-033) live in the multi-mode assembly.
 
-// Test files are in timewarp-nuru-mcp-tests directory
-string testDir = Path.Combine(scriptDir, "..", "timewarp-nuru-mcp-tests");
+string scriptsDir = AppContext.GetData("EntryPointFileDirectoryPath") as string
+  ?? Environment.CurrentDirectory;
+string testsRoot = Path.GetFullPath(Path.Combine(scriptsDir, ".."));
+string repoRoot = Path.GetFullPath(Path.Combine(testsRoot, ".."));
+string ciTestRunner = Path.Combine(testsRoot, "ci-tests", "run-ci-tests.cs");
 
-// Configure Nuru app
-NuruAppBuilder builder = new();
-builder.MapDefault(() => RunTests(), "Run all MCP tests");
-NuruApp app = builder.Build();
+WriteLine("Delegating to tests/ci-tests/run-ci-tests.cs (official CI runner)...");
+WriteLine();
 
-return await app.RunAsync(args);
-
-async Task<int> RunTests()
-{
-  WriteLine("🧪 Running MCP Tests");
-  WriteLine();
-
-  // Track overall results
-  int totalTests = 0;
-  int passedTests = 0;
-
-  // List of MCP test files (01-05 use Jaribu framework)
-  // Note: mcp-06 (server integration test) is at tests/scripts/test-mcp-server.cs
-  string[] testFiles = [
-    Path.Combine(testDir, "mcp-01-example-retrieval.cs"),
-    Path.Combine(testDir, "mcp-02-syntax-documentation.cs"),
-    Path.Combine(testDir, "mcp-03-route-validation.cs"),
-    Path.Combine(testDir, "mcp-04-handler-generation.cs"),
-    Path.Combine(testDir, "mcp-05-error-documentation.cs"),
-  ];
-
-  foreach (string testFile in testFiles)
-  {
-    string fullPath = Path.GetFullPath(testFile);
-    if (!File.Exists(fullPath))
-    {
-      WriteLine($"❌ Test file not found: {testFile}");
-      continue;
-    }
-
-    string testName = Path.GetFileNameWithoutExtension(testFile);
-    Write($"Running {testName}... ");
-
-    // Run test via Shell
-    CommandOutput result = await Shell.Builder(fullPath)
-      .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
-      .WithNoValidation()
-      .CaptureAsync();
-
-    if (result.ExitCode == 0)
-    {
-      passedTests++;
-      WriteLine("✅");
-    }
-    else
-    {
-      WriteLine("❌");
-      WriteLine($"  Exit code: {result.ExitCode}");
-      if (!string.IsNullOrEmpty(result.Stderr))
-      {
-        WriteLine($"  Stderr: {result.Stderr}");
-      }
-    }
-
-    totalTests++;
-  }
-
-  // Summary
-  WriteLine();
-  WriteLine("─".PadRight(50, '─'));
-  WriteLine($"Total: {totalTests} | Passed: {passedTests} | Failed: {totalTests - passedTests}");
-
-  if (passedTests == totalTests)
-  {
-    WriteLine("✅ All MCP tests passed!");
-    return 0;
-  }
-  else
-  {
-    WriteLine($"❌ {totalTests - passedTests} test(s) failed");
-    return 1;
-  }
-}
+return await Shell.Builder("dotnet")
+  .WithArguments([ciTestRunner, ..args])
+  .WithWorkingDirectory(repoRoot)
+  .WithNoValidation()
+  .RunAsync();

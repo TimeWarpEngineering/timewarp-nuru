@@ -61,6 +61,7 @@ public sealed partial class ReplConsoleReader
       string[] args = ParseHistoryArguments(History[historyIndexToUse]);
       if (args.Length > 0)
       {
+        ClearSelection();
         SaveUndoState(isCharacterInput: false);
 
         // Remove the previously yanked text (consecutive press) now that we have a replacement.
@@ -130,6 +131,7 @@ public sealed partial class ReplConsoleReader
     if (args.Length == 0)
       return Task.CompletedTask;
 
+    ClearSelection();
     SaveUndoState(isCharacterInput: false);
 
     // Determine which argument to yank

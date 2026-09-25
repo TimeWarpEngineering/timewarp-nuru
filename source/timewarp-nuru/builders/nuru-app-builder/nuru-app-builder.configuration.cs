@@ -48,14 +48,14 @@ public partial class NuruAppBuilder
   /// <example>
   /// <code>
   /// NuruApp app = NuruApp.CreateBuilder([])
-  ///   .AddDependencyInjection()
+  ///   .UseMicrosoftDependencyInjection()
   ///   .ConfigureServices(services =>
   ///   {
   ///     services.AddSingleton&lt;ICalculator, Calculator&gt;();
   ///     services.AddLogging(config => config.AddConsole());
   ///     services.Configure&lt;AppOptions&gt;(Configuration.GetSection("App"));
   ///   })
-  ///   .Map&lt;Command&gt;("route")
+  ///   .Map&lt;Command&gt;()
   ///   .Build();
   /// </code>
   /// </example>
@@ -76,7 +76,7 @@ public partial class NuruAppBuilder
   /// <example>
   /// <code>
   /// NuruApp app = NuruApp.CreateBuilder([])
-  ///   .AddDependencyInjection()
+  ///   .UseMicrosoftDependencyInjection()
   ///   .AddConfiguration(args)
   ///   .ConfigureServices((services, config) =>
   ///   {
@@ -86,7 +86,7 @@ public partial class NuruAppBuilder
   ///         options.UseSqlServer(config.GetConnectionString("Default")));
   ///     }
   ///   })
-  ///   .Map&lt;Command&gt;("route")
+  ///   .Map&lt;Command&gt;()
   ///   .Build();
   /// </code>
   /// </example>
@@ -162,6 +162,8 @@ public partial class NuruAppBuilder
 
   /// <summary>
   /// Configures OpenTelemetry with OTLP export and custom options.
+  /// The source generator extracts this lambda at compile time and applies
+  /// <see cref="NuruTelemetryOptions"/> when emitting telemetry setup.
   /// </summary>
   /// <param name="configure">Action to configure telemetry options.</param>
   /// <remarks>

@@ -35,12 +35,14 @@ attempt to restate the convention itself — only what is actually implemented h
 Open a PR that changes `<Version>` in `source/Directory.Build.props` (it may ride a
 feature PR or stand alone). Once it merges to master, the `push` event runs
 `workflow.yml` in **merge** mode: `dev workflow` executes
-`clean → build → verify-samples → test`; the `Packages-{run_number}` `.nupkg`
-artifact is uploaded whenever nupkgs exist (the upload step skips release-mode
-runs — release events and confirmed break-glass dispatches — and runs on other
-events with `if-no-files-found: ignore`, and packages exist exactly when the
-build succeeded — `GeneratePackageOnBuild` produces them during Build). This is
-the CI-tested artifact a later release will promote — nothing is published yet.
+`clean → build → verify-samples → test`; on success the `Packages-{run_number}`
+`.nupkg` artifact is uploaded (`GeneratePackageOnBuild` produces the nupkgs
+during Build). Upload is green-`master` only — not PRs, failed runs, probe, or
+release-mode (458-002 already downloaded those bytes). `if-no-files-found:
+error` fails the job if the nupkgs are missing. After upload, older
+`Packages-*` artifacts are deleted, keeping the two newest (`retention-days: 7`
+is the backstop). This is the CI-tested artifact a later release will promote —
+nothing is published yet.
 
 ### 2. Cut the release with `dev release`
 
@@ -263,11 +265,12 @@ means the policy is missing or misconfigured on NuGet.org.
   forward explicitly.) This is a one-time operator action, not something `dev`
   tooling runs.
 
-- **Artifact retention.** The `Packages-{run_number}` upload step in `workflow.yml`
-  sets no `retention-days`, so GitHub's default retention applies (90 days unless
-  the repo's Settings → Actions → General overrides it). If the artifact for the
-  commit you need has expired, regenerate it with `gh run rerun <run-id>` — reruns
-  execute the same commit, so the tested-bytes property is preserved.
+- **Artifact retention.** Green `master` CI uploads `Packages-{run_number}` with
+  `retention-days: 7` and then deletes older `Packages-*` artifacts, keeping the
+  two newest. PR, failed, probe, and release-mode runs do not upload. If the
+  blob for a SHA is gone (expired or pruned), regenerate with
+  `gh run rerun <run-id>` — reruns execute the same commit, so the tested-bytes
+  property is preserved. Do not pack at release time.
 
 - **Distance warning.** A planned `check-version` enhancement (kanban task 456, not
   yet implemented) will warn when the source `<Version>` has drifted more than one

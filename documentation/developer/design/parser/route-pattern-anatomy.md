@@ -104,7 +104,7 @@ Route Pattern (entire string)
 
 **Definition:** The identifier that will bind to the handler parameter.
 
-**Syntax:** Alphanumeric + underscore, must start with letter
+**Syntax:** Letter or underscore, then letters, digits, and underscores. Hyphens are rejected (`{my-param}`). Option names may contain hyphens (`--dry-run`).
 
 **Examples:** `image`, `tag`, `var`, `num`, `args`
 
@@ -116,7 +116,7 @@ Route Pattern (entire string)
 
 **Syntax:** `:` followed by type name
 
-**Supported Types:** `string`, `int`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`
+**Supported Types:** `string`, `int`, `byte`, `sbyte`, `short`, `ushort`, `uint`, `ulong`, `long`, `float`, `double`, `decimal`, `bool`, `char`, `DateTime`, `Guid`, `TimeSpan`, `uri`/`Uri`, `fileinfo`/`FileInfo`, `directoryinfo`/`DirectoryInfo`, `ipaddress`/`IPAddress`, `dateonly`/`DateOnly`, `timeonly`/`TimeOnly`
 
 **Examples from pattern:**
 - `:string` in `{tag:string?}`

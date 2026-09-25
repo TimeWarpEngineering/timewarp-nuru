@@ -2,6 +2,7 @@
 #:package TimeWarp.Amuru
 #:package TimeWarp.Amuru.Tools
 #:property NoWarn=CA2007
+#:property RunAnalyzers=false
 
 // Unified dispatcher: memsearch (best-effort) + ganda repo attest.
 // Exit 0 always — cannot undo an already-completed merge.

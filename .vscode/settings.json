@@ -35,5 +35,6 @@
     "Stackalloc"
   ],
   "timewarp.blurImagePath": "assets/timewarp-nuru-avatar.svg",
-  "window.title": "timewarp-nuru · ${rootName}${separator}${activeEditorShort}"
+  "window.title": "timewarp-nuru · ${rootName}${separator}${activeEditorShort}",
+  "peacock.color": "#3957CF"
 }

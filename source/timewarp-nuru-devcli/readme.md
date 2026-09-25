@@ -181,11 +181,28 @@ The package also now ships the new public `AttestationNoteDto`, `AttestationVeri
 completeness (`TagAssertion` precedent above). If a consuming repo already declares its own type
 under any of these names, the build fails with `CS0101` (duplicate type in namespace `DevCli`).
 
-**Never** point this verifier's tests, or any consuming repo's config, at
+#### Key rotation (public half)
+
+The production private key lives only at `~/.timewarp/ganda/keys/` on operator machines and is
+touched only via `ganda repo attest`. DevCli holds public material: `AttestationVerifier.KnownKeys`
+maps `key_id` → lowercase hex of the 32-byte raw Ed25519 public key (`tw-audit-1` =
+`ea6d9ea94f07d0ffe4d46fa7021115f2d5130b715fced113c8742e1d3be94681`, post-rotation 2026-08-08).
+
+To rotate:
+
+1. Generate the new keypair with `ganda repo attest keygen` on an operator machine (ganda-side
+   procedure is canonical in ganda `documentation/developer/attestation.md`).
+2. Add the new `key_id` → hex to `KnownKeys` **before** ganda starts signing with it. Keep the
+   old `key_id` in the map for a grace window so in-flight notes still verify.
+3. Bump and ship TimeWarp.Nuru.DevCli. Consuming repos pick up the registry via the package bump.
+4. Ganda then signs with the new key. After the grace window, remove the retired `key_id` in a
+   later DevCli bump.
+
+Tests and fixtures use a throwaway keypair via `Evaluate`'s `keyOverride` — never the production
+key. **Never** point this verifier's tests, or any consuming repo's config, at
 `~/.timewarp/ganda/keys/` — that path is the production signing key and is out of scope for
 anything outside `ganda repo attest` itself. `AttestationVerifier.KnownKeys` holds only public
-key material (hex), and `Evaluate`'s `keyOverride` parameter exists specifically so tests can
-inject a throwaway keypair instead.
+key material (hex).
 
 ### 3.0.0-beta.72+: `dev release` cuts tag+Release from props (`release-guard.cs`, `release-command.cs`)
 
@@ -304,8 +321,8 @@ The package also now ships the new public `TagAssertion` / `TagAssertionResult` 
 Release mode (`dev workflow --mode release`) no longer rebuilds from source. The pipeline was
 `tag-gate -> check-version -> clean -> build -> pack -> push`; it is now `tag-gate ->
 check-version -> locate-run -> download-artifact -> verify -> push`. Master-merge CI already
-builds, tests, and uploads the `.nupkg` set (`Packages-{run_number}`, always-run upload step in
-`workflow.yml`); release now locates the successful `workflow.yml` run at the release commit
+builds, tests, and uploads the `.nupkg` set (`Packages-{run_number}`, green-master
+upload step in `workflow.yml`); release now locates the successful `workflow.yml` run at the release commit
 (push-event preferred over a same-commit release-event run, then newest), downloads that run's
 `Packages-*` artifact, verifies the downloaded file names against the derived packable set at the
 source version, and pushes those exact bytes. There is no local `dotnet pack` in release mode
@@ -318,7 +335,8 @@ source").
 
 Locating and downloading the run uses the `gh` CLI (`gh run list`, `gh api
 repos/{owner}/{repo}/actions/runs/{id}/artifacts`, `gh run download`) — `workflow.yml` sets
-`GH_TOKEN: ${{ github.token }}` and grants the job `actions: read` for CI runners; a local or
+`GH_TOKEN: ${{ github.token }}` and grants the job `actions: write` for CI runners
+(keep-last-two prune; release-mode list/download still works); a local or
 break-glass release needs `gh` installed and `gh auth login` run first, or the pipeline aborts
 with that guidance before attempting anything.
 

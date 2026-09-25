@@ -1,6 +1,6 @@
 #!/usr/bin/env -S dotnet --
-#:sdk Aspire.AppHost.Sdk@13.1.0
-#:property NoWarn=ASPIRE004
+#:sdk Aspire.AppHost.Sdk@13.5.3
+#:property NoWarn=ASPIRE004;ASPIRECSHARPAPPS001;ASPIRETERMINAL001
 
 // Aspire Host with OpenTelemetry Sample
 // ======================================
@@ -8,26 +8,33 @@
 // - Aspire Dashboard with built-in OTLP receiver for telemetry
 // - NuruClient runfile registered as an Aspire-managed C# app
 // - Telemetry flows automatically to the Aspire Dashboard
+// - Interactive Nuru REPL under Aspire 13.5 WithTerminal() PTY
 //
 // To run:
-//   ./apphost.cs
-//   (Aspire launches NuruClient automatically)
+//   cd samples/aspire-otel
+//   aspire run
+//   (or: ./apphost.cs)
+//   Dashboard Terminal view needs no extra config.
+//   CLI attach only:
+//     aspire config set features.terminalCommandsEnabled true
+//     aspire terminal attach nuruclient
 
 // Type is for evaluation purposes only and is subject to change or
 // removal in future updates. Suppress this diagnostic to proceed.
 #pragma warning disable ASPIRECSHARPAPPS001
+#pragma warning disable ASPIRETERMINAL001
 
 var builder = DistributedApplication.CreateBuilder();
 
 // Register NuruClient runfile as an Aspire-managed C# app.
 // Aspire will:
-// - Launch it automatically
+// - Launch it automatically under a PTY (WithTerminal)
 // - Inject OTEL_EXPORTER_OTLP_ENDPOINT pointing to the dashboard
 // - Show its telemetry in the dashboard
-//
-// Pass arguments to run a command instead of entering REPL mode
-// (REPL requires interactive console which Aspire doesn't provide)
+// - Expose a live Terminal view and `aspire terminal attach`
 builder.AddCSharpApp("nuruclient", "./nuru-client.cs")
-  .WithArgs("status");
+  // "--" so --interactive is the app's flag, not `dotnet run --interactive`.
+  .WithArgs("--", "--interactive")
+  .WithTerminal();
 
 await builder.Build().RunAsync();

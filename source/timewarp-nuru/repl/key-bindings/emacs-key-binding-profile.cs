@@ -102,6 +102,10 @@ namespace TimeWarp.Nuru;
 ///   <term>Enter</term>
 ///   <description>Submit command</description>
 /// </item>
+/// <item>
+///   <term>Shift+Enter</term>
+///   <description>Add a new line without executing (multiline)</description>
+/// </item>
 /// </list>
 /// <para>
 /// Note: Arrow keys are intentionally omitted to maintain pure Emacs/readline conventions,
@@ -122,6 +126,7 @@ public sealed class EmacsKeyBindingProfile : IKeyBindingProfile
     {
       // === Enter/Submit ===
       [(ConsoleKey.Enter, ConsoleModifiers.None)] = reader.HandleEnterAsync,
+      [(ConsoleKey.Enter, ConsoleModifiers.Shift)] = reader.HandleAddLineAsync,  // Shift+Enter adds new line without executing
 
       // === Tab Completion ===
       [(ConsoleKey.Tab, ConsoleModifiers.None)] = () => reader.HandleTabCompletionAsync(reverse: false),

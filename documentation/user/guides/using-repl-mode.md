@@ -246,7 +246,13 @@ Configure to exit on errors:
 
 ## History Ignore Patterns
 
-Exclude sensitive commands from history:
+Exclude sensitive commands from history. Defaults cover common secret shapes
+(`password`, `secret`, `token`, `apikey` / `api_key` / `api-key`, `credential`,
+`bearer`, `authorization`, `sk-…`, plus `clear-history`).
+
+Ignore patterns are **best-effort** — they reduce accidental persistence but are
+not a guarantee. For hard control, set `PersistHistory = false` or point
+`HistoryFilePath` at a path with appropriate ACLs.
 
 ```csharp
 .AddRepl(options =>
@@ -257,7 +263,12 @@ Exclude sensitive commands from history:
     "*secret*",
     "*token*",
     "*apikey*",
-    "*credential*"
+    "*api_key*",
+    "*api-key*",
+    "*credential*",
+    "*bearer*",
+    "*authorization*",
+    "*sk-*"
   };
 })
 ```
@@ -279,7 +290,10 @@ Available Application Commands:
 
 REPL works on Windows, Linux, and macOS:
 
-- **History file**: `~/.nuru_history` (respects platform conventions)
+- **History file**: default `~/.nuru/history/<app>` (per-app). On Unix, newly
+  created `~/.nuru` / `history` directories are mode `0700` and the history file
+  is written owner-only (`0600`). On Windows, the file inherits user-profile
+  ACLs (other users are already excluded).
 - **Colors**: ANSI escape codes (fallback to plain text if unsupported)
 - **Key handling**: Console.ReadKey() (basic implementation, no advanced line editing)
 - **EOF**: Ctrl+D (Unix) or Ctrl+Z (Windows)
@@ -294,7 +308,7 @@ REPL works on Windows, Linux, and macOS:
 
 ### History Not Persisting
 
-- Check write permissions to `~/.nuru_history`
+- Check write permissions to `~/.nuru/history/`
 - Custom path: `HistoryFilePath = "/custom/path"`
 - Disable persistence: `PersistHistory = false`
 

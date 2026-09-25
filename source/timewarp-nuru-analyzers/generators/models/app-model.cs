@@ -28,6 +28,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="ExplicitEndpointTypes">Fully qualified type names from Map&lt;T&gt;() calls for specific endpoint inclusion</param>
 /// <param name="BuildLocation">Source location of the Build() call - unique identity for this app</param>
 /// <param name="HasTelemetry">Whether UseTelemetry() was called to enable OpenTelemetry instrumentation</param>
+/// <param name="TelemetryOptions">Telemetry configuration extracted from UseTelemetry, if enabled</param>
 /// <param name="HasCompletion">Whether EnableCompletion() was called to enable shell completion</param>
 /// <param name="UseMicrosoftDependencyInjection">Whether UseMicrosoftDependencyInjection() was called to use runtime DI instead of source-gen DI</param>
 /// <param name="ConfigureServicesLambdaBody">Raw lambda body from ConfigureServices() for runtime invocation when UseMicrosoftDependencyInjection is true</param>
@@ -59,6 +60,7 @@ public sealed record AppModel(
   EquatableArray<string> ExplicitEndpointTypes = default,
   string? BuildLocation = null,
   bool HasTelemetry = false,
+  TelemetryModel? TelemetryOptions = null,
   bool HasCompletion = false,
   bool UseMicrosoftDependencyInjection = false,
   string? ConfigureServicesLambdaBody = null,

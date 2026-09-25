@@ -34,7 +34,8 @@ public sealed class HelpOptions
   /// Supports wildcards: * matches any characters.
   /// Example: ["*-debug", "*-internal"]
   /// </summary>
-  public IList<string>? ExcludePatterns { get; init; }
+  [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA2227:Collection properties should be read only", Justification = "ConfigureHelp lambdas assign a collection expression.")]
+  public IList<string>? ExcludePatterns { get; set; }
 
   /// <summary>
   /// Known REPL command patterns that are hidden in CLI mode by default.

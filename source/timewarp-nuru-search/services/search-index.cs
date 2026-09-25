@@ -4,14 +4,26 @@ public sealed partial class SearchIndex : IAsyncDisposable
 {
   private readonly SqliteConnection connection;
   private readonly ILogger<SearchIndex> logger;
+  private readonly string dataSource;
   private bool initialized;
 
-  public SearchIndex(ILogger<SearchIndex> logger)
+  public SearchIndex(ILogger<SearchIndex> logger) : this(logger, DatabasePath.GetIndexPath())
   {
+  }
+
+  /// <summary>
+  /// Opens the index at an explicit SQLite data source (e.g. <c>:memory:</c>). Used by tests so
+  /// the production path under <c>~/.nuru</c> is never touched.
+  /// </summary>
+  internal SearchIndex(ILogger<SearchIndex> logger, string dataSource)
+  {
+    ArgumentNullException.ThrowIfNull(logger);
+    ArgumentException.ThrowIfNullOrEmpty(dataSource);
+
     this.logger = logger;
-    string dbPath = DatabasePath.GetIndexPath();
-    string connectionString = $"Data Source={dbPath}";
-    connection = new SqliteConnection(connectionString);
+    this.dataSource = dataSource;
+    SqliteConnectionStringBuilder builder = new() { DataSource = dataSource };
+    connection = new SqliteConnection(builder.ConnectionString);
   }
 
   public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
@@ -25,7 +37,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
     await CreateSchemaAsync(cancellationToken).ConfigureAwait(false);
     initialized = true;
-    LogInitialized(logger, DatabasePath.GetIndexPath());
+    LogInitialized(logger, dataSource);
   }
 
   [LoggerMessage(LogLevel.Information, "Search index initialized at {Path}")]
@@ -212,7 +224,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
     cmd.Parameters.AddWithValue("$pattern", endpoint.Pattern);
     cmd.Parameters.AddWithValue("$description", endpoint.Description ?? (object)DBNull.Value);
     cmd.Parameters.AddWithValue("$groupPath", string.Join(" ", endpoint.GroupPath));
-    cmd.Parameters.AddWithValue("$endpointJson", JsonSerializer.Serialize(endpoint));
+    cmd.Parameters.AddWithValue("$endpointJson", JsonSerializer.Serialize(endpoint, SearchIndexJsonContext.Default.EndpointCapability));
     await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
   }
 
@@ -242,9 +254,10 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
     StringBuilder sqlBuilder = new();
     sqlBuilder.AppendLine("""
-      SELECT e.cli_name, e.pattern, e.description, e.group_path, e.endpoint_json, endpoints_fts.rank
+      SELECT e.cli_name, e.pattern, e.description, e.group_path, e.endpoint_json, c.version, endpoints_fts.rank
       FROM endpoints_fts
       JOIN endpoints e ON endpoints_fts.rowid = e.id
+      LEFT JOIN clis c ON c.name = e.cli_name
       WHERE endpoints_fts MATCH $query
       """);
 
@@ -270,31 +283,53 @@ public sealed partial class SearchIndex : IAsyncDisposable
     cmd.Parameters.AddWithValue("$query", sanitizedQuery);
     cmd.Parameters.AddWithValue("$limit", limit);
 
-    await using SqliteDataReader reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+    try
     {
-      string endpointJson = reader.GetString(4);
-      EndpointCapability? endpoint = JsonSerializer.Deserialize<EndpointCapability>(endpointJson);
-
-      if (endpoint is not null)
+      await using SqliteDataReader reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+      while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
       {
-        results.Add(new SearchResult
+        string endpointJson = reader.GetString(4);
+        EndpointCapability? endpoint = JsonSerializer.Deserialize(endpointJson, SearchIndexJsonContext.Default.EndpointCapability);
+
+        if (endpoint is not null)
         {
-          CliName = reader.GetString(0),
-          Pattern = reader.GetString(1),
-          Description = await reader.IsDBNullAsync(2, cancellationToken).ConfigureAwait(false) ? null : reader.GetString(2),
-          GroupPath = reader.GetString(3),
-          Endpoint = endpoint
-        });
+          results.Add(new SearchResult
+          {
+            CliName = reader.GetString(0),
+            Pattern = reader.GetString(1),
+            Description = await reader.IsDBNullAsync(2, cancellationToken).ConfigureAwait(false) ? null : reader.GetString(2),
+            GroupPath = reader.GetString(3),
+            CliVersion = await reader.IsDBNullAsync(5, cancellationToken).ConfigureAwait(false) ? null : reader.GetString(5),
+            Endpoint = endpoint
+          });
+        }
       }
+    }
+    catch (SqliteException ex)
+    {
+      // Defense in depth: SanitizeFtsQuery should make every MATCH expression valid, but a
+      // malformed query must degrade to "no results", never crash the CLI.
+      LogSearchFailed(logger, ex, query);
+      results.Clear();
     }
 
     return results;
   }
 
+  [LoggerMessage(LogLevel.Warning, "Search query could not be executed: {Query}")]
+  private static partial void LogSearchFailed(ILogger logger, Exception exception, string query);
+
+  /// <summary>
+  /// Turns free-form user input into a valid FTS5 MATCH expression: every whitespace-separated
+  /// token becomes a quoted prefix term. Control characters (NUL, other C0/C1) are treated as
+  /// separators — FTS5 reports <c>unterminated string</c> for an embedded U+0000, and none of
+  /// them carry search meaning.
+  /// </summary>
   internal static string SanitizeFtsQuery(string query)
   {
-    string[] tokens = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    ArgumentNullException.ThrowIfNull(query);
+
+    string[] tokens = StripControlCharacters(query).Split(' ', StringSplitOptions.RemoveEmptyEntries);
     List<string> sanitizedTokens = [];
 
     foreach (string token in tokens)
@@ -306,6 +341,23 @@ public sealed partial class SearchIndex : IAsyncDisposable
     }
 
     return string.Join(" ", sanitizedTokens);
+  }
+
+  private static string StripControlCharacters(string query)
+  {
+    char[] chars = query.ToCharArray();
+    bool changed = false;
+
+    for (int i = 0; i < chars.Length; i++)
+    {
+      if (char.IsControl(chars[i]))
+      {
+        chars[i] = ' ';
+        changed = true;
+      }
+    }
+
+    return changed ? new string(chars) : query;
   }
 
   internal static string EscapeLikePattern(string input)
@@ -426,6 +478,13 @@ public sealed partial class SearchIndex : IAsyncDisposable
 public sealed class SearchResult
 {
   public required string CliName { get; init; }
+
+  /// <summary>
+  /// Version of the CLI that owns this endpoint, as recorded when it was indexed
+  /// (<c>clis.version</c>). Null only if the owning <c>clis</c> row is missing.
+  /// </summary>
+  public string? CliVersion { get; init; }
+
   public required string Pattern { get; init; }
   public string? Description { get; init; }
   public required string GroupPath { get; init; }

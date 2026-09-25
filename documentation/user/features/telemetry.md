@@ -22,6 +22,12 @@ This configures:
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint (e.g., `http://localhost:4317`) |
 | `OTEL_SERVICE_NAME` | Service name for telemetry (defaults to app name) |
 
+## OTLP sink trust
+
+OTLP export is opt-in (endpoint via options or `OTEL_EXPORTER_OTLP_ENDPOINT`). Any collector that receives export is a **trust boundary**: it can see traces, metrics, and logs from the process. Point export only at collectors you control or otherwise trust.
+
+On failure, Nuru records `error.type` (exception type name) by default and does **not** set `error.message` or Activity status detail from `Exception.Message`, so argv- or secret-bearing exception text is not exported.
+
 ## Aspire Dashboard Integration
 
 When running with .NET Aspire, telemetry automatically flows to the Aspire Dashboard.
@@ -61,7 +67,9 @@ public sealed class TelemetryBehavior : INuruBehavior
     }
     catch (Exception ex)
     {
-      activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+      // Prefer error.type only — do not export Exception.Message to OTLP by default
+      activity?.SetStatus(ActivityStatusCode.Error);
+      activity?.SetTag("error.type", ex.GetType().Name);
       throw;
     }
   }

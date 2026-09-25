@@ -583,7 +583,7 @@ public sealed class DslInterpreter
 
       "WithAiPrompt" => DispatchWithAiPrompt(invocation, receiver),
 
-      "AddHelp" => DispatchAddHelp(invocation, receiver),
+      "ConfigureHelp" => DispatchConfigureHelp(invocation, receiver),
 
       "AddRepl" => DispatchAddRepl(invocation, receiver),
 
@@ -597,7 +597,7 @@ public sealed class DslInterpreter
 
       "UseTerminal" => DispatchUseTerminal(receiver),
 
-      "UseTelemetry" => DispatchUseTelemetry(receiver),
+      "UseTelemetry" => DispatchUseTelemetry(invocation, receiver),
 
       "UseMicrosoftDependencyInjection" => DispatchUseMicrosoftDependencyInjection(receiver),
 
@@ -761,7 +761,7 @@ public sealed class DslInterpreter
       return null;
 
     TypeSyntax typeSyntax = typeArgs.Arguments[0];
-    ITypeSymbol? typeSymbol = SemanticModel.GetTypeInfo(typeSyntax).Type;
+    ITypeSymbol? typeSymbol = TypeSyntaxResolver.ResolveType(SemanticModel, typeSyntax, CancellationToken);
 
     return typeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
   }
@@ -1019,20 +1019,28 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Dispatches AddHelp() call to IIrAppBuilder.
-  /// For now, we just enable help with defaults. Options extraction is Phase 5+.
+  /// Dispatches ConfigureHelp() call to IIrAppBuilder.
+  /// Extracts options from the lambda when present.
   /// </summary>
-  private static object? DispatchAddHelp(InvocationExpressionSyntax invocation, object? receiver)
+  private object? DispatchConfigureHelp(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
       throw new InvalidOperationException(
-        $"AddHelp() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+        $"ConfigureHelp() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
-    // For now, just enable help with defaults
-    // TODO: Phase 5+ - extract options from lambda if present
-    return appBuilder.AddHelp();
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args?.Arguments.Count > 0)
+    {
+      HelpModel? customOptions = HelpOptionsExtractor.Extract(invocation, SemanticModel, CancellationToken);
+      if (customOptions is not null)
+      {
+        return appBuilder.ConfigureHelp(customOptions);
+      }
+    }
+
+    return appBuilder.ConfigureHelp(HelpModel.Default);
   }
 
   /// <summary>
@@ -1286,8 +1294,7 @@ public sealed class DslInterpreter
     ExpressionSyntax argExpression = args.Arguments[0].Expression;
     if (argExpression is TypeOfExpressionSyntax typeofExpr)
     {
-      TypeInfo typeInfo = SemanticModel.GetTypeInfo(typeofExpr.Type);
-      ITypeSymbol? behaviorType = typeInfo.Type;
+      ITypeSymbol? behaviorType = TypeSyntaxResolver.ResolveType(SemanticModel, typeofExpr.Type, CancellationToken);
       if (behaviorType is INamedTypeSymbol namedType)
       {
         string typeName = namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -1422,13 +1429,23 @@ public sealed class DslInterpreter
 
   /// <summary>
   /// Dispatches UseTelemetry() call to IIrAppBuilder.
-  /// This is a no-op - telemetry is runtime only.
+  /// Extracts options from the lambda when the Action overload is used.
   /// </summary>
-  private static object? DispatchUseTelemetry(object? receiver)
+  private object? DispatchUseTelemetry(InvocationExpressionSyntax invocation, object? receiver)
   {
     if (receiver is not IIrAppBuilder appBuilder)
     {
       throw new InvalidOperationException("UseTelemetry() must be called on an app builder.");
+    }
+
+    ArgumentListSyntax? args = invocation.ArgumentList;
+    if (args?.Arguments.Count > 0)
+    {
+      TelemetryModel? customOptions = TelemetryOptionsExtractor.Extract(invocation, SemanticModel, CancellationToken);
+      if (customOptions is not null)
+      {
+        return appBuilder.UseTelemetry(customOptions);
+      }
     }
 
     return appBuilder.UseTelemetry();
@@ -1479,22 +1496,12 @@ public sealed class DslInterpreter
     ArgumentSyntax? arg = invocation.ArgumentList.Arguments.FirstOrDefault();
     if (arg?.Expression is ObjectCreationExpressionSyntax objectCreation)
     {
-      // Use semantic model to get fully qualified converter type name
-      SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(objectCreation.Type);
+      // Fully qualified name: GetSymbolInfo, then GetTypeInfo; TypeKind.Error is unresolved.
       string converterTypeName;
       string targetTypeName = "";
 
-      INamedTypeSymbol? resolvedType = symbolInfo.Symbol as INamedTypeSymbol;
-
-      // GetSymbolInfo can miss types that GetTypeInfo resolves, and vice versa — try harder
-      // semantically before giving up (repo convention, see nuru-specific.md).
-      resolvedType ??= SemanticModel.GetTypeInfo(objectCreation.Type).Type as INamedTypeSymbol;
-
-      // A genuinely unresolvable type (e.g. missing namespace) still produces a non-null
-      // symbol from Roslyn's error recovery, but its TypeKind is Error and its display
-      // string is not usable as a real type name (no "global::" qualification is possible).
-      if (resolvedType?.TypeKind == TypeKind.Error)
-        resolvedType = null;
+      INamedTypeSymbol? resolvedType =
+        TypeSyntaxResolver.ResolveType(SemanticModel, objectCreation.Type, CancellationToken) as INamedTypeSymbol;
 
       if (resolvedType is not null)
       {

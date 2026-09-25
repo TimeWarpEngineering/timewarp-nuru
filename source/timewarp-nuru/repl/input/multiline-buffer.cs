@@ -9,7 +9,8 @@
 // linear positions must index into that string. Environment.NewLine is only valid as
 // an explicit display separator via GetFullText(string); using it as the internal
 // representation broke cursor mapping on Windows (kanban 454-007).
-// SetText accepts any newline style (\r\n, \n, \r) on input.
+// SetText and InsertText accept any newline style (\r\n, \n, \r) on input and split
+// the same way: a CRLF pair is one break, not two (kanban 470-003 / M36).
 #endregion
 
 namespace TimeWarp.Nuru;
@@ -41,6 +42,8 @@ public readonly record struct MultilineCursor(int Line, int Column)
 public sealed class MultilineBuffer
 {
   private readonly List<string> _lines = [""];
+
+  private static readonly string[] NewlineSeparators = ["\r\n", "\n", "\r"];
 
   /// <summary>
   /// Gets the lines in the buffer.
@@ -113,7 +116,7 @@ public sealed class MultilineBuffer
     }
 
     // Split on any newline style
-    string[] splitLines = text.Split(["\r\n", "\n", "\r"], StringSplitOptions.None);
+    string[] splitLines = SplitLines(text);
     _lines.AddRange(splitLines);
 
     // Position cursor at end of last line
@@ -137,21 +140,22 @@ public sealed class MultilineBuffer
   /// Inserts text at the current cursor position.
   /// </summary>
   /// <param name="text">The text to insert (may contain newlines).</param>
+  /// <remarks>
+  /// Newlines split the same way as <see cref="SetText"/>: <c>\r\n</c>, <c>\n</c>, and
+  /// <c>\r</c> are each one line break. A CRLF pair does not insert a blank line.
+  /// </remarks>
   public void InsertText(string text)
   {
     if (string.IsNullOrEmpty(text))
       return;
 
-    foreach (char c in text)
+    string[] splitLines = SplitLines(text);
+
+    InsertSegment(splitLines[0]);
+    for (int i = 1; i < splitLines.Length; i++)
     {
-      if (c is '\n' or '\r')
-      {
-        AddLine();
-      }
-      else
-      {
-        InsertCharacter(c);
-      }
+      AddLine();
+      InsertSegment(splitLines[i]);
     }
   }
 
@@ -370,5 +374,19 @@ public sealed class MultilineBuffer
       total += _lines.Count - 1;
       return total;
     }
+  }
+
+  private static string[] SplitLines(string text) =>
+    text.Split(NewlineSeparators, StringSplitOptions.None);
+
+  private void InsertSegment(string segment)
+  {
+    if (segment.Length == 0)
+      return;
+
+    string line = _lines[Cursor.Line];
+    int col = Cursor.Column;
+    _lines[Cursor.Line] = line[..col] + segment + line[col..];
+    Cursor = new MultilineCursor(Cursor.Line, col + segment.Length);
   }
 }

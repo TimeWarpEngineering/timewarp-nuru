@@ -17,15 +17,19 @@
 // (misconfigured/broken csproj) — throw naming the project rather than silently
 // dropping it from the pack/push/check-version set.
 //
-// Fail-loud guards (round-1 review, kanban task 458-004, finding #1): a project
-// silently dropped from the derived set would ship an incomplete release with a
-// "SUCCEEDED" banner — worse than a hard failure at derivation time.
+// Fail-loud guards (round-1 review, kanban task 458-004, finding #1; 470 M23):
+// a project silently dropped from the derived set would ship an incomplete
+// release with a "SUCCEEDED" banner — worse than a hard failure at derivation
+// time.
 // - JSON anchor: locate `"Properties"` and walk backward to the nearest
 //   preceding `{` (only whitespace allowed between them), NOT the first '{' in
 //   stdout — a log line containing a stray brace before the real payload
 //   (e.g. `warning XY{123}: ...`) must not be mistaken for the JSON start.
 //   Handles both msbuild's actual pretty-printed shape (`{\n  "Properties"`)
 //   and a hypothetical compact shape (`{"Properties"`).
+// - Exit 0 with unparseable/missing Properties JSON throws naming the project
+//   (TryParseGetPropertyOutput false) — same posture as a nonzero exit; must
+//   not be treated as IsPackable=false (470 M23).
 // - IsPackable=true with a null/blank PackageId is a configuration error, not
 //   "not packable" — throws naming the project instead of silently excluding it.
 // - ValidateDerivedSet throws on a duplicate PackageId across two projects
@@ -75,7 +79,10 @@ public sealed class PackableProjectService : IPackableProjectService
         throw new InvalidOperationException($"Failed to evaluate MSBuild properties for '{projectPath}' (exit code {output.ExitCode}): {output.Stderr}");
       }
 
-      (bool isPackable, string? packageId) = ParseGetPropertyOutput(output.Stdout);
+      if (!TryParseGetPropertyOutput(output.Stdout, out bool isPackable, out string? packageId))
+      {
+        throw new InvalidOperationException($"Failed to parse MSBuild -getProperty output for '{projectPath}' (exit code 0 but Properties JSON was missing or unparseable).");
+      }
 
       if (isPackable)
       {
@@ -118,14 +125,39 @@ public sealed class PackableProjectService : IPackableProjectService
 
   /// <summary>
   /// Parses the stdout of <c>dotnet msbuild -getProperty:IsPackable,PackageId</c>
-  /// into (IsPackable, PackageId). Pure function — tolerant of leading non-JSON
-  /// noise (log banners before the JSON payload, even noise containing its own
-  /// brace), case-insensitive boolean parsing, and malformed/partial JSON, all
-  /// of which return <c>(false, null)</c> rather than throw.
+  /// into (IsPackable, PackageId). Pure convenience wrapper over
+  /// <see cref="TryParseGetPropertyOutput"/> — returns <c>(false, null)</c>
+  /// when the Properties JSON cannot be located or deserialized. Callers that
+  /// must fail-loud on unparseable exit-0 output (derivation) should use
+  /// <see cref="TryParseGetPropertyOutput"/> and throw when it returns false.
   /// </summary>
   public static (bool IsPackable, string? PackageId) ParseGetPropertyOutput(string stdout)
   {
+    return TryParseGetPropertyOutput(stdout, out bool isPackable, out string? packageId)
+      ? (isPackable, packageId)
+      : (false, null);
+  }
+
+  /// <summary>
+  /// Tries to parse the stdout of <c>dotnet msbuild -getProperty:IsPackable,PackageId</c>.
+  /// Returns <c>false</c> when the Properties JSON cannot be located or
+  /// deserialized (missing marker, no preceding brace, JsonException, or null
+  /// Properties). Returns <c>true</c> with IsPackable/PackageId when a Properties
+  /// object was obtained — including IsPackable=false. Tolerant of leading
+  /// non-JSON noise (log banners before the JSON payload, even noise containing
+  /// its own brace) and case-insensitive boolean parsing.
+  /// </summary>
+  public static bool TryParseGetPropertyOutput
+  (
+    string stdout,
+    out bool isPackable,
+    out string? packageId
+  )
+  {
     ArgumentNullException.ThrowIfNull(stdout);
+
+    isPackable = false;
+    packageId = null;
 
     // Anchor on "Properties" and walk backward to the nearest preceding '{'
     // (only whitespace allowed in between) rather than the first '{' in
@@ -136,7 +168,7 @@ public sealed class PackableProjectService : IPackableProjectService
     int propertiesIndex = stdout.IndexOf("\"Properties\"", StringComparison.Ordinal);
     if (propertiesIndex < 0)
     {
-      return (false, null);
+      return false;
     }
 
     int braceIndex = -1;
@@ -158,7 +190,7 @@ public sealed class PackableProjectService : IPackableProjectService
 
     if (braceIndex < 0)
     {
-      return (false, null);
+      return false;
     }
 
     string json = stdout[braceIndex..];
@@ -170,23 +202,23 @@ public sealed class PackableProjectService : IPackableProjectService
     }
     catch (JsonException)
     {
-      return (false, null);
+      return false;
     }
 
     if (parsed?.Properties is null)
     {
-      return (false, null);
+      return false;
     }
 
-    bool isPackable = parsed.Properties.TryGetValue("IsPackable", out string? isPackableRaw)
+    isPackable = parsed.Properties.TryGetValue("IsPackable", out string? isPackableRaw)
       && bool.TryParse(isPackableRaw, out bool parsedIsPackable)
       && parsedIsPackable;
 
-    string? packageId = parsed.Properties.TryGetValue("PackageId", out string? packageIdRaw)
+    packageId = parsed.Properties.TryGetValue("PackageId", out string? packageIdRaw)
       ? packageIdRaw
       : null;
 
-    return (isPackable, packageId);
+    return true;
   }
 
   private static bool IsBuildOutputPath(string path)

@@ -10,5 +10,5 @@ hyperfine --warmup 20 --runs 1000 -N \
   -n 'CommandLineParser' 'publish/bench-commandlineparser/bench-commandlineparser --str hello -i 13 -b' \
   -n 'CoconaLite' 'publish/bench-coconalite/bench-coconalite --str hello -i 13 -b' \
   -n 'SpectreConsole' 'publish/bench-spectreconsole/bench-spectreconsole --str hello -i 13 -b' \
-  -n 'Nuru-Full' 'publish/bench-nuru-full/bench-nuru-full --str hello -i 13 -b' \
+  -n 'Nuru' 'publish/bench-nuru/bench-nuru --str hello -i 13 -b' \
   -n 'Cocona' 'publish/bench-cocona/bench-cocona --str hello -i 13 -b'

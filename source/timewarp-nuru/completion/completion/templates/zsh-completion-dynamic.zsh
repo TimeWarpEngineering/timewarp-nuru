@@ -15,13 +15,10 @@ _{{APP_NAME}}() {
     output="$({{APP_NAME}} __complete $((CURRENT - 1)) "${words[@]}" 2>/dev/null)"
     completions=(${(f)output})
 
-    # Remove directive line (last line starting with :) and exit code line
+    # Strip only the directive line (starts with :). Do NOT also strip a trailing
+    # bare numeric line — DynamicCompletionHandler never emits an exit-code line on
+    # stdout, so that filter would drop a legitimate numeric candidate (e.g. "0").
     local directive=0
-    # Remove exit code if it's a number on its own line
-    if [[ "${completions[-1]}" =~ ^[0-9]+$ ]]; then
-        completions=("${(@)completions[1,-2]}")
-    fi
-    # Remove directive line
     if [[ "${completions[-1]}" == :* ]]; then
         directive="${completions[-1]:1}"
         completions=("${(@)completions[1,-2]}")

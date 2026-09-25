@@ -12,7 +12,10 @@
 // - Internal types (NURU054)
 // - Opaque extension method calls (NURU052) after lowering fails
 // - Multiple constructors (chooses one with most parameters)
-// - Optional parameters with default values
+// - Optional parameters with default values. String and char defaults are
+//   SymbolDisplay.FormatLiteral so quotes, backslashes, and newlines compile.
+//   Other primitives use SymbolDisplay.FormatPrimitive plus the C# type suffix
+//   FormatPrimitive omits. Enum defaults are fully-qualified members.
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -36,6 +39,18 @@ internal static class ServiceExtractor
     "TryAddScoped",
     "TryAddSingleton"
   ];
+
+  /// <summary>
+  /// Fully qualifies enum members. FullyQualifiedFormat leaves memberOptions empty,
+  /// so a field would render as the bare member name.
+  /// </summary>
+  private static readonly SymbolDisplayFormat FullyQualifiedMemberFormat = new
+  (
+    globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+    genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+    memberOptions: SymbolDisplayMemberOptions.IncludeContainingType
+  );
 
   /// <summary>
   /// Extracts service definitions from a ConfigureServices() invocation.
@@ -400,23 +415,144 @@ internal static class ServiceExtractor
       return null;
 
     object? defaultValue = param.ExplicitDefaultValue;
-
-    // Handle null
     if (defaultValue is null)
       return "null";
 
-    // Handle common types
+    ITypeSymbol valueType = UnwrapNullable(param.Type);
+    if (valueType.TypeKind == TypeKind.Enum && valueType is INamedTypeSymbol enumType)
+      return FormatEnumDefault(enumType, defaultValue);
+
+    return FormatPrimitiveDefault(defaultValue);
+  }
+
+  private static ITypeSymbol UnwrapNullable(ITypeSymbol type)
+  {
+    if (type is INamedTypeSymbol named
+        && named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+        && named.TypeArguments.Length == 1)
+    {
+      return named.TypeArguments[0];
+    }
+
+    return type;
+  }
+
+  /// <summary>
+  /// Emits <c>global::Namespace.Enum.Member</c>, or a cast of the underlying
+  /// literal when the constant is not a single named member.
+  /// </summary>
+  private static string FormatEnumDefault(INamedTypeSymbol enumType, object defaultValue)
+  {
+    foreach (IFieldSymbol field in enumType.GetMembers().OfType<IFieldSymbol>())
+    {
+      if (field.HasConstantValue
+          && field.ConstantValue is not null
+          && EnumConstantEquals(field.ConstantValue, defaultValue))
+      {
+        return field.ToDisplayString(FullyQualifiedMemberFormat);
+      }
+    }
+
+    string typeName = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    string literal = FormatPrimitiveDefault(defaultValue);
+    return $"({typeName}){literal}";
+  }
+
+  /// <summary>
+  /// Roslyn boxes an enum default as its underlying integral value. Field
+  /// constants use that same box. Compare bits so a boxed enum still matches.
+  /// </summary>
+  private static bool EnumConstantEquals(object fieldValue, object defaultValue)
+  {
+    if (fieldValue.Equals(defaultValue))
+      return true;
+
+    return TryIntegralBits(fieldValue, out ulong fieldBits)
+      && TryIntegralBits(defaultValue, out ulong defaultBits)
+      && fieldBits == defaultBits;
+  }
+
+  private static bool TryIntegralBits(object value, out ulong bits)
+  {
+    if (value is Enum enumValue)
+    {
+      value = Convert.ChangeType(
+        enumValue,
+        Enum.GetUnderlyingType(enumValue.GetType()),
+        CultureInfo.InvariantCulture);
+    }
+
+    switch (value)
+    {
+      case byte v:
+        bits = v;
+        return true;
+      case sbyte v:
+        bits = unchecked((ulong)v);
+        return true;
+      case short v:
+        bits = unchecked((ulong)v);
+        return true;
+      case ushort v:
+        bits = v;
+        return true;
+      case int v:
+        bits = unchecked((ulong)v);
+        return true;
+      case uint v:
+        bits = v;
+        return true;
+      case long v:
+        bits = unchecked((ulong)v);
+        return true;
+      case ulong v:
+        bits = v;
+        return true;
+      default:
+        bits = 0;
+        return false;
+    }
+  }
+
+  /// <summary>
+  /// String and char use FormatLiteral. Other primitives use FormatPrimitive.
+  /// FormatPrimitive does not emit F/M/U/L/UL suffixes or non-finite names,
+  /// which are required for the expression to compile as that parameter type.
+  /// </summary>
+  private static string FormatPrimitiveDefault(object defaultValue)
+  {
+    switch (defaultValue)
+    {
+      case string s:
+        return SymbolDisplay.FormatLiteral(s, quote: true);
+      case char c:
+        return SymbolDisplay.FormatLiteral(c, quote: true);
+      case float f when float.IsNaN(f):
+        return "float.NaN";
+      case float f when float.IsPositiveInfinity(f):
+        return "float.PositiveInfinity";
+      case float f when float.IsNegativeInfinity(f):
+        return "float.NegativeInfinity";
+      case double d when double.IsNaN(d):
+        return "double.NaN";
+      case double d when double.IsPositiveInfinity(d):
+        return "double.PositiveInfinity";
+      case double d when double.IsNegativeInfinity(d):
+        return "double.NegativeInfinity";
+    }
+
+    string? literal = SymbolDisplay.FormatPrimitive(defaultValue, quoteStrings: true, useHexadecimalNumbers: false);
+    if (literal is null)
+      return "default";
+
     return defaultValue switch
     {
-      string s => $"\"{s}\"",
-      bool b => b ? "true" : "false",
-      int i => i.ToString(CultureInfo.InvariantCulture),
-      long l => l.ToString(CultureInfo.InvariantCulture),
-      double d => d.ToString(CultureInfo.InvariantCulture),
-      float f => f.ToString(CultureInfo.InvariantCulture),
-      decimal dec => dec.ToString(CultureInfo.InvariantCulture) + "m",
-      char c => $"'{c}'",
-      _ => defaultValue.ToString()
+      float => literal + "F",
+      decimal => literal + "M",
+      uint => literal + "U",
+      long => literal + "L",
+      ulong => literal + "UL",
+      _ => literal
     };
   }
 
@@ -538,9 +674,9 @@ internal static class ServiceExtractor
 
     // Get service type from first type argument
     TypeSyntax serviceTypeSyntax = typeArgs.Arguments[0];
-    TypeInfo serviceTypeInfo = semanticModel.GetTypeInfo(serviceTypeSyntax, cancellationToken);
+    ITypeSymbol? serviceTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, serviceTypeSyntax, cancellationToken);
 
-    string? serviceType = serviceTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    string? serviceType = serviceTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     if (serviceType is null)
       return (null, null, null);
 
@@ -551,14 +687,14 @@ internal static class ServiceExtractor
     if (typeArgs.Arguments.Count > 1)
     {
       TypeSyntax implTypeSyntax = typeArgs.Arguments[1];
-      TypeInfo implTypeInfo = semanticModel.GetTypeInfo(implTypeSyntax, cancellationToken);
-      implType = implTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-      implSymbol = implTypeInfo.Type as INamedTypeSymbol;
+      ITypeSymbol? implTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, implTypeSyntax, cancellationToken);
+      implType = implTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      implSymbol = implTypeSymbol as INamedTypeSymbol;
     }
     else
     {
       // Single type argument: service and impl are the same
-      implSymbol = serviceTypeInfo.Type as INamedTypeSymbol;
+      implSymbol = serviceTypeSymbol as INamedTypeSymbol;
     }
 
     return (serviceType, implType, implSymbol);
@@ -1024,16 +1160,16 @@ internal static class ServiceExtractor
 
     // Get service type from first type argument
     TypeSyntax serviceTypeSyntax = typeArgs.Arguments[0];
-    TypeInfo serviceTypeInfo = semanticModel.GetTypeInfo(serviceTypeSyntax, cancellationToken);
-    string? serviceTypeName = serviceTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    ITypeSymbol? serviceTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, serviceTypeSyntax, cancellationToken);
+    string? serviceTypeName = serviceTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
     // Get implementation type from second type argument (if present)
     string? implTypeName = null;
     if (typeArgs.Arguments.Count > 1)
     {
       TypeSyntax implTypeSyntax = typeArgs.Arguments[1];
-      TypeInfo implTypeInfo = semanticModel.GetTypeInfo(implTypeSyntax, cancellationToken);
-      implTypeName = implTypeInfo.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      ITypeSymbol? implTypeSymbol = TypeSyntaxResolver.ResolveType(semanticModel, implTypeSyntax, cancellationToken);
+      implTypeName = implTypeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     }
 
     return (serviceTypeName, implTypeName);

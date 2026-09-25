@@ -10,7 +10,6 @@ public partial class NuruAppBuilder
   private protected HelpOptions HelpOptions = new();
   private protected ILoggerFactory? LoggerFactory;
   private protected ReplOptions? ReplOptions;
-  private protected ServiceCollection? ServiceCollection;
   private protected ITerminal? Terminal;
 
   /// <summary>
@@ -20,22 +19,19 @@ public partial class NuruAppBuilder
   internal Action<CompletionSourceRegistry>? CompletionRegistryConfiguration { get; set; }
 
   /// <summary>
-  /// Gets the service collection. Throws if dependency injection has not been added.
-  /// Call AddDependencyInjection() first to enable DI support.
+  /// Gets the service collection.
+  /// This property is not populated. Register services with
+  /// <see cref="ConfigureServices(Action{IServiceCollection})"/>. For a runtime
+  /// Microsoft.Extensions.DependencyInjection container, call
+  /// <see cref="UseMicrosoftDependencyInjection"/> first.
   /// </summary>
-  public IServiceCollection Services
-  {
-    get
-    {
-      if (ServiceCollection is null)
-      {
-        throw new InvalidOperationException(
-          "Dependency injection has not been enabled. Call AddDependencyInjection() first.");
-      }
-
-      return ServiceCollection;
-    }
-  }
+  /// <exception cref="InvalidOperationException">Always thrown. The collection is not populated.</exception>
+  [Obsolete("Use ConfigureServices(Action<IServiceCollection>) to register services. For a runtime Microsoft.Extensions.DependencyInjection container, call UseMicrosoftDependencyInjection() before ConfigureServices.")]
+#pragma warning disable CA1822 // Instance API; the getter never reads builder state because the collection is not populated.
+  public IServiceCollection Services =>
+    throw new InvalidOperationException(
+      "The Services collection is not available on NuruAppBuilder. Use ConfigureServices(...) to register services. For a runtime Microsoft.Extensions.DependencyInjection container, call UseMicrosoftDependencyInjection() before ConfigureServices.");
+#pragma warning restore CA1822
 
   /// <summary>
   /// Registers a pipeline behavior that wraps handler execution.
@@ -85,6 +81,8 @@ public partial class NuruAppBuilder
 
   /// <summary>
   /// Configures help output filtering and display options.
+  /// The source generator extracts this lambda at compile time and applies the
+  /// filters when emitting help listings.
   /// </summary>
   /// <param name="configure">Action to configure help options.</param>
   public virtual NuruAppBuilder ConfigureHelp(Action<HelpOptions> configure)

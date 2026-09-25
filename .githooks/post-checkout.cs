@@ -2,6 +2,7 @@
 #:package TimeWarp.Amuru
 #:package TimeWarp.Amuru.Tools
 #:property NoWarn=CA2007
+#:property RunAnalyzers=false
 
 // Unified dispatcher for branch checkouts only ($3 == 1).
 // Exit 0 always.

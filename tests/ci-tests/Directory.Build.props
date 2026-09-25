@@ -23,9 +23,11 @@
          with a reason; do not switch back to hand-enumerated includes. -->
     <!-- generator-17: tests local functions in TOP-LEVEL STATEMENTS by design; it cannot
          exist inside the multi-mode assembly (the runner owns the entry point). Run it
-         standalone: dotnet run tests/timewarp-nuru-tests/generator/generator-17-local-function-config.cs -->
-    <!-- engine-01: references ParsedInput/InputTokenizer, types removed from source in the
-         #360 refactor; does not compile standalone either. Delete or rewrite (task 454-001 notes). -->
+         standalone via run-ci-tests.cs second phase (task 470-010 / M14). -->
+    <!-- check-version-04: entire body is #if !JARIBU_MULTI because it references
+         CheckVersionCommand, which is not compiled into the multi assembly (454-022 A2).
+         Without this exclude the file is a silently empty include under JARIBU_MULTI.
+         Run standalone via run-ci-tests.cs second phase (task 470-010 / M15). -->
     <!-- generator-28: Roslyn-hosted generator test; references timewarp-nuru-analyzers as a
          LIBRARY, whose shared parsing types (Lexer/Token) collide with timewarp-nuru's in one
          compilation (CS0433). Run standalone by run-ci-tests.cs as a second phase instead. -->
@@ -36,7 +38,7 @@
     <!-- generator-40: same Roslyn-hosted generator test pattern as generator-28
          (kanban 464 round-2 M5); CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
-    <CiTestExcludes Include="../timewarp-nuru-tests/completion/engine/engine-01-input-tokenizer.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs" />
@@ -53,18 +55,30 @@
     <!-- generator-42: same Roslyn-hosted generator test pattern as generator-28
          (task 395 decompile/NURU052); CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-42-extension-method-lowering-diagnostics.cs" />
+    <!-- generator-43: same Roslyn-hosted generator test pattern as generator-28
+         (task 470-001 telemetry options emit); CS0433 collision applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-43-telemetry-options.cs" />
+    <!-- generator-44: same Roslyn-hosted generator test pattern as generator-28
+         (task 470-005 referenced-project type arguments); CS0433 collision applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-44-referenced-type-arguments.cs" />
+    <!-- generator-45: same Roslyn-hosted generator test pattern as generator-28
+         (task 470-006 constructor default literals and FileInfo/DirectoryInfo catch);
+         CS0433 collision applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-45-constructor-default-literals.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />
     <!-- Search tests (timewarp-nuru-search: FTS index) -->
-    <Compile Include="../timewarp-nuru-search-tests/*.cs" />
+    <Compile
+      Include="../timewarp-nuru-search-tests/**/*.cs"
+      Exclude="../timewarp-nuru-search-tests/**/obj/**;../timewarp-nuru-search-tests/**/bin/**" />
     <!-- MCP server tests -->
     <!-- mcp-02: GetSyntaxTool's default (endpoint) path asserts MCP:endpoint-* regions
          that exist nowhere — only the fluent syntax file is embedded. Product bug tracked
          in kanban task 454-033; re-include this file when fixed. -->
     <Compile
-      Include="../timewarp-nuru-mcp-tests/*.cs"
-      Exclude="../timewarp-nuru-mcp-tests/mcp-02-syntax-documentation.cs" />
+      Include="../timewarp-nuru-mcp-tests/**/*.cs"
+      Exclude="../timewarp-nuru-mcp-tests/**/obj/**;../timewarp-nuru-mcp-tests/**/bin/**;../timewarp-nuru-mcp-tests/mcp-02-syntax-documentation.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -77,6 +91,7 @@
          test app an endpoint with an unregistered service -> NURU050 build
          errors across CI (task 454-022 decision A2). -->
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/props-version-reader.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-cli-json-context.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-config.cs" />
@@ -91,6 +106,7 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/irepo-config-service.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ipackable-project-service.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/packable-project-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/windows-exe-replace.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-run-promotion.cs" />
   </ItemGroup>
 

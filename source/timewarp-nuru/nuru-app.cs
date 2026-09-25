@@ -129,13 +129,13 @@ public partial class NuruApp
 #pragma warning restore CA1822
 
   /// <summary>
-  /// Creates a full-featured builder with DI, Configuration, and all extensions auto-wired.
-  /// Use fluent extension methods to configure individual features:
+  /// Creates a builder for a Nuru application.
+  /// Use fluent methods to configure individual features:
   /// <see cref="NuruAppBuilder.AddRepl(Action{ReplOptions})"/> for REPL,
-  /// <see cref="NuruAppBuilder.AddHelp(Action{HelpOptions})"/> for help,
+  /// <see cref="NuruAppBuilder.ConfigureHelp(Action{HelpOptions})"/> for help,
   /// <see cref="NuruAppBuilder.AddConfiguration"/> for configuration.
   /// </summary>
-  /// <returns>A configured NuruAppBuilder with all extensions.</returns>
+  /// <returns>A configured NuruAppBuilder.</returns>
   /// <example>
   /// <code>
   /// NuruApp.CreateBuilder()
@@ -144,7 +144,9 @@ public partial class NuruApp
   ///       options.Prompt = "myapp> ";
   ///       options.WelcomeMessage = "Welcome!";
   ///     })
-  ///     .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
+  ///     .Map("greet {name}")
+  ///       .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+  ///       .Done()
   ///     .Build();
   /// </code>
   /// </example>

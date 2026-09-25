@@ -145,7 +145,8 @@ public class KanbanService : IKanbanService
 // STANDALONE ONLY: [NuruRoute] endpoints are collected globally in the CI multi-mode
 // compilation, so every OTHER test app using unfiltered .DiscoverEndpoints() would pick
 // this endpoint up and fail NURU050 because IKanbanService isn't registered there.
-// Run standalone to exercise it: dotnet run tests/timewarp-nuru-tests/generator/generator-20-parameterized-service-constructor.cs
+// Exercised by run-ci-tests.cs second phase (task 470-010 / M29); also:
+//   dotnet run tests/timewarp-nuru-tests/generator/generator-20-parameterized-service-constructor.cs
 #if !JARIBU_MULTI
 [NuruRoute("gen20-kanban", Description = "List kanban tasks")]
 public sealed class Gen20KanbanQuery : IQuery<Unit>

@@ -27,6 +27,17 @@ Parent: **443**. After **443-001**, Nuru’s generator emits `global::TimeWarp.M
 - This removes public types from `TimeWarp.Nuru`. Document the breaking change (namespace move to
   `TimeWarp.Mediator`) in the changelog and bump the Nuru version accordingly.
 
+## Update 2026-09-25: pin TimeWarp.Mediator 14.0.0-beta.3
+
+The first implement pass (commit 20c368fd) finished the Nuru side but the build failed on 14.0.0-beta.2
+(CS0311 Unit-response handlers, TWM001 array-response handlers). Those generator bugs are fixed in
+TimeWarp.Mediator **14.0.0-beta.3**, now on NuGet.org (mediator task 009, issue #68 closed).
+
+- Bump `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators` in `Directory.Packages.props` to
+  `14.0.0-beta.3` (clear `timewarp.mediator.*` from the local NuGet cache if a `-local` build is cached).
+- Re-run the Release build and the full CI test gate; all requirements above must pass.
+- Keep the existing 20c368fd work; do not redo it.
+
 ## Checklist
 
 - [ ] Generator emit

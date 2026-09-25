@@ -335,7 +335,7 @@ public sealed class DeployCommand : ICommand<Unit>
   public sealed class Handler(IDeploymentService deployment, ITerminal terminal)
     : ICommandHandler<DeployCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(DeployCommand cmd, CancellationToken ct)
+    public async Task<Unit> Handle(DeployCommand cmd, CancellationToken ct)
     {
       await deployment.DeployAsync(cmd.Env);
       terminal.WriteLine($"Deployed to {cmd.Env}");

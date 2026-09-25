@@ -1,5 +1,6 @@
 namespace Editions.GroupFiltering;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("add", Description = "Add a kanban task")]
@@ -10,10 +11,10 @@ public sealed class KanbanAddCommand : KanbanGroup, ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<KanbanAddCommand, Unit>
   {
-    public ValueTask<Unit> Handle(KanbanAddCommand command, CancellationToken cancellationToken)
+    public Task<Unit> Handle(KanbanAddCommand command, CancellationToken cancellationToken)
     {
       Console.WriteLine($"[KANBAN] Added task: {command.Name}");
-      return default;
+      return Unit.Task;
     }
   }
 }

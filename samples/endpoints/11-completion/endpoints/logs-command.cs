@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -15,12 +16,12 @@ public sealed class LogsCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<LogsCommand, Unit>
   {
-    public ValueTask<Unit> Handle(LogsCommand c, CancellationToken ct)
+    public Task<Unit> Handle(LogsCommand c, CancellationToken ct)
     {
       WriteLine($"Logs {c.Action}");
       WriteLine($"  Lines: {c.Lines}");
       WriteLine($"  Follow: {c.Follow}");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -5,6 +5,7 @@
 
 namespace PipelineBasic.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -16,10 +17,10 @@ public sealed class EchoCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<EchoCommand, Unit>
   {
-    public ValueTask<Unit> Handle(EchoCommand command, CancellationToken ct)
+    public Task<Unit> Handle(EchoCommand command, CancellationToken ct)
     {
       WriteLine($"Echo: {command.Message}");
-      return default;
+      return Unit.Task;
     }
   }
 }

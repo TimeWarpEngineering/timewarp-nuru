@@ -5,6 +5,7 @@
 
 namespace EndpointCalculator.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -21,9 +22,9 @@ public sealed class AddCommand : IQuery<double>
 
   public sealed class Handler : IQueryHandler<AddCommand, double>
   {
-    public ValueTask<double> Handle(AddCommand command, CancellationToken ct)
+    public Task<double> Handle(AddCommand command, CancellationToken ct)
     {
-      return new ValueTask<double>(command.X + command.Y);
+      return Task.FromResult<double>(command.X + command.Y);
     }
   }
 }

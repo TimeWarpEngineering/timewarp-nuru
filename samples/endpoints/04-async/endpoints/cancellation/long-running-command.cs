@@ -5,6 +5,7 @@
 
 namespace AsyncExamples.Endpoints.Cancellation;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("long-running", Description = "Long-running operation with cancellation support")]
@@ -15,7 +16,7 @@ public sealed class LongRunningCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<LongRunningCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(LongRunningCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(LongRunningCommand command, CancellationToken ct)
     {
       for (int i = 0; i < command.Iterations; i++)
       {

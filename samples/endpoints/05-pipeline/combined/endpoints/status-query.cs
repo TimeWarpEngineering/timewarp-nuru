@@ -5,6 +5,7 @@
 
 namespace PipelineCombined.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -13,10 +14,10 @@ public sealed class StatusQuery : IQuery<Unit>
 {
   public sealed class Handler : IQueryHandler<StatusQuery, Unit>
   {
-    public ValueTask<Unit> Handle(StatusQuery q, CancellationToken ct)
+    public Task<Unit> Handle(StatusQuery q, CancellationToken ct)
     {
       WriteLine("✓ System operational");
-      return default;
+      return Unit.Task;
     }
   }
 }

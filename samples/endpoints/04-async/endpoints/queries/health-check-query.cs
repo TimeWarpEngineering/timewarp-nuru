@@ -5,6 +5,7 @@
 
 namespace AsyncExamples.Endpoints.Queries;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -24,7 +25,7 @@ public sealed class HealthCheckQuery : IQuery<HealthStatus>
 
   public sealed class Handler : IQueryHandler<HealthCheckQuery, HealthStatus>
   {
-    public async ValueTask<HealthStatus> Handle(HealthCheckQuery query, CancellationToken ct)
+    public async Task<HealthStatus> Handle(HealthCheckQuery query, CancellationToken ct)
     {
       Dictionary<string, bool> statuses = new Dictionary<string, bool>();
 

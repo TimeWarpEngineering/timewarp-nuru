@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,11 +9,11 @@ public sealed class DailyCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DailyCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DailyCommand c, CancellationToken ct)
+    public Task<Unit> Handle(DailyCommand c, CancellationToken ct)
     {
       DateOnly date = DateOnly.Parse(c.Date);
       WriteLine($"Daily report for: {date:yyyy-MM-dd}");
-      return default;
+      return Unit.Task;
     }
   }
 }

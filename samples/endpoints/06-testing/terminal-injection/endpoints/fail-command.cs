@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -6,7 +7,7 @@ public sealed class FailCommand : ICommand<Unit>
 {
   public sealed class Handler(ITerminal Terminal) : ICommandHandler<FailCommand, Unit>
   {
-    public ValueTask<Unit> Handle(FailCommand c, CancellationToken ct)
+    public Task<Unit> Handle(FailCommand c, CancellationToken ct)
     {
       Terminal.WriteErrorLine("ERROR".Red().Bold());
       Terminal.WriteErrorLine("Operation failed!".Red());

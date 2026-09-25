@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,11 +9,11 @@ public sealed class AlarmCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<AlarmCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AlarmCommand c, CancellationToken ct)
+    public Task<Unit> Handle(AlarmCommand c, CancellationToken ct)
     {
       TimeOnly time = TimeOnly.Parse(c.Time);
       WriteLine($"Alarm set for: {time:HH:mm}");
-      return default;
+      return Unit.Task;
     }
   }
 }

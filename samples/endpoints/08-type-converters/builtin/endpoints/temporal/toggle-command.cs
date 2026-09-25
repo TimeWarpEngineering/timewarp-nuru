@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("toggle", Description = "Toggle a boolean feature")]
@@ -7,7 +8,7 @@ public sealed class ToggleCommand : IQuery<bool>
 
   public sealed class Handler : IQueryHandler<ToggleCommand, bool>
   {
-    public ValueTask<bool> Handle(ToggleCommand c, CancellationToken ct) =>
-      new ValueTask<bool>(!c.State);
+    public Task<bool> Handle(ToggleCommand c, CancellationToken ct) =>
+      Task.FromResult<bool>(!c.State);
   }
 }

@@ -1,5 +1,6 @@
 namespace GroupOptionsSample.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -38,7 +39,7 @@ public sealed class RemoteAddCommand : GitRemoteGroupBase, ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<RemoteAddCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(RemoteAddCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(RemoteAddCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 
@@ -86,7 +87,7 @@ public sealed class RemoteRemoveCommand : GitRemoteGroupBase, ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<RemoteRemoveCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(RemoteRemoveCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(RemoteRemoveCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

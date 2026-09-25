@@ -5,6 +5,7 @@
 
 namespace EndpointCalculator.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -30,11 +31,11 @@ public sealed class StatsCommand : IQuery<StatsResponse>
 
   public sealed class Handler : IQueryHandler<StatsCommand, StatsResponse>
   {
-    public ValueTask<StatsResponse> Handle(StatsCommand command, CancellationToken ct)
+    public Task<StatsResponse> Handle(StatsCommand command, CancellationToken ct)
     {
       if (command.Values.Length == 0)
       {
-        return new ValueTask<StatsResponse>(new StatsResponse());
+        return Task.FromResult<StatsResponse>(new StatsResponse());
       }
 
       double[] values =
@@ -46,10 +47,10 @@ public sealed class StatsCommand : IQuery<StatsResponse>
 
       if (values.Length == 0)
       {
-        return new ValueTask<StatsResponse>(new StatsResponse());
+        return Task.FromResult<StatsResponse>(new StatsResponse());
       }
 
-      return new ValueTask<StatsResponse>
+      return Task.FromResult<StatsResponse>
       (
         new StatsResponse
         {

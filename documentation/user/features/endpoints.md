@@ -39,10 +39,10 @@ public sealed class GreetQuery : IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<GreetQuery, Unit>
   {
-    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Hello, {query.Name}!");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -209,7 +209,7 @@ public sealed class DeployCommand : ICommand<Unit>
   public sealed class Handler(ILogger<DeployCommand> logger, IDeployService deploy)
     : ICommandHandler<DeployCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(DeployCommand cmd, CancellationToken ct)
+    public async Task<Unit> Handle(DeployCommand cmd, CancellationToken ct)
     {
       logger.LogInformation("Deploying to {Env}", cmd.Env);
       await deploy.DeployAsync(cmd.Env, cmd.Force, ct);

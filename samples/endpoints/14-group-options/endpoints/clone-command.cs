@@ -1,5 +1,6 @@
 namespace GroupOptionsSample.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -20,7 +21,7 @@ public sealed class CloneCommand : GitGroupBase, ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<CloneCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(CloneCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(CloneCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

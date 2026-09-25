@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("docker-env", Description = "Docker command with environment variables")]
@@ -15,10 +16,10 @@ public sealed class DockerEnvCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DockerEnvCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DockerEnvCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DockerEnvCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Environment variables: {string.Join(", ", command.Var)}");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -23,7 +24,7 @@ public sealed class DefaultQuery : IQuery<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(DefaultQuery query, CancellationToken ct)
+    public Task<Unit> Handle(DefaultQuery query, CancellationToken ct)
     {
       Terminal.WriteLine("Welcome to the Endpoints Sample!");
       Terminal.WriteLine();
@@ -38,7 +39,7 @@ public sealed class DefaultQuery : IQuery<Unit>
       {
         Terminal.WriteLine("Tip: Use --help for the complete auto-generated command list.");
       }
-      return default;
+      return Unit.Task;
     }
   }
 }

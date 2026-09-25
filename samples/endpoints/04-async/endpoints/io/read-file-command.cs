@@ -5,6 +5,7 @@
 
 namespace AsyncExamples.Endpoints.IO;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("read-file", Description = "Simulate async file read")]
@@ -15,7 +16,7 @@ public sealed class ReadFileCommand : ICommand<string>
 
   public sealed class Handler : ICommandHandler<ReadFileCommand, string>
   {
-    public async ValueTask<string> Handle(ReadFileCommand command, CancellationToken ct)
+    public async Task<string> Handle(ReadFileCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Reading file: {command.Path}");
       await Task.Delay(50, ct); // Simulate I/O

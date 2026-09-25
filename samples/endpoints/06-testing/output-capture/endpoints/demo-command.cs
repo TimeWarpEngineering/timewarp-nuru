@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -6,7 +7,7 @@ public sealed class DemoCommand : ICommand<Unit>
 {
   public sealed class Handler(ITerminal Terminal) : ICommandHandler<DemoCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DemoCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DemoCommand command, CancellationToken ct)
     {
       // Demonstrate stdout
       Terminal.WriteLine("Hello from stdout!");
@@ -20,7 +21,7 @@ public sealed class DemoCommand : ICommand<Unit>
       // Demonstrate styled output
       Terminal.WriteLine("Success!".Green());
 
-      return default;
+      return Unit.Task;
     }
   }
 }

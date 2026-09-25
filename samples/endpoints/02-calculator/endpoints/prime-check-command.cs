@@ -6,6 +6,7 @@
 namespace EndpointCalculator.Endpoints;
 
 using EndpointCalculator.Services;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 /// <summary>
@@ -19,11 +20,11 @@ public sealed class PrimeCheckCommand : ICommand<Unit>
 
   public sealed class Handler(IScientificCalculator calc) : ICommandHandler<PrimeCheckCommand, Unit>
   {
-    public ValueTask<Unit> Handle(PrimeCheckCommand command, CancellationToken cancellationToken)
+    public Task<Unit> Handle(PrimeCheckCommand command, CancellationToken cancellationToken)
     {
       bool result = calc.IsPrime(command.N);
       Console.WriteLine($"{command.N} is {(result ? "prime" : "not prime")}");
-      return default;
+      return Unit.Task;
     }
   }
 }

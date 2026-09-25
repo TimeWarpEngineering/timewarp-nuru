@@ -1,5 +1,7 @@
 namespace TimeWarp.Nuru.Search.Endpoints;
 
+using TimeWarp.Mediator;
+
 [NuruRoute("rebuild", Description = "Rebuild the search index for one or more CLIs")]
 public sealed class IndexRebuildCommand : IndexGroup, ICommand<Unit>
 {
@@ -14,7 +16,7 @@ public sealed class IndexRebuildCommand : IndexGroup, ICommand<Unit>
     CapabilitiesClient capabilitiesClient,
     ITerminal terminal) : ICommandHandler<IndexRebuildCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(IndexRebuildCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(IndexRebuildCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

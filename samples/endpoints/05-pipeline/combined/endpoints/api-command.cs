@@ -6,6 +6,7 @@
 namespace PipelineCombined.Endpoints;
 
 using PipelineCombined.Behaviors;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("api", Description = "Call API (retries on failure)")]
@@ -17,11 +18,11 @@ public sealed class ApiCommand : ICommand<string>, IRetryable
   public sealed class Handler : ICommandHandler<ApiCommand, string>
   {
     private static int Fails = 0;
-    public ValueTask<string> Handle(ApiCommand c, CancellationToken ct)
+    public Task<string> Handle(ApiCommand c, CancellationToken ct)
     {
       if (++Fails < 2) throw new TimeoutException("API timeout");
       Fails = 0;
-      return new ValueTask<string>($"Response from {c.Endpoint}");
+      return Task.FromResult<string>($"Response from {c.Endpoint}");
     }
   }
 }

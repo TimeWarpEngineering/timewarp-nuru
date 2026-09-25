@@ -15,7 +15,7 @@ using System.Xml.Linq;
 /// Run Roslynator analysis and fixes.
 /// </summary>
 [NuruRoute("analyze", Description = "Run Roslynator analysis and fixes")]
-internal sealed class AnalyzeCommand : ICommand<Unit>
+public sealed class AnalyzeCommand : ICommand<Unit>
 {
   [Option("diagnostic", "d", Description = "Only fix specific diagnostic ID (e.g., RCS1036)")]
   public string? Diagnostic { get; set; }
@@ -32,7 +32,7 @@ internal sealed class AnalyzeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(AnalyzeCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(AnalyzeCommand command, CancellationToken ct)
     {
       // Get repo root using Git.FindRoot
       string? repoRoot = Git.FindRoot();

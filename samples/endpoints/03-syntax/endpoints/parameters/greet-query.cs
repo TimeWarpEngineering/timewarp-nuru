@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("greet", Description = "Greet someone by name")]
@@ -15,10 +16,10 @@ public sealed class GreetQuery : IQuery<Unit>
 
   public sealed class Handler : IQueryHandler<GreetQuery, Unit>
   {
-    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Hello {query.Name}");
-      return default;
+      return Unit.Task;
     }
   }
 }

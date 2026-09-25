@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 using static System.Console;
@@ -10,7 +11,7 @@ public sealed class VersionCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<VersionCommand, Unit>
   {
-    public ValueTask<Unit> Handle(VersionCommand c, CancellationToken ct)
+    public Task<Unit> Handle(VersionCommand c, CancellationToken ct)
     {
       SemanticVersion current = new SemanticVersion(c.Current);
       SemanticVersion required = new SemanticVersion(c.Required);
@@ -29,7 +30,7 @@ public sealed class VersionCommand : ICommand<Unit>
         WriteLine("✗ Version too old - update required".Red());
       }
 
-      return default;
+      return Unit.Task;
     }
   }
 }

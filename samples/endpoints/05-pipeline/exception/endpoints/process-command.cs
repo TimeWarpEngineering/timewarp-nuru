@@ -5,6 +5,7 @@
 
 namespace PipelineException.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -16,7 +17,7 @@ public sealed class ProcessCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ProcessCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ProcessCommand command, CancellationToken ct)
+    public Task<Unit> Handle(ProcessCommand command, CancellationToken ct)
     {
       if (command.Operation == "fail")
       {
@@ -29,7 +30,7 @@ public sealed class ProcessCommand : ICommand<Unit>
       }
 
       WriteLine($"✓ Processed: {command.Operation}");
-      return default;
+      return Unit.Task;
     }
   }
 }

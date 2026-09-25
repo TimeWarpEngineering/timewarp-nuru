@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -6,12 +7,12 @@ public sealed class StatusCommand : ICommand<Unit>
 {
   public sealed class Handler(ITerminal T) : ICommandHandler<StatusCommand, Unit>
   {
-    public ValueTask<Unit> Handle(StatusCommand c, CancellationToken ct)
+    public Task<Unit> Handle(StatusCommand c, CancellationToken ct)
     {
       T.WriteLine($"{"✓".Green()} System Healthy".Green());
       T.WriteLine($"{"✓".Green()} Database Connected".Green());
       T.WriteLine($"{"✓".Green()} API Responsive".Green());
-      return default;
+      return Unit.Task;
     }
   }
 }

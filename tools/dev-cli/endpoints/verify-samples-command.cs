@@ -14,7 +14,7 @@ namespace DevCli;
 /// Build all samples to verify they compile.
 /// </summary>
 [NuruRoute("verify-samples", Description = "Verify all samples compile")]
-internal sealed class VerifySamplesCommand : ICommand<Unit>
+public sealed class VerifySamplesCommand : ICommand<Unit>
 {
   [Option("category", "c", Description = "Filter by category: fluent, endpoints, hybrid")]
   public string? Category { get; set; }
@@ -28,7 +28,7 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
     {
       // Get repo root using Git.FindRoot
       string? repoRoot = Git.FindRoot();

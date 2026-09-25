@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -9,7 +10,7 @@ public sealed class ProcessCommand : ICommand<string>
 
   public sealed class Handler(FastProcessor Fast, ThoroughProcessor Thorough) : ICommandHandler<ProcessCommand, string>
   {
-    public async ValueTask<string> Handle(ProcessCommand c, CancellationToken ct)
+    public async Task<string> Handle(ProcessCommand c, CancellationToken ct)
     {
       IProcessor processor = c.Mode.ToLower() switch
       {

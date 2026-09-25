@@ -56,6 +56,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen34IListManagerRepeated
     public static async Task Should_not_treat_user_ilistmanager_as_repeated()
     {
       const string Source = """
+        using TimeWarp.Mediator;
         using TimeWarp.Nuru;
 
         NuruApp app = NuruApp.CreateBuilder(args)
@@ -82,7 +83,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen34IListManagerRepeated
 
             public sealed class Handler : ICommandHandler<IListManagerCommand, Unit>
             {
-              public ValueTask<Unit> Handle(IListManagerCommand command, CancellationToken ct) => default;
+              public Task<Unit> Handle(IListManagerCommand command, CancellationToken ct) => Unit.Task;
             }
           }
         }

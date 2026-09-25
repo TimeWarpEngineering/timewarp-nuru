@@ -6,17 +6,17 @@
 //
 // PURPOSE: Verify async delegate handlers returning Unit.Value compile and run
 // correctly. The source generator must emit the fully-qualified
-// global::TimeWarp.Nuru.Unit type name (not just "Unit") to avoid ambiguity
+// global::TimeWarp.Mediator.Unit type name (not just "Unit") to avoid ambiguity
 // when other packages that define a Unit type are referenced.
 //
 // REGRESSION FOR:
 // - Bug #442: GetUnwrappedReturnTypeName() strips namespace from Unit, emitting
-//   bare "Unit" which is ambiguous when e.g. Mediator.Unit is also in scope.
+//   bare "Unit" which is ambiguous when e.g. MediatR.Unit is also in scope.
 //
 // HOW IT WORKS:
 // 1. Define async delegate handlers that return Unit.Value (no closures)
 // 2. Verify they compile and execute correctly (exit code = 0)
-// 3. The fix ensures the generator emits global::TimeWarp.Nuru.Unit, not Unit
+// 3. The fix ensures the generator emits global::TimeWarp.Mediator.Unit, not Unit
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -28,7 +28,7 @@ namespace TimeWarp.Nuru.Tests.Generator.UnitTypeAmbiguity
 {
   /// <summary>
   /// Regression tests for bug #442: async delegate handlers returning Unit must
-  /// use the fully-qualified global::TimeWarp.Nuru.Unit in generated code.
+  /// use the fully-qualified global::TimeWarp.Mediator.Unit in generated code.
   /// </summary>
   [TestTag("Generator")]
   [TestTag("Regression")]
@@ -41,7 +41,7 @@ namespace TimeWarp.Nuru.Tests.Generator.UnitTypeAmbiguity
     /// Regression test for bug #442: async expression-body delegate returning Unit.Value
     /// must compile and run correctly.
     /// The generator emits "Unit result = await __handler();" — bare Unit is ambiguous
-    /// when Mediator or other packages also define Unit. Fix: use global::TimeWarp.Nuru.Unit.
+    /// when MediatR or other packages also define Unit. Fix: use global::TimeWarp.Mediator.Unit.
     /// </summary>
     public static async Task Should_support_async_expression_body_delegate_returning_unit()
     {

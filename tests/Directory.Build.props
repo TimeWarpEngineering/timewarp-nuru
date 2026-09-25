@@ -30,7 +30,7 @@
     <Using Include="TimeWarp.Jaribu" />
     <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
     <Using Include="TimeWarp.Nuru" />
-    <Using Include="TimeWarp.Nuru.Unit" Static="true" />
+    <Using Include="TimeWarp.Mediator" />
     <Using Include="TimeWarp.Terminal" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="System.Runtime.CompilerServices" />

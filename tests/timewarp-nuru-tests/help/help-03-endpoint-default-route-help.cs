@@ -114,7 +114,7 @@ public class EndpointDefaultRouteHelpTests
 // ═══════════════════════════════════════════════════════════════════════════════
 
 [NuruRoute("", Description = "Default action with optional input and verbose option")]
-internal sealed class DefaultEndpoint : ICommand<Unit>
+public sealed class DefaultEndpoint : ICommand<Unit>
 {
   [Parameter(Description = "Optional input value")]
   public string? Input { get; set; }
@@ -124,7 +124,7 @@ internal sealed class DefaultEndpoint : ICommand<Unit>
 
   internal sealed class Handler(ITerminal terminal) : ICommandHandler<DefaultEndpoint, Unit>
   {
-    public async ValueTask<Unit> Handle(DefaultEndpoint command, CancellationToken ct)
+    public async Task<Unit> Handle(DefaultEndpoint command, CancellationToken ct)
     {
       string input = command.Input ?? "(none)";
       await terminal.WriteLineAsync($"default-handler-executed: Input: {input}, Verbose: {command.Verbose}").ConfigureAwait(false);

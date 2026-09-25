@@ -176,7 +176,7 @@ internal static class EndpointExtractor
       }
     }
 
-    return [..allAliases];
+    return [.. allAliases];
   }
 
   /// <summary>
@@ -264,7 +264,7 @@ internal static class EndpointExtractor
           aliases.Add(singleAlias);
         }
 
-        return [..aliases];
+        return [.. aliases];
       }
     }
 
@@ -687,9 +687,16 @@ internal static class EndpointExtractor
     return longForm;
   }
 
+  private const string MediatorNamespace = "TimeWarp.Mediator";
+
   /// <summary>
-  /// Infers message type from implemented interfaces.
+  /// Infers message type from implemented <c>TimeWarp.Mediator</c> interfaces.
   /// </summary>
+  /// <remarks>
+  /// Precedence is Query, then IdempotentCommand, then Command, independent of interface order.
+  /// <c>IIdempotentCommand&lt;T&gt;</c> derives <c>ICommand&lt;T&gt;</c>, so a first-match scan of
+  /// <see cref="ITypeSymbol.AllInterfaces"/> could classify it as a plain Command.
+  /// </remarks>
   private static string InferMessageType
   (
     ClassDeclarationSyntax classDeclaration,
@@ -701,22 +708,42 @@ internal static class EndpointExtractor
     if (classSymbol is null)
       return "Unspecified";
 
+    bool isCommand = false;
+    bool isIdempotent = false;
+
     foreach (INamedTypeSymbol iface in classSymbol.AllInterfaces)
     {
-      string interfaceName = iface.Name;
+      if (!IsMediatorInterface(iface))
+        continue;
 
-      if (interfaceName == "IQuery" || interfaceName.StartsWith("IQuery`", StringComparison.Ordinal))
-        return "Query";
-
-      if (interfaceName == "IIdempotentCommand" || interfaceName.StartsWith("IIdempotentCommand`", StringComparison.Ordinal))
-        return "IdempotentCommand";
-
-      if (interfaceName == "ICommand" || interfaceName.StartsWith("ICommand`", StringComparison.Ordinal))
-        return "Command";
+      switch (iface.Name)
+      {
+        case "IQuery":
+          return "Query";
+        case "IIdempotentCommand":
+          isCommand = true;
+          isIdempotent = true;
+          break;
+        case "ICommand":
+          isCommand = true;
+          break;
+        case "IIdempotent":
+          isIdempotent = true;
+          break;
+      }
     }
 
-    return "Unspecified";
+    if (!isCommand)
+      return "Unspecified";
+
+    return isIdempotent ? "IdempotentCommand" : "Command";
   }
+
+  /// <summary>
+  /// Checks whether an interface is declared in the <c>TimeWarp.Mediator</c> namespace.
+  /// </summary>
+  private static bool IsMediatorInterface(INamedTypeSymbol iface) =>
+    iface.ContainingNamespace?.ToDisplayString() == MediatorNamespace;
 
   /// <summary>
   /// Extracts segments from properties with [Parameter] or [Option] attributes.
@@ -1161,11 +1188,10 @@ internal static class EndpointExtractor
   {
     foreach (INamedTypeSymbol iface in classSymbol.AllInterfaces)
     {
-      if (!iface.IsGenericType)
+      if (!iface.IsGenericType || !IsMediatorInterface(iface))
         continue;
 
-      string interfaceName = iface.Name;
-      if (interfaceName != "IQuery" && interfaceName != "ICommand" && interfaceName != "IIdempotentCommand")
+      if (iface.Name is not ("IQuery" or "ICommand" or "IIdempotentCommand"))
         continue;
 
       if (iface.TypeArguments.Length > 0)
@@ -1200,9 +1226,8 @@ internal static class EndpointExtractor
 
     foreach (INamedTypeSymbol iface in classSymbol.AllInterfaces)
     {
-      // Skip Nuru message interfaces (ICommand, IQuery, etc.)
-      string interfaceName = iface.Name;
-      if (IsMessageInterface(interfaceName))
+      // Skip mediator message/handler interfaces (ICommand, IQuery, IRequest, IIdempotent, etc.)
+      if (IsMediatorInterface(iface))
         continue;
 
       // Skip common .NET interfaces
@@ -1219,21 +1244,6 @@ internal static class EndpointExtractor
     }
 
     return filterInterfaces.ToImmutable();
-  }
-
-  /// <summary>
-  /// Checks if an interface is a Nuru message interface (ICommand, IQuery, etc.).
-  /// These are for message typing, not behavior filtering.
-  /// </summary>
-  private static bool IsMessageInterface(string interfaceName)
-  {
-    return interfaceName is "ICommand" or "IQuery" or "IIdempotentCommand"
-        || interfaceName.StartsWith("ICommand`", StringComparison.Ordinal)
-        || interfaceName.StartsWith("IQuery`", StringComparison.Ordinal)
-        || interfaceName.StartsWith("IIdempotentCommand`", StringComparison.Ordinal)
-        || interfaceName is "ICommandHandler" or "IQueryHandler"
-        || interfaceName.StartsWith("ICommandHandler`", StringComparison.Ordinal)
-        || interfaceName.StartsWith("IQueryHandler`", StringComparison.Ordinal);
   }
 
   /// <summary>

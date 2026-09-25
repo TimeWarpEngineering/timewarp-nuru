@@ -151,13 +151,13 @@ public sealed partial class PartialTestCommand : ICommand<Unit>
 
   public sealed class Handler(ITerminal terminal) : ICommandHandler<PartialTestCommand, Unit>
   {
-    public ValueTask<Unit> Handle(PartialTestCommand command, CancellationToken ct)
+    public Task<Unit> Handle(PartialTestCommand command, CancellationToken ct)
     {
       string displayName = command.Name ?? "Default";
       terminal.WriteLine($"Name: {displayName}");
       terminal.WriteLine($"Verbose: {command.Verbose}");
       terminal.WriteLine($"Count: {command.Count}");
-      return default;
+      return Unit.Task;
     }
   }
 }

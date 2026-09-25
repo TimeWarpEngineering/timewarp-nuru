@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,13 +9,13 @@ public sealed class ReadCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ReadCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ReadCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ReadCommand c, CancellationToken ct)
     {
       FileInfo file = new FileInfo(c.File);
       WriteLine($"Reading: {file.FullName}");
       WriteLine($"  Exists: {file.Exists}");
       WriteLine($"  Size: {file.Length} bytes");
-      return default;
+      return Unit.Task;
     }
   }
 }

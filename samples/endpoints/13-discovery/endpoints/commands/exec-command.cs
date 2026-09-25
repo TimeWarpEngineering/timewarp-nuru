@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -23,10 +24,10 @@ public sealed class ExecCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
+    public Task<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       Terminal.WriteLine($"Executing: {string.Join(" ", command.Args)}");
-      return default;
+      return Unit.Task;
     }
   }
 }

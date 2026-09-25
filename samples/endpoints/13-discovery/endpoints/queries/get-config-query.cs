@@ -1,5 +1,6 @@
 namespace Endpoints.Messages;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -23,11 +24,11 @@ public sealed class GetConfigQuery : ConfigGroupBase, IQuery<Unit>
       Terminal = terminal;
     }
 
-    public ValueTask<Unit> Handle(GetConfigQuery query, CancellationToken ct)
+    public Task<Unit> Handle(GetConfigQuery query, CancellationToken ct)
     {
       // In a real app, this would look up the value
       Terminal.WriteLine($"Config value for '{query.Key}': (not set)");
-      return default;
+      return Unit.Task;
     }
   }
 }

@@ -420,7 +420,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
       ImmutableArray<Diagnostic> validationDiagnostics = ModelValidator.Validate(
         app with { Routes = combinedRoutes },
         routeLocations,
-        app.ExtensionMethods);
+        app.ExtensionMethods,
+        hasGeneratedMediator);
 
       allDiagnostics.AddRange(validationDiagnostics);
     }

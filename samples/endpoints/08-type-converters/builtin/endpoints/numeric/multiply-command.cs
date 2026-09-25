@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("multiply", Description = "Multiply two doubles")]
@@ -8,7 +9,7 @@ public sealed class MultiplyCommand : IQuery<double>
 
   public sealed class Handler : IQueryHandler<MultiplyCommand, double>
   {
-    public ValueTask<double> Handle(MultiplyCommand c, CancellationToken ct) =>
-      new ValueTask<double>(c.X * c.Y);
+    public Task<double> Handle(MultiplyCommand c, CancellationToken ct) =>
+      Task.FromResult<double>(c.X * c.Y);
   }
 }

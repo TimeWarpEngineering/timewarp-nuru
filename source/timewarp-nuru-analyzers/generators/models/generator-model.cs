@@ -53,6 +53,37 @@ public sealed record GeneratorModel(
   public bool UsesMicrosoftDependencyInjection => Apps.Any(a => a.UseMicrosoftDependencyInjection);
 
   /// <summary>
+  /// Gets whether a source-gen DI app injects <c>ISender</c>, <c>IPublisher</c>, or <c>IMediator</c>
+  /// into a handler, service, or behavior.
+  /// </summary>
+  public bool SourceGenDIRequiresMediator
+  {
+    get
+    {
+      AppModel[] sourceGenApps = [.. Apps.Where(a => !a.UseMicrosoftDependencyInjection)];
+      if (sourceGenApps.Length == 0)
+        return false;
+
+      IEnumerable<string> handlerTypes = sourceGenApps
+        .SelectMany(a => a.Routes)
+        .Concat(Endpoints)
+        .SelectMany(r => r.Handler.ServiceParameters.Concat(r.Handler.ConstructorDependencies))
+        .Select(p => p.ParameterTypeName);
+
+      IEnumerable<string> serviceTypes = sourceGenApps
+        .SelectMany(a => a.Services)
+        .SelectMany(s => s.ConstructorParameters.Select(p => p.TypeName).Concat(s.ConstructorDependencyTypes));
+
+      IEnumerable<string> behaviorTypes = sourceGenApps
+        .SelectMany(a => a.Behaviors)
+        .SelectMany(b => b.ConstructorDependencies)
+        .Select(p => p.ParameterTypeName);
+
+      return handlerTypes.Concat(serviceTypes).Concat(behaviorTypes).Any(FrameworkServices.IsMediatorServiceType);
+    }
+  }
+
+  /// <summary>
   /// Gets all behaviors from all apps (deduplicated).
   /// </summary>
   public IEnumerable<BehaviorDefinition> AllBehaviors =>

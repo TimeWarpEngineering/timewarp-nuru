@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
@@ -6,11 +7,11 @@ public sealed class InfoCommand : ICommand<Unit>
 {
   public sealed class Handler(ITerminal Terminal) : ICommandHandler<InfoCommand, Unit>
   {
-    public ValueTask<Unit> Handle(InfoCommand c, CancellationToken ct)
+    public Task<Unit> Handle(InfoCommand c, CancellationToken ct)
     {
       Terminal.WriteLine("INFO".Blue().Bold());
       Terminal.WriteLine("This is an informational message.".Blue());
-      return default;
+      return Unit.Task;
     }
   }
 }

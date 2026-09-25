@@ -271,9 +271,9 @@ internal static class HandlerInvokerEmitter
     {
       string unwrapped = handler.ReturnType.UnwrappedTypeName;
 
-      // Preserve fully qualified name for Nuru's Unit to avoid ambiguity
-      // when other packages (e.g. Mediator) also define a Unit type.
-      if (unwrapped == "global::TimeWarp.Nuru.Unit")
+      // Preserve fully qualified name for Unit to avoid ambiguity
+      // when other packages (e.g. MediatR) also define a Unit type.
+      if (unwrapped == "global::TimeWarp.Mediator.Unit")
         return unwrapped;
 
       // For Task<T>, extract short name from fully qualified unwrapped type
@@ -415,6 +415,9 @@ internal static class HandlerInvokerEmitter
     {
       return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{serviceTypeName}>(GetServiceProvider{runtimeDISuffix}(app))";
     }
+
+    if (FrameworkServices.IsMediatorServiceType(serviceTypeName))
+      return FrameworkServices.MediatorExpression;
 
     // Source-gen DI path: static instantiation via Lazy<T> fields
     // Find matching service registration
@@ -692,7 +695,7 @@ internal static class HandlerInvokerEmitter
     return typeName switch
     {
       // Unit = no output (void equivalent)
-      "global::TimeWarp.Nuru.Unit" or "Unit" => OutputStrategy.None,
+      "global::TimeWarp.Mediator.Unit" or "Unit" => OutputStrategy.None,
 
       // String = raw output (no quotes)
       "global::System.String" or "string" or "String" => OutputStrategy.Raw,
@@ -761,7 +764,7 @@ internal static class HandlerInvokerEmitter
       "global::System.TimeOnly" or "TimeOnly" => true,
       "global::System.TimeSpan" or "TimeSpan" => true,
       "global::System.Guid" or "Guid" => true,
-      "global::TimeWarp.Nuru.Unit" or "Unit" => true,
+      "global::TimeWarp.Mediator.Unit" or "Unit" => true,
       _ => false  // Assume reference type for unknown types (safer - adds null check)
     };
   }

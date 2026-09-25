@@ -5,6 +5,7 @@
 
 namespace PipelineException.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -16,7 +17,7 @@ public sealed class ValidateCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ValidateCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ValidateCommand command, CancellationToken ct)
+    public Task<Unit> Handle(ValidateCommand command, CancellationToken ct)
     {
       if (string.IsNullOrWhiteSpace(command.Value))
       {
@@ -29,7 +30,7 @@ public sealed class ValidateCommand : ICommand<Unit>
       }
 
       WriteLine($"✓ Valid: {command.Value}");
-      return default;
+      return Unit.Task;
     }
   }
 }

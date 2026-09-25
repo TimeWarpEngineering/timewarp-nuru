@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,7 +9,7 @@ public sealed class ListCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ListCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ListCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ListCommand c, CancellationToken ct)
     {
       DirectoryInfo dir = new DirectoryInfo(c.Dir);
       WriteLine($"Listing: {dir.FullName}");
@@ -20,7 +21,7 @@ public sealed class ListCommand : ICommand<Unit>
         WriteLine($"  Subdirectories: {dir.GetDirectories().Length}");
       }
 
-      return default;
+      return Unit.Task;
     }
   }
 }

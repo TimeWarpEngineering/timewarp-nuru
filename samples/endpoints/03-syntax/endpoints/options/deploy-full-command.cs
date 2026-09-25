@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("deploy-full", Description = "Deploy with full options")]
@@ -21,10 +22,10 @@ public sealed class DeployFullCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<DeployFullCommand, Unit>
   {
-    public ValueTask<Unit> Handle(DeployFullCommand command, CancellationToken ct)
+    public Task<Unit> Handle(DeployFullCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deploy to {command.Env} (dry-run: {command.DryRun}, force: {command.Force})");
-      return default;
+      return Unit.Task;
     }
   }
 }

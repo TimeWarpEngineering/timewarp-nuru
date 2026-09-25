@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -8,7 +9,7 @@ public sealed class StatusQuery : IQuery<Unit>
 {
   public sealed class Handler(ILogger<StatusQuery> Logger) : IQueryHandler<StatusQuery, Unit>
   {
-    public ValueTask<Unit> Handle(StatusQuery q, CancellationToken ct)
+    public Task<Unit> Handle(StatusQuery q, CancellationToken ct)
     {
       using IDisposable? scope = Logger.BeginScope(new Dictionary<string, object>
       {
@@ -27,7 +28,7 @@ public sealed class StatusQuery : IQuery<Unit>
 
       WriteLine("System status logged. Check console output.");
 
-      return default;
+      return Unit.Task;
     }
   }
 }

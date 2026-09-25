@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("add", Description = "Add two integers")]
@@ -11,7 +12,7 @@ public sealed class AddCommand : IQuery<int>
 
   public sealed class Handler : IQueryHandler<AddCommand, int>
   {
-    public ValueTask<int> Handle(AddCommand c, CancellationToken ct) =>
-      new ValueTask<int>(c.X + c.Y);
+    public Task<int> Handle(AddCommand c, CancellationToken ct) =>
+      Task.FromResult<int>(c.X + c.Y);
   }
 }

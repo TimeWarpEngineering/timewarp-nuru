@@ -1,3 +1,4 @@
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 using static System.Console;
@@ -10,7 +11,7 @@ public sealed class ColorCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<ColorCommand, Unit>
   {
-    public ValueTask<Unit> Handle(ColorCommand c, CancellationToken ct)
+    public Task<Unit> Handle(ColorCommand c, CancellationToken ct)
     {
       HexColor primary = new HexColor(c.Primary);
       WriteLine("Theme colors:");
@@ -24,7 +25,7 @@ public sealed class ColorCommand : ICommand<Unit>
         WriteLine($"    RGB: ({secondary.R}, {secondary.G}, {secondary.B})");
       }
 
-      return default;
+      return Unit.Task;
     }
   }
 }

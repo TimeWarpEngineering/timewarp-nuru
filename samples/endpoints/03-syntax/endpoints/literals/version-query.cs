@@ -5,6 +5,7 @@
 
 namespace SyntaxExamples.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("version", Description = "Show version information")]
@@ -12,9 +13,9 @@ public sealed class VersionQuery : IQuery<string>
 {
   public sealed class Handler : IQueryHandler<VersionQuery, string>
   {
-    public ValueTask<string> Handle(VersionQuery query, CancellationToken ct)
+    public Task<string> Handle(VersionQuery query, CancellationToken ct)
     {
-      return new ValueTask<string>("1.0.0");
+      return Task.FromResult<string>("1.0.0");
     }
   }
 }

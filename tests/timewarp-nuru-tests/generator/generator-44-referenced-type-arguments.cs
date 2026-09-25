@@ -81,6 +81,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen44ReferencedTypeArguments
       using System.Net.Http;
       using System.Threading;
       using System.Threading.Tasks;
+      using TimeWarp.Mediator;
       using TimeWarp.Nuru;
 
       namespace M7Symbols;
@@ -90,11 +91,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen44ReferencedTypeArguments
       {
         public sealed class Handler : ICommandHandler<M7Command, Unit>
         {
-          public ValueTask<Unit> Handle(M7Command command, CancellationToken cancellationToken)
+          public Task<Unit> Handle(M7Command command, CancellationToken cancellationToken)
           {
             _ = command;
             _ = cancellationToken;
-            return ValueTask.FromResult<Unit>(default);
+            return Task.FromResult<Unit>(default);
           }
         }
       }

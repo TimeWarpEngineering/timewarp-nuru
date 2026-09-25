@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -10,7 +11,7 @@ public sealed class ApiCallQuery : IQuery<Unit>
 
   public sealed class Handler(IOptions<ApiSettings> apiOptions) : IQueryHandler<ApiCallQuery, Unit>
   {
-    public ValueTask<Unit> Handle(ApiCallQuery query, CancellationToken ct)
+    public Task<Unit> Handle(ApiCallQuery query, CancellationToken ct)
     {
       ApiSettings api = apiOptions.Value;
       string fullUrl = $"{api.BaseUrl}/{query.Endpoint}";
@@ -20,7 +21,7 @@ public sealed class ApiCallQuery : IQuery<Unit>
       WriteLine($"  Timeout: {api.TimeoutSeconds}s");
       WriteLine($"  Max Retries: {api.RetryCount}");
       WriteLine("✓ API call successful (simulated)");
-      return default;
+      return Unit.Task;
     }
   }
 }

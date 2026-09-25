@@ -25,7 +25,7 @@ namespace DevCli;
 /// Run the full CI/CD pipeline.
 /// </summary>
 [NuruRoute("workflow", Description = "Run full CI/CD pipeline")]
-internal sealed class WorkflowCommand : ICommand<Unit>
+public sealed class WorkflowCommand : ICommand<Unit>
 {
   [Option("mode", "m", Description = "CI mode: pr, merge, or release (auto-detected from GITHUB_EVENT_NAME if not specified)")]
   public string? Mode { get; set; }
@@ -60,7 +60,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       PackableProjectService = packableProjectService;
     }
 
-    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       // Determine CI mode
       CiMode mode = DetermineMode(command.Mode);

@@ -54,7 +54,7 @@ public class Issue179RequiredParamTests
 // ═══════════════════════════════════════════════════════════════════════════════
 
 [NuruRoute("", Description = "Default action")]
-internal sealed class Issue179DefaultEndpoint : ICommand<Unit>
+public sealed class Issue179DefaultEndpoint : ICommand<Unit>
 {
   [Parameter(Description = "Some input")]
   public string Input { get; set; } = string.Empty;
@@ -64,7 +64,7 @@ internal sealed class Issue179DefaultEndpoint : ICommand<Unit>
 
   internal sealed class Handler(ITerminal terminal) : ICommandHandler<Issue179DefaultEndpoint, Unit>
   {
-    public async ValueTask<Unit> Handle(Issue179DefaultEndpoint command, CancellationToken ct)
+    public async Task<Unit> Handle(Issue179DefaultEndpoint command, CancellationToken ct)
     {
       await terminal.WriteLineAsync($"handler-executed: Input={command.Input}").ConfigureAwait(false);
       return default;

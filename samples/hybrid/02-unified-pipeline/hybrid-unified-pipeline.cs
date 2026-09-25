@@ -18,6 +18,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 using System.Diagnostics;
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -102,10 +103,10 @@ public sealed class EchoCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<EchoCommand, Unit>
   {
-    public ValueTask<Unit> Handle(EchoCommand c, CancellationToken ct)
+    public Task<Unit> Handle(EchoCommand c, CancellationToken ct)
     {
       WriteLine($"Echo: {c.Message}");
-      return default;
+      return Unit.Task;
     }
   }
 }
@@ -117,7 +118,7 @@ public sealed class SlowCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<SlowCommand, Unit>
   {
-    public async ValueTask<Unit> Handle(SlowCommand c, CancellationToken ct)
+    public async Task<Unit> Handle(SlowCommand c, CancellationToken ct)
     {
       WriteLine($"Starting {c.Delay}ms operation...");
       await Task.Delay(c.Delay, ct);

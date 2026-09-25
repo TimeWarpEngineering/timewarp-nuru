@@ -5,6 +5,7 @@
 
 namespace PipelineRetry.Endpoints;
 
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using static System.Console;
 
@@ -13,10 +14,10 @@ public sealed class PingCommand : ICommand<Unit>
 {
   public sealed class Handler : ICommandHandler<PingCommand, Unit>
   {
-    public ValueTask<Unit> Handle(PingCommand command, CancellationToken ct)
+    public Task<Unit> Handle(PingCommand command, CancellationToken ct)
     {
       WriteLine("Pong!");
-      return default;
+      return Unit.Task;
     }
   }
 }

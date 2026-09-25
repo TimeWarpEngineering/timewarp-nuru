@@ -78,6 +78,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen42ExtensionMethodLoweringDiagnostics
     }
 
     private const string AppPreamble = """
+      using TimeWarp.Mediator;
       using TimeWarp.Nuru;
       using Microsoft.Extensions.DependencyInjection;
 
@@ -344,7 +345,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen42ExtensionMethodLoweringDiagnostics
                 _ = hidden;
               }
 
-              public ValueTask<Unit> Handle(HiddenCommand command, CancellationToken ct) => default;
+              public Task<Unit> Handle(HiddenCommand command, CancellationToken ct) => Unit.Task;
             }
           }
         }

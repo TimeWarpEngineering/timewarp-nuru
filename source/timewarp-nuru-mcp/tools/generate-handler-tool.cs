@@ -113,10 +113,10 @@ internal sealed class GenerateHandlerTool
     sb.AppendLine("//");
     sb.AppendLine("//   internal sealed class Handler(ITerminal terminal)");
     sb.AppendLine("//   {");
-    sb.AppendLine(CultureInfo.InvariantCulture, $"//     public ValueTask<Unit> Handle({commandName}Endpoint request, CancellationToken ct)");
+    sb.AppendLine(CultureInfo.InvariantCulture, $"//     public Task<Unit> Handle({commandName}Endpoint request, CancellationToken ct)");
     sb.AppendLine("//     {");
     sb.AppendLine("//       // Handler logic here");
-    sb.AppendLine("//       return ValueTask.FromResult(Unit.Value);");
+    sb.AppendLine("//       return Unit.Task;");
     sb.AppendLine("//     }");
     sb.AppendLine("//   }");
     sb.AppendLine("// }");

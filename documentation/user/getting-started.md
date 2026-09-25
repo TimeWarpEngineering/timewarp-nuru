@@ -52,6 +52,7 @@ return await app.RunAsync(args);
 
 **AddCommand.cs:**
 ```csharp
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
 [NuruRoute("add", Description = "Add two numbers")]
@@ -65,10 +66,10 @@ public sealed class AddCommand : ICommand<Unit>
 
   public sealed class Handler : ICommandHandler<AddCommand, Unit>
   {
-    public ValueTask<Unit> Handle(AddCommand command, CancellationToken ct)
+    public Task<Unit> Handle(AddCommand command, CancellationToken ct)
     {
       Console.WriteLine($"{command.X} + {command.Y} = {command.X + command.Y}");
-      return default;
+      return Unit.Task;
     }
   }
 }

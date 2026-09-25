@@ -99,6 +99,11 @@ public sealed class NuruGenerator : IIncrementalGenerator
     IncrementalValueProvider<AssemblyMetadata> assemblyMetadata = context.CompilationProvider
       .Select(static (compilation, _) => AssemblyMetadataExtractor.Extract(compilation));
 
+    // 6b. Detect whether the TimeWarp.Mediator generator emits AddGeneratedMediator() here
+    IncrementalValueProvider<bool> hasGeneratedMediator = context.CompilationProvider
+      .Combine(context.AnalyzerConfigOptionsProvider)
+      .Select(static (data, _) => GeneratedMediatorDetector.Detect(data.Left, data.Right));
+
     // 7. Combine extraction results with endpoints, locations, endpoint diagnostics, and assembly metadata into GeneratorModel
     // Using buildExtractionResults ensures each Build() produces exactly one app - no duplicates
     IncrementalValueProvider<GeneratorModelWithDiagnostics?> generatorModelWithDiagnostics = buildExtractionResults
@@ -107,8 +112,10 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .Combine(routeLocations)
       .Combine(endpointDiagnostics)
       .Combine(assemblyMetadata)
+      .Combine(hasGeneratedMediator)
       .Select(static (data, ct) => CreateGeneratorModelWithValidation(
-        data.Left.Left.Left.Left,
+        data.Left.Left.Left.Left.Left,
+        data.Left.Left.Left.Left.Right,
         data.Left.Left.Left.Right,
         data.Left.Left.Right,
         data.Left.Right,
@@ -339,6 +346,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     ImmutableDictionary<string, Location> routeLocations,
     ImmutableArray<Diagnostic> endpointDiagnostics,
     AssemblyMetadata assemblyMetadata,
+    bool hasGeneratedMediator,
     CancellationToken cancellationToken
   )
   {
@@ -423,7 +431,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
       Endpoints: allEndpoints,
       Version: assemblyMetadata.Version,
       CommitHash: assemblyMetadata.CommitHash,
-      CommitDate: assemblyMetadata.CommitDate);
+      CommitDate: assemblyMetadata.CommitDate,
+      HasGeneratedMediator: hasGeneratedMediator);
 
     return new GeneratorModelWithDiagnostics(model, [.. allDiagnostics]);
   }

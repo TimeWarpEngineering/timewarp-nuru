@@ -53,7 +53,25 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <!-- Process execution -->
     <PackageReference Include="TimeWarp.Amuru" />
+    <!-- Source-generated mediator. Generators must flow to consuming apps
+         (analyzers + buildTransitive props), so PrivateAssets is cleared; the app compilation
+         is the mediator host and emits AddGeneratedMediator(). -->
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="none" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <!-- TimeWarp.Nuru owns no mediator handlers; it is not a mediator graph member. -->
+    <TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>
+  </PropertyGroup>
+
+  <!-- The mediator generator emits a public AddGeneratedMediator() into every compilation it runs in.
+       Running it here would put a second copy in TimeWarp.Nuru.dll and make the call ambiguous in apps. -->
+  <Target Name="RemoveTimeWarpMediatorGenerator" BeforeTargets="CoreCompile" AfterTargets="ResolveLockFileAnalyzers">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(Filename)' == 'TimeWarp.Mediator.Generators'" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <!-- Include analyzers and source generators for AOT-compatible routing -->

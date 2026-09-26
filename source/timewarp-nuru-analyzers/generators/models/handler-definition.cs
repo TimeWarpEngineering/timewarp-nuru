@@ -16,6 +16,8 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="RequiresServiceProvider">Whether the handler requires IServiceProvider injection</param>
 /// <param name="NestedHandlerTypeName">For Command handlers: fully qualified nested Handler class type name</param>
 /// <param name="ConstructorDependencies">For Command handlers: constructor parameters of the nested Handler class</param>
+/// <param name="HasAsyncModifier">For Delegate handlers: whether the lambda or anonymous method is declared <c>async</c>,
+/// meaning an expression body already contains its own awaits and must be emitted verbatim</param>
 public sealed record HandlerDefinition(
   HandlerKind HandlerKind,
   string? FullTypeName,
@@ -28,7 +30,8 @@ public sealed record HandlerDefinition(
   bool RequiresCancellationToken,
   bool RequiresServiceProvider,
   string? NestedHandlerTypeName = null,
-  EquatableArray<ParameterBinding> ConstructorDependencies = default)
+  EquatableArray<ParameterBinding> ConstructorDependencies = default,
+  bool HasAsyncModifier = false)
 {
   /// <summary>
   /// Creates a handler definition for a delegate-based handler.

@@ -111,6 +111,10 @@ internal static class HandlerInvokerEmitter
     string asyncModifier = handler.IsAsync ? "async " : "";
     string awaitKeyword = handler.IsAsync ? "await " : "";
 
+    // An async lambda's expression body already awaits whatever it needs (e.g. `async s => await s.Send(q)`),
+    // so it is emitted verbatim. Only a non-async Task-returning body (e.g. `() => Task.FromResult(1)`) is awaited.
+    string bodyAwaitKeyword = handler.IsAsync && !handler.HasAsyncModifier ? "await " : "";
+
     // Build parameter list for the local function (preserves handler parameter names)
     string paramList = BuildParameterList(handler);
     string argList = BuildArgumentListFromRoute(route, routeIndex, handler);
@@ -120,7 +124,7 @@ internal static class HandlerInvokerEmitter
       // Expression with return value
       // Generate: ReturnType __handler_N(Type param1, ...) => expression;
       sb.AppendLine(
-        $"{indent}{asyncModifier}{returnTypeName} {handlerName}({paramList}) => {awaitKeyword}{handler.LambdaBodySource};");
+        $"{indent}{asyncModifier}{returnTypeName} {handlerName}({paramList}) => {bodyAwaitKeyword}{handler.LambdaBodySource};");
 
       // Invoke and capture result
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
@@ -136,7 +140,7 @@ internal static class HandlerInvokerEmitter
       if (handler.IsAsync)
       {
         sb.AppendLine(
-          $"{indent}async Task {handlerName}({paramList}) => await {handler.LambdaBodySource};");
+          $"{indent}async Task {handlerName}({paramList}) => {bodyAwaitKeyword}{handler.LambdaBodySource};");
         sb.AppendLine(
           $"{indent}await {handlerName}({argList});");
       }

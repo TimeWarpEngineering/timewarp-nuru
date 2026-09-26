@@ -65,6 +65,9 @@
          (task 470-006 constructor default literals and FileInfo/DirectoryInfo catch);
          CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-45-constructor-default-literals.cs" />
+    <!-- generator-48: same Roslyn-hosted generator test pattern as generator-28
+         (task 474 async expression-body emission); CS0433 collision applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-48-async-expression-body-emission.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

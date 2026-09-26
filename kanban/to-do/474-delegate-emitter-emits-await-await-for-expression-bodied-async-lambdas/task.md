@@ -24,6 +24,8 @@ injecting `ISender`, this shape is the natural one to write.
 
 - Implementer: **commit and push your changes before reporting done.**
 - Run the build and test gate in the foreground.
+- Implementation review: effort 1, roster `general`, 1 round, disposition `clean`. Artifacts under `review/`.
+  Session: ganda task-work review oracle (Cursor implementer-cursor profile, headless).
 
 ## Results
 
@@ -80,3 +82,13 @@ Expect: both runs report `Total: 9` and `Passed: 9` with exit code 0. generator-
 proves that `async (ISender s) => await s.Send(q)` and the other expression-bodied async shapes produce
 valid generated code. generator-48's assertions confirm the emitted local functions contain the body
 verbatim (for example `) => await s.Send(new Q(name));`) and never `await await`.
+
+### Review disposition
+
+- **Outcome:** clean. 1 round, effort 1, reviewer roster: `general`.
+- **Final counts:** bug 0, suggestion 0, nit 0. None open, fixed, or wontfix.
+- The reviewer confirmed that `HasAsyncModifier` is set correctly on every delegate extraction path and
+  survives the `with` copies. It also confirmed that only async expression-body emission changes. On
+  re-run, generator-47 and generator-48 each passed 9/9 and `ganda repo audit` passed.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.

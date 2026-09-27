@@ -103,7 +103,17 @@ Expect:
 - The nuspec lists `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators` at `14.0.0-beta.4`.
 - Audit prints "Repository passes all audit checks."
 
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Final counts:** bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Re-verified during review: `dotnet build timewarp-nuru.slnx -c Release` is 0 warnings, 0 errors. `dotnet build tests/ci-tests/run-ci-tests.cs -c Release` reports 4 `CS0436` warnings, all for `Mediator` imported from `TimeWarp.Nuru.Mcp`. Library generated output has no `AddGeneratedMediator()` call. `basic.cs`, `advanced.cs`, and `fluent-runtime-di.cs` each emit one call. Host types in the library compile are `internal`.
+
 ## Notes
 
 - Implementer: **commit and push your changes before reporting done.**
 - Run the build and test gate in the foreground.
+- 2026-09-27: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — disposition clean. Next host nodes: open-pr / done (no apply-review sibling).

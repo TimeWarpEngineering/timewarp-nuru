@@ -64,7 +64,7 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
   </ItemGroup>
   <ItemGroup Label="MCP Server">
-    <PackageVersion Include="ModelContextProtocol" Version="1.4.0" />
+    <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
   </ItemGroup>
   <ItemGroup Label="SQLite">
     <!-- .Core + bundle_e_sqlite3 3.x (native SourceGear.sqlite3 3.50.4+) avoids the vulnerable

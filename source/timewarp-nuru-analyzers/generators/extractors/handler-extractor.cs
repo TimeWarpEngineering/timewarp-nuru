@@ -142,7 +142,8 @@ internal static class HandlerExtractor
       ReturnType: returnType,
       IsAsync: isAsync,
       RequiresCancellationToken: hasCancellationToken,
-      RequiresServiceProvider: requiresServiceProvider);
+      RequiresServiceProvider: requiresServiceProvider,
+      HasAsyncModifier: isAsync);
   }
 
   /// <summary>
@@ -214,7 +215,8 @@ internal static class HandlerExtractor
       ReturnType: returnType,
       IsAsync: isAsync,
       RequiresCancellationToken: false,
-      RequiresServiceProvider: false);
+      RequiresServiceProvider: false,
+      HasAsyncModifier: isAsync);
   }
 
   /// <summary>
@@ -307,7 +309,8 @@ internal static class HandlerExtractor
       ReturnType: returnType,
       IsAsync: isAsync,
       RequiresCancellationToken: hasCancellationToken,
-      RequiresServiceProvider: requiresServiceProvider);
+      RequiresServiceProvider: requiresServiceProvider,
+      HasAsyncModifier: isAsync);
   }
 
   /// <summary>
@@ -426,7 +429,8 @@ internal static class HandlerExtractor
       ReturnType: returnType,
       IsAsync: isAsync,
       RequiresCancellationToken: hasCancellationToken,
-      RequiresServiceProvider: requiresServiceProvider);
+      RequiresServiceProvider: requiresServiceProvider,
+      HasAsyncModifier: methodSymbol.IsAsync);
   }
 
   /// <summary>

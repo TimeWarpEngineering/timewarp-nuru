@@ -53,12 +53,6 @@ Summary of what it showed:
 - [x] Build, tests, samples, package layout gate pass
 - [x] Final `ganda nuget outdated` in Results
 
-## Notes
-
-- Implementer: **commit and push your changes before reporting done.**
-- Run the build and test gate in the foreground. If a major needs work that cannot be finished here, return
-  `ORACLE_RESULT: Blocked — <what is needed>` rather than half-migrating.
-
 ## Results
 
 Initial `ganda nuget outdated` (2026-09-27, this worktree, before bumps) reported **38 outdated
@@ -183,8 +177,18 @@ Expect:
 - `ganda nuget outdated` lists only `Microsoft.CodeAnalysis.CSharp 5.6.0 -> 5.9.0` and
   `Microsoft.Build.Utilities.Core 18.9.6 -> 18.10.1`, and ends with `2 outdated package(s) (2 minor)`.
 
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Final counts:** bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Re-verified during review: `dotnet build timewarp-nuru.slnx -c Release` is 0 warnings, 0 errors. `TimeWarp.Nuru.3.0.0-beta.78.nupkg` contains all 16 required payload entries; packed decompiler, MSBuild, and Roslyn DLLs match the pinned package assets. `ganda nuget outdated` reports the two pins above and `2 outdated package(s) (2 minor)`.
+
 ## Notes
 
 - Implementer: **commit and push your changes before reporting done.**
 - Run the build and test gate in the foreground. If a major needs work that cannot be finished here, return
   `ORACLE_RESULT: Blocked — <what is needed>` rather than half-migrating.
+- 2026-09-28: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — disposition clean. Next host nodes: open-pr / done (no apply-review sibling).

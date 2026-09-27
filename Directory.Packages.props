@@ -92,7 +92,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
     <!-- ILSpy engine: decompile referenced AddX method bodies for source-gen DI lowering (task 395). -->
-    <PackageVersion Include="ICSharpCode.Decompiler" Version="10.1.1.8388" />
+    <PackageVersion Include="ICSharpCode.Decompiler" Version="11.1.0.9782" />
   </ItemGroup>
   <ItemGroup Label="MSBuild Task Dependencies">
     <!-- 18.10.1 drops lib/net10.0 (net11.0 only) and stops copying Microsoft.Build.Framework.dll

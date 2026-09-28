@@ -42,12 +42,22 @@ Ignore "NURU001" and the analyzer class name in the checklist below; they predat
 
 ## Checklist
 
-- [ ] Create analyzer class `ReplAutoStartConflictsWithDefaultRouteAnalyzer`
-- [ ] Detect `.AddRepl()` calls with `AutoStartWhenEmpty = true`
-- [ ] Detect default routes: `[NuruRoute("")]` or `.Map("")` at the top level
-- [ ] Report diagnostic error when both conditions are met
-- [ ] Add unit tests for the analyzer
-- [ ] Add documentation for the diagnostic code
+- [x] Report NURU_R004 from the generator model (`ReplDefaultRouteValidator`), not a standalone analyzer class
+- [x] Detect `.AddRepl()` calls with `AutoStartWhenEmpty = true`
+- [x] Detect default routes: `[NuruRoute("")]` or `.Map("")` at the top level, including `DiscoverEndpoints()`
+- [x] Report diagnostic error when both conditions are met
+- [x] Add unit tests for the diagnostic
+- [x] Add documentation for NURU_R004
+
+## Results
+
+`ReplDefaultRouteValidator` runs from `ModelValidator` over each app's combined fluent and endpoint routes. NURU_R004 (Error) fires when `ReplModel.AutoStartWhenEmpty` is true and a route has pattern `""` with no group prefix. A `""` route inside a fluent group or a `[NuruRouteGroup]` does not conflict. The generated interceptor still starts the REPL before user routes when `AutoStartWhenEmpty` is on; the diagnostic makes that unreachable default route a compile error.
+
+### How to validate
+
+**Smoke:** `dotnet run tests/timewarp-nuru-tests/generator/generator-49-nuru-r004-repl-default-route.cs`
+
+**Expect:** 7 passed, 0 failed. Fluent `Map("")`, `Map<T>()` of `[NuruRoute("")]`, and `DiscoverEndpoints()` each report NURU_R004 with severity Error. A `""` route inside a group, `AutoStartWhenEmpty = false`, and no `AddRepl()` do not report NURU_R004.
 
 ## Notes
 

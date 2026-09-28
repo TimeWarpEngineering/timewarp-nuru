@@ -335,6 +335,29 @@ Detects when one route makes another unreachable because it matches all the same
 })
 ```
 
+### NURU_R004: REPL AutoStartWhenEmpty Conflicts with Default Route
+
+Detects a top-level default route (`""`) on an app that also enables REPL `AutoStartWhenEmpty`. The generated interceptor starts the REPL when `routeArgs.Length == 0` *before* user routes are matched, so the default route can never run.
+
+```csharp
+// ❌ ERROR: NURU_R004
+.AddRepl(options => options.AutoStartWhenEmpty = true)
+.Map("").WithHandler(() => "Hello")  // unreachable when no args are provided
+
+// ❌ ERROR: NURU_R004 — same conflict for [NuruRoute("")] via Map<T>() or DiscoverEndpoints()
+[NuruRoute("")]
+public sealed class HelloQuery : IQuery<string> { /* ... */ }
+
+// ✅ OK: "" inside a group still requires the prefix
+.WithGroupPrefix("git").Map("").WithHandler(() => "git").Done()
+
+// ✅ OK: start the REPL only with --interactive / -i
+.AddRepl(options => options.AutoStartWhenEmpty = false)
+.Map("").WithHandler(() => "Hello")
+```
+
+**Fix:** Remove the top-level default route, or set `AutoStartWhenEmpty` to `false`.
+
 ## Type Constraints and Route Selection
 
 **Important:** Type constraints affect specificity scoring but do **NOT** enable type-based route dispatch.
@@ -421,4 +444,4 @@ Instead of relying on type-based fallback, use explicit patterns:
 
 - [syntax-rules.md](../parser/syntax-rules.md) - Route pattern syntax and validation rules
 - [parameter-optionality.md](../cross-cutting/parameter-optionality.md) - Nullability-based optionality design
-- Analyzer diagnostics: NURU_R001, NURU_R002, NURU_R003 - Compile-time route validation
+- Analyzer diagnostics: NURU_R001, NURU_R002, NURU_R003, NURU_R004 - Compile-time route validation

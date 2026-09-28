@@ -34,6 +34,11 @@ internal static class ModelValidator
     ImmutableArray<Diagnostic> overlapDiagnostics = OverlapValidator.Validate(model.Routes, routeLocations);
     diagnostics.AddRange(overlapDiagnostics);
 
+    // NURU_R004: AutoStartWhenEmpty hides a top-level default route
+    ImmutableArray<Diagnostic> replDefaultRouteDiagnostics =
+      ReplDefaultRouteValidator.Validate(model, routeLocations);
+    diagnostics.AddRange(replDefaultRouteDiagnostics);
+
     // Run service validator (NURU050, NURU051, NURU053, NURU054)
     ImmutableArray<Diagnostic> serviceDiagnostics = ServiceValidator.Validate(model, routeLocations, hasGeneratedMediator);
     diagnostics.AddRange(serviceDiagnostics);

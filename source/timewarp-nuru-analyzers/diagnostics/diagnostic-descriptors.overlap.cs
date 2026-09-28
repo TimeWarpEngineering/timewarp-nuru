@@ -66,7 +66,8 @@ internal static partial class DiagnosticDescriptors
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
       description: "When AutoStartWhenEmpty is true, an empty argument list starts the REPL before any user route is matched. " +
-                   "A top-level default route (pattern \"\") matches that same empty argument list, so it can never run. " +
+                   "A top-level default route (pattern \"\") that matches that same empty argument list can never run. " +
                    "A \"\" route inside a group does not conflict, because the group prefix is required. " +
+                   "A \"\" route with a required positional parameter or required option does not match an empty argument list, so it does not conflict. " +
                    "Remove the default route, or set AutoStartWhenEmpty to false and start the REPL with --interactive or -i.");
 }

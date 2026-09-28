@@ -354,9 +354,18 @@ public sealed class HelloQuery : IQuery<string> { /* ... */ }
 // ✅ OK: start the REPL only with --interactive / -i
 .AddRepl(options => options.AutoStartWhenEmpty = false)
 .Map("").WithHandler(() => "Hello")
+
+// ✅ OK: a required parameter never matches an empty argument list
+[NuruRoute("")]
+public sealed class Echo : IQuery<string>
+{
+    [Parameter] public string Text { get; set; } = "";
+}
 ```
 
 **Fix:** Remove the top-level default route, or set `AutoStartWhenEmpty` to `false`.
+
+**Not a conflict:** `[NuruRoute("")]` with a required positional parameter, or with a required option, does not match `routeArgs.Length == 0`. `AutoStartWhenEmpty` only intercepts that empty list, so the route still runs when its required input is present. An optional parameter (`string?`) still matches the empty list and remains a conflict. A catch-all can bind an empty remainder and remains a conflict.
 
 ## Type Constraints and Route Selection
 

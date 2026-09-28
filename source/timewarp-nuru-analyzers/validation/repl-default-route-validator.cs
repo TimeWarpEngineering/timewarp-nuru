@@ -1,8 +1,9 @@
 // Detects NURU_R004: REPL AutoStartWhenEmpty makes a top-level default route unreachable.
 //
 // EmitInteractiveFlag checks routeArgs.Length == 0 and starts the REPL before user routes
-// are matched. A top-level "" route is the route that would have handled that empty list.
+// are matched. A top-level "" route that matches that empty list is unreachable.
 // A "" route inside a group still requires its prefix, so it does not conflict.
+// A required parameter or required option does not match length 0, so it does not conflict.
 
 namespace TimeWarp.Nuru.Validation;
 
@@ -50,9 +51,22 @@ internal static class ReplDefaultRouteValidator
   }
 
   /// <summary>
-  /// A top-level default route is pattern <c>""</c> with no group prefix.
-  /// <c>""</c> inside a group keeps <see cref="RouteDefinition.GroupPrefix"/> and does not conflict.
+  /// A top-level default route is pattern <c>""</c> with no group prefix that matches
+  /// an empty argument list. <c>""</c> inside a group keeps <see cref="RouteDefinition.GroupPrefix"/>
+  /// and does not conflict. A required positional parameter or required option does not match
+  /// <c>routeArgs.Length == 0</c>, so <c>AutoStartWhenEmpty</c> does not hide that route.
+  /// Catch-all parameters can bind an empty remainder and still conflict.
   /// </summary>
-  private static bool IsTopLevelDefaultRoute(RouteDefinition route) =>
-    string.IsNullOrEmpty(route.GroupPrefix) && string.IsNullOrEmpty(route.OriginalPattern);
+  private static bool IsTopLevelDefaultRoute(RouteDefinition route)
+  {
+    if (!string.IsNullOrEmpty(route.GroupPrefix) || !string.IsNullOrEmpty(route.OriginalPattern))
+      return false;
+
+    // Same skip the matcher uses: required non-catch-all parameters raise minPositionalArgs,
+    // and a missing required option jumps to route_skip. Length 0 never selects those routes.
+    if (route.Parameters.Any(parameter => !parameter.IsOptional && !parameter.IsCatchAll))
+      return false;
+
+    return !route.Options.Any(option => !option.IsOptional);
+  }
 }

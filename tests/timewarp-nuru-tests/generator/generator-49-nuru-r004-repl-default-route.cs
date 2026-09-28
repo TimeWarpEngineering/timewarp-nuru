@@ -8,7 +8,9 @@
 // The generated interceptor starts the REPL when routeArgs.Length == 0 before user
 // routes are matched, so Map("") / [NuruRoute("")] at the top level can never run.
 // A "" route inside a group does not conflict. AutoStartWhenEmpty false, and apps
-// that never call AddRepl(), do not report NURU_R004.
+// that never call AddRepl(), do not report NURU_R004. A [NuruRoute("")] with a
+// required positional parameter does not match an empty argument list, so it does
+// not conflict. An optional parameter still matches that empty list and does.
 //
 // Hosts NuruGenerator in a CSharpGeneratorDriver over in-memory source and inspects
 // GeneratorDriverRunResult for NURU_R004. RunAsync is required so AppExtractor builds
@@ -282,6 +284,92 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen49NuruR004ReplDefaultRoute
       GeneratorDriverRunResult result = RunNuruGenerator(Source);
       HasR004(result).ShouldBeFalse();
       GeneratedSource(result).ShouldContain("no-repl-default");
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// A required positional parameter does not match an empty argument list, so
+    /// AutoStartWhenEmpty does not hide the route.
+    /// </summary>
+    public static async Task Should_not_emit_nuru_r004_for_required_parameter_on_empty_pattern()
+    {
+      const string Source = """
+        #nullable enable
+        using System.Threading;
+        using System.Threading.Tasks;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        [NuruRoute("")]
+        public sealed class R004RequiredParamDefault : IQuery<string>
+        {
+          [Parameter]
+          public string Name { get; set; } = "";
+
+          public sealed class Handler : IQueryHandler<R004RequiredParamDefault, string>
+          {
+            public Task<string> Handle(R004RequiredParamDefault query, CancellationToken cancellationToken)
+            {
+              return Task.FromResult(query.Name);
+            }
+          }
+        }
+
+        NuruApp app = NuruApp.CreateBuilder([])
+          .Map<R004RequiredParamDefault>()
+          .AddRepl(options => { options.AutoStartWhenEmpty = true; })
+          .Build();
+
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      HasR004(result).ShouldBeFalse();
+      GeneratedSource(result).ShouldContain("R004RequiredParamDefault");
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// An optional parameter still matches an empty argument list, so AutoStartWhenEmpty
+    /// hides that invocation and NURU_R004 still fires.
+    /// </summary>
+    public static async Task Should_emit_nuru_r004_for_optional_parameter_on_empty_pattern()
+    {
+      const string Source = """
+        #nullable enable
+        using System.Threading;
+        using System.Threading.Tasks;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        [NuruRoute("")]
+        public sealed class R004OptionalParamDefault : IQuery<string>
+        {
+          [Parameter]
+          public string? Name { get; set; }
+
+          public sealed class Handler : IQueryHandler<R004OptionalParamDefault, string>
+          {
+            public Task<string> Handle(R004OptionalParamDefault query, CancellationToken cancellationToken)
+            {
+              return Task.FromResult(query.Name ?? "");
+            }
+          }
+        }
+
+        NuruApp app = NuruApp.CreateBuilder([])
+          .Map<R004OptionalParamDefault>()
+          .AddRepl(options => { options.AutoStartWhenEmpty = true; })
+          .Build();
+
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      HasR004(result).ShouldBeTrue();
+      GeneratedSource(result).ShouldContain("R004OptionalParamDefault");
 
       await Task.CompletedTask;
     }

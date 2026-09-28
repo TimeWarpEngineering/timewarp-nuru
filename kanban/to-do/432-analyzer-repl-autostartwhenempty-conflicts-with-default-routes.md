@@ -16,6 +16,30 @@ If both are present, there's no way to distinguish between:
 
 This analyzer should catch this at compile-time and report a diagnostic error.
 
+## Update 2026-09-28 (triage 477): confirmed bug, current approach
+
+**Confirmed on master:** `interceptor-emitter.cs` `EmitInteractiveFlag` (around lines 984 and 1308-1338)
+emits the `AutoStartWhenEmpty` check (`routeArgs.Length == 0` → start REPL) *before* user routes are
+matched, so a default route `""` is silently unreachable when both are configured. No diagnostic covers it.
+
+**Implement it the way Nuru does diagnostics today**, not as a standalone `DiagnosticAnalyzer` class:
+- Validators live in `source/timewarp-nuru-analyzers/validation/` (`model-validator.cs`,
+  `overlap-validator.cs`, `handler-validator.cs`, `service-validator.cs`) and run over the generator model.
+  Add the check there (in `model-validator.cs` or a new small validator wired the same way).
+- Inputs: `ReplModel.AutoStartWhenEmpty` (`generators/models/repl-model.cs`) and the app's routes, covering
+  fluent `.Map("")`, `[NuruRoute("")]` endpoints, and endpoints pulled in via `DiscoverEndpoints`. Only a
+  top-level default route conflicts; `""` inside a group does not.
+- Descriptor: add to `diagnostics/diagnostic-descriptors.overlap.cs` using the existing scheme. Next free id in
+  the routing series is **NURU_R004** (R001-R003 are taken). Severity **Error**. Message along the lines of:
+  "REPL AutoStartWhenEmpty makes the default route unreachable; remove the default route or disable
+  AutoStartWhenEmpty."
+- Tests: generator/analyzer tests in the existing style (see the NURU_R003 tests) for fluent, attributed, and
+  DiscoverEndpoints default routes; no diagnostic for a `""` route inside a group; no diagnostic when
+  AutoStartWhenEmpty is false or the REPL is not added.
+- Document NURU_R004 wherever the other NURU_R diagnostics are documented.
+
+Ignore "NURU001" and the analyzer class name in the checklist below; they predate the validator design.
+
 ## Checklist
 
 - [ ] Create analyzer class `ReplAutoStartConflictsWithDefaultRouteAnalyzer`
@@ -53,3 +77,8 @@ public class HelloCommand { }
 - The analyzer needs to check both attribute-based routes (`[NuruRoute]`) and fluent API routes (`.Map()`)
 - Should only check `.Map("")` at the top level, not within sub-groups
 - The conflict occurs when BOTH conditions are true in the same compilation unit
+
+## Notes for the implementer
+
+- **Commit and push your changes before reporting done.**
+- Run the build and test gate in the foreground.

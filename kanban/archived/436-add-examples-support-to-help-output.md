@@ -123,3 +123,7 @@ Since the source generator already parses route patterns and knows parameters/op
 - `ExampleDefinition.Description` is optional — supports both `WithExample("deploy prod")` and `WithExample("deploy prod", "Deploy to production")`
 - Compile-time validation can be a separate analyzer diagnostic (e.g., `NURU_H006`) added as a follow-up
 - Related to #434 (review help-model.cs) — the `HelpModel` dead code should be cleaned up as part of broader help improvements
+
+## Closed 2026-09-28 (triage 477)
+
+Superseded by **464** (examples in route help and `--capabilities`: `NuruRouteExampleAttribute`, `.WithExample()`, route-help Examples section, capabilities `examples[]`). If an app-level aggregate Examples section or compile-time example validation is still wanted, file a fresh task; this spec's file list no longer matches the code. Archived.

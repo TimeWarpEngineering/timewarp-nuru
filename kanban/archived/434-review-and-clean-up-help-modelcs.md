@@ -39,3 +39,7 @@ None of these are referenced in the emitters (`help-emitter.cs` or `route-help-e
 - The emitters currently hardcode all sections without checking any `HelpModel` flags
 - No support exists for examples, custom headers/footers, or parameter descriptions
 - Related feature request: extend help with Examples section, Header, Footer
+
+## Closed 2026-09-28 (triage 477)
+
+Superseded by **470-001** (commit 3cebc444). `help-model.cs` now only carries the live filter properties (ShowPerCommandHelpRoutes, ShowReplCommandsInCli, ShowCompletionRoutes, ExcludePatterns), all wired into the help emitters; the dead layout flags this task listed are gone. Archived.

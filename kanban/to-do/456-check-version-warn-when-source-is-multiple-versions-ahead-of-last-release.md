@@ -21,8 +21,8 @@ currently discards.
 
 ## Requirements
 
-1. **Always report the distance**, both strategies (git-tag and nuget-search): after the
-   existing "Version in source" / "Latest release tag" lines, state the relationship — e.g.
+1. **Always report the distance**: after the existing "Version in source" / "Latest NuGet version"
+   lines, state the relationship — e.g.
    `Source is 5 prerelease increments ahead of v2.0.0-beta.9`.
 2. **Warn when distance > 1**: a distinct, visible warning naming the likely cause, e.g.
    "4 version(s) were bumped but never released — was a release step skipped?" Keep **exit code
@@ -34,8 +34,16 @@ currently discards.
    skip the distance line rather than inventing a metric.
 4. Tests: distance 0 (already released → existing failure path unchanged), 1 (normal, no
    warning), >1 (warning, exit 0; `--strict` → non-zero), mismatched-shape (no distance line),
-   no-prior-release (no distance line), both strategies.
+   no-prior-release (no distance line).
 5. Readme/doc note for consumers on what the warning means and the `--strict` option.
+
+## Update 2026-09-28 (triage 477)
+
+The `git-tag` strategy was removed in 3.0.0-beta.72 (`source/timewarp-nuru-devcli/readme.md`,
+"git-tag strategy is gone": `GitTagCheckService` and `CheckVersionStrategy` no longer exist). There is one
+methodology: NuGet version lookup via `NuGetVersionService` (fail-closed since 470-007), classified by
+`PublishStateClassifier` / `PublishState`. Compute the distance from the NuGet version list (latest
+published version vs source). The requirements above match that single methodology.
 
 ## Notes
 

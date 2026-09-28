@@ -145,3 +145,7 @@ runfiles/dev/
 ## Notes
 
 This Epic leverages the mature TimeWarp.Nuru endpoints infrastructure (Task 150) and existing runfile patterns to create a unified developer tool that serves both CI/CD orchestration and development workflow automation needs. The endpoints approach provides maximum flexibility for command organization and future evolution based on user feedback.
+
+## Closed 2026-09-28 (triage 477)
+
+Epic checklist complete. Delivery happened as **448** (shared DevCli endpoints) and the **458** series (versioning, release gate, `dev release`); the Phase 3 workflow vision (kanban, PR automation) is owned by ganda. Archived.

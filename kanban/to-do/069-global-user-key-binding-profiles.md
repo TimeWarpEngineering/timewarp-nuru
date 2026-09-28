@@ -6,6 +6,16 @@ Enable users to define key binding profiles in JSON config files that apply acro
 
 **Goal**: Allow users to set "I always want Emacs bindings" or "use my custom profile" globally, without requiring each app to configure it programmatically.
 
+## Update 2026-09-28 (triage 477)
+
+Paths corrected: there is no `timewarp-nuru-repl` project. Key bindings live in
+`source/timewarp-nuru/repl/key-bindings/` (`custom-key-binding-profile.cs`,
+`key-binding-profile-factory.cs`, `key-binding-builder.cs`, default/emacs/vi/vscode profiles); REPL tests are
+jaribu runfiles in `tests/timewarp-nuru-tests/repl/` (see `repl-23-key-binding-profiles.cs`,
+`repl-24-custom-key-bindings.cs`). Apps enable the REPL with `NuruAppBuilder.AddRepl(...)` / `AddReplOptions(...)`;
+`ReplOptions.KeyBindingProfileName` defaults to `"Default"` (not null). The handler list below is from 2025;
+build the action registry from the handlers that exist today, not from this list.
+
 ## Parent
 
 Follows Task 057 (Custom Key Bindings via Builder API) which implemented the programmatic `CustomKeyBindingProfile` API.
@@ -15,7 +25,7 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
 - Define JSON config file format for key bindings
 - Create Action Registry mapping string names to handler methods
 - Implement config file loader with search path precedence
-- Auto-discover and load config files in `AddReplSupport()`
+- Auto-discover and load config files when the REPL starts (apps enable it with `AddRepl(...)`)
 - Provide clear error messages for invalid configurations
 - Document config format and available actions
 
@@ -28,7 +38,7 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
 - [ ] Plan config file precedence rules
 
 ### Implementation - Action Registry
-- [ ] Create `source/timewarp-nuru-repl/key-bindings/key-binding-action-registry.cs`
+- [ ] Create `source/timewarp-nuru/repl/key-bindings/key-binding-action-registry.cs`
   - [ ] Map action names to handler method factories
   - [ ] Support all existing handlers (58 total):
     
@@ -96,7 +106,7 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
   - [ ] XML documentation listing all actions
 
 ### Implementation - Config Model
-- [ ] Create `source/timewarp-nuru-repl/key-bindings/key-binding-config.cs`
+- [ ] Create `source/timewarp-nuru/repl/key-bindings/key-binding-config.cs`
   - [ ] `Name` property
   - [ ] `BaseProfile` property (optional: "Default", "Emacs", "Vi", "VSCode")
   - [ ] `Overrides` dictionary (key combo → action name)
@@ -105,7 +115,7 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
   - [ ] `ExitKeys` list (optional)
 
 ### Implementation - Config Loader
-- [ ] Create `source/timewarp-nuru-repl/key-bindings/key-binding-config-loader.cs`
+- [ ] Create `source/timewarp-nuru/repl/key-bindings/key-binding-config-loader.cs`
   - [ ] `LoadFromFile(string path)` method
   - [ ] `LoadFromJson(string json)` method
   - [ ] `LoadDefault()` method (searches standard locations)
@@ -124,12 +134,12 @@ Follows Task 057 (Custom Key Bindings via Builder API) which implemented the pro
 - [ ] Log which config file was loaded (at Debug level)
 
 ### Implementation - Auto-Discovery
-- [ ] Update `AddReplSupport()` to auto-load config if no profile specified
+- [ ] Auto-load config at REPL startup if no profile was chosen by the app
 - [ ] Respect explicit `KeyBindingProfile` or `KeyBindingProfileName` settings
-- [ ] Only auto-discover if neither is set
+- [ ] Only auto-discover when `KeyBindingProfile` is null and `KeyBindingProfileName` is still the default (`"Default"`); an explicit choice wins
 
 ### Testing
-- [ ] Create `tests/timewarp-nuru-repl-tests/key-bindings/config-loader-tests.cs`
+- [ ] Create `tests/timewarp-nuru-tests/repl/repl-NN-key-binding-config-loader.cs`
   - [ ] Test JSON parsing
   - [ ] Test key combination string parsing
   - [ ] Test action name resolution

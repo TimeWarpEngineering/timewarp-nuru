@@ -10,23 +10,20 @@ Multiple test files exceed 500 lines. While test files can be larger than produc
 
 ## Checklist
 
-### High Priority (600+ lines)
-- [ ] `endpoint-generator-02-source.cs` (692 lines)
-- [ ] `routing-05-option-matching.cs` (689 lines)
-- [ ] `engine-03-candidate-generator.cs` (673 lines)
-- [ ] `engine-01-input-tokenizer.cs` (672 lines)
-- [ ] `delegate-command-generator-01-basic.cs` (624 lines)
-- [ ] `program.cs` (testapp-mediator) (595 lines)
+Regenerated 2026-09-28 (triage 477) from `wc -l` over `tests/**/*.cs`; the 2025 list named six files that no
+longer exist. Review each; split only where the guidelines below apply.
 
-### Medium Priority (500-600 lines)
-- [ ] `repl-31-multiline-buffer.cs` (572 lines)
-- [ ] `repl-18-psreadline-keybindings.cs` (558 lines)
-- [ ] `repl-23-key-binding-profiles.cs` (530 lines)
-- [ ] `repl-28-text-selection.cs` (526 lines)
-- [ ] `endpoint-generator-03-matching.cs` (524 lines)
-- [ ] `repl-33-yank-arguments.cs` (521 lines)
-- [ ] `lexer-15-advanced-features.cs` (515 lines)
-- [ ] `repl-29-word-operations.cs` (506 lines)
+- [ ] `tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs` (729 lines)
+- [ ] `tests/timewarp-nuru-tests/repl/repl-31-multiline-buffer.cs` (726 lines)
+- [ ] `tests/timewarp-nuru-tests/routing/routing-05-option-matching.cs` (717 lines)
+- [ ] `tests/timewarp-nuru-tests/repl/repl-23-key-binding-profiles.cs` (659 lines)
+- [ ] `tests/timewarp-nuru-tests/repl/repl-18-psreadline-keybindings.cs` (557 lines)
+- [ ] `tests/timewarp-nuru-tests/repl/repl-28-text-selection.cs` (525 lines)
+- [ ] `tests/timewarp-nuru-tests/generator/generator-01-intercept.cs` (523 lines)
+- [ ] `tests/timewarp-nuru-tests/repl/repl-33-yank-arguments.cs` (520 lines)
+- [ ] `tests/timewarp-nuru-tests/lexer/lexer-15-advanced-features.cs` (515 lines)
+- [ ] `tests/timewarp-nuru-tests/generator/generator-15-runtime-di.cs` (508 lines)
+- [ ] `tests/timewarp-nuru-tests/repl/repl-29-word-operations.cs` (505 lines)
 
 ## Notes
 

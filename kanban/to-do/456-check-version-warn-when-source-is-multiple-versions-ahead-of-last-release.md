@@ -43,7 +43,7 @@ The `git-tag` strategy was removed in 3.0.0-beta.72 (`source/timewarp-nuru-devcl
 "git-tag strategy is gone": `GitTagCheckService` and `CheckVersionStrategy` no longer exist). There is one
 methodology: NuGet version lookup via `NuGetVersionService` (fail-closed since 470-007), classified by
 `PublishStateClassifier` / `PublishState`. Compute the distance from the NuGet version list (latest
-published version vs source). Requirements below are updated accordingly.
+published version vs source). The requirements above match that single methodology.
 
 ## Notes
 

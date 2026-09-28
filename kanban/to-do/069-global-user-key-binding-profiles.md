@@ -12,7 +12,7 @@ Paths corrected: there is no `timewarp-nuru-repl` project. Key bindings live in
 `source/timewarp-nuru/repl/key-bindings/` (`custom-key-binding-profile.cs`,
 `key-binding-profile-factory.cs`, `key-binding-builder.cs`, default/emacs/vi/vscode profiles); REPL tests are
 jaribu runfiles in `tests/timewarp-nuru-tests/repl/` (see `repl-23-key-binding-profiles.cs`,
-`repl-24-custom-key-bindings.cs`). Apps enable the REPL with `NuruAppBuilder.AddRepl(...)` / `AddReplOptions(...)`;
+`repl-24-custom-key-bindings.cs`). Apps enable the REPL with `NuruAppBuilder.AddRepl()` or `AddRepl(Action<ReplOptions>)` (`AddReplOptions` is obsolete);
 `ReplOptions.KeyBindingProfileName` defaults to `"Default"` (not null). The handler list below is from 2025;
 build the action registry from the handlers that exist today, not from this list.
 

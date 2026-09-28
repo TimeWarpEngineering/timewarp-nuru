@@ -51,13 +51,22 @@ Ignore "NURU001" and the analyzer class name in the checklist below; they predat
 
 ## Results
 
-`ReplDefaultRouteValidator` runs from `ModelValidator` over each app's combined fluent and endpoint routes. NURU_R004 (Error) fires when `ReplModel.AutoStartWhenEmpty` is true and a route has pattern `""` with no group prefix. A `""` route inside a fluent group or a `[NuruRouteGroup]` does not conflict. The generated interceptor still starts the REPL before user routes when `AutoStartWhenEmpty` is on; the diagnostic makes that unreachable default route a compile error.
+`ReplDefaultRouteValidator` runs from `ModelValidator` over each app's combined fluent and endpoint routes. NURU_R004 (Error) fires when `ReplModel.AutoStartWhenEmpty` is true and a top-level route has pattern `""` and matches an empty argument list. A `""` route inside a fluent group or a `[NuruRouteGroup]` does not conflict. A `[NuruRoute("")]` with a required positional parameter does not match `routeArgs.Length == 0`, so it does not conflict; an optional parameter still does. The generated interceptor still starts the REPL before user routes when `AutoStartWhenEmpty` is on; the diagnostic makes that unreachable default route a compile error.
 
 ### How to validate
 
 **Smoke:** `dotnet run tests/timewarp-nuru-tests/generator/generator-49-nuru-r004-repl-default-route.cs`
 
-**Expect:** 7 passed, 0 failed. Fluent `Map("")`, `Map<T>()` of `[NuruRoute("")]`, and `DiscoverEndpoints()` each report NURU_R004 with severity Error. A `""` route inside a group, `AutoStartWhenEmpty = false`, and no `AddRepl()` do not report NURU_R004.
+**Expect:** 9 passed, 0 failed. Fluent `Map("")`, `Map<T>()` of `[NuruRoute("")]`, `DiscoverEndpoints()`, and a `""` route with an optional parameter each report NURU_R004 with severity Error. A `""` route inside a group, a `""` route with a required parameter, `AutoStartWhenEmpty = false`, and no `AddRepl()` do not report NURU_R004.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 2
+- **Final counts:** bug 0 open, 1 fixed, 0 wontfix; suggestion 0; nit 0
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`
+- M1 (false NURU_R004 on `[NuruRoute("")]` with a required parameter) fixed on this id. Re-verified: generator-49, 9 passed, 0 failed.
 
 ## Notes
 
@@ -92,3 +101,4 @@ public class HelloCommand { }
 
 - **Commit and push your changes before reporting done.**
 - Run the build and test gate in the foreground.
+- 2026-09-28: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — M1 bug (NURU_R004 false positive on a required parameter). Fixed on this id. Round 2 re-review — disposition clean. Next host nodes: open-pr / done (no apply-review sibling).

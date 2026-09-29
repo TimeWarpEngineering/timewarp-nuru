@@ -62,7 +62,22 @@ dotnet run tests/timewarp-nuru-tests/help/help-02-table-formatting.cs
 
 Expect: exit code 0, `Total: 10`, `Passed: 10`. `Should_separate_options_table_from_commands_heading` fails if the options table border is not followed by a blank line before `Commands:`.
 
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Final counts:** bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Re-verified during review: `dotnet run tests/timewarp-nuru-tests/help/help-02-table-formatting.cs` — Total 10, Passed 10. Generated `PrintHelp_2` writes `terminal.WriteLine()` between the Options `WriteTable` and `Commands:`. Generated `PrintHelp_9` writes that same line before the first group heading. `EmitCommands` still returns before that line when there is no Commands or REPL section.
+
 ## Notes
 
 - Observed in ganda v1.0.0-beta.20
 - Likely in the generated `PrintHelp()` method from `help-emitter.cs`
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — disposition clean. Next host nodes: open-pr / done (no apply-review sibling).
+
+## Session
+
+- Review: Cursor implementer-cursor session review-oracle (2026-09-29)
+

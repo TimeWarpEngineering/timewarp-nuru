@@ -58,9 +58,6 @@ public class NestedRouteGroupTests
 
     int exitCode = await app.RunAsync(["issue160-level1", "two-level-action"]);
 
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
-
     exitCode.ShouldBe(0);
     terminal.OutputContains("Two-level action executed").ShouldBeTrue();
   }
@@ -79,9 +76,6 @@ public class NestedRouteGroupTests
       .Build();
 
     int exitCode = await app.RunAsync(["issue160-ccc1-demo", "queue", "peek"]);
-
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
 
     exitCode.ShouldBe(0);
     terminal.OutputContains("Peeking at queue").ShouldBeTrue();
@@ -102,9 +96,6 @@ public class NestedRouteGroupTests
 
     int exitCode = await app.RunAsync(["issue160-cloud", "azure", "storage", "upload", "myfile.txt"]);
 
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
-
     exitCode.ShouldBe(0);
     terminal.OutputContains("Uploading: myfile.txt").ShouldBeTrue();
   }
@@ -124,9 +115,6 @@ public class NestedRouteGroupTests
       .Build();
 
     int exitCode = await app.RunAsync(["issue160-root", "mixed-action"]);
-
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
 
     exitCode.ShouldBe(0);
     terminal.OutputContains("Mixed inheritance action executed").ShouldBeTrue();

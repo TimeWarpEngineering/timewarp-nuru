@@ -198,13 +198,13 @@ public class Gen27MixedConsumer : IGen27MixedConsumer
 
   public string GetImplementationInfo()
   {
-    List<string> names = _implementations.Select(i => i.Name).ToList();
+    List<string> names = [.. _implementations.Select(i => i.Name)];
     return string.Join(", ", names);
   }
 
   public string GetInstanceIds()
   {
-    List<string> ids = _implementations.Select(i => $"{i.Name}={i.InstanceId}").ToList();
+    List<string> ids = [.. _implementations.Select(i => $"{i.Name}={i.InstanceId}")];
     return string.Join(", ", ids);
   }
 }
@@ -253,10 +253,12 @@ public class Gen27Pipeline : IGen27Pipeline
 
   public string RunPipeline()
   {
-    List<string> results = _steps
-      .OrderBy(s => s.Order)
-      .Select(s => s.Execute())
-      .ToList();
+    List<string> results =
+    [
+      .. _steps
+        .OrderBy(s => s.Order)
+        .Select(s => s.Execute())
+    ];
     return string.Join(" -> ", results);
   }
 }

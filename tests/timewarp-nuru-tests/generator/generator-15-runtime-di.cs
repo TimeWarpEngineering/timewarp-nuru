@@ -1,5 +1,4 @@
 #!/usr/bin/env -S dotnet --
-#:package Microsoft.Extensions.Logging.Console
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Runtime DI with UseMicrosoftDependencyInjection (#392, #396)

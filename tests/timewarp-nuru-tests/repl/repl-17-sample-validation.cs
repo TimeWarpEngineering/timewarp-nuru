@@ -203,11 +203,6 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
 
       // Assert: Should show "Prod" (either as completion or auto-completed)
       Terminal.OutputContains("Prod").ShouldBeTrue("Should show or complete to 'Prod'");
-
-      // Debug output to see what actually happened
-      WriteLine("=== OUTPUT FOR PARTIAL 'p' ===");
-      WriteLine(Terminal.Output);
-      WriteLine("=== END ===");
     }
 
     [Timeout(5000)]
@@ -342,10 +337,6 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       await App.RunAsync(["--interactive"]);
 
       // Debug output to see cycling behavior
-      WriteLine("=== OUTPUT FOR TAB CYCLING ===");
-      WriteLine(Terminal.Output);
-      WriteLine("=== END ===");
-
       // Assert: Should show completions
       Terminal.OutputContains("Available completions").ShouldBeTrue("Should show completions on first tab");
     }
@@ -404,10 +395,6 @@ namespace TimeWarp.Nuru.Tests.ReplTests.SampleValidation
       await App.RunAsync(["--interactive"]);
 
       // Assert
-      WriteLine("=== COMPLETION OUTPUT ===");
-      WriteLine(Terminal.Output);
-      WriteLine("=== END ===");
-
       // Verify the sequence worked:
       // 1. "g" with tab showed git and greet
       Terminal.OutputContains("git").ShouldBeTrue("Should show 'git' in initial completions");

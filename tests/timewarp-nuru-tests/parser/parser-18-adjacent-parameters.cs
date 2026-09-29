@@ -62,7 +62,7 @@ public class AdjacentParametersTests
     int adjacentErrorCount = exception.ParseErrors.Count(e => e is AdjacentParametersError);
     adjacentErrorCount.ShouldBeGreaterThanOrEqualTo(2);
 
-    AdjacentParametersError[] adjacentErrors = exception.ParseErrors.OfType<AdjacentParametersError>().ToArray();
+    AdjacentParametersError[] adjacentErrors = [.. exception.ParseErrors.OfType<AdjacentParametersError>()];
     adjacentErrors.Length.ShouldBe(2);
     adjacentErrors[0].Position.ShouldBe(7);
     adjacentErrors[0].Length.ShouldBe(3);

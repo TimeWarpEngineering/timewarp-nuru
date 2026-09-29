@@ -138,20 +138,7 @@ namespace TimeWarp.Nuru.Tests.Generator.IOptionsInjection
         .Build();
 
       // Act
-      int exitCode;
-      try
-      {
-        exitCode = await app.RunAsync(testArgs);
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine($"Exception: {ex}");
-        throw;
-      }
-
-      // Assert - Debug output
-      Console.WriteLine($"Exit code: {exitCode}");
-      Console.WriteLine($"Output: {terminal.Output}");
+      int exitCode = await app.RunAsync(testArgs);
 
       exitCode.ShouldBe(0);
       terminal.OutputContains("Value: MyValue").ShouldBeTrue();

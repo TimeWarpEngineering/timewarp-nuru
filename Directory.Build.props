@@ -47,9 +47,9 @@
 
   <!-- Code quality, analyzers, and warning configuration -->
   <PropertyGroup Label="Code Quality and Analysis">
-    <!-- Warnings-as-errors is OFF by default (applies to tests/samples/benchmarks).
-         source/Directory.Build.props re-enables it (true) for the shipping library so
-         released code stays warning-clean while local test/sample iteration is not blocked. -->
+    <!-- Warnings-as-errors is OFF at the repo root. source/, tests/, and samples/
+         re-enable it so shipping code, the CI test gate, and verify-samples stay
+         warning-clean. Benchmarks keep the root default. -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>5</WarningLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>

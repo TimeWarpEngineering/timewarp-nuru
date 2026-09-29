@@ -6,6 +6,9 @@
 
 using TimeWarp.Amuru;
 
+// Runner progress is process stdout. RS0030 bans System.Console in app code.
+#pragma warning disable RS0030
+
 WriteLine("TimeWarp.Nuru Multi-Mode Test Runner");
 WriteLine();
 

@@ -71,12 +71,7 @@ public class DoubleTabBugTests
     // 2. Second tab should show completions: --help, -m
     // 3. Should NOT revert to "git" context showing "git --help"
 
-    // For now, just document that the test runs without crashing
-    WriteLine("Test completed - manual verification required:");
-    WriteLine("1. Run: demo> git commit<Tab><Tab>");
-    WriteLine("2. Expected: Shows completions for 'git commit' (--help, -m)");
-    WriteLine("3. Actual BUG: Shows 'git --help' instead");
-
+    // The method documents the bug and checks that the session exits.
     await Task.CompletedTask;
   }
 }

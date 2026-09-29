@@ -35,18 +35,11 @@ NuruApp app = NuruApp.CreateBuilder()
 int exitCode = await app.RunAsync(["lfc17-test"]);
 
 if (exitCode != 0)
-{
-  Console.WriteLine($"FAILED: Exit code was {exitCode}");
-  return 1;
-}
+  throw new InvalidOperationException($"Exit code was {exitCode}");
 
 if (!terminal.OutputContains("Local function service works!"))
-{
-  Console.WriteLine($"FAILED: Output was '{terminal.Output}'");
-  return 1;
-}
+  throw new InvalidOperationException($"Output was '{terminal.Output}'");
 
-Console.WriteLine("PASSED: Local function ConfigureServices works!");
 return 0;
 
 // Service definitions at bottom (after top-level code)

@@ -108,7 +108,7 @@ public class DatabasePathTests
       string second = DatabasePath.EnsureIndexPath(nuruDir);
 
       second.ShouldBe(first);
-      (await File.ReadAllBytesAsync(second)).ShouldBe(new byte[] { 1, 2, 3 });
+      (await File.ReadAllBytesAsync(second)).ShouldBe([1, 2, 3]);
     }
     finally
     {

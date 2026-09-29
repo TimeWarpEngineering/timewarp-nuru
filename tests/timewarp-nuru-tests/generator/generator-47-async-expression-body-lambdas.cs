@@ -1,4 +1,6 @@
 #!/usr/bin/env -S dotnet --
+// async/await in the handlers below is the emission scenario this file tests.
+#pragma warning disable RCS1174
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Expression-bodied async lambda handlers (kanban 474)

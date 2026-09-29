@@ -9,9 +9,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- Warnings-as-errors is OFF for samples (matches repo root). source/ re-enables
-         it so shipping library code stays warning-clean while sample iteration is not blocked. -->
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Samples treat warnings as errors so verify-samples matches shipping builds.
+         Suppress a single diagnostic locally, with a comment, when a sample demonstrates it. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Disable code analysis for samples -->
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>

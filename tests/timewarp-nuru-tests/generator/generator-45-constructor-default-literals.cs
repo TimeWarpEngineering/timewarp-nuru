@@ -188,7 +188,8 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen45ConstructorDefaultLiterals
         searchFrom = at + construction.Length;
       }
 
-      found.ShouldBe(4);
+      // Each route emits the matcher conversion plus the --json-args argv branch and JSON branch.
+      found.ShouldBe(12);
     }
   }
 }

@@ -304,6 +304,9 @@ internal static class RouteHelpEmitter
         }
       }
     }
+
+    sb.AppendLine($"{indentStr}app.Terminal.WriteLine();");
+    sb.AppendLine($"{indentStr}app.Terminal.WriteLine(\"Values may come from --json-args.\");");
   }
 
   /// <summary>

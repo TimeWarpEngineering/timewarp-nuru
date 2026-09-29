@@ -196,6 +196,7 @@ internal static class HelpEmitter
     sb.AppendLine("      .AddRow(\"--capabilities\", \"Show capabilities for AI tools\")");
     sb.AppendLine("      .AddRow(\"--capabilities --group-filter <group>\", \"Filter capabilities by group prefix\")");
     sb.AppendLine("      .AddRow(\"--capabilities --search <query>\", \"Search capabilities using nuru\")");
+    sb.AppendLine("      .AddRow(\"--json-args <value>\", \"Bind arguments from -, @path, or an inline JSON object\")");
     if (helpOptions.ShowCompletionRoutes && model.HasCompletion)
     {
       sb.AppendLine("      .AddRow(\"__complete\", \"Shell completion callback\")");

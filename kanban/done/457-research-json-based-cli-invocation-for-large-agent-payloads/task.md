@@ -19,7 +19,7 @@ This task is research + design recommendation + follow-up implementation task(s)
 5. Call out AOT / source-gen implications (bind via endpoint metadata, not free reflection).
 6. Note relationship to MCP: what JSON-invoke closes vs what remains host-integration-only.
 7. Related work: task **142** (WASI/MCP/capabilities alignment), existing `--capabilities` catalog, any prior stdin patterns in Nuru/REPL.
-8. Produce a short **design recommendation** under this folder (`research/recommendation.md`) and create follow-up kanban task(s) for implementation if the recommendation is “build it.”
+8. Produce a short **design recommendation** under this folder (`research/recommendation.md`) and list proposed follow-up implementation task(s) (title + one-paragraph scope each) in the recommendation if the recommendation is “build it.” The cockpit files them after review.
 
 ### Non-goals for this research task
 
@@ -31,33 +31,33 @@ This task is research + design recommendation + follow-up implementation task(s)
 
 ### Context & prior art
 
-- [ ] Re-read `--capabilities` model (`CapabilitiesResponse`, `EndpointCapability`, `EndpointKind`, `--group-filter` / `--search`)
-- [ ] Survey existing Nuru/MCP packages and samples for stdin or structured invoke patterns
-- [ ] Survey industry conventions: `-` = stdin, `@file` = path (`kubectl apply -f -`, `gh api --input -`, etc.)
-- [ ] Note OS limits: `ARG_MAX`, shell quoting, agent host shell nesting
+- [x] Re-read `--capabilities` model (`CapabilitiesResponse`, `EndpointCapability`, `EndpointKind`, `--group-filter` / `--search`)
+- [x] Survey existing Nuru/MCP packages and samples for stdin or structured invoke patterns
+- [x] Survey industry conventions: `-` = stdin, `@file` = path (`kubectl apply -f -`, `gh api --input -`, etc.)
+- [x] Note OS limits: `ARG_MAX`, shell quoting, agent host shell nesting
 
 ### Design options (evaluate and recommend)
 
-- [ ] **A. Fat-field only:** route via argv; one large option from stdin/file (e.g. `--patch -`)
-- [ ] **B. `--json-args`:** route via argv; params/options filled from JSON object on stdin/`@file`
-- [ ] **C. `--invoke-json`:** full call `{ "endpoint"|"pattern", "args": { ... } }` on stdin (CLI `tools/call`)
-- [ ] **D. App-only convention:** document pattern; no framework change (Roslynk implements `-`/`@file` itself)
-- [ ] Compare merge rules (argv vs JSON key conflicts), error UX, exit codes
-- [ ] Capabilities surface: advertise support? always-on? per-endpoint?
+- [x] **A. Fat-field only:** route via argv; one large option from stdin/file (e.g. `--patch -`)
+- [x] **B. `--json-args`:** route via argv; params/options filled from JSON object on stdin/`@file`
+- [x] **C. `--invoke-json`:** full call `{ "endpoint"|"pattern", "args": { ... } }` on stdin (CLI `tools/call`)
+- [x] **D. App-only convention:** document pattern; no framework change (Roslynk implements `-`/`@file` itself)
+- [x] Compare merge rules (argv vs JSON key conflicts), error UX, exit codes
+- [x] Capabilities surface: advertise support? always-on? per-endpoint?
 
 ### Feasibility
 
-- [ ] Source-gen / AOT binding path from JSON keys → endpoint properties
-- [ ] Interaction with REPL, help, and pipeline behaviors
-- [ ] Windows/Unix stdin behavior (redirect, non-TTY, binary-safe text)
-- [ ] Security notes (local CLI trust model; no new network surface)
+- [x] Source-gen / AOT binding path from JSON keys → endpoint properties
+- [x] Interaction with REPL, help, and pipeline behaviors
+- [x] Windows/Unix stdin behavior (redirect, non-TTY, binary-safe text)
+- [x] Security notes (local CLI trust model; no new network surface)
 
 ### Deliverables
 
-- [ ] Write `research/recommendation.md` (chosen option, UX examples, non-goals, open questions)
-- [ ] Optionally write `research/roslynk-use-case.md` (or keep use case in Notes — already captured below)
-- [ ] Create follow-up implementation task(s) via `ganda kanban create` if building
-- [ ] Update `## Results` with How to validate (reviewers re-read recommendation + checklist)
+- [x] Write `research/recommendation.md` (chosen option, UX examples, non-goals, open questions)
+- [x] Optionally write `research/roslynk-use-case.md` (or keep use case in Notes — already captured below)
+- [x] List proposed follow-up implementation task(s) in `research/recommendation.md` (do **not** run `ganda kanban create`; the cockpit files them after review)
+- [x] Update `## Results` with How to validate (reviewers re-read recommendation + checklist)
 
 ## Notes
 
@@ -203,6 +203,32 @@ Researchers should decide whether this interim is enough as the *recommended* st
     notes.md                   # optional working notes
 ```
 
+## Results
+
+Build **option B**: `--json-args` as the canonical agent invocation. Route literals stay on argv; one JSON object supplies parameter and option values using capability `name`s. `-` is stdin, `@path` is an optional file, and a file is never required. Argv overrides JSON. Unknown keys and type mismatches exit 1. Option C is rejected. Option D is the interim for Roslynk only. No `source/`, `tests/`, or `samples/` changes. Follow-up tasks are listed in the recommendation for the cockpit to file; this walk did not create them.
+
+- `research/recommendation.md` — decision, UX, merge and match rules, AOT path, stdin/REPL/security, MCP and task 142, two proposed implementation tasks
+- Use case stays in Notes (no separate `research/roslynk-use-case.md`)
+
+### How to validate
+
+- **Smoke:** Read `kanban/to-do/457-research-json-based-cli-invocation-for-large-agent-payloads/research/recommendation.md`. Confirm the decision is `--json-args` (option B), that it states a file is not required, that JSON keys are capability `name`s, and that it lists two follow-up tasks and does not add files under `source/`, `tests/`, or `samples/`. Re-read the checklist above; every item is checked.
+- **Expect:** The recommendation rejects `--invoke-json`, keeps human argv, specifies argv-overrides-JSON and exit code 1, rejects every `IsConfigArg` attached form (`--json-args=`, `--json-args:`, `/json-args=`, `/json-args:`), keeps the equal-literal-count tie as exit 1 (not `ComputedSpecificity`), treats the `json-args` diagnostic as new, and leaves task creation to the cockpit.
+
+### Implementation review
+
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1, reviewer `general`). Rounds: 2. Final counts: bug 1 fixed / 1 wontfix, suggestion 2 fixed, nit 1 fixed, open 0.
+- Disposition: **accepted-exceptions**. M1 stays a literal-count tie then exit 1. NURU_R003 already rejects the optional-sibling pair that looked like a false tie, and two compiling routes that can both bind one object (`deploy {env}` and `deploy --env {env}`) must not be guessed apart with `ComputedSpecificity`.
+- M2–M5 fixed on this id: the reserved-flag diagnostic is new (user routes may still override `--help`), attached `:` and `/` forms are errors, no-body built-ins do not read stdin, `EmitNoMatch` is cited on `interceptor-emitter.cs`.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Next host nodes: open-pr / done (no apply-review sibling).
+
 ## Session
 
 - Created: grok session (2026-08-06) — feature-request research task from Roslynk + Nuru architecture discussion; use case and analysis captured for agent handoff
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1, general). Round 1 raised M1–M5. Round 2 disposition accepted-exceptions (M1 wontfix).
+
+## Notes for the implementer (2026-09-29)
+
+- Research only: no changes under `source/`, `tests/`, or `samples/` unless a throwaway prototype is needed; if so, keep it under this task folder.
+- Do not create kanban tasks or worktrees; propose them in the recommendation.
+- **Commit and push your changes before reporting done.**

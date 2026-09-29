@@ -47,6 +47,7 @@ published version vs source). The requirements above match that single methodolo
 
 ## Notes
 
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — disposition clean. Next host nodes: open-pr / done (no apply-review sibling).
 - Consumers today: timewarp-architecture (`tools/dev-cli/dev.cs` — "Shared endpoints (clean,
   self-install, check-version) come from TimeWarp.Nuru.DevCli"); any other repo on DevCli picks
   the fix up on package update.
@@ -106,3 +107,12 @@ dotnet run tools/dev-cli/dev.cs -- check-version --package TimeWarp.Nuru --stric
 - 08: 14 passed. `2.0.0-beta.14` vs `2.0.0-beta.9` is distance 5 and the warning `4 version(s) were bumped but never released — was a release step skipped?`. Distance 1 has no warning and is not a strict failure. Distance 0 has no warning. A major/minor/patch change, a different label, `1.2.0` vs `1.2.0`, and a null latest return no distance.
 - 07: 7 passed. With the repo's source version published by the stub, the handler prints `was already released` and `Bump the version before releasing.`, plus `Source is 0 prerelease increments ahead`, and exits 1. One increment behind exits 0 with the distance line and no `never released` warning, including with `--strict`. Five increments behind prints the warning and `safe to release` and exits 0; `--strict` exits 1. Latest `1.0.0` prints both versions and no distance line, exit 0. A 404 prints `Latest NuGet version: (none)` and `safe to release`, and does not print `prerelease increment`, exit 0.
 - Live `check-version --package TimeWarp.Nuru` (observed 2026-09-29): `Version in source: 3.0.0-beta.78`, `Latest NuGet version: 3.0.0-beta.76`, `Source is 2 prerelease increments ahead of v3.0.0-beta.76`, the one-version warning, `safe to release`, exit 0. `--strict` prints the same lines and exits 1. A later publish of beta.77 or beta.78 changes the numbers; the lines above are the shape.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Final counts:** bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Re-verified during review: `check-version-08` 14 passed, `check-version-07` 7 passed, and `check-version --help` lists `--strict`. The release workflow still calls `new CheckVersionCommand()` with `Strict` left false.

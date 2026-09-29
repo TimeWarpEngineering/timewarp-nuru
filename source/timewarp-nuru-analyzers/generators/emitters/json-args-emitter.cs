@@ -337,7 +337,7 @@ internal static class JsonArgsEmitter
       }
       else
       {
-        sb.AppendLine($"            {type} {slot.VariableName} = default!;");
+        sb.AppendLine($"            {type} {slot.VariableName} = {DefaultInitializer(slot)};");
       }
     }
 
@@ -488,10 +488,8 @@ internal static class JsonArgsEmitter
               string missing = $"\"Error: Missing required value '{Escape(slot.Key)}' for '{pattern}'.\"";
               sb.AppendLine($"{ind}    __ok = false;");
               sb.AppendLine($"{ind}    __fail ??= {missing};");
-              if (reserved > 0)
-              {
-                sb.AppendLine($"{ind}    __litOk = false;");
-              }
+              // Later literals still run. They clear __litOk when they do not match,
+              // so this failure is reported only when the route's literals match.
             }
 
             sb.AppendLine($"{ind}  }}");
@@ -885,12 +883,13 @@ internal static class JsonArgsEmitter
     pattern = ForInterpolation(pattern);
     string ind = new(' ', indent);
     string expected = Escape(slot.ExpectedType);
-    string fail = $"$\"Error: Key '{Escape(slot.Key)}' for '{pattern}' has the wrong JSON type. Expected {expected}.\"";
+    string jsonFail = $"$\"Error: Key '{Escape(slot.Key)}' for '{pattern}' has the wrong JSON type. Expected {expected}.\"";
+    string argvFail = $"$\"Error: Invalid value for '{Escape(slot.Key)}' on '{pattern}'. Expected {expected}.\"";
     sb.AppendLine($"{ind}if (__av_{slot.Id})");
     sb.AppendLine($"{ind}{{");
     if (slot.IsList)
     {
-      EmitAssignListFromStrings(sb, slot, $"__al_{slot.Id}", fail, indent + 2);
+      EmitAssignListFromStrings(sb, slot, $"__al_{slot.Id}", argvFail, indent + 2);
     }
     else if (slot.IsFlag)
     {
@@ -898,14 +897,25 @@ internal static class JsonArgsEmitter
     }
     else
     {
-      EmitAssignScalarFromString(sb, slot, $"__ar_{slot.Id}", fail, indent + 2);
+      EmitAssignScalarFromString(sb, slot, $"__ar_{slot.Id}", argvFail, indent + 2);
     }
 
     sb.AppendLine($"{ind}}}");
     sb.AppendLine($"{ind}else if (__jsonMap.TryGetValue(\"{Escape(slot.Key)}\", out global::System.Text.Json.JsonElement __fill_{slot.Id}))");
     sb.AppendLine($"{ind}{{");
-    EmitAssignFromJson(sb, slot, $"__fill_{slot.Id}", fail, indent + 2);
+    EmitAssignFromJson(sb, slot, $"__fill_{slot.Id}", jsonFail, indent + 2);
     sb.AppendLine($"{ind}}}");
+  }
+
+  // Flags stay false and repeated options stay empty, matching the argv matcher.
+  // Other absent keys keep the property or parameter default.
+  private static string DefaultInitializer(Slot slot)
+  {
+    string? literal = slot.Option?.DefaultValueLiteral ?? slot.Parameter?.DefaultValue;
+    if (!string.IsNullOrEmpty(literal))
+      return literal;
+
+    return "default!";
   }
 
   private static void EmitAssignFromJson(StringBuilder sb, Slot slot, string element, string fail, int indent)

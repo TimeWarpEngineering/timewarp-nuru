@@ -35,6 +35,7 @@ Reserve `--json-args` as a built-in with no short form. Add a new diagnostic whe
 
 - If a rule proves unworkable, return `ORACLE_RESULT: Blocked — <which rule and why>` rather than inventing a variant.
 - Commit and push your changes before reporting done. Run the build and test gate in the foreground.
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1, reviewer `general`). Session: review-oracle (Cursor implementer-cursor profile, headless). Rounds: 2. Final counts: bug 2 fixed, suggestion 1 fixed, open 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Next host nodes: open-pr / done (no apply-review sibling).
 
 ## Results
 
@@ -42,11 +43,13 @@ Reserve `--json-args` as a built-in with no short form. Add a new diagnostic whe
 
 No rule from the recommendation was changed.
 
+Review found two gaps against that contract. An absent key now keeps an option's property default instead of assigning `default!`. A missing required positional is named when the route's later literals still match, instead of collapsing to "Unknown command". An argv conversion failure names the key and the expected type and is not described as a JSON type error.
+
 `generator-45` now expects 12 `FileInfo` and `DirectoryInfo` constructions (was 4). Each route emits the matcher conversion plus the `--json-args` argv branch and the JSON branch. Every construction is still inside `catch (Exception)`.
 
 Verification:
 
-- `dotnet tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode total 1786, passed 1780, skipped 6, failed 0, including `JsonArgs` 16/16. Standalone phase passed, including `generator-50` (NURU_R005) and `generator-45`.
+- `dotnet tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode total 1789, passed 1783, skipped 6, failed 0, including `JsonArgs` 19/19. Standalone phase passed, including `generator-50` (NURU_R005) and `generator-45`.
 - `dotnet run tools/dev-cli/dev.cs -- verify-samples`: `64/64 samples built successfully`.
 - `ganda repo audit`: "Repository passes all audit checks." (`bin/dev` is gitignored; `ganda repo audit --fix` ran `self-install`).
 
@@ -63,7 +66,9 @@ dotnet run tests/timewarp-nuru-tests/routing/routing-33-json-args.cs
 
 Expect:
 
-- The CI runner exits 0. Multi-mode total 1786, passed 1780, skipped 6, failed 0. `JsonArgs` is 16 passed. Standalone tests pass, including `generator-50-json-args-reserved.cs`.
+- The CI runner exits 0. Multi-mode total 1789, passed 1783, skipped 6, failed 0. `JsonArgs` is 19 passed. Standalone tests pass, including `generator-50-json-args-reserved.cs`.
 - `verify-samples` prints `64/64 samples built successfully`.
 - Audit prints "Repository passes all audit checks."
-- `routing-33-json-args.cs` exits 0 with 16 passed. That covers merge precedence, unknown key, type mismatch, enum, repeated option, catch-all, `@file`, stdin larger than `MAX_ARG_STRLEN`, empty stdin, TTY stdin, each attached form, the equal-literal-count tie, a built-in that does not read stdin, REPL rejection of `-`, and a route that matches only because required positionals are in the JSON object.
+- `routing-33-json-args.cs` exits 0 with 19 passed. That covers merge precedence, unknown key, type mismatch, enum, repeated option, catch-all, `@file`, stdin larger than `MAX_ARG_STRLEN`, empty stdin, TTY stdin, each attached form, the equal-literal-count tie, a built-in that does not read stdin, REPL rejection of `-`, a route that matches only because required positionals are in the JSON object, option defaults kept when a JSON key is absent, a missing positional named when later literals match, and an argv conversion failure that is not labeled a JSON type error.
+
+Implementation review (effort 1, reviewer `general`): rounds 2. Final counts: bug 2 fixed, suggestion 1 fixed, nit 0, open 0. Disposition: `clean`. Artifacts: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.

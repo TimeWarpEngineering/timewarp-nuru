@@ -354,6 +354,70 @@ public class JsonArgsTests
     terminal.OutputContains("pos:prod").ShouldBeTrue();
   }
 
+  public static async Task Should_keep_option_defaults_when_the_json_key_is_absent()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map<JsonArgs478ShipCommand>()
+      .Build();
+
+    int baseline = await app.RunAsync(["ship", "--env", "prod"]);
+    baseline.ShouldBe(0);
+    terminal.OutputContains("env:prod|title:untitled|retries:3").ShouldBeTrue();
+
+    terminal.Clear();
+    int fromJson = await app.RunAsync(["ship", "--json-args", """{"env":"prod"}"""]);
+    fromJson.ShouldBe(0);
+    terminal.OutputContains("env:prod|title:untitled|retries:3").ShouldBeTrue();
+  }
+
+  public static async Task Should_name_a_missing_required_positional_when_later_literals_match()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("promote {env} now")
+        .WithHandler((string env) => $"promoted:{env}")
+        .AsCommand()
+        .Done()
+      .Build();
+
+    int missing = await app.RunAsync(["promote", "now", "--json-args", "{}"]);
+    missing.ShouldBe(1);
+    terminal.ErrorContains("Missing required value 'env'").ShouldBeTrue();
+    terminal.ErrorContains("Unknown command").ShouldBeFalse();
+
+    terminal.Clear();
+    int wrongLiteral = await app.RunAsync(["promote", "later", "--json-args", "{}"]);
+    wrongLiteral.ShouldBe(1);
+    terminal.ErrorContains("Unknown command").ShouldBeTrue();
+
+    terminal.Clear();
+    int ok = await app.RunAsync(["promote", "now", "--json-args", """{"env":"prod"}"""]);
+    ok.ShouldBe(0);
+    terminal.OutputContains("promoted:prod").ShouldBeTrue();
+  }
+
+  public static async Task Should_not_call_an_argv_conversion_failure_a_json_type_error()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("deploy --count {count:int}")
+        .WithHandler((int count) => $"count:{count}")
+        .AsCommand()
+        .Done()
+      .Build();
+
+    int exitCode = await app.RunAsync(["deploy", "--count", "nope", "--json-args", "{}"]);
+
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("wrong JSON type").ShouldBeFalse();
+    terminal.ErrorContains("Invalid value for 'count'").ShouldBeTrue();
+    terminal.ErrorContains("Expected int").ShouldBeTrue();
+  }
+
   public static async Task Should_cover_stdin_tty_and_a_builtin_that_does_not_read_stdin()
   {
     string dir = FindTestAppsHarnessDir();
@@ -451,6 +515,30 @@ public class JsonArgsTests
       .WithNoValidation()
       .CaptureAsync();
     return (output.ExitCode, output.Stdout, output.Stderr);
+  }
+}
+
+[NuruRoute("ship")]
+public sealed class JsonArgs478ShipCommand : ICommand<Unit>
+{
+  [Option("env", Description = "Target environment")]
+  public string Env { get; set; } = "dev";
+
+  [Option("title", Description = "Display title")]
+  public string Title { get; set; } = "untitled";
+
+  [Option("retries", Description = "Retry count")]
+  public int Retries { get; set; } = 3;
+
+  internal sealed class Handler(ITerminal terminal) : ICommandHandler<JsonArgs478ShipCommand, Unit>
+  {
+    public async Task<Unit> Handle(JsonArgs478ShipCommand command, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(command);
+      cancellationToken.ThrowIfCancellationRequested();
+      await terminal.WriteLineAsync($"env:{command.Env}|title:{command.Title}|retries:{command.Retries}").ConfigureAwait(false);
+      return default;
+    }
   }
 }
 }

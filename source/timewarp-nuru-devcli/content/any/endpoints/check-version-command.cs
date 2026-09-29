@@ -16,6 +16,14 @@
 // --package value that parses to zero packages (e.g. ",") is still an explicit
 // override and does NOT fall through to derivation — it hits the same "no
 // packages" error as an empty/unconfigured repo.
+//
+// After the two version lines, PrereleaseDistance reports how many prerelease
+// increments separate source from the latest published version when that gap
+// is honest (same core, same label, only the number differs). A gap greater
+// than 1 warns that intermediate numbers were bumped and never published, and
+// exits 0 — a deliberate jump is legitimate. --strict turns that warning into
+// exit code 1 for CI. Every other shape (core change, different label, no
+// published version) keeps the two version lines and omits the distance.
 #endregion
 
 namespace DevCli;
@@ -25,10 +33,14 @@ using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
 [NuruRoute("check-version", Description = "Verify version is ready to release")]
+[NuruRouteExample("check-version --strict", Description = "Fail when source is more than one prerelease increment ahead of the latest published version")]
 public sealed class CheckVersionCommand : ICommand<Unit>
 {
   [Option("package", Description = "NuGet package ID to check (comma-separated)")]
   public string? Package { get; set; }
+
+  [Option("strict", Description = "Exit non-zero when source is more than one prerelease increment ahead of the latest published version")]
+  public bool Strict { get; set; }
 
   public sealed class Handler : ICommandHandler<CheckVersionCommand, Unit>
   {
@@ -164,6 +176,17 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       string latestDisplay = latestNuGetVersion ?? "(none)";
       Terminal.WriteLine($"Latest NuGet version: {latestDisplay}".Cyan());
 
+      int? prereleaseIncrements = PrereleaseDistance.TryGetIncrements(version, latestNuGetVersion);
+      if (prereleaseIncrements is int increments && latestNuGetVersion is not null)
+      {
+        Terminal.WriteLine(PrereleaseDistance.FormatDistanceLine(increments, latestNuGetVersion));
+        string? skippedReleaseWarning = PrereleaseDistance.FormatSkippedReleaseWarning(increments);
+        if (skippedReleaseWarning is not null)
+        {
+          Terminal.WriteLine(skippedReleaseWarning.Yellow());
+        }
+      }
+
       if (checkedPackages.Count > 0)
       {
         Terminal.WriteLine($"Packages checked: {string.Join(", ", checkedPackages)}");
@@ -197,6 +220,11 @@ public sealed class CheckVersionCommand : ICommand<Unit>
 
         default:
           throw new InvalidOperationException($"Unknown publish state '{publishState}'.");
+      }
+
+      if (command.Strict && PrereleaseDistance.IsStrictFailure(prereleaseIncrements))
+      {
+        Environment.ExitCode = 1;
       }
 
       return Unit.Value;

@@ -16,6 +16,7 @@ int multiResult = await RunAllTests();
 // as a second phase so CI still covers them:
 // - generator-17: top-level-statements local-function ConfigureServices (M14 / 470-010)
 // - check-version-04: entire body #if !JARIBU_MULTI; needs CheckVersionCommand endpoint (M15)
+// - check-version-07: entire body #if !JARIBU_MULTI; needs CheckVersionCommand endpoint (task 456)
 // - generator-19/20: multi-included for filtered cases, but #if !JARIBU_MULTI methods
 //   (NoFilter_IncludesAll, Gen20KanbanQuery) only run in this standalone phase (M29)
 // - generator-28..49: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
@@ -24,6 +25,7 @@ string[] standaloneTests =
 [
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-17-local-function-config.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-04-endpoint-zero-package.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-07-endpoint-fail-closed.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-19-group-filtering.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-20-parameterized-service-constructor.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-28-interpreter-cycle-guard.cs"),

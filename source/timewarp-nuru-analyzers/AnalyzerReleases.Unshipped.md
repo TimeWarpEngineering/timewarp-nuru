@@ -33,6 +33,7 @@ NURU_H007 | Handler.Validation | Warning | ILogger<T> injected without logging c
 NURU_R001 | RoutePattern.Overlap | Error | Overlapping routes with different type constraints
 NURU_R002 | RoutePattern.Overlap | Error | Duplicate route pattern
 NURU_R003 | RoutePattern.Overlap | Error | Unreachable route
+NURU_R004 | RoutePattern.Overlap | Error | REPL AutoStartWhenEmpty conflicts with default route
 NURU050 | Service.Validation | Error | Handler requires unregistered service
 NURU051 | Service.Validation | Error | Service has constructor dependencies  
 NURU052 | Service.Validation | Warning | Nuru did not instantiate anything this AddX registered

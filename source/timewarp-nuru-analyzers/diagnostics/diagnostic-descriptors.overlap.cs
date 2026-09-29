@@ -52,4 +52,22 @@ internal static partial class DiagnosticDescriptors
                    "additional optional elements (options, optional parameters). The route with higher specificity will always " +
                    "be matched first, making the lower specificity route dead code. Consider removing the unreachable route or " +
                    "differentiating the patterns.");
+
+  /// <summary>
+  /// NURU_R004: REPL AutoStartWhenEmpty makes a top-level default route unreachable.
+  /// The generated interceptor starts the REPL when <c>routeArgs.Length == 0</c> before user routes
+  /// are matched, so a top-level <c>""</c> route can never run.
+  /// </summary>
+  public static readonly DiagnosticDescriptor ReplAutoStartConflictsWithDefaultRoute = new(
+      id: "NURU_R004",
+      title: "REPL AutoStartWhenEmpty conflicts with default route",
+      messageFormat: "REPL AutoStartWhenEmpty makes the default route unreachable; remove the default route or disable AutoStartWhenEmpty",
+      category: OverlapCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "When AutoStartWhenEmpty is true, an empty argument list starts the REPL before any user route is matched. " +
+                   "A top-level default route (pattern \"\") that matches that same empty argument list can never run. " +
+                   "A \"\" route inside a group does not conflict, because the group prefix is required. " +
+                   "A \"\" route with a required positional parameter or required option does not match an empty argument list, so it does not conflict. " +
+                   "Remove the default route, or set AutoStartWhenEmpty to false and start the REPL with --interactive or -i.");
 }

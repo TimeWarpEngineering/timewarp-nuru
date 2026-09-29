@@ -219,7 +219,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
     }
 
     string? pattern = literal.Token.ValueText;
-    if (string.IsNullOrEmpty(pattern))
+    // Empty string is a valid default route. Keep its location so NURU_R004 can point at Map("").
+    if (pattern is null)
       return null;
 
     Location location = literal.GetLocation();

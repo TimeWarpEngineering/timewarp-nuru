@@ -86,10 +86,6 @@ public class TabCyclingBugTests
     Log("RunReplAsync completed");
 
     // Assert
-    WriteLine("=== TAB CYCLING OUTPUT ===");
-    WriteLine(Terminal.Output);
-    WriteLine("=== END ===");
-
     // Check that all three completions appeared in sequence
     Terminal.OutputContains("commit").ShouldBeTrue("Should cycle to 'commit'");
     Terminal.OutputContains("log").ShouldBeTrue("Should cycle to 'log'");

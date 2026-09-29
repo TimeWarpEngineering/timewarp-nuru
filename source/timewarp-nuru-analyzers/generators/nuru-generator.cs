@@ -113,8 +113,10 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .Combine(endpointDiagnostics)
       .Combine(assemblyMetadata)
       .Combine(hasGeneratedMediator)
+      .Combine(context.CompilationProvider)
       .Select(static (data, ct) => CreateGeneratorModelWithValidation(
-        data.Left.Left.Left.Left.Left,
+        data.Left.Left.Left.Left.Left.Left,
+        data.Left.Left.Left.Left.Left.Right,
         data.Left.Left.Left.Left.Right,
         data.Left.Left.Left.Right,
         data.Left.Left.Right,
@@ -348,6 +350,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     ImmutableArray<Diagnostic> endpointDiagnostics,
     AssemblyMetadata assemblyMetadata,
     bool hasGeneratedMediator,
+    Compilation compilation,
     CancellationToken cancellationToken
   )
   {
@@ -422,7 +425,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
         app with { Routes = combinedRoutes },
         routeLocations,
         app.ExtensionMethods,
-        hasGeneratedMediator);
+        hasGeneratedMediator,
+        compilation);
 
       allDiagnostics.AddRange(validationDiagnostics);
     }

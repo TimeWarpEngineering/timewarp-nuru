@@ -47,6 +47,7 @@ public class KanbanService : IKanbanService
     {
       using TestTerminal terminal = new();
 
+#pragma warning disable NURU056 // Singleton depends on Transient; this test resolves that registration
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .ConfigureServices(services =>
@@ -59,6 +60,7 @@ public class KanbanService : IKanbanService
           .AsQuery()
           .Done()
         .Build();
+#pragma warning restore NURU056
 
       int exitCode = await app.RunAsync(["status"]);
       exitCode.ShouldBe(0);

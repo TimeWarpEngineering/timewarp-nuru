@@ -12,7 +12,10 @@
     <!-- Suppress namespace style warnings for tests with top-level statements + namespace blocks -->
     <!-- CA5399: the shared NuGetVersionService creates HttpClient without enabling
          CRL checks; the consuming CLI (tools/dev-cli) already suppresses this. -->
-    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065;CA5399</NoWarn>
+    <!-- CS0436: this assembly generates TimeWarp.Mediator.Generated.Mediator while
+         TimeWarp.Nuru.Mcp already contains that type (visible via InternalsVisibleTo).
+         The compiler uses the locally generated type. -->
+    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065;CA5399;CS0436</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <!-- ALL test files are included via recursive glob so that new tests are picked up

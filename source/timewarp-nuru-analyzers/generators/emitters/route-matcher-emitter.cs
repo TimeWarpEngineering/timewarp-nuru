@@ -74,9 +74,6 @@ internal static class RouteMatcherEmitter
     // Comment showing the route pattern
     sb.AppendLine(
       $"    // Route: {EscapeXmlComment(route.FullPattern)}");
-    // DEBUG: Show custom converter count
-    sb.AppendLine(
-      $"    // DEBUG: CustomConverters.Length={customConverters.Length}");
 
     // Per-route help: args that match this route's literal prefix plus --help.
     // Routes that share that prefix are printed once, ahead of this loop.
@@ -850,13 +847,6 @@ internal static class RouteMatcherEmitter
         // 2. Simple target type name (e.g., "MyApp.Types.EmailAddress" -> "EmailAddress")
         // 3. Constraint alias (e.g., "email")
         // 4. Convention: ConverterTypeName minus "Converter" suffix (e.g., "EmailAddressConverter" -> "EmailAddress")
-        // DEBUG: Emit lookup info
-        sb.AppendLine($"{indentStr}// DEBUG: Looking for converter for baseType='{baseType}', customConverters.Length={customConverters.Length}");
-        foreach (CustomConverterDefinition c in customConverters)
-        {
-          sb.AppendLine($"{indentStr}// DEBUG:   Converter: {c.ConverterTypeName}, TargetTypeName={c.TargetTypeName}, Alias={c.ConstraintAlias}, DerivedTarget={GetTargetTypeFromConverterName(c.ConverterTypeName)}");
-        }
-
         CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
           string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
           string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||

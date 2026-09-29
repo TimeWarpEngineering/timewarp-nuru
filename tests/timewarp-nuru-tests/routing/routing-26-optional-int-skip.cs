@@ -54,9 +54,6 @@ public class OptionalIntSkipTests
     // This should match Issue152RepoSetupCommand, NOT error from Issue152WorkspaceCommitsCommand
     int exitCode = await app.RunAsync(["issue152-repo", "setup"]);
 
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
-
     exitCode.ShouldBe(0);
     terminal.OutputContains("Setting up repo").ShouldBeTrue();
     terminal.OutputContains("Error").ShouldBeFalse($"Should not contain error, got: {terminal.AllOutput}");
@@ -93,9 +90,6 @@ public class OptionalIntSkipTests
       .Build();
 
     int exitCode = await app.RunAsync(["issue152-workspace", "commits"]);
-
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
 
     exitCode.ShouldBe(0);
     terminal.OutputContains("Showing commits from last 0 days").ShouldBeTrue();

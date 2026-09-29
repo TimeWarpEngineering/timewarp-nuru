@@ -31,7 +31,8 @@ internal static class ServiceValidator
   public static ImmutableArray<Diagnostic> Validate(
     AppModel app,
     IReadOnlyDictionary<string, Location>? routeLocations = null,
-    bool hasGeneratedMediator = false)
+    bool hasGeneratedMediator = false,
+    Compilation? compilation = null)
   {
     // Skip ALL validation when runtime DI is enabled
     if (app.UseMicrosoftDependencyInjection)
@@ -66,7 +67,7 @@ internal static class ServiceValidator
     {
       foreach (ServiceDefinition service in app.Services)
       {
-        Location? loc = service.RegistrationLocation?.ToLocation();
+        Location? loc = service.RegistrationLocation?.ToLocation(compilation);
         if (loc is null)
           continue;
 
@@ -79,13 +80,13 @@ internal static class ServiceValidator
     ValidateHandlerServiceRequirements(app, registeredServices, routeLocations, diagnostics);
 
     // NURU051: Validate service constructor dependencies
-    ValidateServiceConstructorDependencies(app.Services, registeredServices, diagnostics);
+    ValidateServiceConstructorDependencies(app.Services, registeredServices, diagnostics, compilation);
 
     // NURU053: Validate factory registrations
-    ValidateFactoryRegistrations(app.Services, diagnostics);
+    ValidateFactoryRegistrations(app.Services, diagnostics, compilation);
 
     // NURU054: Validate type accessibility
-    ValidateTypeAccessibility(app.Services, diagnostics);
+    ValidateTypeAccessibility(app.Services, diagnostics, compilation);
 
     // NURU055: Validate circular dependencies
     ValidateCircularDependencies(app.Services, serviceLocationByImpl, diagnostics);
@@ -276,7 +277,8 @@ internal static class ServiceValidator
   private static void ValidateServiceConstructorDependencies(
     ImmutableArray<ServiceDefinition> services,
     HashSet<string> registeredServices,
-    List<Diagnostic> diagnostics)
+    List<Diagnostic> diagnostics,
+    Compilation? compilation)
   {
     if (services.IsDefaultOrEmpty)
       return;
@@ -310,7 +312,7 @@ internal static class ServiceValidator
 
       if (missingDeps.Count > 0)
       {
-        Location location = service.RegistrationLocation?.ToLocation() ?? Location.None;
+        Location location = service.RegistrationLocation?.ToLocation(compilation) ?? Location.None;
 
         diagnostics.Add(Diagnostic.Create(
           DiagnosticDescriptors.ServiceHasConstructorDependencies,
@@ -326,7 +328,8 @@ internal static class ServiceValidator
   /// </summary>
   private static void ValidateFactoryRegistrations(
     ImmutableArray<ServiceDefinition> services,
-    List<Diagnostic> diagnostics)
+    List<Diagnostic> diagnostics,
+    Compilation? compilation)
   {
     if (services.IsDefaultOrEmpty)
       return;
@@ -336,7 +339,7 @@ internal static class ServiceValidator
       if (!service.IsFactoryRegistration)
         continue;
 
-      Location location = service.RegistrationLocation?.ToLocation() ?? Location.None;
+      Location location = service.RegistrationLocation?.ToLocation(compilation) ?? Location.None;
 
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.FactoryDelegateNotSupported,
@@ -350,7 +353,8 @@ internal static class ServiceValidator
   /// </summary>
   private static void ValidateTypeAccessibility(
     ImmutableArray<ServiceDefinition> services,
-    List<Diagnostic> diagnostics)
+    List<Diagnostic> diagnostics,
+    Compilation? compilation)
   {
     if (services.IsDefaultOrEmpty)
       return;
@@ -360,7 +364,7 @@ internal static class ServiceValidator
       if (!service.IsInternalType)
         continue;
 
-      Location location = service.RegistrationLocation?.ToLocation() ?? Location.None;
+      Location location = service.RegistrationLocation?.ToLocation(compilation) ?? Location.None;
 
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.InternalTypeNotAccessible,

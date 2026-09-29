@@ -23,7 +23,8 @@ internal static class ModelValidator
     AppModel model,
     IReadOnlyDictionary<string, Location> routeLocations,
     ImmutableArray<ExtensionMethodCall> extensionMethods = default,
-    bool hasGeneratedMediator = false)
+    bool hasGeneratedMediator = false,
+    Compilation? compilation = null)
   {
     ArgumentNullException.ThrowIfNull(model);
     ArgumentNullException.ThrowIfNull(routeLocations);
@@ -40,7 +41,11 @@ internal static class ModelValidator
     diagnostics.AddRange(replDefaultRouteDiagnostics);
 
     // Run service validator (NURU050, NURU051, NURU053, NURU054)
-    ImmutableArray<Diagnostic> serviceDiagnostics = ServiceValidator.Validate(model, routeLocations, hasGeneratedMediator);
+    ImmutableArray<Diagnostic> serviceDiagnostics = ServiceValidator.Validate(
+      model,
+      routeLocations,
+      hasGeneratedMediator,
+      compilation);
     diagnostics.AddRange(serviceDiagnostics);
 
     // Run extension method validation (NURU052)

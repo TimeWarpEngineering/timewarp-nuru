@@ -18,10 +18,24 @@ public sealed record LocationInfo(
   LinePositionSpan LineSpan)
 {
   /// <summary>
-  /// Rebuilds a <see cref="Location"/> for diagnostic reporting. Produces an external-file
-  /// location whose equality is path/span based rather than tree-reference based.
+  /// Rebuilds a <see cref="Location"/> for diagnostic reporting.
+  /// When <paramref name="compilation"/> contains the source file, the location is bound to
+  /// that syntax tree so <c>#pragma warning</c> can suppress it. A path-only location has no
+  /// <see cref="Location.SourceTree"/>, and pragmas do not apply.
   /// </summary>
-  public Location ToLocation() => Location.Create(FilePath, TextSpan, LineSpan);
+  public Location ToLocation(Compilation? compilation = null)
+  {
+    if (compilation is not null)
+    {
+      foreach (SyntaxTree tree in compilation.SyntaxTrees)
+      {
+        if (string.Equals(tree.FilePath, FilePath, StringComparison.Ordinal))
+          return Location.Create(tree, TextSpan);
+      }
+    }
+
+    return Location.Create(FilePath, TextSpan, LineSpan);
+  }
 
   /// <summary>
   /// Captures a <see cref="Location"/> into an equatable <see cref="LocationInfo"/>,

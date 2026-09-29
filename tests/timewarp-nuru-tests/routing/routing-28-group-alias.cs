@@ -60,9 +60,6 @@ public class GroupAliasTests
 
     int exitCode = await app.RunAsync(["issue178-bye"]);
 
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
-
     exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!").ShouldBeTrue();
   }
@@ -77,9 +74,6 @@ public class GroupAliasTests
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-cya"]);
-
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
 
     exitCode.ShouldBe(0);
     terminal.OutputContains("Goodbye!").ShouldBeTrue();
@@ -104,9 +98,6 @@ public class GroupAliasTests
 
     int exitCode = await app.RunAsync(["issue178-workspace", "info"]);
 
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
-
     exitCode.ShouldBe(0);
     terminal.OutputContains("Workspace info").ShouldBeTrue();
   }
@@ -127,9 +118,6 @@ public class GroupAliasTests
 
     int exitCode = await app.RunAsync(["issue178-ws", "info"]);
 
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
-
     exitCode.ShouldBe(0);
     terminal.OutputContains("Workspace info").ShouldBeTrue();
   }
@@ -148,9 +136,6 @@ public class GroupAliasTests
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-work", "info"]);
-
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
 
     exitCode.ShouldBe(0);
     terminal.OutputContains("Workspace info").ShouldBeTrue();
@@ -175,9 +160,6 @@ public class GroupAliasTests
 
     int exitCode = await app.RunAsync(["issue178-workspace", "repo", "info"]);
 
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
-
     exitCode.ShouldBe(0);
     terminal.OutputContains("Repo info").ShouldBeTrue();
   }
@@ -196,9 +178,6 @@ public class GroupAliasTests
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-ws", "repo", "info"]);
-
-    Console.WriteLine($"Exit code: {exitCode}");
-    Console.WriteLine($"Output: {terminal.AllOutput}");
 
     exitCode.ShouldBe(0);
     terminal.OutputContains("Repo info").ShouldBeTrue();

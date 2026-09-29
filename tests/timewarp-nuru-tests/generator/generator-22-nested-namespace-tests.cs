@@ -51,6 +51,7 @@ namespace TimeWarp.Nuru.Tests.Generator.ParameterizedServiceConstructor
     {
       using TestTerminal terminal = new();
 
+#pragma warning disable NURU056 // Singleton depends on Transient; this test resolves that registration
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .ConfigureServices(services =>
@@ -63,6 +64,7 @@ namespace TimeWarp.Nuru.Tests.Generator.ParameterizedServiceConstructor
           .AsQuery()
           .Done()
         .Build();
+#pragma warning restore NURU056
 
       int exitCode = await app.RunAsync(["status"]);
       exitCode.ShouldBe(0);

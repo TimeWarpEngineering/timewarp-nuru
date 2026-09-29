@@ -78,6 +78,10 @@
          (task 432 NURU_R004 AutoStartWhenEmpty vs default route); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-49-nuru-r004-repl-default-route.cs" />
+    <!-- generator-50: same Roslyn-hosted generator test pattern as generator-28
+         (task 478 NURU_R005 reserved json-args option); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-50-json-args-reserved.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

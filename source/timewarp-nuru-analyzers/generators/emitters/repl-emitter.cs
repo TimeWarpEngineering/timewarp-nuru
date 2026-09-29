@@ -253,7 +253,7 @@ internal static class ReplEmitter
     sb.AppendLine("      routeProvider,");
     // Call ExecuteRouteAsync directly - the core route matching logic used by both RunAsync and REPL.
     // ct is the session's per-command linked token (Ctrl+C cancellation, 454-017) — forward it.
-    sb.AppendLine($"      static (nuruApp, args, ct) => ExecuteRouteAsync{methodSuffix}(nuruApp, args, ct),");
+    sb.AppendLine($"      static (nuruApp, args, ct) => ExecuteRouteAsync{methodSuffix}(nuruApp, args, ct, fromRepl: true),");
     sb.AppendLine("      app.LoggerFactory,");
     sb.AppendLine("      cancellationToken");
     sb.AppendLine("    ).ConfigureAwait(false);");

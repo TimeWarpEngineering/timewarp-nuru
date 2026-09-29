@@ -157,7 +157,9 @@ internal static class InterceptorEmitter
     sb.AppendLine("    string[] args,");
     // The token flows from the REPL's per-command linked CTS (Ctrl+C cancellation, 454-017)
     // and doubles as the declaration that handler CancellationToken parameters bind to.
-    sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default");
+    // fromRepl is true only for the REPL command callback. --json-args - is rejected there.
+    sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default,");
+    sb.AppendLine("    bool fromRepl = false");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
 
@@ -976,14 +978,11 @@ internal static class InterceptorEmitter
     sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
     sb.AppendLine();
 
-    // Filter out configuration override args before route matching
-    // Config overrides follow pattern: --Section:Key=value (starts with -- and contains :)
-    // This allows AddCommandLine(args) to process them while route matching ignores them
-    EmitConfigArgFiltering(sb);
+    // Peel --json-args before IsConfigArg and before user routes, then filter config args.
+    JsonArgsEmitter.EmitPrepare(sb, app);
 
     // --interactive / -i must be checked BEFORE user routes so catch-all routes don't intercept it
     string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
-    EmitInteractiveFlag(sb, app, methodSuffix);
 
     // Route matching - emit this app's routes in specificity order (highest first)
     // User routes are emitted BEFORE built-ins so users can override --help, --version, etc.
@@ -995,6 +994,14 @@ internal static class InterceptorEmitter
     // IMPORTANT: Use only this app's routes (plus filtered endpoints), not all routes from all apps
     // Using model.AllRoutes would cause route index collisions between different apps
     List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(endpointsForApp)];
+
+    // JSON selection returns. Calls without --json-args leave __jsonDoc null and fall through.
+    JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName);
+
+    sb.AppendLine("    if (!__jsonBuiltInOnly)");
+    sb.AppendLine("    {");
+
+    EmitInteractiveFlag(sb, app, methodSuffix);
 
     // Shared-prefix help prints every route whose leading literals equal the typed words.
     // It runs before group-summary help so those routes win when the group prefix is the
@@ -1018,6 +1025,9 @@ internal static class InterceptorEmitter
 
       RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes);
     }
+
+    sb.AppendLine("    }");
+    sb.AppendLine();
 
     // Built-in flags: --help, --version, --capabilities
     // Emitted AFTER user routes so users can override default behavior
@@ -1341,36 +1351,6 @@ internal static class InterceptorEmitter
         sb.AppendLine();
       }
     }
-  }
-
-  /// <summary>
-  /// Emits code to filter out configuration override args before route matching.
-  /// Config overrides are identified by: --key=value, --Section:Key=value, /key=value, /Section:Key=value
-  /// This allows AddCommandLine(args) to process them while route matching ignores them.
-  /// </summary>
-  private static void EmitConfigArgFiltering(StringBuilder sb)
-  {
-    sb.AppendLine("    // Filter out configuration override args before route matching");
-    sb.AppendLine("    // Config overrides: --key=value, --Section:Key=value, /key=value, /Section:Key=value");
-    sb.AppendLine("    // Original args are still passed to AddCommandLine() for configuration");
-    sb.AppendLine("    static bool IsConfigArg(string arg)");
-    sb.AppendLine("    {");
-    sb.AppendLine("      if (arg.StartsWith(\"--\", global::System.StringComparison.Ordinal))");
-    sb.AppendLine("      {");
-    sb.AppendLine("        int eqIdx = arg.IndexOf('=');");
-    sb.AppendLine("        int colonIdx = arg.IndexOf(':');");
-    sb.AppendLine("        return (eqIdx > 2) || (colonIdx > 2);");
-    sb.AppendLine("      }");
-    sb.AppendLine("      if (arg.StartsWith(\"/\", global::System.StringComparison.Ordinal) && arg.Length > 1 && char.IsLetter(arg[1]))");
-    sb.AppendLine("      {");
-    sb.AppendLine("        int eqIdx = arg.IndexOf('=');");
-    sb.AppendLine("        int colonIdx = arg.IndexOf(':');");
-    sb.AppendLine("        return (eqIdx > 1) || (colonIdx > 1);");
-    sb.AppendLine("      }");
-    sb.AppendLine("      return false;");
-    sb.AppendLine("    }");
-    sb.AppendLine("    string[] routeArgs = [.. args.Where(arg => !IsConfigArg(arg))];");
-    sb.AppendLine();
   }
 
   /// <summary>

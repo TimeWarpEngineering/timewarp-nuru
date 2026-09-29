@@ -34,6 +34,7 @@ NURU_R001 | RoutePattern.Overlap | Error | Overlapping routes with different typ
 NURU_R002 | RoutePattern.Overlap | Error | Duplicate route pattern
 NURU_R003 | RoutePattern.Overlap | Error | Unreachable route
 NURU_R004 | RoutePattern.Overlap | Error | REPL AutoStartWhenEmpty conflicts with default route
+NURU_R005 | RoutePattern.Overlap | Error | Option long form json-args is reserved
 NURU050 | Service.Validation | Error | Handler requires unregistered service
 NURU051 | Service.Validation | Error | Service has constructor dependencies  
 NURU052 | Service.Validation | Warning | Nuru did not instantiate anything this AddX registered

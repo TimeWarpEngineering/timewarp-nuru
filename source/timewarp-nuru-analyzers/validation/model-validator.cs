@@ -40,6 +40,11 @@ internal static class ModelValidator
       ReplDefaultRouteValidator.Validate(model, routeLocations);
     diagnostics.AddRange(replDefaultRouteDiagnostics);
 
+    // NURU_R005: user option long form json-args is reserved
+    ImmutableArray<Diagnostic> reservedJsonArgsDiagnostics =
+      ReservedJsonArgsValidator.Validate(model, routeLocations);
+    diagnostics.AddRange(reservedJsonArgsDiagnostics);
+
     // Run service validator (NURU050, NURU051, NURU053, NURU054)
     ImmutableArray<Diagnostic> serviceDiagnostics = ServiceValidator.Validate(
       model,

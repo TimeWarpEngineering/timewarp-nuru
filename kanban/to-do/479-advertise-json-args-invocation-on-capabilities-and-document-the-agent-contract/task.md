@@ -30,6 +30,7 @@ Add the optional `invocation` object to `CapabilitiesResponse` and emit it from 
 ## Notes
 
 - Commit and push your changes before reporting done. Run the build and test gate in the foreground.
+- 2026-09-30: review oracle (ganda task work, tw-implementation-review effort 1, reviewer `general`). Session: review-oracle (Cursor implementer-cursor profile, headless). Rounds: 1. Final counts: bug 0, suggestion 0, nit 0, open 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Next host nodes: open-pr / done (no apply-review sibling).
 
 ## Results
 
@@ -64,3 +65,5 @@ Expect:
 - `verify-samples` prints `64/64 samples built successfully`.
 - Audit prints "Repository passes all audit checks."
 - `capabilities-04-roundtrip.cs` exits 0 with 8 passed. Emitted `--capabilities` includes `invocation` with `jsonArgs` `--json-args`, `stdin` `-`, `filePrefix` `@`, `merge` `argvOverridesJson`, and `unknownKeys` `error`. A document that omits `invocation` deserializes with `Invocation` null.
+
+Implementation review (effort 1, reviewer `general`): rounds 1. Final counts: bug 0, suggestion 0, nit 0, open 0. Disposition: `clean`. Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.

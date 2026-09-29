@@ -70,4 +70,20 @@ internal static partial class DiagnosticDescriptors
                    "A \"\" route inside a group does not conflict, because the group prefix is required. " +
                    "A \"\" route with a required positional parameter or required option does not match an empty argument list, so it does not conflict. " +
                    "Remove the default route, or set AutoStartWhenEmpty to false and start the REPL with --interactive or -i.");
+
+  /// <summary>
+  /// NURU_R005: A user option's long form is the reserved built-in <c>json-args</c>.
+  /// User routes may still override <c>--help</c>. This diagnostic is new; there is
+  /// no <c>--help</c> or <c>--capabilities</c> diagnostic to copy.
+  /// </summary>
+  public static readonly DiagnosticDescriptor ReservedJsonArgsOption = new(
+      id: "NURU_R005",
+      title: "Option long form json-args is reserved",
+      messageFormat: "Option long form 'json-args' on route '{0}' is reserved. --json-args is a built-in and cannot be a user option.",
+      category: OverlapCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "--json-args is peeled from the original argument list before user routes run. " +
+                   "A user option whose long form is json-args would claim that flag. " +
+                   "Rename the option. There is no short form to use instead.");
 }

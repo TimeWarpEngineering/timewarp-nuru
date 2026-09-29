@@ -23,15 +23,47 @@ Reserve `--json-args` as a built-in with no short form. Add a new diagnostic whe
 
 ## Checklist
 
-- [ ] `--json-args` reserved; diagnostic for a user option named `json-args`
-- [ ] Peel-off before config-arg filter and user routes; attached forms rejected
-- [ ] Route selection with JSON-satisfied slots; tie rule; argv overrides JSON
-- [ ] Generated, reflection-free binding via existing converters
-- [ ] Error cases and exit codes as specified; REPL rejects `-`
-- [ ] Root help row
-- [ ] Tests from the scope list
+- [x] `--json-args` reserved; diagnostic for a user option named `json-args`
+- [x] Peel-off before config-arg filter and user routes; attached forms rejected
+- [x] Route selection with JSON-satisfied slots; tie rule; argv overrides JSON
+- [x] Generated, reflection-free binding via existing converters
+- [x] Error cases and exit codes as specified; REPL rejects `-`
+- [x] Root help row
+- [x] Tests from the scope list
 
 ## Notes
 
 - If a rule proves unworkable, return `ORACLE_RESULT: Blocked — <which rule and why>` rather than inventing a variant.
 - Commit and push your changes before reporting done. Run the build and test gate in the foreground.
+
+## Results
+
+`--json-args` is reserved (no short form) and peeled from the original `args` array before `IsConfigArg` and before user routes. Attached forms (`--json-args=`, `--json-args:`, `/json-args=`, `/json-args:`) exit 1. The next token is the value (`-`, `@path`, or an inline object), including when that token is `--help`. A remaining argv that already matches a no-body built-in or a completion route is dispatched and does not read stdin. Otherwise the object is parsed with `JsonDocument` and route selection lets parameter slots come from JSON keys. More matched literals win. An equal literal count exits 1 and lists the patterns. `ComputedSpecificity` is not used to break that tie. Argv overrides JSON. Unknown keys, type mismatches, empty stdin, and a TTY stdin exit 1. Binding assigns the same generated locals through `TypeConversionMap`, `EnumTypeConverter`, and registered custom converters, with no reflection. NURU_R005 rejects a user option whose long form is `json-args`. The REPL rejects `-`. Root help lists `--json-args`, and per-route help says values may come from it.
+
+No rule from the recommendation was changed.
+
+`generator-45` now expects 12 `FileInfo` and `DirectoryInfo` constructions (was 4). Each route emits the matcher conversion plus the `--json-args` argv branch and the JSON branch. Every construction is still inside `catch (Exception)`.
+
+Verification:
+
+- `dotnet tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode total 1786, passed 1780, skipped 6, failed 0, including `JsonArgs` 16/16. Standalone phase passed, including `generator-50` (NURU_R005) and `generator-45`.
+- `dotnet run tools/dev-cli/dev.cs -- verify-samples`: `64/64 samples built successfully`.
+- `ganda repo audit`: "Repository passes all audit checks." (`bin/dev` is gitignored; `ganda repo audit --fix` ran `self-install`).
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet tests/ci-tests/run-ci-tests.cs
+dotnet run tools/dev-cli/dev.cs -- verify-samples
+ganda repo audit
+dotnet run tests/timewarp-nuru-tests/routing/routing-33-json-args.cs
+```
+
+Expect:
+
+- The CI runner exits 0. Multi-mode total 1786, passed 1780, skipped 6, failed 0. `JsonArgs` is 16 passed. Standalone tests pass, including `generator-50-json-args-reserved.cs`.
+- `verify-samples` prints `64/64 samples built successfully`.
+- Audit prints "Repository passes all audit checks."
+- `routing-33-json-args.cs` exits 0 with 16 passed. That covers merge precedence, unknown key, type mismatch, enum, repeated option, catch-all, `@file`, stdin larger than `MAX_ARG_STRLEN`, empty stdin, TTY stdin, each attached form, the equal-literal-count tie, a built-in that does not read stdin, REPL rejection of `-`, and a route that matches only because required positionals are in the JSON object.

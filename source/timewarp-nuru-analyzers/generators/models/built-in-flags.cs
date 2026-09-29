@@ -22,6 +22,13 @@ internal static class BuiltInFlags
   public static readonly string[] CapabilitiesForms = ["--capabilities"];
 
   /// <summary>
+  /// JSON argument payload. No short form. Not part of <see cref="All"/> or
+  /// <see cref="PatternMatchExpression"/>: it is peeled before route matching,
+  /// so empty-pattern routes never see the token.
+  /// </summary>
+  public const string JsonArgsForm = "--json-args";
+
+  /// <summary>
   /// Search flag forms: --search, -s
   /// </summary>
   public static readonly string[] SearchForms = ["--search", "-s"];

@@ -26,6 +26,26 @@ When user runs `deploy --help`, what should happen?
 3. **Recommend groups** - analyzer suggests using `.WithGroupPrefix("deploy")`
 4. **Keep current behavior** - document that more specific route wins
 
+## Decision 2026-09-29: Option 1, show help for all routes sharing the prefix
+
+`deploy --help` lists every route whose literal prefix is `deploy` (here `deploy` and `deploy {env}`), each
+with its pattern, description, parameters, options, and examples, in the same format per-route help uses
+today. This is what the skipped test already expects:
+`tests/timewarp-nuru-tests/help/help-01-per-route-help.cs` `Should_show_help_for_multiple_routes_with_same_prefix`
+(around line 232, `[Skip(... See kanban #370)]`).
+
+## Requirements
+
+- When `X --help` matches more than one route that starts with the literal segment(s) `X`, print help for all
+  of them, most specific first. A single match keeps today's output unchanged.
+- Only routes whose leading literal segments equal the typed literals count; do not pull in `deployment` for
+  `deploy`, and do not list routes from other groups.
+- Works for fluent `.Map(...)`, `[NuruRoute]` endpoints, and grouped routes (`WithGroupPrefix`).
+- Remove the `[Skip]` and make `Should_show_help_for_multiple_routes_with_same_prefix` pass; add cases for a
+  single match (unchanged), a group prefix, and a non-matching near-prefix (`deploy` vs `deployment`).
+- Update the per-route help doc to describe the multi-route case.
+- Out of scope: new analyzer diagnostics (Options 2 and 3). File a follow-up if still wanted.
+
 ## Related Patterns
 
 - Optional parameters: `deploy {env?}` handles both cases in one route
@@ -40,3 +60,9 @@ When user runs `deploy --help`, what should happen?
 ## Notes
 
 Discovered while testing per-route help (Task #356). Test skipped pending design decision.
+
+## Notes for the implementer
+
+- **Commit and push your changes before reporting done.**
+- Run the build and test gate in the foreground.
+- Task 435 (blank line before Commands) runs first in the same stacked set and touches `help-emitter.cs`; build on it.

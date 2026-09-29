@@ -996,7 +996,13 @@ internal static class InterceptorEmitter
     // Using model.AllRoutes would cause route index collisions between different apps
     List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(endpointsForApp)];
 
-    // Group-level help checks (before user routes so groups get priority over routes)
+    // Shared-prefix help prints every route whose leading literals equal the typed words.
+    // It runs before group-summary help so those routes win when the group prefix is the
+    // whole literal prefix (an empty subcommand together with "{env}").
+    HashSet<RouteDefinition> sharedPrefixHelpRoutes =
+      RouteHelpEmitter.EmitSharedPrefixHelpChecks(sb, allRoutesOrdered, 4);
+
+    // Group-level help checks (before user routes so groups get priority over a single route)
     RouteHelpEmitter.EmitGroupHelpChecks(sb, allRoutesOrdered, 4);
 
     foreach (RouteDefinition route in allRoutes.OrderByDescending(r => r.ComputedSpecificity))
@@ -1010,7 +1016,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes);
     }
 
     // Built-in flags: --help, --version, --capabilities

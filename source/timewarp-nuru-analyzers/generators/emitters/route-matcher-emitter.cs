@@ -22,6 +22,10 @@
 // ArgumentException, PathTooLongException, NotSupportedException,
 // UnauthorizedAccessException, and SecurityException. Catch Exception so any of
 // those stay on the invalid-value exit instead of escaping the route.
+//
+// SHARED PREFIX HELP: Routes that share leading literals are printed together by
+// EmitSharedPrefixHelpChecks. EmitPerRouteHelpCheck skips those routes. A prefix
+// with one route keeps the single-route help check beside that route's matcher.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -46,6 +50,8 @@ internal static class RouteMatcherEmitter
   /// <param name="loggerFactoryFieldName">Logger factory source for ILogger injection, or null if no logging.</param>
   /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
   /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
+  /// <param name="httpClientConfigurations">Named HTTP clients registered on the app.</param>
+  /// <param name="sharedPrefixHelpRoutes">Routes whose help is emitted by the shared-prefix check.</param>
   public static void Emit(
     StringBuilder sb,
     RouteDefinition route,
@@ -56,7 +62,8 @@ internal static class RouteMatcherEmitter
     string? loggerFactoryFieldName = null,
     bool useRuntimeDI = false,
     string runtimeDISuffix = "",
-    ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default,
+    HashSet<RouteDefinition>? sharedPrefixHelpRoutes = null)
   {
     // Use empty array if optional parameters not provided
     if (behaviors.IsDefault)
@@ -71,9 +78,9 @@ internal static class RouteMatcherEmitter
     sb.AppendLine(
       $"    // DEBUG: CustomConverters.Length={customConverters.Length}");
 
-    // Per-route help: Check if args end with --help and match this route's literal prefix
-    // This enables "command --help" to show help for just that command
-    RouteHelpEmitter.EmitPerRouteHelpCheck(sb, route, routeIndex);
+    // Per-route help: args that match this route's literal prefix plus --help.
+    // Routes that share that prefix are printed once, ahead of this loop.
+    RouteHelpEmitter.EmitPerRouteHelpCheck(sb, route, routeIndex, sharedPrefixHelpRoutes);
 
     // Use unified matching for all routes
     EmitMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);

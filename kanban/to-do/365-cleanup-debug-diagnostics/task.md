@@ -36,6 +36,7 @@ Partly done: the `NURU_DEBUG*` diagnostics in `app-extractor.cs` and `NURU_DEBUG
 
 - Implementer: **commit and push your changes before reporting done.**
 - Run the build and test gate in the foreground.
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — disposition clean. Next host nodes: open-pr / done (no apply-review sibling).
 
 ## Results
 
@@ -71,4 +72,13 @@ Expect:
 - The CI runner exits 0. Multi-mode total 1770, passed 1764, skipped 6. Standalone files then pass, and the runner prints `Tests completed successfully!`.
 - `rg` prints `no DEBUG comments`.
 - Audit prints `Repository passes all audit checks.`
+
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Final counts:** bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Re-verified during review: `generator-21` 1 passed (`NURU056` pragma under warnings-as-errors), `generator-37` 2 passed (emit model and enum info stay Cached or Unchanged), `generator-26` 10 passed including the lifetime-mismatch pragma. No `DEBUG:` strings under `source/`.
 

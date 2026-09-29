@@ -19,7 +19,7 @@ This task is research + design recommendation + follow-up implementation task(s)
 5. Call out AOT / source-gen implications (bind via endpoint metadata, not free reflection).
 6. Note relationship to MCP: what JSON-invoke closes vs what remains host-integration-only.
 7. Related work: task **142** (WASI/MCP/capabilities alignment), existing `--capabilities` catalog, any prior stdin patterns in Nuru/REPL.
-8. Produce a short **design recommendation** under this folder (`research/recommendation.md`) and create follow-up kanban task(s) for implementation if the recommendation is “build it.”
+8. Produce a short **design recommendation** under this folder (`research/recommendation.md`) and list proposed follow-up implementation task(s) (title + one-paragraph scope each) in the recommendation if the recommendation is “build it.” The cockpit files them after review.
 
 ### Non-goals for this research task
 
@@ -56,7 +56,7 @@ This task is research + design recommendation + follow-up implementation task(s)
 
 - [ ] Write `research/recommendation.md` (chosen option, UX examples, non-goals, open questions)
 - [ ] Optionally write `research/roslynk-use-case.md` (or keep use case in Notes — already captured below)
-- [ ] Create follow-up implementation task(s) via `ganda kanban create` if building
+- [ ] List proposed follow-up implementation task(s) in `research/recommendation.md` (do **not** run `ganda kanban create`; the cockpit files them after review)
 - [ ] Update `## Results` with How to validate (reviewers re-read recommendation + checklist)
 
 ## Notes
@@ -206,3 +206,9 @@ Researchers should decide whether this interim is enough as the *recommended* st
 ## Session
 
 - Created: grok session (2026-08-06) — feature-request research task from Roslynk + Nuru architecture discussion; use case and analysis captured for agent handoff
+
+## Notes for the implementer (2026-09-29)
+
+- Research only: no changes under `source/`, `tests/`, or `samples/` unless a throwaway prototype is needed; if so, keep it under this task folder.
+- Do not create kanban tasks or worktrees; propose them in the recommendation.
+- **Commit and push your changes before reporting done.**

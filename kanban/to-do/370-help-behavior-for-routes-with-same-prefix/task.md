@@ -61,6 +61,8 @@ today. This is what the skipped test already expects:
 
 Discovered while testing per-route help (Task #356). Test skipped pending design decision.
 
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — disposition clean. Next host nodes: open-pr / done (no apply-review sibling).
+
 ## Results
 
 `deploy --help` prints every route whose leading literal segments equal `deploy`, most specific first, in the existing per-route layout (pattern, description, parameters, options, examples). A single match stays that one route. `deployment` and `deploy status` are different literal sequences, and a `git deploy` route stays on `git deploy --help`.
@@ -81,6 +83,15 @@ dotnet run tests/timewarp-nuru-tests/help/help-01-per-route-help.cs
 Expect: exit code 0, `Total: 19`, `Passed: 19`. `Should_show_help_for_multiple_routes_with_same_prefix` fails if either description is missing or `Deploy to environment` is not printed before `Simple deploy`.
 
 `dotnet build timewarp-nuru.slnx` succeeded with 0 warnings and 0 errors. `dotnet run tests/ci-tests/run-ci-tests.cs` exited 0: multi-mode total 1770, passed 1764, skipped 6 (`PerRouteHelp` 19 passed), and every standalone phase passed.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Final counts:** bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Re-verified during review: `help-01-per-route-help.cs` 19 passed, `help-04-group-level-help.cs` 6 passed. Shared-prefix checks run before group-summary checks; a single match still uses the per-route check.
 
 ## Notes for the implementer
 

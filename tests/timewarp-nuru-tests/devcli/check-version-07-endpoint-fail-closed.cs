@@ -6,7 +6,8 @@
 // but deliberately NOT compiled into the tests/ci-tests multi-mode assembly (endpoints
 // are collected GLOBALLY by .DiscoverEndpoints() there — task 454-022 decision A2). Without
 // this guard, the multi-mode compile would fail with CS0246 (CheckVersionCommand not found).
-// Run standalone only: dotnet run tests/timewarp-nuru-tests/devcli/check-version-07-endpoint-fail-closed.cs
+// Listed in CiTestExcludes and run by run-ci-tests.cs second phase (task 456).
+// Manual: dotnet run tests/timewarp-nuru-tests/devcli/check-version-07-endpoint-fail-closed.cs
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -14,6 +15,7 @@ return await RunAllTests();
 namespace TimeWarp.Nuru.Tests.DevCli
 {
 
+using System.Text;
 using global::DevCli;
 
 /// <summary>
@@ -110,6 +112,8 @@ public class CheckVersionEndpointFailClosedTests
       await handler.Handle(new CheckVersionCommand { Package = "TimeWarp.Nuru" }, CancellationToken.None);
 
       terminal.OutputContains("safe to release").ShouldBeTrue();
+      terminal.OutputContains("Latest NuGet version: (none)").ShouldBeTrue();
+      terminal.OutputContains("prerelease increment").ShouldBeFalse();
       Environment.ExitCode.ShouldBe(0);
     }
     finally
@@ -118,6 +122,197 @@ public class CheckVersionEndpointFailClosedTests
     }
 
     await Task.CompletedTask;
+  }
+
+  public static async Task Distance_zero_keeps_the_already_released_failure()
+  {
+    string source = ReadSourceVersion();
+    await RunAsync
+    (
+      new CheckVersionCommand { Package = "TimeWarp.Nuru" },
+      Versions(source),
+      terminal =>
+      {
+        terminal.OutputContains("was already released").ShouldBeTrue();
+        terminal.OutputContains("Bump the version before releasing.").ShouldBeTrue();
+        terminal.OutputContains(PrereleaseDistance.FormatDistanceLine(0, source)).ShouldBeTrue();
+        terminal.OutputContains("never released").ShouldBeFalse();
+        terminal.OutputContains("safe to release").ShouldBeFalse();
+        Environment.ExitCode.ShouldBe(1);
+      }
+    );
+
+    await RunAsync
+    (
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true },
+      Versions(source),
+      terminal =>
+      {
+        terminal.OutputContains("was already released").ShouldBeTrue();
+        terminal.OutputContains("never released").ShouldBeFalse();
+        Environment.ExitCode.ShouldBe(1);
+      }
+    );
+  }
+
+  public static async Task Distance_one_prints_the_line_without_a_warning()
+  {
+    string source = ReadSourceVersion();
+    int number = ReadPrereleaseNumber(source);
+    string latest = WithPrereleaseNumber(source, number - 1);
+    PrereleaseDistance.TryGetIncrements(source, latest).ShouldBe(1);
+    string distanceLine = PrereleaseDistance.FormatDistanceLine(1, latest);
+
+    await RunAsync
+    (
+      new CheckVersionCommand { Package = "TimeWarp.Nuru" },
+      Versions(latest),
+      terminal =>
+      {
+        terminal.OutputContains(distanceLine).ShouldBeTrue();
+        terminal.OutputContains("never released").ShouldBeFalse();
+        terminal.OutputContains("safe to release").ShouldBeTrue();
+        Environment.ExitCode.ShouldBe(0);
+      }
+    );
+
+    await RunAsync
+    (
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true },
+      Versions(latest),
+      _ => Environment.ExitCode.ShouldBe(0)
+    );
+  }
+
+  public static async Task Distance_above_one_warns_and_strict_exits_non_zero()
+  {
+    string source = ReadSourceVersion();
+    int number = ReadPrereleaseNumber(source);
+    number.ShouldBeGreaterThanOrEqualTo(5);
+    string latest = WithPrereleaseNumber(source, number - 5);
+    int increments = PrereleaseDistance.TryGetIncrements(source, latest) ?? -1;
+    increments.ShouldBe(5);
+    string distanceLine = PrereleaseDistance.FormatDistanceLine(increments, latest);
+    string warning = PrereleaseDistance.FormatSkippedReleaseWarning(increments) ?? "";
+
+    await RunAsync
+    (
+      new CheckVersionCommand { Package = "TimeWarp.Nuru" },
+      Versions(latest),
+      terminal =>
+      {
+        int sourceAt = terminal.Output.IndexOf("Version in source", StringComparison.Ordinal);
+        int latestAt = terminal.Output.IndexOf("Latest NuGet version", StringComparison.Ordinal);
+        int distanceAt = terminal.Output.IndexOf(distanceLine, StringComparison.Ordinal);
+        sourceAt.ShouldBeGreaterThanOrEqualTo(0);
+        latestAt.ShouldBeGreaterThan(sourceAt);
+        distanceAt.ShouldBeGreaterThan(latestAt);
+        terminal.OutputContains(warning).ShouldBeTrue();
+        terminal.OutputContains("safe to release").ShouldBeTrue();
+        terminal.OutputContains("was already released").ShouldBeFalse();
+        Environment.ExitCode.ShouldBe(0);
+      }
+    );
+
+    await RunAsync
+    (
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true },
+      Versions(latest),
+      terminal =>
+      {
+        terminal.OutputContains(warning).ShouldBeTrue();
+        terminal.OutputContains("safe to release").ShouldBeTrue();
+        Environment.ExitCode.ShouldBe(1);
+      }
+    );
+  }
+
+  public static async Task Mismatched_shape_prints_both_versions_and_skips_the_distance()
+  {
+    string source = ReadSourceVersion();
+    const string Latest = "1.0.0";
+    PrereleaseDistance.TryGetIncrements(source, Latest).ShouldBeNull();
+
+    await RunAsync
+    (
+      new CheckVersionCommand { Package = "TimeWarp.Nuru" },
+      Versions(Latest),
+      terminal =>
+      {
+        terminal.OutputContains($"Version in source: {source}").ShouldBeTrue();
+        terminal.OutputContains($"Latest NuGet version: {Latest}").ShouldBeTrue();
+        terminal.OutputContains("prerelease increment").ShouldBeFalse();
+        terminal.OutputContains("never released").ShouldBeFalse();
+        terminal.OutputContains("safe to release").ShouldBeTrue();
+        Environment.ExitCode.ShouldBe(0);
+      }
+    );
+  }
+
+  private static string ReadSourceVersion()
+  {
+    string? source = PropsVersionReader.Read(Git.FindRoot());
+    source.ShouldNotBeNullOrWhiteSpace();
+    PrereleaseDistance.TryGetIncrements(source, source).ShouldBe(0);
+    return source;
+  }
+
+  private static int ReadPrereleaseNumber(string version)
+  {
+    int plus = version.IndexOf('+');
+    string noBuild = plus >= 0 ? version[..plus] : version;
+    int dash = noBuild.IndexOf('-');
+    string prerelease = noBuild[(dash + 1)..];
+    string numberText = prerelease[(prerelease.LastIndexOf('.') + 1)..];
+    return int.Parse(numberText, CultureInfo.InvariantCulture);
+  }
+
+  private static string WithPrereleaseNumber(string version, int number)
+  {
+    int plus = version.IndexOf('+');
+    string noBuild = plus >= 0 ? version[..plus] : version;
+    int dash = noBuild.IndexOf('-');
+    string prerelease = noBuild[(dash + 1)..];
+    int dot = prerelease.LastIndexOf('.');
+    return $"{noBuild[..(dash + 1)]}{prerelease[..(dot + 1)]}{number.ToString(CultureInfo.InvariantCulture)}";
+  }
+
+  private static StubHandler Versions(string version) =>
+    new(_ => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+      Content = new StringContent($"{{\"versions\":[\"{version}\"]}}", Encoding.UTF8, "application/json")
+    });
+
+  private static async Task RunAsync
+  (
+    CheckVersionCommand command,
+    StubHandler handler,
+    Action<TestTerminal> assert
+  )
+  {
+    int originalExitCode = Environment.ExitCode;
+
+    try
+    {
+      Environment.ExitCode = 0;
+
+      using TestTerminal terminal = new();
+      using NuGetVersionService nuGetVersionService = new(handler);
+      CheckVersionCommand.Handler commandHandler = new
+      (
+        terminal,
+        nuGetVersionService,
+        new RepoConfigService(),
+        new PackableProjectService()
+      );
+
+      await commandHandler.Handle(command, CancellationToken.None);
+      assert(terminal);
+    }
+    finally
+    {
+      Environment.ExitCode = originalExitCode;
+    }
   }
 
   private sealed class StubHandler : HttpMessageHandler

@@ -10,7 +10,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 |----------|-------------|--------------|
 | `clean` | Clean solution and build artifacts | `IRepoCleanService` (TimeWarp.Amuru) |
 | `self-install` | AOT compile dev CLI to ./bin | None (standalone) |
-| `check-version` | Verify version is ready to release — three-state gate: none published (proceed), all published (abort), some published (resume with warning) | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
+| `check-version` | Verify version is ready to release — three-state publish gate, plus an honest prerelease-increment distance (warns when more than one ahead; `--strict` exits non-zero) | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
 | `release` | Cut a release: create tag `v{Version}` (from `source/Directory.Build.props`) and the GitHub Release, gated by working-tree/branch/sync/tag-availability/publish-state/CI-run guards; `--dry-run` runs every guard and previews the exact commands without creating anything | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
 
 ### Services
@@ -24,6 +24,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
 | `CiMode` (enum) / `CiModeDetector` | Pure CI mode detection (`pr`/`merge`/`release`); `workflow_dispatch` auto-detects `merge`; unknown explicit mode throws |
 | `PublishState` (enum) / `PublishStateClassifier` | Pure none/some/all classification of published packages for the `check-version` gate; throws on zero packages or an out-of-range published count |
+| `PrereleaseDistance` | Pure prerelease-increment distance between source and the latest published version. Defined only when major.minor.patch and the prerelease label match and only the numeric identifier differs |
 | `CiRunPromotion` | Pure logic for release-mode artifact promotion: orders candidate CI runs for a commit, selects a run's `Packages-*` artifact (including expiry handling), and verifies a downloaded `.nupkg` set against the derived packable set — no process execution |
 | `ReleaseGuard` (`GuardVerdict`) | Pure per-guard classifiers for the `release` gate: working tree clean, on master, synced with origin, tag `v{Version}` available (neither local nor remote), and publish state (none/partial/all) — no process execution |
 | `AttestationVerifier` (`AttestationNoteDto`, `AttestationEvaluation`, `AttestationVerificationStatus`) | Pure verifier for ganda-audit attestation notes (kanban task 458-010): parses the frozen v1 note JSON, rebuilds the canonical signed payload, decodes the unpadded-base64url signature, resolves `key_id` against a baked-in key registry (or a test-only `keyOverride`), and compares the note's tree against the tree being verified — no process execution; the actual Ed25519 verify (via `openssl pkeyutl -verify -rawin`) runs in `workflow-command.cs`, not here |
@@ -54,6 +55,39 @@ Create a `.timewarp/dev.jsonc` file in your repository root only to override the
 
 If the file does not exist, `IRepoConfigService` returns defaults and the package set is fully
 derived.
+
+## Prerelease distance (`check-version`)
+
+After the source version and the latest published NuGet version, `check-version` states the
+distance when that distance is a single prerelease number:
+
+```text
+Source is 5 prerelease increments ahead of v2.0.0-beta.9
+```
+
+The pair has to share major, minor, and patch (NuGet core normalization applies, so `2.0` and
+`2.0.0` match) and the same prerelease label, with only the numeric identifier different
+(`beta.9` → `beta.14` is 5). A major, minor, or patch change, a different label, a prerelease
+that is not `{label}.{number}`, or no published version prints both versions and omits the
+distance line. The command does not invent a metric for those shapes.
+
+A distance of 1 is a normal bump: the distance line prints, and there is no warning. A distance
+of 0 is the existing already-released failure (exit 1); the distance line is the only addition.
+A distance greater than 1 means intermediate numbers were bumped and never published. The warning
+counts those intermediates (distance minus the source version, which is the one being released)
+and the process exits 0, because a deliberate jump is legitimate:
+
+```text
+4 version(s) were bumped but never released — was a release step skipped?
+```
+
+Pass `--strict` to exit non-zero when that warning is present, for a CI job that should fail a
+skipped release step. `--strict` does not change the distance-0 already-released failure, and it
+does not fail a one-increment bump. The "safe to release" line means this exact source
+version is absent from NuGet; `--strict` fails the gap, not that membership check.
+
+`PrereleaseDistance` (namespace `DevCli`) is the pure function behind the line. A consuming repo
+that already declares that type name fails to compile with `CS0101`.
 
 ## Installation
 

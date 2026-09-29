@@ -28,6 +28,8 @@
          CheckVersionCommand, which is not compiled into the multi assembly (454-022 A2).
          Without this exclude the file is a silently empty include under JARIBU_MULTI.
          Run standalone via run-ci-tests.cs second phase (task 470-010 / M15). -->
+    <!-- check-version-07: same CheckVersionCommand constraint as check-version-04.
+         Run standalone via run-ci-tests.cs second phase (task 456 distance wiring). -->
     <!-- generator-28: Roslyn-hosted generator test; references timewarp-nuru-analyzers as a
          LIBRARY, whose shared parsing types (Lexer/Token) collide with timewarp-nuru's in one
          compilation (CS0433). Run standalone by run-ci-tests.cs as a second phase instead. -->
@@ -39,6 +41,7 @@
          (kanban 464 round-2 M5); CS0433 collision applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-07-endpoint-fail-closed.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs" />
@@ -108,6 +111,7 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/tag-assertion.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nupkg-layout-check.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/publish-state.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/prerelease-distance.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/release-guard.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/repo-config-service.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/irepo-config-service.cs" />

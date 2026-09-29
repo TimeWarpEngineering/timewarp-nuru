@@ -213,11 +213,19 @@ Build **option B**: `--json-args` as the canonical agent invocation. Route liter
 ### How to validate
 
 - **Smoke:** Read `kanban/to-do/457-research-json-based-cli-invocation-for-large-agent-payloads/research/recommendation.md`. Confirm the decision is `--json-args` (option B), that it states a file is not required, that JSON keys are capability `name`s, and that it lists two follow-up tasks and does not add files under `source/`, `tests/`, or `samples/`. Re-read the checklist above; every item is checked.
-- **Expect:** The recommendation rejects `--invoke-json`, keeps human argv, specifies argv-overrides-JSON and exit code 1, calls out the `--json-args=` clash with `IsConfigArg`, and leaves task creation to the cockpit.
+- **Expect:** The recommendation rejects `--invoke-json`, keeps human argv, specifies argv-overrides-JSON and exit code 1, rejects every `IsConfigArg` attached form (`--json-args=`, `--json-args:`, `/json-args=`, `/json-args:`), keeps the equal-literal-count tie as exit 1 (not `ComputedSpecificity`), treats the `json-args` diagnostic as new, and leaves task creation to the cockpit.
+
+### Implementation review
+
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1, reviewer `general`). Rounds: 2. Final counts: bug 1 fixed / 1 wontfix, suggestion 2 fixed, nit 1 fixed, open 0.
+- Disposition: **accepted-exceptions**. M1 stays a literal-count tie then exit 1. NURU_R003 already rejects the optional-sibling pair that looked like a false tie, and two compiling routes that can both bind one object (`deploy {env}` and `deploy --env {env}`) must not be guessed apart with `ComputedSpecificity`.
+- M2–M5 fixed on this id: the reserved-flag diagnostic is new (user routes may still override `--help`), attached `:` and `/` forms are errors, no-body built-ins do not read stdin, `EmitNoMatch` is cited on `interceptor-emitter.cs`.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Next host nodes: open-pr / done (no apply-review sibling).
 
 ## Session
 
 - Created: grok session (2026-08-06) — feature-request research task from Roslynk + Nuru architecture discussion; use case and analysis captured for agent handoff
+- 2026-09-29: review oracle (ganda task work, tw-implementation-review effort 1, general). Round 1 raised M1–M5. Round 2 disposition accepted-exceptions (M1 wontfix).
 
 ## Notes for the implementer (2026-09-29)
 

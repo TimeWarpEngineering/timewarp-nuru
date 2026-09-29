@@ -95,7 +95,7 @@ Stdin and `@path` avoid all four. Inline JSON does not.
 
 `--json-args` and its value are peeled off the original `args` **before** route matching and **before** the config-arg filter.
 
-That filter (`IsConfigArg` in `interceptor-emitter.cs`) treats `--key=value` and `--key:value` as configuration overrides and drops them from `routeArgs`. `--json-args=-` and `--json-args={...}` would vanish and the command would run with no payload. **The `=` form is an error**, not a synonym: tell the caller to use a separate token (`--json-args -`, `--json-args @path`, or `--json-args '{...}'`).
+That filter (`IsConfigArg` in `interceptor-emitter.cs`) drops a `--` token when `=` or `:` sits past the prefix (`eqIdx > 2` or `colonIdx > 2`), and a `/` token whose second character is a letter when `=` or `:` sits past that slash. `--json-args=-`, `--json-args:{...}`, `/json-args={...}`, and `/json-args:...` would all vanish, and the command would run with no payload. **Every attached form is an error**, not a synonym: tell the caller to use a separate token (`--json-args -`, `--json-args @path`, or `--json-args '{...}'`).
 
 Matching then uses the remaining argv plus the already-parsed object:
 
@@ -103,10 +103,16 @@ Matching then uses the remaining argv plus the already-parsed object:
 2. A parameter slot may be the next argv token, or it may be omitted from argv when the JSON object contains that parameter's `name`.
 3. Every JSON key must be a parameter or option `name` on that route. A short `alias` is not a JSON key. Unknown keys eliminate the candidate.
 4. After argv ∪ JSON, every required parameter and required option is present.
-5. Zero candidates → exit 1. If the literals matched one route and the only problem is an unknown key, name the key, the pattern, and the known names.
+5. Zero candidates → exit 1. If the literals matched one route and the only problem is an unknown key, a type mismatch, or a missing required value, name that failure (the key, the pattern, and the known names or expected type). Do not collapse it to "Unknown command".
 6. Several candidates → prefer the route with more matched literals. If still tied, exit 1 and list the patterns. Do not guess.
 
-This is what makes `apply_patch --json-args -` work when `solution` and `patch` are not on argv, and what stops a zero-parameter `deploy` from stealing `{"env":"prod"}` that belongs to `deploy {env}`.
+A candidate is only a route that already satisfied 1–4. Calls that do not pass `--json-args` keep today's matcher (first match by `ComputedSpecificity` in `interceptor-emitter.cs`).
+
+This is what makes `apply_patch --json-args -` work when `solution` and `patch` are not on argv: those keys satisfy that route, and an unknown key eliminates any other literal match that does not declare them. A zero-parameter `deploy` does not steal `{"env":"prod"}` from `deploy {env}`.
+
+Do not break a tie with `ComputedSpecificity`. `deploy {env}` (literal 1000 + required parameter 100) and `deploy --env {env}` (literal 1000 + required option 75) can both bind `{"env":"prod"}`. The literal counts tie, so exit 1 and list both patterns. Silent first-match would run the positional route and hide the option route. Argv `deploy prod` is not this case: the token position selects one route before JSON is involved.
+
+NURU_R003 (Error) already rejects a lower route with the same required signature, such as `greet {name}` beside `greet {name} {title?}`. That pair is not two candidates in a compiling app. The tie rule does not replace it.
 
 **Merge: argv overrides JSON** for the same `name`. A key only in JSON is used. A key only in argv is used. When both set a repeated option, the argv list replaces the JSON array (no element-wise merge). This matches AWS CLI `--cli-input-json` (command line wins) and lets a human flip one flag while the bulk stays in the pipe.
 
@@ -116,19 +122,21 @@ Duplicate JSON keys: last one wins (System.Text.Json).
 
 ## Errors and exit codes
 
-Failures happen before the handler. They use `ITerminal.WriteErrorLineAsync` and **exit 1**, the same code the matcher already returns for an invalid value or an unknown command (`route-matcher-emitter.cs`, `EmitNoMatch`). Handlers keep using `Environment.ExitCode` for their own failures. Stdout stays available for successful command output.
+Failures happen before the handler. They use `ITerminal.WriteErrorLineAsync` and **exit 1**, the same code an invalid value already returns from `route-matcher-emitter.cs` and an unknown command returns from `EmitNoMatch` in `interceptor-emitter.cs`. Handlers keep using `Environment.ExitCode` for their own failures. Stdout stays available for successful command output.
 
 | Condition | Result |
 |-----------|--------|
 | Malformed JSON, JSON array, or JSON primitive | Exit 1, parse error, do not include the body |
-| `--json-args` missing its value, duplicated, or using `=` | Exit 1 |
+| `--json-args` missing its value, duplicated, or attached with `=` or `:` on `--` or `/` | Exit 1 |
 | `-` and stdin is a TTY (not redirected) | Exit 1. Do not block. |
 | `-` and stdin is empty or whitespace | Exit 1. A forgotten pipe is not `{}`. An explicit `{}` is valid and adds no keys. |
 | `@path` missing, unreadable, or a URI | Exit 1 |
 | Unknown key | Exit 1, name the key and the known names |
 | JSON type does not match the capability `type` | Exit 1, name the key and the expected type |
 | Required value still missing after merge | Exit 1, same idea as today's missing-parameter error |
-| `--help` / `-h` also present | Help wins. Do not read stdin. |
+| `--help` / `-h` is its own argv element, not the value of `--json-args` | Help wins. Do not read stdin. |
+| The token after `--json-args` is `--help`, `-h`, or another flag | That token is the value. It is not a legal payload, so exit 1. Do not treat it as the flag. |
+| Removing the `--json-args` pair leaves argv that already matches a built-in in `EmitBuiltInFlags` or `EmitCompletionRoutes` (`--version`, `--capabilities` with optional `--search` / `--group-filter`, `--check-updates`, completion routes) | Dispatch that built-in. Do not read stdin. |
 
 Error text names keys and types. It does not echo multi-KB string values (patches contain source).
 
@@ -167,7 +175,7 @@ Add an optional top-level object so an agent that only reads `--capabilities` le
 
 Do not emit a JSON Schema. `parameters[]` / `options[]` remain the schema. Root `--help` should list `--json-args` next to `--capabilities` (`help-emitter.cs`). Per-route help can add one line: values may come from `--json-args`.
 
-Reserve the flag beside the other built-ins in `BuiltInFlags`. An analyzer diagnostic should fire if a user option's long form is `json-args`, the same way user routes must not take `--help` or `--capabilities`.
+Reserve the flag beside the other built-ins in `BuiltInFlags`. No analyzer diagnostic today forbids a user route from taking `--help` or `--capabilities`. User routes are emitted before built-ins so authors can override those flags (`interceptor-emitter.cs`). `--json-args` must not follow that pattern. Peel it off the original `args` before user-route matching, and add a new diagnostic when a user option's long form is `json-args`. There is no existing diagnostic to copy.
 
 ## AOT and source generation
 
@@ -183,7 +191,7 @@ Behaviors and the handler run after binding, as they do today. They see the comm
 
 Inside the REPL, the input line is stdin (`repl-session.cs` → `CommandLineParser`). `--json-args -` there would consume the session. **Reject `-` in the REPL** with exit 1 and tell the caller to use `@path` or a single-line `'{"…"}'`. `@path` and quoted inline JSON work because `CommandLineParser` already keeps quoted strings. v1 does not add a multiline REPL paste mode.
 
-`--capabilities`, `--version`, `--help`, and the other built-ins are unchanged. `--json-args` is not a command and does not appear in the endpoint list except via the `invocation` object and help text.
+`--capabilities`, `--version`, `--help`, and the other built-ins keep their current argv shapes. If removing the `--json-args` pair leaves one of those shapes, dispatch it and do not read stdin. `--json-args` is not a command and does not appear in the endpoint list except via the `invocation` object and help text.
 
 ## Stdin on Unix and Windows
 
@@ -247,7 +255,7 @@ The cockpit files these after review. Do not create them from the research walk.
 
 ### 1. Bind `--json-args` in the Nuru source generator
 
-Reserve `--json-args` as a built-in with no short form, and diagnose user options that take that long form. On the original `args` array, before `IsConfigArg`, reject the `=` form and peel a single `-`, `@path`, or inline object. Parse with `JsonDocument`. Extend route selection so literal segments still match argv while parameter slots may be satisfied by JSON keys, using the candidate rules above (argv overrides JSON, unknown keys and type mismatches exit 1, TTY or empty stdin with `-` exits 1). Assign the same generated locals and command properties the matcher already assigns, via `TypeConversionMap` and `EnumTypeConverter`, with no reflection. Reject `-` inside the REPL; allow `@path` and quoted inline JSON there. Add a root-help row. Tests: merge precedence, unknown key, type mismatch, enum, repeated option, catch-all, `@file`, stdin larger than `MAX_ARG_STRLEN`, empty stdin, TTY stdin, `=` form, REPL rejection, and a route that matches only because required positionals are in the JSON object.
+Reserve `--json-args` as a built-in with no short form. Add a new diagnostic when a user option's long form is `json-args` (user routes may still override `--help`; do not copy a diagnostic that is not there). On the original `args` array, before `IsConfigArg` and before user routes, reject every attached form that filter would drop (`--json-args=`, `--json-args:`, `/json-args=`, `/json-args:`) and peel a single separate-token `-`, `@path`, or inline object. The next token is always the value, even when it looks like `--help`. If removing that pair leaves argv that already matches a built-in in `EmitBuiltInFlags` or `EmitCompletionRoutes`, dispatch it and do not read stdin. Parse with `JsonDocument`. Extend route selection so literal segments still match argv while parameter slots may be satisfied by JSON keys. A candidate must satisfy every key and every required slot. Prefer more matched literals; if still tied, exit 1 and list the patterns. Do not use `ComputedSpecificity` to break that tie (`deploy {env}` and `deploy --env {env}` can both bind `{"env":"prod"}`). Calls without `--json-args` keep today's matcher. NURU_R003 already rejects a same-required-signature sibling, so that pair is not the tie. Argv overrides JSON. Unknown keys and type mismatches exit 1. TTY or empty stdin with `-` exits 1. Assign the same generated locals and command properties the matcher already assigns, via `TypeConversionMap` and `EnumTypeConverter`, with no reflection. Reject `-` inside the REPL; allow `@path` and quoted inline JSON there. Add a root-help row. Tests: merge precedence, unknown key, type mismatch, enum, repeated option, catch-all, `@file`, stdin larger than `MAX_ARG_STRLEN`, empty stdin, TTY stdin, each attached form, equal-literal-count tie lists both patterns and exits 1, a built-in that remains after the pair is removed does not read stdin, REPL rejection, and a route that matches only because required positionals are in the JSON object.
 
 ### 2. Advertise invocation on `--capabilities` and document the contract
 

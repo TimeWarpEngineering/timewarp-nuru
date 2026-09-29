@@ -42,6 +42,12 @@ Routes auto-registered by `NuruApp.CreateBuilder()`:
 - `--interactive, -i` - Enter REPL mode
 - Configuration via [`NuruAppOptions`](../reference/nuru-app-options.md)
 
+### [Agent invocation](agent-invocation.md)
+How an agent calls a route with a large payload:
+- `--capabilities`, then `--json-args -` or `--json-args @path`
+- Exact `name` keys and argv-overrides-JSON
+- App-level fat field when the app does not emit `invocation`
+
 ### [Configuration](configuration.md)
 Microsoft.Extensions.Configuration and DependencyInjection integration:
 - Automatic loading from JSON files and environment variables
@@ -91,6 +97,7 @@ Built-in widgets for formatted terminal output:
 | ⚡ Zero-Overhead Logging | Optional, high-performance | [Logging](logging.md) |
 | 📖 Auto-Help | No manual documentation | [Auto-Help](auto-help.md) |
 | 🔧 Built-in Routes | Version, updates, REPL out-of-box | [Built-in Routes](built-in-routes.md) |
+| 🤖 Agent invocation | `--capabilities` then `--json-args` | [Agent invocation](agent-invocation.md) |
 | ⚙️ Configuration | IOptions<T> and DI integration | [Configuration](configuration.md) |
 | ⌨️ Shell Completion | Tab completion in all shells | [Shell Completion](shell-completion.md) |
 | 🎨 Colored Output | Testable ANSI colors | [Terminal Abstractions](terminal-abstractions.md) |

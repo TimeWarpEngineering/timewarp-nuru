@@ -521,6 +521,12 @@ For CLIs with multiple endpoint files, use a `Directory.Build.props` to include 
 </Project>
 ```
 
+## --capabilities
+
+`--capabilities` prints the agent catalog. `parameters[]` and `options[]` `name` values are the argument schema. The optional top-level `invocation` object names the `--json-args` transport (`-` for stdin, `@` for a file, `argvOverridesJson`).
+
+The agent loop, the exact-name rule, argv-overrides-JSON, and the app-level fat-field pattern are in [Agent invocation](../../documentation/user/features/agent-invocation.md).
+
 ## General Rules
 
 - `DiscoverEndpoints()` auto-discovers all `[NuruRoute]` classes

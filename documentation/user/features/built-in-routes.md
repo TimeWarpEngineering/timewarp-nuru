@@ -10,6 +10,8 @@ When you use `NuruApp.CreateBuilder()`, several utility routes are automatically
 | `--check-updates` | Check GitHub for newer versions |
 | `--help`, `-h` | Show help (see [Auto-Help](auto-help.md)) |
 | `--interactive`, `-i` | Enter REPL mode |
+| `--capabilities` | Machine-readable endpoint catalog for agents |
+| `--json-args <value>` | Bind parameter and option values from JSON |
 
 ## Version Route (`--version`, `-v`)
 
@@ -110,6 +112,12 @@ literal prefix, help prints each of them in that same layout, most specific firs
 prints that route alone. Longer commands and near-prefixes stay on their own help invocations.
 See [Auto-Help](auto-help.md) for the shared-prefix case.
 
+## Capabilities and JSON arguments
+
+`--capabilities` writes the endpoint catalog as JSON. `--json-args` binds values for the matched route from `-` (stdin), `@path`, or an inline object. The `invocation` object, the exact-name rule, argv-overrides-JSON, and the app-level fat-field pattern are in [Agent invocation](agent-invocation.md).
+
+`--json-args` is not an endpoint. It does not appear in the `endpoints` array. Root help lists it next to `--capabilities`.
+
 ## Disabling Built-in Routes
 
 You can disable specific routes using `NuruAppOptions`:
@@ -153,6 +161,7 @@ See [Architecture Choices](../guides/architecture-choices.md) for more guidance.
 
 ## Related Documentation
 
+- **[Agent invocation](agent-invocation.md)** - `--capabilities` then `--json-args`
 - **[Auto-Help](auto-help.md)** - Help generation and customization
 - **[REPL Key Bindings](repl-key-bindings.md)** - Interactive mode keyboard shortcuts
 - **[Getting Started](../getting-started.md)** - Quick start guide

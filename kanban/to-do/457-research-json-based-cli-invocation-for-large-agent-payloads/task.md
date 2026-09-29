@@ -31,33 +31,33 @@ This task is research + design recommendation + follow-up implementation task(s)
 
 ### Context & prior art
 
-- [ ] Re-read `--capabilities` model (`CapabilitiesResponse`, `EndpointCapability`, `EndpointKind`, `--group-filter` / `--search`)
-- [ ] Survey existing Nuru/MCP packages and samples for stdin or structured invoke patterns
-- [ ] Survey industry conventions: `-` = stdin, `@file` = path (`kubectl apply -f -`, `gh api --input -`, etc.)
-- [ ] Note OS limits: `ARG_MAX`, shell quoting, agent host shell nesting
+- [x] Re-read `--capabilities` model (`CapabilitiesResponse`, `EndpointCapability`, `EndpointKind`, `--group-filter` / `--search`)
+- [x] Survey existing Nuru/MCP packages and samples for stdin or structured invoke patterns
+- [x] Survey industry conventions: `-` = stdin, `@file` = path (`kubectl apply -f -`, `gh api --input -`, etc.)
+- [x] Note OS limits: `ARG_MAX`, shell quoting, agent host shell nesting
 
 ### Design options (evaluate and recommend)
 
-- [ ] **A. Fat-field only:** route via argv; one large option from stdin/file (e.g. `--patch -`)
-- [ ] **B. `--json-args`:** route via argv; params/options filled from JSON object on stdin/`@file`
-- [ ] **C. `--invoke-json`:** full call `{ "endpoint"|"pattern", "args": { ... } }` on stdin (CLI `tools/call`)
-- [ ] **D. App-only convention:** document pattern; no framework change (Roslynk implements `-`/`@file` itself)
-- [ ] Compare merge rules (argv vs JSON key conflicts), error UX, exit codes
-- [ ] Capabilities surface: advertise support? always-on? per-endpoint?
+- [x] **A. Fat-field only:** route via argv; one large option from stdin/file (e.g. `--patch -`)
+- [x] **B. `--json-args`:** route via argv; params/options filled from JSON object on stdin/`@file`
+- [x] **C. `--invoke-json`:** full call `{ "endpoint"|"pattern", "args": { ... } }` on stdin (CLI `tools/call`)
+- [x] **D. App-only convention:** document pattern; no framework change (Roslynk implements `-`/`@file` itself)
+- [x] Compare merge rules (argv vs JSON key conflicts), error UX, exit codes
+- [x] Capabilities surface: advertise support? always-on? per-endpoint?
 
 ### Feasibility
 
-- [ ] Source-gen / AOT binding path from JSON keys → endpoint properties
-- [ ] Interaction with REPL, help, and pipeline behaviors
-- [ ] Windows/Unix stdin behavior (redirect, non-TTY, binary-safe text)
-- [ ] Security notes (local CLI trust model; no new network surface)
+- [x] Source-gen / AOT binding path from JSON keys → endpoint properties
+- [x] Interaction with REPL, help, and pipeline behaviors
+- [x] Windows/Unix stdin behavior (redirect, non-TTY, binary-safe text)
+- [x] Security notes (local CLI trust model; no new network surface)
 
 ### Deliverables
 
-- [ ] Write `research/recommendation.md` (chosen option, UX examples, non-goals, open questions)
-- [ ] Optionally write `research/roslynk-use-case.md` (or keep use case in Notes — already captured below)
-- [ ] List proposed follow-up implementation task(s) in `research/recommendation.md` (do **not** run `ganda kanban create`; the cockpit files them after review)
-- [ ] Update `## Results` with How to validate (reviewers re-read recommendation + checklist)
+- [x] Write `research/recommendation.md` (chosen option, UX examples, non-goals, open questions)
+- [x] Optionally write `research/roslynk-use-case.md` (or keep use case in Notes — already captured below)
+- [x] List proposed follow-up implementation task(s) in `research/recommendation.md` (do **not** run `ganda kanban create`; the cockpit files them after review)
+- [x] Update `## Results` with How to validate (reviewers re-read recommendation + checklist)
 
 ## Notes
 
@@ -202,6 +202,18 @@ Researchers should decide whether this interim is enough as the *recommended* st
     recommendation.md          # required deliverable
     notes.md                   # optional working notes
 ```
+
+## Results
+
+Build **option B**: `--json-args` as the canonical agent invocation. Route literals stay on argv; one JSON object supplies parameter and option values using capability `name`s. `-` is stdin, `@path` is an optional file, and a file is never required. Argv overrides JSON. Unknown keys and type mismatches exit 1. Option C is rejected. Option D is the interim for Roslynk only. No `source/`, `tests/`, or `samples/` changes. Follow-up tasks are listed in the recommendation for the cockpit to file; this walk did not create them.
+
+- `research/recommendation.md` — decision, UX, merge and match rules, AOT path, stdin/REPL/security, MCP and task 142, two proposed implementation tasks
+- Use case stays in Notes (no separate `research/roslynk-use-case.md`)
+
+### How to validate
+
+- **Smoke:** Read `kanban/to-do/457-research-json-based-cli-invocation-for-large-agent-payloads/research/recommendation.md`. Confirm the decision is `--json-args` (option B), that it states a file is not required, that JSON keys are capability `name`s, and that it lists two follow-up tasks and does not add files under `source/`, `tests/`, or `samples/`. Re-read the checklist above; every item is checked.
+- **Expect:** The recommendation rejects `--invoke-json`, keeps human argv, specifies argv-overrides-JSON and exit code 1, calls out the `--json-args=` clash with `IsConfigArg`, and leaves task creation to the cockpit.
 
 ## Session
 

@@ -16,7 +16,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 
 This automatically creates:
 - `--help` or `-h` - Shows all available commands
-- `<command> --help` - Shows usage for specific command
+- `<command> --help` - Shows usage for that command. When several routes share its literal prefix, each of those routes is listed.
 
 ## Basic Help
 
@@ -68,6 +68,21 @@ Parameters:
 Options:
   --help, -h    Show this help message
 ```
+
+### Several routes with the same literal prefix
+
+When more than one route has the same leading literal segments, `<command> --help` prints every one of those routes. Each block uses the per-route layout above (pattern, description, parameters, options, and examples). The most specific route is printed first. A single matching route prints that route alone.
+
+```csharp
+.Map("deploy").WithDescription("Simple deploy").Done()
+.Map("deploy {env}").WithDescription("Deploy to environment").Done()
+```
+
+`deploy --help` prints `deploy {env}` and then `deploy`.
+
+Only routes whose leading literals equal the words typed are included. `deploy --help` does not include `deploy status` or `deployment`. A route under another group prefix is separate, so `git deploy` is not listed by `deploy --help`. The same rule applies to fluent `.Map(...)` routes, `[NuruRoute]` endpoints, and routes inside `.WithGroupPrefix(...)`.
+
+`worktree --help` prints the group summary when the subcommands add a further literal (`worktree add`, `worktree list`). That summary is the group listing, not this shared-prefix listing.
 
 ### With Options
 

@@ -89,6 +89,9 @@ internal static class HelpEmitter
       return;
     }
 
+    // Separate the Options table from the first command heading.
+    sb.AppendLine("    terminal.WriteLine();");
+
     // Group routes by GroupPrefix
     IEnumerable<IGrouping<string, RouteDefinition>> groups = visibleRoutes
       .GroupBy(r => r.GroupPrefix ?? "") // Empty string for no group

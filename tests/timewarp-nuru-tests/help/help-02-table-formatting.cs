@@ -6,6 +6,7 @@
 // Tests for table-formatted help output (Task #400).
 // Validates that --help uses terminal.WriteTable for commands, options, and per-route help.
 // Covers: command tables, option tables, parameter tables, typed parameters, catch-all, optional params.
+// Task 435: a blank line separates the Options table from the Commands heading.
 #endregion
 
 #if !JARIBU_MULTI
@@ -67,6 +68,28 @@ public class HelpTableFormattingTests
     terminal.OutputContains("Show this help message").ShouldBeTrue();
     terminal.OutputContains("--version").ShouldBeTrue();
     terminal.OutputContains("--capabilities").ShouldBeTrue();
+  }
+
+  public static async Task Should_separate_options_table_from_commands_heading()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .WithName("testapp")
+      .Map("status").WithHandler(() => "ok").WithDescription("Show status").Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["--help"]);
+    string output = terminal.Output;
+
+    // Assert — the options table border is followed by a blank line, then Commands.
+    exitCode.ShouldBe(0);
+    int gap = output.IndexOf("┘\n\n", StringComparison.Ordinal);
+    int commands = output.IndexOf("Commands:", StringComparison.Ordinal);
+    gap.ShouldBeGreaterThanOrEqualTo(0, $"Options table should be followed by a blank line. Output:\n{output}");
+    commands.ShouldBeGreaterThan(gap, $"Commands heading should follow the blank line. Output:\n{output}");
   }
 
   public static async Task Should_format_per_route_parameters_as_table()

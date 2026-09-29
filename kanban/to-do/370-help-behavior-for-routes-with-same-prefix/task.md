@@ -61,6 +61,27 @@ today. This is what the skipped test already expects:
 
 Discovered while testing per-route help (Task #356). Test skipped pending design decision.
 
+## Results
+
+`deploy --help` prints every route whose leading literal segments equal `deploy`, most specific first, in the existing per-route layout (pattern, description, parameters, options, examples). A single match stays that one route. `deployment` and `deploy status` are different literal sequences, and a `git deploy` route stays on `git deploy --help`.
+
+Shared-prefix help is emitted before the group summary. `.WithGroupPrefix("deploy")` with `""` and `{env}` therefore prints those two per-route blocks, and a longer subcommand such as `deploy status` is left out of that invocation. Group summaries for prefixes like `worktree` (where each subcommand adds another literal) are unchanged.
+
+Fluent `.Map`, `[NuruRoute]` endpoints, and grouped routes all go through the same check. No analyzer follow-up: the decision is to list the routes, not to diagnose them toward `{env?}` or a group.
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/help/help-01-per-route-help.cs
+```
+
+Expect: exit code 0, `Total: 19`, `Passed: 19`. `Should_show_help_for_multiple_routes_with_same_prefix` fails if either description is missing or `Deploy to environment` is not printed before `Simple deploy`.
+
+`dotnet build timewarp-nuru.slnx` succeeded with 0 warnings and 0 errors. `dotnet run tests/ci-tests/run-ci-tests.cs` exited 0: multi-mode total 1770, passed 1764, skipped 6 (`PerRouteHelp` 19 passed), and every standalone phase passed.
+
 ## Notes for the implementer
 
 - **Commit and push your changes before reporting done.**

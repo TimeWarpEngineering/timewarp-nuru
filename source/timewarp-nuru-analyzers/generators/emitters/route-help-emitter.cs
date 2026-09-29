@@ -1,14 +1,28 @@
 // Emits per-route help text generation code.
 // Generates inline help output for "command --help" scenarios.
 // Task #356: Per-route help support
+// Task #370: several routes with the same leading literals share one help invocation.
+
+#region Purpose
+// Emit help text for "command --help", including every route that shares that literal prefix.
+#endregion
+
+#region Design
+// A help invocation matches routes whose leading literal segments equal the typed words.
+// One match prints that route. Two or more print each route, most specific first, in the
+// same per-route layout. Longer commands (deploy status) and near-prefixes (deployment)
+// are different literal sequences, so they stay out. Group-prefix words are part of the
+// leading literals, which keeps another group's routes out of this invocation.
+// Shared-prefix help is emitted before group-summary help so an empty subcommand and
+// {env} under the same group prefix still print per-route blocks.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
 
 /// <summary>
-/// Emits code to generate help text for a specific route.
-/// Used when a user types "command --help" to show help for just that command.
+/// Emits code to generate help text for a route, or for every route that shares a literal prefix.
 /// </summary>
 internal static class RouteHelpEmitter
 {
@@ -18,14 +32,22 @@ internal static class RouteHelpEmitter
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="route">The route definition to emit help for.</param>
-  /// <param name="routeIndex">The index of this route (used for unique label names).</param>
+  /// <param name="routeIndex">The index of this route, written into the generated comment.</param>
+  /// <param name="sharedPrefixHelpRoutes">
+  /// Routes already printed by <see cref="EmitSharedPrefixHelpChecks"/>. Those routes skip
+  /// the single-route check so the same arguments are not handled twice.
+  /// </param>
   /// <param name="indent">Indentation level (number of spaces).</param>
   public static void EmitPerRouteHelpCheck(
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
+    HashSet<RouteDefinition>? sharedPrefixHelpRoutes = null,
     int indent = 4)
   {
+    if (sharedPrefixHelpRoutes?.Contains(route) == true)
+      return;
+
     string indentStr = new(' ', indent);
 
     // Get the literal prefix for this route (group prefix + pattern literals)
@@ -35,21 +57,10 @@ internal static class RouteHelpEmitter
     if (literalPrefix.Count == 0)
       return;
 
-    // Build the pattern match for: [literal1, literal2, ..., "--help" or "-h"]
-    StringBuilder patternBuilder = new();
-    patternBuilder.Append('[');
-    foreach (string literal in literalPrefix)
-    {
-      patternBuilder.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(literal)}\", ");
-    }
-
-    // Use BuiltInFlags constant for help forms
-    string helpFormsPattern = string.Join(" or ", BuiltInFlags.HelpForms.Select(f => $"\"{f}\""));
-    patternBuilder.Append($"{helpFormsPattern}]");
-    string helpPattern = patternBuilder.ToString();
+    string helpPattern = BuildHelpArgsPattern(literalPrefix);
 
     // Emit the help check
-    sb.AppendLine($"{indentStr}// Per-route help: {route.FullPattern} --help");
+    sb.AppendLine($"{indentStr}// Per-route help [{routeIndex}]: {route.FullPattern} --help");
     sb.AppendLine($"{indentStr}if (routeArgs is {helpPattern})");
     sb.AppendLine($"{indentStr}" + "{");
 
@@ -59,6 +70,87 @@ internal static class RouteHelpEmitter
     sb.AppendLine($"{indentStr}  return 0;");
     sb.AppendLine($"{indentStr}" + "}");
     sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits one help check per literal prefix shared by two or more routes.
+  /// Each check prints every sharing route, highest specificity first.
+  /// </summary>
+  /// <param name="sb">The StringBuilder to append to.</param>
+  /// <param name="routes">Routes that can answer a help invocation.</param>
+  /// <param name="indent">Indentation level (number of spaces).</param>
+  /// <returns>Routes covered by a shared-prefix check.</returns>
+  public static HashSet<RouteDefinition> EmitSharedPrefixHelpChecks(
+    StringBuilder sb,
+    IEnumerable<RouteDefinition> routes,
+    int indent = 4)
+  {
+    HashSet<RouteDefinition> covered = new(ReferenceEqualityComparer.Instance);
+    string indentStr = new(' ', indent);
+
+    List<(RouteDefinition Route, string Key, List<string> Prefix)> prefixed = [];
+    foreach (RouteDefinition route in routes)
+    {
+      List<string> prefix = GetLiteralPrefix(route);
+      if (prefix.Count == 0)
+        continue;
+
+      prefixed.Add((route, string.Join('\u001f', prefix), prefix));
+    }
+
+    foreach (IGrouping<string, (RouteDefinition Route, string Key, List<string> Prefix)> group in
+      prefixed.GroupBy(entry => entry.Key, StringComparer.Ordinal))
+    {
+      List<(RouteDefinition Route, string Key, List<string> Prefix)> matches = [.. group];
+      if (matches.Count < 2)
+        continue;
+
+      List<RouteDefinition> ordered =
+      [
+        .. matches
+          .Select(entry => entry.Route)
+          .OrderByDescending(route => route.ComputedSpecificity)
+      ];
+
+      string helpPattern = BuildHelpArgsPattern(matches[0].Prefix);
+      string patterns = string.Join(", ", ordered.Select(route => route.FullPattern));
+
+      sb.AppendLine($"{indentStr}// Shared-prefix help: {patterns}");
+      sb.AppendLine($"{indentStr}if (routeArgs is {helpPattern})");
+      sb.AppendLine($"{indentStr}" + "{");
+
+      for (int index = 0; index < ordered.Count; index++)
+      {
+        if (index > 0)
+          sb.AppendLine($"{indentStr}  app.Terminal.WriteLine();");
+
+        EmitRouteHelpContent(sb, ordered[index], indent + 2);
+        covered.Add(ordered[index]);
+      }
+
+      sb.AppendLine($"{indentStr}  return 0;");
+      sb.AppendLine($"{indentStr}" + "}");
+      sb.AppendLine();
+    }
+
+    return covered;
+  }
+
+  /// <summary>
+  /// Builds the list pattern for leading literals followed by a help flag.
+  /// </summary>
+  private static string BuildHelpArgsPattern(IReadOnlyList<string> literalPrefix)
+  {
+    StringBuilder patternBuilder = new();
+    patternBuilder.Append('[');
+    foreach (string literal in literalPrefix)
+    {
+      patternBuilder.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(literal)}\", ");
+    }
+
+    string helpFormsPattern = string.Join(" or ", BuiltInFlags.HelpForms.Select(form => $"\"{form}\""));
+    patternBuilder.Append($"{helpFormsPattern}]");
+    return patternBuilder.ToString();
   }
 
   /// <summary>
@@ -216,7 +308,9 @@ internal static class RouteHelpEmitter
 
   /// <summary>
   /// Emits code to check for group-level help (e.g., "worktree --help") and display group-specific help.
-  /// This should be called before user routes so groups get priority.
+  /// Call this after shared-prefix help and before route matching. A single route under the
+  /// group prefix still reaches this summary; two or more routes that share the prefix are
+  /// already printed by <see cref="EmitSharedPrefixHelpChecks"/>.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="routes">All routes to group by prefix.</param>
@@ -241,18 +335,7 @@ internal static class RouteHelpEmitter
       // Split prefix by spaces into words
       string[] words = groupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-      // Build pattern: ["word1", "word2", ..., "--help" or "-h"]
-      StringBuilder patternBuilder = new();
-      patternBuilder.Append('[');
-      foreach (string word in words)
-      {
-        patternBuilder.Append($"\"{EmitterStringUtils.EscapeForStringLiteral(word)}\", ");
-      }
-
-      // Use BuiltInFlags constant for help forms
-      string helpFormsPattern = string.Join(" or ", BuiltInFlags.HelpForms.Select(f => $"\"{f}\""));
-      patternBuilder.Append($"{helpFormsPattern}]");
-      string helpPattern = patternBuilder.ToString();
+      string helpPattern = BuildHelpArgsPattern(words);
 
       // Emit the group help check
       sb.AppendLine($"{indentStr}// Group-level help: {groupPrefix} --help");

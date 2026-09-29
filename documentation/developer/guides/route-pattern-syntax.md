@@ -169,7 +169,7 @@ NuruApp app = new NuruAppBuilder()
 
 This will automatically create help routes for:
 - `--help` - Shows all available commands
-- `command --help` - Shows help for specific command and its variations
+- `command --help` - Shows help for every route whose leading literals equal `command`, most specific first. One match prints that route. `deploy --help` does not include `deploy status` or `deployment`.
 
 ## Best Practices
 

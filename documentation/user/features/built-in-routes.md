@@ -105,7 +105,10 @@ See [REPL Key Bindings](repl-key-bindings.md) for keyboard shortcuts and customi
 
 Displays help information for your application. See [Auto-Help](auto-help.md) for details on customizing help output.
 Per-route help (`<command> --help`) also renders an "Examples:" section when the route declares
-usage examples via `[NuruRouteExample]` or `.WithExample()`.
+usage examples via `[NuruRouteExample]` or `.WithExample()`. When several routes share the typed
+literal prefix, help prints each of them in that same layout, most specific first. A single match
+prints that route alone. Longer commands and near-prefixes stay on their own help invocations.
+See [Auto-Help](auto-help.md) for the shared-prefix case.
 
 ## Disabling Built-in Routes
 

@@ -136,7 +136,8 @@ internal static class CapabilitiesEmitter
     }
 
     sb.AppendLine("      Filter = groupFilter is null ? null : new global::TimeWarp.Nuru.CapabilitiesFilter { Group = groupFilter },");
-    sb.AppendLine("      Endpoints = __filteredEndpoints");
+    sb.AppendLine("      Endpoints = __filteredEndpoints,");
+    sb.AppendLine("      Invocation = global::TimeWarp.Nuru.InvocationCapability.Standard");
     sb.AppendLine("    };");
   }
 

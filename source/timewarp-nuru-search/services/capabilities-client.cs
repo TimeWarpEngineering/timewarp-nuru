@@ -45,6 +45,7 @@ public sealed partial class CapabilitiesClient
         return null;
       }
 
+      // Search indexes endpoints. invocation stays in RawJson and is not copied here.
       return new CliCapabilities
       {
         Name = response.Name,

@@ -220,6 +220,45 @@ public class CapabilitiesBasicTests
     // Assert - description should not appear when null
     int descCount = CountOccurrences(json, "\"description\"");
     descCount.ShouldBe(0);
+    json.ShouldNotContain("\"invocation\"");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_omit_null_invocation_in_json()
+  {
+    CapabilitiesResponse response = new()
+    {
+      Name = "mytool",
+      Version = "1.0.0",
+      Endpoints = [],
+      Invocation = null
+    };
+
+    string json = System.Text.Json.JsonSerializer.Serialize(response, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+
+    json.ShouldNotContain("\"invocation\"");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_serialize_invocation_object()
+  {
+    CapabilitiesResponse response = new()
+    {
+      Name = "mytool",
+      Version = "1.0.0",
+      Endpoints = [],
+      Invocation = InvocationCapability.Standard
+    };
+
+    string json = System.Text.Json.JsonSerializer.Serialize(response, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+
+    json.ShouldContain("\"jsonArgs\": \"--json-args\"");
+    json.ShouldContain("\"stdin\": \"-\"");
+    json.ShouldContain("\"filePrefix\": \"@\"");
+    json.ShouldContain("\"merge\": \"argvOverridesJson\"");
+    json.ShouldContain("\"unknownKeys\": \"error\"");
 
     await Task.CompletedTask;
   }

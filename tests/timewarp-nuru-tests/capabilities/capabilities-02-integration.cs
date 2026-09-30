@@ -193,6 +193,12 @@ public class CapabilitiesIntegrationTests
     doc.RootElement.GetProperty("name").GetString().ShouldNotBeNullOrEmpty();
     doc.RootElement.GetProperty("version").GetString().ShouldNotBeNullOrEmpty();
     doc.RootElement.GetProperty("endpoints").ValueKind.ShouldBe(System.Text.Json.JsonValueKind.Array);
+    System.Text.Json.JsonElement invocation = doc.RootElement.GetProperty("invocation");
+    invocation.GetProperty("jsonArgs").GetString().ShouldBe("--json-args");
+    invocation.GetProperty("stdin").GetString().ShouldBe("-");
+    invocation.GetProperty("filePrefix").GetString().ShouldBe("@");
+    invocation.GetProperty("merge").GetString().ShouldBe("argvOverridesJson");
+    invocation.GetProperty("unknownKeys").GetString().ShouldBe("error");
   }
 
   public static async Task Should_deserialize_output_to_capabilities_response()
@@ -214,12 +220,23 @@ public class CapabilitiesIntegrationTests
     // Assert
     response.ShouldNotBeNull();
     response.Endpoints.Count.ShouldBeGreaterThan(0);
+    AssertStandardInvocation(response.Invocation);
 
     EndpointCapability greet = response.Endpoints.First(e => e.Pattern.Contains("greet"));
     greet.Kind.ShouldBe(EndpointKind.Query);
     greet.Description.ShouldBe("Greet someone");
     greet.Parameters.Count.ShouldBe(1);
     greet.Parameters[0].Name.ShouldBe("name");
+  }
+
+  private static void AssertStandardInvocation(InvocationCapability? invocation)
+  {
+    invocation.ShouldNotBeNull();
+    invocation.JsonArgs.ShouldBe("--json-args");
+    invocation.Stdin.ShouldBe("-");
+    invocation.FilePrefix.ShouldBe("@");
+    invocation.Merge.ShouldBe("argvOverridesJson");
+    invocation.UnknownKeys.ShouldBe("error");
   }
 }
 

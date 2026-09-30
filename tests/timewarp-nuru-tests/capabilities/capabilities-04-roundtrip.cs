@@ -132,6 +132,13 @@ public class CapabilitiesRoundtripTests
     doc.RootElement.GetProperty("name").GetString().ShouldNotBeNullOrEmpty();
     doc.RootElement.GetProperty("version").GetString().ShouldNotBeNullOrEmpty();
     doc.RootElement.GetProperty("endpoints").ValueKind.ShouldBe(System.Text.Json.JsonValueKind.Array);
+    System.Text.Json.JsonElement invocation = doc.RootElement.GetProperty("invocation");
+    invocation.EnumerateObject().Count().ShouldBe(5);
+    invocation.GetProperty("jsonArgs").GetString().ShouldBe("--json-args");
+    invocation.GetProperty("stdin").GetString().ShouldBe("-");
+    invocation.GetProperty("filePrefix").GetString().ShouldBe("@");
+    invocation.GetProperty("merge").GetString().ShouldBe("argvOverridesJson");
+    invocation.GetProperty("unknownKeys").GetString().ShouldBe("error");
 
     await Task.CompletedTask;
   }
@@ -152,6 +159,7 @@ public class CapabilitiesRoundtripTests
 
     response.ShouldNotBeNull();
     response.Endpoints.Count.ShouldBeGreaterThan(0);
+    AssertStandardInvocation(response.Invocation);
 
     EndpointCapability greet = response.Endpoints.First(e => e.Pattern.Contains("greet"));
     greet.Kind.ShouldBe(EndpointKind.Query);
@@ -206,6 +214,57 @@ public class CapabilitiesRoundtripTests
     greet.Parameters[0].AllowedValues.ShouldBeNull("String parameter should not have AllowedValues");
 
     await Task.CompletedTask;
+  }
+
+  public static async Task Should_roundtrip_invocation()
+  {
+    CapabilitiesResponse original = new()
+    {
+      Name = "mytool",
+      Version = "1.0.0",
+      Endpoints = [],
+      Invocation = InvocationCapability.Standard
+    };
+
+    string json = System.Text.Json.JsonSerializer.Serialize(original, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+    CapabilitiesResponse? roundtripped = System.Text.Json.JsonSerializer.Deserialize(json, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+
+    roundtripped.ShouldNotBeNull();
+    AssertStandardInvocation(roundtripped.Invocation);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_load_capabilities_document_that_omits_invocation()
+  {
+    string json =
+      """
+      {
+        "name": "oldtool",
+        "version": "0.1.0",
+        "endpoints": []
+      }
+      """;
+
+    CapabilitiesResponse? response = System.Text.Json.JsonSerializer.Deserialize(json, CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);
+
+    response.ShouldNotBeNull();
+    response.Name.ShouldBe("oldtool");
+    response.Version.ShouldBe("0.1.0");
+    response.Endpoints.Count.ShouldBe(0);
+    response.Invocation.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  private static void AssertStandardInvocation(InvocationCapability? invocation)
+  {
+    invocation.ShouldNotBeNull();
+    invocation.JsonArgs.ShouldBe("--json-args");
+    invocation.Stdin.ShouldBe("-");
+    invocation.FilePrefix.ShouldBe("@");
+    invocation.Merge.ShouldBe("argvOverridesJson");
+    invocation.UnknownKeys.ShouldBe("error");
   }
 }
 

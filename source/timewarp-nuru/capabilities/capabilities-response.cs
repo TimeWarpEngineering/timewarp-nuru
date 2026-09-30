@@ -11,6 +11,49 @@ public sealed class CapabilitiesResponse
   public string? Description { get; init; }
   public CapabilitiesFilter? Filter { get; init; }
   public required IReadOnlyList<EndpointCapability> Endpoints { get; init; }
+
+  // Omitted from JSON when null (WhenWritingNull), so a document without this property still loads.
+  public InvocationCapability? Invocation { get; init; }
+}
+
+/// <summary>
+/// Transport an agent uses to pass argument values for every generated app.
+/// The same object is emitted on every <c>--capabilities</c> document.
+/// </summary>
+public sealed class InvocationCapability
+{
+  /// <summary>Flag an agent passes. The value is <c>-</c>, <c>@path</c>, or an inline JSON object.</summary>
+  public const string JsonArgsFlag = "--json-args";
+
+  /// <summary>Value of <see cref="JsonArgs"/> that reads stdin to EOF.</summary>
+  public const string StdinValue = "-";
+
+  /// <summary>Prefix on a <see cref="JsonArgs"/> value that names a filesystem path.</summary>
+  public const string FilePrefixValue = "@";
+
+  /// <summary>Merge rule: an argv value for the same name replaces the JSON value.</summary>
+  public const string ArgvOverridesJsonMerge = "argvOverridesJson";
+
+  /// <summary>Unknown JSON keys are an error.</summary>
+  public const string UnknownKeysError = "error";
+
+  public required string JsonArgs { get; init; }
+  public required string Stdin { get; init; }
+  public required string FilePrefix { get; init; }
+  public required string Merge { get; init; }
+  public required string UnknownKeys { get; init; }
+
+  /// <summary>
+  /// The invocation object every generated app emits.
+  /// </summary>
+  public static InvocationCapability Standard { get; } = new()
+  {
+    JsonArgs = JsonArgsFlag,
+    Stdin = StdinValue,
+    FilePrefix = FilePrefixValue,
+    Merge = ArgvOverridesJsonMerge,
+    UnknownKeys = UnknownKeysError
+  };
 }
 
 /// <summary>

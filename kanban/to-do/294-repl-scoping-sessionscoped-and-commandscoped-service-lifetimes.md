@@ -41,6 +41,34 @@ When user writes `services.AddScoped<>()`:
 - In normal CLI mode → treat as `Singleton` (one invocation = one scope)
 - In REPL mode → treat as `CommandScoped` (each command = new scope)
 
+## Decision 2026-09-30 (cockpit)
+
+**Option A (extension methods):** `services.AddSessionScoped<TService, TImpl>()` and
+`services.AddCommandScoped<TService, TImpl>()` (plus factory overloads if `AddSingleton` has them). No new enum
+in the public API; an internal lifetime marker in the generator model is fine.
+
+Semantics:
+
+| Registration | Single CLI invocation | REPL |
+|---|---|---|
+| `AddSingleton` | one instance | one instance for the process |
+| `AddSessionScoped` | one instance | one instance for the REPL session; disposed when the REPL exits |
+| `AddCommandScoped` | one instance | a new instance per command; disposed after that command |
+| `AddScoped` | one instance (today's behavior) | **CommandScoped** |
+| `AddTransient` | new per resolution | new per resolution |
+
+`IDisposable` / `IAsyncDisposable` instances are disposed at the end of their scope (async first when both).
+
+**Both DI paths:** the source-generated static resolver (`service-resolver-emitter.cs`, which today maps
+Scoped to a static field around lines 100 and 363) and the Microsoft DI path
+(`.UseMicrosoftDependencyInjection()`): in REPL mode create an `IServiceScope` per command and dispose it
+after the command; session-scoped maps to the root provider with disposal at REPL exit. The generated
+mediator registration (`AddGeneratedMediator`, epic 443) must still resolve correctly per command.
+
+Tests: each row of the table in both DI paths (a REPL test that runs two commands and checks instance
+identity and disposal), plus a non-REPL invocation proving today's single-run behavior is unchanged.
+Document the table in the user docs next to the existing DI documentation.
+
 ## Checklist
 
 - [ ] Design API for SessionScoped/CommandScoped registration
@@ -77,3 +105,9 @@ __session_DbConnection?.Dispose();
 ## Notes
 
 This is a follow-up to #292 which initially treats `Scoped` as `Singleton`. This task adds proper REPL-aware scoping when needed.
+
+## Notes for the implementer
+
+- #292 (static service injection) is done; its Scoped-as-singleton fallback is the current behavior.
+- If a row of the table proves unworkable in one DI path, return `ORACLE_RESULT: Blocked — <row, path, reason>`.
+- Commit and push your changes before reporting done. Run the build and test gate in the foreground.

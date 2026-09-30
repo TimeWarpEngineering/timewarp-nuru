@@ -144,4 +144,11 @@ internal static class ReplLoggerMessages
       LogLevel.Debug,
       new EventId(2402, "ShowCompletionCandidatesStarted"),
       "Showing completion candidates for input: '{Input}'");
+
+  // ===== REPL Key Binding Config (2500-2509) =====
+  internal static readonly Action<ILogger, string, Exception?> KeyBindingConfigLoaded =
+    LoggerMessage.Define<string>(
+      LogLevel.Debug,
+      new EventId(2500, "KeyBindingConfigLoaded"),
+      "Loaded key binding config from '{Path}'");
 }

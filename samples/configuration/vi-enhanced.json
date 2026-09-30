@@ -1,0 +1,12 @@
+{
+  "name": "ViEnhanced",
+  "baseProfile": "Vi",
+  "overrides": {
+    "Ctrl+W": "UnixWordRubout"
+  },
+  "additions": {
+    "Ctrl+Left": "BackwardWord",
+    "Ctrl+Right": "ForwardWord",
+    "Ctrl+R": "ReverseSearchHistory"
+  }
+}

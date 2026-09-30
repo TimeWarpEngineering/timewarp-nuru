@@ -1,0 +1,13 @@
+{
+  "name": "Minimal",
+  "additions": {
+    "Enter": "Enter",
+    "Left": "BackwardChar",
+    "Right": "ForwardChar",
+    "Backspace": "BackwardDeleteChar",
+    "Ctrl+D": "DeleteCharOrExit"
+  },
+  "exitKeys": [
+    "Enter"
+  ]
+}

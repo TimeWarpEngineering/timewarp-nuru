@@ -1,0 +1,14 @@
+{
+  "name": "EmacsEnhanced",
+  "baseProfile": "Emacs",
+  "overrides": {
+    "Ctrl+K": "KillLineToRing"
+  },
+  "additions": {
+    "Left": "BackwardChar",
+    "Right": "ForwardChar",
+    "Up": "PreviousHistory",
+    "Down": "NextHistory",
+    "Ctrl+Shift+Z": "Redo"
+  }
+}

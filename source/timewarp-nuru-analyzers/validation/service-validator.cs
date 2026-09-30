@@ -434,7 +434,8 @@ internal static class ServiceValidator
           location,
           dependentService,
           dependentLifetime,
-          dependencyService));
+          dependencyService,
+          dependencyLifetime));
       }
     }
   }

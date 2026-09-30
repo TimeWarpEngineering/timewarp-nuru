@@ -414,10 +414,27 @@ internal static class HandlerInvokerEmitter
       return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
     }
 
-    // Runtime DI path: use GetServiceProvider{suffix}(app).GetRequiredService<T>()
+    // Runtime DI path: use the command scope when one is active.
+    // Session-scoped services stay on the root provider so a command scope does not dispose them.
     if (useRuntimeDI)
     {
-      return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{serviceTypeName}>(GetServiceProvider{runtimeDISuffix}(app))";
+      string normalizedServiceTypeName = serviceTypeName.StartsWith("global::", StringComparison.Ordinal)
+        ? serviceTypeName[8..]
+        : serviceTypeName;
+      ServiceDefinition? runtimeService = services.FirstOrDefault(service =>
+      {
+        if (service.IsInternalType)
+          return false;
+
+        string registered = service.ServiceTypeName.StartsWith("global::", StringComparison.Ordinal)
+          ? service.ServiceTypeName[8..]
+          : service.ServiceTypeName;
+        return registered == normalizedServiceTypeName;
+      });
+      string providerMethod = runtimeService?.Lifetime == ServiceLifetime.SessionScoped
+        ? $"GetServiceProvider{runtimeDISuffix}"
+        : $"GetResolutionProvider{runtimeDISuffix}";
+      return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{serviceTypeName}>({providerMethod}(app))";
     }
 
     if (FrameworkServices.IsMediatorServiceType(serviceTypeName))
@@ -440,22 +457,10 @@ internal static class HandlerInvokerEmitter
 
     if (service is not null)
     {
-      if (service.HasConstructorDependencies && service.Lifetime == ServiceLifetime.Transient)
-      {
-        // Transient with constructor deps: inline new T(resolvedDeps...)
-        string args = ServiceResolverEmitter.ResolveConstructorArguments(service, services);
-        return $"new {service.ImplementationTypeName}({args})";
-      }
+      if (service.Lifetime == ServiceLifetime.Transient)
+        return ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command);
 
-      if (service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
-      {
-        // Singleton/Scoped: use static field directly
-        string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
-        return fieldName;
-      }
-
-      // Transient without deps: new instance
-      return $"new {service.ImplementationTypeName}()";
+      return ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
     }
 
     // HttpClient typed service resolution: create implementation with static HttpClient field
@@ -510,21 +515,10 @@ internal static class HandlerInvokerEmitter
     ServiceDefinition? service = services.FirstOrDefault(s => !s.IsInternalType && s.ServiceTypeName == serviceTypeName);
     if (service is not null)
     {
-      if (service.HasConstructorDependencies && service.Lifetime == ServiceLifetime.Transient)
-      {
-        // Transient with constructor deps: inline new T(resolvedDeps...)
-        string args = ServiceResolverEmitter.ResolveConstructorArguments(service, services);
-        return $"new {service.ImplementationTypeName}({args})";
-      }
+      if (service.Lifetime == ServiceLifetime.Transient)
+        return ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command);
 
-      if (service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
-      {
-        // Singleton/Scoped: use static field directly
-        return InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
-      }
-
-      // Transient without deps: new instance
-      return $"new {service.ImplementationTypeName}()";
+      return ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
     }
 
     // Fallback: try direct instantiation

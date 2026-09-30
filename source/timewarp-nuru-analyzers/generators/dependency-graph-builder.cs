@@ -227,7 +227,6 @@ internal static class DependencyGraphBuilder
       if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
         continue;
 
-      // Only check Singleton and Scoped services
       if (service.Lifetime == ServiceLifetime.Transient)
         continue;
 
@@ -241,8 +240,7 @@ internal static class DependencyGraphBuilder
         if (serviceByImpl.TryGetValue(normalizedDep, out ServiceDefinition? depService) ||
             TryFindServiceByServiceType(services, normalizedDep, out depService))
         {
-          // Check if dependency is Transient
-          if (depService!.Lifetime == ServiceLifetime.Transient)
+          if (IsCaptiveDependency(service.Lifetime, depService!.Lifetime))
           {
             mismatches.Add((
               service.ShortImplementationTypeName,
@@ -255,6 +253,33 @@ internal static class DependencyGraphBuilder
     }
 
     return [.. mismatches];
+  }
+
+  /// <summary>
+  /// True when <paramref name="dependency"/> will not live as long as <paramref name="dependent"/>.
+  /// Scoped stays compatible with Singleton: a single CLI run still treats Scoped as one instance.
+  /// </summary>
+  private static bool IsCaptiveDependency(ServiceLifetime dependent, ServiceLifetime dependency)
+  {
+    if (dependent == ServiceLifetime.Transient)
+      return false;
+
+    if (dependency == ServiceLifetime.Transient)
+      return true;
+
+    if (dependent == ServiceLifetime.Singleton &&
+        dependency is ServiceLifetime.SessionScoped or ServiceLifetime.CommandScoped)
+    {
+      return true;
+    }
+
+    if (dependent == ServiceLifetime.SessionScoped &&
+        dependency is ServiceLifetime.CommandScoped or ServiceLifetime.Scoped)
+    {
+      return true;
+    }
+
+    return false;
   }
 
   /// <summary>

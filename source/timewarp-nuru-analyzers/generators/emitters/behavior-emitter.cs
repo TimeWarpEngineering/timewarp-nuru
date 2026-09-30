@@ -401,8 +401,10 @@ internal static class BehaviorEmitter
 
     if (service is not null)
     {
-      string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
-      return fieldName;
+      if (service.Lifetime == ServiceLifetime.Transient)
+        return ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command);
+
+      return ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
     }
 
     // Fallback: emit error

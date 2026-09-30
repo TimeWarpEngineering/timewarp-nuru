@@ -71,15 +71,15 @@ Document the table in the user docs next to the existing DI documentation.
 
 ## Checklist
 
-- [ ] Design API for SessionScoped/CommandScoped registration
-- [ ] Extend `ServiceDefinition` or create `NuruServiceLifetime` enum
-- [ ] Update `ServiceExtractor` to recognize new registration patterns
-- [ ] Update emitter to generate scoped instance management
-- [ ] For SessionScoped: emit field that persists across REPL commands
-- [ ] For CommandScoped: emit new instance per command invocation
-- [ ] Handle `IDisposable` services - dispose at scope end
-- [ ] Update REPL loop to manage scope lifecycle
-- [ ] Document scoping behavior differences from ASP.NET
+- [x] Design API for SessionScoped/CommandScoped registration
+- [x] Extend `ServiceDefinition` or create `NuruServiceLifetime` enum
+- [x] Update `ServiceExtractor` to recognize new registration patterns
+- [x] Update emitter to generate scoped instance management
+- [x] For SessionScoped: emit field that persists across REPL commands
+- [x] For CommandScoped: emit new instance per command invocation
+- [x] Handle `IDisposable` services - dispose at scope end
+- [x] Update REPL loop to manage scope lifecycle
+- [x] Document scoping behavior differences from ASP.NET
 
 ## Generated Code Concept
 
@@ -111,3 +111,28 @@ This is a follow-up to #292 which initially treats `Scoped` as `Singleton`. This
 - #292 (static service injection) is done; its Scoped-as-singleton fallback is the current behavior.
 - If a row of the table proves unworkable in one DI path, return `ORACLE_RESULT: Blocked — <row, path, reason>`.
 - Commit and push your changes before reporting done. Run the build and test gate in the foreground.
+
+## Results
+
+Option A is the public API: `AddSessionScoped` and `AddCommandScoped` (type, factory, and `TryAdd` overloads; `AddSessionScoped` also accepts an instance). Lifetimes are an internal generator enum, not a public one.
+
+Both DI paths follow the decision table. Source-generated DI keeps session instances in `__ses_` fields and command or REPL-scoped instances in `__cmd_` fields. A single CLI invocation still treats `AddScoped` as one process instance and does not dispose it. The REPL disposes command-scoped and `AddScoped` instances after each command, and session-scoped instances when the REPL exits. `DisposeAsync` is used when a type implements both dispose interfaces.
+
+`UseMicrosoftDependencyInjection()` maps session scope to a root cache (`NuruSessionCache`) and command scope to `NuruCommandCache`. In the REPL, each command gets an `IServiceScope` so `AddScoped` is command-scoped; session services are constructed from the root so that scope does not dispose them. `AddGeneratedMediator` still resolves per command. Starting the REPL (`--interactive`) does not open a command cache, so nested commands can begin their own.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet tests/ci-tests/run-ci-tests.cs
+ganda repo audit
+dotnet run tests/timewarp-nuru-tests/generator/generator-51-repl-service-scopes.cs
+```
+
+Expect:
+
+- The CI runner exits 0. Multi-mode total 1797, passed 1791, skipped 6, failed 0. Standalone phase passes.
+- `ganda repo audit` prints "Repository passes all audit checks." Passed 29, Failed 0. (`bin/dev` is gitignored; `ganda repo audit --fix` ran `self-install`.)
+- `generator-51-repl-service-scopes.cs` exits 0 with 4 passed: source-generated and runtime DI, each covering one CLI invocation and a REPL script of two `check` commands plus `ping`. Singleton identity is stable and not disposed. Session identity is stable across the two REPL commands and disposed once on exit. Command-scoped and REPL `AddScoped` identities change per command and are disposed after the command. Transient identity changes per resolution. `ping` prints `pong` through the generated mediator.
+

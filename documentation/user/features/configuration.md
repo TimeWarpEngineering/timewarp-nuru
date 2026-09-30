@@ -179,11 +179,35 @@ NuruApp app = NuruApp.CreateBuilder(args)
 
 ### Service Lifetimes
 
-Standard .NET service lifetimes are supported:
+A single CLI invocation runs one command. The REPL runs many commands in one process.
+`AddScoped` stays one instance for a single invocation, which is how source-generated DI has always behaved.
+In the REPL it follows command scope.
 
-- `AddSingleton<T>()` - One instance for the application lifetime
-- `AddScoped<T>()` - One instance per command execution
-- `AddTransient<T>()` - New instance every time
+| Registration | Single CLI invocation | REPL |
+|---|---|---|
+| `AddSingleton` | One instance | One instance for the process |
+| `AddSessionScoped` | One instance, disposed when the invocation ends | One instance for the REPL session, disposed when the REPL exits |
+| `AddCommandScoped` | One instance, disposed when the invocation ends | A new instance per command, disposed after that command |
+| `AddScoped` | One instance (same as a single run has always done) | Command scope: a new instance per command, disposed after that command |
+| `AddTransient` | A new instance per resolution | A new instance per resolution |
+
+`IDisposable` and `IAsyncDisposable` instances are disposed at the end of that lifetime. When a type implements both, Nuru calls `DisposeAsync` only.
+
+```csharp
+.ConfigureServices(services =>
+{
+  services.AddSingleton<IClock, SystemClock>();
+  services.AddSessionScoped<IDbConnection, DbConnection>();
+  services.AddCommandScoped<IUnitOfWork, UnitOfWork>();
+  services.AddScoped<IRepository, Repository>();
+  services.AddTransient<IIdFactory, IdFactory>();
+})
+```
+
+`AddSessionScoped` and `AddCommandScoped` take the same factory overloads as `AddSingleton`.
+In the REPL, `UseMicrosoftDependencyInjection()` opens an `IServiceScope` per command and disposes it after the command.
+Session-scoped services stay on the root provider and are disposed when the REPL exits.
+`AddGeneratedMediator()` still resolves for each command.
 
 ## User Secrets
 

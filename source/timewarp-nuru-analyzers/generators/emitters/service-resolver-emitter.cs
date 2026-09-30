@@ -76,11 +76,16 @@ internal static class ServiceResolverEmitter
       return;
     }
 
-    // Runtime DI path: use GetServiceProvider{suffix}(app).GetRequiredService<T>()
+    // Runtime DI path: use the command scope when one is active.
+    // Session-scoped services stay on the root provider so a command scope does not dispose them.
     if (useRuntimeDI)
     {
+      ServiceDefinition? runtimeService = FindService(typeName, services);
+      string providerMethod = runtimeService?.Lifetime == ServiceLifetime.SessionScoped
+        ? $"GetServiceProvider{runtimeDISuffix}"
+        : $"GetResolutionProvider{runtimeDISuffix}";
       sb.AppendLine(
-        $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>(GetServiceProvider{runtimeDISuffix}(app));");
+        $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>({providerMethod}(app));");
       return;
     }
 
@@ -97,25 +102,15 @@ internal static class ServiceResolverEmitter
     ServiceDefinition? service = FindService(typeName, services);
     if (service is not null)
     {
-      if (service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+      if (service.Lifetime == ServiceLifetime.Transient)
       {
-        // Singleton/Scoped: use static field directly
-        string fieldName = InterceptorEmitter.GetServiceFieldName(service.ImplementationTypeName);
         sb.AppendLine(
-          $"{indent}{typeName} {varName} = {fieldName};");
-      }
-      else if (service.HasConstructorDependencies)
-      {
-        // Transient with constructor deps: inline new T(resolvedDeps...)
-        string args = ResolveConstructorArguments(service, services);
-        sb.AppendLine(
-          $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}({args});");
+          $"{indent}{typeName} {varName} = {ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command)};");
       }
       else
       {
-        // Transient without deps: new instance each time
         sb.AppendLine(
-          $"{indent}{typeName} {varName} = new {service.ImplementationTypeName}();");
+          $"{indent}{typeName} {varName} = {ServiceScopeExpressions.Read(service, ServiceResolveMode.Command)};");
       }
 
       return;
@@ -325,27 +320,32 @@ internal static class ServiceResolverEmitter
   /// Resolves all constructor arguments for a service to their compile-time expressions.
   /// Uses ConstructorParameters if available for detailed resolution including optional params.
   /// </summary>
-  internal static string ResolveConstructorArguments(ServiceDefinition service, ImmutableArray<ServiceDefinition> services)
+  internal static string ResolveConstructorArguments
+  (
+    ServiceDefinition service,
+    ImmutableArray<ServiceDefinition> services,
+    ServiceResolveMode mode = ServiceResolveMode.Command
+  )
   {
     // Prefer ConstructorParameters if available (has detailed info)
     if (!service.ConstructorParameters.IsDefaultOrEmpty && service.ConstructorParameters.Length > 0)
     {
       return string.Join(", ", service.ConstructorParameters
-        .Select(param => ResolveParameterExpression(param, services)));
+        .Select(param => ResolveParameterExpression(param, services, mode)));
     }
 
     // Fallback to ConstructorDependencyTypes
     if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
       return "";
 
-    return string.Join(", ", service.ConstructorDependencyTypes.Select(dep => ResolveDepExpression(dep, services)));
+    return string.Join(", ", service.ConstructorDependencyTypes.Select(dep => ResolveDepExpression(dep, services, mode)));
   }
 
   /// <summary>
   /// Resolves a single constructor parameter to its compile-time expression.
   /// Handles optional parameters with default values.
   /// </summary>
-  private static string ResolveParameterExpression(ConstructorParameter param, ImmutableArray<ServiceDefinition> services)
+  private static string ResolveParameterExpression(ConstructorParameter param, ImmutableArray<ServiceDefinition> services, ServiceResolveMode mode)
   {
     // Framework service types (ITerminal, IConfiguration, NuruApp, etc.)
     if (FrameworkServices.IsFrameworkServiceType(param.TypeName))
@@ -360,22 +360,10 @@ internal static class ServiceResolverEmitter
     ServiceDefinition? depService = FindService(param.TypeName, services);
     if (depService is not null)
     {
-      // Singleton/Scoped: use static field directly
-      if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
-      {
-        string fieldName = InterceptorEmitter.GetServiceFieldName(depService.ImplementationTypeName);
-        return fieldName;
-      }
+      if (depService.Lifetime == ServiceLifetime.Transient)
+        return ServiceScopeExpressions.Construct(depService, services, mode);
 
-      // Transient with constructor deps: inline new T(resolvedDeps...)
-      if (depService.HasConstructorDependencies)
-      {
-        string innerArgs = ResolveConstructorArguments(depService, services);
-        return $"new {depService.ImplementationTypeName}({innerArgs})";
-      }
-
-      // Transient without deps: new instance
-      return $"new {depService.ImplementationTypeName}()";
+      return ServiceScopeExpressions.Read(depService, mode);
     }
 
     // Optional parameter with default value - use the default
@@ -392,7 +380,7 @@ internal static class ServiceResolverEmitter
   /// Resolves a single dependency type to its compile-time expression.
   /// Maps framework types to their known sources and registered services to their instantiation.
   /// </summary>
-  private static string ResolveDepExpression(string depType, ImmutableArray<ServiceDefinition> services)
+  private static string ResolveDepExpression(string depType, ImmutableArray<ServiceDefinition> services, ServiceResolveMode mode)
   {
     // Framework service types (ITerminal, IConfiguration, NuruApp, etc.)
     if (FrameworkServices.IsFrameworkServiceType(depType))
@@ -407,22 +395,10 @@ internal static class ServiceResolverEmitter
     ServiceDefinition? depService = FindService(depType, services);
     if (depService is not null)
     {
-      // Singleton/Scoped: use static field directly
-      if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
-      {
-        string fieldName = InterceptorEmitter.GetServiceFieldName(depService.ImplementationTypeName);
-        return fieldName;
-      }
+      if (depService.Lifetime == ServiceLifetime.Transient)
+        return ServiceScopeExpressions.Construct(depService, services, mode);
 
-      // Transient with constructor deps: inline new T(resolvedDeps...)
-      if (depService.HasConstructorDependencies)
-      {
-        string innerArgs = ResolveConstructorArguments(depService, services);
-        return $"new {depService.ImplementationTypeName}({innerArgs})";
-      }
-
-      // Transient without deps: new instance
-      return $"new {depService.ImplementationTypeName}()";
+      return ServiceScopeExpressions.Read(depService, mode);
     }
 
     // Unresolvable - NURU051 validator will report the error

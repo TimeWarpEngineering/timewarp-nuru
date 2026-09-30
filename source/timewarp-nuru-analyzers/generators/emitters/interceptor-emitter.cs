@@ -341,17 +341,31 @@ internal static class InterceptorEmitter
     // Transient services are instantiated inline but still need framework service fields
     HashSet<string> frameworkServiceTypes = CollectFrameworkServiceTypes(allServices);
 
-    // Filter to Singleton/Scoped and remove duplicates
-    ServiceDefinition[] cachedServices =
+    // Filter to process-cached services (Singleton and non-REPL Scoped) and remove duplicates
+    ServiceDefinition[] processServices =
     [
       .. allServices
-        .Where(s => s.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
-        .DistinctBy(s => s.ImplementationTypeName)
+        .Where(static service => service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
+        .DistinctBy(static service => service.ImplementationTypeName)
+    ];
+
+    ServiceDefinition[] sessionServices =
+    [
+      .. allServices
+        .Where(static service => service.Lifetime == ServiceLifetime.SessionScoped)
+        .DistinctBy(static service => service.ImplementationTypeName)
+    ];
+
+    ServiceDefinition[] commandServices =
+    [
+      .. allServices
+        .Where(static service => service.Lifetime == ServiceLifetime.CommandScoped)
+        .DistinctBy(static service => service.ImplementationTypeName)
     ];
 
     // Sort services topologically (dependencies first)
-    ImmutableArray<ServiceDefinition> sortedServices =
-      DependencyGraphBuilder.TopologicalSort([.. cachedServices]);
+    ImmutableArray<ServiceDefinition> sortedProcessServices =
+      DependencyGraphBuilder.TopologicalSort([.. processServices]);
 
     sb.AppendLine("  // Static service fields (initialized in EnsureServicesInitialized)");
     sb.AppendLine("  // Services are sorted topologically to ensure dependencies are emitted first");
@@ -371,17 +385,43 @@ internal static class InterceptorEmitter
     }
 
     // Emit user service fields
-    foreach (ServiceDefinition service in sortedServices)
+    foreach (ServiceDefinition service in sortedProcessServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
       sb.AppendLine(
         $"  private static {service.ImplementationTypeName}? {fieldName};");
     }
 
+    foreach (ServiceDefinition service in sessionServices)
+    {
+      sb.AppendLine(
+        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.SessionField(service.ImplementationTypeName)};");
+    }
+
+    foreach (ServiceDefinition service in commandServices)
+    {
+      sb.AppendLine(
+        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)};");
+    }
+
+    // REPL Scoped uses a per-command field. Non-REPL Scoped keeps the process field above.
+    foreach (ServiceDefinition service in sortedProcessServices.Where(static service => service.Lifetime == ServiceLifetime.Scoped))
+    {
+      sb.AppendLine(
+        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)};");
+    }
+
+    sb.AppendLine("  private static bool __replCommandActive;");
+    sb.AppendLine("  private static bool __sessionServicesReady;");
+    sb.AppendLine("  private static bool __nonReplScopedReady;");
+    sb.AppendLine("  private static readonly global::System.Collections.Generic.List<object> __commandDisposables = new();");
+    sb.AppendLine("  private static readonly global::System.Collections.Generic.List<object> __sessionDisposables = new();");
+
     sb.AppendLine();
 
     // Emit EnsureServicesInitialized method
-    EmitEnsureServicesInitialized(sb, sortedServices, allServices, frameworkServiceTypes, requiresMediator);
+    EmitEnsureServicesInitialized(sb, sortedProcessServices, allServices, frameworkServiceTypes, requiresMediator);
+    EmitSourceGenScopeMethods(sb, allServices, sortedProcessServices);
 
     if (requiresMediator)
       EmitSourceGenMediator(sb, allServices, hasGeneratedMediator, loggerFactoryFieldName);
@@ -431,9 +471,9 @@ internal static class InterceptorEmitter
 
     foreach (ServiceDefinition service in allServices.DistinctBy(s => s.ServiceTypeName))
     {
-      string factory = service.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped
-        ? $"{GetServiceFieldName(service.ImplementationTypeName)}!"
-        : $"new {service.ImplementationTypeName}({ServiceResolverEmitter.ResolveConstructorArguments(service, allServices)})";
+      string factory = service.Lifetime == ServiceLifetime.Transient
+        ? ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.Command)
+        : ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
       sb.AppendLine($"      {Sce}.AddTransient<{service.ServiceTypeName}>(services, static _ => {factory});");
     }
 
@@ -489,10 +529,16 @@ internal static class InterceptorEmitter
   /// </summary>
   private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, ImmutableArray<ServiceDefinition> allServices, HashSet<string> frameworkServiceTypes, bool requiresMediator)
   {
-    sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
+    sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration, bool fromRepl)");
     sb.AppendLine("  {");
-    // Check if already initialized for THIS app instance (supports multiple apps in same process)
-    sb.AppendLine("    if (__fw_NuruApp == app) return;");
+    // Already initialized for this app. Non-REPL Scoped is created on the first single-run
+    // command when the first call was a REPL command (which skips process-scoped fields).
+    sb.AppendLine("    if (__fw_NuruApp == app)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      if (!fromRepl)");
+    sb.AppendLine("        EnsureNonReplScoped();");
+    sb.AppendLine("      return;");
+    sb.AppendLine("    }");
     sb.AppendLine();
 
     // Initialize framework services
@@ -518,152 +564,178 @@ internal static class InterceptorEmitter
 
     sb.AppendLine();
 
-    // Initialize user services in topological order
+    // Initialize user services in topological order.
+    // Scoped process fields are skipped in the REPL so each command can construct __cmd_ instead.
     sb.AppendLine("    // User services");
     foreach (ServiceDefinition service in sortedServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
-      if (service.HasConstructorDependencies)
+      string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
+      if (service.Lifetime == ServiceLifetime.Scoped)
       {
-        string args = ResolveConstructorArgumentsForInit(service, allServices);
-        sb.AppendLine(
-          $"    {fieldName} = new {service.ImplementationTypeName}({args});");
+        sb.AppendLine("    if (!fromRepl && !__nonReplScopedReady)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"      {fieldName} = {constructed};");
+        sb.AppendLine("    }");
       }
       else
       {
-        sb.AppendLine(
-          $"    {fieldName} = new {service.ImplementationTypeName}();");
+        sb.AppendLine($"    {fieldName} = {constructed};");
       }
     }
 
+    sb.AppendLine("    if (!fromRepl)");
+    sb.AppendLine("      __nonReplScopedReady = true;");
     sb.AppendLine("  }");
     sb.AppendLine();
   }
 
   /// <summary>
-  /// Resolves constructor arguments for service initialization.
-  /// Framework services use __fw_* fields, user services use __svc_* fields.
+  /// Emits session and command scope helpers for source-generated DI.
   /// </summary>
-  private static string ResolveConstructorArgumentsForInit(ServiceDefinition service, ImmutableArray<ServiceDefinition> allServices)
+  private static void EmitSourceGenScopeMethods
+  (
+    StringBuilder sb,
+    ImmutableArray<ServiceDefinition> allServices,
+    ImmutableArray<ServiceDefinition> sortedProcessServices
+  )
   {
-    if (!service.ConstructorParameters.IsDefaultOrEmpty && service.ConstructorParameters.Length > 0)
+    ImmutableArray<ServiceDefinition> sessionServices = DependencyGraphBuilder.TopologicalSort
+    (
+      [.. allServices.Where(static service => service.Lifetime == ServiceLifetime.SessionScoped).DistinctBy(static service => service.ImplementationTypeName)]
+    );
+    ImmutableArray<ServiceDefinition> commandServices = DependencyGraphBuilder.TopologicalSort
+    (
+      [.. allServices.Where(static service => service.Lifetime == ServiceLifetime.CommandScoped).DistinctBy(static service => service.ImplementationTypeName)]
+    );
+    ImmutableArray<ServiceDefinition> replCommandServices = DependencyGraphBuilder.TopologicalSort
+    (
+      [
+        .. allServices
+          .Where(static service => service.Lifetime is ServiceLifetime.CommandScoped or ServiceLifetime.Scoped)
+          .DistinctBy(static service => service.ImplementationTypeName)
+      ]
+    );
+
+    sb.AppendLine("  private static T __TrackCommand<T>(T instance) where T : class");
+    sb.AppendLine("  {");
+    sb.AppendLine("    if (instance is global::System.IDisposable or global::System.IAsyncDisposable)");
+    sb.AppendLine("      __commandDisposables.Add(instance);");
+    sb.AppendLine("    return instance;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+    sb.AppendLine("  private static T __TrackSession<T>(T instance) where T : class");
+    sb.AppendLine("  {");
+    sb.AppendLine("    if (instance is global::System.IDisposable or global::System.IAsyncDisposable)");
+    sb.AppendLine("      __sessionDisposables.Add(instance);");
+    sb.AppendLine("    return instance;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+    sb.AppendLine("  private static async global::System.Threading.Tasks.ValueTask __DisposeTrackedAsync(global::System.Collections.Generic.List<object> items)");
+    sb.AppendLine("  {");
+    sb.AppendLine("    for (int i = items.Count - 1; i >= 0; i--)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      object instance = items[i];");
+    sb.AppendLine("      if (instance is global::System.IAsyncDisposable asyncDisposable)");
+    sb.AppendLine("        await asyncDisposable.DisposeAsync().ConfigureAwait(false);");
+    sb.AppendLine("      else if (instance is global::System.IDisposable disposable)");
+    sb.AppendLine("        disposable.Dispose();");
+    sb.AppendLine("    }");
+    sb.AppendLine("    items.Clear();");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+
+    sb.AppendLine("  private static void EnsureSessionServices()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    if (__sessionServicesReady) return;");
+    sb.AppendLine("    __sessionServicesReady = true;");
+    EmitConstructions(sb, sessionServices, allServices, ServiceResolveMode.Session, ServiceScopeExpressions.SessionField, "    ");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+
+    sb.AppendLine("  private static void EnsureNonReplScoped()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    if (__nonReplScopedReady) return;");
+    sb.AppendLine("    __nonReplScopedReady = true;");
+    foreach (ServiceDefinition service in sortedProcessServices.Where(static service => service.Lifetime == ServiceLifetime.Scoped))
     {
-      return string.Join(", ", service.ConstructorParameters
-        .Select(param => ResolveParameterForInit(param, allServices)));
+      string fieldName = GetServiceFieldName(service.ImplementationTypeName);
+      string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
+      sb.AppendLine($"    {fieldName} = {constructed};");
     }
 
-    if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
-      return "";
+    sb.AppendLine("  }");
+    sb.AppendLine();
 
-    return string.Join(", ", service.ConstructorDependencyTypes
-      .Select(dep => ResolveDepForInit(dep, allServices)));
+    sb.AppendLine("  private static void BeginReplCommandServices()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    EnsureSessionServices();");
+    EmitConstructions(sb, replCommandServices, allServices, ServiceResolveMode.Command, ServiceScopeExpressions.CommandField, "    ");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+
+    sb.AppendLine("  private static void BeginSingleRunServices()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    EnsureSessionServices();");
+    EmitConstructions(sb, commandServices, allServices, ServiceResolveMode.Command, ServiceScopeExpressions.CommandField, "    ");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+
+    sb.AppendLine("  private static async global::System.Threading.Tasks.ValueTask EndReplCommandServicesAsync()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    await __DisposeTrackedAsync(__commandDisposables).ConfigureAwait(false);");
+    EmitNullAssignments(sb, replCommandServices, ServiceScopeExpressions.CommandField, "    ");
+    sb.AppendLine("    __replCommandActive = false;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+
+    sb.AppendLine("  private static async global::System.Threading.Tasks.ValueTask EndSingleRunServicesAsync()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    await __DisposeTrackedAsync(__commandDisposables).ConfigureAwait(false);");
+    sb.AppendLine("    await __DisposeTrackedAsync(__sessionDisposables).ConfigureAwait(false);");
+    EmitNullAssignments(sb, commandServices, ServiceScopeExpressions.CommandField, "    ");
+    EmitNullAssignments(sb, sessionServices, ServiceScopeExpressions.SessionField, "    ");
+    sb.AppendLine("    __sessionServicesReady = false;");
+    sb.AppendLine("    __replCommandActive = false;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+
+    sb.AppendLine("  private static async global::System.Threading.Tasks.ValueTask EndReplSessionServicesAsync()");
+    sb.AppendLine("  {");
+    sb.AppendLine("    await __DisposeTrackedAsync(__sessionDisposables).ConfigureAwait(false);");
+    EmitNullAssignments(sb, sessionServices, ServiceScopeExpressions.SessionField, "    ");
+    sb.AppendLine("    __sessionServicesReady = false;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
   }
 
-  /// <summary>
-  /// Resolves a single constructor parameter for service initialization.
-  /// </summary>
-  private static string ResolveParameterForInit(ConstructorParameter param, ImmutableArray<ServiceDefinition> allServices)
+  private static void EmitConstructions
+  (
+    StringBuilder sb,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<ServiceDefinition> allServices,
+    ServiceResolveMode mode,
+    Func<string, string> fieldName,
+    string indent
+  )
   {
-    // Framework service types
-    if (FrameworkServices.IsFrameworkServiceType(param.TypeName))
-    {
-      return FrameworkServices.GetFieldName(param.TypeName);
-    }
-
-    if (FrameworkServices.IsMediatorServiceType(param.TypeName))
-      return FrameworkServices.MediatorExpression;
-
-    // Check if this is a registered service
-    ServiceDefinition? depService = FindServiceForInit(param.TypeName, allServices);
-    if (depService is not null)
-    {
-      if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
-      {
-        return GetServiceFieldName(depService.ImplementationTypeName);
-      }
-
-      if (depService.HasConstructorDependencies)
-      {
-        string innerArgs = ResolveConstructorArgumentsForInit(depService, allServices);
-        return $"new {depService.ImplementationTypeName}({innerArgs})";
-      }
-
-      return $"new {depService.ImplementationTypeName}()";
-    }
-
-    // Optional parameter with default value
-    if (param.HasDefaultValue && param.DefaultValue is not null)
-    {
-      return param.DefaultValue;
-    }
-
-    return $"default! /* ERROR: Cannot resolve {param.TypeName} */";
-  }
-
-  /// <summary>
-  /// Resolves a dependency type for service initialization.
-  /// </summary>
-  private static string ResolveDepForInit(string depType, ImmutableArray<ServiceDefinition> allServices)
-  {
-    // Framework service types
-    if (FrameworkServices.IsFrameworkServiceType(depType))
-    {
-      return FrameworkServices.GetFieldName(depType);
-    }
-
-    if (FrameworkServices.IsMediatorServiceType(depType))
-      return FrameworkServices.MediatorExpression;
-
-    // Registered service
-    ServiceDefinition? depService = FindServiceForInit(depType, allServices);
-    if (depService is not null)
-    {
-      if (depService.Lifetime is ServiceLifetime.Singleton or ServiceLifetime.Scoped)
-      {
-        return GetServiceFieldName(depService.ImplementationTypeName);
-      }
-
-      if (depService.HasConstructorDependencies)
-      {
-        string innerArgs = ResolveConstructorArgumentsForInit(depService, allServices);
-        return $"new {depService.ImplementationTypeName}({innerArgs})";
-      }
-
-      return $"new {depService.ImplementationTypeName}()";
-    }
-
-    return $"default! /* ERROR: Cannot resolve {depType} */";
-  }
-
-  /// <summary>
-  /// Finds a service by its type name (checks both service type and implementation type).
-  /// </summary>
-  private static ServiceDefinition? FindServiceForInit(string typeName, ImmutableArray<ServiceDefinition> services)
-  {
-    string normalized = typeName.StartsWith("global::", StringComparison.Ordinal)
-      ? typeName[8..]
-      : typeName;
-
     foreach (ServiceDefinition service in services)
     {
-      // Check service type name (interface)
-      string serviceTypeNormalized = service.ServiceTypeName.StartsWith("global::", StringComparison.Ordinal)
-        ? service.ServiceTypeName[8..]
-        : service.ServiceTypeName;
-
-      if (serviceTypeNormalized == normalized)
-        return service;
-
-      // Check implementation type name (class)
-      string implNormalized = service.ImplementationTypeName.StartsWith("global::", StringComparison.Ordinal)
-        ? service.ImplementationTypeName[8..]
-        : service.ImplementationTypeName;
-
-      if (implNormalized == normalized)
-        return service;
+      string constructed = ServiceScopeExpressions.Construct(service, allServices, mode);
+      sb.AppendLine($"{indent}{fieldName(service.ImplementationTypeName)} = {constructed};");
     }
+  }
 
-    return null;
+  private static void EmitNullAssignments
+  (
+    StringBuilder sb,
+    ImmutableArray<ServiceDefinition> services,
+    Func<string, string> fieldName,
+    string indent
+  )
+  {
+    foreach (ServiceDefinition service in services)
+      sb.AppendLine($"{indent}{fieldName(service.ImplementationTypeName)} = null;");
   }
 
   /// <summary>
@@ -709,6 +781,7 @@ internal static class InterceptorEmitter
       }
 
       sb.AppendLine($"  private static global::System.IServiceProvider? __serviceProvider{suffix};");
+      sb.AppendLine($"  private static global::Microsoft.Extensions.DependencyInjection.IServiceScope? __commandScope{suffix};");
       sb.AppendLine();
       sb.AppendLine($"  private static global::System.IServiceProvider GetServiceProvider{suffix}(NuruApp app)");
       sb.AppendLine("  {");
@@ -741,22 +814,27 @@ internal static class InterceptorEmitter
         sb.AppendLine("    // MS DI handles constructor dependency resolution automatically");
         foreach (ServiceDefinition service in app.Services)
         {
+          string owner = service.Lifetime is ServiceLifetime.SessionScoped or ServiceLifetime.CommandScoped
+            ? "global::TimeWarp.Nuru.NuruServiceCollectionExtensions"
+            : "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions";
           string methodName = service.Lifetime switch
           {
             ServiceLifetime.Singleton => "AddSingleton",
             ServiceLifetime.Scoped => "AddScoped",
             ServiceLifetime.Transient => "AddTransient",
+            ServiceLifetime.SessionScoped => "AddSessionScoped",
+            ServiceLifetime.CommandScoped => "AddCommandScoped",
             _ => "AddSingleton"
           };
 
           // If service type equals implementation type, use single type parameter form
           if (service.ServiceTypeName == service.ImplementationTypeName)
           {
-            sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ImplementationTypeName}>(services);");
+            sb.AppendLine($"    {owner}.{methodName}<{service.ImplementationTypeName}>(services);");
           }
           else
           {
-            sb.AppendLine($"    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.{methodName}<{service.ServiceTypeName}, {service.ImplementationTypeName}>(services);");
+            sb.AppendLine($"    {owner}.{methodName}<{service.ServiceTypeName}, {service.ImplementationTypeName}>(services);");
           }
         }
       }
@@ -764,6 +842,12 @@ internal static class InterceptorEmitter
       sb.AppendLine();
       sb.AppendLine($"    __serviceProvider{suffix} = global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);");
       sb.AppendLine($"    return __serviceProvider{suffix};");
+      sb.AppendLine("  }");
+      sb.AppendLine();
+      sb.AppendLine($"  private static global::System.IServiceProvider GetResolutionProvider{suffix}(NuruApp app)");
+      sb.AppendLine("  {");
+      sb.AppendLine($"    if (__commandScope{suffix} is not null) return __commandScope{suffix}.ServiceProvider;");
+      sb.AppendLine($"    return GetServiceProvider{suffix}(app);");
       sb.AppendLine("  }");
       sb.AppendLine();
     }
@@ -973,9 +1057,26 @@ internal static class InterceptorEmitter
       sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");
     }
 
-    // Initialize services after configuration is built
+    // Initialize services after configuration is built, then open the command scope.
+    // await using disposes that scope on every return, including early exits.
     sb.AppendLine("    // Initialize services with app and configuration");
-    sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
+    sb.AppendLine("    __replCommandActive = fromRepl;");
+    string scopeSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+    if (app.UseMicrosoftDependencyInjection)
+    {
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl);");
+      sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: !fromRepl && args is [\"--interactive\"] or [\"-i\"]);");
+    }
+    else
+    {
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl);");
+      sb.AppendLine("    if (fromRepl)");
+      sb.AppendLine("      BeginReplCommandServices();");
+      sb.AppendLine("    else");
+      sb.AppendLine("      BeginSingleRunServices();");
+      sb.AppendLine("    await using global::TimeWarp.Nuru.NuruAsyncLease __nuruLease = global::TimeWarp.Nuru.NuruAsyncLease.For(fromRepl, EndReplCommandServicesAsync, EndSingleRunServicesAsync);");
+    }
+
     sb.AppendLine();
 
     // Peel --json-args before IsConfigArg and before user routes, then filter config args.

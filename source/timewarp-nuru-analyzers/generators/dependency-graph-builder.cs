@@ -227,7 +227,6 @@ internal static class DependencyGraphBuilder
       if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
         continue;
 
-      // Only check Singleton and Scoped services
       if (service.Lifetime == ServiceLifetime.Transient)
         continue;
 
@@ -241,8 +240,7 @@ internal static class DependencyGraphBuilder
         if (serviceByImpl.TryGetValue(normalizedDep, out ServiceDefinition? depService) ||
             TryFindServiceByServiceType(services, normalizedDep, out depService))
         {
-          // Check if dependency is Transient
-          if (depService!.Lifetime == ServiceLifetime.Transient)
+          if (IsCaptiveDependency(service.Lifetime, depService!.Lifetime))
           {
             mismatches.Add((
               service.ShortImplementationTypeName,
@@ -255,6 +253,107 @@ internal static class DependencyGraphBuilder
     }
 
     return [.. mismatches];
+  }
+
+  /// <summary>
+  /// True when <paramref name="dependency"/> will not live as long as <paramref name="dependent"/>.
+  /// Scoped stays compatible with Singleton: a single CLI run still treats Scoped as one instance.
+  /// </summary>
+  private static bool IsCaptiveDependency(ServiceLifetime dependent, ServiceLifetime dependency)
+  {
+    if (dependent == ServiceLifetime.Transient)
+      return false;
+
+    if (dependency == ServiceLifetime.Transient)
+      return true;
+
+    if (dependent == ServiceLifetime.Singleton &&
+        dependency is ServiceLifetime.SessionScoped or ServiceLifetime.CommandScoped)
+    {
+      return true;
+    }
+
+    if (dependent == ServiceLifetime.SessionScoped &&
+        dependency is ServiceLifetime.CommandScoped or ServiceLifetime.Scoped)
+    {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// True when a scoped service injects a session-scoped or command-scoped service,
+  /// directly or through another scoped service. Those instances are built after
+  /// process singletons, so this service has to be built with them.
+  /// </summary>
+  internal static bool DependsOnInvocationScope(
+    ServiceDefinition service,
+    ImmutableArray<ServiceDefinition> services)
+  {
+    return WalkInvocationScope(service, services, new HashSet<string>(StringComparer.Ordinal));
+  }
+
+  private static bool WalkInvocationScope(
+    ServiceDefinition service,
+    ImmutableArray<ServiceDefinition> services,
+    HashSet<string> stack)
+  {
+    string name = NormalizeTypeName(service.ImplementationTypeName);
+    if (!stack.Add(name))
+      return false;
+
+    try
+    {
+      if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
+        return false;
+
+      foreach (string depType in service.ConstructorDependencyTypes)
+      {
+        if (FrameworkServices.IsFrameworkServiceType(depType))
+          continue;
+
+        if (!TryFindServiceByServiceType(services, depType, out ServiceDefinition? dependency) &&
+            !TryFindByImplementation(services, depType, out dependency))
+        {
+          continue;
+        }
+
+        if (dependency!.Lifetime is ServiceLifetime.SessionScoped or ServiceLifetime.CommandScoped)
+          return true;
+
+        if (dependency.Lifetime == ServiceLifetime.Scoped &&
+            WalkInvocationScope(dependency, services, stack))
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+    finally
+    {
+      stack.Remove(name);
+    }
+  }
+
+  private static bool TryFindByImplementation(
+    ImmutableArray<ServiceDefinition> services,
+    string typeName,
+    out ServiceDefinition? service)
+  {
+    string normalized = NormalizeTypeName(typeName);
+    foreach (ServiceDefinition candidate in services)
+    {
+      if (NormalizeTypeName(candidate.ImplementationTypeName) == normalized)
+      {
+        service = candidate;
+        return true;
+      }
+    }
+
+    service = null;
+    return false;
   }
 
   /// <summary>

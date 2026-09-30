@@ -3,7 +3,7 @@
 // Handles:
 // - .ConfigureServices(services => { ... })           - inline lambda
 // - .ConfigureServices(ConfigureServices)             - method group reference
-// - Services registered via AddTransient, AddScoped, AddSingleton, TryAdd*
+// - Services registered via AddTransient, AddScoped, AddSingleton, AddSessionScoped, AddCommandScoped, TryAdd*
 // - In-project AddX via syntax and referenced AddX via decompile (task 395)
 //
 // Also detects:
@@ -35,9 +35,13 @@ internal static class ServiceExtractor
     "AddTransient",
     "AddScoped",
     "AddSingleton",
+    "AddSessionScoped",
+    "AddCommandScoped",
     "TryAddTransient",
     "TryAddScoped",
-    "TryAddSingleton"
+    "TryAddSingleton",
+    "TryAddSessionScoped",
+    "TryAddCommandScoped"
   ];
 
   /// <summary>

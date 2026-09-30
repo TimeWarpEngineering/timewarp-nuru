@@ -43,7 +43,7 @@ public sealed record ConstructorParameter(
 /// </summary>
 /// <param name="ServiceTypeName">Fully qualified interface/abstract type name</param>
 /// <param name="ImplementationTypeName">Fully qualified implementation type name</param>
-/// <param name="Lifetime">Service lifetime (Singleton, Scoped, Transient)</param>
+/// <param name="Lifetime">Service lifetime (Singleton, Scoped, Transient, SessionScoped, CommandScoped)</param>
 /// <param name="ConstructorDependencyTypes">Fully qualified type names of constructor parameters (legacy, for backward compatibility)</param>
 /// <param name="ConstructorParameters">Detailed constructor parameter information.</param>
 /// <param name="IsFactoryRegistration">True if registered with a factory delegate</param>
@@ -147,22 +147,38 @@ public sealed record ServiceDefinition(
 }
 
 /// <summary>
-/// Service lifetime for DI container.
+/// Service lifetime for the source-generated DI model.
+/// This is not a public API; apps register lifetimes with
+/// <c>AddSingleton</c>, <c>AddScoped</c>, <c>AddTransient</c>,
+/// <c>AddSessionScoped</c>, and <c>AddCommandScoped</c>.
 /// </summary>
 public enum ServiceLifetime
 {
   /// <summary>
-  /// Single instance for the application lifetime.
+  /// Single instance for the process.
   /// </summary>
   Singleton,
 
   /// <summary>
-  /// One instance per scope (typically per request).
+  /// One instance for a single CLI invocation.
+  /// In the REPL this is command-scoped: a new instance per command.
   /// </summary>
   Scoped,
 
   /// <summary>
-  /// New instance every time.
+  /// New instance every time the service is resolved.
   /// </summary>
-  Transient
+  Transient,
+
+  /// <summary>
+  /// One instance for a single CLI invocation, disposed when that invocation ends.
+  /// In the REPL, one instance for the session, disposed when the REPL exits.
+  /// </summary>
+  SessionScoped,
+
+  /// <summary>
+  /// One instance for a single CLI invocation, disposed when that invocation ends.
+  /// In the REPL, a new instance per command, disposed after that command.
+  /// </summary>
+  CommandScoped
 }

@@ -82,14 +82,14 @@ internal static partial class DiagnosticDescriptors
     description: "Source-generated DI cannot resolve circular dependencies at compile time. Refactor the services to eliminate the cycle, or use .UseMicrosoftDependencyInjection() for runtime DI which handles cycles via lazy resolution.");
 
   /// <summary>
-  /// NURU056: Singleton/Scoped service depends on Transient service.
+  /// NURU056: A service depends on another service that does not live as long.
   /// </summary>
   public static readonly DiagnosticDescriptor LifetimeMismatch = new(
     id: "NURU056",
     title: "Service lifetime mismatch",
-    messageFormat: "Service '{0}' ({1} lifetime) depends on transient service '{2}'. Each resolution will get a new instance. If intentional, use #pragma warning disable NURU056.",
+    messageFormat: "Service '{0}' ({1} lifetime) depends on '{2}' ({3} lifetime), which does not live as long. If intentional, use #pragma warning disable NURU056.",
     category: ServiceCategory,
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
-    description: "A Singleton or Scoped service depending on a Transient service will receive a new Transient instance each time the dependency is resolved. This is often unintentional. If this is desired behavior, suppress the warning with #pragma warning disable NURU056.");
+    description: "A longer-lived service depending on a shorter-lived service receives an instance that can be disposed while the consumer still holds it. If this is desired behavior, suppress the warning with #pragma warning disable NURU056.");
 }

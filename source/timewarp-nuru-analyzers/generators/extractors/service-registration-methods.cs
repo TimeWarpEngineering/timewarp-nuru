@@ -19,13 +19,27 @@ internal static class ServiceRegistrationMethods
   /// Standard lifetime registration methods with bodies we already analyze.
   /// </summary>
   internal static readonly HashSet<string> LifetimeAdds =
-    new(StringComparer.Ordinal) { "AddTransient", "AddScoped", "AddSingleton" };
+    new(StringComparer.Ordinal)
+    {
+      "AddTransient",
+      "AddScoped",
+      "AddSingleton",
+      "AddSessionScoped",
+      "AddCommandScoped"
+    };
 
   /// <summary>
   /// TryAdd variants replayed in order against the accumulated model.
   /// </summary>
   internal static readonly HashSet<string> TryAdds =
-    new(StringComparer.Ordinal) { "TryAddTransient", "TryAddScoped", "TryAddSingleton" };
+    new(StringComparer.Ordinal)
+    {
+      "TryAddTransient",
+      "TryAddScoped",
+      "TryAddSingleton",
+      "TryAddSessionScoped",
+      "TryAddCommandScoped"
+    };
 
   /// <summary>
   /// Existing special-cases that scrape lambdas; not lowered as collection scripts.
@@ -48,7 +62,12 @@ internal static class ServiceRegistrationMethods
       return false;
     }
 
-    if (methodName.Contains("Singleton", StringComparison.Ordinal))
+    // SessionScoped and CommandScoped contain "Scoped"; match them before AddScoped.
+    if (methodName.Contains("SessionScoped", StringComparison.Ordinal))
+      lifetime = ServiceLifetime.SessionScoped;
+    else if (methodName.Contains("CommandScoped", StringComparison.Ordinal))
+      lifetime = ServiceLifetime.CommandScoped;
+    else if (methodName.Contains("Singleton", StringComparison.Ordinal))
       lifetime = ServiceLifetime.Singleton;
     else if (methodName.Contains("Scoped", StringComparison.Ordinal))
       lifetime = ServiceLifetime.Scoped;

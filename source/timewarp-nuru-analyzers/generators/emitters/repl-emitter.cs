@@ -28,7 +28,7 @@ internal static class ReplEmitter
 
     EmitGeneratedReplRouteProvider(sb, app, methodSuffix, endpoints, enumValues);
     sb.AppendLine();
-    EmitRunReplAsyncMethod(sb, methodSuffix);
+    EmitRunReplAsyncMethod(sb, app, methodSuffix);
   }
 
   /// <summary>
@@ -238,7 +238,7 @@ internal static class ReplEmitter
   /// <summary>
   /// Emits the RunReplAsync method that starts the REPL session.
   /// </summary>
-  private static void EmitRunReplAsyncMethod(StringBuilder sb, string methodSuffix)
+  private static void EmitRunReplAsyncMethod(StringBuilder sb, AppModel app, string methodSuffix)
   {
     string providerClassName = $"GeneratedReplRouteProvider{methodSuffix}";
 
@@ -247,16 +247,31 @@ internal static class ReplEmitter
     sb.AppendLine($"    global::TimeWarp.Nuru.IReplRouteProvider routeProvider = new {providerClassName}();");
     sb.AppendLine("    global::TimeWarp.Nuru.ReplOptions replOptions = app.ReplOptions ?? new global::TimeWarp.Nuru.ReplOptions();");
     sb.AppendLine();
-    sb.AppendLine("    await global::TimeWarp.Nuru.ReplSession.RunAsync(");
-    sb.AppendLine("      app,");
-    sb.AppendLine("      replOptions,");
-    sb.AppendLine("      routeProvider,");
+    sb.AppendLine("    try");
+    sb.AppendLine("    {");
+    sb.AppendLine("      await global::TimeWarp.Nuru.ReplSession.RunAsync(");
+    sb.AppendLine("        app,");
+    sb.AppendLine("        replOptions,");
+    sb.AppendLine("        routeProvider,");
     // Call ExecuteRouteAsync directly - the core route matching logic used by both RunAsync and REPL.
     // ct is the session's per-command linked token (Ctrl+C cancellation, 454-017) — forward it.
-    sb.AppendLine($"      static (nuruApp, args, ct) => ExecuteRouteAsync{methodSuffix}(nuruApp, args, ct, fromRepl: true),");
-    sb.AppendLine("      app.LoggerFactory,");
-    sb.AppendLine("      cancellationToken");
-    sb.AppendLine("    ).ConfigureAwait(false);");
+    sb.AppendLine($"        static (nuruApp, args, ct) => ExecuteRouteAsync{methodSuffix}(nuruApp, args, ct, fromRepl: true),");
+    sb.AppendLine("        app.LoggerFactory,");
+    sb.AppendLine("        cancellationToken");
+    sb.AppendLine("      ).ConfigureAwait(false);");
+    sb.AppendLine("    }");
+    sb.AppendLine("    finally");
+    sb.AppendLine("    {");
+    if (app.UseMicrosoftDependencyInjection)
+    {
+      sb.AppendLine($"      await global::TimeWarp.Nuru.NuruCommandLease.ResetSessionAsync(__serviceProvider{methodSuffix}).ConfigureAwait(false);");
+    }
+    else
+    {
+      sb.AppendLine("      await EndReplSessionServicesAsync().ConfigureAwait(false);");
+    }
+
+    sb.AppendLine("    }");
     sb.AppendLine("  }");
   }
 

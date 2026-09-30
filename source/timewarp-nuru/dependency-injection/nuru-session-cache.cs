@@ -48,6 +48,22 @@ public sealed class NuruSessionCache : IDisposable, IAsyncDisposable
   }
 
   /// <summary>
+  /// True when <paramref name="instance"/> is a session instance this cache owns.
+  /// </summary>
+  internal bool Tracks(object instance)
+  {
+    ArgumentNullException.ThrowIfNull(instance);
+
+    foreach (object existing in Instances.Values)
+    {
+      if (ReferenceEquals(existing, instance))
+        return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
   /// Disposes session instances and allows the next resolution to create new ones.
   /// </summary>
   public async ValueTask ResetAsync()

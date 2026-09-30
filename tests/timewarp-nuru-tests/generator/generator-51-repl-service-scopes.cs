@@ -70,6 +70,11 @@ public interface IGen51Scoped
   int Id { get; }
 }
 
+public interface IGen51ScopedOnSession
+{
+  IGen51Session Session { get; }
+}
+
 public interface IGen51Transient
 {
   int Id { get; }
@@ -123,6 +128,11 @@ public sealed class Gen51CommandBag(IGen51Command inner) : IGen51CommandBag
 }
 
 public sealed class Gen51Scoped : Gen51Probe<Gen51Scoped>, IGen51Scoped;
+public sealed class Gen51ScopedOnSession(IGen51Session session) : IGen51ScopedOnSession
+{
+  public IGen51Session Session { get; } = session;
+}
+
 public sealed class Gen51ScopedBag(IGen51Scoped inner) : IGen51ScopedBag
 {
   public IGen51Scoped Inner { get; } = inner;
@@ -191,6 +201,7 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
       Gen51Stats<Gen51Singleton>.Seen[1].ShouldBe(singletonId);
       Gen51Stats<Gen51Scoped>.Seen[1].ShouldBe(scopedId);
       Gen51Stats<Gen51Session>.Seen[1].ShouldNotBe(Gen51Stats<Gen51Session>.Seen[0]);
+      Gen51Stats<Gen51Session>.Same.ShouldBe([true, true]);
       Gen51Stats<Gen51Command>.Seen[1].ShouldNotBe(Gen51Stats<Gen51Command>.Seen[0]);
       Gen51Stats<Gen51Singleton>.AsyncDisposeCount.ShouldBe(0);
       Gen51Stats<Gen51Scoped>.AsyncDisposeCount.ShouldBe(0);
@@ -220,6 +231,7 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
       Gen51Stats<Gen51Singleton>.Seen[0].ShouldBe(Gen51Stats<Gen51Singleton>.Seen[1]);
       Gen51Stats<Gen51Singleton>.AsyncDisposeCount.ShouldBe(0);
       Gen51Stats<Gen51Session>.Seen[0].ShouldBe(Gen51Stats<Gen51Session>.Seen[1]);
+      Gen51Stats<Gen51Session>.Same.ShouldBe([true, true]);
       Gen51Stats<Gen51Session>.DisposedAtEntry.ShouldBe([0, 0]);
       Gen51Stats<Gen51Session>.AsyncDisposeCount.ShouldBe(1);
       Gen51Stats<Gen51Session>.DisposeCount.ShouldBe(0);
@@ -232,6 +244,11 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
       Gen51Stats<Gen51Scoped>.DisposedAtEntry[1].ShouldBeGreaterThan(0);
       Gen51Stats<Gen51Transient>.Same.ShouldBe([false, false]);
       terminal.OutputContains("pong").ShouldBeTrue();
+    }
+
+    public static async Task Should_not_open_command_scope_for_autostart_repl()
+    {
+      await Gen51Apps.AssertAutoStartRepl(useRuntimeDi: false);
     }
   }
 
@@ -306,6 +323,7 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
       Gen51Stats<Gen51Singleton>.Seen[0].ShouldBe(Gen51Stats<Gen51Singleton>.Seen[1]);
       Gen51Stats<Gen51Singleton>.AsyncDisposeCount.ShouldBe(0);
       Gen51Stats<Gen51Session>.Seen[0].ShouldBe(Gen51Stats<Gen51Session>.Seen[1]);
+      Gen51Stats<Gen51Session>.Same.ShouldBe([true, true]);
       Gen51Stats<Gen51Session>.DisposedAtEntry.ShouldBe([0, 0]);
       Gen51Stats<Gen51Session>.AsyncDisposeCount.ShouldBe(1);
       Gen51Stats<Gen51Command>.Seen[0].ShouldNotBe(Gen51Stats<Gen51Command>.Seen[1]);
@@ -315,6 +333,11 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
       Gen51Stats<Gen51Scoped>.DisposedAtEntry[1].ShouldBeGreaterThan(0);
       Gen51Stats<Gen51Transient>.Same.ShouldBe([false, false]);
       terminal.OutputContains("pong").ShouldBeTrue();
+    }
+
+    public static async Task Should_not_open_command_scope_for_autostart_repl()
+    {
+      await Gen51Apps.AssertAutoStartRepl(useRuntimeDi: true);
     }
   }
 
@@ -338,6 +361,7 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
       services.AddCommandScoped<IGen51Command, Gen51Command>();
       services.AddCommandScoped<IGen51CommandBag, Gen51CommandBag>();
       services.AddScoped<IGen51Scoped, Gen51Scoped>();
+      services.AddScoped<IGen51ScopedOnSession, Gen51ScopedOnSession>();
       services.AddScoped<IGen51ScopedBag, Gen51ScopedBag>();
       services.AddTransient<IGen51Transient, Gen51Transient>();
       services.AddTransient<IGen51TransientBag, Gen51TransientBag>();
@@ -352,13 +376,14 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
       IGen51Command command,
       IGen51CommandBag commandBag,
       IGen51Scoped scoped,
+      IGen51ScopedOnSession scopedOnSession,
       IGen51ScopedBag scopedBag,
       IGen51Transient transient,
       IGen51TransientBag transientBag
     )
     {
       Note(Gen51Stats<Gen51Singleton>.Seen, Gen51Stats<Gen51Singleton>.DisposedAtEntry, Gen51Stats<Gen51Singleton>.Same, singleton.Id, Gen51Stats<Gen51Singleton>.AsyncDisposeCount, ReferenceEquals(singleton, singletonBag.Inner));
-      Note(Gen51Stats<Gen51Session>.Seen, Gen51Stats<Gen51Session>.DisposedAtEntry, Gen51Stats<Gen51Session>.Same, session.Id, Gen51Stats<Gen51Session>.AsyncDisposeCount, ReferenceEquals(session, sessionBag.Inner) && ReferenceEquals(session, command.Session));
+      Note(Gen51Stats<Gen51Session>.Seen, Gen51Stats<Gen51Session>.DisposedAtEntry, Gen51Stats<Gen51Session>.Same, session.Id, Gen51Stats<Gen51Session>.AsyncDisposeCount, ReferenceEquals(session, sessionBag.Inner) && ReferenceEquals(session, command.Session) && ReferenceEquals(session, scopedOnSession.Session));
       Note(Gen51Stats<Gen51Command>.Seen, Gen51Stats<Gen51Command>.DisposedAtEntry, Gen51Stats<Gen51Command>.Same, command.Id, Gen51Stats<Gen51Command>.AsyncDisposeCount, ReferenceEquals(command, commandBag.Inner));
       Note(Gen51Stats<Gen51Scoped>.Seen, Gen51Stats<Gen51Scoped>.DisposedAtEntry, Gen51Stats<Gen51Scoped>.Same, scoped.Id, Gen51Stats<Gen51Scoped>.AsyncDisposeCount, ReferenceEquals(scoped, scopedBag.Inner));
       Note(Gen51Stats<Gen51Transient>.Seen, Gen51Stats<Gen51Transient>.DisposedAtEntry, Gen51Stats<Gen51Transient>.Same, transient.Id, Gen51Stats<Gen51Transient>.AsyncDisposeCount, ReferenceEquals(transient, transientBag.Inner));
@@ -366,6 +391,36 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
     }
 
     internal static Task<string> Ping(ISender sender) => sender.Send(new Gen51Ping());
+
+    internal static async Task AssertAutoStartRepl(bool useRuntimeDi)
+    {
+      ResetAll();
+      using TestTerminal terminal = new();
+      terminal.QueueLine("check");
+      terminal.QueueLine("exit");
+      NuruAppBuilder builder = NuruApp.CreateBuilder().UseTerminal(terminal);
+      if (useRuntimeDi)
+        builder.UseMicrosoftDependencyInjection();
+
+      NuruApp app = builder
+        .ConfigureServices(RegisterServices)
+        .AddRepl(options => options.AutoStartWhenEmpty = true)
+        .Map("check").WithHandler(Check).AsQuery().Done()
+        .Map("ping").WithHandler(Ping).AsQuery().Done()
+        .Build();
+
+      int exitCode = await app.RunAsync([]);
+
+      exitCode.ShouldBe(0);
+      Gen51Stats<Gen51Command>.Seen.Count.ShouldBe(1);
+      Gen51Stats<Gen51Command>.NextId.ShouldBe(1);
+      Gen51Stats<Gen51Command>.Seen[0].ShouldBe(1);
+      Gen51Stats<Gen51Session>.Seen.Count.ShouldBe(1);
+      Gen51Stats<Gen51Session>.Same.ShouldBe([true]);
+      Gen51Stats<Gen51Session>.AsyncDisposeCount.ShouldBe(1);
+      Gen51Stats<Gen51Session>.DisposeCount.ShouldBe(0);
+      Gen51Stats<Gen51Scoped>.NextId.ShouldBe(1);
+    }
 
     internal static void Note(List<int> seen, List<int> disposedAtEntry, List<bool> same, int id, int disposed, bool identical)
     {

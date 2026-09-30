@@ -205,8 +205,9 @@ In the REPL it follows command scope.
 ```
 
 `AddSessionScoped` and `AddCommandScoped` take the same factory overloads as `AddSingleton`.
+Starting the REPL (`--interactive`, `-i`, or `AutoStartWhenEmpty`) does not open a command scope, so each command opens its own.
 In the REPL, `UseMicrosoftDependencyInjection()` opens an `IServiceScope` per command and disposes it after the command.
-Session-scoped services stay on the root provider and are disposed when the REPL exits.
+Session-scoped services stay on the root provider, including when a scoped service injects them, and are disposed when the REPL exits.
 `AddGeneratedMediator()` still resolves for each command.
 
 ## User Secrets

@@ -573,6 +573,11 @@ internal static class InterceptorEmitter
       string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
       if (service.Lifetime == ServiceLifetime.Scoped)
       {
+        // Session and command fields are assigned in BeginSingleRunServices.
+        // A scoped service that injects them is built there, not here.
+        if (DependencyGraphBuilder.DependsOnInvocationScope(service, allServices))
+          continue;
+
         sb.AppendLine("    if (!fromRepl && !__nonReplScopedReady)");
         sb.AppendLine("    {");
         sb.AppendLine($"      {fieldName} = {constructed};");
@@ -657,7 +662,9 @@ internal static class InterceptorEmitter
     sb.AppendLine("  {");
     sb.AppendLine("    if (__nonReplScopedReady) return;");
     sb.AppendLine("    __nonReplScopedReady = true;");
-    foreach (ServiceDefinition service in sortedProcessServices.Where(static service => service.Lifetime == ServiceLifetime.Scoped))
+    foreach (ServiceDefinition service in sortedProcessServices.Where(service =>
+      service.Lifetime == ServiceLifetime.Scoped &&
+      !DependencyGraphBuilder.DependsOnInvocationScope(service, allServices)))
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
       string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
@@ -674,10 +681,38 @@ internal static class InterceptorEmitter
     sb.AppendLine("  }");
     sb.AppendLine();
 
+    ServiceDefinition[] lateScoped =
+    [
+      .. sortedProcessServices.Where(service =>
+        service.Lifetime == ServiceLifetime.Scoped &&
+        DependencyGraphBuilder.DependsOnInvocationScope(service, allServices))
+    ];
+    ImmutableArray<ServiceDefinition> singleRunInvocation = DependencyGraphBuilder.TopologicalSort
+    (
+      [.. commandServices, .. lateScoped]
+    );
+
     sb.AppendLine("  private static void BeginSingleRunServices()");
     sb.AppendLine("  {");
     sb.AppendLine("    EnsureSessionServices();");
-    EmitConstructions(sb, commandServices, allServices, ServiceResolveMode.Command, ServiceScopeExpressions.CommandField, "    ");
+    foreach (ServiceDefinition service in singleRunInvocation)
+    {
+      if (service.Lifetime == ServiceLifetime.CommandScoped)
+      {
+        string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.Command);
+        sb.AppendLine($"    {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)} = {constructed};");
+        continue;
+      }
+
+      // Recreate each single-run. The captured session and command instances
+      // are disposed at the end of the invocation.
+      string fieldName = GetServiceFieldName(service.ImplementationTypeName);
+      string lateConstructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
+      sb.AppendLine($"    {fieldName} = {lateConstructed};");
+      sb.AppendLine($"    if ((object){fieldName} is global::System.IDisposable or global::System.IAsyncDisposable)");
+      sb.AppendLine($"      __commandDisposables.Add({fieldName});");
+    }
+
     sb.AppendLine("  }");
     sb.AppendLine();
 
@@ -1041,6 +1076,22 @@ internal static class InterceptorEmitter
   /// <summary>
   /// Emits the complete method body including all route matching logic.
   /// </summary>
+  /// <summary>
+  /// True in generated code when this invocation is the REPL host, not a command.
+  /// <paramref name="app"/> supplies <c>AutoStartWhenEmpty</c>. The expression reads
+  /// <c>routeArgs</c>, which has config arguments removed.
+  /// </summary>
+  private static string EnteringReplExpression(AppModel app)
+  {
+    if (!app.HasRepl)
+      return "false";
+
+    bool autoStartWhenEmpty = app.ReplOptions?.AutoStartWhenEmpty ?? false;
+    return autoStartWhenEmpty
+      ? "!fromRepl && (routeArgs is [\"--interactive\"] or [\"-i\"] || routeArgs.Length == 0)"
+      : "!fromRepl && routeArgs is [\"--interactive\"] or [\"-i\"]";
+  }
+
   private static void EmitMethodBody(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string? loggerFactoryFieldName)
   {
     // Configuration setup (if AddConfiguration was called)
@@ -1057,30 +1108,35 @@ internal static class InterceptorEmitter
       sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");
     }
 
-    // Initialize services after configuration is built, then open the command scope.
-    // await using disposes that scope on every return, including early exits.
-    sb.AppendLine("    // Initialize services with app and configuration");
+    // Peel --json-args before the command scope so the REPL host check sees routeArgs
+    // (config args stripped), including AutoStartWhenEmpty on an empty route.
     sb.AppendLine("    __replCommandActive = fromRepl;");
+    JsonArgsEmitter.EmitPrepare(sb, app);
+
+    // The REPL host must not open a command scope. Nested commands open their own.
+    // await using disposes that scope on every later return, including early exits.
+    string enteringRepl = EnteringReplExpression(app);
+    sb.AppendLine("    // Initialize services with app and configuration");
+    sb.AppendLine($"    bool __enteringRepl = {enteringRepl};");
     string scopeSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
     if (app.UseMicrosoftDependencyInjection)
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl);");
-      sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: !fromRepl && args is [\"--interactive\"] or [\"-i\"]);");
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl);");
+      sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: __enteringRepl);");
     }
     else
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl);");
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl);");
       sb.AppendLine("    if (fromRepl)");
       sb.AppendLine("      BeginReplCommandServices();");
-      sb.AppendLine("    else");
+      sb.AppendLine("    else if (!__enteringRepl)");
       sb.AppendLine("      BeginSingleRunServices();");
-      sb.AppendLine("    await using global::TimeWarp.Nuru.NuruAsyncLease __nuruLease = global::TimeWarp.Nuru.NuruAsyncLease.For(fromRepl, EndReplCommandServicesAsync, EndSingleRunServicesAsync);");
+      sb.AppendLine("    await using global::TimeWarp.Nuru.NuruAsyncLease __nuruLease = __enteringRepl");
+      sb.AppendLine("      ? global::TimeWarp.Nuru.NuruAsyncLease.Idle()");
+      sb.AppendLine("      : global::TimeWarp.Nuru.NuruAsyncLease.For(fromRepl, EndReplCommandServicesAsync, EndSingleRunServicesAsync);");
     }
 
     sb.AppendLine();
-
-    // Peel --json-args before IsConfigArg and before user routes, then filter config args.
-    JsonArgsEmitter.EmitPrepare(sb, app);
 
     // --interactive / -i must be checked BEFORE user routes so catch-all routes don't intercept it
     string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";

@@ -26,6 +26,12 @@ public sealed class NuruAsyncLease : IAsyncDisposable
     return new NuruAsyncLease(fromRepl ? replEnd : singleRunEnd);
   }
 
+  /// <summary>
+  /// A lease that does not dispose services. Used for the REPL host invocation,
+  /// which must not own the command or session scope.
+  /// </summary>
+  public static NuruAsyncLease Idle() => new(null);
+
   /// <inheritdoc />
   public ValueTask DisposeAsync()
   {
@@ -68,7 +74,7 @@ public sealed class NuruCommandLease : IAsyncDisposable
   /// <param name="root">The app's root provider.</param>
   /// <param name="fromRepl">True when the command is executing inside the REPL.</param>
   /// <param name="setScope">Receives the REPL command scope, or null for a single CLI invocation.</param>
-  /// <param name="hostRepl">True when this invocation is starting the REPL (<c>--interactive</c>), not running a command.</param>
+  /// <param name="hostRepl">True when this invocation is starting the REPL (<c>--interactive</c>, <c>-i</c>, or <c>AutoStartWhenEmpty</c>), not running a command.</param>
   /// <returns>A lease that disposes the command when the caller exits.</returns>
   public static NuruCommandLease Enter
   (
@@ -130,6 +136,14 @@ public sealed class NuruCommandLease : IAsyncDisposable
 
     if (Scope is not null)
     {
+      // Session services are transients so the next invocation can replace them.
+      // A command scope tracks every transient it resolves, including a session
+      // instance injected into a scoped service. Drop those before the scope
+      // disposes, or the session ends with the command.
+      NuruSessionCache? session = Root.GetService<NuruSessionCache>();
+      if (session is not null)
+        ReleaseSessionInstances(Scope, session);
+
       if (Scope is IAsyncDisposable asyncScope)
         await asyncScope.DisposeAsync().ConfigureAwait(false);
       else
@@ -140,5 +154,22 @@ public sealed class NuruCommandLease : IAsyncDisposable
 
     if (ResetSession)
       await ResetSessionAsync(Root).ConfigureAwait(false);
+  }
+
+  [UnconditionalSuppressMessage(
+    "Trimming",
+    "IL2075",
+    Justification = "Microsoft.Extensions.DependencyInjection stores scope-owned disposables in a private list. Session instances are transients so a later invocation can replace them, and a command scope must not dispose them.")]
+  private static void ReleaseSessionInstances(IServiceScope scope, NuruSessionCache session)
+  {
+    for (Type? type = scope.GetType(); type is not null; type = type.BaseType)
+    {
+      FieldInfo? field = type.GetField("_disposables", BindingFlags.Instance | BindingFlags.NonPublic);
+      if (field?.GetValue(scope) is not List<object> disposables)
+        continue;
+
+      disposables.RemoveAll(session.Tracks);
+      return;
+    }
   }
 }

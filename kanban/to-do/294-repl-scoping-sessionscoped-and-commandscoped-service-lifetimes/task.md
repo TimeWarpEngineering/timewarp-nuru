@@ -111,6 +111,7 @@ This is a follow-up to #292 which initially treats `Scoped` as `Singleton`. This
 - #292 (static service injection) is done; its Scoped-as-singleton fallback is the current behavior.
 - If a row of the table proves unworkable in one DI path, return `ORACLE_RESULT: Blocked — <row, path, reason>`.
 - Commit and push your changes before reporting done. Run the build and test gate in the foreground.
+- 2026-09-30: review oracle (ganda task work, tw-implementation-review effort 1, reviewer `general`). Session: review-oracle (Cursor implementer-cursor profile, headless). Rounds: 2. Final counts: bug 4 fixed, suggestion 0, nit 0, open 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Next host nodes: open-pr / done (no apply-review sibling).
 
 ## Results
 
@@ -118,7 +119,7 @@ Option A is the public API: `AddSessionScoped` and `AddCommandScoped` (type, fac
 
 Both DI paths follow the decision table. Source-generated DI keeps session instances in `__ses_` fields and command or REPL-scoped instances in `__cmd_` fields. A single CLI invocation still treats `AddScoped` as one process instance and does not dispose it. The REPL disposes command-scoped and `AddScoped` instances after each command, and session-scoped instances when the REPL exits. `DisposeAsync` is used when a type implements both dispose interfaces.
 
-`UseMicrosoftDependencyInjection()` maps session scope to a root cache (`NuruSessionCache`) and command scope to `NuruCommandCache`. In the REPL, each command gets an `IServiceScope` so `AddScoped` is command-scoped; session services are constructed from the root so that scope does not dispose them. `AddGeneratedMediator` still resolves per command. Starting the REPL (`--interactive`) does not open a command cache, so nested commands can begin their own.
+`UseMicrosoftDependencyInjection()` maps session scope to a root cache (`NuruSessionCache`) and command scope to `NuruCommandCache`. In the REPL, each command gets an `IServiceScope` so `AddScoped` is command-scoped. Session services stay on the root cache; a command scope drops them from its disposable list before it disposes, including when a scoped service injected them. `AddGeneratedMediator` still resolves per command. Starting the REPL (`--interactive`, `-i`, or `AutoStartWhenEmpty`) does not open a command cache, so nested commands can begin their own. A source-generated scoped service that injects a session-scoped or command-scoped service is built with that invocation's instances.
 
 ### How to validate
 
@@ -132,7 +133,11 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-51-repl-service-scopes.
 
 Expect:
 
-- The CI runner exits 0. Multi-mode total 1797, passed 1791, skipped 6, failed 0. Standalone phase passes.
+- The CI runner exits 0. Multi-mode total 1799, passed 1793, skipped 6, failed 0. Standalone phase passes.
 - `ganda repo audit` prints "Repository passes all audit checks." Passed 29, Failed 0. (`bin/dev` is gitignored; `ganda repo audit --fix` ran `self-install`.)
-- `generator-51-repl-service-scopes.cs` exits 0 with 4 passed: source-generated and runtime DI, each covering one CLI invocation and a REPL script of two `check` commands plus `ping`. Singleton identity is stable and not disposed. Session identity is stable across the two REPL commands and disposed once on exit. Command-scoped and REPL `AddScoped` identities change per command and are disposed after the command. Transient identity changes per resolution. `ping` prints `pong` through the generated mediator.
+- `generator-51-repl-service-scopes.cs` exits 0 with 6 passed: source-generated and runtime DI, each covering one CLI invocation, a REPL script of two `check` commands plus `ping`, and an `AutoStartWhenEmpty` REPL. Singleton identity is stable and not disposed. Session identity is stable across the two REPL commands and disposed once on exit, including when a scoped service injects the session. Command-scoped and REPL `AddScoped` identities change per command and are disposed after the command. Transient identity changes per resolution. The auto-start host does not construct an extra command instance. `ping` prints `pong` through the generated mediator.
+
+### Review
+
+- 2026-09-30: review oracle (ganda task work, tw-implementation-review effort 1, reviewer `general`). Session: review-oracle (Cursor implementer-cursor profile, headless). Rounds: 2. Final counts: bug 4 fixed, suggestion 0, nit 0, open 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Next host nodes: open-pr / done (no apply-review sibling).
 

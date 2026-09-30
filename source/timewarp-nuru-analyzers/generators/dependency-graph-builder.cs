@@ -283,6 +283,80 @@ internal static class DependencyGraphBuilder
   }
 
   /// <summary>
+  /// True when a scoped service injects a session-scoped or command-scoped service,
+  /// directly or through another scoped service. Those instances are built after
+  /// process singletons, so this service has to be built with them.
+  /// </summary>
+  internal static bool DependsOnInvocationScope(
+    ServiceDefinition service,
+    ImmutableArray<ServiceDefinition> services)
+  {
+    return WalkInvocationScope(service, services, new HashSet<string>(StringComparer.Ordinal));
+  }
+
+  private static bool WalkInvocationScope(
+    ServiceDefinition service,
+    ImmutableArray<ServiceDefinition> services,
+    HashSet<string> stack)
+  {
+    string name = NormalizeTypeName(service.ImplementationTypeName);
+    if (!stack.Add(name))
+      return false;
+
+    try
+    {
+      if (service.ConstructorDependencyTypes.IsDefaultOrEmpty)
+        return false;
+
+      foreach (string depType in service.ConstructorDependencyTypes)
+      {
+        if (FrameworkServices.IsFrameworkServiceType(depType))
+          continue;
+
+        if (!TryFindServiceByServiceType(services, depType, out ServiceDefinition? dependency) &&
+            !TryFindByImplementation(services, depType, out dependency))
+        {
+          continue;
+        }
+
+        if (dependency!.Lifetime is ServiceLifetime.SessionScoped or ServiceLifetime.CommandScoped)
+          return true;
+
+        if (dependency.Lifetime == ServiceLifetime.Scoped &&
+            WalkInvocationScope(dependency, services, stack))
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+    finally
+    {
+      stack.Remove(name);
+    }
+  }
+
+  private static bool TryFindByImplementation(
+    ImmutableArray<ServiceDefinition> services,
+    string typeName,
+    out ServiceDefinition? service)
+  {
+    string normalized = NormalizeTypeName(typeName);
+    foreach (ServiceDefinition candidate in services)
+    {
+      if (NormalizeTypeName(candidate.ImplementationTypeName) == normalized)
+      {
+        service = candidate;
+        return true;
+      }
+    }
+
+    service = null;
+    return false;
+  }
+
+  /// <summary>
   /// Normalizes a type name by removing global:: prefix.
   /// </summary>
   private static string NormalizeTypeName(string typeName)

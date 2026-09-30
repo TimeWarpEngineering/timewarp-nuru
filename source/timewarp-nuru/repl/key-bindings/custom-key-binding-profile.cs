@@ -11,6 +11,7 @@ namespace TimeWarp.Nuru;
 /// <item><description>Starting from an existing profile (Default, Emacs, Vi, VSCode) and modifying it</description></item>
 /// <item><description>Building a completely custom set of bindings from scratch</description></item>
 /// <item><description>Overriding, adding, or removing specific key bindings</description></item>
+/// <item><description>Loading the same shape from JSON via <see cref="KeyBindingConfigLoader"/></description></item>
 /// </list>
 /// <para>
 /// All modification methods return <c>this</c> to enable fluent chaining.
@@ -217,6 +218,24 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
     RemovedBindings.Remove(keyBinding);
     RemovedExitKeys.Remove(keyBinding);
     Modifications.Add(new BindingModification(key, modifiers, actionFactory));
+    AddedExitKeys.Add(keyBinding);
+    return this;
+  }
+
+  /// <summary>
+  /// Marks a key as an exit key without changing its action.
+  /// </summary>
+  /// <param name="key">The console key to mark.</param>
+  /// <param name="modifiers">The modifier keys of the binding.</param>
+  /// <returns>This profile for fluent chaining.</returns>
+  /// <remarks>
+  /// Exit keys cause ReadLine to return after the bound action runs. The key still needs a
+  /// binding from the base profile or from <see cref="Override"/>.
+  /// </remarks>
+  public CustomKeyBindingProfile MarkExitKey(ConsoleKey key, ConsoleModifiers modifiers)
+  {
+    (ConsoleKey, ConsoleModifiers) keyBinding = (key, modifiers);
+    RemovedExitKeys.Remove(keyBinding);
     AddedExitKeys.Add(keyBinding);
     return this;
   }

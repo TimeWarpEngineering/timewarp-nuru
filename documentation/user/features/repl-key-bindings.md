@@ -235,26 +235,15 @@ NuruApp app = NuruApp.CreateBuilder(args)
 await app.RunReplAsync();
 ```
 
-### Detecting User Preference
+### Global JSON profiles
 
-You can let users choose their profile via configuration:
+Users can save one profile for every Nuru app. `NURU_KEYBINDINGS` is a path to a JSON file, not a profile name. When `KeyBindingProfile` is unset and `KeyBindingProfileName` is still `"Default"`, the REPL loads the first file that exists:
 
-```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-  .Map("greet {name}")
-    .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
-    .AsCommand()
-    .Done()
-  .AddRepl(options =>
-  {
-    // Read from environment or config
-    string profile = Environment.GetEnvironmentVariable("NURU_KEYBINDINGS") ?? "Default";
-    options.KeyBindingProfileName = profile;
-  })
-  .Build();
+1. `$NURU_KEYBINDINGS`
+2. `./.nuru/keybindings.json`
+3. `~/.nuru/keybindings.json`
 
-await app.RunAsync(args);
-```
+An explicit profile name such as `"Emacs"` skips those files. See [Global Key Binding Profiles](global-key-binding-profiles.md).
 
 ### Available Profile Names
 

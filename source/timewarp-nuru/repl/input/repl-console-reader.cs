@@ -91,11 +91,14 @@ public sealed partial class ReplConsoleReader
     Terminal = terminal;
     CompletionHandler = new TabCompletionHandler(RouteProvider, terminal, ReplOptions, loggerFactory);
 
-    // Initialize key bindings from the configured profile
-    // Check for custom profile instance first, then fall back to profile name
-    IKeyBindingProfile profile = ReplOptions.KeyBindingProfile is IKeyBindingProfile customProfile
-      ? customProfile
-      : KeyBindingProfileFactory.GetProfile(ReplOptions.KeyBindingProfileName);
+    // Explicit profile instance, then an explicit non-default name, then JSON config, then Default.
+    IKeyBindingProfile profile = KeyBindingConfigLoader.ResolveStartupProfile
+    (
+      ReplOptions.KeyBindingProfile,
+      ReplOptions.KeyBindingProfileName,
+      KeyBindingConfigLoader.CreateDefaultSearch(),
+      Logger
+    );
     KeyBindings = profile.GetBindings(this);
     ExitKeys = profile.GetExitKeys();
   }

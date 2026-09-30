@@ -133,6 +133,12 @@ public class ReplOptions
   /// Default is <c>"Default"</c> for backward compatibility.
   /// </para>
   /// <para>
+  /// When this stays <c>"Default"</c> and <see cref="KeyBindingProfile"/> is not set, the REPL
+  /// loads JSON from <c>NURU_KEYBINDINGS</c>, then <c>./.nuru/keybindings.json</c>, then
+  /// <c>~/.nuru/keybindings.json</c>. A different name skips that search. See
+  /// <c>KeyBindingConfigLoader</c>.
+  /// </para>
+  /// <para>
   /// This property is ignored if <see cref="KeyBindingProfile"/> is set.
   /// </para>
   /// </remarks>

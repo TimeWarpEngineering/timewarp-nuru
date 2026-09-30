@@ -284,6 +284,7 @@ git commit -m "Add team key binding profile"
 - Action registry is straightforward mapping
 - Main risk: edge cases in key combination parsing
 - Mitigation: comprehensive test coverage for parser
+- 2026-09-30: review oracle (ganda task work, tw-implementation-review effort 1, reviewer `general`). Session: review-oracle (Cursor implementer-cursor profile, headless). Rounds: 1. Final counts: bug 0, suggestion 0, nit 0, open 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Next host nodes: open-pr / done (no apply-review sibling).
 
 ## Results
 
@@ -292,6 +293,8 @@ Nuru REPLs now load a global key binding profile from JSON when the app leaves `
 Search order is `NURU_KEYBINDINGS`, then `./.nuru/keybindings.json`, then `~/.nuru/keybindings.json`. Missing files are skipped. The first file that exists is loaded, and an invalid file throws `KeyBindingConfigException` with a line number instead of falling through. The loaded path is logged at Debug.
 
 `KeyBindingActionRegistry` maps the handlers that exist today (67 canonical names, including `DigitArgument:0` through `DigitArgument:9`). `TabComplete:reverse` is an alias of `TabCompleteReverse`. `CharacterWithOverwrite` is not a handler; overwrite remains `ToggleInsertMode` plus typed characters. The format, action list, and samples are in `documentation/user/features/global-key-binding-profiles.md` and `samples/configuration/`.
+
+Implementation review (effort 1, reviewer `general`): 1 round, disposition `clean`. Final counts: bug 0, suggestion 0, nit 0, open 0. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 Verification:
 

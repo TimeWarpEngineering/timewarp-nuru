@@ -34,7 +34,7 @@ lacks the guard.
 - [x] Hook smoke test: task→home refused, raw sha→home allowed (stdin simulation only)
 - [x] Gates per this repo's `tw-pr` (a hook-only change needs no full build unless the skill's
       scope table says otherwise)
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review; host `open-pr`
 
 ## Notes
 
@@ -71,7 +71,15 @@ Expect:
   `Refusing push of task branch to home: task/x -> master.` (recorded 2026-10-01).
 - raw sha→home is allowed with exit=0 and no output (HEAD is a task branch).
 
+### Review disposition
+
+- Rounds: 1; roster: general (effort 1, by-diff budget 53 lines).
+- Final counts: bug 0 / suggestion 0 / nit 0 (all statuses 0).
+- Disposition: **clean** — no findings; smoke test and audit re-verified.
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 2026-10-01
 - 2026-10-01: implement oracle (ganda task work) refreshed the hook, made the audit clean, and ran the smoke test.
+- 2026-10-01: review oracle (tw-implementation-review, effort 1) — disposition clean.

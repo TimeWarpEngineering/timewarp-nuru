@@ -29,10 +29,10 @@ lacks the guard.
 
 ## Checklist
 
-- [ ] `.githooks/pre-push.cs` refreshed via `ganda repo audit --fix --checks memsearch-scaffold`
-- [ ] Audit clean (no `memsearch-scaffold` warning)
-- [ ] Hook smoke test: task→home refused, raw sha→home allowed (stdin simulation only)
-- [ ] Gates per this repo's `tw-pr` (a hook-only change needs no full build unless the skill's
+- [x] `.githooks/pre-push.cs` refreshed via `ganda repo audit --fix --checks memsearch-scaffold`
+- [x] Audit clean (no `memsearch-scaffold` warning)
+- [x] Hook smoke test: task→home refused, raw sha→home allowed (stdin simulation only)
+- [x] Gates per this repo's `tw-pr` (a hook-only change needs no full build unless the skill's
       scope table says otherwise)
 - [ ] Implementation review; host `open-pr`
 
@@ -45,15 +45,33 @@ lacks the guard.
 
 ## Results
 
-*(fill when done)*
+- `ganda repo audit --fix --checks memsearch-scaffold` refreshed `.githooks/pre-push.cs`: a pure
+  addition (+19 lines) of the task/* → home guard. No local customization was dropped. The
+  `.githooks/pre-push` shim was unchanged.
+- Boyscout: the audit also failed `bin-dev` / `dev-cli-capabilities` (bin/dev missing in this
+  worktree). `ganda repo audit --fix --checks bin-dev` built it. `bin/` is gitignored, so there
+  is no committed change.
+- `ganda repo audit` result: "Repository passes all audit checks." No `memsearch-scaffold` warning.
+- Gates: this is a hook-only change, so no full build was needed. `dotnet build-server shutdown` was run.
 
 ### How to validate
 
-*(required before done)*
+Smoke (from the task worktree, with S=$(git rev-parse HEAD)):
 
-`ganda repo audit` shows no `memsearch-scaffold` warning, and the stdin smoke test output is
-recorded.
+```bash
+ganda repo audit
+echo "refs/heads/task/x $S refs/heads/master $S" | ./.githooks/pre-push origin url; echo "exit=$?"
+echo "$S $S refs/heads/master $S" | ./.githooks/pre-push origin url; echo "exit=$?"
+```
+
+Expect:
+
+- The audit reports "Repository passes all audit checks." and no `memsearch-scaffold` warning.
+- task→home is refused with exit=1 and prints
+  `Refusing push of task branch to home: task/x -> master.` (recorded 2026-10-01).
+- raw sha→home is allowed with exit=0 and no output (HEAD is a task branch).
 
 ## Session
 
 - Created: 2026-10-01
+- 2026-10-01: implement oracle (ganda task work) refreshed the hook, made the audit clean, and ran the smoke test.

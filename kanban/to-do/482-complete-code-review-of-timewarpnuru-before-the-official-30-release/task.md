@@ -51,7 +51,6 @@ one findings file per area, then a merged `findings.md` with dispositions.
 - [ ] `generators/locators/`, `extractors/`, `ir-builders/`, `interpreter/`, `emitters/` — SemanticModel over syntax-string type resolution (per `.agent/local/nuru-specific.md`)
 - [ ] `diagnostics/` — every descriptor has an id, category, help link, and a test; messages are user-facing quality
 - [ ] `validation/` — route pattern validation matches runtime parser behaviour
-- [ ] `AnalyzerReleases.Unshipped.md` (44 lines) vs `AnalyzerReleases.Shipped.md` (2 lines) — move all diagnostics shipping in 3.0 to Shipped with the 3.0 release header
 - [ ] Generated code compiles warning-free under `TreatWarningsAsErrors` in consumer projects
 
 ### Parsing (`source/timewarp-nuru-parsing`)
@@ -92,6 +91,9 @@ one findings file per area, then a merged `findings.md` with dispositions.
 
 - Package version at task creation: `3.0.0-beta.78` (`source/Directory.Build.props`).
 - Baseline commit: _to be recorded at review start_.
+- `AnalyzerReleases.Shipped.md` / `AnalyzerReleases.Unshipped.md`: diagnostics stay in Unshipped
+  by decision (2026-10-04). The shipped/unshipped split is a Microsoft-internal convention and is
+  not part of the 3.0 release criteria.
 - MCP server is frozen as of 2026-07-14 (kanban 454-033 closed won't-do); it is in scope only
   to decide whether it ships under the 3.0 banner.
 - Related open tasks: 219 (large test file refactor) and 481 (.NET 11 upgrade). Neither blocks

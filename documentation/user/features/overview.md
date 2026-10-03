@@ -64,6 +64,12 @@ Console stream management:
 - Piping and scripting support
 - Best practices
 
+### [REPL Key Bindings](repl-key-bindings.md)
+Keyboard shortcuts for the interactive REPL:
+- Default, Emacs, Vi, and VSCode profiles
+- `key-bindings` lists Key, Function, and Description by category
+- Filter by chord or function name
+
 ### [Shell Completion](shell-completion.md)
 Automatic tab completion for CLI applications:
 - One-line enablement
@@ -99,6 +105,7 @@ Built-in widgets for formatted terminal output:
 | 🔧 Built-in Routes | Version, updates, REPL out-of-box | [Built-in Routes](built-in-routes.md) |
 | 🤖 Agent invocation | `--capabilities` then `--json-args` | [Agent invocation](agent-invocation.md) |
 | ⚙️ Configuration | IOptions<T> and DI integration | [Configuration](configuration.md) |
+| ⌨️ REPL Key Bindings | Shortcuts and `key-bindings` | [REPL Key Bindings](repl-key-bindings.md) |
 | ⌨️ Shell Completion | Tab completion in all shells | [Shell Completion](shell-completion.md) |
 | 🎨 Colored Output | Testable ANSI colors | [Terminal Abstractions](terminal-abstractions.md) |
 | 📊 Terminal Widgets | Tables, panels, rules | [Widgets](widgets.md) |

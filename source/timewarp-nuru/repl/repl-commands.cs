@@ -90,4 +90,103 @@ internal sealed class ReplCommands
     Terminal.Clear();
     return Task.CompletedTask;
   }
+
+  /// <summary>
+  /// Prints the key bindings for a built-in profile.
+  /// </summary>
+  /// <param name="args">The REPL tokens, starting with <c>key-bindings</c>.</param>
+  /// <param name="activeProfileName">The profile the session is using, when the user does not pass <c>--profile</c>.</param>
+  public void ShowKeyBindings(string[] args, string activeProfileName)
+  {
+    ArgumentNullException.ThrowIfNull(args);
+
+    string? profile = null;
+    string? key = null;
+    string? function = null;
+    bool detailed = false;
+
+    for (int index = 1; index < args.Length; index++)
+    {
+      string arg = args[index];
+      if (arg is "--detailed" or "-d")
+      {
+        detailed = true;
+        continue;
+      }
+
+      if (arg is "--profile" or "-p")
+      {
+        if (!TryTakeValue(args, ref index, out profile))
+        {
+          WriteKeyBindingsUsage("Missing value for --profile.");
+          return;
+        }
+
+        continue;
+      }
+
+      if (arg is "--key" or "-k")
+      {
+        if (!TryTakeValue(args, ref index, out key))
+        {
+          WriteKeyBindingsUsage("Missing value for --key.");
+          return;
+        }
+
+        continue;
+      }
+
+      if (arg is "--function" or "-f")
+      {
+        if (!TryTakeValue(args, ref index, out function))
+        {
+          WriteKeyBindingsUsage("Missing value for --function.");
+          return;
+        }
+
+        continue;
+      }
+
+      if (profile is null && KeyBindingCatalog.IsKnownProfile(arg))
+      {
+        profile = arg;
+        continue;
+      }
+
+      WriteKeyBindingsUsage($"Unknown argument '{arg}'.");
+      return;
+    }
+
+    string profileName = profile ?? activeProfileName;
+    try
+    {
+      Terminal.WriteLine(KeyBindingCatalog.Render(profileName, key, function, detailed));
+    }
+    catch (ArgumentException exception)
+    {
+      Terminal.WriteErrorLine(exception.Message);
+    }
+  }
+
+  private void WriteKeyBindingsUsage(string message)
+  {
+    Terminal.WriteErrorLine(message);
+    Terminal.WriteErrorLine
+    (
+      "Usage: key-bindings [--profile <name>] [--key <chord>] [--function <name>] [--detailed]"
+    );
+  }
+
+  private static bool TryTakeValue(string[] args, ref int index, out string? value)
+  {
+    if (index + 1 >= args.Length || args[index + 1].StartsWith('-'))
+    {
+      value = null;
+      return false;
+    }
+
+    index++;
+    value = args[index];
+    return true;
+  }
 }

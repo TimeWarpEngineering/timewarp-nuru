@@ -240,6 +240,14 @@ public sealed class ReplSession : IDisposable
       return true;
     }
 
+    if (args.Length > 0 && args[0] == "key-bindings")
+    {
+      string profileName = (ReplOptions.KeyBindingProfile as IKeyBindingProfile)?.Name
+        ?? ReplOptions.KeyBindingProfileName;
+      Commands.ShowKeyBindings(args, profileName);
+      return true;
+    }
+
     return false;
   }
 

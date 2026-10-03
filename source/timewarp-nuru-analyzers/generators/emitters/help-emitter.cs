@@ -152,6 +152,7 @@ internal static class HelpEmitter
       sb.AppendLine("      .AddRow(\"cls\", \"Clear the screen\")");
       sb.AppendLine("      .AddRow(\"clear-history\", \"Clear command history\")");
       sb.AppendLine("      .AddRow(\"history\", \"Show command history\")");
+      sb.AppendLine("      .AddRow(\"key-bindings\", \"Show REPL key bindings\")");
       sb.AppendLine("      .AddRow(\"help\", \"Show REPL help\")");
       sb.AppendLine("      .HideHeaders()");
       sb.AppendLine("    );");

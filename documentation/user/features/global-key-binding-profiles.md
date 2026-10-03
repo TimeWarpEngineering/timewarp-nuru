@@ -2,7 +2,7 @@
 
 Save a key binding profile once and have every Nuru REPL load it. The file is JSON. Apps do not need to set a profile in code.
 
-Built-in profile names (`Default`, `Emacs`, `Vi`, `VSCode`) and the programmatic `CustomKeyBindingProfile` API are described in [REPL Key Bindings](repl-key-bindings.md).
+Built-in profile names (`Default`, `Emacs`, `Vi`, `VSCode`) and the programmatic `CustomKeyBindingProfile` API are described in [REPL Key Bindings](repl-key-bindings.md). The `key-bindings` command lists those built-in catalogs. It does not print the effective bindings from a JSON file loaded here.
 
 ## Search order
 

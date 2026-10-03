@@ -101,7 +101,7 @@ myapp> multiply 3 4
 myapp> exit
 ```
 
-See [REPL Key Bindings](repl-key-bindings.md) for keyboard shortcuts and customization.
+Inside the REPL, `key-bindings` lists the active built-in profile. See [REPL Key Bindings](repl-key-bindings.md) for keyboard shortcuts, filters, and customization.
 
 ## Help Route (`--help`, `-h`)
 

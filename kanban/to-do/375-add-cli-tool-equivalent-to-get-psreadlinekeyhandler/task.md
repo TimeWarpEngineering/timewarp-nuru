@@ -6,13 +6,13 @@ Create a CLI tool that displays key bindings and their associated handler functi
 
 ## Checklist
 
-- [ ] Research Get-PSReadLineKeyHandler functionality and output format
-- [ ] Design the CLI command structure and options
-- [ ] Implement key binding enumeration
-- [ ] Add output formatting (table, detailed view)
-- [ ] Support filtering by key chord or function name
-- [ ] Add unit tests
-- [ ] Document the new CLI tool
+- [x] Research Get-PSReadLineKeyHandler functionality and output format
+- [x] Design the CLI command structure and options
+- [x] Implement key binding enumeration
+- [x] Add output formatting (table, detailed view)
+- [x] Support filtering by key chord or function name
+- [x] Add unit tests
+- [x] Document the new CLI tool
 
 ## Notes
 
@@ -110,4 +110,70 @@ A detailed analysis against the complete PSReadLine function reference has been 
   - High Priority: `ShowKeyBindings`, `GotoBrace`, `ViEditVisually`, `WhatIsKey`
   - Medium Priority: `ClearHistory`, `ShowCommandHelp`, `Shell*Word` functions
   - Low Priority: Full Vi mode expansion, prediction functions
+
+The listing command is `key-bindings` (REPL and `tools/nuru-key-bindings`). It prints the four built-in catalogs. A custom or JSON profile is not expanded. `GotoBrace`, `WhatIsKey`, and `ViEditVisually` stay out of this task.
+
+## Session
+
+- Implementer: grok session 01a10099-8707-7d03-90a7-fe9c3f294943 (2026-10-03)
+
+## Results
+
+`key-bindings` lists built-in REPL shortcuts the way `Get-PSReadLineKeyHandler` does: category sections and a Key, Function, Description table. `--detailed` prints one block per binding. `--key` and `--function` filter. `--profile` selects Default, Emacs, Vi, or VSCode.
+
+The REPL command uses the active profile name when `--profile` is omitted. A positional built-in name (`key-bindings Emacs`) does the same. `tools/nuru-key-bindings` is the same listing outside the REPL. A bare run lists Default. An unknown profile exits 1.
+
+Bindings are delegates, so `KeyBindingCatalog` is the display table. A parity test checks every built-in chord against the live profile and, for method-group handlers, against `KeyBindingActionRegistry`.
+
+### Files
+
+- `source/timewarp-nuru/repl/key-bindings/key-binding-catalog.cs`
+- `source/timewarp-nuru/repl/key-bindings/key-binding-catalog.assignments.cs`
+- `source/timewarp-nuru/repl/key-bindings/key-binding-row.cs`
+- `source/timewarp-nuru/repl/repl-commands.cs`
+- `source/timewarp-nuru/repl/repl-session.cs`
+- `source/timewarp-nuru/help/help-options.cs`
+- `source/timewarp-nuru-analyzers/generators/emitters/help-emitter.cs`
+- `tools/nuru-key-bindings/`
+- `tests/timewarp-nuru-tests/repl/repl-47-key-binding-catalog.cs`
+- `documentation/user/tools/key-bindings.md` and the REPL key-binding docs
+- `changelog.md` (Unreleased)
+
+### Decisions
+
+- Command name is `key-bindings`, not `show-keys` or `key-handler`.
+- Custom and JSON profiles are named and rejected when the name is not a built-in catalog. Their chords are not printed.
+- `GotoBrace`, `WhatIsKey`, `ViEditVisually`, prediction, and full Vi mode are not part of this task.
+
+### Tests
+
+`dotnet run tests/timewarp-nuru-tests/repl/repl-47-key-binding-catalog.cs` — 17 passed, 0 failed.
+
+CLI smoke: Default table, Emacs `BeginningOfLine` filter, `Ctrl+a --detailed`, Vi `LeftArrow`, `--help`, and `--profile Mine` (exit 1, message names the four profiles).
+
+### How to validate
+
+**Smoke**
+
+```bash
+dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- --key Ctrl+a --detailed
+dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- --profile Emacs --function BeginningOfLine
+dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- --profile Mine; echo "exit=$?"
+```
+
+**Expect**
+
+- The detailed run prints `Profile: Default`, `Ctrl+a`, `Function: BeginningOfLine`, and `Move the cursor to the beginning of the line.`
+- The Emacs filter prints `Profile: Emacs` and one `BeginningOfLine` row for `Ctrl+a`.
+- `--profile Mine` prints `Unknown key binding profile: 'Mine'. Valid profiles are: Default, Emacs, Vi, VSCode.` and the shell `exit` line is `exit=1`.
+
+**Automated gate**
+
+```bash
+dotnet run tests/timewarp-nuru-tests/repl/repl-47-key-binding-catalog.cs
+```
+
+Expect 17 passed, 0 failed. The run checks catalog parity with Default, Emacs, Vi, and VSCode, filters, the REPL command, and the `key-bindings` row in CLI help when `ShowReplCommandsInCli` is true.
+
+**Not in scope:** `GotoBrace`, `WhatIsKey`, `ViEditVisually`, prediction, and expanding a custom or JSON profile into chords.
 

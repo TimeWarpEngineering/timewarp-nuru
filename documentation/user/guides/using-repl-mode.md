@@ -90,6 +90,7 @@ $
 - `history` - Show command history
 - `clear`, `cls` - Clear the screen
 - `clear-history` - Clear command history
+- `key-bindings` - List key bindings for the active built-in profile
 
 ## Features
 
@@ -144,6 +145,7 @@ REPL Commands:
   history           - Show command history
   clear, cls        - Clear the screen
   clear-history     - Clear command history
+  key-bindings      - List key bindings for the active built-in profile
 
 Any other input is executed as an application command.
 
@@ -375,5 +377,6 @@ See [samples/13-repl/](../../../samples/13-repl/) for complete working examples.
 
 ## Next Steps
 
-- Explore [REPL Key Bindings](../features/repl-key-bindings.md) for customizable key binding profiles
+- Explore [REPL Key Bindings](../features/repl-key-bindings.md) for customizable key binding profiles and the `key-bindings` command
+- List bindings from the command line with the [key-bindings tool](../tools/key-bindings.md)
 - See [samples/13-repl/](../../../samples/13-repl/) for working examples

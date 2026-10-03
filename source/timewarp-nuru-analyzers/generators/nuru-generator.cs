@@ -104,6 +104,16 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .Combine(context.AnalyzerConfigOptionsProvider)
       .Select(static (data, _) => GeneratedMediatorDetector.Detect(data.Left, data.Right));
 
+    // 6c. Full configuration sources are emitted only when something in this compilation uses them.
+    // The locator result replaces the previous hardcoded HasConfiguration=true.
+    IncrementalValueProvider<bool> hasConfiguration = context.SyntaxProvider
+      .CreateSyntaxProvider(
+        predicate: static (node, _) => AddConfigurationLocator.IsPotentialMatch(node),
+        transform: static (ctx, ct) => AddConfigurationLocator.UsesConfiguration(ctx, ct))
+      .Where(static usesConfiguration => usesConfiguration)
+      .Collect()
+      .Select(static (matches, _) => matches.Length > 0);
+
     // 7. Combine extraction results with endpoints, locations, endpoint diagnostics, and assembly metadata into GeneratorModel
     // Using buildExtractionResults ensures each Build() produces exactly one app - no duplicates
     IncrementalValueProvider<GeneratorModelWithDiagnostics?> generatorModelWithDiagnostics = buildExtractionResults
@@ -113,9 +123,11 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .Combine(endpointDiagnostics)
       .Combine(assemblyMetadata)
       .Combine(hasGeneratedMediator)
+      .Combine(hasConfiguration)
       .Combine(context.CompilationProvider)
       .Select(static (data, ct) => CreateGeneratorModelWithValidation(
-        data.Left.Left.Left.Left.Left.Left,
+        data.Left.Left.Left.Left.Left.Left.Left,
+        data.Left.Left.Left.Left.Left.Left.Right,
         data.Left.Left.Left.Left.Left.Right,
         data.Left.Left.Left.Left.Right,
         data.Left.Left.Left.Right,
@@ -350,6 +362,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     ImmutableArray<Diagnostic> endpointDiagnostics,
     AssemblyMetadata assemblyMetadata,
     bool hasGeneratedMediator,
+    bool hasConfiguration,
     Compilation compilation,
     CancellationToken cancellationToken
   )
@@ -382,11 +395,12 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
       if (!uniqueApps.TryGetValue(key, out AppModel? existingApp))
       {
-        // Ensure each app has help and configuration enabled by default
+        // Help is always available. Configuration sources follow AddConfiguration()
+        // on this app or a handler parameter detected by AddConfigurationLocator.
         AppModel enrichedModel = result.Model with
         {
           HasHelp = true,
-          HasConfiguration = true
+          HasConfiguration = result.Model.HasConfiguration || hasConfiguration
         };
         uniqueApps[key] = enrichedModel;
       }

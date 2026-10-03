@@ -22,7 +22,7 @@ int multiResult = await RunAllTests();
 // - check-version-07: entire body #if !JARIBU_MULTI; needs CheckVersionCommand endpoint (task 456)
 // - generator-19/20: multi-included for filtered cases, but #if !JARIBU_MULTI methods
 //   (NoFilter_IncludesAll, Gen20KanbanQuery) only run in this standalone phase (M29)
-// - generator-28..50: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
+// - generator-28..52: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
 string ciDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? ".";
 string[] standaloneTests =
 [
@@ -51,6 +51,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-48-async-expression-body-emission.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-49-nuru-r004-repl-default-route.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-50-json-args-reserved.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-52-configuration-detection.cs"),
 ];
 
 int standaloneFailures = 0;

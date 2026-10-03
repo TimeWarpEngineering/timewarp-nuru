@@ -62,3 +62,10 @@ ServiceGen generalizes this into a reusable package.
 - Must work standalone (no Nuru or Mediator dependency)
 - Three generators (ServiceGen + Mediator + Nuru) compose through shared compiled types, not generated output
 - Build this first — Mediator and Nuru migration depend on it
+
+## Archived 2026-10-03
+
+Archived from the nuru board: this card describes a new product and repository (TimeWarp.ServiceGen),
+not nuru-local work. Its stated consumer, task 443, shipped on TimeWarp.Mediator 14.0.0-beta.4 without it
+and records 444 as a non-blocker. No ServiceGen repo exists. If the product is still wanted, recreate it
+as an org-level task; a nuru "consume ServiceGen" task can follow once a package exists.

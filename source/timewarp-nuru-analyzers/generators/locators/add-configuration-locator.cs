@@ -6,10 +6,12 @@
 // HasConfiguration is compilation-scoped. Endpoint Handler types are not nested in a
 // builder chain, so a match cannot be attributed to one Build() call. One CLI per
 // compilation is the common case; every app in a multi-app compilation shares the flag.
-// A match is .AddConfiguration() on NuruAppBuilder, or a handler parameter of type
-// IConfiguration, IConfigurationRoot, or IOptions<T>. Handler forms are a WithHandler
-// delegate (lambda, anonymous method, or method group) and a nested Handler constructor
-// or Handle method. IOptionsSnapshot<T> and IOptionsMonitor<T> are not configuration
+// A match is .AddConfiguration() on NuruAppBuilder, a constructor parameter of type
+// IConfiguration, IConfigurationRoot, or IOptions<T> on any type, or such a parameter on
+// a handler. Constructors count on any type because registered services, behaviors, and
+// mediator-resolved types all receive the generated configuration root through them.
+// Handler forms are a WithHandler delegate (lambda, anonymous method, or method group)
+// and a nested Handler Handle method. IOptionsSnapshot<T> and IOptionsMonitor<T> are not configuration
 // setup signals. An unresolved AddConfiguration() call still matches: dropping sources
 // while the call is unbound would hide appsettings and command-line overrides.
 #endregion
@@ -18,7 +20,6 @@ namespace TimeWarp.Nuru.Generators;
 
 using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 using ParameterSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.ParameterSyntax;
-using SyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 
 /// <summary>
 /// Locates configuration use that requires the full configuration builder.
@@ -230,7 +231,7 @@ internal static class AddConfigurationLocator
   )
   {
     if (context.SemanticModel.GetDeclaredSymbol(parameter, cancellationToken) is not IParameterSymbol parameterSymbol)
-      return ParameterSyntaxIsEndpointHandlerConfiguration(parameter);
+      return ParameterSyntaxUsesConfiguration(parameter);
 
     if (!IsConfigurationParameterType(parameterSymbol.Type))
       return false;
@@ -238,15 +239,16 @@ internal static class AddConfigurationLocator
     if (parameterSymbol.ContainingSymbol is not IMethodSymbol method)
       return false;
 
-    bool isConstructor = method.MethodKind == MethodKind.Constructor;
-    bool isHandleMethod = method.Name == HandleMethodName;
-    if (!isConstructor && !isHandleMethod)
+    if (method.MethodKind == MethodKind.Constructor)
+      return true;
+
+    if (method.Name != HandleMethodName)
       return false;
 
     return IsEndpointHandlerType(method.ContainingType, cancellationToken);
   }
 
-  private static bool ParameterSyntaxIsEndpointHandlerConfiguration(ParameterSyntax parameter)
+  private static bool ParameterSyntaxUsesConfiguration(ParameterSyntax parameter)
   {
     if (!ParameterTypeMightBeConfiguration(parameter.Type))
       return false;
@@ -254,20 +256,14 @@ internal static class AddConfigurationLocator
     if (parameter.Parent is not ParameterListSyntax parameterList)
       return false;
 
-    SyntaxNode? owner = parameterList.Parent;
-    if (owner is ConstructorDeclarationSyntax constructor)
-    {
-      owner = constructor.Parent;
-    }
-    else if (owner is MethodDeclarationSyntax method)
-    {
-      if (method.Identifier.ValueText != HandleMethodName)
-        return false;
+    RoslynSyntaxNode? owner = parameterList.Parent;
+    if (owner is ConstructorDeclarationSyntax or TypeDeclarationSyntax)
+      return true;
 
-      owner = method.Parent;
-    }
+    if (owner is not MethodDeclarationSyntax method || method.Identifier.ValueText != HandleMethodName)
+      return false;
 
-    if (owner is not ClassDeclarationSyntax classDeclaration)
+    if (method.Parent is not ClassDeclarationSyntax classDeclaration)
       return false;
 
     if (classDeclaration.Identifier.ValueText != HandlerTypeName)

@@ -4,8 +4,9 @@
 #:package Microsoft.CodeAnalysis.CSharp
 
 #region Purpose
-// Task 321: full configuration sources are emitted only for AddConfiguration()
-// or a handler parameter of type IConfiguration, IConfigurationRoot, or IOptions<T>.
+// Task 321: full configuration sources are emitted only for AddConfiguration(),
+// a constructor parameter of type IConfiguration, IConfigurationRoot, or IOptions<T>,
+// or such a parameter on a handler.
 #endregion
 
 #if !JARIBU_MULTI
@@ -415,19 +416,43 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
       await Task.CompletedTask;
     }
 
-    public static async Task HandlerTypeWithoutNuruInterface_Should_EmitMinimalConfiguration()
+    public static async Task RegisteredServiceConstructorIConfiguration_Should_EmitFullConfiguration()
+    {
+      const string Source = """
+        using Microsoft.Extensions.Configuration;
+        using Microsoft.Extensions.DependencyInjection;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .ConfigureServices(services => services.AddSingleton<IGreeter, Greeter>())
+          .Map("greet")
+            .WithHandler((IGreeter greeter) => greeter.Greet())
+            .AsQuery()
+            .Done()
+          .Build();
+
+        return await app.RunAsync(args);
+
+        public interface IGreeter
+        {
+          string Greet();
+        }
+
+        public sealed class Greeter(IConfiguration configuration) : IGreeter
+        {
+          public string Greet() => configuration["Greeting"] ?? "";
+        }
+        """;
+
+      ShouldEmitFull(Source);
+      await Task.CompletedTask;
+    }
+
+    public static async Task HandleMethodWithoutNuruInterface_Should_EmitMinimalConfiguration()
     {
       const string Source = """
         using Microsoft.Extensions.Configuration;
         using TimeWarp.Nuru;
-
-        public sealed class Handler
-        {
-          public Handler(IConfiguration configuration)
-          {
-            _ = configuration;
-          }
-        }
 
         NuruApp app = NuruApp.CreateBuilder()
           .Map("ping")
@@ -437,6 +462,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
           .Build();
 
         return await app.RunAsync(args);
+
+        public sealed class Handler
+        {
+          public string Handle(IConfiguration configuration) => configuration["k"] ?? "";
+        }
         """;
 
       ShouldEmitMinimal(Source);

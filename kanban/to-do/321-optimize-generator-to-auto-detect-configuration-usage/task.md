@@ -34,23 +34,32 @@ Set `HasConfiguration=true` if ANY of:
 
 ## Results
 
-`HasConfiguration` follows real use. The generator emits appsettings, environment, user-secrets, and command-line sources when the compilation calls `.AddConfiguration()` or a handler takes `IConfiguration`, `IConfigurationRoot`, or `IOptions<T>`. Other apps get the blank `ConfigurationBuilder` root.
+`HasConfiguration` follows real use. The generator emits appsettings, environment, user-secrets, and command-line sources when the compilation calls `.AddConfiguration()`, any type's constructor takes `IConfiguration`, `IConfigurationRoot`, or `IOptions<T>`, or a handler takes one of those types. Other apps get the blank `ConfigurationBuilder` root.
 
-Handler forms covered: `WithHandler` lambdas, anonymous methods, and method groups, plus a nested `Handler` constructor or `Handle` method on `ICommandHandler`, `IQueryHandler`, or `IIdempotentCommandHandler`. `IOptionsSnapshot<T>` and `IOptionsMonitor<T>` do not turn sources on. A helper that merely mentions `IConfiguration` does not either. The flag is compilation-scoped because endpoint handlers are not nested in one `Build()` chain.
+Constructors count on any type because registered services, behaviors, and mediator-resolved types receive the generated configuration root through them. Handler forms covered: `WithHandler` lambdas, anonymous methods, and method groups, plus a nested `Handler` `Handle` method on `ICommandHandler`, `IQueryHandler`, or `IIdempotentCommandHandler`. `IOptionsSnapshot<T>` and `IOptionsMonitor<T>` do not turn sources on. A non-constructor helper method that merely takes `IConfiguration` does not either. The flag is compilation-scoped because endpoint handlers are not nested in one `Build()` chain.
 
 ### How to validate
 
 Smoke: `dotnet run tests/timewarp-nuru-tests/generator/generator-52-configuration-detection.cs`
 
-Expect: 15 passed. Cases with `AddConfiguration()`, `IConfiguration`, `IConfigurationRoot`, or `IOptions<T>` on a handler contain `CONFIGURATION (from AddConfiguration())`. Apps with no configuration use, an `IOptionsSnapshot<T>` handler, or a non-handler `IConfiguration` parameter contain `Minimal configuration for service initialization` and do not contain the full configuration banner.
+Expect: 16 passed. Cases with `AddConfiguration()`, `IConfiguration`, `IConfigurationRoot`, or `IOptions<T>` on a handler contain `CONFIGURATION (from AddConfiguration())`. A `ConfigureServices`-registered service whose constructor takes `IConfiguration` also gets full sources. Apps with no configuration use, an `IOptionsSnapshot<T>` handler, or a non-constructor, non-handler `IConfiguration` parameter contain `Minimal configuration for service initialization` and do not contain the full configuration banner.
 
 Smoke: `dotnet run tests/timewarp-nuru-tests/generator/generator-14-options-validation.cs`
 
 Expect: passed. `IOptions<T>` method-group handlers still bind `--Test:Port=0` without calling `AddConfiguration()`, and invalid values still throw `OptionsValidationException`.
 
+### Review disposition
+
+- Effort 3 (by-diff), roster: general. 2 rounds.
+- Final counts: bug 1 fixed, suggestion 0, nit 1 fixed, open 0, wontfix 0.
+- Disposition: **clean**. M1 (bug): constructor injection of configuration into registered services, behaviors, and mediator-resolved types was not detected, so those consumers silently got a blank root. Fixed by counting any constructor parameter of a configuration type. M2 (nit): duplicate using alias removed.
+- Artifacts: `review/review-framework.md`, `review/round-1/` (general.md, merged.md), `review/round-2/merged.md`, `review/disposition.md`.
+- Verification: generator-52 16/16, generator-14 5/5, full `run-ci-tests.cs` exit 0 after a runfile cache clear.
+
 ## Session
 
 - Implementation: grok task-work (2026-10-03)
+- Review oracle: claude (opus) task-work, effort 3, roster general (2026-10-03)
 
 ## Notes
 

@@ -1094,15 +1094,14 @@ internal static class InterceptorEmitter
 
   private static void EmitMethodBody(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string? loggerFactoryFieldName)
   {
-    // Configuration setup (if AddConfiguration was called)
+    // Full sources when AddConfiguration() ran or a handler takes configuration.
+    // A blank root still satisfies EnsureServicesInitialized.
     if (app.HasConfiguration)
     {
       ConfigurationEmitter.Emit(sb);
     }
     else
     {
-      // Create a minimal configuration for apps without AddConfiguration()
-      // This is needed for EnsureServicesInitialized
       sb.AppendLine("    // Minimal configuration for service initialization");
       sb.AppendLine("    global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration =");
       sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");

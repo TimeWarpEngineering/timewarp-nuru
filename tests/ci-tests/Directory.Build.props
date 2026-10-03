@@ -82,6 +82,10 @@
          (task 478 NURU_R005 reserved json-args option); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-50-json-args-reserved.cs" />
+    <!-- generator-52: Roslyn-hosted configuration detection (task 321). The analyzer
+         project collides with timewarp-nuru parsing types (CS0433) in the multi assembly.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-52-configuration-detection.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

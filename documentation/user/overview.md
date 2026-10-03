@@ -30,7 +30,7 @@ Real-world scenarios and patterns:
 Practical implementation guides:
 - Architecture choices (Direct, Mediator, Mixed)
 - Deployment strategies (AOT, runfiles, cross-platform)
-- Migration from other frameworks
+- Migration from other frameworks, and [migrating to 3.0](guides/migrating-to-3.0.md)
 - Best practices
 
 ### [Features](features/)

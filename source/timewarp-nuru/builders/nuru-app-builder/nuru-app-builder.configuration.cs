@@ -125,7 +125,7 @@ public partial class NuruAppBuilder
   ///
   /// NuruApp app = NuruApp.CreateBuilder([])
   ///     .UseTerminal(terminal)
-  ///     .AddReplSupport()
+  ///     .AddRepl()
   ///     .Build();
   /// </code>
   /// </example>

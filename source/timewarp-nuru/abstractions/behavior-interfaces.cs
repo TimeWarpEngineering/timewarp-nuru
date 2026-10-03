@@ -166,7 +166,7 @@ public interface INuruBehavior
 /// }
 ///
 /// // Register and use with .Implements&lt;T&gt;()
-/// NuruApp.CreateBuilder(args)
+/// NuruApp.CreateBuilder()
 ///   .AddBehavior(typeof(AuthorizationBehavior))
 ///   .Map("admin {action}")
 ///     .Implements&lt;IRequireAuthorization&gt;(x =&gt; x.RequiredPermission = "admin:execute")

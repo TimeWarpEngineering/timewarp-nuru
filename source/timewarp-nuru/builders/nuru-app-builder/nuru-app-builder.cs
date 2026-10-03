@@ -42,7 +42,7 @@ public partial class NuruAppBuilder
   /// <returns>The builder for method chaining.</returns>
   /// <example>
   /// <code>
-  /// NuruApp.CreateBuilder(args)
+  /// NuruApp.CreateBuilder()
   ///   .AddBehavior(typeof(LoggingBehavior))
   ///   .AddBehavior(typeof(PerformanceBehavior))
   ///   .Map("ping").WithHandler(() => "pong").Done()

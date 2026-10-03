@@ -13,7 +13,7 @@ Multiple test files exceed 500 lines. While test files can be larger than produc
 Regenerated 2026-09-28 (triage 477) from `wc -l` over `tests/**/*.cs`; the 2025 list named six files that no
 longer exist. Review each; split only where the guidelines below apply.
 
-- [x] `tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs` — subjects extracted (runfile 380, fixtures 361)
+- [ ] `tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs` — SEND-BACK: restore subjects inline (see ## Send-back 2026-10-03)
 - [x] `tests/timewarp-nuru-tests/repl/repl-31-multiline-buffer.cs` (726) — kept; one sectioned `MultilineBuffer` surface
 - [x] `tests/timewarp-nuru-tests/routing/routing-05-option-matching.cs` — split into modifier matrix, boolean/mixed/typed, and aliases
 - [x] `tests/timewarp-nuru-tests/repl/repl-23-key-binding-profiles.cs` (659) — kept; one sectioned profile matrix
@@ -57,6 +57,34 @@ Split a test file if:
 - Finding specific tests is difficult
 - Test data could be externalized
 - Shared test utilities could be extracted
+
+## Send-back 2026-10-03 (human gate on PR #280)
+
+PR #280 was reviewed at the merge gate and sent back for one change. Keep everything else.
+
+**Revert the generator-26 extraction.** The per-folder `tests/timewarp-nuru-tests/generator/Directory.Build.props`
+with a `Compile Include` guarded by `'$(MSBuildProjectName)' == 'generator-26-constructor-dependency-resolution.cs'`
+is build plumbing for a single test, keyed on an undocumented file-based-app naming detail, and fails silently on
+a rename. A shorter file is not worth that. The lexer-folder props is not a precedent: it shares a helper every
+lexer test uses, unconditionally.
+
+- [ ] Delete `tests/timewarp-nuru-tests/generator/Directory.Build.props`
+- [ ] Delete `tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-fixtures.cs`
+- [ ] Restore the subjects inline in `generator-26-constructor-dependency-resolution.cs` (729 lines is accepted).
+      A section banner between subjects and scenarios is welcome; no other restructuring.
+- [ ] Regenerate the three `internals-visible-to.g.cs` files (`runfiles/generate-internals-visible-to.cs`) so the
+      fixtures stem and the `generator` directory entry are dropped again; keep the other new stems.
+- [ ] Re-run smoke: `dotnet run tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs`
+      (expect 10 passed) and `dotnet build tests/ci-tests/run-ci-tests.cs`
+- [ ] Update `## Results` (generator-26 is now a "kept" entry) and the `## Checklist` line above
+- [ ] Push to the same task branch; PR #280 stays open — do not open a new PR
+
+**Keep:** the routing-05 three-way split, the internals-visible-to refresh of pre-existing missing stems, and the
+nine "kept" decisions.
+
+**Not requested this round:** reviewing `help-01-per-route-help.cs` (551), `routing-33-json-args.cs` (544), and
+`repl-46-key-binding-config-loader.cs` (510), which crossed 500 lines after the 2026-09-28 list was generated.
+Record them under Notes as a possible follow-up only.
 
 ## Session
 

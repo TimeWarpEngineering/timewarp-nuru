@@ -99,9 +99,15 @@ public sealed partial class ReplConsoleReader
       KeyBindingConfigLoader.CreateDefaultSearch(),
       Logger
     );
+    ProfileName = profile.Name;
     KeyBindings = profile.GetBindings(this);
     ExitKeys = profile.GetExitKeys();
   }
+
+  /// <summary>
+  /// Name of the profile resolved at construction, including one loaded from a JSON config file.
+  /// </summary>
+  internal string ProfileName { get; }
 
   /// <summary>
   /// Reads a line of input with advanced editing capabilities.

@@ -19,10 +19,17 @@ using TimeWarp.Nuru;
 /// </summary>
 [NuruRoute("key-bindings", Description = "List REPL key bindings")]
 [NuruRouteExample("key-bindings", Description = "List the Default profile")]
+[NuruRouteExample("key-bindings Emacs", Description = "List the Emacs profile by positional name")]
 [NuruRouteExample("key-bindings --profile Emacs --function Backward", Description = "Emacs bindings whose function name contains Backward")]
 [NuruRouteExample("key-bindings --key Ctrl+a --detailed", Description = "Show one chord with its description")]
 public sealed class KeyBindingsQuery : IQuery<string>
 {
+  /// <summary>
+  /// Positional built-in profile name, used when <see cref="Profile"/> is not set.
+  /// </summary>
+  [Parameter(Description = "Built-in profile name, same as --profile")]
+  public string? ProfileName { get; set; }
+
   /// <summary>
   /// Built-in profile name. Defaults to Default.
   /// </summary>
@@ -61,7 +68,8 @@ public sealed class KeyBindingsQuery : IQuery<string>
     public Task<string> Handle(KeyBindingsQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
-      string profile = string.IsNullOrWhiteSpace(query.Profile) ? "Default" : query.Profile;
+      string? requested = string.IsNullOrWhiteSpace(query.Profile) ? query.ProfileName : query.Profile;
+      string profile = string.IsNullOrWhiteSpace(requested) ? "Default" : requested;
       try
       {
         return Task.FromResult

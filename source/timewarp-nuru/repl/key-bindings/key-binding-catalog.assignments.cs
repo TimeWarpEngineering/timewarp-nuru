@@ -27,8 +27,16 @@ public static partial class KeyBindingCatalog
 
   private static readonly Dictionary<string, FunctionInfo> Functions = CreateFunctions();
 
+  // Set after the first successful check. The table is static, so later calls skip the scan.
+  private static volatile bool TableChecked;
+
   private static void EnsureTable()
   {
+    if (TableChecked)
+    {
+      return;
+    }
+
     HashSet<(string Profile, ConsoleKey Key, ConsoleModifiers Modifiers)> seen = [];
     foreach (Assignment assignment in Assignments)
     {
@@ -55,6 +63,8 @@ public static partial class KeyBindingCatalog
         throw new InvalidOperationException($"Catalog function '{assignment.Function}' is not a registered action.");
       }
     }
+
+    TableChecked = true;
   }
 
   private static Dictionary<string, FunctionInfo> CreateFunctions()

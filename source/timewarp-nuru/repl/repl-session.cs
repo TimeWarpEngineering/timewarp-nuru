@@ -27,6 +27,10 @@ public sealed class ReplSession : IDisposable
   private bool Running;
   private bool Disposed;
 
+  // Profile the console reader actually resolved (explicit, named, or JSON config).
+  // Null until the first read with arrow history enabled.
+  private string? ActiveKeyBindingProfileName;
+
   // CTS for the command currently executing, linked to the external token. Published so
   // OnCancelKeyPress (raised on a console/threadpool thread) can cancel the in-flight
   // command; null whenever no command is executing. Volatile: written on the loop thread,
@@ -242,7 +246,8 @@ public sealed class ReplSession : IDisposable
 
     if (args.Length > 0 && args[0] == "key-bindings")
     {
-      string profileName = (ReplOptions.KeyBindingProfile as IKeyBindingProfile)?.Name
+      string profileName = ActiveKeyBindingProfileName
+        ?? (ReplOptions.KeyBindingProfile as IKeyBindingProfile)?.Name
         ?? ReplOptions.KeyBindingProfileName;
       Commands.ShowKeyBindings(args, profileName);
       return true;
@@ -261,6 +266,7 @@ public sealed class ReplSession : IDisposable
         ReplOptions,
         LoggerFactory,
         Terminal);
+      ActiveKeyBindingProfileName = consoleReader.ProfileName;
       return await consoleReader.ReadLineAsync(ReplOptions.Prompt).ConfigureAwait(false);
     }
 

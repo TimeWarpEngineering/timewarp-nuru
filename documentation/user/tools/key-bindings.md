@@ -12,13 +12,13 @@ dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- key-bindings --profil
 dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- key-bindings --key Ctrl+a --detailed
 ```
 
-A bare `dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs` lists the Default profile. The entry point forwards a leading option to the `key-bindings` command.
+A bare `dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs` lists the Default profile. The entry point forwards any arguments that do not start with `key-bindings` to that command, so `-- Emacs --detailed` works too.
 
 ## Options
 
 | Flag | Short | Meaning |
 |------|-------|---------|
-| `--profile` | `-p` | `Default`, `Emacs`, `Vi`, or `VSCode`. Defaults to `Default`. |
+| `--profile` | `-p` | `Default`, `Emacs`, `Vi`, or `VSCode`. Defaults to `Default`. A positional name (`key-bindings Emacs`) does the same when `--profile` is absent. |
 | `--key` | `-k` | Exact chord when the parser accepts it, otherwise a case-insensitive substring of the displayed chord. |
 | `--function` | `-f` | Case-insensitive substring of the function name. |
 | `--detailed` | `-d` | One block per binding instead of the table. |

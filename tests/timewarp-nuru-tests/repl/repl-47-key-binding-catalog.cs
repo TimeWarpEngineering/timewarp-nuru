@@ -283,6 +283,43 @@ public class KeyBindingCatalogTests
     terminal.OutputContains("Goodbye!").ShouldBeTrue();
   }
 
+  public static async Task Should_report_a_json_profile_loaded_by_the_reader()
+  {
+    string configFile = Path.Combine(Path.GetTempPath(), $"nuru-keybindings-{Guid.NewGuid():N}.json");
+    string? previous = Environment.GetEnvironmentVariable(KeyBindingConfigLoader.EnvironmentVariableName);
+    await File.WriteAllTextAsync(configFile, """{"name":"Json","baseProfile":"Default"}""");
+    Environment.SetEnvironmentVariable(KeyBindingConfigLoader.EnvironmentVariableName, configFile);
+    try
+    {
+      using TestTerminal terminal = new();
+      terminal.QueueLine("key-bindings");
+      terminal.QueueLine("exit");
+
+      // No explicit profile, so the reader loads the JSON file. The listing
+      // must name that profile instead of silently printing Default.
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .AddRepl(options =>
+        {
+          options.EnableColors = false;
+          options.PersistHistory = false;
+          options.WelcomeMessage = null;
+          options.ShowTiming = false;
+        })
+        .Build();
+      await app.RunAsync(["--interactive"]);
+
+      terminal.ErrorOutput.ShouldContain("Unknown key binding profile: 'Json'");
+      terminal.OutputContains("Profile: Default").ShouldBeFalse();
+      terminal.OutputContains("Goodbye!").ShouldBeTrue();
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable(KeyBindingConfigLoader.EnvironmentVariableName, previous);
+      File.Delete(configFile);
+    }
+  }
+
   public static async Task Should_print_usage_for_a_bad_flag_without_leaving_the_repl()
   {
     using TestTerminal terminal = new();

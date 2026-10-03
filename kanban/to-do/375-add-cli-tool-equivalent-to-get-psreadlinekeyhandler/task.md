@@ -116,12 +116,13 @@ The listing command is `key-bindings` (REPL and `tools/nuru-key-bindings`). It p
 ## Session
 
 - Implementer: grok session 01a10099-8707-7d03-90a7-fe9c3f294943 (2026-10-03)
+- Review oracle: claude-opus-5-5 (2026-10-03). The general reviewer was a Claude subagent. Effort 3.
 
 ## Results
 
 `key-bindings` lists built-in REPL shortcuts the way `Get-PSReadLineKeyHandler` does: category sections and a Key, Function, Description table. `--detailed` prints one block per binding. `--key` and `--function` filter. `--profile` selects Default, Emacs, Vi, or VSCode.
 
-The REPL command uses the active profile name when `--profile` is omitted. A positional built-in name (`key-bindings Emacs`) does the same. `tools/nuru-key-bindings` is the same listing outside the REPL. A bare run lists Default. An unknown profile exits 1.
+The REPL command uses the active profile name when `--profile` is omitted. A positional built-in name (`key-bindings Emacs`) does the same in the REPL and in the tool. With no `--profile`, the REPL uses the profile the line reader resolved, including one loaded from JSON config, and reports an error for a non-built-in name. `tools/nuru-key-bindings` is the same listing outside the REPL. A bare run lists Default. An unknown profile exits 1.
 
 Bindings are delegates, so `KeyBindingCatalog` is the display table. A parity test checks every built-in chord against the live profile and, for method-group handlers, against `KeyBindingActionRegistry`.
 
@@ -147,7 +148,7 @@ Bindings are delegates, so `KeyBindingCatalog` is the display table. A parity te
 
 ### Tests
 
-`dotnet run tests/timewarp-nuru-tests/repl/repl-47-key-binding-catalog.cs` — 17 passed, 0 failed.
+`dotnet run tests/timewarp-nuru-tests/repl/repl-47-key-binding-catalog.cs` — 18 passed, 0 failed (includes the JSON-profile regression test from review M1). `dotnet run tests/ci-tests/run-ci-tests.cs`, after clearing the runfile cache, passed: 3738 tests, 0 failed.
 
 CLI smoke: Default table, Emacs `BeginningOfLine` filter, `Ctrl+a --detailed`, Vi `LeftArrow`, `--help`, and `--profile Mine` (exit 1, message names the four profiles).
 
@@ -173,7 +174,20 @@ dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- --profile Mine; echo 
 dotnet run tests/timewarp-nuru-tests/repl/repl-47-key-binding-catalog.cs
 ```
 
-Expect 17 passed, 0 failed. The run checks catalog parity with Default, Emacs, Vi, and VSCode, filters, the REPL command, and the `key-bindings` row in CLI help when `ShowReplCommandsInCli` is true.
+Expect 18 passed, 0 failed. The run checks catalog parity with Default, Emacs, Vi, and VSCode, filters, the REPL command, and the `key-bindings` row in CLI help when `ShowReplCommandsInCli` is true.
 
 **Not in scope:** `GotoBrace`, `WhatIsKey`, `ViEditVisually`, prediction, and expanding a custom or JSON profile into chords.
 
+### Review
+
+- **Rounds:** 1. **Effort:** 3. **Roster:** general.
+- **Final counts:** 2 bugs fixed, 2 suggestions fixed, 2 nits wontfix. 0 open.
+- **Disposition:** `accepted-exceptions`.
+  - M5: the tool's unknown-profile message stays on stdout by design, and exit code 1 is the signal.
+  - M6: flag values that start with `-` stay rejected, so a value cannot swallow the next flag.
+- **Fixes:**
+  - M1: the REPL listing now follows the profile the reader resolved, including JSON config.
+  - M2: the tool accepts a positional profile name.
+  - M3: the changelog notes that the built-in shadows a same-named app route.
+  - M4: the catalog table is validated once.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

@@ -13,7 +13,7 @@ Multiple test files exceed 500 lines. While test files can be larger than produc
 Regenerated 2026-09-28 (triage 477) from `wc -l` over `tests/**/*.cs`; the 2025 list named six files that no
 longer exist. Review each; split only where the guidelines below apply.
 
-- [ ] `tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs` — SEND-BACK: restore subjects inline (see ## Send-back 2026-10-03)
+- [x] `tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs` (729) — kept; subjects stay inline above the scenario classes
 - [x] `tests/timewarp-nuru-tests/repl/repl-31-multiline-buffer.cs` (726) — kept; one sectioned `MultilineBuffer` surface
 - [x] `tests/timewarp-nuru-tests/routing/routing-05-option-matching.cs` — split into modifier matrix, boolean/mixed/typed, and aliases
 - [x] `tests/timewarp-nuru-tests/repl/repl-23-key-binding-profiles.cs` (659) — kept; one sectioned profile matrix
@@ -58,6 +58,14 @@ Split a test file if:
 - Test data could be externalized
 - Shared test utilities could be extracted
 
+### Possible follow-up
+
+These files crossed 500 lines after the 2026-09-28 list. This round did not review them:
+
+- `tests/timewarp-nuru-tests/help/help-01-per-route-help.cs` (551)
+- `tests/timewarp-nuru-tests/routing/routing-33-json-args.cs` (544)
+- `tests/timewarp-nuru-tests/repl/repl-46-key-binding-config-loader.cs` (510)
+
 ## Send-back 2026-10-03 (human gate on PR #280)
 
 PR #280 was reviewed at the merge gate and sent back for one change. Keep everything else.
@@ -68,16 +76,16 @@ is build plumbing for a single test, keyed on an undocumented file-based-app nam
 a rename. A shorter file is not worth that. The lexer-folder props is not a precedent: it shares a helper every
 lexer test uses, unconditionally.
 
-- [ ] Delete `tests/timewarp-nuru-tests/generator/Directory.Build.props`
-- [ ] Delete `tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-fixtures.cs`
-- [ ] Restore the subjects inline in `generator-26-constructor-dependency-resolution.cs` (729 lines is accepted).
+- [x] Delete `tests/timewarp-nuru-tests/generator/Directory.Build.props`
+- [x] Delete `tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-fixtures.cs`
+- [x] Restore the subjects inline in `generator-26-constructor-dependency-resolution.cs` (729 lines is accepted).
       A section banner between subjects and scenarios is welcome; no other restructuring.
-- [ ] Regenerate the three `internals-visible-to.g.cs` files (`runfiles/generate-internals-visible-to.cs`) so the
+- [x] Regenerate the three `internals-visible-to.g.cs` files (`runfiles/generate-internals-visible-to.cs`) so the
       fixtures stem and the `generator` directory entry are dropped again; keep the other new stems.
-- [ ] Re-run smoke: `dotnet run tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs`
+- [x] Re-run smoke: `dotnet run tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs`
       (expect 10 passed) and `dotnet build tests/ci-tests/run-ci-tests.cs`
-- [ ] Update `## Results` (generator-26 is now a "kept" entry) and the `## Checklist` line above
-- [ ] Push to the same task branch; PR #280 stays open — do not open a new PR
+- [x] Update `## Results` (generator-26 is now a "kept" entry) and the `## Checklist` line above
+- [x] Push to the same task branch; PR #280 stays open — do not open a new PR
 
 **Keep:** the routing-05 three-way split, the internals-visible-to refresh of pre-existing missing stems, and the
 nine "kept" decisions.
@@ -89,15 +97,14 @@ Record them under Notes as a possible follow-up only.
 ## Session
 
 - Implementer: Grok session 01a1015d-d3f0-7710-aa84-ac2484e5b9ec (2026-10-03)
+- Implementer: Grok session 01a1022c-a940-73f2-a2c5-3ff9233e748c (2026-10-03) — send-back: restore generator-26 subjects inline
 - Review oracle: Claude Opus 5.5 (2026-10-03), effort 3, roster general (subagent af0976436bd743e3b)
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-03T11:11:02Z
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-03T14:26:08Z
 
 ## Results
 
-Two files met the split guidelines. The other nine stay. Each of those is one feature, and section banners or scenario class names already identify the tests.
-
-`generator-26-constructor-dependency-resolution.cs` was 729 lines because the service graphs the source generator compiles sat above the ten scenario classes. Those subjects are now `generator-26-constructor-dependency-fixtures.cs` (global namespace, no entry point). `tests/timewarp-nuru-tests/generator/Directory.Build.props` compiles that sibling when the project name is `generator-26-constructor-dependency-resolution.cs`, which is how file-based apps name the runfile. Multi-mode still picks the fixtures up through the `tests/**/*.cs` glob, and the include condition limits the extra compile to that runfile. The scenario runfile is 380 lines.
+One file met the split guidelines. The other ten stay. Each of those is one feature, and section banners or scenario class names already identify the tests.
 
 `routing-05-option-matching.cs` was 717 lines and 31 tests with no section breaks, and the method names differ by only the modifier under test. It is now three runfiles aligned with the option-matching matrix:
 
@@ -114,9 +121,10 @@ Kept:
 - `repl-18-psreadline-keybindings.cs`, `repl-28-text-selection.cs`, `repl-29-word-operations.cs`, `repl-33-yank-arguments.cs` — one REPL feature each, sectioned. Argument parsing in `repl-33` feeds yank.
 - `generator-01-intercept.cs` — one intercept list, sectioned by route, parameter, option, and group.
 - `lexer-15-advanced-features.cs` — advanced tokenization cases for one lexer. Names identify the pattern.
-- `generator-15-runtime-di.cs` — nine runtime-DI scenarios. The subjects are in the same file and do not bury the list the way the constructor-dependency graphs did.
+- `generator-15-runtime-di.cs` — nine runtime-DI scenarios. The subjects stay in the same file.
+- `generator-26-constructor-dependency-resolution.cs` (729) — one constructor-dependency surface. The service graphs the source generator compiles stay in this runfile, above the ten scenario classes. The `JARIBU TESTS` banner separates subjects from scenarios. The merge gate on PR #280 rejected a sibling fixtures file plus a project-name `Compile` include, so that extraction is gone.
 
-`runfiles/generate-internals-visible-to.cs` refreshed the three `internals-visible-to.g.cs` files. That drops `routing-05-option-matching` and adds the new runfiles, the fixtures file, and the `generator` directory name from the new `Directory.Build.props`. It also adds stems that were already on disk and missing from the attributes: `generator-50-json-args-reserved`, `generator-51-repl-service-scopes`, `repl-46-key-binding-config-loader`, `repl-47-key-binding-catalog`, and `routing-33-json-args`.
+`runfiles/generate-internals-visible-to.cs` refreshed the three `internals-visible-to.g.cs` files. That drops `routing-05-option-matching` and adds the routing-05 runfiles. It also adds stems that were already on disk and missing from the attributes: `generator-50-json-args-reserved`, `generator-51-repl-service-scopes`, `repl-46-key-binding-config-loader`, `repl-47-key-binding-catalog`, and `routing-33-json-args`. Regeneration after the send-back drops `generator-26-constructor-dependency-fixtures` and the `generator` directory entry.
 
 ### How to validate
 
@@ -136,12 +144,11 @@ Expect:
 - `routing-05-option-modifier-matrix.cs` exits 0 with 11 passed.
 - `routing-05-boolean-mixed-typed-options.cs` exits 0 with 7 passed.
 - `routing-05-option-aliases.cs` exits 0 with 13 passed.
-- `dotnet build tests/ci-tests/run-ci-tests.cs` exits 0, so the multi-mode assembly compiles the fixtures once beside the scenario runfile and compiles the three routing files.
+- `dotnet build tests/ci-tests/run-ci-tests.cs` exits 0, so the multi-mode assembly compiles generator-26 with its subjects inline and compiles the three routing files.
 
 ### Review disposition
 
-- Rounds: 1. Effort 3 (by-diff), roster: general.
+- Rounds: 1. Effort 3 (by-diff), roster: general. That round reviewed the fixtures extraction. The human gate on PR #280 then required the subjects back inline, which this send-back does.
 - Final counts: bug 0, suggestion 0, nit 1 (wontfix). 0 open.
-- Disposition: **accepted-exceptions**. M1 (nit) said the `MSBuildProjectName` condition could not be checked statically. It was closed wontfix because the standalone generator-26 run passed 10/10 after `ganda runfile cache --clear`, which shows the condition matches.
-- Verified: all four smoke runs exit 0 (10/11/7/13 passed). `dotnet build tests/ci-tests/run-ci-tests.cs` and `ganda repo audit` both pass.
+- Disposition: **accepted-exceptions** for that round. M1 (nit) said the `MSBuildProjectName` condition could not be checked statically. The send-back removes that condition and the fixtures file, so M1 no longer applies to the tree.
 - Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

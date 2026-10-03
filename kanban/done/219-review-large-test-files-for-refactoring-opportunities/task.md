@@ -101,6 +101,7 @@ Record them under Notes as a possible follow-up only.
 - Review oracle: Claude Opus 5.5 (2026-10-03), effort 3, roster general (subagent af0976436bd743e3b)
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-03T11:11:02Z
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-03T14:26:08Z
+- Review oracle round 2: Claude Opus 5.5 (2026-10-03), effort 3, roster general — send-back delta
 
 ## Results
 
@@ -148,7 +149,9 @@ Expect:
 
 ### Review disposition
 
-- Rounds: 1. Effort 3 (by-diff), roster: general. That round reviewed the fixtures extraction. The human gate on PR #280 then required the subjects back inline, which this send-back does.
+- Rounds: 2. Effort 3 (by-diff), roster: general.
+  - Round 1 reviewed the routing-05 split and the generator-26 fixtures extraction.
+  - Round 2 reviewed the PR #280 send-back that put the generator-26 subjects back inline. It reran the smoke tests (10, 11, 7 and 13 tests passed) and the CI build (exit 0). It also confirmed that the internals-visible-to files match a fresh regeneration.
 - Final counts: bug 0, suggestion 0, nit 1 (wontfix). 0 open.
-- Disposition: **accepted-exceptions** for that round. M1 (nit) said the `MSBuildProjectName` condition could not be checked statically. The send-back removes that condition and the fixtures file, so M1 no longer applies to the tree.
-- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Disposition: **accepted-exceptions**. M1 (nit) concerned the `MSBuildProjectName` condition, which the send-back removed, so it no longer applies. Round 2 raised no new findings.
+- Artifacts: `review/review-framework.md`, `review/round-1/`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.

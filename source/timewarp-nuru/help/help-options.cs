@@ -16,7 +16,7 @@ public sealed class HelpOptions
 
   /// <summary>
   /// Whether to show REPL-specific commands in CLI help output.
-  /// REPL commands: exit, quit, q, clear, cls, clear-history, history, help (literal)
+  /// REPL commands: exit, quit, q, clear, cls, clear-history, history, key-bindings, help (literal)
   /// When false, these are hidden from CLI --help but shown in REPL's help command.
   /// Default: false
   /// </summary>
@@ -49,6 +49,7 @@ public sealed class HelpOptions
     "cls",
     "clear-history",
     "history",
+    "key-bindings",
     "help"  // literal help (without dash)
   };
 

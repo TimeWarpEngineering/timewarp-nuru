@@ -265,6 +265,42 @@ See [samples/13-repl/](../../../samples/13-repl/) for complete working examples:
 - `03-repl-options.cs` - Comprehensive ReplOptions configuration
 - `04-repl-complete.cs` - Complete REPL feature demonstration
 
+## Listing bindings
+
+In the REPL, `key-bindings` prints the built-in profile that is active. Bindings are grouped by category. Each table has three columns: Key, Function, and Description.
+
+```text
+key-bindings
+key-bindings Emacs
+key-bindings --profile Vi --detailed
+key-bindings --function BeginningOfLine
+key-bindings --key Ctrl+a
+key-bindings --key LeftArrow
+```
+
+| Flag | Short | Meaning |
+|------|-------|---------|
+| `--profile` | `-p` | Built-in profile: `Default`, `Emacs`, `Vi`, or `VSCode`. A positional known name (`key-bindings Emacs`) does the same when `--profile` is absent. |
+| `--key` | `-k` | A chord the parser accepts (`Ctrl+a`, `Control+a`, `Left`) matches that combination. `Ctrl+a` does not include `Ctrl+Shift+a`. Text the parser rejects (`Arrow`) is a case-insensitive substring of the displayed chord. |
+| `--function` | `-f` | Case-insensitive substring of the function name. |
+| `--detailed` | `-d` | One block per binding (`Function`, `Category`, `Description`) instead of the table. |
+
+A missing flag value or an unknown argument prints usage on the error stream and leaves the REPL running. The command does not change the process exit code.
+
+`key-bindings` lists a built-in catalog chosen by name. With no `--profile`, that name is the active profile's `Name`. `Default`, `Emacs`, `Vi`, and `VSCode` print that catalog. Any other name, including a `CustomKeyBindingProfile` or a JSON profile, prints an error and does not expand those chords. Pass `--profile Default` to print the Default catalog.
+
+`Alt+'` is `PossibleCompletions`. That chord is Alt plus the quote key (`ConsoleKey.Oem7`).
+
+The same listing is available outside the REPL. Running the tool with no arguments lists Default. An unknown `--profile` exits with code 1.
+
+```bash
+dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- key-bindings
+dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- key-bindings --profile Emacs --function BackwardChar
+dotnet run tools/nuru-key-bindings/nuru-key-bindings.cs -- key-bindings --key Ctrl+a --detailed
+```
+
+See [key-bindings tool](../tools/key-bindings.md).
+
 ## Future Enhancements
 
 - **Full Vi Modal Editing**: Normal, insert, and visual modes

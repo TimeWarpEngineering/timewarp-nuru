@@ -4,6 +4,12 @@ Supporting tools and integrations for TimeWarp.Nuru development.
 
 ## Available Tools
 
+### [Key bindings](key-bindings.md)
+List built-in REPL key bindings from the command line:
+- Same table as the REPL `key-bindings` command
+- Filter by profile, chord, or function name
+- Table or detailed view
+
 ### [MCP Server](mcp-server.md)
 AI-assisted development with Model Context Protocol:
 - Route pattern validation
@@ -17,6 +23,7 @@ AI-assisted development with Model Context Protocol:
 
 | Tool | Purpose | Learn More |
 |------|---------|------------|
+| ⌨️ Key bindings | List built-in REPL shortcuts | [Key bindings](key-bindings.md) |
 | 🤖 MCP Server | AI-powered development assistance | [MCP Server](mcp-server.md) |
 
 ## Installation

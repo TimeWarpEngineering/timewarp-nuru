@@ -61,6 +61,7 @@ Split a test file if:
 ## Session
 
 - Implementer: Grok session 01a1015d-d3f0-7710-aa84-ac2484e5b9ec (2026-10-03)
+- Review oracle: Claude Opus 5.5 (2026-10-03), effort 3, roster general (subagent af0976436bd743e3b)
 
 ## Results
 
@@ -106,3 +107,11 @@ Expect:
 - `routing-05-boolean-mixed-typed-options.cs` exits 0 with 7 passed.
 - `routing-05-option-aliases.cs` exits 0 with 13 passed.
 - `dotnet build tests/ci-tests/run-ci-tests.cs` exits 0, so the multi-mode assembly compiles the fixtures once beside the scenario runfile and compiles the three routing files.
+
+### Review disposition
+
+- Rounds: 1. Effort 3 (by-diff), roster: general.
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). 0 open.
+- Disposition: **accepted-exceptions**. M1 (nit) said the `MSBuildProjectName` condition could not be checked statically. It was closed wontfix because the standalone generator-26 run passed 10/10 after `ganda runfile cache --clear`, which shows the condition matches.
+- Verified: all four smoke runs exit 0 (10/11/7/13 passed). `dotnet build tests/ci-tests/run-ci-tests.cs` and `ganda repo audit` both pass.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

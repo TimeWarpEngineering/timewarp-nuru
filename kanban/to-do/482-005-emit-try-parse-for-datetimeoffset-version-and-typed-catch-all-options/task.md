@@ -22,6 +22,7 @@ Evidence: `source/timewarp-nuru-analyzers/generators/emitters/type-conversion-ma
 - [x] Typed catch-all and repeated options use the same non-throwing conversion as scalar parameters, including `uint` and `TimeSpan`
 - [x] Overflow on `{*ids:int}` writes the invalid-value error and returns 1, and does not escape as `OverflowException`
 - [x] Add generator tests that compile `{*values:uint}`, a `DateTimeOffset` endpoint parameter, and a `Version` parameter
+- [x] Implementation review disposition recorded (round 1, general, clean)
 
 ## How to validate
 
@@ -39,6 +40,14 @@ Expect: The new generator tests compile. `{*values:uint}` is not assigned from a
 - `route-matcher-emitter.cs`: removed `GetParseExpression` and the `try { Select(Parse) } catch (FormatException)` pattern. Typed catch-all and repeated options now call one helper, `EmitBuiltInArrayConversion`. It loops over the elements and runs the same `GetBuiltInTryConversion` condition that scalar parameters use. A failed TryParse writes the invalid-value line and returns 1. Overflow is just a failed TryParse, so it cannot escape as `OverflowException`. Every built-in type (`uint`, `TimeSpan`, `IPAddress`, ...) now converts. None are assigned from a raw string. Also dropped the unused `routeIndex` parameter from `EmitCatchAllTypeConversion`.
 - Tests: `tests/timewarp-nuru-tests/routing/routing-16-typed-catch-all.cs` has 7 new cases: `{*values:uint}` bind and a negative-value reject, `{*values:TimeSpan}`, `{*ids:int}` overflow exiting 1 with the invalid-value line, a repeated `--id {id:uint}*` bind and reject, a `DateTimeOffset` parameter, and a `Version` parameter bind and reject. 20/20 pass. The full CI suite `tests/ci-tests/run-ci-tests.cs` exits 0.
 
+### Review
+
+- Rounds: 1. Effort 2 (by-diff, 301 lines). Roster: general.
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0/0/0; nit 0/0/0. Final open count: 0.
+- Disposition: **clean**. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Re-check during review: `dotnet run tests/timewarp-nuru-tests/routing/routing-16-typed-catch-all.cs` passed 20/20.
+
 ### How to validate
 
 Smoke:
@@ -55,7 +64,9 @@ Expect: 20/20 pass, including `Should_bind_uint_array_catch_all`, `Should_fail_o
 - Created: 529644 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
 - Implemented (claude, ganda task work implement oracle, 2026-10-05)
+- Review: grok 01a10ab9-c704-7972-af41-5ba364f25154 (2026-10-05); general reviewer 01a10abf-08e0-7082-9bdd-19b564c14f95
 
 ## Notes
 
 - Parent review: `kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/findings.md` on the task 482 branch until that PR merges.
+- Implementation review: `review/disposition.md` (clean, round 1, general). Live ledger: `review/round-1/merged.md`.

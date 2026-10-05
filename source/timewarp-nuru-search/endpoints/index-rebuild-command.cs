@@ -5,7 +5,7 @@ using TimeWarp.Mediator;
 [NuruRoute("rebuild", Description = "Rebuild the search index for one or more CLIs")]
 public sealed class IndexRebuildCommand : IndexGroup, ICommand<Unit>
 {
-  [Option("--cli", Description = "Path to CLI executable to index")]
+  [Option("--cli", Description = "Path to, or PATH name of, the CLI executable to index")]
   public string? Cli { get; set; }
 
   [Option("--all", Description = "Rebuild all currently indexed CLIs")]
@@ -55,7 +55,9 @@ public sealed class IndexRebuildCommand : IndexGroup, ICommand<Unit>
 
       foreach (CliInfo cli in existingClis)
       {
-        bool success = await TryIndexCliAsync(cli.Name, cancellationToken).ConfigureAwait(false);
+        // Run the executable that was indexed, not the capabilities name: the name comes from
+        // WithName or the assembly name and need not resolve to anything (482-011 / S-3).
+        bool success = await TryIndexCliAsync(cli.CliPath ?? cli.Name, cancellationToken).ConfigureAwait(false);
 
         if (success)
         {
@@ -72,11 +74,11 @@ public sealed class IndexRebuildCommand : IndexGroup, ICommand<Unit>
 
     private async Task RebuildSingleAsync(IndexRebuildCommand command, CancellationToken cancellationToken)
     {
-      string cliPath = command.Cli!;
+      string? cliPath = ResolveCliPath(command.Cli!);
 
-      if (!File.Exists(cliPath))
+      if (cliPath is null)
       {
-        await terminal.WriteLineAsync($"Error: CLI not found: {cliPath}").ConfigureAwait(false);
+        await terminal.WriteLineAsync($"Error: CLI not found: {command.Cli}").ConfigureAwait(false);
         return;
       }
 
@@ -94,9 +96,22 @@ public sealed class IndexRebuildCommand : IndexGroup, ICommand<Unit>
       }
     }
 
-    private async Task<bool> TryIndexCliAsync(string cliPathOrName, CancellationToken cancellationToken)
+    /// <summary>
+    /// Resolves <c>--cli</c> to an absolute executable path: an existing file, or a name on PATH.
+    /// </summary>
+    private static string? ResolveCliPath(string cli)
     {
-      CliCapabilities? capabilities = await capabilitiesClient.GetCapabilitiesAsync(cliPathOrName, cancellationToken).ConfigureAwait(false);
+      if (File.Exists(cli))
+      {
+        return Path.GetFullPath(cli);
+      }
+
+      return PathResolver.ResolveExecutable(cli);
+    }
+
+    private async Task<bool> TryIndexCliAsync(string cliPath, CancellationToken cancellationToken)
+    {
+      CliCapabilities? capabilities = await capabilitiesClient.GetCapabilitiesAsync(cliPath, cancellationToken).ConfigureAwait(false);
 
       if (capabilities is null)
       {
@@ -108,6 +123,7 @@ public sealed class IndexRebuildCommand : IndexGroup, ICommand<Unit>
         capabilities.Version,
         capabilities.RawJson,
         capabilities.Endpoints,
+        cliPath,
         cancellationToken).ConfigureAwait(false);
 
       return true;

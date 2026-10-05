@@ -49,6 +49,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
       CREATE TABLE IF NOT EXISTS clis (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
+        cli_path TEXT,
         version TEXT NOT NULL,
         indexed_at TEXT NOT NULL,
         capabilities_json TEXT NOT NULL
@@ -136,13 +137,43 @@ public sealed partial class SearchIndex : IAsyncDisposable
       cmd.CommandText = createUpdateTrigger;
       await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    await EnsureCliPathColumnAsync(cancellationToken).ConfigureAwait(false);
   }
 
+  /// <summary>
+  /// Adds <c>clis.cli_path</c> to an index created before the column existed (482-011 / S-3).
+  /// Rows from that index keep a null path; rebuild falls back to the CLI name for them.
+  /// </summary>
+  private async Task EnsureCliPathColumnAsync(CancellationToken cancellationToken)
+  {
+    await using (SqliteCommand cmd = connection.CreateCommand())
+    {
+      cmd.CommandText = "SELECT COUNT(*) FROM pragma_table_info('clis') WHERE name = 'cli_path'";
+      long count = (long)(await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? 0L);
+
+      if (count > 0)
+      {
+        return;
+      }
+    }
+
+    await using SqliteCommand alter = connection.CreateCommand();
+    alter.CommandText = "ALTER TABLE clis ADD COLUMN cli_path TEXT";
+    await alter.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+  }
+
+  /// <summary>
+  /// Indexes a CLI under its capabilities <paramref name="cliName"/>. <paramref name="cliPath"/> is
+  /// the executable that was actually run; <c>index rebuild --all</c> runs it again. The name and
+  /// the path differ when the executable file name is not the capabilities name.
+  /// </summary>
   public async Task IndexCliAsync(
     string cliName,
     string version,
     string capabilitiesJson,
     IReadOnlyList<EndpointCapability> endpoints,
+    string? cliPath = null,
     CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(cliName);
@@ -165,10 +196,11 @@ public sealed partial class SearchIndex : IAsyncDisposable
       {
         cmd.Transaction = (SqliteTransaction)transaction;
         cmd.CommandText = """
-          INSERT OR REPLACE INTO clis (name, version, indexed_at, capabilities_json)
-          VALUES ($name, $version, $indexedAt, $capabilitiesJson)
+          INSERT OR REPLACE INTO clis (name, cli_path, version, indexed_at, capabilities_json)
+          VALUES ($name, $cliPath, $version, $indexedAt, $capabilitiesJson)
           """;
         cmd.Parameters.AddWithValue("$name", cliName);
+        cmd.Parameters.AddWithValue("$cliPath", cliPath ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("$version", version);
         cmd.Parameters.AddWithValue("$indexedAt", DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
         cmd.Parameters.AddWithValue("$capabilitiesJson", capabilitiesJson);
@@ -397,8 +429,9 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
     await using SqliteCommand cmd = connection.CreateCommand();
     cmd.CommandText = """
-      SELECT name, version, indexed_at, 
-             (SELECT COUNT(*) FROM endpoints WHERE cli_name = clis.name) as endpoint_count
+      SELECT name, version, indexed_at,
+             (SELECT COUNT(*) FROM endpoints WHERE cli_name = clis.name) as endpoint_count,
+             cli_path
       FROM clis
       ORDER BY name
       """;
@@ -411,7 +444,8 @@ public sealed partial class SearchIndex : IAsyncDisposable
         Name = reader.GetString(0),
         Version = reader.GetString(1),
         IndexedAt = DateTime.Parse(reader.GetString(2), CultureInfo.InvariantCulture),
-        EndpointCount = reader.GetInt32(3)
+        EndpointCount = reader.GetInt32(3),
+        CliPath = await reader.IsDBNullAsync(4, cancellationToken).ConfigureAwait(false) ? null : reader.GetString(4)
       });
     }
 
@@ -515,4 +549,9 @@ public sealed class CliInfo
   public required string Version { get; init; }
   public required DateTime IndexedAt { get; init; }
   public required int EndpointCount { get; init; }
+
+  /// <summary>
+  /// Executable that was run to index this CLI. Null for rows indexed before the path was stored.
+  /// </summary>
+  public string? CliPath { get; init; }
 }

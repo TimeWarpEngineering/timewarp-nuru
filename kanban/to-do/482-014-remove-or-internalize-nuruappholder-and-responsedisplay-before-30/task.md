@@ -39,6 +39,7 @@ Expect: `rg` shows no public declaration of either type. AOT publish exits 0 wit
 - Created: 538291 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
 - Implemented: claude implement oracle (2026-10-05) — deleted both types
+- Review: grok 01a10b8e-35a2-71f1-b60b-4ccbf82609a0 (2026-10-05)
 
 ## Results
 
@@ -54,6 +55,13 @@ Deleted both types rather than internalizing them. Neither had a caller in `sour
 - `dotnet build source/timewarp-nuru` succeeded with 0 warnings and 0 errors. The delegates AOT publish
   exited 0 with 0 IL2026/IL3050. The CI tests passed (3774 tests, exit 0) after `ganda runfile cache --clear`. `ganda repo audit` passes.
 
+## Review
+
+- Rounds: 1. Roster: general. Effort: 1.
+- Counts (round 1): bug 0 open / 0 fixed / 0 wontfix. Suggestion 0. Nit 0.
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
@@ -68,4 +76,5 @@ Expect: `rg` prints nothing. The build succeeds with 0 errors. The publish exits
 
 ## Notes
 
-- Parent review: `kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/findings.md` on the task 482 branch until that PR merges.
+- Parent review: `kanban/done/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/runtime-core.md` R-9. Findings index: `review/findings.md` on that task.
+- Implementation review: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Outcome clean (no findings).

@@ -29,7 +29,7 @@ With `NuruApp.CreateBuilder()`, dynamic shell completion is **enabled by default
 using TimeWarp.Nuru;
 
 // Dynamic completion is automatically enabled
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 builder.Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag));
 builder.Map("status", () => ShowStatus());
@@ -70,7 +70,7 @@ If you prefer explicit control over completion registration:
 using TimeWarp.Nuru;
 using TimeWarp.Nuru.Completion;
 
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 builder.Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag));
 builder.Map("status", () => ShowStatus());
@@ -438,7 +438,7 @@ When you press Tab, the shell calls your app via `__complete`, which queries you
 ```csharp
 public enum LogLevel { Debug, Info, Warning, Error }
 
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 builder.Map("log --level {level}", (LogLevel level) => SetLogLevel(level));
 builder.EnableStaticCompletion();  // Generates static completion with enum values
 ```

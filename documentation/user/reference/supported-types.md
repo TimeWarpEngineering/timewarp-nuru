@@ -24,7 +24,7 @@ TimeWarp.Nuru includes converters for common .NET types:
 ### String (Default)
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Type annotation optional for strings
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
@@ -45,7 +45,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### Integer
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("wait {seconds:int}")
     .WithHandler((int sec) => Thread.Sleep(sec * 1000))
     .AsCommand()
@@ -69,7 +69,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### Double
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("calc {x:double} {y:double}")
     .WithHandler((double x, double y) => Console.WriteLine(x + y))
     .AsCommand()
@@ -89,7 +89,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### Boolean
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("set {key} {value:bool}")
     .WithHandler((string key, bool value) => Config.Set(key, value))
     .AsCommand()
@@ -105,7 +105,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### DateTime
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("schedule {when:DateTime}")
     .WithHandler((DateTime dt) => Console.WriteLine($"Scheduled for {dt}"))
     .AsCommand()
@@ -121,7 +121,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### Guid
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("get {id:Guid}")
     .WithHandler((Guid id) => GetRecord(id))
     .AsCommand()
@@ -140,7 +140,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### Long
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("allocate {bytes:long}")
     .WithHandler((long bytes) => Allocate(bytes))
     .AsCommand()
@@ -155,7 +155,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### Decimal
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("pay {amount:decimal}")
     .WithHandler((decimal amt) => ProcessPayment(amt))
     .AsCommand()
@@ -170,7 +170,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### TimeSpan
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("timeout {duration:TimeSpan}")
     .WithHandler((TimeSpan ts) => SetTimeout(ts))
     .AsCommand()
@@ -186,7 +186,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### Uri
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("download {url:uri}")
     .WithHandler((Uri url) => Download(url))
     .AsCommand()
@@ -203,7 +203,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 Use nullable types for optional parameters:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("deploy {env} {version?}")
     .WithHandler((string env, string? version) =>
     {
@@ -229,7 +229,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 Use `string[]` for catch-all parameters:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("echo {*words}")
     .WithHandler((string[] words) => Console.WriteLine(string.Join(" ", words)))
     .AsCommand()
@@ -325,7 +325,7 @@ public class ColorConverter : IRouteTypeConverter
 Register converters using `.AddTypeConverter()`:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .AddTypeConverter(new EmailAddressConverter())
   .AddTypeConverter(new ColorConverter())
   .Map("send {to:email}")
@@ -375,7 +375,7 @@ See [Analyzer Documentation](../features/analyzer.md) for more details.
   .Done()
 
 // ❌ String requires manual validation
-NuruApp badApp = NuruApp.CreateBuilder(args)
+NuruApp badApp = NuruApp.CreateBuilder()
   .Map("wait {seconds}")
     .WithHandler((string sec) =>
     {

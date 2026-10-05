@@ -16,7 +16,7 @@ This enables zero-ceremony route registration - users decorate request classes a
 Without endpoints, users must explicitly call `Map()` for each route:
 
 ```csharp
-var app = NuruApp.CreateBuilder(args)
+var app = NuruApp.CreateBuilder()
   .Map("deploy {env}", (DeployRequest req) => mediator.Send(req))
   .Build();
 ```
@@ -31,7 +31,7 @@ public sealed class DeployRequest {
 }
 
 // No Map() call needed - auto-registered via [ModuleInitializer]
-var app = NuruApp.CreateBuilder(args).Build();
+var app = NuruApp.CreateBuilder().Build();
 ```
 
 ## Attributes

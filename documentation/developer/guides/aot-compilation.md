@@ -14,7 +14,7 @@ Direct delegate routing works seamlessly with Native AOT:
 
 using TimeWarp.Nuru;
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .AddAutoHelp()
     .Map("greet {name}", (string name) =>
         Console.WriteLine($"Hello, {name}!"))
@@ -101,7 +101,7 @@ class Program { ... }
 The fluent API is fully AOT-compatible:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services =>
   {
     services.AddSingleton<IDeploymentService, DeploymentService>();
@@ -153,7 +153,7 @@ Here's a complete example that works with full Native AOT:
 
 using TimeWarp.Nuru;
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .AddAutoHelp()
     .Map("add {x:int} {y:int}", Add, "Add two numbers")
     .Map("greet {name}", Greet, "Greet someone")

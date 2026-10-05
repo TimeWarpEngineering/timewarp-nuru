@@ -5,7 +5,7 @@ TimeWarp.Nuru integrates with OpenTelemetry for distributed tracing, metrics, an
 ## Enabling Telemetry
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .UseTelemetry()
   .Build();
 ```
@@ -79,7 +79,7 @@ public sealed class TelemetryBehavior : INuruBehavior
 Register with:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .UseTelemetry()
   .AddBehavior(typeof(TelemetryBehavior))
   .Build();

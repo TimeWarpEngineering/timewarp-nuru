@@ -25,7 +25,7 @@ Console.WriteLine("Highlight".BrightYellow().Underline());
 ### Colored Output in Route Handlers
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 builder.Map("status", (ITerminal terminal) =>
 {
@@ -49,7 +49,7 @@ return await builder.Build().RunAsync(args);
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("greet {name}", (string name, ITerminal t) =>
         t.WriteLine($"Hello, {name}!".Green()))
@@ -227,7 +227,7 @@ Console.WriteLine($"{"Home".Link("https://example.com")} | {"Docs".Link("https:/
 Use `WriteLink()` and `WriteLinkLine()` for terminal-aware hyperlinks:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 builder.Map("help", (ITerminal terminal) =>
 {
@@ -286,7 +286,7 @@ Where:
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("hello", (ITerminal t) => t.WriteLine("Hello, World!"))
     .Build();
@@ -303,7 +303,7 @@ Assert.Equal(1, terminal.GetOutputLines().Length);
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("fail", (ITerminal t) => t.WriteErrorLine("Something went wrong"))
     .Build();
@@ -325,7 +325,7 @@ terminal.QueueKey(ConsoleKey.Tab); // Press Tab for completion
 terminal.QueueKey(ConsoleKey.Enter); // Press Enter
 terminal.QueueLine("exit");       // Type "exit" and Enter
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("hello-world", () => Console.WriteLine("Hello!"))
     .Build();
@@ -367,20 +367,20 @@ terminal.ClearKeys();
 
 ```csharp
 // Production (default)
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 // Uses TimeWarpTerminal.Default automatically
 
 // Testing
 using TestTerminal terminal = new();
-NuruApp testApp = NuruApp.CreateBuilder(args)
+NuruApp testApp = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
     .Map("hello", () => Console.WriteLine("Hello!"))
     .Build();
 
 // Custom terminal
-NuruApp customApp = NuruApp.CreateBuilder(args)
+NuruApp customApp = NuruApp.CreateBuilder()
     .UseTerminal(new MyCustomTerminal())
     .Build();
 ```
@@ -390,7 +390,7 @@ NuruApp customApp = NuruApp.CreateBuilder(args)
 ITerminal is automatically registered when using `NuruApp.CreateBuilder()`:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // ITerminal is injectable
 builder.Map("status", (ITerminal terminal) =>

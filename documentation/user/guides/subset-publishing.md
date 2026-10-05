@@ -104,7 +104,7 @@ Create separate entry points that filter by group:
 using MyApp.Shared;
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints(typeof(AdminGroupBase))  // Only admin commands
   .Build();
 
@@ -116,7 +116,7 @@ return await app.RunAsync(args);
 using MyApp.Shared;
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints(typeof(UserGroupBase))   // Only user commands
   .Build();
 
@@ -179,7 +179,7 @@ Returns `NuruAppBuilder` for method chaining.
 **Combining with Other Builder Methods:**
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints(typeof(KanbanGroupBase))
   .ConfigureServices(services =>
   {
@@ -288,7 +288,7 @@ public sealed class KanbanAddCommand : KanbanGroupBase, ICommand<Unit>
 }
 
 // Program.cs (kanban edition)
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints(typeof(KanbanGroupBase))
   .Build();
 ```
@@ -306,7 +306,7 @@ Create a CLI combining kanban and git commands:
 
 ```csharp
 // Program.cs (combined edition)
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints(
     typeof(KanbanGroupBase),
     typeof(GitGroupBase)
@@ -329,7 +329,7 @@ Create a comprehensive CLI with all commands:
 
 ```csharp
 // Program.cs (full edition)
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .DiscoverEndpoints()  // No parameters = all endpoints
   .Build();
 ```

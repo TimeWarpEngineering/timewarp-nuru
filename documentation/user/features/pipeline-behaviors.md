@@ -15,7 +15,7 @@ First registered = outermost (called first, returns last).
 ## Basic Pattern
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(PerformanceBehavior))
   .Map("echo {message}")
@@ -167,7 +167,7 @@ Registration order determines execution order:
 - **Last registered** = innermost (called last, returns first)
 
 ```csharp
-NuruApp.CreateBuilder(args)
+NuruApp.CreateBuilder()
   .AddBehavior(typeof(TelemetryBehavior))         // 1st - outermost
   .AddBehavior(typeof(LoggingBehavior))           // 2nd
   .AddBehavior(typeof(ExceptionHandlingBehavior)) // 3rd
@@ -230,7 +230,7 @@ public sealed class AuthorizationBehavior : INuruBehavior<IRequireAuthorization>
 Apply to routes with `.Implements<T>()`:
 
 ```csharp
-NuruApp.CreateBuilder(args)
+NuruApp.CreateBuilder()
   .AddBehavior(typeof(AuthorizationBehavior))
   
   // No interface - AuthorizationBehavior does not run

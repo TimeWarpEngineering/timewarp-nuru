@@ -295,7 +295,7 @@ builder.Map("status")
 
 **Examples**:
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Simple commands: inline handlers (fast)
   .Map("ping").WithHandler(() => Console.WriteLine("pong")).AsCommand().Done()
   .Map("status").WithHandler(() => Console.WriteLine("OK")).AsCommand().Done()
@@ -593,7 +593,7 @@ builder.Map("git {*args}", handler)
 **Setup**:
 ```csharp
 // Source-generated DI (default, AOT-compatible)
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services =>
   {
     services.AddSingleton<ILogger, ConsoleLogger>();
@@ -608,7 +608,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
   .Build();
 
 // Or use Microsoft DI for complex scenarios (opt-in)
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .UseMicrosoftDependencyInjection()
   .ConfigureServices(services =>
   {

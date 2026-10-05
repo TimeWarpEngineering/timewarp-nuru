@@ -220,7 +220,7 @@ The `Map<TCommand>` pattern requires Mediator packages to be directly referenced
 
 ```csharp
 // ❌ Error: Mediator packages not installed
-var app = NuruApp.CreateBuilder(args)
+var app = NuruApp.CreateBuilder()
   .ConfigureServices(services => services.AddMediator())
   .Map<PingCommand>("ping")  // NURU_D001
   .Build();

@@ -13,7 +13,7 @@ Build modern command-line tools from scratch with clean architecture and progres
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("version", () => Console.WriteLine("MyTool v1.0.0"))
   .Map("status", () => ShowSystemStatus())
   .Map("config get {key}", (string key) => Console.WriteLine(GetConfig(key)))
@@ -38,7 +38,7 @@ using TimeWarp.Nuru;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services =>
   {
     services.AddSingleton<IDatabaseService, DatabaseService>();
@@ -68,7 +68,7 @@ return await app.RunAsync(args);
 **Use Case**: Git-like tools with subcommands and complex options
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Repository management
   .Map
   (
@@ -115,7 +115,7 @@ Wrap existing command-line tools to add authentication, logging, validation, or 
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Intercept production deployments for auth check
   .Map
   (
@@ -259,7 +259,7 @@ builder.Map
 **Use Case**: Add telemetry to existing tools
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services =>
   {
     services.AddSingleton<ITelemetryService, TelemetryService>();
@@ -308,7 +308,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 Combine both patterns:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services =>
   {
     services.AddSingleton<IDeploymentService, DeploymentService>();
@@ -333,7 +333,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ### Database Management CLI
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services =>
   {
     services.AddSingleton<IDatabaseService, DatabaseService>();

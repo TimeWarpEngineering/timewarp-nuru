@@ -16,7 +16,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<Unit>
   [Option("--query", Description = "Search query (positional or named)")]
   public string? Query { get; set; }
 
-  [Option("--group", Description = "Filter results by group path prefix")]
+  [Option("--group", Description = "Filter results by group path (dotted, e.g. docker.remote) and its children")]
   public string? Group { get; set; }
 
   [Parameter(Order = 0, Description = "Search query terms", IsCatchAll = true)]

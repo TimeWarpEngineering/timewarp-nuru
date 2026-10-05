@@ -18,10 +18,10 @@ Accept the dotted form the capabilities filter already documents. A space-separa
 
 ## Checklist
 
-- [ ] `--group docker.remote` returns endpoints whose group path is `docker remote` and its children
-- [ ] `--group docker` still returns that group and its children
-- [ ] A group that merely contains the letters as a different segment does not match
-- [ ] Add a search-index test that inserts a nested group and queries both forms
+- [x] `--group docker.remote` returns endpoints whose group path is `docker remote` and its children
+- [x] `--group docker` still returns that group and its children
+- [x] A group that merely contains the letters as a different segment does not match
+- [x] Add a search-index test that inserts a nested group and queries both forms
 
 ## How to validate
 
@@ -37,6 +37,44 @@ Expect: The dotted filter and the first-segment filter both return the nested en
 
 - Created: 535148 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
+- Implemented by claude implementer under ganda task work (2026-10-05)
+
+## Results
+
+`SearchIndex.SearchAsync` now normalizes the `--group` filter with a new `NormalizeGroupFilter`
+before it runs the query. The filter is split on `.` and whitespace, then joined with single spaces,
+which is the format `InsertEndpointAsync` stores in `group_path`. So `docker.remote` and
+`docker remote` both become `docker remote`. The SQL predicate was `group_path LIKE $g || '%'`, a raw
+string prefix. It is now `group_path LIKE $g OR group_path LIKE $g || ' %'`, which matches whole
+segments only. With this change `docker.remote` no longer matches `docker remotes` or `dockerx remote`.
+Matching is still ASCII case-insensitive through SQLite `LIKE`, as in the capabilities filter. The
+`--group` option description now documents the dotted form.
+
+Files:
+- `source/timewarp-nuru-search/services/search-index.cs` (`SearchAsync`, new `NormalizeGroupFilter`)
+- `source/timewarp-nuru-search/endpoints/search-query.cs` (option description)
+- `tests/timewarp-nuru-search-tests/search-03-search-index.cs`: adds 5 tests covering a nested
+  group indexed with dotted, space-separated, and first-segment filters, string-prefix siblings
+  (`docker remotes` and `dockerx remote`) that must not match, and normalizer edge cases.
+
+Verified: `search-03-search-index.cs` passes 12/12. The full `tests/ci-tests/run-ci-tests.cs` run
+passes after a runfile cache clear and exits 0.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run tests/timewarp-nuru-search-tests/search-03-search-index.cs
+```
+
+(The search tests are runfiles and are also included in `tests/ci-tests`. There is no
+`timewarp-nuru-tests.csproj` to filter on, so the original smoke command does not apply.)
+
+Expect: All 12 tests pass. `Should_match_dotted_group_filter_and_children` and
+`Should_match_first_segment_group_filter` return the nested `docker remote` endpoints.
+`Should_not_match_group_sharing_only_a_string_prefix` returns nothing for `docker.remote`
+against the `dockerx remote` and `docker remotes` groups.
 
 ## Notes
 

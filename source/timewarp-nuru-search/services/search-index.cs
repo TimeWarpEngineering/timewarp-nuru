@@ -267,10 +267,12 @@ public sealed partial class SearchIndex : IAsyncDisposable
       cmd.Parameters.AddWithValue("$cliName", cliName);
     }
 
-    if (!string.IsNullOrEmpty(groupPath))
+    string normalizedGroupPath = NormalizeGroupFilter(groupPath);
+    if (normalizedGroupPath.Length > 0)
     {
-      sqlBuilder.AppendLine("  AND e.group_path LIKE $groupPath || '%' ESCAPE '\\'");
-      cmd.Parameters.AddWithValue("$groupPath", EscapeLikePattern(groupPath));
+      // Match the group itself or any child group, on whole segment boundaries only.
+      sqlBuilder.AppendLine("  AND (e.group_path LIKE $groupPath ESCAPE '\\' OR e.group_path LIKE $groupPath || ' %' ESCAPE '\\')");
+      cmd.Parameters.AddWithValue("$groupPath", EscapeLikePattern(normalizedGroupPath));
     }
 
     sqlBuilder.AppendLine("  ORDER BY endpoints_fts.rank");
@@ -358,6 +360,22 @@ public sealed partial class SearchIndex : IAsyncDisposable
     }
 
     return changed ? new string(chars) : query;
+  }
+
+  /// <summary>
+  /// Normalizes a <c>--group</c> filter to the space-separated form stored in <c>group_path</c>.
+  /// Accepts the dotted form documented by the capabilities filter (<c>docker.remote</c>) as well as
+  /// a space-separated form (<c>docker remote</c>).
+  /// </summary>
+  internal static string NormalizeGroupFilter(string? groupFilter)
+  {
+    if (string.IsNullOrWhiteSpace(groupFilter))
+    {
+      return string.Empty;
+    }
+
+    string[] segments = groupFilter.Split(['.', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    return string.Join(" ", segments);
   }
 
   internal static string EscapeLikePattern(string input)

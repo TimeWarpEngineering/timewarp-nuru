@@ -14,16 +14,16 @@ Evidence: `source/timewarp-nuru/nuru-app.cs`. Parent record: `review/runtime-cor
 
 ## Checklist
 
-- [ ] The stub message says the source generator must be enabled, and that `AddRepl()` was called
-- [ ] The XML exception doc and the thrown string agree
-- [ ] A test or snapshot asserts the thrown message
+- [x] The stub message says the source generator must be enabled, and that `AddRepl()` was called
+- [x] The XML exception doc and the thrown string agree
+- [x] A test or snapshot asserts the thrown message
 
 ## How to validate
 
 Smoke:
 
 ```bash
-dotnet test tests/timewarp-nuru-tests/timewarp-nuru-tests.csproj --filter FullyQualifiedName~RunRepl
+dotnet run tests/timewarp-nuru-tests/repl/repl-48-run-repl-async-stub-message.cs
 ```
 
 Expect: The assertion reads the thrown message and it tells the caller to enable the source generator. It does not say to disable it.
@@ -32,6 +32,34 @@ Expect: The assertion reads the thrown message and it tells the caller to enable
 
 - Created: 528163 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
+
+- Implemented: claude implement oracle (2026-10-05)
+
+## Results
+
+- `source/timewarp-nuru/nuru-app.cs`: `RunReplAsync` stub now throws
+  `RunReplAsync was not intercepted. Ensure AddRepl() is called and the source generator is enabled.`
+  The `<exception>` XML doc was reworded to the same guidance (call not intercepted; call
+  `AddRepl()` and enable the source generator).
+- New test `tests/timewarp-nuru-tests/repl/repl-48-run-repl-async-stub-message.cs` reaches the
+  stub through a method-group conversion (interceptors only replace invocations, so the fallback
+  body runs) and asserts the exact message and that it does not contain "not enabled".
+- The original smoke command referenced a non-existent `timewarp-nuru-tests.csproj`; tests in
+  this repo are runfiles, so the validation below uses the runfile directly.
+- Full CI multi-mode run (`dotnet run tests/ci-tests/run-ci-tests.cs`) passes, including the new test.
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/repl/repl-48-run-repl-async-stub-message.cs
+```
+
+Expect: `Should_tell_caller_to_enable_source_generator` passes — the assertion reads the thrown
+`InvalidOperationException` message, which says the source generator must be **enabled** and
+that `AddRepl()` must be called; it does not say to disable it.
 
 ## Notes
 

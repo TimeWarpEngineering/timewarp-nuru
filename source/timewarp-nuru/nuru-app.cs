@@ -116,15 +116,15 @@ public partial class NuruApp
   /// <param name="cancellationToken">Optional cancellation token.</param>
   /// <returns>A task that completes when the REPL session exits.</returns>
   /// <exception cref="InvalidOperationException">
-  /// Thrown if REPL mode is not enabled via AddRepl() in the builder,
-  /// or if the source generator is not enabled.
+  /// Thrown if the call was not intercepted. Ensure AddRepl() is called in the builder
+  /// and the source generator is enabled.
   /// </exception>
 #pragma warning disable CA1822 // Member does not access instance data
   public Task RunReplAsync(CancellationToken cancellationToken = default)
   {
     // This should never execute - interceptor replaces this call
     throw new InvalidOperationException(
-        "RunReplAsync was not intercepted. Ensure AddRepl() is called and the source generator is not enabled.");
+        "RunReplAsync was not intercepted. Ensure AddRepl() is called and the source generator is enabled.");
   }
 #pragma warning restore CA1822
 

@@ -9,14 +9,20 @@ Use for **data and results** that other programs might consume:
 
 ```csharp
 // Simple text output
-builder.Map("hello", () => Console.WriteLine("Hello, World!"));
+builder.Map("hello")
+  .WithHandler(() => Console.WriteLine("Hello, World!"))
+  .AsQuery()
+  .Done();
 
 // Structured data (automatic JSON serialization)
-builder.Map("info", () => new {
+builder.Map("info")
+  .WithHandler(() => new {
     Name = "MyApp",
     Version = "1.0.0",
     Status = "Running"
-});
+  })
+  .AsQuery()
+  .Done();
 ```
 
 ### stderr (Standard Error)
@@ -116,7 +122,7 @@ using TimeWarp.Nuru;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .UseConsoleLogging()  // Logs → stderr
   .ConfigureServices(services =>
   {

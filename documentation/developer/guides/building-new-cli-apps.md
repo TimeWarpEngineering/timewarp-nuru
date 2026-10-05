@@ -29,8 +29,10 @@ The route pattern is self-contained and fully defines matching behavior. The del
 
 ```csharp
 // ONE ROUTE handles all these cases:
-.Map("build {project?} --config? {cfg?} --verbose --watch",
-    (string? project, string? cfg, bool verbose, bool watch) => ...)
+.Map("build {project?} --config? {cfg?} --verbose --watch")
+  .WithHandler((string? project, string? cfg, bool verbose, bool watch) => ...)
+  .AsCommand()
+  .Done()
 
 // Matches ALL of these:
 build                           // project=null, cfg=null, verbose=false, watch=false
@@ -48,8 +50,10 @@ build --watch --config debug myapp              // Order doesn't matter
 
 ```csharp
 // ONE ROUTE with mixed requirements:
-.Map("deploy {env} --version? {ver?} --config {cfg} --dry-run --force",
-    (string env, string? ver, string cfg, bool dryRun, bool force) => ...)
+.Map("deploy {env} --version? {ver?} --config {cfg} --dry-run --force")
+  .WithHandler((string env, string? ver, string cfg, bool dryRun, bool force) => ...)
+  .AsCommand()
+  .Done()
 
 // env is REQUIRED (positional)
 // --config is REQUIRED (no ? on flag)
@@ -72,8 +76,8 @@ deploy --config prod.json      // Missing required env
 
 ```csharp
 // ONE ROUTE for all migration scenarios:
-.Map("migrate {direction?} --target? {version?} --step? {count:int?} --dry-run",
-    (string? direction, string? version, int? count, bool dryRun) =>
+.Map("migrate {direction?} --target? {version?} --step? {count:int?} --dry-run")
+  .WithHandler((string? direction, string? version, int? count, bool dryRun) =>
     {
         string dir = direction ?? "up";
 
@@ -84,6 +88,8 @@ deploy --config prod.json      // Missing required env
         else
             MigrateLatest(dir, dryRun);
     })
+  .AsCommand()
+  .Done()
 
 // All handled by ONE route:
 migrate                                    // up to latest
@@ -119,23 +125,49 @@ The route pattern MUST be self-contained:
 
 ```csharp
 // Need 8 routes for 3 optional options!
-.Map("test", () => RunTests())
-.Map("test --verbose", (bool v) => RunTests(v))
-.Map("test --coverage", (bool c) => RunTests(coverage: c))
-.Map("test --watch", (bool w) => RunTests(watch: w))
-.Map("test --verbose --coverage", (bool v, bool c) => RunTests(v, c))
-.Map("test --verbose --watch", (bool v, bool w) => RunTests(v, watch: w))
-.Map("test --coverage --watch", (bool c, bool w) => RunTests(coverage: c, watch: w))
-.Map("test --verbose --coverage --watch", (bool v, bool c, bool w) => RunTests(v, c, w))
+.Map("test")
+  .WithHandler(() => RunTests())
+  .AsCommand()
+  .Done()
+.Map("test --verbose")
+  .WithHandler((bool v) => RunTests(v))
+  .AsCommand()
+  .Done()
+.Map("test --coverage")
+  .WithHandler((bool c) => RunTests(coverage: c))
+  .AsCommand()
+  .Done()
+.Map("test --watch")
+  .WithHandler((bool w) => RunTests(watch: w))
+  .AsCommand()
+  .Done()
+.Map("test --verbose --coverage")
+  .WithHandler((bool v, bool c) => RunTests(v, c))
+  .AsCommand()
+  .Done()
+.Map("test --verbose --watch")
+  .WithHandler((bool v, bool w) => RunTests(v, watch: w))
+  .AsCommand()
+  .Done()
+.Map("test --coverage --watch")
+  .WithHandler((bool c, bool w) => RunTests(coverage: c, watch: w))
+  .AsCommand()
+  .Done()
+.Map("test --verbose --coverage --watch")
+  .WithHandler((bool v, bool c, bool w) => RunTests(v, c, w))
+  .AsCommand()
+  .Done()
 ```
 
 ### New Way: Single Route
 
 ```csharp
 // ONE route handles all 8 combinations:
-.Map("test --verbose --coverage --watch",
-    (bool verbose, bool coverage, bool watch) =>
-        RunTests(verbose, coverage, watch))
+.Map("test --verbose --coverage --watch")
+  .WithHandler((bool verbose, bool coverage, bool watch) =>
+      RunTests(verbose, coverage, watch))
+  .AsCommand()
+  .Done()
 
 // Booleans are inherently optional, so this matches all combinations
 ```
@@ -160,7 +192,7 @@ Without explicit modifiers in the route pattern:
 With explicit modifiers:
 1. **Clear Intent**: Route pattern tells complete story
 2. **Decoupled**: Route works with any matching delegate/command
-3. **Mediator Support**: `Map<Command>("pattern")` works
+3. **Mediator Support**: `Map<TEndpoint>()` with a `[NuruRoute("pattern")]` endpoint class works
 4. **Better Tooling**: Can analyze/validate routes independently
 
 ## Greenfield Best Practices
@@ -174,17 +206,31 @@ With explicit modifiers:
 ### Good Pattern
 ```csharp
 // Single flexible route
-.Map("backup {source} --dest? {destination?} --compress --encrypt",
-    (string source, string? destination, bool compress, bool encrypt) => ...)
+.Map("backup {source} --dest? {destination?} --compress --encrypt")
+  .WithHandler((string source, string? destination, bool compress, bool encrypt) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ### Avoid Pattern
 ```csharp
 // Multiple rigid routes
-.Map("backup {source}", ...)
-.Map("backup {source} --dest {destination}", ...)
-.Map("backup {source} --compress", ...)
-.Map("backup {source} --dest {destination} --compress", ...)
+.Map("backup {source}")
+  .WithHandler(...)
+  .AsCommand()
+  .Done()
+.Map("backup {source} --dest {destination}")
+  .WithHandler(...)
+  .AsCommand()
+  .Done()
+.Map("backup {source} --compress")
+  .WithHandler(...)
+  .AsCommand()
+  .Done()
+.Map("backup {source} --dest {destination} --compress")
+  .WithHandler(...)
+  .AsCommand()
+  .Done()
 // ... exponential explosion
 ```
 

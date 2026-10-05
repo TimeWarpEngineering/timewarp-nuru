@@ -21,7 +21,7 @@ using TestTerminal terminal = new();
 // we expect the linker to remove it entirely from the final binary.
 // AOT compilers should be able to eliminate this code path.
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   #region Configuration
   // we support appsettings, environment variables, command-line args
   // configuration settings 

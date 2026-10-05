@@ -471,19 +471,22 @@ All widgets work with `TestTerminal` for unit testing:
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
-    .Map("status", (ITerminal t) =>
+    .Map("status")
+    .WithHandler((ITerminal t) =>
     {
         t.WritePanel(panel => panel
             .Header("Status")
             .Content("All systems operational"));
-        
+
         t.WriteTable(table => table
             .AddColumns("Service", "Status")
             .AddRow("API", "Running")
             .AddRow("Database", "Connected"));
     })
+    .AsQuery()
+    .Done()
     .Build();
 
 await app.RunAsync(["status"]);

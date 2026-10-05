@@ -116,7 +116,7 @@ Create single-file executables that run directly.
 
 ```csharp
 #!/usr/bin/dotnet --
-#:package TimeWarp.Nuru@1.0.0
+#:package TimeWarp.Nuru
 
 using TimeWarp.Nuru;
 

@@ -1,50 +1,40 @@
 # Route Pattern Parsing Flow and Dependency Analysis
 
-This document provides a detailed analysis of the method dependencies in the TimeWarp.Nuru route pattern parsing system.
+This document provides an analysis of the method dependencies in the TimeWarp.Nuru route pattern parsing system, located in `source/timewarp-nuru-parsing/parsing/`.
 
 ## High-Level Flow
 
-1. **NuruAppBuilder.Map(pattern, handler)**
-   - Calls `MapInternal(pattern, handler, description)`
+Route patterns declared with `Map("pattern").WithHandler(...).AsCommand().Done()` are parsed with the same pipeline that the source generator uses at compile time (the analyzer calls `PatternParser.TryParse`).
 
-2. **NuruAppBuilder.MapInternal()**
-   - Calls `EndpointCollectionBuilder.Map(pattern, handler, description)`
+1. **PatternParser.Parse() / PatternParser.TryParse()**
+   - Creates a `Parser` and a `Compiler`
+   - Calls `Parser.Parse(routePattern)`; throws `PatternException` (or returns the errors from `TryParse`) when the result is not successful
+   - Calls `Compiler.Compile(result.Value)` and returns the `CompiledRoute`
 
-3. **DefaultEndpointCollectionBuilder.Map()**
-   - Calls `RoutePatternParser.Parse(routePattern)`
-   - Creates a `RouteEndpoint` with the parsed route
-   - Adds it to the `EndpointCollection`
+2. **Parser.Parse()**
+   - Creates a `Lexer` and calls `lexer.Tokenize()`
+   - Calls `ParsePattern()` to build the `Syntax` tree
+   - Calls `SemanticValidator.Validate(ast)`
+   - Returns a `ParseResult<Syntax>` holding the tree, `ParseErrors`, and `SemanticErrors`
 
-4. **RoutePatternParser.Parse()**
-   - Returns `ImprovedRoutePatternParser.Parse(routePattern)`
+3. **Lexer.Tokenize()**
+   - Breaks input into tokens (`Identifier`, `DoubleDash`, `LeftBrace`, etc.) and appends an `EndOfInput` token
 
-5. **ImprovedRoutePatternParser.Parse()**
-   - Calls `Parser.Parse(routePattern)` (NewRoutePatternParser)
-   - Calls `Builder.Build(result.Value)` (ParsedRouteBuilder)
-
-6. **NewRoutePatternParser.Parse()**
-   - Creates lexer and calls `lexer.Tokenize()`
-   - Calls `ParsePattern()` to build AST
-   - Returns AST
-
-7. **Lexer.Tokenize()**
-   - Breaks input into tokens (Identifier, DoubleDash, LeftBrace, etc.)
-
-8. **ParsedRouteBuilder.Build()**
-   - Visits AST nodes and builds ParsedRoute
-   - Converts AST nodes to RouteSegments and OptionSegments
+4. **Compiler.Compile()**
+   - Visits the `Syntax` tree via `VisitPattern()` (`Compiler` extends `SyntaxVisitor<object?>`)
+   - Converts syntax nodes to `RouteMatcher` objects (`LiteralMatcher`, `ParameterMatcher`, `OptionMatcher`) and computes specificity
+   - Returns a `CompiledRoute`
 
 ## Detailed Method Dependencies
 
 ### Lexer
 
 **Class Dependencies:**
-- `Token` class (creates instances)
-- `TokenType` enum
-- `System.Text.StringBuilder`
+- `Token` record (creates instances)
+- `RouteTokenType` enum
 - `System.Collections.Generic.List<Token>`
 
-**Method Dependencies:**
+**Methods:**
 
 | Method | Calls |
 |--------|-------|
@@ -54,66 +44,69 @@ This document provides a detailed analysis of the method dependencies in the Tim
 | **ScanInvalidParameterSyntax()** | `IsAtEnd()`, `Peek()`, `Advance()`, `AddToken()` |
 | **Match()** | `IsAtEnd()` |
 | **AddToken()** | `Token` constructor |
-| **Advance()** | *(leaf method)* |
 | **Peek()** | `IsAtEnd()` |
-| **PeekNext()** | *(leaf method)* |
+| **Advance()** | *(leaf method)* |
 | **IsAtEnd()** | *(leaf method)* |
 | **IsAlphaNumeric()** | *(leaf method)* |
 
-### NewRoutePatternParser
+### Parser
+
+The `Parser` class is split across partial files: `parser.cs`, `parser.segments.cs`, `parser.navigation.cs`, and `parser.validation.cs`.
 
 **Class Dependencies:**
 - `Lexer` class
-- `Token` class
-- `TokenType` enum
-- AST node classes (`LiteralNode`, `ParameterNode`, `OptionNode`)
-- `ParseError` class
+- `Token` record
+- `RouteTokenType` enum
+- Syntax node records (`Syntax`, `SegmentSyntax`, `LiteralSyntax`, `ParameterSyntax`, `OptionSyntax`, `EndOfOptionsSyntax`)
+- `SemanticValidator` class
+- `ParseError` record (and subclasses such as `UnexpectedTokenError`)
+- `ParseException` class
 - `ParseResult<T>` class
-- `RoutePatternAst` class
 
-**Method Dependencies:**
+**Methods:**
 
 | Method | Calls |
 |--------|-------|
-| **Parse()** | `Lexer.Tokenize()`, `ParsePattern()` |
+| **Parse()** | `Lexer.Tokenize()`, `ParsePattern()`, `SemanticValidator.Validate()` |
 | **ParsePattern()** | `IsAtEnd()`, `ParseSegment()`, `Synchronize()` |
-| **ParseSegment()** | `Peek()`, `ParseParameter()`, `ParseOption()`, `ParseLiteral()`, `ParseInvalidToken()` |
-| **ParseLiteral()** | `Consume()`, `LiteralNode` constructor |
-| **ParseParameter()** | `Consume()`, `Match()`, `ConsumeDescription()`, `ParameterNode` constructor |
-| **ParseOption()** | `Current()`, `Advance()`, `Consume()`, `Match()`, `ConsumeDescription()`, `ParseParameter()`, `OptionNode` constructor |
-| **ParseInvalidToken()** | `Advance()`, `AddError()` |
-| **ConsumeDescription()** | `IsAtEnd()`, `Peek()`, `Advance()` |
+| **ParseSegment()** | `Peek()`, `Previous()`, `ParseParameter()`, `ParseOption()`, `ParseEndOfOptions()`, `ParseLiteral()`, `ParseInvalidToken()`, `HandleUnexpectedRightBrace()`, `HandleUnexpectedToken()`, `AddParseError()` |
+| **ParseOption()** | `Current()`, `Advance()`, `Consume()`, `ParseOptionForms()`, `Match()`, `ParseOptionDescription()`, `ParseOptionParameter()`, `Previous()` |
+| **ParseOptionForms()** | `Match()`, `Consume()` |
 | **Synchronize()** | `IsAtEnd()`, `Peek()`, `Advance()` |
 | **Match()** | `Check()`, `Advance()` |
 | **Check()** | `IsAtEnd()`, `Peek()` |
-| **Consume()** | `Check()`, `Advance()`, `Peek()`, `AddError()` |
+| **Consume()** | `Check()`, `Advance()`, `Peek()`, `AddParseError()` |
 | **Advance()** | `IsAtEnd()`, `Previous()` |
 | **IsAtEnd()** | `Peek()` |
 | **Peek()** | `Token.EndOfInput()` |
 | **Previous()** | *(leaf method)* |
 | **Current()** | *(leaf method)* |
-| **AddError()** | `ParseError` constructor |
 
-### ParsedRouteBuilder
+`ParseLiteral()`, `ParseParameter()`, `ParseOptionDescription()`, `ParseOptionParameter()`, and `ConsumeDescription()` are also in the parser; they use the same navigation helpers (`Consume()`, `Match()`, `Advance()`, `Peek()`).
+
+### SemanticValidator
+
+`SemanticValidator.Validate(Syntax)` collects segment metadata into a `ValidationContext` and runs the checks `ValidateDuplicateParameters`, `ValidateOptionalBeforeRequired`, `ValidateConsecutiveOptionalParameters`, `ValidateCatchAllPosition`, `ValidateEndOfOptionsSeparator`, `ValidateDuplicateOptionAliases`, and `ValidateMixedCatchAllWithOptional`, producing `SemanticError` values.
+
+### Compiler
 
 **Class Dependencies:**
-- AST node classes (`RoutePatternAst`, `LiteralNode`, `ParameterNode`, `OptionNode`)
-- Segment classes (`LiteralSegment`, `ParameterSegment`, `OptionSegment`)
-- `ParsedRoute` class
-- `RoutePatternVisitor<T>` base class
+- Syntax node records (`Syntax`, `LiteralSyntax`, `ParameterSyntax`, `OptionSyntax`, `EndOfOptionsSyntax`)
+- Matcher classes (`LiteralMatcher`, `ParameterMatcher`, `OptionMatcher`) deriving from `RouteMatcher`
+- `CompiledRoute` class
+- `SyntaxVisitor<T>` base class
 
-**Method Dependencies:**
+**Methods:**
 
 | Method | Calls |
 |--------|-------|
-| **Build()** | `Accept()`, `BuildParsedRoute()` |
-| **VisitPattern()** | `VisitSegment()` |
-| **VisitSegment()** | `Visit()` |
-| **Visit()** | `VisitLiteral()`, `VisitParameter()`, `VisitOption()` |
-| **VisitLiteral()** | `LiteralSegment` constructor |
-| **VisitParameter()** | `ParameterSegment` constructor |
-| **VisitOption()** | `OptionSegment` constructor |
-| **BuildParsedRoute()** | `ParsedRoute` constructor |
+| **Compile()** | `VisitPattern()`, `CompiledRoute` constructor |
+| **VisitPattern()** *(from `SyntaxVisitor<T>`)* | `Visit()` |
+| **Visit()** *(from `SyntaxVisitor<T>`)* | `VisitLiteral()`, `VisitParameter()`, `VisitOption()`, `VisitEndOfOptions()` |
+| **VisitLiteral()** | `LiteralMatcher` constructor |
+| **VisitParameter()** | `ParameterMatcher` constructor |
+| **VisitOption()** | `OptionMatcher` constructor |
+| **VisitEndOfOptions()** | *(adds no matcher; structural marker only)* |
 
 ## Leaf Methods
 
@@ -121,24 +114,18 @@ These methods do not call any other methods in the parsing flow:
 
 ### Lexer
 - **Advance()** - `return Input[Position++]`
-- **PeekNext()** - `return Position + 1 >= Input.Length ? '\0' : Input[Position + 1]`
 - **IsAtEnd()** - `return Position >= Input.Length`
 - **IsAlphaNumeric()** - `return char.IsLetterOrDigit(c) || c == '_'`
 
-### NewRoutePatternParser
+### Parser
 - **Previous()** - `return Tokens[CurrentIndex - 1]`
 - **Current()** - `return Tokens[CurrentIndex]`
 
 ### Constructors (all are leaf methods)
 - **Token** constructor
-- **LiteralNode** constructor
-- **ParameterNode** constructor
-- **OptionNode** constructor
-- **ParseError** constructor
-- **LiteralSegment** constructor
-- **ParameterSegment** constructor
-- **OptionSegment** constructor
-- **ParsedRoute** constructor
+- **LiteralSyntax**, **ParameterSyntax**, **OptionSyntax** constructors
+- **LiteralMatcher**, **ParameterMatcher**, **OptionMatcher** constructors
+- **CompiledRoute** constructor
 
 ### External .NET Dependencies
 - `char.IsLetterOrDigit()`
@@ -148,11 +135,12 @@ These methods do not call any other methods in the parsing flow:
 ## Key Observations
 
 1. The parsing flow follows a clear pipeline:
-   - Lexer tokenizes the input string
-   - Parser builds an AST from tokens
-   - Builder converts AST to ParsedRoute
+   - `Lexer` tokenizes the input string
+   - `Parser` builds a `Syntax` tree from tokens
+   - `SemanticValidator` validates the tree
+   - `Compiler` converts the tree to a `CompiledRoute`
 
-2. Most complexity is in the middle layers (parsing and AST traversal)
+2. Most complexity is in the middle layers (parsing and tree traversal)
 
 3. The leaf methods are simple primitives that:
    - Access array/string elements

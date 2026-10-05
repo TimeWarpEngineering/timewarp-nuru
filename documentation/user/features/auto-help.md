@@ -4,19 +4,24 @@ TimeWarp.Nuru can automatically generate help documentation for your CLI command
 
 ## Enabling Auto-Help
 
-Add `.AddAutoHelp()` to your application builder:
+Help is built in. `NuruApp.CreateBuilder()` registers it automatically, so there is nothing to enable:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-  .Map("deploy {env}", (string env) => Deploy(env))
-  .Map("backup {source}", (string source) => Backup(source))
-  .AddAutoHelp()  // Enable automatic help
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("deploy {env}")
+    .WithHandler((string env) => Deploy(env))
+    .AsCommand()
+    .Done()
+  .Map("backup {source}")
+    .WithHandler((string source) => Backup(source))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
-This automatically creates:
-- `--help` or `-h` - Shows all available commands
-- `<command> --help` - Shows usage for that command. When several routes share its literal prefix, each of those routes is listed.
+This creates:
+- `--help` or `-h` - Root help: `Version:`, `Usage:`, `Options:`, then `Commands:` (the first literal of each route)
+- `<command> --help` - Per-route help. When several routes share its literal prefix, each of those routes is listed.
 
 ## Basic Help
 
@@ -24,12 +29,27 @@ This automatically creates:
 ./myapp --help
 ```
 
-```
-Available commands:
-  deploy {env}
-  backup {source}
+Root help uses the entry assembly name when the builder has no app name. This transcript uses `myapp`. The default version text is `v1.0.0`. Command rows are the first literal only, and the description is empty until you call `.WithDescription`.
 
-Use '<command> --help' for detailed help on a specific command.
+```
+Version:
+  v1.0.0
+
+
+Usage:
+  myapp [command] [options]
+
+Options:
+  --help, -h                                 Show this help message
+  --version                                  Show version information
+  --capabilities                             Show capabilities for AI tools
+  --capabilities --group-filter <group>      Filter capabilities by group prefix
+  --capabilities --search <query>            Search capabilities using nuru
+  --json-args <value>                        Bind arguments from -, @path, or an inline JSON object
+
+Commands:
+  deploy
+  backup
 ```
 
 ## Adding Descriptions
@@ -37,18 +57,15 @@ Use '<command> --help' for detailed help on a specific command.
 Use the pipe (`|`) syntax to add descriptions to parameters and options:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-  .Map
-  (
-    "deploy {env|Target environment} {tag?|Optional version tag}",
-    (string env, string? tag) => Deploy(env, tag)
-  )
-  .Map
-  (
-    "backup {source|Source directory} --compress,-c|Enable compression",
-    (string source, bool compress) => Backup(source, compress)
-  )
-  .AddAutoHelp()
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("deploy {env|Target environment} {tag?|Optional version tag}")
+    .WithHandler((string env, string? tag) => Deploy(env, tag))
+    .AsCommand()
+    .Done()
+  .Map("backup {source|Source directory} --compress,-c|Enable compression")
+    .WithHandler((string source, bool compress) => Backup(source, compress))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -58,15 +75,17 @@ NuruApp app = NuruApp.CreateBuilder(args)
 ./myapp deploy --help
 ```
 
+Per-route help prints the pattern, then an indented description when `.WithDescription` was set, then tables. A required parameter is `{name}`. An optional parameter is `[name]`. This route has no options and no examples, so those sections are omitted. The page ends with the JSON-args line.
+
 ```
-Usage: myapp deploy {env} {tag?}
+deploy {env} [tag]
 
 Parameters:
-  env     Target environment (required)
-  tag     Optional version tag (optional)
+  Name    Required    Type      Description
+  env     Yes         string    Target environment
+  tag     No          string    Optional version tag
 
-Options:
-  --help, -h    Show this help message
+Values may come from --json-args.
 ```
 
 ### Several routes with the same literal prefix
@@ -90,15 +109,20 @@ Only routes whose leading literals equal the words typed are included. `deploy -
 ./myapp backup --help
 ```
 
+An option is wrapped in `[]` only when the pattern marks it optional with `?` (`--compress?`). This sample does not, so `--compress,-c` is shown as required. The options table writes `--long, -short` (a space after the comma). Built-in `--help` is not repeated on the route.
+
 ```
-Usage: myapp backup {source} [options]
+backup {source} --compress,-c
 
 Parameters:
-  source    Source directory (required)
+  Name      Required    Type      Description
+  source    Yes         string    Source directory
 
 Options:
+  Option            Description
   --compress, -c    Enable compression
-  --help, -h        Show this help message
+
+Values may come from --json-args.
 ```
 
 ## Complete Example
@@ -106,32 +130,35 @@ Options:
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
-  .Map
-  (
-    "version|Show application version",
-    () => Console.WriteLine("MyApp v1.0.0")
-  )
-  .Map
-  (
-    "deploy {env|Environment (prod/staging/dev)} {tag?|Version tag}",
-    (string env, string? tag) => Deploy(env, tag)
-  )
-  .Map
-  (
-    "backup {source|Source path} {dest?|Destination path} --compress,-c|Compress backup",
-    (string source, string? dest, bool compress) => Backup(source, dest, compress)
-  )
-  .Map
-  (
-    "logs {service|Service name} --tail,-t {lines:int|Number of lines}",
-    (string service, int lines) => ShowLogs(service, lines)
-  )
-  .AddAutoHelp()
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("MyApp v1.0.0"))
+    .WithDescription("Show application version")
+    .AsCommand()
+    .Done()
+  .Map("deploy {env|Environment (prod/staging/dev)} {tag?|Version tag}")
+    .WithHandler((string env, string? tag) => Deploy(env, tag))
+    .WithDescription("Deploy to an environment")
+    .WithExample("deploy prod", "Deploy to production")
+    .WithExample("deploy staging v1.2.3", "Deploy a version tag")
+    .AsCommand()
+    .Done()
+  .Map("backup {source|Source path} {dest?|Destination path} --compress,-c|Compress backup")
+    .WithHandler((string source, string? dest, bool compress) => Backup(source, dest, compress))
+    .WithDescription("Backup files")
+    .AsCommand()
+    .Done()
+  .Map("logs {service|Service name} --tail,-t {lines:int|Number of lines}")
+    .WithHandler((string service, int lines) => ShowLogs(service, lines))
+    .WithDescription("View service logs")
+    .AsCommand()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);
 ```
+
+A pipe after a command literal (`version|...`) is not a description. It is an invalid character (NURU_P005). Parameter pipes (`{env|...}`) and option pipes (`--compress,-c|...`) are descriptions. Command text comes from `.WithDescription`.
 
 ### Generated Help Output
 
@@ -139,39 +166,54 @@ return await app.RunAsync(args);
 ./myapp --help
 ```
 
+`Commands:` lists the first literal and the `.WithDescription` text. It does not list the full pattern, and there is no "Available commands" footer.
+
 ```
-MyApp - Command-line interface
+Version:
+  v1.0.0
 
-Available commands:
-  version                                Show application version
-  deploy {env} {tag?}                    Deploy to specified environment
-  backup {source} {dest?} [options]      Backup files
-  logs {service} [options]               View service logs
 
-Use '<command> --help' for detailed help on a specific command.
-Use '--help' or '-h' after any command for usage information.
+Usage:
+  myapp [command] [options]
+
+Options:
+  --help, -h                                 Show this help message
+  --version                                  Show version information
+  --capabilities                             Show capabilities for AI tools
+  --capabilities --group-filter <group>      Filter capabilities by group prefix
+  --capabilities --search <query>            Search capabilities using nuru
+  --json-args <value>                        Bind arguments from -, @path, or an inline JSON object
+
+Commands:
+  version    Show application version
+  deploy     Deploy to an environment
+  backup     Backup files
+  logs       View service logs
 ```
 
 ```bash
 ./myapp deploy --help
 ```
 
-```
-Usage: myapp deploy {env} {tag?}
+Examples appear only because this route calls `.WithExample`. The example text is what the user types after the executable name.
 
-Description:
-  Deploy to specified environment
+```
+deploy {env} [tag]
+
+  Deploy to an environment
 
 Parameters:
-  env     Environment (prod/staging/dev) (required)
-  tag     Version tag (optional)
-
-Options:
-  --help, -h    Show this help message
+  Name    Required    Type      Description
+  env     Yes         string    Environment (prod/staging/dev)
+  tag     No          string    Version tag
 
 Examples:
-  myapp deploy prod
-  myapp deploy staging v1.2.3
+  deploy prod
+    Deploy to production
+  deploy staging v1.2.3
+    Deploy a version tag
+
+Values may come from --json-args.
 ```
 
 ## Description Syntax
@@ -197,10 +239,14 @@ Format: `--option,-o|description`
 
 ### Command Descriptions
 
-Format: `"pattern|description"`
+Use `.WithDescription(...)` on the endpoint builder:
 
 ```csharp
-.Map("version|Show application version", handler)
+.Map("version")
+  .WithHandler(handler)
+  .WithDescription("Show application version")
+  .AsQuery()
+  .Done()
 ```
 
 ### Command Examples
@@ -232,14 +278,17 @@ A route with no examples declared omits the "Examples:" section entirely.
 You can provide custom help handlers:
 
 ```csharp
-builder.Map("--help", () =>
-{
+builder.Map("--help")
+  .WithHandler(() =>
+  {
     Console.WriteLine("MyApp - Custom Help");
     Console.WriteLine();
     Console.WriteLine("Commands:");
     Console.WriteLine("  deploy {env}     Deploy to environment");
     Console.WriteLine("  backup {source}  Backup files");
-});
+  })
+  .AsQuery()
+  .Done();
 ```
 
 ### Conditional Help
@@ -247,8 +296,14 @@ builder.Map("--help", () =>
 Show different help based on context:
 
 ```csharp
-builder.Map("deploy --help", () => ShowDeployHelp());
-builder.Map("backup --help", () => ShowBackupHelp());
+builder.Map("deploy --help")
+  .WithHandler(() => ShowDeployHelp())
+  .AsQuery()
+  .Done();
+builder.Map("backup --help")
+  .WithHandler(() => ShowBackupHelp())
+  .AsQuery()
+  .Done();
 ```
 
 ## Best Practices
@@ -286,9 +341,18 @@ builder.Map("backup --help", () => ShowBackupHelp());
 ### Subcommands
 
 ```csharp
-builder.Map("git --help", () => ShowGitHelp());
-builder.Map("git commit --help", () => ShowGitCommitHelp());
-builder.Map("git push --help", () => ShowGitPushHelp());
+builder.Map("git --help")
+  .WithHandler(() => ShowGitHelp())
+  .AsQuery()
+  .Done();
+builder.Map("git commit --help")
+  .WithHandler(() => ShowGitCommitHelp())
+  .AsQuery()
+  .Done();
+builder.Map("git push --help")
+  .WithHandler(() => ShowGitPushHelp())
+  .AsQuery()
+  .Done();
 ```
 
 ### Option Groups
@@ -301,9 +365,11 @@ builder.Map
   "serve {port:int|Port number} " +
   "--host {addr|Host address} " +
   "--ssl|Enable SSL " +
-  "--cert {path|Certificate path}",
-  handler
-);
+  "--cert {path|Certificate path}"
+)
+  .WithHandler(handler)
+  .AsCommand()
+  .Done();
 ```
 
 Help output shows options logically grouped.

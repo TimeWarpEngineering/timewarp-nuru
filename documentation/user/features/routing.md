@@ -20,7 +20,7 @@ TimeWarp.Nuru supports intuitive route patterns:
 Parameters are automatically converted to the correct types:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // Supports common types out of the box
   .Map("wait {seconds:int}")
     .WithHandler((int seconds) => Thread.Sleep(seconds * 1000))
@@ -64,13 +64,13 @@ TimeWarp.Nuru includes built-in type converters for:
 
 See [Supported Types Reference](../reference/supported-types.md) for complete list and custom type converters.
 
-## Default Route (MapDefault)
+## Default Route (Map(""))
 
-The `MapDefault` method registers a handler that executes when no arguments are provided:
+The empty pattern `Map("")` registers a handler that executes when no arguments are provided:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-  .MapDefault()
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("")
     .WithHandler(() => Console.WriteLine("Usage: myapp <command>"))
     .AsCommand()
     .Done()
@@ -91,8 +91,8 @@ NuruApp app = NuruApp.CreateBuilder(args)
 A typical pattern is to display help information when users run your CLI without arguments:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-  .MapDefault()
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("")
     .WithHandler(() =>
     {
       Console.WriteLine("myapp - A sample CLI application");
@@ -115,11 +115,11 @@ NuruApp app = NuruApp.CreateBuilder(args)
   .Build();
 ```
 
-### MapDefault vs Catch-All `{*args}`
+### Map("") vs Catch-All `{*args}`
 
 While both can handle "fallback" scenarios, they serve different purposes:
 
-| Feature | `MapDefault` | Catch-all `{*args}` |
+| Feature | `Map("")` | Catch-all `{*args}` |
 |---------|--------------|---------------------|
 | **Matches** | Empty input only (no arguments) | Any unmatched input |
 | **Use case** | Show usage/help when CLI invoked alone | Forward unknown commands elsewhere |
@@ -127,8 +127,8 @@ While both can handle "fallback" scenarios, they serve different purposes:
 | **Specificity** | Most specific (exact empty match) | Least specific (matches anything) |
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-  .MapDefault()
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("")
     .WithHandler(() => Console.WriteLine("No command provided. Try 'help'."))
     .AsCommand()
     .Done()

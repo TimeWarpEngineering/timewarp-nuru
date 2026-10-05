@@ -1,148 +1,152 @@
 # Error Handling in TimeWarp.Nuru
 
-Documentation of the actual error handling implementation in TimeWarp.Nuru.
+Documentation of the error handling behavior of the generated code in TimeWarp.Nuru 3.0.
+
+`NuruApp.RunAsync(args)` is replaced at compile time by a source-generated interceptor. All behavior below
+describes what that generated code does.
 
 ## Error Handling Architecture
 
 ```mermaid
 graph TD
-    A[User Input] --> B[Route Matching]
-    B --> C{Command Found?}
-    C -->|No| D[Show Help & Exit]
-    C -->|Yes| E[Parameter Binding]
-    E --> F{Type Conversion Success?}
-    F -->|No| G[Clear Error Message + Exit 1]
+    A[User Input] --> B[Generated Route Matching]
+    B --> C{Route Matched?}
+    C -->|No| D["'Unknown command. Use --help for usage.' to stderr, return 1"]
+    C -->|Yes| E[Parameter and Option Conversion]
+    E --> F{Conversion Succeeded?}
+    F -->|No| G["'Error: Invalid value ...' to terminal stdout, return 1"]
     F -->|Yes| H[Handler Execution]
-    H --> I{Delegate or Mediator?}
-    I -->|Delegate| J[Execute Delegate]
-    I -->|Mediator| K[Populate Command & Execute]
-    J --> L{Exception?}
-    K --> M{Exception?}
-    L -->|Yes| N[Handler Error Message]
-    M -->|Yes| O[Command Error Message]
-    L -->|No| P[Success]
-    M -->|No| P
-    N --> Q[Global Error Handler]
-    O --> Q
-    Q --> R[Write to stderr & Exit Code 1]
-    P --> S[Write to stdout & Exit Code 0]
+    H --> I{Exception?}
+    I -->|Yes| J[Exception propagates out of RunAsync]
+    I -->|No| K[Result written to terminal; return Environment.ExitCode]
 ```
 
 ## Key Error Handling Mechanisms
 
-### 1. **Top-Level Exception Handling**
+### 1. **Handler Exceptions Are Not Caught**
 
-The framework catches all unhandled exceptions and writes to stderr:
+Generated code does not wrap handler invocation in a catch block. If a handler throws, the exception
+propagates out of `RunAsync` to the caller. When telemetry is enabled, the generated code records the
+exception type on the activity and metrics and then rethrows (`throw;`); it does not swallow it.
+
+There is no framework-written `Error executing handler` message and no automatic exit code `1` for
+handler exceptions. If you want a friendly message and a non-zero exit code, handle the exception yourself,
+either inside the handler or around `RunAsync`:
 
 ```csharp
-// Framework handles this internally
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("process {file}")
+    .WithHandler((string file, ITerminal terminal) =>
+    {
+      try
+      {
+        ProcessFile(file);
+        terminal.WriteLine($"Processed {file}");
+      }
+      catch (IOException ex)
+      {
+        terminal.WriteErrorLine($"Error: {ex.Message}");
+        Environment.ExitCode = 1;
+      }
+    })
+    .AsCommand()
+    .Done()
+  .Build();
+
+return await app.RunAsync(args);
+```
+
+Or catch at the call site:
+
+```csharp
 try
 {
-    return await ExecuteHandlerAsync(...);
+  return await app.RunAsync(args);
 }
 catch (Exception ex)
 {
-    await Console.Error.WriteLineAsync($"Error: {ex.Message}");
-    return 1;
+  Console.Error.WriteLine($"Error: {ex.Message}");
+  return 1;
 }
 ```
 
-**User handlers** should follow similar patterns:
+### 2. **Exit Codes and Handler Return Values**
+
+Per the `NuruApp.RunAsync` documentation, handler return values are written to the terminal as output;
+they do **not** control the exit code. For example, `.WithHandler(() => 42)` prints `42` and the process
+still exits with `0`. The generated code ends each matched route with `return Environment.ExitCode;`, so
+to signal failure from a handler, set `Environment.ExitCode`:
 
 ```csharp
-// In your command handlers
-.Map("process {file}", async (string file) =>
-{
-    try
-    {
-        // Your logic
-        await ProcessFileAsync(file);
-        await Console.Out.WriteLineAsync($"Processed {file}");
-        return 0;
-    }
-    catch (Exception ex)
-    {
-        await Console.Error.WriteLineAsync($"Error: {ex.Message}");
-        return 1;
-    }
-});
+.Map("check")
+  .WithHandler(() =>
+  {
+    Environment.ExitCode = 1;
+  })
+  .AsCommand()
+  .Done()
 ```
+
+Generated binding and no-match errors (below) return `1` directly.
 
 **Key principles:**
-- Normal output → `Console.Out` / `Console.WriteLine()`
-- Errors → `Console.Error` / `Console.Error.WriteLine()`
-- Exit codes: 0 = success, 1 = failure
+- Handler output is written through the terminal (`app.Terminal`), not via a returned exit code.
+- A non-zero exit code from a handler requires setting `Environment.ExitCode`.
+- Exit codes: `0` = success, `1` = generated binding or no-match failure.
 
-### 2. **Route Parsing Errors**
-The `RouteParser` provides comprehensive parsing error handling:
-- **ParseResult<T>** with Success/Failure status
-- **ParseError** collection with specific error types:
-  - `InvalidTypeConstraint` - Unsupported type in `{param:type}` syntax
-  - `DuplicateParameterNames` - Same parameter name used twice
-  - `UnbalancedBraces` - Missing opening/closing braces
-  - `InvalidParameterSyntax` - Wrong parameter format (suggests corrections)
-- **Error recovery** with synchronization to continue parsing after errors
+### 3. **Route Parsing Errors**
+Route patterns are parsed by the source generator at compile time, so malformed patterns are reported as
+build diagnostics rather than runtime errors. Examples include unsupported `{param:type}` constraints,
+duplicate parameter names, unbalanced braces and invalid parameter syntax.
 
-### 3. **Parameter Binding Errors**
-During parameter extraction and type conversion:
-```csharp
-throw new InvalidOperationException(
-    $"Cannot convert '{stringValue}' to type {param.ParameterType} for parameter '{param.Name}'"
-);
-```
-- Validates required parameters are provided
-- Handles type conversion failures with descriptive messages
-- Supports optional parameters with default values
+### 4. **Parameter and Option Binding Errors**
+After a route matches, the generated code converts string arguments to the declared parameter types.
+It uses `TryParse()`-style conversion for built-in types (`int`, `long`, `double`, `decimal`, `bool`,
+`DateTime`, `Guid`, `TimeSpan`, and so on), `Uri.TryCreate` for `Uri`, constructor calls with a
+`try`/`catch` for `FileInfo` and `DirectoryInfo`, and the registered `TryConvert()` for enums and custom
+converters.
 
-### 4. **Type Conversion Errors**
-The source generator uses `TryParse()` for safe type conversion:
-- Uses `int.TryParse()`, `Guid.TryParse()`, etc. for built-in types
-- On conversion failure: **emits clear error message and returns exit code 1**
-- Does **NOT** skip to the next route on type conversion failure
-- Supports built-in types: `string`, `int`, `long`, `double`, `decimal`, `bool`, `DateTime`, `Guid`, `TimeSpan`, etc.
-- Custom converters use `TryConvert()` pattern for consistency
+On conversion failure the generated code:
+- writes one line to `app.Terminal.WriteLine(...)` (the terminal's **standard output**, not
+  standard error), and
+- returns exit code `1` immediately.
 
-**Example error output:**
-```
-Error: Invalid value 'abc' for parameter 'port'. Expected: int
-```
+It does **not** throw an exception and does **not** try the next route.
 
-**Design Decision:** Type conversion failures are binding errors, not matching failures. When a user types `server --port abc` and a route exists for `server --port {num:int}`, the route **matched** but the **binding failed**. The user should get a clear error, not a confusing "unknown command" message from fallback behavior.
+Messages emitted by the generator:
 
-### 5. **Handler Execution Errors**
-Separate error handling for delegate vs Mediator commands:
+| Case | Message |
+|------|---------|
+| Scalar parameter (built-in type) | `Error: Invalid value 'abc' for parameter 'port'. Expected: int` |
+| Typed catch-all parameter | `Error: Invalid value in 'args'. Expected: int[]` |
+| Repeated or typed option | `Error: Invalid value in option '--ids'. Expected: int` |
+| Scalar option | `Error: Invalid value 'abc' for option '--port'. Expected: int` |
+| Enum parameter or option | `Error: Invalid value 'x' for parameter 'env'. <valid values message>` |
+| Custom converter parameter | `Error: Invalid <Type> value for parameter 'name': 'x'` |
+| Option missing a `FileInfo`/`DirectoryInfo` value | `Error: Missing value for option '--file'. Expected: FileInfo` |
 
-**Delegate Commands:**
-```csharp
-catch (Exception ex)
-{
-    await Console.Error.WriteLineAsync(
-        $"Error executing handler: {ex.Message}"
-    ).ConfigureAwait(false);
-    return 1;
-}
-```
+**Design Decision:** Type conversion failures are binding errors, not matching failures. When a user types
+`server --port abc` and a route exists for `server --port {num:int}`, the route **matched** but the
+**binding failed**. The user gets a clear error, not a confusing "unknown command" message from fallback
+behavior.
 
-**Mediator Commands:**
-- Errors during command property population throw `InvalidOperationException`
-- Command execution errors bubble up through the Mediator pipeline
-- Property setting failures include parameter names and values in error messages
+Note: binding errors currently go to the terminal's standard output.
 
-### 6. **Command Matching Errors**
-When no route matches the input:
-- Returns `ResolverResult` with `Success = false`
-- Shows available commands via automatic help generation
-- Uses `RouteHelpProvider` to display command usage
+### 5. **Command Matching Errors**
+When no route matches the input, the generated fallback writes
+`Unknown command. Use --help for usage.` to the terminal's **standard error**
+(`WriteErrorLineAsync`) and returns exit code `1`.
 
-### 7. **Output Stream Separation**
-- **stdout**: Normal command output and results
-- **stderr**: Error messages and diagnostic information
-- Prevents error messages from polluting command output
-- Enables proper piping and scripting workflows
+### 6. **Output Stream Usage**
+- **Handler results**: written to `app.Terminal` (standard output). `void`/`Task`/`Unit` results produce
+  no output; primitives are written as text, dates as ISO 8601, and complex types as JSON.
+- **Binding errors**: `app.Terminal.WriteLine` (standard output, currently).
+- **No-match error**: `app.Terminal.WriteErrorLineAsync` (standard error).
+- Handlers that need to write errors to standard error should use
+  `ITerminal.WriteErrorLine` / `WriteErrorLineAsync`.
 
 ## Implementation Details
 
-- Uses standard exit codes (0 = success, 1 = error)
-- Separates error output (stderr) from normal output (stdout)
-- Shows help automatically when commands are invalid
-- Provides specific error messages with parameter names and values
+- Matched routes return `Environment.ExitCode` (default `0`); binding and no-match failures return `1`.
+- Handler exceptions are not caught by generated code and propagate to the caller of `RunAsync`.
+- Binding errors name the parameter or option and the offending value.

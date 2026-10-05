@@ -11,6 +11,8 @@ List built-in REPL key bindings from the command line:
 - Table or detailed view
 
 ### [MCP Server](mcp-server.md)
+> Frozen and **not part of the 3.0 release**. Use the Nuru skill (`skills/tw-nuru/SKILL.md`) instead.
+
 AI-assisted development with Model Context Protocol:
 - Route pattern validation
 - Handler code generation
@@ -24,11 +26,13 @@ AI-assisted development with Model Context Protocol:
 | Tool | Purpose | Learn More |
 |------|---------|------------|
 | ⌨️ Key bindings | List built-in REPL shortcuts | [Key bindings](key-bindings.md) |
-| 🤖 MCP Server | AI-powered development assistance | [MCP Server](mcp-server.md) |
+| 🤖 MCP Server | Frozen; not part of 3.0 | [MCP Server](mcp-server.md) |
 
 ## Installation
 
 ### MCP Server
+
+Not part of the 3.0 release. Older prereleases install with:
 
 ```bash
 # Install as global tool

@@ -6,15 +6,26 @@ using TimeWarp.Nuru.Generators;
 /// Resolves the source location of a route's pattern string for diagnostics.
 /// </summary>
 /// <remarks>
-/// Location keys are the literal pattern strings from source (<c>Map("...")</c> or the
-/// <c>[NuruRoute]</c> attribute). <see cref="RouteDefinition.EffectivePattern"/> is rebuilt
-/// from segments, so it can differ from the source literal (descriptions, <c>{tag?:int}</c>
-/// vs <c>{tag:int?}</c>). Try the source forms first, then the effective pattern.
+/// Fluent <c>Map("...")</c> locations are keyed by that string literal, which is
+/// <see cref="RouteDefinition.OriginalPattern"/>. <see cref="RouteDefinition.EffectivePattern"/>
+/// can differ (group prefix, descriptions, <c>{tag?:int}</c> vs <c>{tag:int?}</c>), so fluent
+/// lookup tries the source forms first.
+/// <c>[NuruRoute]</c> locations are keyed by <see cref="RouteDefinition.EffectivePattern"/>
+/// because the attribute is a single literal and property segments are appended. Trying
+/// <see cref="RouteDefinition.OriginalPattern"/> first selects a fluent <c>Map</c> of that
+/// same literal (for example <c>Map("")</c> beside <c>[NuruRoute("")]</c> with <c>{name?}</c>).
 /// </remarks>
 internal static class RouteLocationLookup
 {
   public static Location? Find(RouteDefinition route, IReadOnlyDictionary<string, Location> routeLocations)
   {
+    if (route.Handler.HandlerKind == HandlerKind.Command)
+    {
+      return routeLocations.TryGetValue(route.EffectivePattern, out Location? endpointLocation)
+        ? endpointLocation
+        : null;
+    }
+
     if (routeLocations.TryGetValue(route.OriginalPattern, out Location? original))
       return original;
 

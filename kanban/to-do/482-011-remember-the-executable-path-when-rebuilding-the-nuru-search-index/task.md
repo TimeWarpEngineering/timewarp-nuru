@@ -38,6 +38,7 @@ Expect: Rebuild invokes the stored path. The capabilities name used for `--cli` 
 - Created: 535767 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
 - Implemented: claude (ganda task work implement oracle, 2026-10-05)
+- Review: grok 01a10c04-80b0-7ab3-a658-313db8815faa (2026-10-05)
 
 ## Results
 
@@ -74,6 +75,15 @@ Expect: `IndexRebuildPath` 3/3 pass. In those tests, `rebuild --all` re-runs the
 which updates the version to 2.0.0 with "1 succeeded, 0 failed". `search --cli mycli` (the
 capabilities name) still matches. The CI runner exits 0.
 
+### Review
+
+- Rounds: 1. Roster: general. Effort: 2 (274-line diff, commits `314951fc` and `4605c20a`).
+- Counts: bug 0; suggestion 0; nit 0; open 0.
+- Disposition: clean. No wontfix. No escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Re-checked: `dotnet run tests/timewarp-nuru-search-tests/search-06-index-rebuild-path.cs` passed 3/3. `--all` updated the stored-path CLI from 1.0.0 to 2.0.0. Search by `mycli` matched. Search by the file name did not.
+
 ## Notes
 
 - Parent review: `kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/findings.md` on the task 482 branch until that PR merges.
+- Implementation review: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Outcome clean.

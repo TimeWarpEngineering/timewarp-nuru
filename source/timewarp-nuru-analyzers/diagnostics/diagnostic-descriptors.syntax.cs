@@ -89,7 +89,7 @@ internal static partial class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor AdjacentParameters = new(
       id: "NURU_P010",
       title: "Adjacent parameters in route pattern",
-      messageFormat: "Adjacent parameters must be separated by whitespace (e.g., '{{a}} {{b}}' rather than '{{a}}{{b}}')",
+      messageFormat: "Adjacent parameters must be separated by whitespace (e.g., '{0}' rather than '{1}')",
       category: SyntaxCategory,
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,

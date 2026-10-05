@@ -67,7 +67,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen53InvalidRoutePatterns
     private static string GeneratedCode(GeneratorDriverRunResult result) =>
       string.Join("\n", result.Results.SelectMany(r => r.GeneratedSources).Select(static g => g.SourceText.ToString()));
 
-    private static void AssertDiagnosedAndNotEmitted(string pattern, string expectedId)
+    private static void AssertDiagnosedAndNotEmitted(string pattern, string expectedId, string? messageFragment = null)
     {
       GeneratorDriverRunResult result = RunNuruGenerator(pattern);
 
@@ -75,7 +75,12 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen53InvalidRoutePatterns
       diagnostic.ShouldNotBeNull();
       diagnostic!.Severity.ShouldBe(DiagnosticSeverity.Error);
       diagnostic.Descriptor.Category.ShouldBe("RoutePattern.Syntax");
-      diagnostic.GetMessage(CultureInfo.InvariantCulture).ShouldNotBeNullOrWhiteSpace();
+      string message = diagnostic.GetMessage(CultureInfo.InvariantCulture);
+      message.ShouldNotBeNullOrWhiteSpace();
+      if (messageFragment is not null)
+      {
+        message.ShouldContain(messageFragment);
+      }
 
       string generated = GeneratedCode(result);
       generated.ShouldContain("// Route: greet {name}");
@@ -84,7 +89,12 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen53InvalidRoutePatterns
 
     public static async Task Should_diagnose_adjacent_parameters_and_not_emit_route()
     {
-      AssertDiagnosedAndNotEmitted("{a}{b}", "NURU_P010");
+      AssertDiagnosedAndNotEmitted
+      (
+        "{a}{b}",
+        "NURU_P010",
+        "(e.g., '{a} {b}' rather than '{a}{b}')"
+      );
       await Task.CompletedTask;
     }
 

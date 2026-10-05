@@ -873,7 +873,7 @@ public sealed class DslInterpreter
         Diagnostic.Create(DiagnosticDescriptors.InvalidModifierCombination, location, e.ParameterName),
 
       AdjacentParametersError =>
-        Diagnostic.Create(DiagnosticDescriptors.AdjacentParameters, location),
+        Diagnostic.Create(DiagnosticDescriptors.AdjacentParameters, location, "{a} {b}", "{a}{b}"),
 
       _ => null
     };

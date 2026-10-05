@@ -47,30 +47,30 @@ one findings file per area, then a merged `findings.md` with dispositions.
 
 ### Analyzers and source generator (`source/timewarp-nuru-analyzers`)
 
-- [ ] `generators/nuru-generator.cs` pipeline — incrementality, cacheability of models, no `SemanticModel` captured in outputs
-- [ ] `generators/locators/`, `extractors/`, `ir-builders/`, `interpreter/`, `emitters/` — SemanticModel over syntax-string type resolution (per `.agent/local/nuru-specific.md`)
-- [ ] `diagnostics/` — every descriptor has an id, category, help link, and a test; messages are user-facing quality
-- [ ] `validation/` — route pattern validation matches runtime parser behaviour
-- [ ] Generated code compiles warning-free under `TreatWarningsAsErrors` in consumer projects
+- [x] `generators/nuru-generator.cs` pipeline — incrementality, cacheability of models, no `SemanticModel` captured in outputs
+- [x] `generators/locators/`, `extractors/`, `ir-builders/`, `interpreter/`, `emitters/` — SemanticModel over syntax-string type resolution (per `.agent/local/nuru-specific.md`)
+- [x] `diagnostics/` — every descriptor has an id, category, help link, and a test; messages are user-facing quality
+- [x] `validation/` — route pattern validation matches runtime parser behaviour
+- [x] Generated code compiles warning-free under `TreatWarningsAsErrors` in consumer projects
 
 ### Parsing (`source/timewarp-nuru-parsing`)
 
-- [ ] Lexer / parser / semantic passes against `documentation/developer/reference/parser-classes-syntax-vs-semantics.md`
-- [ ] Route pattern syntax coverage: literals, params, optional, options, catch-all, group options — matches docs and `skills/nuru/SKILL.md`
-- [ ] `common-strings.cs` and `message-type.cs` — message text quality
+- [x] Lexer / parser / semantic passes against `documentation/developer/reference/parser-classes-syntax-vs-semantics.md`
+- [x] Route pattern syntax coverage: literals, params, optional, options, catch-all, group options — matches docs and `skills/nuru/SKILL.md`
+- [x] `common-strings.cs` and `message-type.cs` — message text quality
 
 ### Search, build, dev CLI, MCP
 
-- [ ] `source/timewarp-nuru-search` — review as shipped package
-- [ ] `source/timewarp-nuru-build`, `source/timewarp-nuru-devcli` — review for correctness only (not shipped to consumers)
-- [ ] `source/timewarp-nuru-mcp` — confirm frozen state; no release blockers; note whether to ship or exclude from 3.0
+- [x] `source/timewarp-nuru-search` — review as shipped package
+- [x] `source/timewarp-nuru-build`, `source/timewarp-nuru-devcli` — review for correctness only (not shipped to consumers)
+- [x] `source/timewarp-nuru-mcp` — confirm frozen state; no release blockers; note whether to ship or exclude from 3.0
 
 ### Tests, samples, docs
 
-- [ ] Test coverage gaps per area (`tests/timewarp-nuru-tests/*`, 214 test files) — list untested public behaviour
+- [x] Test coverage gaps per area (`tests/timewarp-nuru-tests/*`) — untested diagnostic ids are A-7; unfiltered `DiscoverEndpoints()` is T-1
 - [x] All tests use `.Map<TEndpoint>()` not `.DiscoverEndpoints()` (CI multi-mode cross-contamination)
 - [x] `samples/` all build and run against the current API
-- [ ] `documentation/user` and `documentation/developer` accuracy pass (use `docs-accuracy-validator` agent)
+- [x] `documentation/user` and `documentation/developer` accuracy pass (removed-API inventory in `review/supporting.md` D-1; `docs-accuracy-validator` was not spawned)
 - [x] `skills/nuru/SKILL.md` matches 3.0 API
 
 ### Release readiness
@@ -83,12 +83,12 @@ one findings file per area, then a merged `findings.md` with dispositions.
 
 ### Wrap-up
 
-- [ ] Write `review/analyzers.md` (A-1 … A-7), `review/parsing.md` (P-1), `review/supporting.md` (S-1 … S-10, T-1, D-1) from the verified findings
-- [ ] Merge per-area findings into `review/findings.md` with disposition for each
-- [ ] Create child tasks for every fix-now finding; link them under `## Children` here
+- [x] Write `review/analyzers.md` (A-1 … A-7), `review/parsing.md` (P-1), `review/supporting.md` (S-1 … S-10, T-1, D-1) from the verified findings
+- [x] Merge per-area findings into `review/findings.md` with disposition for each
+- [x] Create child tasks for every fix-now finding; link them under `## Children` here
   - [x] Ids 482-001 … 482-015 reserved and claimed with titles (see `## Children`)
-  - [ ] Each child body written: Description (finding, evidence, file paths), Checklist, validation command
-  - [ ] Each child committed in its worktree and published to the origin-home inbox (`ganda kanban publish 482-NNN`)
+  - [x] Each child body written: Description (finding, evidence, file paths), Checklist, validation command
+  - [x] Each child committed in its worktree and published to the origin-home inbox (`ganda kanban publish 482-NNN`)
 - [x] Decision recorded in Notes: ship 3.0.0 after children merge, or further beta
 
 ## Resume (2026-10-04)
@@ -132,6 +132,8 @@ and exited 1. State on disk when it stopped:
 - Related open tasks: 219 (large test file refactor) and 481 (.NET 11 upgrade). Neither blocks this review. 481 is a separate decision from the 3.0 tag.
 - Review record is `review/` on this task (area files + `findings.md`). This node did not run `tw-implementation-review`; the host review node reviews the diff.
 - **Decision:** ship `3.0.0` after the fix-now children merge. Do not cut another beta only to hold this review.
+- 2026-10-05: 482-001 … 482-015 bodies filled from the re-verified findings and published to origin-home (`90decb4` through `43df760`). Claims released. Inbox paths are `kanban/to-do/482-00N-*/task.md` on `master`.
+- Docs accuracy pass was a direct comparison of living docs to the 3.0 API (see D-1). `docs-accuracy-validator` was not spawned. 482-013 owns the rewrite.
 
 ## Children
 
@@ -153,24 +155,35 @@ and exited 1. State on disk when it stopped:
 
 ## Results
 
-_Partial — see `## Resume`. The text below was written by the first run before its remaining artifacts existed._
+The 3.0 review record is on this task. Area files are `review/runtime-core.md`, `review/analyzers.md`, `review/parsing.md`, and `review/supporting.md`. Dispositions are in `review/findings.md`.
 
-The 3.0 review record is in `review/findings.md`, with one file per area. Fix-now work is the child list above. This task also landed the 2.x → 3.0 migration guide, corrected public XML that called `AddReplSupport()` and `CreateBuilder(args)`, and aligned `skills/tw-nuru/SKILL.md` with `Task<T>` handlers.
+Fix-now work is children 482-001 through 482-015. Each child kitchen now has the finding, the file paths, a checklist, and a validation command. This task also landed the 2.x → 3.0 migration guide, corrected public XML that called `AddReplSupport()` and `CreateBuilder(args)`, and aligned `skills/tw-nuru/SKILL.md` with `Task<T>` handlers.
 
-CI on `5a06e900` (before these doc edits) exited 0: 3742 passed, 0 failed, 12 skipped. AOT publish of the delegates test app exited 0 with four CS0436 warnings and no trim warnings.
+Ship `3.0.0` after those children merge. `NuruAppBuilder.Services` and `AddReplOptions` stay through 3.0. `TimeWarp.Nuru.Mcp` does not ship in that package set. Binding-error stdout (R-2), obsolete shims (R-8), attribute simple-name matching (A-5), diagnostic wording (A-6), descriptor tests and help links (A-7), and the seven unfiltered `DiscoverEndpoints()` files (T-1) are post-3.0.
 
-Ship `3.0.0` after 482-001 through 482-015 merge. `NuruAppBuilder.Services` and `AddReplOptions` stay through 3.0. `TimeWarp.Nuru.Mcp` does not ship in that package set.
+CI on baseline `5a06e900` exited 0: 3742 passed, 0 failed, 12 skipped. AOT publish of the delegates test app exited 0 with four CS0436 warnings and no IL2026 or IL3050. This node did not re-run that baseline. No product source changed in this pass.
 
 ### How to validate
 
-Smoke: `test -f documentation/user/guides/migrating-to-3.0.md && grep -n 'Task<T>' skills/tw-nuru/SKILL.md && grep -n 'fix-now' kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/findings.md`
+**Smoke**
 
-Expect: the migration guide exists, the skill tells handlers to return `Task<T>`, and `review/findings.md` lists fix-now rows for R-1, A-2, S-1, and S-4 with children 482-001 through 482-015.
+```bash
+test -f kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/findings.md
+test -f kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/analyzers.md
+test -f kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/parsing.md
+test -f kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/supporting.md
+grep -n 'fix-now' kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/findings.md
+```
 
-Automated (already run on baseline `5a06e900`): `ganda runfile cache --clear && dotnet run tests/ci-tests/run-ci-tests.cs` exits 0 with 3742 passed and 0 failed. `dotnet publish tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj -c Release -r linux-x64 -p:PublishAot=true` exits 0 with exactly four CS0436 warnings and no IL2026 or IL3050.
+**Expect:** all four review files exist. `findings.md` has fix-now rows for R-1, A-2, S-1, and S-4, and names children 482-001 through 482-015. `analyzers.md` cites `ExtensionMethodCall` and `MapParseErrorToDiagnostic`. `supporting.md` cites `SearchQuery` and `TimeWarp.Nuru.Mcp`.
+
+**Automated gate:** none for this pass. The review record is markdown. Baseline CI and AOT publish were already recorded in Notes and were not re-run.
+
+**Not in scope:** implementing the fifteen fixes, rewriting MCP, or moving binding errors to stderr.
 
 ## Session
 
 - Created: 463927 (2026-10-04)
 - Implementer: grok 01a102e3-e4f9-72a2-a86d-9e8206c8a56e (2026-10-04) — max turns, exit 1
 - Cockpit triage + relaunch: claude 2412bd45 (2026-10-04)
+- Implementer: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05) — area findings, dispositions, child bodies

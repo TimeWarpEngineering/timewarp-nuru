@@ -37,12 +37,12 @@ Parent records: `review/supporting.md` D-1, `review/parsing.md` P-1, `review/run
 
 ## Checklist
 
-- [ ] The D-1 file list no longer shows `CreateBuilder(args)`, `MapDefault`, `AddAutoHelp`, `TimeWarp.Nuru.Logging`, or a 1.x/2.x package pin on a current guide
-- [ ] Parser reference names the types that exist (`Lexer`, `Parser`, `Syntax`, `CompiledRoute`, matchers)
-- [ ] `error-handling.md` matches generator binding errors and handler exit-code behavior
-- [ ] `[NuruRoute]` XML matches NURU_A001 (one literal, or empty)
-- [ ] `source/timewarp-nuru-devcli/readme.md` calls `CreateBuilder()`
-- [ ] `documentation/posts/` is unchanged
+- [x] The D-1 file list no longer shows `CreateBuilder(args)`, `MapDefault`, `AddAutoHelp`, `TimeWarp.Nuru.Logging`, or a 1.x/2.x package pin on a current guide
+- [x] Parser reference names the types that exist (`Lexer`, `Parser`, `Syntax`, `CompiledRoute`, matchers)
+- [x] `error-handling.md` matches generator binding errors and handler exit-code behavior
+- [x] `[NuruRoute]` XML matches NURU_A001 (one literal, or empty)
+- [x] `source/timewarp-nuru-devcli/readme.md` calls `CreateBuilder()`
+- [x] `documentation/posts/` is unchanged
 
 ## How to validate
 
@@ -54,6 +54,46 @@ rg -n "RoutePatternAst|NewRoutePatternParser" documentation/developer/reference
 ```
 
 Expect: Both searches print no matches in living docs, the attribute remarks, or the DevCli readme. `documentation/posts/` may still match and is out of scope. `migrating-to-3.0.md` may name the old APIs in the removal table.
+
+## Results
+
+Living user and developer docs now teach the 3.0 surface. `documentation/posts/` is unchanged.
+
+- `NuruApp.CreateBuilder(args)` and `new NuruAppBuilder()` became `NuruApp.CreateBuilder()` across the D-1 pages, the DevCli readme, and two design samples.
+- `Map(pattern, delegate)` became `Map(pattern).WithHandler(...).AsCommand()/AsQuery().Done()` in the D-1 pages, `building-new-cli-apps.md`, `implementing-help.md`, `analyzer.md`, and `performance.md`. `Map<T>("pattern")` became `Map<T>()`.
+- S-8: `routing.md` documents the default route as `Map("")`.
+- `AddAutoHelp()` is gone. `auto-help.md`, `route-pattern-syntax.md`, `aot-compilation.md` and the glossary say help is built in and point to `ConfigureHelp(Action<HelpOptions>)`.
+- S-9: both logging pages use `TimeWarp.Nuru.NuruLoggingExtensions`, which ships inside `TimeWarp.Nuru`. There is no separate package. The `debugging.md` link points at `source/timewarp-nuru/logging/nuru-logging-extensions.cs`.
+- S-7 and S-10: `aot-compilation.md` and `deployment.md` use an unpinned `#:package TimeWarp.Nuru`.
+- P-1: the parser references name `Lexer`, `Token`, `RouteTokenType`, the `*Syntax` nodes, `Parser`, `PatternParser`, `SemanticValidator`, `Compiler`, `CompiledRoute`, and the matchers. `OptionSyntax.LongForm`/`ShortForm` are dash-free; `OptionMatcher.MatchPattern`/`AlternateForm` carry the dashes.
+- R-2: `error-handling.md` describes generator behavior.
+  - Binding errors go through `app.Terminal.WriteLine` and `return 1`.
+  - No match writes `Unknown command. Use --help for usage.` to stderr and returns 1.
+  - Handler exceptions propagate out of `RunAsync`. Telemetry only records and rethrows them.
+  - Handler return values are output. The exit code is `Environment.ExitCode`.
+  - The stdout/stderr behavior is unchanged; that change is post-3.0.
+- `[NuruRoute]` XML says the pattern is one literal or `""`, and points to NURU_A001 and `[NuruRouteGroup]`.
+- Also removed other APIs that do not exist in `source/`:
+  - `NuruAppOptions` and `CreateBuilder(args, options)`. `nuru-app-options.md` is now "Builder Configuration Options". `built-in-routes.md` explains overriding a built-in route by mapping the same pattern.
+  - `RouteHelpProvider`, `EndpointCollection`, `ResolverResult`, `AddVersionRoute`, `EnableStaticCompletion`, and `EnableDynamicCompletion`.
+- `dotnet build source/timewarp-nuru/timewarp-nuru.csproj`: 0 errors.
+
+### How to validate
+
+Smoke:
+
+```bash
+rg -n "CreateBuilder\(args|MapDefault|AddAutoHelp|TimeWarp\.Nuru\.Logging|TimeWarp\.Nuru@1\.|TimeWarp\.Nuru@2\." documentation/user documentation/developer/guides documentation/developer/reference source/timewarp-nuru/attributes/nuru-route-attribute.cs source/timewarp-nuru-devcli/readme.md
+rg -n "RoutePatternAst|NewRoutePatternParser|NuruAppOptions|RouteHelpProvider" documentation/developer/reference documentation/user documentation/developer/guides
+rg -n '\.Map\("[^"]*",' documentation/user documentation/developer/guides documentation/developer/reference
+git diff --stat origin/master -- documentation/posts
+```
+
+Expect:
+
+- First search: two hits only. `migrating-to-3.0.md` names `MapDefault(...)` in its removal table. `telemetry.md:39` is Aspire's `DistributedApplication.CreateBuilder(args)`, not Nuru.
+- Second and third searches: no output.
+- `git diff`: empty, because `documentation/posts/` is unchanged.
 
 ## Session
 

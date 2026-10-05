@@ -137,7 +137,10 @@ The parser provides extensive debugging capabilities through multiple components
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
     .UseConsoleLogging(LogLevel.Trace)  // Enable ALL parser trace messages
-    .Map("test {param}", () => {})
+    .Map("test {param}")
+      .WithHandler((string param) => { })
+      .AsCommand()
+      .Done()
     .Build();
 
 await app.RunAsync(args);
@@ -345,7 +348,7 @@ This debugging system was shaped by **community feedback analysis** in:
 ### 🪲 Implementation Details
 - **[Logger Message Definitions](../../Source/TimeWarp.Nuru.Parsing/Logging/LoggerMessageDefinitions.cs)** - Complete message catalog
 - **[Route Based Command Resolver](../../Source/TimeWarp.Nuru/CommandResolver/RouteBasedCommandResolver.cs)** - Debug implementation
-- **[Nuru Logging Extensions](../../Source/TimeWarp.Nuru.Logging/NuruLoggingExtensions.cs)** - Logging configuration API
+- **[Nuru Logging Extensions](../../source/timewarp-nuru/logging/nuru-logging-extensions.cs)** - Logging configuration API
 
 ### 🔧 Testing
 - **[Analyzer Test Cases](../../Tests/TimeWarp.Nuru.Analyzers.Tests/TestSamples.cs)** - Diagnostic test scenarios

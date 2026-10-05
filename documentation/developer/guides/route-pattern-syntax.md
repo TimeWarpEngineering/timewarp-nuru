@@ -9,8 +9,14 @@ This document describes the route pattern syntax used in TimeWarp.Nuru for defin
 Literal segments are plain text that must match exactly:
 
 ```csharp
-.Map("status", () => Console.WriteLine("OK"))
-.Map("git commit", () => Console.WriteLine("Committing..."))
+.Map("status")
+  .WithHandler(() => Console.WriteLine("OK"))
+  .AsCommand()
+  .Done()
+.Map("git commit")
+  .WithHandler(() => Console.WriteLine("Committing..."))
+  .AsCommand()
+  .Done()
 ```
 
 ### Parameters
@@ -19,10 +25,16 @@ Parameters are defined using curly braces `{}` and capture values from the comma
 
 ```csharp
 // Basic parameter
-.Map("greet {name}", (string name) => Console.WriteLine($"Hello {name}"))
+.Map("greet {name}")
+  .WithHandler((string name) => Console.WriteLine($"Hello {name}"))
+  .AsCommand()
+  .Done()
 
 // Multiple parameters
-.Map("copy {source} {destination}", (string source, string dest) => ...)
+.Map("copy {source} {destination}")
+  .WithHandler((string source, string dest) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ### Parameter Types
@@ -30,9 +42,18 @@ Parameters are defined using curly braces `{}` and capture values from the comma
 Parameters can have type constraints using a colon `:` followed by the type:
 
 ```csharp
-.Map("delay {ms:int}", (int milliseconds) => ...)
-.Map("price {amount:double}", (double amount) => ...)
-.Map("schedule {date:DateTime}", (DateTime date) => ...)
+.Map("delay {ms:int}")
+  .WithHandler((int milliseconds) => ...)
+  .AsCommand()
+  .Done()
+.Map("price {amount:double}")
+  .WithHandler((double amount) => ...)
+  .AsCommand()
+  .Done()
+.Map("schedule {date:DateTime}")
+  .WithHandler((DateTime date) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 Supported types:
@@ -51,14 +72,23 @@ Supported types:
 Parameters can be made optional by adding `?` after the name:
 
 ```csharp
-.Map("deploy {env} {tag?}", (string env, string? tag) => ...)
+.Map("deploy {env} {tag?}")
+  .WithHandler((string env, string? tag) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 Optional parameters can also have type constraints:
 
 ```csharp
-.Map("wait {seconds:int?}", (int? seconds) => ...)
-.Map("backup {source} {destination:string?}", (string source, string? destination) => ...)
+.Map("wait {seconds:int?}")
+  .WithHandler((int? seconds) => ...)
+  .AsCommand()
+  .Done()
+.Map("backup {source} {destination:string?}")
+  .WithHandler((string source, string? destination) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ### Catch-all Parameters
@@ -66,7 +96,10 @@ Optional parameters can also have type constraints:
 Use `*` prefix for catch-all parameters that capture all remaining arguments:
 
 ```csharp
-.Map("docker {*args}", (string[] args) => ...)
+.Map("docker {*args}")
+  .WithHandler((string[] args) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ## Options
@@ -75,13 +108,22 @@ Options start with `--` (long form) or `-` (short form):
 
 ```csharp
 // Boolean option
-.Map("build --verbose", (bool verbose) => ...)
+.Map("build --verbose")
+  .WithHandler((bool verbose) => ...)
+  .AsCommand()
+  .Done()
 
 // Option with value
-.Map("build --config {mode}", (string mode) => ...)
+.Map("build --config {mode}")
+  .WithHandler((string mode) => ...)
+  .AsCommand()
+  .Done()
 
 // Short form
-.Map("build -c {mode}", (string mode) => ...)
+.Map("build -c {mode}")
+  .WithHandler((string mode) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ## Descriptions
@@ -91,11 +133,15 @@ Options start with `--` (long form) or `-` (short form):
 Add descriptions to parameters using the pipe `|` character:
 
 ```csharp
-.Map("deploy {env|Target environment (dev, staging, prod)}", 
-    (string env) => ...)
+.Map("deploy {env|Target environment (dev, staging, prod)}")
+  .WithHandler((string env) => ...)
+  .AsCommand()
+  .Done()
 
-.Map("copy {source|Source file path} {dest|Destination path}", 
-    (string source, string dest) => ...)
+.Map("copy {source|Source file path} {dest|Destination path}")
+  .WithHandler((string source, string dest) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ### Option Descriptions
@@ -104,16 +150,22 @@ Options can have descriptions and short aliases:
 
 ```csharp
 // Option with description
-.Map("build --verbose|Show detailed output", 
-    (bool verbose) => ...)
+.Map("build --verbose|Show detailed output")
+  .WithHandler((bool verbose) => ...)
+  .AsCommand()
+  .Done()
 
 // Option with short alias and description
-.Map("build --config,-c|Build configuration mode", 
-    (string config) => ...)
+.Map("build --config,-c|Build configuration mode")
+  .WithHandler((string config) => ...)
+  .AsCommand()
+  .Done()
 
 // Option with parameter and descriptions
-.Map("deploy {env} --version|Deploy specific version {ver|Version tag}", 
-    (string env, string ver) => ...)
+.Map("deploy {env} --version|Deploy specific version {ver|Version tag}")
+  .WithHandler((string env, string ver) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ### Short Aliases
@@ -121,8 +173,14 @@ Options can have descriptions and short aliases:
 Use comma `,` to specify short aliases for options:
 
 ```csharp
-.Map("test --verbose,-v", (bool verbose) => ...)
-.Map("build --output,-o {path}", (string path) => ...)
+.Map("test --verbose,-v")
+  .WithHandler((bool verbose) => ...)
+  .AsCommand()
+  .Done()
+.Map("build --output,-o {path}")
+  .WithHandler((string path) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ## Complex Examples
@@ -132,8 +190,10 @@ Use comma `,` to specify short aliases for options:
 ```csharp
 .Map("deploy {env|Environment name} " +
           "--dry-run,-d|Preview without deploying " +
-          "--force,-f|Skip confirmations",
-    (string env, bool dryRun, bool force) => ...)
+          "--force,-f|Skip confirmations")
+  .WithHandler((string env, bool dryRun, bool force) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ### Options with Parameters and Descriptions
@@ -141,8 +201,10 @@ Use comma `,` to specify short aliases for options:
 ```csharp
 .Map("backup {source|Directory to backup} " +
           "--output,-o|Backup file location {path|Output path} " +
-          "--compress,-c|Enable compression",
-    (string source, string path, bool compress) => ...)
+          "--compress,-c|Enable compression")
+  .WithHandler((string source, string path, bool compress) => ...)
+  .AsCommand()
+  .Done()
 ```
 
 ## Route Descriptions
@@ -150,24 +212,25 @@ Use comma `,` to specify short aliases for options:
 In addition to inline descriptions, you can provide an overall route description:
 
 ```csharp
-.Map("deploy {env}", 
-    (string env) => ...,
-    description: "Deploy application to specified environment")
+.Map("deploy {env}")
+  .WithHandler((string env) => ...)
+  .WithDescription("Deploy application to specified environment")
+  .AsCommand()
+  .Done()
 ```
 
 ## Automatic Help Generation
 
-Enable automatic help generation for all routes:
+Help is built in and enabled automatically for every app; no extra call is needed. Use `ConfigureHelp(...)` to customize it:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
     .Map(...)
     .Map(...)
-    .AddAutoHelp()  // Generates --help routes automatically
-    .Build();
+    .Build();  // --help / -h work automatically
 ```
 
-This will automatically create help routes for:
+Help is available for:
 - `--help` - Shows all available commands
 - `command --help` - Shows help for every route whose leading literals equal `command`, most specific first. One match prints that route. `deploy --help` does not include `deploy status` or `deployment`.
 
@@ -187,24 +250,27 @@ This will automatically create help routes for:
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
     // Simple command
-    .Map("version",
-        () => Console.WriteLine("1.0.0"),
-        description: "Show version information")
-    
+    .Map("version")
+        .WithHandler(() => Console.WriteLine("1.0.0"))
+        .WithDescription("Show version information")
+        .AsQuery()
+        .Done()
+
     // Command with parameters and descriptions
-    .Map("deploy {env|Target environment (dev, staging, prod)} {tag?|Optional version tag}",
-        (string env, string? tag) => DeployTo(env, tag),
-        description: "Deploy application to environment")
-    
+    .Map("deploy {env|Target environment (dev, staging, prod)} {tag?|Optional version tag}")
+        .WithHandler((string env, string? tag) => DeployTo(env, tag))
+        .WithDescription("Deploy application to environment")
+        .AsCommand()
+        .Done()
+
     // Command with options
     .Map("test {project|Project name} " +
               "--verbose,-v|Show detailed output " +
-              "--filter,-f|Test name filter {pattern|Filter pattern}",
-        (string project, bool verbose, string? pattern) => RunTests(project, verbose, pattern),
-        description: "Run tests for specified project")
-    
-    // Enable automatic help
-    .AddAutoHelp()
+              "--filter,-f|Test name filter {pattern|Filter pattern}")
+        .WithHandler((string project, bool verbose, string? pattern) => RunTests(project, verbose, pattern))
+        .WithDescription("Run tests for specified project")
+        .AsCommand()
+        .Done()
     .Build();
 ```
 
@@ -220,7 +286,7 @@ Deploy Commands:
   deploy --help                         Show help for deploy command
   deploy {env} {tag?}                   Deploy application to environment
 
-Test Commands:  
+Test Commands:
   test --help                           Show help for test command
   test {project} --verbose,-v --filter,-f {pattern}  Run tests for specified project
 ```

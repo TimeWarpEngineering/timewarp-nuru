@@ -130,7 +130,7 @@ public class DatabaseOptions
 {
   [Required]
   public string ConnectionString { get; set; } = string.Empty;
-  
+
   [Range(1, 300)]
   public int TimeoutSeconds { get; set; } = 30;
 }
@@ -167,7 +167,7 @@ NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices((services, config) =>
   {
     services.Configure<DatabaseOptions>(config.GetSection("Database"));
-    
+
     string? environment = config["Environment"];
     if (environment == "Development")
       services.AddSingleton<INotificationService, ConsoleNotificationService>();

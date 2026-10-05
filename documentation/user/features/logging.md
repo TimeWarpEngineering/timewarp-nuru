@@ -8,11 +8,13 @@ By default, logging is disabled (zero overhead). To enable console logging:
 
 ```csharp
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Logging;
 
 NuruApp app = NuruApp.CreateBuilder()
     .UseConsoleLogging()  // Enable console logging
-    .Map("test", () => Console.WriteLine("Test"))
+    .Map("test")
+      .WithHandler(() => Console.WriteLine("Test"))
+      .AsCommand()
+      .Done()
     .Build();
 
 return await app.RunAsync(args);
@@ -20,17 +22,16 @@ return await app.RunAsync(args);
 
 ## Installation
 
-Add the logging package to enable console output:
+The logging extensions (`UseConsoleLogging`, `UseDebugLogging`, `ConfigureLogging`) are part of the main `TimeWarp.Nuru` package (namespace `TimeWarp.Nuru`). No separate logging package is needed:
 
 ```bash
-dotnet add package TimeWarp.Nuru.Logging
+dotnet add package TimeWarp.Nuru
 ```
 
 Or in a script file:
 ```csharp
 #!/usr/bin/env dotnet run
 #:package TimeWarp.Nuru
-#:package TimeWarp.Nuru.Logging
 ```
 
 ## Log Levels
@@ -89,7 +90,10 @@ Log.Logger = new LoggerConfiguration()
 
 NuruApp app = NuruApp.CreateBuilder()
     .UseLogging(new SerilogLoggerFactory(Log.Logger))
-    .Map("test", () => Console.WriteLine("Test"))
+    .Map("test")
+      .WithHandler(() => Console.WriteLine("Test"))
+      .AsCommand()
+      .Done()
     .Build();
 ```
 
@@ -105,7 +109,10 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 
 NuruApp app = NuruApp.CreateBuilder()
     .UseLogging(loggerFactory)
-    .Map("test", () => Console.WriteLine("Test"))
+    .Map("test")
+      .WithHandler(() => Console.WriteLine("Test"))
+      .AsCommand()
+      .Done()
     .Build();
 ```
 
@@ -121,7 +128,10 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
 
 NuruApp app = NuruApp.CreateBuilder()
     .UseLogging(loggerFactory)
-    .Map("test", () => Console.WriteLine("Test"))
+    .Map("test")
+      .WithHandler(() => Console.WriteLine("Test"))
+      .AsCommand()
+      .Done()
     .Build();
 ```
 
@@ -286,24 +296,24 @@ public class CustomLoggerProvider : ILoggerProvider
     {
         return new CustomLogger(categoryName);
     }
-    
+
     public void Dispose() { }
 }
 
 public class CustomLogger : ILogger
 {
     private readonly string categoryName;
-    
+
     public CustomLogger(string categoryName)
     {
         this.categoryName = categoryName;
     }
-    
+
     public IDisposable BeginScope<TState>(TState state) => null;
     public bool IsEnabled(LogLevel logLevel) => true;
-    
-    public void Log<TState>(LogLevel logLevel, EventId eventId, 
-        TState state, Exception exception, 
+
+    public void Log<TState>(LogLevel logLevel, EventId eventId,
+        TState state, Exception exception,
         Func<TState, Exception, string> formatter)
     {
         // Custom logging logic here

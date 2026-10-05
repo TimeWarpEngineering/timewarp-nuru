@@ -1,15 +1,15 @@
 # Built-in Routes
 
-When you use `NuruApp.CreateBuilder()`, several utility routes are automatically registered to provide common CLI functionality out of the box.
+When you use `NuruApp.CreateBuilder()`, several utility routes are built in to provide common CLI functionality out of the box.
 
 ## Overview
 
 | Route | Description |
 |-------|-------------|
 | `--version`, `-v` | Display version information |
-| `--check-updates` | Check GitHub for newer versions |
+| `--check-updates` | Check GitHub for newer versions (opt-in via `AddCheckUpdatesRoute()`) |
 | `--help`, `-h` | Show help (see [Auto-Help](auto-help.md)) |
-| `--interactive`, `-i` | Enter REPL mode |
+| `--interactive`, `-i` | Enter REPL mode (requires `AddRepl()`) |
 | `--capabilities` | Machine-readable endpoint catalog for agents |
 | `--json-args <value>` | Bind parameter and option values from JSON |
 
@@ -118,42 +118,35 @@ See [Auto-Help](auto-help.md) for the shared-prefix case.
 
 `--json-args` is not an endpoint. It does not appear in the `endpoints` array. Root help lists it next to `--capabilities`.
 
-## Disabling Built-in Routes
+## Overriding Built-in Routes
 
-You can disable specific routes using `NuruAppOptions`:
-
-```csharp
-NuruApp.CreateBuilder(args, new NuruAppOptions
-{
-    DisableVersionRoute = true,      // Disable --version, -v
-    DisableCheckUpdatesRoute = true  // Disable --check-updates
-});
-```
-
-### When to Disable
-
-- **DisableVersionRoute**: If you want to implement custom version output
-- **DisableCheckUpdatesRoute**: If your app isn't hosted on GitHub, or you have a custom update mechanism
-
-## Customizing Route Patterns
-
-You can customize the interactive route patterns:
-
-```csharp
-NuruApp.CreateBuilder(args, new NuruAppOptions
-{
-    InteractiveRoutePatterns = "--interactive,-i,--repl"  // Add --repl alias
-});
-```
-
-## Manual Feature Registration
-
-You can manually add specific features using the builder:
+There is no option to switch built-in routes off. The generator emits your own routes first and the built-in `--help`, `--version` and `--capabilities` handling after them, so a route you map with the same pattern takes precedence:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
-    .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
-    .AddVersionRoute()  // Manually add version route
+    .Map("--version")
+      .WithHandler(() => Console.WriteLine("MyApp 1.2.3 (custom)"))
+      .AsQuery()
+      .Done()
+    .Build();
+```
+
+Two routes are different:
+
+- `--check-updates` is opt-in. It exists only when you call `AddCheckUpdatesRoute()` (see below).
+- `--interactive` / `-i` exists only when you call `AddRepl()`, and it is matched before your routes so a catch-all route cannot intercept it.
+
+## Manual Feature Registration
+
+You can manually add specific features using the builder, for example `AddCheckUpdatesRoute()`:
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+    .Map("greet {name}")
+      .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+      .AsQuery()
+      .Done()
+    .AddCheckUpdatesRoute()  // Manually add the check-updates route
     .Build();
 ```
 

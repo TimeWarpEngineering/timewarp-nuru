@@ -8,10 +8,10 @@ The analyzer prevents common mistakes that would otherwise fail at runtime:
 
 ```csharp
 // ❌ This compiles without analyzer, fails at runtime
-builder.Map("deploy <env>", handler);  // Wrong syntax
+builder.Map("deploy <env>").WithHandler(handler).AsCommand().Done();  // Wrong syntax
 
 // ❌ This compiles without analyzer, creates ambiguous routing
-builder.Map("run {file?} {*args}", handler);  // Invalid combination
+builder.Map("run {file?} {*args}").WithHandler(handler).AsCommand().Done();  // Invalid combination
 
 // ✅ With analyzer: Both caught at compile-time with clear error messages
 ```
@@ -49,10 +49,10 @@ Missing package dependencies required for specific features.
 
 ```csharp
 // ❌ Error: Invalid syntax
-builder.Map("deploy <env>", handler);  // Should use curly braces
+builder.Map("deploy <env>").WithHandler(handler).AsCommand().Done();  // Should use curly braces
 
 // ✅ Correct
-builder.Map("deploy {env}", handler);
+builder.Map("deploy {env}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_P002: Unbalanced Braces
@@ -61,13 +61,13 @@ builder.Map("deploy {env}", handler);
 
 ```csharp
 // ❌ Error: Missing closing brace
-builder.Map("deploy {env", handler);
+builder.Map("deploy {env").WithHandler(handler).AsCommand().Done();
 
 // ❌ Error: Missing opening brace
-builder.Map("deploy env}", handler);
+builder.Map("deploy env}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct
-builder.Map("deploy {env}", handler);
+builder.Map("deploy {env}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_P003: Invalid Option Format
@@ -76,16 +76,16 @@ builder.Map("deploy {env}", handler);
 
 ```csharp
 // ✅ Correct: Double-dash for long options
-builder.Map("build --verbose", handler);
+builder.Map("build --verbose").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Single dash, single character
-builder.Map("build -v", handler);
+builder.Map("build -v").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Single dash, multi-character (dotnet/msbuild style)
-builder.Map("build -bl", handler);
+builder.Map("build -bl").WithHandler(handler).AsCommand().Done();
 
 // ✅ Best: Provide both long and short forms
-builder.Map("build --verbose,-v", handler);
+builder.Map("build --verbose,-v").WithHandler(handler).AsCommand().Done();
 ```
 
 Single-dash options support multi-character names (`-bl`, `-verbosity`) to model
@@ -98,10 +98,10 @@ grouping (`-la` meaning `-l -a`) is not supported.
 
 ```csharp
 // ❌ Error: 'integer' is not supported
-builder.Map("process {id:integer}", handler);
+builder.Map("process {id:integer}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Use 'int'
-builder.Map("process {id:int}", handler);
+builder.Map("process {id:int}").WithHandler(handler).AsCommand().Done();
 ```
 
 **Supported types**: `string`, `int`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`, `uri`
@@ -114,10 +114,10 @@ See [Supported Types](../reference/supported-types.md) for complete list.
 
 ```csharp
 // ❌ Error: Parameter 'arg' appears twice
-builder.Map("run {arg} {arg}", handler);
+builder.Map("run {arg} {arg}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Use unique names
-builder.Map("run {source} {dest}", handler);
+builder.Map("run {source} {dest}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_S002: Conflicting Optional Parameters
@@ -126,14 +126,14 @@ builder.Map("run {source} {dest}", handler);
 
 ```csharp
 // ❌ Error: Which parameter gets the value?
-builder.Map("deploy {env?} {version?}", handler);
+builder.Map("deploy {env?} {version?}").WithHandler(handler).AsCommand().Done();
 // If user types "deploy v2.0", is it env or version?
 
 // ✅ Correct: Only last parameter optional
-builder.Map("deploy {env} {version?}", handler);
+builder.Map("deploy {env} {version?}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Alternative: Use options for multiple optional values
-builder.Map("deploy {env} --version? {ver?}", handler);
+builder.Map("deploy {env} --version? {ver?}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_S003: Catch-all Not at End
@@ -142,10 +142,10 @@ builder.Map("deploy {env} --version? {ver?}", handler);
 
 ```csharp
 // ❌ Error: Catch-all in middle
-builder.Map("exec {*args} {script}", handler);
+builder.Map("exec {*args} {script}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Catch-all at end
-builder.Map("exec {script} {*args}", handler);
+builder.Map("exec {script} {*args}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_S004: Mixed Catch-all with Optional
@@ -154,12 +154,12 @@ builder.Map("exec {script} {*args}", handler);
 
 ```csharp
 // ❌ Error: Invalid combination
-builder.Map("run {script?} {*args}", handler);
+builder.Map("run {script?} {*args}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Use one pattern:
-builder.Map("run {script} {*args}", handler);  // Required + catch-all
+builder.Map("run {script} {*args}").WithHandler(handler).AsCommand().Done();  // Required + catch-all
 // OR
-builder.Map("run {script?}", handler);          // Just optional
+builder.Map("run {script?}").WithHandler(handler).AsCommand().Done();          // Just optional
 ```
 
 ### NURU_S006: Optional Before Required
@@ -168,10 +168,10 @@ builder.Map("run {script?}", handler);          // Just optional
 
 ```csharp
 // ❌ Error: Optional before required
-builder.Map("copy {source?} {dest}", handler);
+builder.Map("copy {source?} {dest}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Required first
-builder.Map("copy {source} {dest?}", handler);
+builder.Map("copy {source} {dest?}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_D001: Missing Mediator Packages
@@ -214,7 +214,7 @@ Errors appear in multiple places:
 
 ```csharp
 // This code would compile, then fail at runtime
-builder.Map("deploy <env?> <ver?>", handler);
+builder.Map("deploy <env?> <ver?>").WithHandler(handler).AsCommand().Done();
 //                      ↑       ↑
 //                Multiple problems invisible until runtime
 ```
@@ -225,14 +225,14 @@ builder.Map("deploy <env?> <ver?>", handler);
 // Build fails immediately with clear errors:
 // NURU_P001: Invalid parameter syntax - use {env} not <env>
 // NURU_S002: Conflicting optional parameters
-builder.Map("deploy <env?> <ver?>", handler);
+builder.Map("deploy <env?> <ver?>").WithHandler(handler).AsCommand().Done();
 ```
 
 ### Fixed Code
 
 ```csharp
 // Errors fixed, builds successfully
-builder.Map("deploy {env} --version? {ver?}", handler);
+builder.Map("deploy {env} --version? {ver?}").WithHandler(handler).AsCommand().Done();
 ```
 
 ## Benefits
@@ -252,7 +252,7 @@ If you have a valid reason to suppress an error (rare), you can:
 
 ```csharp
 #pragma warning disable NURU_S002
-builder.Map("risky {a?} {b?}", handler);  // NOT RECOMMENDED
+builder.Map("risky {a?} {b?}").WithHandler(handler).AsCommand().Done();  // NOT RECOMMENDED
 #pragma warning restore NURU_S002
 ```
 

@@ -353,12 +353,24 @@ The Roslyn analyzer validates type syntax at compile-time:
 
 ```csharp
 // ✅ Valid types
-builder.Map("test {value:int}", handler);
-builder.Map("test {value:DateTime}", handler);
+builder.Map("test {value:int}")
+  .WithHandler(handler)
+  .AsCommand()
+  .Done();
+builder.Map("test {value:DateTime}")
+  .WithHandler(handler)
+  .AsCommand()
+  .Done();
 
 // ❌ Invalid type (analyzer error NURU_P004)
-builder.Map("test {value:integer}", handler);  // Use 'int'
-builder.Map("test {value:float}", handler);    // Use 'double'
+builder.Map("test {value:integer}")
+  .WithHandler(handler)
+  .AsCommand()
+  .Done();  // Use 'int'
+builder.Map("test {value:float}")
+  .WithHandler(handler)
+  .AsCommand()
+  .Done();    // Use 'double'
 ```
 
 See [Analyzer Documentation](../features/analyzer.md) for more details.

@@ -6,7 +6,9 @@ namespace TimeWarp.Nuru;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The pattern contains only the literal segments (e.g., "deploy", "docker compose up", or "" for default route).
+/// The pattern is a single literal (e.g., "deploy") or "" for the default route.
+/// Multi-word patterns and parameters are rejected (NURU_A001).
+/// Use <see cref="NuruRouteGroupAttribute"/> on a base class for sub-command prefixes.
 /// Parameters and options are inferred from properties marked with <see cref="ParameterAttribute"/> and <see cref="OptionAttribute"/>.
 /// </para>
 /// <para>
@@ -18,11 +20,11 @@ namespace TimeWarp.Nuru;
 public sealed class NuruRouteAttribute : Attribute
 {
   /// <summary>
-  /// Gets the route pattern (literal segments only).
+  /// Gets the route pattern (a single literal).
   /// </summary>
   /// <remarks>
   /// Use empty string for the default route.
-  /// Multiple literals are space-separated (e.g., "docker compose up").
+  /// Space-separated multi-word patterns are not allowed (NURU_A001).
   /// </remarks>
   public string Pattern { get; }
 
@@ -34,7 +36,7 @@ public sealed class NuruRouteAttribute : Attribute
   /// <summary>
   /// Creates a new route attribute with the specified pattern.
   /// </summary>
-  /// <param name="pattern">The route pattern (literal segments only). Use "" for default route.</param>
+  /// <param name="pattern">The route pattern (a single literal). Use "" for default route.</param>
   public NuruRouteAttribute(string pattern = "")
   {
     Pattern = pattern ?? string.Empty;

@@ -10,15 +10,19 @@ Direct delegate routing works seamlessly with Native AOT:
 
 ```csharp
 #!/usr/bin/dotnet --
-#:package TimeWarp.Nuru@2.1.0-beta.17
+#:package TimeWarp.Nuru
 
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
-    .AddAutoHelp()
-    .Map("greet {name}", (string name) =>
-        Console.WriteLine($"Hello, {name}!"))
-    .Map("status", () => "System is operational")
+    .Map("greet {name}")
+        .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+        .AsCommand()
+        .Done()
+    .Map("status")
+        .WithHandler(() => "System is operational")
+        .AsQuery()
+        .Done()
     .Build();
 
 return await app.RunAsync(args);
@@ -149,15 +153,26 @@ Here's a complete example that works with full Native AOT:
 
 ```csharp
 #!/usr/bin/dotnet --
-#:package TimeWarp.Nuru@2.1.0-beta.17
+#:package TimeWarp.Nuru
 
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
-    .AddAutoHelp()
-    .Map("add {x:int} {y:int}", Add, "Add two numbers")
-    .Map("greet {name}", Greet, "Greet someone")
-    .Map("version", () => "1.0.0", "Show version")
+    .Map("add {x:int} {y:int}")
+        .WithHandler(Add)
+        .WithDescription("Add two numbers")
+        .AsQuery()
+        .Done()
+    .Map("greet {name}")
+        .WithHandler(Greet)
+        .WithDescription("Greet someone")
+        .AsCommand()
+        .Done()
+    .Map("version")
+        .WithHandler(() => "1.0.0")
+        .WithDescription("Show version")
+        .AsQuery()
+        .Done()
     .Build();
 
 return await app.RunAsync(args);

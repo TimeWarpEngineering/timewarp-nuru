@@ -21,9 +21,9 @@ This glossary provides detailed definitions and examples of all key terms used t
 
 **Examples**:
 ```csharp
-.Map("git status", () => {})     // Simple literal route
-.Map("deploy {env} --version {tag} --dry-run", handler)  // Complex route
-.Map("docker run {*args}", handler)  // Catch-all route
+.Map("git status").WithHandler(() => {}).Done()     // Simple literal route
+.Map("deploy {env} --version {tag} --dry-run").WithHandler(handler).Done()  // Complex route
+.Map("docker run {*args}").WithHandler(handler).Done()  // Catch-all route
 ```
 
 ### Literal Segments
@@ -31,8 +31,8 @@ This glossary provides detailed definitions and examples of all key terms used t
 
 **Examples**:
 ```csharp
-builder.Map("git status", () => {})        // "git" and "status" are literals
-builder.Map("backup command", () => {})     // "backup" and "command" are literals
+builder.Map("git status").WithHandler(() => {}).Done()        // "git" and "status" are literals
+builder.Map("backup command").WithHandler(() => {}).Done()     // "backup" and "command" are literals
 ```
 
 ### Parameters
@@ -47,17 +47,17 @@ builder.Map("backup command", () => {})     // "backup" and "command" are litera
 **Examples**:
 ```csharp
 // Basic parameters
-builder.Map("greet {name}", (string name) => {})  // Required string parameter
-builder.Map("wait {seconds:int}", (int s) => {})  // Required integer parameter
+builder.Map("greet {name}").WithHandler((string name) => {}).Done()  // Required string parameter
+builder.Map("wait {seconds:int}").WithHandler((int s) => {}).Done()  // Required integer parameter
 
 // Multiple parameters
-builder.Map("copy {source} {destination}", (string source, string dest) => {})
+builder.Map("copy {source} {destination}").WithHandler((string source, string dest) => {}).Done()
 
 // Optional parameters
-builder.Map("deploy {env} {tag?}", (string env, string? tag) => {})
+builder.Map("deploy {env} {tag?}").WithHandler((string env, string? tag) => {}).Done()
 
 // Catch-all parameters
-builder.Map("docker {*args}", (string[] args) => {})
+builder.Map("docker {*args}").WithHandler((string[] args) => {}).Done()
 ```
 
 **See Also**: [**Arguments**](#arguments), [**Type Constraints**](#type-constraints)
@@ -73,16 +73,17 @@ builder.Map("docker {*args}", (string[] args) => {})
 **Examples**:
 ```csharp
 // Boolean options
-builder.Map("build --verbose", (bool verbose) => {})
-        .Map("test -v", (bool v) => {})
+builder.Map("build --verbose").WithHandler((bool verbose) => {}).Done()
+        .Map("test -v").WithHandler((bool v) => {}).Done()
 
 // Options with values
-builder.Map("deploy --version {ver}", (string ver) => {})
-        .Map("run --config,-c {cfg}", (string cfg) => {})
+builder.Map("deploy --version {ver}").WithHandler((string ver) => {}).Done()
+        .Map("run --config,-c {cfg}").WithHandler((string cfg) => {}).Done()
 
 // Multiple options
-builder.Map("server --port,-p {port} --host {host} --debug,-d",
-    (int port, string host, bool debug) => {})
+builder.Map("server --port,-p {port} --host {host} --debug,-d")
+    .WithHandler((int port, string host, bool debug) => {})
+    .Done()
 ```
 
 **Related Terms**: [**Short Aliases**](#short-aliases), [**Boolean Options**](#boolean-options)
@@ -92,8 +93,8 @@ builder.Map("server --port,-p {port} --host {host} --debug,-d",
 
 **Examples**:
 ```csharp
-builder.Map("run --verbose,-v", handler)     // -v is short alias for --verbose
-builder.Map("build --output,-o {path}", handler)  // -o is short alias for --output
+builder.Map("run --verbose,-v").WithHandler(handler).Done()     // -v is short alias for --verbose
+builder.Map("build --output,-o {path}").WithHandler(handler).Done()  // -o is short alias for --output
 ```
 
 ### Boolean Options
@@ -102,7 +103,7 @@ builder.Map("build --output,-o {path}", handler)  // -o is short alias for --out
 **Examples**:
 ```csharp
 // Route definition
-builder.Map("compile --optimize --debug,-d", (bool opt, bool debug) => {})
+builder.Map("compile --optimize --debug,-d").WithHandler((bool opt, bool debug) => {}).Done()
 
 // Usage examples
 myapp compile --optimize --debug  // Both flags set to true
@@ -154,9 +155,12 @@ myapp docker run ubuntu            // command="run", args=["ubuntu"]
 
 **Examples**:
 ```csharp
-builder.Map("deploy {env} {tag?}", (string env, string? tag) => {
-    // In handler: tag can be null if not provided
-})
+builder.Map("deploy {env} {tag?}")
+    .WithHandler((string env, string? tag) =>
+    {
+        // In handler: tag can be null if not provided
+    })
+    .Done()
 
 // Valid command usages:
 myapp deploy production v1.2   // env="production", tag="v1.2"
@@ -169,10 +173,10 @@ myapp deploy production        // env="production", tag=null
 
 ```csharp
 // ❌ Ambiguous - won't work
-builder.Map("backup {source?} {dest?}", handler)
+builder.Map("backup {source?} {dest?}").WithHandler(handler).Done()
 
 // ✅ Clear separation
-builder.Map("backup {source?} to {dest?}", handler)
+builder.Map("backup {source?} to {dest?}").WithHandler(handler).Done()
 ```
 
 ### Catch-all Parameters
@@ -180,9 +184,12 @@ builder.Map("backup {source?} to {dest?}", handler)
 
 **Examples**:
 ```csharp
-builder.Map("docker {*args}", (string[] args) => {
-    // Captures all arguments after "docker"
-})
+builder.Map("docker {*args}")
+    .WithHandler((string[] args) =>
+    {
+        // Captures all arguments after "docker"
+    })
+    .Done()
 
 // Command: myapp docker run -it --rm ubuntu bash
 // args = ["run", "-it", "--rm", "ubuntu", "bash"]
@@ -193,7 +200,7 @@ builder.Map("docker {*args}", (string[] args) => {
 
 **Examples**:
 ```csharp
-builder.Map("deploy {env}", (string env) => {})  // env is required
+builder.Map("deploy {env}").WithHandler((string env) => {}).Done()  // env is required
 
 // ✓ Valid
 myapp deploy production          // env="production"
@@ -218,22 +225,27 @@ myapp deploy                     // Throws exception
 **Examples**:
 ```csharp
 // Synchronous Direct Approach
-builder.Map("ping {count:int}",
-    (int count) => {
+builder.Map("ping {count:int}")
+    .WithHandler((int count) =>
+    {
         for(int i = 0; i < count; i++)
             Console.WriteLine("pong");
-    });
+    })
+    .AsCommand().Done();
 
 // Asynchronous Direct Approach
-builder.Map("add {x:double} {y:double}",
-    async (double x, double y) => {
+builder.Map("add {x:double} {y:double}")
+    .WithHandler(async (double x, double y) =>
+    {
         await Task.Delay(10); // Async work
         Console.WriteLine($"{x} + {y} = {x + y}");
-    });
+    })
+    .AsCommand().Done();
 
 // Returning values
-builder.Map("calculate {a:double} {b:double}",
-    (double a, double b) => a + b); // Returns result to stdout
+builder.Map("calculate {a:double} {b:double}")
+    .WithHandler((double a, double b) => a + b) // Returns result to stdout
+    .AsQuery().Done();
 ```
 
 **See Also**: [**Fluent API with DI**](#fluent-api-with-di), [**Mixed Approach**](#mixed-approach)
@@ -342,13 +354,13 @@ NuruApp app = NuruApp.CreateBuilder()
 **Examples**:
 ```csharp
 builder
-    .Map("create {name}", (string name) => {})                    // Default string
-    .Map("wait {ms:int}", (int milliseconds) => {})              // Integer
-    .Map("price {cost:decimal}", (decimal cost) => {})           // Decimal
-    .Map("enabled {flag:bool}", (bool flag) => {})               // Boolean
-    .Map("schedule {when:DateTime}", (DateTime when) => {})      // DateTime
-    .Map("process {id:Guid}", (Guid id) => {})                   // GUID
-    .Map("download {url:Uri}", (Uri url) => {});                 // URI
+    .Map("create {name}").WithHandler((string name) => {}).Done()                    // Default string
+    .Map("wait {ms:int}").WithHandler((int milliseconds) => {}).Done()              // Integer
+    .Map("price {cost:decimal}").WithHandler((decimal cost) => {}).Done()           // Decimal
+    .Map("enabled {flag:bool}").WithHandler((bool flag) => {}).Done()               // Boolean
+    .Map("schedule {when:DateTime}").WithHandler((DateTime when) => {}).Done()      // DateTime
+    .Map("process {id:Guid}").WithHandler((Guid id) => {}).Done()                   // GUID
+    .Map("download {url:Uri}").WithHandler((Uri url) => {}).Done();                 // URI
 ```
 
 ### Type Conversion
@@ -387,11 +399,11 @@ public class MyCustomConverter : IRouteTypeConverter
 **Examples**:
 ```csharp
 // Automatic string array (default)
-builder.Map("copy {*files}", (string[] files) => {})
+builder.Map("copy {*files}").WithHandler((string[] files) => {}).Done()
 
 // Typed arrays
-builder.Map("sum {*numbers:int}", (int[] numbers) => {})
-        .Map("average {*values:double}", (double[] values) => {})
+builder.Map("sum {*numbers:int}").WithHandler((int[] numbers) => {}).Done()
+        .Map("average {*values:double}").WithHandler((double[] values) => {}).Done()
 
 // Usage:
 myapp copy *.txt                  // files = ["file1.txt", "file2.txt"]
@@ -447,11 +459,7 @@ public class RouteEndpoint
 ### Command Resolver
 **Definition**: Component responsible for matching command-line [**arguments**](#arguments) against registered routes and extracting parameter values. Implements the routing logic that powers the framework.
 
-**Key Method**:
-```csharp
-public static ResolverResult Resolve(string[] args, EndpointCollection endpoints,
-                                   ITypeConverterRegistry converters, ILogger logger)
-```
+**How it works**: Resolution is generated at compile time. For each app, the source generator emits a route matcher per route (see `route-matcher-emitter.cs`), tried in specificity order, with user routes ahead of the built-in `--help`, `--version` and `--capabilities` handling. A matcher checks the literals, extracts parameters and options, converts types, and then calls the handler. If no matcher succeeds, the generated code falls through to the no-match path.
 
 ### Parameter Binder
 **Definition**: Component that maps extracted string values to strongly-typed method parameters, handling both Direct delegates and Mediator commands with dependency injection.
@@ -470,16 +478,16 @@ public static ResolverResult Resolve(string[] args, EndpointCollection endpoints
 **Examples**:
 ```csharp
 // Basic commands
-builder.Map("build", () => {})
-       .Map("test", () => {})
-       .Map("deploy", () => {})
-       .Map("status", () => {})
-       .Map("clean", () => {});
+builder.Map("build").WithHandler(() => {}).Done()
+       .Map("test").WithHandler(() => {}).Done()
+       .Map("deploy").WithHandler(() => {}).Done()
+       .Map("status").WithHandler(() => {}).Done()
+       .Map("clean").WithHandler(() => {}).Done();
 ```
 
 **Implementation Styles**:
 - **Simple Commands**: Use [**Direct Approach**](#direct-approach)
-- **Complex Commands**: Use [**Mediator Approach**](#mediator-approach)
+- **Complex Commands**: Use [**Fluent API with DI**](#fluent-api-with-di) or `[NuruRoute]` endpoints
 - **Grouped Commands**: Use command prefixes for organization
 
 ### Subcommands
@@ -488,20 +496,20 @@ builder.Map("build", () => {})
 **Examples**:
 ```csharp
 // Git-style subcommands
-builder.Map("git status", () => {})
-       .Map("git commit", () => {})
-       .Map("git push", () => {})
-       .Map("git pull", () => {})
+builder.Map("git status").WithHandler(() => {}).Done()
+       .Map("git commit").WithHandler(() => {}).Done()
+       .Map("git push").WithHandler(() => {}).Done()
+       .Map("git pull").WithHandler(() => {}).Done()
 
 // Docker-style subcommands
-builder.Map("docker build", () => {})
-       .Map("docker run", () => {})
-       .Map("docker compose", () => {});
+builder.Map("docker build").WithHandler(() => {}).Done()
+       .Map("docker run").WithHandler(() => {}).Done()
+       .Map("docker compose").WithHandler(() => {}).Done();
 
 // Command prefixes for logical grouping
 const string gitPrefix = "git";
-builder.Map($"{gitPrefix} status", handler)
-       .Map($"{gitPrefix} commit", handler);
+builder.Map($"{gitPrefix} status").WithHandler(handler).Done()
+       .Map($"{gitPrefix} commit").WithHandler(handler).Done();
 ```
 
 **Benefits**:
@@ -520,22 +528,23 @@ builder.Map($"{gitPrefix} status", handler)
 - Short alias information
 
 ### Auto Help
-**Definition**: Framework feature that automatically registers `--help` routes for all commands, providing consistent help experience without manual implementation.
+**Definition**: Built-in framework feature that provides `--help` (and `-h`) for the app and for every command, giving a consistent help experience without manual implementation. There is nothing to enable; use `ConfigureHelp(Action<HelpOptions>)` to customize it.
 
 **Examples**:
 ```csharp
-// Enable automatic help generation
-builder.AddAutoHelp();
+// Help is built in - no registration call needed.
+// Customize it with ConfigureHelp(Action<HelpOptions>) if required.
 
-// Automatically creates:
+// Automatically available:
 // --help                                    (global help)
 // git --help                             (git command group help)
 // git status --help                      (specific command help)
 // git commit --help                      (specific command help)
 
 // Command-specific help includes parameter descriptions
-builder.Map("deploy {env|Deployment environment} --version {ver|Version tag} --dry-run,-d|Preview only",
-    (string env, string ver, bool dry) => {});
+builder.Map("deploy {env|Deployment environment} --version {ver|Version tag} --dry-run,-d|Preview only")
+    .WithHandler((string env, string ver, bool dry) => {})
+    .AsCommand().Done();
 ```
 
 ---
@@ -548,20 +557,21 @@ builder.Map("deploy {env|Deployment environment} --version {ver|Version tag} --d
 **Examples**:
 ```csharp
 // Parameter descriptions
-builder.Map("deploy {env|Target environment (dev, staging, prod)}", handler)
+builder.Map("deploy {env|Target environment (dev, staging, prod)}").WithHandler(handler).Done()
 
 // Option descriptions
-builder.Map("build --verbose|Enable debug output", handler)
+builder.Map("build --verbose|Enable debug output").WithHandler(handler).Done()
 
 // Short alias descriptions
-builder.Map("test --output,-o {path|Output file path}", handler)
+builder.Map("test --output,-o {path|Output file path}").WithHandler(handler).Done()
 
 // Complex descriptions
 builder.Map("backup {source|Source directory or file} " +
                 "--compress,-c|Compress archived file " +
                 "--output,-o {path|Backup file location} " +
-                "--exclude,-e {patterns|File patterns to exclude}",
-    (string source, string path, string[] patterns, bool compress) => {});
+                "--exclude,-e {patterns|File patterns to exclude}")
+    .WithHandler((string source, string path, string[] patterns, bool compress) => {})
+    .AsCommand().Done();
 ```
 
 ### Specificity Scoring
@@ -578,13 +588,13 @@ builder.Map("backup {source|Source directory or file} " +
 **Examples**:
 ```csharp
 // Highest specificity (31 points)
-builder.Map("git commit --amend", handler)
+builder.Map("git commit --amend").WithHandler(handler).Done()
 
 // Medium specificity (17 points)
-builder.Map("git commit {message}", handler)
+builder.Map("git commit {message}").WithHandler(handler).Done()
 
 // Lowest specificity (-3 points)
-builder.Map("git {*args}", handler)
+builder.Map("git {*args}").WithHandler(handler).Done()
 ```
 
 ### Dependency Injection (DI)

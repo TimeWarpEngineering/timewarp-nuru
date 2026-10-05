@@ -589,7 +589,7 @@ public class AdminEditionRoutingTests
   public async Task AdminEdition_ContainsDeployCommand()
   {
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .DiscoverEndpoints(typeof(AdminGroupBase))
       .Build();
@@ -602,7 +602,7 @@ public class AdminEditionRoutingTests
   public async Task AdminEdition_DoesNotContainUserCommand()
   {
     using TestTerminal terminal = new();
-    NuruApp app = NuruApp.CreateBuilder([])
+    NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .DiscoverEndpoints(typeof(AdminGroupBase))
       .Build();

@@ -40,7 +40,7 @@ Routes auto-registered by `NuruApp.CreateBuilder()`:
 - `--version, -v` - Display version with commit info
 - `--check-updates` - Check GitHub for newer versions
 - `--interactive, -i` - Enter REPL mode
-- Configuration via [`NuruAppOptions`](../reference/nuru-app-options.md)
+- Configuration via [Builder Configuration Options](../reference/nuru-app-options.md)
 
 ### [Agent invocation](agent-invocation.md)
 How an agent calls a route with a large payload:

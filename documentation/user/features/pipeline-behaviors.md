@@ -112,7 +112,7 @@ public sealed class TelemetryBehavior : INuruBehavior
   {
     using var activity = Source.StartActivity(context.CommandName);
     activity?.SetTag("correlation.id", context.CorrelationId);
-    
+
     try
     {
       await proceed();
@@ -218,10 +218,10 @@ public sealed class AuthorizationBehavior : INuruBehavior<IRequireAuthorization>
   {
     // context.Command is already IRequireAuthorization - no casting needed
     string permission = context.Command.RequiredPermission;
-    
+
     if (!HasPermission(permission))
       throw new UnauthorizedAccessException($"Required: {permission}");
-    
+
     await proceed();
   }
 }
@@ -232,18 +232,18 @@ Apply to routes with `.Implements<T>()`:
 ```csharp
 NuruApp.CreateBuilder()
   .AddBehavior(typeof(AuthorizationBehavior))
-  
+
   // No interface - AuthorizationBehavior does not run
   .Map("echo {message}")
     .WithHandler((string message) => Console.WriteLine(message))
     .Done()
-  
+
   // Has IRequireAuthorization - AuthorizationBehavior runs
   .Map("admin {action}")
     .Implements<IRequireAuthorization>(x => x.RequiredPermission = "admin:execute")
     .WithHandler((string action) => Console.WriteLine($"Admin: {action}"))
     .Done()
-  
+
   .Build();
 ```
 

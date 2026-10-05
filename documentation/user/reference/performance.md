@@ -98,10 +98,13 @@ All tests run against both Direct and Mediator implementations to ensure feature
 
 ```csharp
 // ✅ Direct for hot paths
-builder.Map("ping", () => "pong");  // Called frequently
+builder.Map("ping")
+  .WithHandler(() => "pong")
+  .AsQuery()
+  .Done();  // Called frequently
 
 // ✅ Mediator for complex logic
-builder.Map<DeployCommand>("deploy {env}");  // Complex, less frequent
+builder.Map<DeployCommand>();  // Complex, less frequent
 ```
 
 ### Use Native AOT
@@ -119,20 +122,32 @@ Provides **88-93% performance improvement** over JIT.
 
 ```csharp
 // ✅ Return value types when possible
-.Map("status", () => 0);  // int return
+.Map("status")
+  .WithHandler(() => 0)
+  .AsQuery()
+  .Done();  // int return
 
 // ❌ Avoid unnecessary allocations
-.Map("status", () => new Status());  // Allocates object
+.Map("status")
+  .WithHandler(() => new Status())
+  .AsQuery()
+  .Done();  // Allocates object
 ```
 
 ### Async Only When Needed
 
 ```csharp
 // ✅ Sync for CPU-bound work
-.Map("calc {x:int} {y:int}", (int x, int y) => x + y)
+.Map("calc {x:int} {y:int}")
+  .WithHandler((int x, int y) => x + y)
+  .AsQuery()
+  .Done()
 
 // ✅ Async for I/O-bound work
-.Map("fetch {url}", async (string url) => await FetchAsync(url))
+.Map("fetch {url}")
+  .WithHandler(async (string url) => await FetchAsync(url))
+  .AsQuery()
+  .Done()
 ```
 
 ## Scaling Characteristics

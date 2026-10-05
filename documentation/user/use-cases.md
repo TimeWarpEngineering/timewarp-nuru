@@ -14,10 +14,22 @@ Build modern command-line tools from scratch with clean architecture and progres
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
-  .Map("version", () => Console.WriteLine("MyTool v1.0.0"))
-  .Map("status", () => ShowSystemStatus())
-  .Map("config get {key}", (string key) => Console.WriteLine(GetConfig(key)))
-  .Map("config set {key} {value}", (string key, string value) => SetConfig(key, value))
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("MyTool v1.0.0"))
+    .AsQuery()
+    .Done()
+  .Map("status")
+    .WithHandler(() => ShowSystemStatus())
+    .AsQuery()
+    .Done()
+  .Map("config get {key}")
+    .WithHandler((string key) => Console.WriteLine(GetConfig(key)))
+    .AsCommand()
+    .Done()
+  .Map("config set {key} {value}")
+    .WithHandler((string key, string value) => SetConfig(key, value))
+    .AsCommand()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);
@@ -46,12 +58,18 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddScoped<IReportGenerator, ReportGenerator>();
   })
   // Simple commands remain direct
-  .Map("version", () => Console.WriteLine("v1.0.0"))
-  .Map("ping", () => Console.WriteLine("pong"))
-  // Complex commands use mediator pattern
-  .Map<QueryCommand>("query {sql}")
-  .Map<DeployCommand>("deploy {env} --version {tag?} --dry-run")
-  .Map<GenerateReportCommand>("report generate {type} --format {fmt}")
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("v1.0.0"))
+    .AsQuery()
+    .Done()
+  .Map("ping")
+    .WithHandler(() => Console.WriteLine("pong"))
+    .AsQuery()
+    .Done()
+  // Complex commands use mediator pattern  (routes declared via [NuruRoute] on each class)
+  .Map<QueryCommand>()
+  .Map<DeployCommand>()
+  .Map<GenerateReportCommand>()
   .Build();
 
 return await app.RunAsync(args);
@@ -70,29 +88,44 @@ return await app.RunAsync(args);
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
   // Repository management
-  .Map
-  (
-    "repo init {name} --bare",
-    (string name, bool bare) => InitializeRepository(name, bare)
-  )
-  .Map
-  (
-    "repo clone {url} {path?}",
-    (string url, string? path) => CloneRepository(url, path)
-  )
-  .Map("repo list", () => ListRepositories())
+  .Map("repo init {name} --bare")
+    .WithHandler((string name, bool bare) => InitializeRepository(name, bare))
+    .AsCommand()
+    .Done()
+  .Map("repo clone {url} {path?}")
+    .WithHandler((string url, string? path) => CloneRepository(url, path))
+    .AsCommand()
+    .Done()
+  .Map("repo list")
+    .WithHandler(() => ListRepositories())
+    .AsQuery()
+    .Done()
   // Branch operations
-  .Map("branch create {name}", (string name) => CreateBranch(name))
-  .Map
-  (
-    "branch delete {name} --force",
-    (string name, bool force) => DeleteBranch(name, force)
-  )
-  .Map("branch list --all", (bool all) => ListBranches(all))
+  .Map("branch create {name}")
+    .WithHandler((string name) => CreateBranch(name))
+    .AsCommand()
+    .Done()
+  .Map("branch delete {name} --force")
+    .WithHandler((string name, bool force) => DeleteBranch(name, force))
+    .AsCommand()
+    .Done()
+  .Map("branch list --all")
+    .WithHandler((bool all) => ListBranches(all))
+    .AsQuery()
+    .Done()
   // File operations
-  .Map("add {*files}", (string[] files) => StageFiles(files))
-  .Map("commit -m {message}", (string message) => Commit(message))
-  .Map("push --force", (bool force) => Push(force))
+  .Map("add {*files}")
+    .WithHandler((string[] files) => StageFiles(files))
+    .AsCommand()
+    .Done()
+  .Map("commit -m {message}")
+    .WithHandler((string message) => Commit(message))
+    .AsCommand()
+    .Done()
+  .Map("push --force")
+    .WithHandler((bool force) => Push(force))
+    .AsCommand()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);
@@ -315,18 +348,23 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddSingleton<IConfigurationService, ConfigurationService>();
   })
   // Simple commands - Direct
-  .Map("version", () => Console.WriteLine("DeployTool v2.0"))
-  .Map("ping {host}", (string host) => PingHost(host))
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("DeployTool v2.0"))
+    .AsQuery()
+    .Done()
+  .Map("ping {host}")
+    .WithHandler((string host) => PingHost(host))
+    .AsQuery()
+    .Done()
   // Complex commands - Mediator
-  .Map<DeployCommand>("deploy {env} --version {tag?} --dry-run")
-  .Map<RollbackCommand>("rollback {env} --to {version}")
-  .Map<ValidateCommand>("validate {env}")
+  .Map<DeployCommand>()
+  .Map<RollbackCommand>()
+  .Map<ValidateCommand>()
   // Wrap existing tool for migration
-  .Map
-  (
-    "legacy {*args}",
-    async (string[] args) => await Shell.ExecuteAsync("old-deploy-tool", args)
-  )
+  .Map("legacy {*args}")
+    .WithHandler(async (string[] args) => await Shell.ExecuteAsync("old-deploy-tool", args))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -339,12 +377,18 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddSingleton<IDatabaseService, DatabaseService>();
   })
   // Direct for queries
-  .Map("db list", () => ListDatabases())
-  .Map("db status {name}", (string name) => ShowDatabaseStatus(name))
+  .Map("db list")
+    .WithHandler(() => ListDatabases())
+    .AsQuery()
+    .Done()
+  .Map("db status {name}")
+    .WithHandler((string name) => ShowDatabaseStatus(name))
+    .AsQuery()
+    .Done()
   // Mediator for complex operations
-  .Map<BackupCommand>("db backup {name} --compress")
-  .Map<RestoreCommand>("db restore {name} --from {file}")
-  .Map<MigrateCommand>("db migrate {name} --version {ver?}")
+  .Map<BackupCommand>()
+  .Map<RestoreCommand>()
+  .Map<MigrateCommand>()
   .Build();
 ```
 

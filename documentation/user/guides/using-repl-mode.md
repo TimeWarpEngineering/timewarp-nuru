@@ -277,7 +277,7 @@ not a guarantee. For hard control, set `PersistHistory = false` or point
 
 ## Integration with Completion
 
-REPL integrates with TimeWarp.Nuru.Completion for enhanced help:
+REPL integrates with shell completion (`EnableCompletion()`) for enhanced help:
 
 ```csharp
 // If CompletionProvider is available, help shows command descriptions

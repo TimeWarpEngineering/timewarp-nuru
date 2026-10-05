@@ -288,38 +288,38 @@ using TimeWarp.Nuru;
 NuruApp app = NuruApp.CreateBuilder()
   .WithName("myapp")
   .WithDescription("My awesome CLI application")
-  
+
   // Configuration and DI
   .AddConfiguration()
   .ConfigureServices(services =>
   {
     services.AddSingleton<IDeployer, Deployer>();
   })
-  
+
   // Pipeline behaviors
   .AddBehavior(typeof(LoggingBehavior))
-  
+
   // Query command (safe to retry)
   .Map("status")
     .WithHandler(() => Console.WriteLine("All systems operational"))
     .WithDescription("Show system status")
     .AsQuery()
     .Done()
-  
+
   // Command with required parameter
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .WithDescription("Greet someone by name")
     .AsCommand()
     .Done()
-  
+
   // Command with typed parameters
   .Map("add {x:int} {y:int}")
     .WithHandler((int x, int y) => Console.WriteLine($"{x} + {y} = {x + y}"))
     .WithDescription("Add two integers")
     .AsQuery()
     .Done()
-  
+
   // Command with optional parameter
   .Map("deploy {env} {tag?}")
     .WithHandler((string env, string? tag) =>
@@ -330,7 +330,7 @@ NuruApp app = NuruApp.CreateBuilder()
     .WithDescription("Deploy to environment with optional tag")
     .AsCommand()
     .Done()
-  
+
   // Command with boolean option
   .Map("build --release,-r")
     .WithHandler((bool release) =>
@@ -341,7 +341,7 @@ NuruApp app = NuruApp.CreateBuilder()
     .WithDescription("Build the project")
     .AsCommand()
     .Done()
-  
+
   // Command with option value
   .Map("search {query} --limit,-l {count:int?}")
     .WithHandler((string query, int? count) =>
@@ -352,7 +352,7 @@ NuruApp app = NuruApp.CreateBuilder()
     .WithDescription("Search with optional result limit")
     .AsQuery()
     .Done()
-  
+
   // Async command with injected service
   .Map("deploy-async {env}")
     .WithHandler(async (string env, IDeployer deployer) =>
@@ -362,18 +362,18 @@ NuruApp app = NuruApp.CreateBuilder()
     .WithDescription("Deploy asynchronously")
     .AsIdempotentCommand()
     .Done()
-  
+
   // Catch-all parameter
   .Map("echo {*words}")
     .WithHandler((string[] words) => Console.WriteLine(string.Join(" ", words)))
     .WithDescription("Echo all arguments")
     .AsQuery()
     .Done()
-  
+
   // REPL and completion
   .AddRepl(options => options.Prompt = "myapp> ")
   .EnableCompletion()
-  
+
   .Build();
 
 return await app.RunAsync(args);
@@ -383,5 +383,5 @@ return await app.RunAsync(args);
 
 - [Route Pattern Syntax](../features/route-patterns.md)
 - [Supported Types](supported-types.md)
-- [NuruAppOptions](nuru-app-options.md)
+- [Builder Configuration Options](nuru-app-options.md)
 - [Pipeline Behaviors](../features/pipeline-behaviors.md)

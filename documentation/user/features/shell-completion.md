@@ -4,7 +4,7 @@ Automatic tab completion for your CLI applications across bash, zsh, PowerShell,
 
 ## Overview
 
-TimeWarp.Nuru.Completion generates shell-specific completion scripts from your route definitions, providing intelligent tab completion for:
+Nuru generates shell-specific completion scripts from your route definitions, providing intelligent tab completion for:
 
 - Command names
 - Parameters (with type-aware hints)
@@ -13,73 +13,61 @@ TimeWarp.Nuru.Completion generates shell-specific completion scripts from your r
 - File and directory paths
 
 **Key Benefits:**
-- ⚡ **Zero configuration with CreateBuilder**: Dynamic completion enabled by default
+- ⚡ **One call to enable**: `.EnableCompletion()` on the builder
 - 🎯 **Automatic**: Generates from your existing route definitions
 - 🌐 **Cross-platform**: Supports 4 major shells
-- 🔄 **Dynamic by default**: Runtime-computed completions for databases, APIs, config
+- 🔄 **Dynamic**: Runtime-computed completions for databases, APIs, config
 - 🔒 **Type-aware**: Knows parameter types and suggests appropriately
 
 ## Quick Start
 
-### Using CreateBuilder (Recommended)
+### Enabling Completion
 
-With `NuruApp.CreateBuilder()`, dynamic shell completion is **enabled by default**. No additional code needed!
+Call `.EnableCompletion()` on the builder to enable dynamic shell completion:
 
 ```csharp
 using TimeWarp.Nuru;
 
-// Dynamic completion is automatically enabled
-NuruAppBuilder builder = NuruApp.CreateBuilder();
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("deploy {env} --version {tag}")
+    .WithHandler((string env, string tag) => Deploy(env, tag))
+    .AsCommand()
+    .Done()
+  .Map("status")
+    .WithHandler(() => ShowStatus())
+    .AsQuery()
+    .Done()
+  .EnableCompletion()
+  .Build();
 
-builder.Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag));
-builder.Map("status", () => ShowStatus());
-
-NuruApp app = builder.Build();
 return await app.RunAsync(args);
 ```
 
-This automatically registers these routes:
+`EnableCompletion()` registers these routes:
 - `__complete {index:int} {*words}` - Dynamic completion callback for shells
-- `--generate-completion {shell}` - Generate shell-specific completion scripts  
+- `--generate-completion {shell}` - Generate shell-specific completion scripts
 - `--install-completion {shell?}` - Install completion to shell config files
 - `--install-completion --dry-run {shell?}` - Preview installation
 
 ### Customizing Completion Sources
 
-Use `ConfigureCompletion` to register custom completion sources:
+Pass a `configure` callback to `EnableCompletion` to register custom completion sources:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
-{
-    ConfigureCompletion = registry =>
-    {
-        // Complete "env" parameter from a list
-        registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
-        
-        // Complete "tag" parameter dynamically (could query Git, Docker registry, etc.)
-        registry.RegisterForParameter("tag", new TagCompletionSource());
-    }
-});
-```
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("deploy {env} --version {tag}")
+    .WithHandler((string env, string tag) => Deploy(env, tag))
+    .AsCommand()
+    .Done()
+  .EnableCompletion(configure: registry =>
+  {
+    // Complete "env" parameter from a list
+    registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
 
-### Manual Completion Setup
-
-If you prefer explicit control over completion registration:
-
-```csharp
-using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
-
-NuruAppBuilder builder = NuruApp.CreateBuilder();
-
-builder.Map("deploy {env} --version {tag}", (string env, string tag) => Deploy(env, tag));
-builder.Map("status", () => ShowStatus());
-
-// Manually enable completion
-builder.EnableDynamicCompletion();  // Or: builder.EnableStaticCompletion()
-
-NuruApp app = builder.Build();
-return await app.RunAsync(args);
+    // Complete "tag" parameter dynamically (could query Git, Docker registry, etc.)
+    registry.RegisterForParameter("tag", new TagCompletionSource());
+  })
+  .Build();
 ```
 
 ### 3. Install Shell Completion
@@ -164,9 +152,18 @@ mkdir -p ~/.config/fish/completions
 All root-level literal routes become completable commands:
 
 ```csharp
-builder.Map("deploy {env}", (string env) => Deploy(env));
-builder.Map("status", () => Status());
-builder.Map("version", () => Version());
+builder.Map("deploy {env}")
+  .WithHandler((string env) => Deploy(env))
+  .AsCommand()
+  .Done();
+builder.Map("status")
+  .WithHandler(() => Status())
+  .AsQuery()
+  .Done();
+builder.Map("version")
+  .WithHandler(() => Version())
+  .AsQuery()
+  .Done();
 ```
 
 ```bash
@@ -179,7 +176,10 @@ deploy    status    version
 Parameter names are shown as completion hints:
 
 ```csharp
-builder.Map("deploy {env}", (string env) => Deploy(env));
+builder.Map("deploy {env}")
+  .WithHandler((string env) => Deploy(env))
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -199,7 +199,10 @@ config.json    data.xml    settings.toml
 All options defined in routes are completable:
 
 ```csharp
-builder.Map("build --config {mode} --verbose", (string mode, bool verbose) => Build(mode, verbose));
+builder.Map("build --config {mode} --verbose")
+  .WithHandler((string mode, bool verbose) => Build(mode, verbose))
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -217,7 +220,10 @@ Enum parameters automatically complete with all possible values:
 ```csharp
 public enum LogLevel { Debug, Info, Warning, Error }
 
-builder.Map("log --level {level}", (LogLevel level) => SetLogLevel(level));
+builder.Map("log --level {level}")
+  .WithHandler((LogLevel level) => SetLogLevel(level))
+  .AsCommand()
+  .Done();
 ```
 
 ```bash
@@ -230,7 +236,10 @@ Debug    Info    Warning    Error
 Catch-all parameters trigger file/directory completion:
 
 ```csharp
-builder.Map("echo {*words}", (string[] words) => Echo(words));
+builder.Map("echo {*words}")
+  .WithHandler((string[] words) => Echo(words))
+  .AsQuery()
+  .Done();
 ```
 
 ```bash
@@ -244,16 +253,20 @@ $ ./myapp echo <TAB>
 
 ```csharp
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Completion;
 
-NuruAppBuilder builder = new();
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
-builder.Map("createorder {product} {quantity:int}",
-    (string product, int quantity) => CreateOrder(product, quantity));
+builder.Map("createorder {product} {quantity:int}")
+  .WithHandler((string product, int quantity) => CreateOrder(product, quantity))
+  .AsCommand()
+  .Done();
 
-builder.Map("status", () => ShowStatus());
+builder.Map("status")
+  .WithHandler(() => ShowStatus())
+  .AsQuery()
+  .Done();
 
-builder.EnableStaticCompletion();
+builder.EnableCompletion();
 
 NuruApp app = builder.Build();
 return await app.RunAsync(args);
@@ -278,8 +291,14 @@ status
 ### With Options
 
 ```csharp
-builder.Map("git commit -m {message} --amend?", (string message, bool amend) => Commit(message, amend));
-builder.Map("git status --short?", (bool short) => Status(short));
+builder.Map("git commit -m {message} --amend?")
+  .WithHandler((string message, bool amend) => Commit(message, amend))
+  .AsCommand()
+  .Done();
+builder.Map("git status --short?")
+  .WithHandler((bool short) => Status(short))
+  .AsCommand()
+  .Done();
 ```
 
 **Tab completion behavior:**
@@ -300,8 +319,11 @@ $ ./myapp git status --<TAB>
 ```csharp
 public enum Environment { Development, Staging, Production }
 
-builder.Map("deploy {env}", (Environment env) => Deploy(env));
-builder.EnableStaticCompletion();
+builder.Map("deploy {env}")
+  .WithHandler((Environment env) => Deploy(env))
+  .AsCommand()
+  .Done();
+builder.EnableCompletion();
 ```
 
 **Tab completion behavior:**
@@ -314,9 +336,18 @@ Development    Staging    Production
 ### Complex Routes
 
 ```csharp
-builder.Map("docker run {image} {*args}", (string image, string[] args) => DockerRun(image, args));
-builder.Map("docker ps --all?", (bool all) => DockerPs(all));
-builder.Map("docker logs {container} --follow?", (string container, bool follow) => DockerLogs(container, follow));
+builder.Map("docker run {image} {*args}")
+  .WithHandler((string image, string[] args) => DockerRun(image, args))
+  .AsCommand()
+  .Done();
+builder.Map("docker ps --all?")
+  .WithHandler((bool all) => DockerPs(all))
+  .AsCommand()
+  .Done();
+builder.Map("docker logs {container} --follow?")
+  .WithHandler((string container, bool follow) => DockerLogs(container, follow))
+  .AsCommand()
+  .Done();
 ```
 
 **Tab completion behavior:**
@@ -384,16 +415,15 @@ Fish completion uses the declarative `complete` command:
 
 **Compatibility:** Fish 3.0+
 
-## Static vs Dynamic Completion
+## How Completion Works
 
-`NuruApp.CreateBuilder()` enables **dynamic completion** by default. You can also choose static completion for simpler use cases.
-
-### Dynamic Completion (Default with CreateBuilder)
+`EnableCompletion()` enables **dynamic completion**: the shell calls your app via `__complete` at Tab-press time, and the app computes candidates at runtime.
 
 **Runtime-computed completion candidates:**
 - Query databases, APIs, configuration services at Tab-press time
 - Context-aware suggestions based on previous arguments
 - Custom completion sources for any parameter
+- Command names, option names, and enum values come from your route definitions
 
 **Advantages:**
 - 🔄 **Live data**: Completions reflect current state
@@ -405,56 +435,20 @@ Fish completion uses the declarative `complete` command:
 **Example:**
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
-{
-    ConfigureCompletion = registry =>
-    {
-        // Register custom completion source for environments
-        registry.RegisterForParameter("env", new EnvironmentCompletionSource());
-    }
-});
-
-builder.Map("deploy {env}", (string env) => Deploy(env));
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("deploy {env}")
+    .WithHandler((string env) => Deploy(env))
+    .AsCommand()
+    .Done()
+  .EnableCompletion(configure: registry =>
+  {
+    // Register custom completion source for environments
+    registry.RegisterForParameter("env", new EnvironmentCompletionSource());
+  })
+  .Build();
 ```
 
 When you press Tab, the shell calls your app via `__complete`, which queries your completion source.
-
-### Static Completion (Opt-in)
-
-**All completion candidates known at build time:**
-- Command names from route definitions
-- Option names from route patterns
-- Enum values from parameter types
-- File paths (delegated to shell)
-
-**Advantages:**
-- ⚡ Instant (0ms latency, no subprocess call)
-- 🔒 No runtime dependencies
-- 🎯 Works offline
-- ✅ Sufficient for many use cases
-
-**Example:**
-
-```csharp
-public enum LogLevel { Debug, Info, Warning, Error }
-
-NuruAppBuilder builder = NuruApp.CreateBuilder();
-builder.Map("log --level {level}", (LogLevel level) => SetLogLevel(level));
-builder.EnableStaticCompletion();  // Generates static completion with enum values
-```
-
-The completion script contains: `Debug Info Warning Error`
-
-### When to Choose Each
-
-| Use Case | Recommended |
-|----------|-------------|
-| Simple CLI with enum parameters | Static |
-| Need database/API lookups | Dynamic |
-| Offline-only environments | Static |
-| Context-aware completions | Dynamic |
-| Minimal app startup time | Static |
-| Complex enterprise CLIs | Dynamic |
 
 ## Troubleshooting
 
@@ -528,12 +522,7 @@ Completion script generation happens once, typically during installation:
 
 ### Completion Latency
 
-Static completion has **zero runtime overhead**:
-
-- **Bash/Zsh/Fish**: <1ms (native shell lookup)
-- **PowerShell**: <5ms (PSReadLine integration)
-
-All completions are pre-computed and embedded in the shell script.
+Dynamic completion invokes your app on each Tab press. AOT-compiled apps respond in ~7-10ms, which is imperceptible to users. Non-AOT apps pay the normal JIT startup cost per Tab press.
 
 ## Best Practices
 
@@ -543,10 +532,16 @@ Use clear parameter names that make sense as completion hints:
 
 ```csharp
 // ✅ Good
-builder.Map("deploy {environment}", (string environment) => Deploy(environment));
+builder.Map("deploy {environment}")
+  .WithHandler((string environment) => Deploy(environment))
+  .AsCommand()
+  .Done();
 
 // ❌ Less helpful
-builder.Map("deploy {env}", (string env) => Deploy(env));
+builder.Map("deploy {env}")
+  .WithHandler((string env) => Deploy(env))
+  .AsCommand()
+  .Done();
 ```
 
 ### 2. Use Enums for Fixed Value Sets
@@ -556,10 +551,16 @@ Convert string parameters with known values to enums:
 ```csharp
 // ✅ Good - automatic completion of all values
 public enum Environment { Dev, Staging, Prod }
-builder.Map("deploy {env}", (Environment env) => Deploy(env));
+builder.Map("deploy {env}")
+  .WithHandler((Environment env) => Deploy(env))
+  .AsCommand()
+  .Done();
 
 // ❌ Missed opportunity
-builder.Map("deploy {env}", (string env) => Deploy(env));
+builder.Map("deploy {env}")
+  .WithHandler((string env) => Deploy(env))
+  .AsCommand()
+  .Done();
 ```
 
 ### 3. Group Related Commands
@@ -567,9 +568,18 @@ builder.Map("deploy {env}", (string env) => Deploy(env));
 Use consistent command prefixes for related functionality:
 
 ```csharp
-builder.Map("docker run {image}", (string image) => DockerRun(image));
-builder.Map("docker ps", () => DockerPs());
-builder.Map("docker logs {container}", (string container) => DockerLogs(container));
+builder.Map("docker run {image}")
+  .WithHandler((string image) => DockerRun(image))
+  .AsCommand()
+  .Done();
+builder.Map("docker ps")
+  .WithHandler(() => DockerPs())
+  .AsCommand()
+  .Done();
+builder.Map("docker logs {container}")
+  .WithHandler((string container) => DockerLogs(container))
+  .AsCommand()
+  .Done();
 
 // Tab: ./myapp docker <TAB> → run, ps, logs
 ```
@@ -596,67 +606,54 @@ Include shell completion setup in your project's installation instructions:
 Use standard option names for common functionality:
 
 ```csharp
-builder.Map("build --verbose", (bool verbose) => Build(verbose));
-builder.Map("test --verbose", (bool verbose) => Test(verbose));
-builder.Map("deploy --verbose", (bool verbose) => Deploy(verbose));
+builder.Map("build --verbose")
+  .WithHandler((bool verbose) => Build(verbose))
+  .AsCommand()
+  .Done();
+builder.Map("test --verbose")
+  .WithHandler((bool verbose) => Test(verbose))
+  .AsCommand()
+  .Done();
+builder.Map("deploy --verbose")
+  .WithHandler((bool verbose) => Deploy(verbose))
+  .AsCommand()
+  .Done();
 ```
 
 ## API Reference
 
-### NuruAppOptions.ConfigureCompletion
+### EnableCompletion()
 
-Configure dynamic completion sources when using `CreateBuilder()`:
-
-```csharp
-public Action<CompletionSourceRegistry>? ConfigureCompletion { get; set; }
-```
-
-**Example:**
+Enable dynamic completion and optionally register custom completion sources:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args, new NuruAppOptions
-{
-    ConfigureCompletion = registry =>
-    {
-        registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
-        registry.RegisterForType(typeof(MyEnum), new EnumCompletionSource<MyEnum>());
-    }
-});
-```
-
-### EnableDynamicCompletion()
-
-Manually enable dynamic completion (called automatically by `CreateBuilder()`):
-
-```csharp
-public NuruAppBuilder EnableDynamicCompletion(
+public static TBuilder EnableCompletion<TBuilder>(
+    this TBuilder builder,
     string? appName = null,
     Action<CompletionSourceRegistry>? configure = null)
+    where TBuilder : NuruAppBuilder
 ```
 
 **Parameters:**
 - `appName` (optional): Application name for completion functions. Defaults to executable name.
 - `configure` (optional): Action to register custom completion sources.
 
+**Example:**
+
+```csharp
+NuruApp.CreateBuilder()
+  .EnableCompletion(configure: registry =>
+  {
+    registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
+    registry.RegisterForType(typeof(MyEnum), new EnumCompletionSource<MyEnum>());
+  });
+```
+
 **Registers these routes:**
 - `__complete {index:int} {*words}` - Callback for dynamic completion
 - `--generate-completion {shell}` - Generate shell completion scripts
 - `--install-completion {shell?}` - Install completion to shell config
 - `--install-completion --dry-run {shell?}` - Preview installation
-
-### EnableStaticCompletion()
-
-Enable static completion (simpler, no runtime callbacks):
-
-```csharp
-public NuruAppBuilder EnableStaticCompletion(string? appName = null)
-```
-
-**Parameters:**
-- `appName` (optional): Application name for completion functions. Defaults to executable name.
-
-**Registers this route:**
-- `--generate-completion {shell}` - Generate static shell completion scripts
 
 **Shell parameter values:** `bash`, `zsh`, `pwsh`, `fish`
 
@@ -669,5 +666,3 @@ public NuruAppBuilder EnableStaticCompletion(string? appName = null)
 ## Learn More
 
 - **Sample Application:** [samples/shell-completion-example/](../../../samples/shell-completion-example/)
-- **Test Coverage:** [Tests/TimeWarp.Nuru.Completion.Tests/](../../../Tests/TimeWarp.Nuru.Completion.Tests/) (135 tests)
-- **Source Code:** [Source/TimeWarp.Nuru.Completion/](../../../Source/TimeWarp.Nuru.Completion/)

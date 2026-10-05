@@ -4,17 +4,22 @@ TimeWarp.Nuru can automatically generate help documentation for your CLI command
 
 ## Enabling Auto-Help
 
-Add `.AddAutoHelp()` to your application builder:
+Help is built in. `NuruApp.CreateBuilder()` registers it automatically, so there is nothing to enable:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
-  .Map("deploy {env}", (string env) => Deploy(env))
-  .Map("backup {source}", (string source) => Backup(source))
-  .AddAutoHelp()  // Enable automatic help
+  .Map("deploy {env}")
+    .WithHandler((string env) => Deploy(env))
+    .AsCommand()
+    .Done()
+  .Map("backup {source}")
+    .WithHandler((string source) => Backup(source))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
-This automatically creates:
+This creates:
 - `--help` or `-h` - Shows all available commands
 - `<command> --help` - Shows usage for that command. When several routes share its literal prefix, each of those routes is listed.
 
@@ -38,17 +43,14 @@ Use the pipe (`|`) syntax to add descriptions to parameters and options:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
-  .Map
-  (
-    "deploy {env|Target environment} {tag?|Optional version tag}",
-    (string env, string? tag) => Deploy(env, tag)
-  )
-  .Map
-  (
-    "backup {source|Source directory} --compress,-c|Enable compression",
-    (string source, bool compress) => Backup(source, compress)
-  )
-  .AddAutoHelp()
+  .Map("deploy {env|Target environment} {tag?|Optional version tag}")
+    .WithHandler((string env, string? tag) => Deploy(env, tag))
+    .AsCommand()
+    .Done()
+  .Map("backup {source|Source directory} --compress,-c|Enable compression")
+    .WithHandler((string source, bool compress) => Backup(source, compress))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -107,27 +109,22 @@ Options:
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
-  .Map
-  (
-    "version|Show application version",
-    () => Console.WriteLine("MyApp v1.0.0")
-  )
-  .Map
-  (
-    "deploy {env|Environment (prod/staging/dev)} {tag?|Version tag}",
-    (string env, string? tag) => Deploy(env, tag)
-  )
-  .Map
-  (
-    "backup {source|Source path} {dest?|Destination path} --compress,-c|Compress backup",
-    (string source, string? dest, bool compress) => Backup(source, dest, compress)
-  )
-  .Map
-  (
-    "logs {service|Service name} --tail,-t {lines:int|Number of lines}",
-    (string service, int lines) => ShowLogs(service, lines)
-  )
-  .AddAutoHelp()
+  .Map("version|Show application version")
+    .WithHandler(() => Console.WriteLine("MyApp v1.0.0"))
+    .AsCommand()
+    .Done()
+  .Map("deploy {env|Environment (prod/staging/dev)} {tag?|Version tag}")
+    .WithHandler((string env, string? tag) => Deploy(env, tag))
+    .AsCommand()
+    .Done()
+  .Map("backup {source|Source path} {dest?|Destination path} --compress,-c|Compress backup")
+    .WithHandler((string source, string? dest, bool compress) => Backup(source, dest, compress))
+    .AsCommand()
+    .Done()
+  .Map("logs {service|Service name} --tail,-t {lines:int|Number of lines}")
+    .WithHandler((string service, int lines) => ShowLogs(service, lines))
+    .AsCommand()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);
@@ -197,10 +194,14 @@ Format: `--option,-o|description`
 
 ### Command Descriptions
 
-Format: `"pattern|description"`
+Use `.WithDescription(...)` on the endpoint builder:
 
 ```csharp
-.Map("version|Show application version", handler)
+.Map("version")
+  .WithHandler(handler)
+  .WithDescription("Show application version")
+  .AsQuery()
+  .Done()
 ```
 
 ### Command Examples
@@ -232,14 +233,17 @@ A route with no examples declared omits the "Examples:" section entirely.
 You can provide custom help handlers:
 
 ```csharp
-builder.Map("--help", () =>
-{
+builder.Map("--help")
+  .WithHandler(() =>
+  {
     Console.WriteLine("MyApp - Custom Help");
     Console.WriteLine();
     Console.WriteLine("Commands:");
     Console.WriteLine("  deploy {env}     Deploy to environment");
     Console.WriteLine("  backup {source}  Backup files");
-});
+  })
+  .AsQuery()
+  .Done();
 ```
 
 ### Conditional Help
@@ -247,8 +251,14 @@ builder.Map("--help", () =>
 Show different help based on context:
 
 ```csharp
-builder.Map("deploy --help", () => ShowDeployHelp());
-builder.Map("backup --help", () => ShowBackupHelp());
+builder.Map("deploy --help")
+  .WithHandler(() => ShowDeployHelp())
+  .AsQuery()
+  .Done();
+builder.Map("backup --help")
+  .WithHandler(() => ShowBackupHelp())
+  .AsQuery()
+  .Done();
 ```
 
 ## Best Practices
@@ -286,9 +296,18 @@ builder.Map("backup --help", () => ShowBackupHelp());
 ### Subcommands
 
 ```csharp
-builder.Map("git --help", () => ShowGitHelp());
-builder.Map("git commit --help", () => ShowGitCommitHelp());
-builder.Map("git push --help", () => ShowGitPushHelp());
+builder.Map("git --help")
+  .WithHandler(() => ShowGitHelp())
+  .AsQuery()
+  .Done();
+builder.Map("git commit --help")
+  .WithHandler(() => ShowGitCommitHelp())
+  .AsQuery()
+  .Done();
+builder.Map("git push --help")
+  .WithHandler(() => ShowGitPushHelp())
+  .AsQuery()
+  .Done();
 ```
 
 ### Option Groups
@@ -301,9 +320,11 @@ builder.Map
   "serve {port:int|Port number} " +
   "--host {addr|Host address} " +
   "--ssl|Enable SSL " +
-  "--cert {path|Certificate path}",
-  handler
-);
+  "--cert {path|Certificate path}"
+)
+  .WithHandler(handler)
+  .AsCommand()
+  .Done();
 ```
 
 Help output shows options logically grouped.

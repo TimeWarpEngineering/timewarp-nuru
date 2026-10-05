@@ -22,13 +22,18 @@ Maximum performance with minimal overhead.
 **Example:**
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
-  .Map("version", () => Console.WriteLine("v1.0.0"))
-  .Map("ping", () => Console.WriteLine("pong"))
-  .Map
-  (
-    "add {x:double} {y:double}",
-    (double x, double y) => Console.WriteLine(x + y)
-  )
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("v1.0.0"))
+    .AsQuery()
+    .Done()
+  .Map("ping")
+    .WithHandler(() => Console.WriteLine("pong"))
+    .AsQuery()
+    .Done()
+  .Map("add {x:double} {y:double}")
+    .WithHandler((double x, double y) => Console.WriteLine(x + y))
+    .AsCommand()
+    .Done()
   .Build();
 ```
 
@@ -57,8 +62,8 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddSingleton<IDatabase, Database>();
     services.AddScoped<IAnalyzer, Analyzer>();
   })
-  .Map<QueryCommand>("query {sql}")
-  .Map<AnalyzeCommand>("analyze {*files}")
+  .Map<QueryCommand>()
+  .Map<AnalyzeCommand>()
   .Build();
 ```
 
@@ -84,11 +89,17 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddScoped<IDeploymentService, DeploymentService>();
   })
   // Direct: Simple, fast commands
-  .Map("version", () => Console.WriteLine("v1.0"))
-  .Map("ping", () => Console.WriteLine("pong"))
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("v1.0"))
+    .AsQuery()
+    .Done()
+  .Map("ping")
+    .WithHandler(() => Console.WriteLine("pong"))
+    .AsQuery()
+    .Done()
   // Mediator: Complex commands with DI
-  .Map<DeployCommand>("deploy {env} --dry-run")
-  .Map<AnalyzeCommand>("analyze {*files}")
+  .Map<DeployCommand>()
+  .Map<AnalyzeCommand>()
   .Build();
 ```
 
@@ -134,17 +145,16 @@ See [Performance Reference](../reference/performance.md) for detailed benchmarks
 **Direct:**
 ```csharp
 // All in one place
-builder.Map
-(
-  "deploy {env}",
-  (string env) =>
+builder.Map("deploy {env}")
+  .WithHandler((string env) =>
   {
     ValidateEnvironment(env);
     DeploymentConfig config = LoadConfig(env);
     ExecuteDeployment(config);
     LogSuccess(env);
-  }
-);
+  })
+  .AsCommand()
+  .Done();
 ```
 
 **With DI:**
@@ -179,7 +189,7 @@ Assert.Equal(0, result);
 ```csharp
 // Test via TestTerminal
 using TestTerminal terminal = new();
-NuruApp app = NuruApp.CreateBuilder([])
+NuruApp app = NuruApp.CreateBuilder()
   .UseTerminal(terminal)
   .ConfigureServices(services =>
   {
@@ -206,7 +216,10 @@ mockDeployment.Verify(x => x.ExecuteAsync("test"), Times.Once);
 ```csharp
 // Phase 1: Start simple
 NuruApp app = NuruApp.CreateBuilder()
-  .Map("deploy {env}", (string env) => Deploy(env))
+  .Map("deploy {env}")
+    .WithHandler((string env) => Deploy(env))
+    .AsCommand()
+    .Done()
   .Build();
 
 // Phase 2: Add DI for new complex command
@@ -215,8 +228,11 @@ NuruApp app2 = NuruApp.CreateBuilder()
   {
     services.AddScoped<IAnalyzer, Analyzer>();
   })
-  .Map("deploy {env}", (string env) => Deploy(env))  // Keep existing
-  .Map<AnalyzeCommand>("analyze {*files}")  // New complex command
+  .Map("deploy {env}")
+    .WithHandler((string env) => Deploy(env))
+    .AsCommand()
+    .Done()  // Keep existing
+  .Map<AnalyzeCommand>()  // New complex command
   .Build();
 
 // Phase 3: Migrate deploy to mediator if needed
@@ -228,10 +244,13 @@ NuruApp app2 = NuruApp.CreateBuilder()
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
   // Most commands use mediator
-  .Map<DeployCommand>("deploy {env}")
-  .Map<AnalyzeCommand>("analyze {*files}")
+  .Map<DeployCommand>()
+  .Map<AnalyzeCommand>()
   // Optimize hot path with direct approach
-  .Map("ping", () => "pong")  // Called frequently, needs speed
+  .Map("ping")
+    .WithHandler(() => "pong")
+    .AsQuery()
+    .Done()  // Called frequently, needs speed
   .Build();
 ```
 
@@ -243,9 +262,18 @@ NuruApp app = NuruApp.CreateBuilder()
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
-  .Map("encode {text}", (string text) => Base64.Encode(text))
-  .Map("decode {text}", (string text) => Base64.Decode(text))
-  .Map("hash {file}", (string file) => ComputeHash(file))
+  .Map("encode {text}")
+    .WithHandler((string text) => Base64.Encode(text))
+    .AsQuery()
+    .Done()
+  .Map("decode {text}")
+    .WithHandler((string text) => Base64.Decode(text))
+    .AsQuery()
+    .Done()
+  .Map("hash {file}")
+    .WithHandler((string file) => ComputeHash(file))
+    .AsQuery()
+    .Done()
   .Build();
 ```
 
@@ -263,8 +291,8 @@ NuruApp app = NuruApp.CreateBuilder()
     services.AddTelemetry();
   })
   // All commands use mediator
-  .Map<UserCreateCommand>("user create {email}")
-  .Map<ReportGenerateCommand>("report generate {type}")
+  .Map<UserCreateCommand>()
+  .Map<ReportGenerateCommand>()
   // ... 98 more commands
   .Build();
 ```
@@ -284,11 +312,17 @@ NuruApp app = NuruApp.CreateBuilder()
     }
   )
   // Simple direct commands
-  .Map("version", () => Console.WriteLine("v2.0"))
-  .Map("status", () => ShowStatus())
+  .Map("version")
+    .WithHandler(() => Console.WriteLine("v2.0"))
+    .AsQuery()
+    .Done()
+  .Map("status")
+    .WithHandler(() => ShowStatus())
+    .AsQuery()
+    .Done()
   // Complex commands with DI
-  .Map<DeployCommand>("deploy {env} --dry-run")
-  .Map<RollbackCommand>("rollback {env} --to {version}")
+  .Map<DeployCommand>()
+  .Map<RollbackCommand>()
   .Build();
 ```
 
@@ -299,7 +333,10 @@ NuruApp app = NuruApp.CreateBuilder()
 ```csharp
 // ✅ Start with direct approach
 NuruApp app = NuruApp.CreateBuilder()
-  .Map("greet {name}", (string name) => $"Hello, {name}!")
+  .Map("greet {name}")
+    .WithHandler((string name) => $"Hello, {name}!")
+    .AsQuery()
+    .Done()
   .Build();
 
 // ❌ Don't over-engineer from the start
@@ -312,7 +349,7 @@ NuruApp app = NuruApp.CreateBuilder()
       services.AddScoped<IGreetingFormatter, GreetingFormatter>();
     }
   )
-  .Map<GreetCommand>("greet {name}")  // Overkill for simple greeting
+  .Map<GreetCommand>()  // Overkill for simple greeting
   .Build();
 ```
 
@@ -331,10 +368,16 @@ Migrate to mediator when:
 NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services => services.AddComplexServices();)
   // Direct for simple operations
-  .Map("ping", () => "pong")
-  .Map("version", () => "1.0")
+  .Map("ping")
+    .WithHandler(() => "pong")
+    .AsQuery()
+    .Done()
+  .Map("version")
+    .WithHandler(() => "1.0")
+    .AsQuery()
+    .Done()
   // Mediator for complex operations
-  .Map<ComplexCommand>("complex {arg}")
+  .Map<ComplexCommand>()
   // Both in same app - totally fine!
   .Build();
 ```

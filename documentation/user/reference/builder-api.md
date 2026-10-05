@@ -234,20 +234,28 @@ Methods available on `NuruApp` after building:
 
 ### Exit Codes
 
-- **0**: Success
-- **Non-zero**: Failure (handler threw exception)
+`RunAsync` returns the process exit code:
 
-Handler return values are written to terminal output, not used as exit codes:
+- **0**: The matched route finished and `Environment.ExitCode` is still 0.
+- **Non-zero**: The handler set `Environment.ExitCode`, or the generated host returned 1 because argument binding failed or no route matched.
+
+Handler return values are written to the terminal. They are not the exit code. A handler exception is not turned into exit code 1. It propagates out of `RunAsync`. When telemetry is enabled, the host records `error.type` and rethrows.
 
 ```csharp
-// Outputs "42" to terminal, returns exit code 0
+// Writes "42" to the terminal. The exit code stays Environment.ExitCode (0 unless the handler sets it).
 .Map("answer")
   .WithHandler(() => 42)
+  .AsCommand()
   .Done()
 
-// To signal failure, throw an exception
+// Signal failure by setting the exit code. The return value is still terminal output.
 .Map("fail")
-  .WithHandler(() => throw new Exception("Something went wrong"))
+  .WithHandler(() =>
+  {
+    Environment.ExitCode = 2;
+    return "failed";
+  })
+  .AsCommand()
   .Done()
 ```
 

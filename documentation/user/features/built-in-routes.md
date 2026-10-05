@@ -6,42 +6,40 @@ When you use `NuruApp.CreateBuilder()`, several utility routes are built in to p
 
 | Route | Description |
 |-------|-------------|
-| `--version`, `-v` | Display version information |
+| `--version` | Display version information. There is no `-v` alias. |
 | `--check-updates` | Check GitHub for newer versions (opt-in via `AddCheckUpdatesRoute()`) |
 | `--help`, `-h` | Show help (see [Auto-Help](auto-help.md)) |
 | `--interactive`, `-i` | Enter REPL mode (requires `AddRepl()`) |
 | `--capabilities` | Machine-readable endpoint catalog for agents |
 | `--json-args <value>` | Bind parameter and option values from JSON |
 
-## Version Route (`--version`, `-v`)
+## Version Route (`--version`)
 
-Displays version information about your application.
+Displays the application version. `CreateBuilder()` registers this route. There is no `-v` form.
 
 ### Output Format
 
 ```bash
 $ myapp --version
 1.2.3
-Commit: abc1234567890def1234567890abcdef12345678
-Date: 2024-01-15T10:30:00Z
+```
+
+When the app model has a name, that name is written on the same line before the version:
+
+```bash
+$ myapp --version
+MyApp 1.2.3
 ```
 
 ### What It Displays
 
-- **Version**: The assembly informational version (or simple version as fallback)
-- **Commit**: Full git commit hash (if available)
-- **Date**: Commit timestamp (if available)
+`VersionEmitter` writes one line:
 
-### Prerequisites
+1. The assembly informational version, when `AssemblyInformationalVersionAttribute` is present.
+2. Otherwise `AssemblyName.Version`.
+3. Otherwise `1.0.0`.
 
-The commit hash and date are automatically injected by **TimeWarp.Build.Tasks**, which is a transitive dependency of TimeWarp.Nuru. No additional configuration is required.
-
-If commit information isn't available, only the version number is displayed:
-
-```bash
-$ myapp --version
-1.2.3
-```
+It does not write a commit hash or a commit date.
 
 ## Check Updates Route (`--check-updates`)
 
@@ -83,8 +81,8 @@ Unable to check for updates: RepositoryUrl not configured in project
 ### Version Comparison Logic
 
 - Compares SemVer versions (major.minor.patch)
-- Pre-release versions (e.g., `1.0.0-beta.1`) only compare against other pre-releases
-- Stable versions only compare against stable releases
+- A stable current version is compared only with stable GitHub releases
+- A pre-release current version (the version string contains `-`, for example `1.0.0-beta.1`) is compared with every release, stable and pre-release
 - Colored output: green checkmark for up-to-date, yellow warning for updates
 
 ## Interactive Route (`--interactive`, `-i`)

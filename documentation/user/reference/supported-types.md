@@ -10,6 +10,7 @@ TimeWarp.Nuru includes converters for common .NET types:
 |-------------|---------|-----------------|---------------|
 | `string` (default) | `string` | `{name}` or `{name:string}` | `"Alice"` |
 | `int` | `Int32` | `{count:int}` | `42`, `-10` |
+| `float` | `Single` | `{ratio:float}` | `0.5`, `-1.25` |
 | `double` | `Double` | `{price:double}` | `3.14`, `-2.5` |
 | `bool` | `Boolean` | `{enabled:bool}` | `true`, `false` |
 | `DateTime` | `DateTime` | `{date:DateTime}` | `2025-01-15` |
@@ -361,16 +362,16 @@ builder.Map("test {value:DateTime}")
   .WithHandler(handler)
   .AsCommand()
   .Done();
+builder.Map("test {value:float}")
+  .WithHandler(handler)
+  .AsCommand()
+  .Done();
 
 // ❌ Invalid type (analyzer error NURU_P004)
 builder.Map("test {value:integer}")
   .WithHandler(handler)
   .AsCommand()
   .Done();  // Use 'int'
-builder.Map("test {value:float}")
-  .WithHandler(handler)
-  .AsCommand()
-  .Done();    // Use 'double'
 ```
 
 See [Analyzer Documentation](../features/analyzer.md) for more details.

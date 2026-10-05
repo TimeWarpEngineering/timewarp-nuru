@@ -61,13 +61,34 @@ NuruApp app = NuruApp.CreateBuilder()
     .Done()
   .EnableCompletion(configure: registry =>
   {
-    // Complete "env" parameter from a list
-    registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
+    // Complete "env" from your ICompletionSource. The package has no StaticCompletionSource.
+    registry.RegisterForParameter("env", new EnvironmentCompletionSource());
 
     // Complete "tag" parameter dynamically (could query Git, Docker registry, etc.)
     registry.RegisterForParameter("tag", new TagCompletionSource());
   })
   .Build();
+
+sealed class EnvironmentCompletionSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    _ = context;
+    yield return new CompletionCandidate("dev", "Development", CompletionType.Parameter);
+    yield return new CompletionCandidate("staging", "Staging", CompletionType.Parameter);
+    yield return new CompletionCandidate("prod", "Production", CompletionType.Parameter);
+  }
+}
+
+// Another ICompletionSource you write. This one is a stand-in for a Git or registry query.
+sealed class TagCompletionSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    _ = context;
+    yield return new CompletionCandidate("v1.2.3", "Current release", CompletionType.Parameter);
+  }
+}
 ```
 
 ### 3. Install Shell Completion
@@ -644,9 +665,12 @@ public static TBuilder EnableCompletion<TBuilder>(
 NuruApp.CreateBuilder()
   .EnableCompletion(configure: registry =>
   {
-    registry.RegisterForParameter("env", new StaticCompletionSource("dev", "staging", "prod"));
-    registry.RegisterForType(typeof(MyEnum), new EnumCompletionSource<MyEnum>());
+    registry.RegisterForParameter("env", new EnvironmentCompletionSource());
+    registry.RegisterForType(typeof(LogLevel), new EnumCompletionSource<LogLevel>());
   });
+
+// EnvironmentCompletionSource is the user type shown under Customizing Completion Sources.
+// EnumCompletionSource<TEnum> is built in. Its candidates are the enum names.
 ```
 
 **Registers these routes:**

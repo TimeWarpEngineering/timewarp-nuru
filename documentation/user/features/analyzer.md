@@ -18,10 +18,10 @@ builder.Map("run {file?} {*args}").WithHandler(handler).AsCommand().Done();  // 
 
 ## Installation
 
-**No separate installation needed!** The analyzer is automatically included with TimeWarp.Nuru (version 2.1.0-beta.9+).
+**No separate installation needed!** The analyzer ships inside the TimeWarp.Nuru package.
 
 ```xml
-<PackageReference Include="TimeWarp.Nuru" Version="2.1.0-beta.9" />
+<PackageReference Include="TimeWarp.Nuru" />
 ```
 
 The analyzer:
@@ -37,9 +37,6 @@ Syntax issues in route patterns - malformed brackets, invalid characters, unsupp
 
 ### Semantic Errors (NURU_S###)
 Logical issues that create ambiguity or conflicts - duplicate parameters, invalid parameter ordering, incompatible combinations.
-
-### Dependency Errors (NURU_D###)
-Missing package dependencies required for specific features.
 
 ## Common Errors and Fixes
 
@@ -104,7 +101,7 @@ builder.Map("process {id:integer}").WithHandler(handler).AsCommand().Done();
 builder.Map("process {id:int}").WithHandler(handler).AsCommand().Done();
 ```
 
-**Supported types**: `string`, `int`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`, `uri`
+**Supported types**: `string`, `int`, `float`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`, `uri`
 
 See [Supported Types](../reference/supported-types.md) for complete list.
 
@@ -174,20 +171,25 @@ builder.Map("copy {source?} {dest}").WithHandler(handler).AsCommand().Done();
 builder.Map("copy {source} {dest?}").WithHandler(handler).AsCommand().Done();
 ```
 
-### NURU_D001: Missing Mediator Packages
+### Typed endpoints
 
-**Problem**: Using `Map<TCommand>` without required Mediator packages
+`.Map<TEndpoint>()` takes no pattern argument. Put the route on `[NuruRoute]`. There is no `NURU_D001` diagnostic.
 
 ```csharp
-// ❌ Error: Mediator packages not installed
-builder.Map<PingCommand>("ping");
+using TimeWarp.Mediator;
+using TimeWarp.Nuru;
 
-// ✅ Fix: Install packages
-// dotnet add package Mediator.Abstractions
-// dotnet add package Mediator.SourceGenerator
+[NuruRoute("ping", Description = "Send a ping")]
+public sealed class PingCommand : ICommand<Unit>
+{
+}
+
+NuruApp app = NuruApp.CreateBuilder()
+  .Map<PingCommand>()
+  .Build();
 ```
 
-The `Map<TCommand>` pattern uses [Mediator](https://github.com/martinothamar/Mediator) for request handling. Both packages must be directly referenced (not transitive).
+`ICommand<T>` and `Unit` come from `TimeWarp.Mediator`. See [Endpoints](endpoints.md).
 
 ## IDE Integration
 
@@ -275,23 +277,9 @@ dotnet_diagnostic.NURU_S002.severity = none     # Completely suppress
 
 ⚠️ **Warning**: Suppressing errors can lead to runtime failures. The analyzer exists to prevent patterns that will fail at runtime.
 
-## Debug Diagnostics
+## Severity Values
 
-TimeWarp.Nuru includes debug diagnostics (NURU_DEBUG*) that are hidden by default. These provide detailed information about the source generator's processing.
-
-### Enabling Debug Diagnostics
-
-Add to your `.editorconfig`:
-
-```ini
-[*.cs]
-# Enable specific debug diagnostics
-dotnet_diagnostic.NURU_DEBUG001.severity = suggestion
-dotnet_diagnostic.NURU_DEBUG002.severity = suggestion
-
-# Or enable all debug diagnostics
-dotnet_diagnostic.NURU_DEBUG.severity = suggestion
-```
+There is no `NURU_DEBUG` diagnostic id.
 
 ### Available Severity Values
 
@@ -304,15 +292,6 @@ dotnet_diagnostic.NURU_DEBUG.severity = suggestion
 | `error` | Shows as compiler error |
 
 **Note:** `info` is NOT a valid severity value (common mistake).
-
-### Why Hidden by Default?
-
-Debug diagnostics are verbose and primarily useful for:
-- Troubleshooting source generator issues
-- Understanding what routes are being generated
-- Debugging custom type converter registration
-
-For normal development, keep them hidden.
 
 ## All Error Codes
 
@@ -340,12 +319,6 @@ For normal development, keep them hidden.
 | NURU_S006 | Optional before required |
 | NURU_S007 | Invalid end-of-options separator |
 | NURU_S008 | Options after end-of-options separator |
-
-### Dependency Errors (NURU_D###)
-
-| Code | Description |
-|------|-------------|
-| NURU_D001 | Missing Mediator packages for Map&lt;TCommand&gt; |
 
 ## Related Documentation
 

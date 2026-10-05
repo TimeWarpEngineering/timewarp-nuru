@@ -108,14 +108,23 @@ Registers custom completion sources for shell tab-completion.
 NuruApp.CreateBuilder()
   .EnableCompletion(configure: registry =>
   {
-    // Static completions for a parameter name
-    registry.RegisterForParameter("env",
-      new StaticCompletionSource("dev", "staging", "prod"));
+    // Your type. The package does not ship a static-list completion source.
+    registry.RegisterForParameter("env", new EnvironmentCompletionSource());
 
-    // Completions for all parameters of a type
-    registry.RegisterForType(typeof(LogLevel),
-      new StaticCompletionSource("debug", "info", "warning", "error"));
+    // Built-in source. Candidates are the enum names (Trace, Debug, Information, ...).
+    registry.RegisterForType(typeof(LogLevel), new EnumCompletionSource<LogLevel>());
   });
+
+sealed class EnvironmentCompletionSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    _ = context;
+    yield return new CompletionCandidate("dev", "Development", CompletionType.Parameter);
+    yield return new CompletionCandidate("staging", "Staging", CompletionType.Parameter);
+    yield return new CompletionCandidate("prod", "Production", CompletionType.Parameter);
+  }
+}
 ```
 
 ### Shell vs REPL Completion
@@ -166,7 +175,7 @@ See [Auto-Help](../features/auto-help.md) for help generation details.
 
 ## Built-in Routes
 
-`--help`, `--version`, `-v` and `--interactive`, `-i` (REPL) are built in. `--check-updates` is added with `AddCheckUpdatesRoute()`.
+`--help` and `-h` are built in. `--version` is built in and has no `-v` alias. `--interactive` and `-i` are registered when you call `AddRepl()`. `--check-updates` is added with `AddCheckUpdatesRoute()`.
 
 ```csharp
 NuruApp.CreateBuilder()
@@ -186,16 +195,11 @@ Requires `RepositoryUrl` in your project file:
 </PropertyGroup>
 ```
 
-The built-in version route displays:
-- Assembly informational version (or simple version as fallback)
-- Git commit hash (if available from TimeWarp.Build.Tasks)
-- Commit date (if available)
+The built-in version route writes one line: the assembly informational version, or `AssemblyName.Version`, or `1.0.0`. When the app model has a name, that name is written before the version on the same line. It does not write a commit hash or a commit date.
 
 ```bash
 $ myapp --version
 1.2.3
-Commit: abc1234567890def1234567890abcdef12345678
-Date: 2024-01-15T10:30:00Z
 ```
 
 ## Complete Example
@@ -220,8 +224,7 @@ NuruApp app = NuruApp.CreateBuilder()
   // Register completions
   .EnableCompletion(configure: registry =>
   {
-    registry.RegisterForParameter("operation",
-      new StaticCompletionSource("add", "subtract", "multiply", "divide"));
+    registry.RegisterForParameter("operation", new OperationCompletionSource());
   })
   // Hide internal routes from help
   .ConfigureHelp(options =>
@@ -239,6 +242,18 @@ NuruApp app = NuruApp.CreateBuilder()
   .Build();
 
 return await app.RunAsync(args);
+
+sealed class OperationCompletionSource : ICompletionSource
+{
+  public IEnumerable<CompletionCandidate> GetCompletions(CompletionContext context)
+  {
+    _ = context;
+    yield return new CompletionCandidate("add", null, CompletionType.Parameter);
+    yield return new CompletionCandidate("subtract", null, CompletionType.Parameter);
+    yield return new CompletionCandidate("multiply", null, CompletionType.Parameter);
+    yield return new CompletionCandidate("divide", null, CompletionType.Parameter);
+  }
+}
 ```
 
 ## Related Documentation

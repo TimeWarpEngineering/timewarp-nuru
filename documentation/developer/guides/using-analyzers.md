@@ -4,21 +4,20 @@ TimeWarp.Nuru includes built-in analyzers that provide compile-time validation o
 
 ## Installation
 
-**No separate installation needed!** Starting with version 2.1.0-beta.9, the analyzers are automatically included with the main TimeWarp.Nuru package.
+**No separate installation needed!** The analyzers ship inside the TimeWarp.Nuru package.
 
 ```xml
-<PackageReference Include="TimeWarp.Nuru" Version="2.1.0-beta.9" />
+<PackageReference Include="TimeWarp.Nuru" />
 ```
 
 The analyzers run during compilation only and don't affect runtime performance or application size.
 
 ## Error Categories
 
-Nuru uses three categories of diagnostics:
+Nuru uses two categories of diagnostics:
 
 - **Parse Errors (NURU_P###)**: Syntax issues in route patterns
 - **Semantic Errors (NURU_S###)**: Validation issues that create ambiguity or conflicts
-- **Dependency Errors (NURU_D###)**: Missing package dependencies for specific features
 
 ---
 
@@ -50,18 +49,25 @@ builder.Map("deploy {env}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_P003: Invalid Option Format
-Ensures options follow proper naming conventions.
+
+The diagnostic message is “options must start with '--' or '-'”. A token that already starts with `-` or `--` is an option. That includes multi-character single-dash names.
 
 ```csharp
-// ❌ Error: Invalid option format
-builder.Map("build -verbose").WithHandler(handler).AsCommand().Done();  // Multi-character single-dash
-
-// ✅ Correct: Use double-dash for long options
+// ✅ Correct: Double-dash for long options
 builder.Map("build --verbose").WithHandler(handler).AsCommand().Done();
 
-// ✅ Correct: Single dash for single character
+// ✅ Correct: Single dash, single character
 builder.Map("build -v").WithHandler(handler).AsCommand().Done();
+
+// ✅ Correct: Single dash, multi-character (dotnet/msbuild style)
+builder.Map("build -verbose").WithHandler(handler).AsCommand().Done();
+builder.Map("build -bl").WithHandler(handler).AsCommand().Done();
+
+// ✅ Best: Provide both long and short forms
+builder.Map("build --verbose,-v").WithHandler(handler).AsCommand().Done();
 ```
+
+Matching is exact, so POSIX-style flag grouping (`-la` meaning `-l` and `-a`) is not supported. The current parser does not construct `InvalidOptionFormatError` for a dash-prefixed token.
 
 ### NURU_P004: Invalid Type Constraint
 Validates that parameter types are supported.
@@ -213,26 +219,25 @@ builder.Map("run --verbose -- {*args}").WithHandler(handler).AsCommand().Done();
 
 ---
 
-## Dependency Errors (NURU_D###)
+## Typed endpoints
 
-### NURU_D001: Missing Mediator Packages
-The `Map<TCommand>` pattern requires Mediator packages to be directly referenced.
+`.Map<TEndpoint>()` takes no pattern argument. The route lives on `[NuruRoute]`. There is no `NURU_D001` diagnostic.
 
 ```csharp
-// ❌ Error: Mediator packages not installed
-var app = NuruApp.CreateBuilder()
-  .ConfigureServices(services => services.AddMediator())
-  .Map<PingCommand>("ping")  // NURU_D001
-  .Build();
+using TimeWarp.Mediator;
+using TimeWarp.Nuru;
 
-// ✅ Fix: Add package references
-// dotnet add package Mediator.Abstractions
-// dotnet add package Mediator.SourceGenerator
+[NuruRoute("ping", Description = "Send a ping")]
+public sealed class PingCommand : ICommand<Unit>
+{
+}
+
+NuruApp app = NuruApp.CreateBuilder()
+  .Map<PingCommand>()
+  .Build();
 ```
 
-**Why direct references?** The `Mediator.SourceGenerator` generates an `AddMediator()` extension method in your assembly. Transitive references don't trigger source generation.
-
-**Detection**: The analyzer checks if a generated `AddMediator` extension method exists on `IServiceCollection`. If not found, it reports the diagnostic.
+Mediator contracts (`ICommand<T>`, `Unit`, handlers) come from `TimeWarp.Mediator`, which the Nuru package references. The generated host calls `AddGeneratedMediator()`. Do not reference `Mediator.Abstractions` or `Mediator.SourceGenerator`, and do not call `AddMediator()`. See [Endpoints](../../user/features/endpoints.md) for a handler.
 
 ---
 
@@ -317,12 +322,3 @@ builder.Map("deploy {env} --version? {ver?}").WithHandler(handler).AsCommand().D
 - [Syntax Rules](../design/parser/syntax-rules.md) - Complete route pattern syntax reference
 - [Parameter Optionality](../design/cross-cutting/parameter-optionality.md) - Nullability-based optional design
 - [Error Handling](../design/cross-cutting/error-handling.md) - Runtime error handling
-
----
-
-## Debug Diagnostic
-
-### NURU_DEBUG (Hidden)
-Development diagnostic for verifying route detection. Not visible in normal builds.
-
-This diagnostic is used during analyzer development to verify that routes are being detected correctly. It's hidden by default and doesn't affect your build.

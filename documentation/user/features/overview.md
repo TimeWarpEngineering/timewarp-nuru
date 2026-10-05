@@ -36,10 +36,9 @@ Automatic help generation:
 - Auto-generated usage examples
 
 ### [Built-in Routes](built-in-routes.md)
-Routes auto-registered by `NuruApp.CreateBuilder()`:
-- `--version, -v` - Display version with commit info
-- `--check-updates` - Check GitHub for newer versions
-- `--interactive, -i` - Enter REPL mode
+- `--version` - Assembly informational version, with the app name as a prefix when one is set. Registered by `NuruApp.CreateBuilder()`. There is no `-v` alias.
+- `--check-updates` - Check GitHub for newer versions. Opt-in via `AddCheckUpdatesRoute()`.
+- `--interactive, -i` - Enter REPL mode. Requires `AddRepl()`.
 - Configuration via [Builder Configuration Options](../reference/nuru-app-options.md)
 
 ### [Agent invocation](agent-invocation.md)

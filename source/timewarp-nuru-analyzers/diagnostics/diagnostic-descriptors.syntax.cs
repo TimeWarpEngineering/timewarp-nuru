@@ -67,4 +67,31 @@ internal static partial class DiagnosticDescriptors
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
       description: "The route pattern must not be null.");
+
+  public static readonly DiagnosticDescriptor InvalidIdentifier = new(
+      id: "NURU_P008",
+      title: "Invalid identifier in route pattern",
+      messageFormat: "Invalid identifier '{0}' - identifiers must start with a letter or underscore and contain only letters, digits, and underscores",
+      category: SyntaxCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "Parameter names must be valid identifiers (e.g., {my_param} rather than {my-param}).");
+
+  public static readonly DiagnosticDescriptor InvalidModifierCombination = new(
+      id: "NURU_P009",
+      title: "Invalid parameter modifier combination",
+      messageFormat: "Parameter '{0}' cannot combine catch-all (*) and optional (?) modifiers",
+      category: SyntaxCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "A catch-all parameter already accepts zero or more values, so it cannot also be marked optional.");
+
+  public static readonly DiagnosticDescriptor AdjacentParameters = new(
+      id: "NURU_P010",
+      title: "Adjacent parameters in route pattern",
+      messageFormat: "Adjacent parameters must be separated by whitespace (e.g., '{0}' rather than '{1}')",
+      category: SyntaxCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "Each parameter must be its own whitespace-separated segment of the route pattern.");
 }

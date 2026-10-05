@@ -42,8 +42,9 @@ public sealed class IrGroupBuilder<TParent> : IIrGroupBuilder
   {
     // Extract segments from the pattern only (not including prefix).
     // The GroupPrefix is stored separately and prepended by RouteDefinition.PositionalMatchSegments.
-    ImmutableArray<SegmentDefinition> segments = PatternStringExtractor.ExtractSegments(pattern);
-    return new IrRouteBuilder<IrGroupBuilder<TParent>>(this, pattern, segments, RegisterRoute, AccumulatedPrefix);
+    // An invalid pattern is reported as a diagnostic by the interpreter and is never registered.
+    PatternParseResult parseResult = PatternStringExtractor.ExtractSegmentsWithErrors(pattern);
+    return new IrRouteBuilder<IrGroupBuilder<TParent>>(this, pattern, parseResult.Segments, RegisterRoute, AccumulatedPrefix, parseResult.Success);
   }
 
   /// <summary>

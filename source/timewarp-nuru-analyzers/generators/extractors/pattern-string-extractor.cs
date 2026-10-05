@@ -76,9 +76,9 @@ internal static class PatternStringExtractor
 
     if (!success)
     {
-      // Return errors along with a fallback literal segment
+      // No fallback segments: an invalid pattern must not become a route
       return PatternParseResult.Failed(
-        [new LiteralDefinition(0, pattern)],
+        [],
         parseErrors,
         semanticErrors);
     }
@@ -91,7 +91,7 @@ internal static class PatternStringExtractor
     {
       // Shouldn't happen if TryParse succeeded, but handle it anyway
       return PatternParseResult.Failed(
-        [new LiteralDefinition(0, pattern)],
+        [],
         parseErrors,
         semanticErrors);
     }

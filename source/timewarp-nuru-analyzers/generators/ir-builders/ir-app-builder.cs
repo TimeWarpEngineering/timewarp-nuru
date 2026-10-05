@@ -280,8 +280,9 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   /// <returns>An IrRouteBuilder for configuring the route.</returns>
   public IrRouteBuilder<TSelf> Map(string pattern)
   {
-    ImmutableArray<SegmentDefinition> segments = PatternStringExtractor.ExtractSegments(pattern);
-    return new IrRouteBuilder<TSelf>((TSelf)this, pattern, segments, RegisterRoute);
+    // An invalid pattern is reported as a diagnostic by the interpreter and is never registered.
+    PatternParseResult parseResult = PatternStringExtractor.ExtractSegmentsWithErrors(pattern);
+    return new IrRouteBuilder<TSelf>((TSelf)this, pattern, parseResult.Segments, RegisterRoute, isValid: parseResult.Success);
   }
 
   /// <summary>

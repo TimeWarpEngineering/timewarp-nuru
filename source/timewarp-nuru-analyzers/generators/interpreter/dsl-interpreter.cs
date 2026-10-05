@@ -866,6 +866,15 @@ public sealed class DslInterpreter
       NullPatternError =>
         Diagnostic.Create(DiagnosticDescriptors.NullPattern, location),
 
+      InvalidIdentifierError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidIdentifier, location, e.InvalidIdentifier),
+
+      InvalidModifierCombinationError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidModifierCombination, location, e.ParameterName),
+
+      AdjacentParametersError =>
+        Diagnostic.Create(DiagnosticDescriptors.AdjacentParameters, location),
+
       _ => null
     };
   }

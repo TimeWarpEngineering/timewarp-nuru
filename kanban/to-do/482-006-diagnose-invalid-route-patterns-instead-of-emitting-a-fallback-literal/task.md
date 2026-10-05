@@ -16,25 +16,57 @@ Evidence: `source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter
 
 ## Checklist
 
-- [ ] `{a}{b}`, `{*name?}`, and `{my-param}` each report a NURU diagnostic with an id, category, and a user-facing message
-- [ ] Those patterns do not emit a fallback literal route
-- [ ] Add an asserting test for each of the three errors
-- [ ] A pattern that already has a diagnostic (unbalanced braces, bad option) still reports that diagnostic and still does not emit a matching route
+- [x] `{a}{b}`, `{*name?}`, and `{my-param}` each report a NURU diagnostic with an id, category, and a user-facing message
+- [x] Those patterns do not emit a fallback literal route
+- [x] Add an asserting test for each of the three errors
+- [x] A pattern that already has a diagnostic (unbalanced braces, bad option) still reports that diagnostic and still does not emit a matching route
 
 ## How to validate
 
 Smoke:
 
 ```bash
-dotnet test tests/timewarp-nuru-tests/timewarp-nuru-tests.csproj --filter FullyQualifiedName~InvalidPattern
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/generator/generator-53-invalid-route-patterns.cs
 ```
 
 Expect: Each new test expects a diagnostic and no generated route for `{a}{b}`, `{*name?}`, and `{my-param}`.
+
+## Results
+
+- New descriptors `NURU_P008` (invalid identifier), `NURU_P009` (catch-all + optional), `NURU_P010`
+  (adjacent parameters), category `RoutePattern.Syntax`, severity Error; mapped in
+  `DslInterpreter.MapParseErrorToDiagnostic` and listed in `AnalyzerReleases.Unshipped.md`.
+- `PatternStringExtractor.ExtractSegmentsWithErrors` no longer returns a fallback `LiteralDefinition`
+  of the raw pattern on failure; it returns no segments.
+- `IrAppBuilder.Map` / `IrGroupBuilder.Map` pass `parseResult.Success` to `IrRouteBuilder`; `Done()`
+  skips `RegisterRoute` for an invalid pattern, so no route (and no empty default route) is emitted.
+  This also applies to patterns that already had a diagnostic (e.g. `greet {name`).
+- Side effect: `[NuruRoute("{a}{b}")]` no longer passes `ValidateRoutePattern` as a single literal;
+  it now reports `NURU_A001` like any other non-literal endpoint pattern.
+- Test: `tests/timewarp-nuru-tests/generator/generator-53-invalid-route-patterns.cs` (5 tests, all
+  pass). Excluded from the CI multi-assembly like other Roslyn-hosted generator tests (CS0433).
+- `dotnet run tests/ci-tests/run-ci-tests.cs`: 1925 passed, 0 failed.
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/generator/generator-53-invalid-route-patterns.cs
+```
+
+Expect: 5 tests pass. `{a}{b}` → `NURU_P010`, `{*name?}` → `NURU_P009`, `{my-param}` → `NURU_P008`,
+each Error / `RoutePattern.Syntax`, with no `// Route:` comment emitted for the bad pattern while the
+control route `greet {name}` is emitted. `greet {name` and `deploy --{x}` still report a `NURU_P`
+diagnostic and emit no route.
 
 ## Session
 
 - Created: 532275 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
+- Implemented: claude (ganda task work implement oracle) (2026-10-05)
 
 ## Notes
 

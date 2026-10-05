@@ -86,6 +86,10 @@
          project collides with timewarp-nuru parsing types (CS0433) in the multi assembly.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-52-configuration-detection.cs" />
+    <!-- generator-53: same Roslyn-hosted generator test pattern as generator-28
+         (task 482-006 invalid route pattern diagnostics); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-53-invalid-route-patterns.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

@@ -37,6 +37,7 @@ Expect: The heading search shows the backfilled span. A reader can see what ship
 
 - Implemented: claude implement oracle (2026-10-05)
 - Review: grok 01a10c45-a1e3-7da0-ae7d-bbcefd35de9f (2026-10-05)
+- Review oracle: review by implementer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-05T13:52:06Z
 
 ## Notes
 

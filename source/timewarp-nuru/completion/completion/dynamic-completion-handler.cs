@@ -28,14 +28,19 @@ public static class DynamicCompletionHandler
     ArgumentNullException.ThrowIfNull(terminal);
 
     // Get completions - prioritize custom sources, then use provider
-    IEnumerable<CompletionCandidate> items = GetCompletions(context, registry, provider);
+    List<CompletionCandidate> items = [.. GetCompletions(context, registry, provider)];
 
-    // Determine the directive to use (default to NoFileComp for string parameters)
-    CompletionDirective directive = CompletionDirective.NoFileComp;
+    CompletionDirective directive = ResolveDirective(items);
 
-    // Output completions (one per line)
+    // Output completions (one per line). File/Directory candidates with no value are
+    // delegation markers only: the directive tells the shell to run its own path completion.
     foreach (CompletionCandidate item in items)
     {
+      if (string.IsNullOrEmpty(item.Value))
+      {
+        continue;
+      }
+
       if (!string.IsNullOrEmpty(item.Description))
       {
         terminal.WriteLine($"{item.Value}\t{item.Description}");
@@ -53,6 +58,43 @@ public static class DynamicCompletionHandler
     terminal.WriteErrorLine($"Completion ended with directive: {directive}");
 
     return 0;
+  }
+
+  /// <summary>
+  /// Combines the directive flags requested by candidates with the file-completion policy.
+  /// </summary>
+  /// <remarks>
+  /// <see cref="CompletionDirective.NoFileComp"/> is added unless a <see cref="CompletionType.File"/> or
+  /// <see cref="CompletionType.Directory"/> candidate is present; a candidate may still request it explicitly.
+  /// When only directory candidates request path completion, <see cref="CompletionDirective.FilterDirs"/> is added.
+  /// </remarks>
+  /// <param name="candidates">The completion candidates for this request.</param>
+  /// <returns>The directive written to the shell script.</returns>
+  public static CompletionDirective ResolveDirective(IEnumerable<CompletionCandidate> candidates)
+  {
+    ArgumentNullException.ThrowIfNull(candidates);
+
+    CompletionDirective directive = CompletionDirective.None;
+    bool wantsFiles = false;
+    bool wantsDirectories = false;
+
+    foreach (CompletionCandidate candidate in candidates)
+    {
+      directive |= candidate.Directive;
+      wantsFiles |= candidate.Type == CompletionType.File;
+      wantsDirectories |= candidate.Type == CompletionType.Directory;
+    }
+
+    if (!wantsFiles && !wantsDirectories)
+    {
+      directive |= CompletionDirective.NoFileComp;
+    }
+    else if (wantsDirectories && !wantsFiles)
+    {
+      directive |= CompletionDirective.FilterDirs;
+    }
+
+    return directive;
   }
 
   /// <summary>

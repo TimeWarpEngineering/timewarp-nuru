@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **`TimeWarp.Nuru.Mcp` is not part of the 3.0 package set**: the project is `IsPackable=false`, so the build and release pipeline no longer produce or publish `TimeWarp.Nuru.Mcp.*.nupkg`. The MCP server is frozen and its `GetSyntax` / `GenerateHandler` answers do not match 3.0. Use the Nuru skill instead. The source stays in the repo and still builds; `dotnet pack -p:NuruMcpPack=true` packs it locally.
+
 ### Changed
 - **TimeWarp.Mediator 14.0.0-beta.4**: Contracts and Generators moved from 14.0.0-beta.3. Generated host types (`Mediator`, `MediatorManifest`, `GeneratedMediatorServiceCollectionExtensions`) are `internal` to the compilation that emits them. TimeWarp.Nuru no longer strips the mediator generator from its own compile; `TimeWarpMediatorAssembly` stays `false`, so the library still does not call `AddGeneratedMediator()`. Apps keep a single call in their own compilation.
 - **BREAKING: message and handler contracts moved to `TimeWarp.Mediator`**: TimeWarp.Nuru no longer defines `IMessage`, `IQuery<T>`, `ICommand<T>`, `IIdempotentCommand<T>`, `IIdempotent`, `IQueryHandler<,>`, `ICommandHandler<,>`, `IIdempotentCommandHandler<,>`, or `Unit`. Endpoints use the `TimeWarp.Mediator` 14.0.0-beta types instead. Migration:

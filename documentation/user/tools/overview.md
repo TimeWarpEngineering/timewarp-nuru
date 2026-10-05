@@ -11,6 +11,8 @@ List built-in REPL key bindings from the command line:
 - Table or detailed view
 
 ### [MCP Server](mcp-server.md)
+> Frozen and **not part of the 3.0 release**. Use the Nuru skill (`skills/tw-nuru/SKILL.md`) instead.
+
 AI-assisted development with Model Context Protocol:
 - Route pattern validation
 - Handler code generation

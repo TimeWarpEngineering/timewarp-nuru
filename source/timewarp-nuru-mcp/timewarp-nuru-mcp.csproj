@@ -10,6 +10,13 @@
     <IncludeSymbols>false</IncludeSymbols>
     <IncludeSource>false</IncludeSource>
 
+    <!-- Not part of the 3.0 package set (kanban 482-012): the tool is frozen and its
+         GetSyntax / GenerateHandler answers do not match 3.0. IsPackable=false keeps it
+         out of GeneratePackageOnBuild and the release packable-project set. Pass
+         -p:NuruMcpPack=true to pack it locally. -->
+    <IsPackable>false</IsPackable>
+    <IsPackable Condition="'$(NuruMcpPack)' == 'true'">true</IsPackable>
+
     <!-- Set up the NuGet package to be an MCP server -->
     <PackAsTool>true</PackAsTool>
     <PackageType>McpServer</PackageType>

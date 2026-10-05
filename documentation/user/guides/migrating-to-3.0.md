@@ -67,6 +67,15 @@ keep a migration message. They are scheduled to leave after 3.0, not in the
   `UseMicrosoftDependencyInjection()` before `ConfigureServices`.
 - `AddReplOptions(...)` still works. New code calls `AddRepl()`.
 
+## TimeWarp.Nuru.Mcp is not part of 3.0
+
+The `TimeWarp.Nuru.Mcp` tool package does not ship with 3.0. The MCP server is
+frozen, and its syntax and handler-generation answers do not match the 3.0
+surface. Do not install a `3.0.0` `TimeWarp.Nuru.Mcp`; none is published.
+Use the Nuru skill (`skills/tw-nuru/SKILL.md`) and the `samples/` files
+instead. The source stays in `source/timewarp-nuru-mcp` and still builds; pass
+`-p:NuruMcpPack=true` to `dotnet pack` for a local package.
+
 ## What did not move
 
 Direct delegate routes (`Map(...).WithHandler(...).Done()`), route-pattern

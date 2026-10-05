@@ -78,6 +78,7 @@ control route `greet {name}` is emitted. The `NURU_P010` message contains `(e.g.
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
 - Implemented: claude (ganda task work implement oracle) (2026-10-05)
 - Review: grok 01a10ae6-22a2-73a2-8d03-84b40635c7d8 (2026-10-05)
+- Review oracle: review by implementer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-05T07:25:43Z
 
 ## Notes
 

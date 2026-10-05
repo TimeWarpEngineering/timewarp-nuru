@@ -15,7 +15,7 @@ namespace TimeWarp.Nuru;
 ///    .WithDescription("List all users")
 ///    .AsQuery()
 ///    .Done()                    // Returns to TBuilder
-///    .AddReplSupport()          // Extension methods work!
+///    .AddRepl()                 // Back on the app builder after Done()
 ///    .Build();
 ///
 /// // Or use inline configuration with Also():
@@ -23,7 +23,7 @@ namespace TimeWarp.Nuru;
 ///    .WithHandler(handler)
 ///    .Also(r => r.AsQuery())    // Returns EndpointBuilder&lt;TBuilder&gt;
 ///    .Done()
-///    .AddReplSupport()
+///    .AddRepl()
 ///    .Build();
 /// </code>
 /// </remarks>
@@ -235,10 +235,10 @@ public class EndpointBuilder<TBuilder>
   /// <example>
   /// <code>
   /// // Preferred - use Done()
-  /// app.Map("test").WithHandler(handler).Done().AddReplSupport().Build();
+  /// app.Map("test").WithHandler(handler).Done().AddRepl().Build();
   ///
   /// // Alternative - use Builder property
-  /// app.Map("test").WithHandler(handler).Builder.AddReplSupport().Build();
+  /// app.Map("test").WithHandler(handler).Builder.AddRepl().Build();
   /// </code>
   /// </example>
   public TBuilder Builder => ParentBuilder;

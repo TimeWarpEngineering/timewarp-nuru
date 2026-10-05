@@ -12,7 +12,7 @@ public partial class NuruAppBuilder
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// NuruApp.CreateBuilder(args)
+  /// NuruApp.CreateBuilder()
   ///     .AddRepl()  // Enable REPL mode
   ///     .Map("greet {name}")
   ///       .WithHandler((string name) => $"Hello, {name}!")
@@ -35,7 +35,7 @@ public partial class NuruAppBuilder
   /// <returns>The builder for chaining.</returns>
   /// <example>
   /// <code>
-  /// NuruApp.CreateBuilder(args)
+  /// NuruApp.CreateBuilder()
   ///     .AddRepl(options =>
   ///     {
   ///         options.Prompt = "myapp> ";
@@ -176,7 +176,7 @@ public partial class NuruAppBuilder
   /// <example>
   /// <code>
   /// // Include all [NuruRoute] endpoint classes
-  /// NuruApp.CreateBuilder(args)
+  /// NuruApp.CreateBuilder()
   ///     .DiscoverEndpoints()
   ///     .Build();
   /// </code>
@@ -196,7 +196,7 @@ public partial class NuruAppBuilder
   /// <example>
   /// <code>
   /// // Include only endpoints from the MaintenanceGroup
-  /// NuruApp.CreateBuilder(args)
+  /// NuruApp.CreateBuilder()
   ///     .DiscoverEndpoints(typeof(MaintenanceGroup))
   ///     .Build();
   /// </code>
@@ -217,7 +217,7 @@ public partial class NuruAppBuilder
   /// <example>
   /// <code>
   /// // Include only specific endpoints
-  /// NuruApp.CreateBuilder(args)
+  /// NuruApp.CreateBuilder()
   ///     .Map&lt;DeployCommand&gt;()
   ///     .Map&lt;BuildCommand&gt;()
   ///     .Build();

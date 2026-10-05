@@ -56,7 +56,7 @@ dotnet run tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs  # Single 
 
 Routes are defined via fluent API and processed at compile time:
 ```csharp
-NuruApp.CreateBuilder(args)
+NuruApp.CreateBuilder()
   .Map("greet {name}").WithHandler((string name) => $"Hello, {name}!")
   .AsCommand().Done()
   .Build();
@@ -69,7 +69,7 @@ The generator intercepts `Map()` calls and emits optimized matching code.
 Tests use the Jaribu test framework with `TestTerminal` for output verification:
 ```csharp
 using TestTerminal terminal = new();
-NuruApp app = NuruApp.CreateBuilder([])
+NuruApp app = NuruApp.CreateBuilder()
   .UseTerminal(terminal)
   .Map("test").WithHandler(() => "output")
   .AsCommand().Done()

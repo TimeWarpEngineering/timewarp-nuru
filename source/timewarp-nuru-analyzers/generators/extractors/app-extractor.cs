@@ -323,7 +323,7 @@ internal static class AppExtractor
 
   /// <summary>
   /// Finds the field symbol if a Build() call result is being assigned to a field.
-  /// Handles patterns like: App = NuruApp.CreateBuilder([])...Build();
+  /// Handles patterns like: App = NuruApp.CreateBuilder()...Build();
   /// </summary>
   private static IFieldSymbol? FindFieldAssignmentTarget(InvocationExpressionSyntax buildInvocation, SemanticModel semanticModel)
   {

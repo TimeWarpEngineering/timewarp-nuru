@@ -389,7 +389,7 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Evaluates an assignment expression (e.g., "App = NuruApp.CreateBuilder([])...Build()").
+  /// Evaluates an assignment expression (e.g., "App = NuruApp.CreateBuilder()...Build()").
   /// Stores the value in VariableState if the left side is a field or variable.
   /// </summary>
   private object? EvaluateAssignment(AssignmentExpressionSyntax assignment)

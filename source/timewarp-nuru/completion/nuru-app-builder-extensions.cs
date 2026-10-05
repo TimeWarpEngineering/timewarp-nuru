@@ -75,7 +75,7 @@ public static class NuruAppBuilderCompletionExtensions
   /// <example>
   /// Basic usage:
   /// <code>
-  /// NuruApp.CreateBuilder(args)
+  /// NuruApp.CreateBuilder()
   ///   .Map("deploy {env}").WithHandler((string env) => { }).Done()
   ///   .EnableCompletion()
   ///   .Build()

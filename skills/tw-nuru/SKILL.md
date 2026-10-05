@@ -62,6 +62,8 @@ return await app.RunAsync(args);
 
 ### Commands, Queries, and Idempotent Commands
 
+These contracts live in `TimeWarp.Mediator`, not `TimeWarp.Nuru`. Add `using TimeWarp.Mediator;`. Handlers return `Task<T>`, not `ValueTask<T>`.
+
 - **ICommand<T>** / **ICommandHandler<TCommand, T>**: Actions with side effects, NOT safe to retry (deploy, build, delete)
 - **IQuery<T>** / **IQueryHandler<TQuery, T>**: Read-only operations, safe to retry (status, greet, version)
 - **IIdempotentCommand<T>** / **IIdempotentCommandHandler<TCommand, T>**: Mutating but safe to retry (set config, PUT/DELETE-style operations)
@@ -305,7 +307,7 @@ See `samples/editions/01-group-filtering/` for a complete working example.
 - `[NuruRoute]` takes only a single literal or `""` - the analyzer rejects anything else
 - Use nullable types (`string?`) for optional parameters, NOT `IsOptional=true`
 - Return `Unit` when no meaningful return value
-- Use `ValueTask<T>` for handler return types
+- Handler methods return `Task<T>` (`return Unit.Task` from a non-async `Task<Unit>` handler). Do not use `ValueTask<T>`
 
 ### Return Values vs Exit Codes
 
@@ -538,4 +540,4 @@ The agent loop, the exact-name rule, argv-overrides-JSON, and the app-level fat-
 ## Samples
 
 - `samples/endpoints/02-calculator/` - Complete calculator CLI reference pattern
-- `samples/endpoints/05-httpclient/` - Typed HTTP client with source-gen DI example
+- `samples/endpoints/15-httpclient/` - Typed HTTP client with source-gen DI example

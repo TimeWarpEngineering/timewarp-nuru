@@ -25,6 +25,10 @@ Create specialized CLI editions from a shared command library:
 - Smaller, focused executables per use case
 - Publishing multiple editions from one codebase
 
+### [Migrating to 3.0](migrating-to-3.0.md)
+Breaking changes from 2.x and early 3.0 betas: Mediator contracts, handler
+return types, and the `--capabilities` document.
+
 ### [Best Practices](best-practices.md)
 Patterns and conventions for maintainable CLI apps:
 - Route organization strategies

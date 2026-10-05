@@ -223,9 +223,13 @@ public class EndpointBuilder<TBuilder>
     ParentBuilder.Map(configureRoute);
 
   /// <summary>
-  /// Builds the NuruApp from the configured builder.
-  /// Enables fluent chaining to terminate with Build().
+  /// Completes this route, then builds the NuruApp from the configured builder.
   /// </summary>
+  /// <remarks>
+  /// Equivalent to <c>.Done().Build()</c>: the source generator registers this route exactly
+  /// as <see cref="Done"/> would before building. Prefer <see cref="Done"/> to finish a route
+  /// when the chain continues on the app builder.
+  /// </remarks>
   public NuruApp Build() => ParentBuilder.Build();
 
   /// <summary>

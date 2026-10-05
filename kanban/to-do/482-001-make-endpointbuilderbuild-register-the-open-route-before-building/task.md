@@ -16,17 +16,17 @@ Evidence: `source/timewarp-nuru/builders/endpoint-builder.cs` (`Build`), `source
 
 ## Checklist
 
-- [ ] Calling `Build()` on an `EndpointBuilder` that has a handler registers that route, then builds the app
-- [ ] A chain that already called `Done()` still builds once and does not register the route twice
-- [ ] Add a generator or runtime test that fails today on `.Map("ping").WithHandler(() => 0).Build()`
+- [x] Calling `Build()` on an `EndpointBuilder` that has a handler registers that route, then builds the app
+- [x] A chain that already called `Done()` still builds once and does not register the route twice
+- [x] Add a generator or runtime test that fails today on `.Map("ping").WithHandler(() => 0).Build()`
 
 ## How to validate
 
 Smoke:
 
 ```bash
-dotnet test tests/timewarp-nuru-tests/timewarp-nuru-tests.csproj --filter FullyQualifiedName~EndpointBuilderBuild
-# or the new test name this task adds
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/builder/builder-02-endpoint-builder-build.cs
 ```
 
 Expect: The new test passes. `.Map("ping").WithHandler(() => 0).Build()` produces an app whose `ping` route runs. A chain that calls `Done()` then `Build()` still has exactly one `ping` route.
@@ -35,6 +35,36 @@ Expect: The new test passes. `.Map("ping").WithHandler(() => 0).Build()` produce
 
 - Created: 524751 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
+- Implemented: claude-opus-5-5 implement oracle under ganda task work (2026-10-05)
+
+## Results
+
+- `DslInterpreter.DispatchBuild` now completes an open route (`IIrRouteBuilder`) through the
+  same `TryDoneRoute` path as `Done()` (including the NURU parameter-mismatch diagnostic), then
+  builds the returned app builder. Before, it returned `null` for a route-builder receiver, so the
+  route was dropped and the app never marked built.
+- `IrRouteBuilder.Done()` registers its route at most once (`IsRegistered` guard), so a route
+  completed by both `Done()` and `Build()` cannot be registered twice.
+- `EndpointBuilder.Build()` XML doc now states it is equivalent to `.Done().Build()`; `Done()`
+  stays the documented way to finish a route.
+- New test `tests/timewarp-nuru-tests/builder/builder-02-endpoint-builder-build.cs`
+  (`EndpointBuilderBuildTests`, runs in CI multi-mode). Verified the two open-route tests fail
+  with `InvalidOperationException` without the generator fix and pass with it.
+- CI suite: `dotnet run tests/ci-tests/run-ci-tests.cs` exit 0 — 3767 passed, 12 skipped, 0 failed.
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/builder/builder-02-endpoint-builder-build.cs
+dotnet run tests/ci-tests/run-ci-tests.cs
+```
+
+Expect: `builder-02` reports 3/3 passed — `.Map("ping").WithHandler(() => 0).Build()` runs
+`ping` with exit 0, the open-route handler output appears, and a `Done()`-then-`Build()` chain
+lists the `ping` route exactly once in help. The CI runner exits 0 with no failures.
 
 ## Notes
 

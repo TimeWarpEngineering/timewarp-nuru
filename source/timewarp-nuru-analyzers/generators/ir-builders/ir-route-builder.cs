@@ -21,6 +21,7 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   private readonly Action<RouteDefinition> RegisterRoute;
   private readonly RouteDefinitionBuilder Builder = new();
   private readonly bool IsValid;
+  private bool IsRegistered;
 
   /// <summary>
   /// Creates a new route builder.
@@ -143,10 +144,12 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   public TParent Done()
   {
     // An invalid pattern already reported a diagnostic; emitting it would register a bogus route.
-    if (IsValid)
+    // A route is registered at most once, even if both Done() and Build() complete it.
+    if (IsValid && !IsRegistered)
     {
       RouteDefinition route = Builder.Build();
       RegisterRoute(route);
+      IsRegistered = true;
     }
 
     return Parent;

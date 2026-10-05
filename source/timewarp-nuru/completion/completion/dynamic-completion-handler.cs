@@ -66,7 +66,7 @@ public static class DynamicCompletionHandler
   )
   {
     // Try to detect if we're completing a specific parameter using the source-generated provider
-    if (provider.TryGetParameterInfo(context.CursorPosition, context.Args, out string? paramName, out string? paramTypeName))
+    if (provider.TryGetParameterInfo(context.CursorPosition, context.Args, out string? paramName, out Type? paramType))
     {
       // First, check if a completion source is registered for this specific parameter name
       if (paramName is not null)
@@ -79,16 +79,12 @@ public static class DynamicCompletionHandler
       }
 
       // Second, check if a completion source is registered for this parameter's type
-      if (paramTypeName is not null)
+      if (paramType is not null)
       {
-        Type? paramType = Type.GetType(paramTypeName);
-        if (paramType is not null)
+        ICompletionSource? typeSource = registry.GetSourceForType(paramType);
+        if (typeSource is not null)
         {
-          ICompletionSource? typeSource = registry.GetSourceForType(paramType);
-          if (typeSource is not null)
-          {
-            return typeSource.GetCompletions(context);
-          }
+          return typeSource.GetCompletions(context);
         }
       }
     }

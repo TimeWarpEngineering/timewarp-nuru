@@ -242,35 +242,38 @@ internal static class CompletionEmitter
     List<CompletionDataExtractor.ParameterInfo> parameters,
     List<CompletionDataExtractor.EnumParameterInfo> enumParameters)
   {
-    sb.AppendLine("    public bool TryGetParameterInfo(int cursorIndex, string[] words, out string? parameterName, out string? parameterTypeName)");
+    sb.AppendLine("    public bool TryGetParameterInfo(int cursorIndex, string[] words, out string? parameterName, out global::System.Type? parameterType)");
     sb.AppendLine("    {");
     sb.AppendLine("      parameterName = null;");
-    sb.AppendLine("      parameterTypeName = null;");
+    sb.AppendLine("      parameterType = null;");
     sb.AppendLine();
-    sb.AppendLine("      if (words.Length < 2) return false;");
+    sb.AppendLine("      if (words.Length < 2 || cursorIndex < 1) return false;");
     sb.AppendLine();
-    sb.AppendLine("      // Get command words (excluding app name)");
-    sb.AppendLine("      string[] cmdWords = words[1..];");
-    sb.AppendLine("      string prefix = string.Join(\" \", cmdWords.Take(cursorIndex - 1));");
+    sb.AppendLine("      // Words before the cursor (excluding app name)");
+    sb.AppendLine("      int precedingCount = global::System.Math.Min(cursorIndex - 1, words.Length - 1);");
+    sb.AppendLine("      string prefix = string.Join(\" \", words, 1, precedingCount);");
     sb.AppendLine();
 
-    // Generate parameter detection based on extracted parameter info
-    foreach (CompletionDataExtractor.ParameterInfo param in parameters)
+    // Longer command prefixes first so "git push {remote}" wins over "git {repo}"
+    IEnumerable<CompletionDataExtractor.ParameterInfo> orderedParameters = parameters
+      .Where(p => !string.IsNullOrEmpty(p.CommandPrefix))
+      .OrderByDescending(p => p.CommandPrefix.Split(' ').Length);
+
+    foreach (CompletionDataExtractor.ParameterInfo param in orderedParameters)
     {
-      if (string.IsNullOrEmpty(param.CommandPrefix))
-        continue;
-
       int cmdWordCount = param.CommandPrefix.Split(' ').Length;
+      string escapedPrefix = EmitterStringUtils.EscapeForStringLiteral(param.CommandPrefix);
 
-      sb.AppendLine($"      // Parameter '{param.Name}' for command '{EmitterStringUtils.EscapeForStringLiteral(param.CommandPrefix)}'");
-      sb.AppendLine($"      if (prefix.StartsWith(\"{EmitterStringUtils.EscapeForStringLiteral(param.CommandPrefix)}\", global::System.StringComparison.OrdinalIgnoreCase))");
+      sb.AppendLine($"      // Parameter '{param.Name}' at position {param.Position} for command '{escapedPrefix}'");
+      sb.AppendLine($"      if (string.Equals(prefix, \"{escapedPrefix}\", global::System.StringComparison.OrdinalIgnoreCase) ||");
+      sb.AppendLine($"          prefix.StartsWith(\"{escapedPrefix} \", global::System.StringComparison.OrdinalIgnoreCase))");
       sb.AppendLine("      {");
       sb.AppendLine($"        int paramPos = cursorIndex - 1 - {cmdWordCount};");
-      sb.AppendLine("        if (paramPos == 0) // First parameter position");
+      string positionTest = param.IsCatchAll ? $"paramPos >= {param.Position}" : $"paramPos == {param.Position}";
+      sb.AppendLine($"        if ({positionTest})");
       sb.AppendLine("        {");
       sb.AppendLine($"          parameterName = \"{param.Name}\";");
-      string typeConstraint = param.TypeConstraint is not null ? $"\"{param.TypeConstraint}\"" : "null";
-      sb.AppendLine($"          parameterTypeName = {typeConstraint};");
+      sb.AppendLine($"          parameterType = {EmitTypeOf(param.ClrTypeName)};");
       sb.AppendLine("          return true;");
       sb.AppendLine("        }");
       sb.AppendLine("      }");
@@ -281,4 +284,15 @@ internal static class CompletionEmitter
     sb.AppendLine("    }");
   }
 
+  /// <summary>
+  /// Emits a <c>typeof</c> expression for a handler parameter type, or <c>null</c> when unknown.
+  /// Nullable annotations are dropped so <c>int?</c> and <c>string?</c> resolve to the registered type.
+  /// </summary>
+  private static string EmitTypeOf(string? clrTypeName)
+  {
+    if (string.IsNullOrEmpty(clrTypeName))
+      return "null";
+
+    return $"typeof({clrTypeName!.TrimEnd('?')})";
+  }
 }

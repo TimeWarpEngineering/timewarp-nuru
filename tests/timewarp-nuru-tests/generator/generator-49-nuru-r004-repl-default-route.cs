@@ -11,6 +11,9 @@
 // that never call AddRepl(), do not report NURU_R004. A [NuruRoute("")] with a
 // required positional parameter does not match an empty argument list, so it does
 // not conflict. An optional parameter still matches that empty list and does.
+// An endpoint [NuruRoute("")] with an optional parameter keeps its own location when a
+// fluent Map("") is registered in the same app. The attribute span and the Map literal
+// are different keys.
 //
 // Hosts NuruGenerator in a CSharpGeneratorDriver over in-memory source and inspects
 // GeneratorDriverRunResult for NURU_R004. RunAsync is required so AppExtractor builds
@@ -373,5 +376,66 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen49NuruR004ReplDefaultRoute
 
       await Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Endpoint locations are stored under EffectivePattern. A fluent Map("") owns the
+    /// empty OriginalPattern key. NURU_R004 for [NuruRoute("")] with an optional parameter
+    /// must still squiggle the attribute, and the fluent diagnostic must squiggle Map("").
+    /// </summary>
+    public static async Task Should_anchor_endpoint_nuru_r004_beside_fluent_empty_route()
+    {
+      const string Source = """
+        #nullable enable
+        using System.Threading;
+        using System.Threading.Tasks;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        [NuruRoute("")]
+        public sealed class R004EndpointBesideFluentEmpty : IQuery<string>
+        {
+          [Parameter]
+          public string? Name { get; set; }
+
+          public sealed class Handler : IQueryHandler<R004EndpointBesideFluentEmpty, string>
+          {
+            public Task<string> Handle(R004EndpointBesideFluentEmpty query, CancellationToken cancellationToken)
+            {
+              return Task.FromResult(query.Name ?? "");
+            }
+          }
+        }
+
+        NuruApp app = NuruApp.CreateBuilder([])
+          .Map("").WithHandler(() => "fluent-default").AsCommand().Done()
+          .Map<R004EndpointBesideFluentEmpty>()
+          .AddRepl(options => { options.AutoStartWhenEmpty = true; })
+          .Build();
+
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      List<Diagnostic> r004 = DiagnosticsWithId(result, "NURU_R004");
+
+      List<string> spans = [];
+      foreach (Diagnostic diagnostic in r004)
+      {
+        diagnostic.Location.IsInSource.ShouldBeTrue();
+        spans.Add((await diagnostic.Location.SourceTree!.GetTextAsync()).ToString(diagnostic.Location.SourceSpan));
+      }
+
+      r004.Count.ShouldBeGreaterThan(1);
+      spans.ShouldContain("\"\"");
+      spans.Any(span => span.Contains("NuruRoute", StringComparison.Ordinal)).ShouldBeTrue();
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Returns every diagnostic with the given id from the generator run.
+    /// </summary>
+    private static List<Diagnostic> DiagnosticsWithId(GeneratorDriverRunResult result, string id) =>
+      [.. result.Diagnostics.Concat(result.Results.SelectMany(r => r.Diagnostics)).Where(d => d.Id == id).Distinct()];
   }
 }

@@ -22,25 +22,11 @@ internal static class ReservedJsonArgsValidator
 
         diagnostics.Add(Diagnostic.Create(
           DiagnosticDescriptors.ReservedJsonArgsOption,
-          Lookup(route, routeLocations),
+          RouteLocationLookup.FindOrNone(route, routeLocations),
           route.FullPattern));
       }
     }
 
     return [.. diagnostics];
-  }
-
-  private static Location Lookup(RouteDefinition route, IReadOnlyDictionary<string, Location> routeLocations)
-  {
-    if (routeLocations.TryGetValue(route.OriginalPattern, out Location? original))
-      return original;
-
-    if (routeLocations.TryGetValue(route.FullPattern, out Location? full))
-      return full;
-
-    if (routeLocations.TryGetValue(route.EffectivePattern, out Location? effective))
-      return effective;
-
-    return Location.None;
   }
 }

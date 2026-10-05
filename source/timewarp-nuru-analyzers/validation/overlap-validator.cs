@@ -164,9 +164,7 @@ internal static class OverlapValidator
         if (route1.EffectivePattern == route2.EffectivePattern)
         {
           // Get location for the first route (or use a default)
-          Location location = routeLocations.TryGetValue(route1.EffectivePattern, out Location? loc)
-            ? loc
-            : Location.None;
+          Location location = RouteLocationLookup.FindOrNone(route1, routeLocations);
 
           Diagnostic diagnostic = Diagnostic.Create(
             DiagnosticDescriptors.DuplicateRoutePattern,
@@ -181,9 +179,7 @@ internal static class OverlapValidator
         if (HaveDifferentTypeConstraints(route1, route2))
         {
           // Get location for the first route (or use a default)
-          Location location = routeLocations.TryGetValue(route1.EffectivePattern, out Location? loc)
-            ? loc
-            : Location.None;
+          Location location = RouteLocationLookup.FindOrNone(route1, routeLocations);
 
           Diagnostic diagnostic = Diagnostic.Create(
             DiagnosticDescriptors.OverlappingTypeConstraints,
@@ -407,14 +403,10 @@ internal static class OverlapValidator
           // The previous `higherRoute.ComputedSpecificity >= lowerRoute.ComputedSpecificity` guard
           // was therefore always true; kept as a scoping block for the diagnostic's locals.
           {
-            Location location = routeLocations.TryGetValue(lowerRoute.EffectivePattern, out Location? loc)
-              ? loc
-              : Location.None;
+            Location location = RouteLocationLookup.FindOrNone(lowerRoute, routeLocations);
 
             // Get the location of the shadowing route for additional context
-            Location? higherLocation = routeLocations.TryGetValue(higherRoute.EffectivePattern, out Location? higherLoc)
-              ? higherLoc
-              : null;
+            Location? higherLocation = RouteLocationLookup.Find(higherRoute, routeLocations);
 
             IEnumerable<Location> additionalLocations = higherLocation is not null
               ? [higherLocation]

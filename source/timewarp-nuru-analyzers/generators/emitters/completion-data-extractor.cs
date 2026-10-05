@@ -96,9 +96,17 @@ internal static class CompletionDataExtractor
       // Get the command prefix for context
       string cmdPrefix = string.Join(" ", route.Literals.Select(l => l.Value));
 
+      // Position counts positional parameters only, matching words after the command prefix
+      int position = 0;
       foreach (ParameterDefinition param in route.Parameters)
       {
-        parameters.Add(new ParameterInfo(param.Name, param.TypeConstraint, param.Description, cmdPrefix));
+        string? clrTypeName = route.Handler?.Parameters
+          .FirstOrDefault(p => p.Source == BindingSource.Parameter &&
+            string.Equals(p.SourceName, param.Name, StringComparison.OrdinalIgnoreCase))
+          ?.ParameterTypeName;
+
+        parameters.Add(new ParameterInfo(param.Name, param.TypeConstraint, param.Description, cmdPrefix, position, param.IsCatchAll, clrTypeName));
+        position++;
       }
     }
 
@@ -149,7 +157,21 @@ internal static class CompletionDataExtractor
   /// <summary>
   /// Information about a parameter for completion generation.
   /// </summary>
-  public sealed record ParameterInfo(string Name, string? TypeConstraint, string? Description, string CommandPrefix);
+  /// <param name="Name">The route parameter name.</param>
+  /// <param name="TypeConstraint">The route type constraint as written (e.g., "int"), if any.</param>
+  /// <param name="Description">Optional description for help text.</param>
+  /// <param name="CommandPrefix">The leading literal words of the route.</param>
+  /// <param name="Position">Zero-based index among the route's positional parameters.</param>
+  /// <param name="IsCatchAll">Whether the parameter consumes all remaining words.</param>
+  /// <param name="ClrTypeName">The bound handler parameter's C# type name, if known.</param>
+  public sealed record ParameterInfo(
+    string Name,
+    string? TypeConstraint,
+    string? Description,
+    string CommandPrefix,
+    int Position = 0,
+    bool IsCatchAll = false,
+    string? ClrTypeName = null);
 
   /// <summary>
   /// Information about an enum parameter for position-aware completion generation.

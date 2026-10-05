@@ -20,6 +20,7 @@ Evidence: `source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter
 - [x] Those patterns do not emit a fallback literal route
 - [x] Add an asserting test for each of the three errors
 - [x] A pattern that already has a diagnostic (unbalanced braces, bad option) still reports that diagnostic and still does not emit a matching route
+- [x] Review disposition recorded (clean; M1 and M2 fixed)
 
 ## How to validate
 
@@ -46,7 +47,16 @@ Expect: Each new test expects a diagnostic and no generated route for `{a}{b}`, 
   it now reports `NURU_A001` like any other non-literal endpoint pattern.
 - Test: `tests/timewarp-nuru-tests/generator/generator-53-invalid-route-patterns.cs` (5 tests, all
   pass). Excluded from the CI multi-assembly like other Roslyn-hosted generator tests (CS0433).
-- `dotnet run tests/ci-tests/run-ci-tests.cs`: 1925 passed, 0 failed.
+- `dotnet run tests/ci-tests/run-ci-tests.cs`: 1925 passed, 0 failed (before review). Review then wired `generator-53` into that runner's standalone phase.
+
+### Review
+
+- Rounds: 2. Roster: general. Effort: 2.
+- Round 1: 2 bugs (M1, M2), 0 suggestions, 0 nits. Both fixed on this task. Round 2: no new findings.
+- Final counts: bug 0 open / 2 fixed / 0 wontfix. Disposition: **clean**. No wontfix. No escalation.
+- M1: `generator-53` was listed in `CiTestExcludes` but missing from `tests/ci-tests/run-ci-tests.cs` `standaloneTests`, so CI did not run it. It is now on that list (`generator-28..53`).
+- M2: `NURU_P010` rendered doubled braces. Roslyn 5.6 `GetMessage` leaves `{{` unchanged when there are no format arguments. The descriptor now uses `'{0}'` and `'{1}'` with `"{a} {b}"` and `"{a}{b}"`.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -59,15 +69,17 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-53-invalid-route-patter
 
 Expect: 5 tests pass. `{a}{b}` → `NURU_P010`, `{*name?}` → `NURU_P009`, `{my-param}` → `NURU_P008`,
 each Error / `RoutePattern.Syntax`, with no `// Route:` comment emitted for the bad pattern while the
-control route `greet {name}` is emitted. `greet {name` and `deploy --{x}` still report a `NURU_P`
-diagnostic and emit no route.
+control route `greet {name}` is emitted. The `NURU_P010` message contains `(e.g., '{a} {b}' rather than '{a}{b}')`.
+`greet {name` and `deploy --{x}` still report a `NURU_P` diagnostic and emit no route.
 
 ## Session
 
 - Created: 532275 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
 - Implemented: claude (ganda task work implement oracle) (2026-10-05)
+- Review: grok 01a10ae6-22a2-73a2-8d03-84b40635c7d8 (2026-10-05)
 
 ## Notes
 
 - Parent review: `kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/findings.md` on the task 482 branch until that PR merges.
+- Implementation review: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Outcome clean (2 rounds, general, effort 2). M1 and M2 fixed.

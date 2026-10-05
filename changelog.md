@@ -77,22 +77,26 @@ The version was set to `3.0.0-beta.77` on 2026-08-27 and moved to `3.0.0-beta.78
   - PowerShell 5.1 completion quoting
   - MCP example-cache fallback and thread safety
   - Search FTS query sanitizing
+- Single-dash options may be longer than one character. Matching is exact, so a short option is no longer treated as a character inside a longer token (`-e` no longer matches `-help`)
+- Generated help escapes `{`, quotes, and backslashes in descriptions, so text such as `greet {name}` compiles
 
 ## [3.0.0-beta.71] - 2026-06-15
 
 ### Fixed
 - Per-command `--help` shows `[Parameter(Description)]` text (#215, #218)
 
-## [3.0.0-beta.70] - not documented
+## [3.0.0-beta.70] - 2026-04-27
 
-A `3.0.0-beta.70` package is on NuGet. It has no git tag and no GitHub release, so its contents cannot be confirmed. Changes from beta.69 to beta.71 are listed under beta.71.
-
-## [3.0.0-beta.69] - 2026-04-27
+No git tag. The GitHub release is tagged `v3.0.0-beta.69`, and that commit's package version is `3.0.0-beta.70`. NuGet published `3.0.0-beta.70` on this date. There is no `3.0.0-beta.69` package.
 
 ### Changed
 - `dev check-version` uses the NuGet.org V3 flat-container API through `HttpClient` in place of NuGet.Protocol, so it works under AOT. It defaults to the `nuget-search` strategy.
 - `TimeWarp.Nuru.DevCli` gets `IRepoConfigService` (#187) and a source-generated JSON context for `.timewarp/dev.jsonc`
 - Updated dependencies: TimeWarp.Amuru 1.0.0-beta.32 (no Newtonsoft.Json), Microsoft.Extensions 10.0.7
+
+## [3.0.0-beta.69] - not published
+
+No NuGet package. The GitHub tag `v3.0.0-beta.69` points at the `3.0.0-beta.70` tree. See beta.70.
 
 ## [3.0.0-beta.68] - 2026-03-24
 
@@ -109,6 +113,7 @@ These two betas have the same release notes.
 
 ### Fixed
 - Two regressions from the AOT DI refactor that broke most generated apps: `EnsureServicesInitialized` is always emitted (CS0103), and `Lazy<T>` behaviors are called through `.Value` (CS1061)
+- Dev CLI workflow handlers call the handler directly instead of a non-intercepted `App.RunAsync()`, and `DevCli.Commands` is renamed `DevCli.Endpoints`
 
 ## [3.0.0-beta.65] - 2026-03-23
 
@@ -160,7 +165,7 @@ These two betas have the same release notes.
 ## [3.0.0-beta.57] - 2026-03-07
 
 ### Fixed
-- Generated code uses `global::TimeWarp.Nuru.Unit` in place of a bare `Unit`, so it does not clash with other packages' `Unit` types (#442)
+- Generated code uses `global::TimeWarp.Nuru.Unit` in place of a bare `Unit`, so it does not clash with other packages' `Unit` types (task 442, #191)
 
 ## [3.0.0-beta.56] - 2026-03-04
 
@@ -241,7 +246,7 @@ beta.48 is a version bump of beta.47 with no further changes.
 
 ### Fixed
 - Nested `[NuruRouteGroup]` inheritance joins all prefixes (#160)
-- Routes with no positional arguments no longer catch the built-in flags, while explicit overrides of those flags still work (#403)
+- Routes with no positional arguments no longer catch the built-in flags, while explicit overrides of those flags still work (task 403)
 
 ## [3.0.0-beta.42] - 2026-01-27
 
@@ -287,7 +292,7 @@ beta.48 is a version bump of beta.47 with no further changes.
 
 ### Fixed
 - `ConfigureServices` accepts method group references
-- `ILogger<T>` resolves transitively under `UseMicrosoftDependencyInjection()` (#396)
+- `ILogger<T>` resolves transitively under `UseMicrosoftDependencyInjection()` (task 396)
 
 ## [3.0.0-beta.33] - 2026-01-22
 
@@ -312,12 +317,12 @@ beta.48 is a version bump of beta.47 with no further changes.
 ## [3.0.0-beta.30] - 2026-01-21
 
 ### Fixed
-- `timewarp-nuru-build` is in the solution and CI build list, so the package includes `TimeWarp.Nuru.Build.dll` (#389)
+- `timewarp-nuru-build` is in the solution and CI build list, so the package includes `TimeWarp.Nuru.Build.dll` (task 389)
 
 ## [3.0.0-beta.29] - 2026-01-21
 
 ### Fixed
-- First attempt to restore the MSBuild task `.dll` that beta.28 lacked (`MSB4062`) (#389). The fix was completed in beta.30.
+- First attempt to restore the MSBuild task `.dll` that beta.28 lacked (`MSB4062`) (task 389). The fix was completed in beta.30.
 
 ## [3.0.0-beta.28] - 2026-01-21
 
@@ -325,33 +330,37 @@ beta.48 is a version bump of beta.47 with no further changes.
 - "Attributed routes" are renamed "endpoints" across code, the analyzer category, and the docs
 - The MCP server no longer falls back to built-in documentation
 
-## [3.0.0-beta.26] / [3.0.0-beta.27] - 2026-01-21
+## [3.0.0-beta.27] - 2026-01-21
 
 ### Changed
 - MCP server: examples come from `examples.json`, and a shared `GitHubCacheService` handles GitHub caching. Fixed `CacheManagementTool` and the `GenerateHandler` output.
+
+## [3.0.0-beta.26] - 2026-01-21
+
+Same commit as beta.25 (`ac2ede19`). No code changes and no NuGet package. The GitHub release notes repeat the beta.27 MCP cleanup, which is not in this tag.
 
 ## [3.0.0-beta.25] - 2026-01-21
 
 ### Changed
 - **BREAKING**: `NuruCoreApp` and `NuruApp` are now one `NuruApp`. `NuruCoreAppBuilder` became `NuruAppBuilder`, and `CreateBuilder(args)` became `CreateBuilder()`. `NuruAppOptions` and `NuruHostEnvironment` are removed (#133)
 - **BREAKING**: shell completion is source-generated. Static completion is removed, and dynamic completion is now `EnableCompletion`.
-- `NURU_DEBUG` diagnostics are hidden by default (#385)
+- `NURU_DEBUG` diagnostics are hidden by default (task 385)
 
 ### Fixed
-- Enum option parameter conversion (#387)
+- Enum option parameter conversion (task 387)
 
 ## [3.0.0-beta.24] - 2026-01-19
 
 ### Added
-- **Source-generator runtime**: route matching, invokers, help, and REPL support are generated at compile time. The core and extension packages are now one `TimeWarp.Nuru` package (#360)
+- **Source-generator runtime**: route matching, invokers, help, and REPL support are generated at compile time. The core and extension packages are now one `TimeWarp.Nuru` package (task 360)
 - `DiscoverEndpoints()` and `Map<T>()` for endpoints
-- Per-command `--help` (#356) and the `--capabilities` flag (#157)
-- `NURU_R003` reports unreachable routes (#351)
-- Built-in conversion for `Uri`, `FileInfo`, and `DirectoryInfo` (#381)
+- Per-command `--help` (task 356). The source generator emits per-app `--capabilities` output. The flag itself shipped in beta.22.
+- `NURU_R003` reports unreachable routes (task 351)
+- Built-in conversion for `Uri`, `FileInfo`, and `DirectoryInfo` (task 381)
 
 ### Fixed
-- Custom type converters (#382), enum parameters (#372), typed catch-alls and repeated options (#349), and default values for typed options
-- User routes override the built-in `--version` and `--help` (#357)
+- Custom type converters (task 382), enum parameters (task 372), typed catch-alls and repeated options (task 349), and default values for typed options
+- User routes override the built-in `--version` and `--help` (task 357)
 - `--interactive` is no longer captured by catch-all routes
 - `ILogger<T>` uses the app `LoggerFactory` for OTLP export
 
@@ -372,11 +381,13 @@ beta.21 was not published. Changes from beta.20 to beta.22 are listed here.
 ### Added
 - **`[NuruRoute]` endpoints**: a source generator for attribute-based routes, with `[Parameter]` and `[Option]` binding and message-type detection (`AsQuery`, `AsCommand`, `AsIdempotentCommand`)
 - **Fluent route builder**: `Map(pattern).WithHandler(...).WithDescription(...)` built on `IBuilder<TParent>`. The same pattern is used by `TableBuilder`, `PanelBuilder`, `RuleBuilder`, and `KeyBindingBuilder`.
+- **`--capabilities`**: prints machine-readable CLI capabilities for tool discovery (#157)
 - Method group handlers for delegate routes
 - Tables shrink to fit with `TruncateMode` for narrow terminals
 
 ### Changed
 - **BREAKING**: removed the `Map(pattern, handler)` and `MapDefault` overloads. Use the fluent builder.
+- **BREAKING**: removed `MapMultiple`. Register each pattern with `Map`.
 - **BREAKING**: `RunReplAsync` returns `Task`, not `Task<int>`
 - `TimeWarp.Builder` and `TimeWarp.Terminal` are versioned separately (1.0.0-beta.1)
 

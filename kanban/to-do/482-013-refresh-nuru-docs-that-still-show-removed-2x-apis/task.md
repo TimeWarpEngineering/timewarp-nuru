@@ -95,10 +95,20 @@ Expect:
 - Second and third searches: no output.
 - `git diff`: empty, because `documentation/posts/` is unchanged.
 
+### Review
+
+- Rounds: 2. Roster: general. Effort: 3 (by diff, 3496 lines).
+- Round 1: 10 bugs open (M1–M7 from the reviewer, M8 and M9 raised from suggestion to bug, M10 added for `{value:float}` as NURU_P004). 0 suggestions, 0 nits.
+- Round 2: those 10 bugs fixed, 0 open, 0 wontfix. No new findings.
+- Disposition: clean. No exceptions and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 537072 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
+- Review oracle: grok 01a10c26-ade6-7920-b50f-35c6419409bf (2026-10-05)
+- Round 1 reviewer: grok subagent 01a10c28-e156-7b71-a01b-74bed2d9d269 (2026-10-05, docs-accuracy-validator)
 
 ## Notes
 

@@ -110,7 +110,8 @@ internal static class ServiceValidator
   /// </summary>
   public static ImmutableArray<Diagnostic> ValidateExtensionMethods(
     ImmutableArray<ExtensionMethodCall> extensionMethods,
-    bool useMicrosoftDependencyInjection)
+    bool useMicrosoftDependencyInjection,
+    Compilation? compilation = null)
   {
     if (useMicrosoftDependencyInjection || extensionMethods.IsDefaultOrEmpty)
       return [];
@@ -119,7 +120,7 @@ internal static class ServiceValidator
       .Where(ext => !WhitelistedExtensionMethods.Contains(ext.MethodName))
       .Select(ext => Diagnostic.Create(
         DiagnosticDescriptors.ExtensionMethodRegistration,
-        ext.Location,
+        ext.Location?.ToLocation(compilation) ?? Location.None,
         ext.MethodName))];
   }
 

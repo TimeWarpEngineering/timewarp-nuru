@@ -58,7 +58,8 @@ internal static class ModelValidator
     {
       ImmutableArray<Diagnostic> extensionDiagnostics = ServiceValidator.ValidateExtensionMethods(
         extensionMethods,
-        model.UseMicrosoftDependencyInjection);
+        model.UseMicrosoftDependencyInjection,
+        compilation);
       diagnostics.AddRange(extensionDiagnostics);
     }
 

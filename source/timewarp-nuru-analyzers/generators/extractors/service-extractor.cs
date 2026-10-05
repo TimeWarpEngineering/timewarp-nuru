@@ -228,7 +228,7 @@ internal static class ServiceExtractor
 
     if (ServiceRegistrationMethods.IsSpecialCased(methodName))
     {
-      extensionMethods.Add(new ExtensionMethodCall(methodName, invocation.GetLocation()));
+      extensionMethods.Add(new ExtensionMethodCall(methodName, LocationInfo.CreateFrom(invocation.GetLocation())));
       return;
     }
 
@@ -246,7 +246,7 @@ internal static class ServiceExtractor
         return;
       }
 
-      extensionMethods.Add(new ExtensionMethodCall(methodName, invocation.GetLocation()));
+      extensionMethods.Add(new ExtensionMethodCall(methodName, LocationInfo.CreateFrom(invocation.GetLocation())));
       return;
     }
 

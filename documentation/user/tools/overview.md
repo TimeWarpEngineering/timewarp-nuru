@@ -26,11 +26,13 @@ AI-assisted development with Model Context Protocol:
 | Tool | Purpose | Learn More |
 |------|---------|------------|
 | ⌨️ Key bindings | List built-in REPL shortcuts | [Key bindings](key-bindings.md) |
-| 🤖 MCP Server | AI-powered development assistance | [MCP Server](mcp-server.md) |
+| 🤖 MCP Server | Frozen; not part of 3.0 | [MCP Server](mcp-server.md) |
 
 ## Installation
 
 ### MCP Server
+
+Not part of the 3.0 release. Older prereleases install with:
 
 ```bash
 # Install as global tool

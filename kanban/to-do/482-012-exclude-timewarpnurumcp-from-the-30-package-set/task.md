@@ -24,6 +24,7 @@ Exclude the project from the pack that `tw-release` publishes for 3.0. Leave the
 - [x] `source/timewarp-nuru-mcp` still builds for anyone working in the repo
 - [x] Release notes or the migration guide say the MCP package is not part of 3.0
 - [x] No rewrite of `GetSyntax` or `GenerateHandler` on this id
+- [x] Implementation review disposition recorded (`review/disposition.md`)
 
 ## How to validate
 
@@ -42,6 +43,7 @@ Expect: A local pack of the project can still succeed. The 3.0 release pack outp
 - Created: 536472 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
 - Implemented: claude implementer under ganda task work (2026-10-05)
+- Review: grok 01a10c14-6b0b-7f13-bedb-fcea892ce42f (2026-10-05)
 
 ## Results
 
@@ -65,6 +67,16 @@ find /tmp/nuru-mcp-pack-optin -name 'TimeWarp.Nuru.Mcp*.nupkg'
 
 Expect: `IsPackable` is `false`. Build succeeds with 0 warnings/errors and puts no `TimeWarp.Nuru.Mcp*` in `artifacts/packages`. The default pack exits 0 and the first `find` prints nothing. The opt-in pack produces `TimeWarp.Nuru.Mcp.<version>.nupkg`. `grep -n "not part of 3.0" documentation/user/guides/migrating-to-3.0.md` finds the section.
 
+### Implementation review
+
+- Rounds: 2. Roster: general. Effort: 1 (by-diff, 149 lines).
+- Final counts: bug 0/0/0, suggestion 0 open / 1 fixed / 0 wontfix, nit 0/0/0 (open/fixed/wontfix).
+- Disposition: **clean**. No wontfix and no escalation.
+- M1 (suggestion): `documentation/user/tools/overview.md` highlights row and Installation section still read as a current `TimeWarp.Nuru.Mcp` install. Fixed on this task so both say it is not part of 3.0, and the install command is limited to older prereleases.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Review re-ran the pack gate on 2026-10-05: `IsPackable` evaluates `false` (opt-in `true`); Release build 0 warnings and no `TimeWarp.Nuru.Mcp*` under `artifacts/packages`; default `dotnet pack` exit 0 with no nupkg; `-p:NuruMcpPack=true` wrote `TimeWarp.Nuru.Mcp.3.0.0-beta.78.nupkg`.
+
 ## Notes
 
 - Parent review: `kanban/to-do/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/findings.md` on the task 482 branch until that PR merges.
+- Implementation review: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`.

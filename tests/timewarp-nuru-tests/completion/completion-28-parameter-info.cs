@@ -136,6 +136,52 @@ public class CompletionParameterInfoTests
     terminal.OutputContains("100").ShouldBeTrue();
     terminal.OutputContains("250").ShouldBeTrue();
   }
+
+  public static async Task Complete_should_resolve_registered_type_for_catch_all()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("pack {*files}").WithHandler((string[] files) => files.Length).AsCommand().Done()
+      .EnableCompletion(configure: registry =>
+      {
+        registry.RegisterForType(typeof(string[]), new FixedSource("a.txt", "b.txt"));
+      })
+      .Build();
+
+    // Act - cursor on the catch-all slot: "app pack <TAB>"
+    int exitCode = await app.RunAsync(["__complete", "2", "app", "pack"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("a.txt").ShouldBeTrue();
+    terminal.OutputContains("b.txt").ShouldBeTrue();
+  }
+
+  public static async Task Complete_should_resolve_catch_all_type_past_the_first_word()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("pack {*files}").WithHandler((string[] files) => files.Length).AsCommand().Done()
+      .EnableCompletion(configure: registry =>
+      {
+        registry.RegisterForType(typeof(string[]), new FixedSource("a.txt", "b.txt"));
+      })
+      .Build();
+
+    // Act - cursor past the first catch-all word: "app pack a.txt <TAB>"
+    int exitCode = await app.RunAsync(["__complete", "3", "app", "pack", "a.txt"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("a.txt").ShouldBeTrue();
+    terminal.OutputContains("b.txt").ShouldBeTrue();
+  }
 }
 
 // ==========================================================================

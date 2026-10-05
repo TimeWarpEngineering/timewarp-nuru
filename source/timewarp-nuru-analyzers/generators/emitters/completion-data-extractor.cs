@@ -100,8 +100,10 @@ internal static class CompletionDataExtractor
       int position = 0;
       foreach (ParameterDefinition param in route.Parameters)
       {
+        // Catch-all handler parameters are BindingSource.CatchAll after rebind.
         string? clrTypeName = route.Handler?.Parameters
-          .FirstOrDefault(p => p.Source == BindingSource.Parameter &&
+          .FirstOrDefault(p =>
+            p.Source is BindingSource.Parameter or BindingSource.CatchAll &&
             string.Equals(p.SourceName, param.Name, StringComparison.OrdinalIgnoreCase))
           ?.ParameterTypeName;
 

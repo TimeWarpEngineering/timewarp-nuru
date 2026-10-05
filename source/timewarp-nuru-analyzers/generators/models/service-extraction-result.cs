@@ -5,10 +5,14 @@ namespace TimeWarp.Nuru.Generators;
 /// These calls (like AddLogging, AddHttpClient) are opaque to source-gen DI.
 /// </summary>
 /// <param name="MethodName">The name of the extension method (e.g., "AddLogging").</param>
-/// <param name="Location">Source location of the call for diagnostic reporting.</param>
+/// <param name="Location">
+/// Value-equatable source location of the call for diagnostic reporting.
+/// Stored as <see cref="LocationInfo"/> (not a Roslyn <c>Location</c>) so the record keeps
+/// value equality across edits and does not defeat the emit cache.
+/// </param>
 public sealed record ExtensionMethodCall(
   string MethodName,
-  Location Location);
+  LocationInfo? Location);
 
 /// <summary>
 /// Represents HttpClient configuration extracted from AddHttpClient() calls.

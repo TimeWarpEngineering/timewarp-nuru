@@ -206,9 +206,8 @@ internal static class ServiceValidator
     {
       // Anchor unregistered-service diagnostics at the route when its location is known.
       Location routeLocation = routeLocations is not null
-        && routeLocations.TryGetValue(route.EffectivePattern, out Location? loc)
-          ? loc
-          : Location.None;
+        ? RouteLocationLookup.FindOrNone(route, routeLocations)
+        : Location.None;
 
       // Check handler service parameters
       foreach (ParameterBinding param in route.Handler.ServiceParameters)

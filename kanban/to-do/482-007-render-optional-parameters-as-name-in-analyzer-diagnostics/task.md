@@ -16,10 +16,10 @@ Evidence: `source/timewarp-nuru-analyzers/generators/models/segment-definition.c
 
 ## Checklist
 
-- [ ] `PatternSyntax` for an optional parameter is `{name?}` (and `{name:type?}` when there is a constraint), not `[name]`
-- [ ] Duplicate and overlap diagnostics on an optional route squiggle the `Map(...)` string
-- [ ] The message text is a pattern `PatternParser` accepts
-- [ ] Add a test with two routes that overlap on `{tag?}`
+- [x] `PatternSyntax` for an optional parameter is `{name?}` (and `{name:type?}` when there is a constraint), not `[name]`
+- [x] Duplicate and overlap diagnostics on an optional route squiggle the `Map(...)` string
+- [x] The message text is a pattern `PatternParser` accepts
+- [x] Add a test with two routes that overlap on `{tag?}`
 
 ## How to validate
 
@@ -31,10 +31,42 @@ dotnet test tests/timewarp-nuru-tests/timewarp-nuru-tests.csproj --filter FullyQ
 
 Expect: The overlap test's diagnostic location is the source route string, and the message contains `{name?}` rather than `[name]`.
 
+## Results
+
+- `ParameterDefinition.PatternSyntax` now renders optional parameters as `{name?}` and
+  `{name:type?}` (a trailing `?` already present on `TypeConstraint` is not doubled), so
+  `EffectivePattern` and the diagnostic text use syntax `PatternParser` accepts.
+- New `validation/route-location-lookup.cs` (`RouteLocationLookup`) resolves a route's source
+  location by `OriginalPattern`, then `FullPattern`, then `EffectivePattern`. Overlap (R001/R002/R003),
+  REPL-default (R004), reserved json-args (R005), and service validators use it, so diagnostics
+  anchor at the `Map(...)` string even when the effective pattern differs from the source
+  literal (descriptions, `{tag?:int}` vs `{tag:int?}`).
+- Tests in `tests/timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs`: duplicate
+  `deploy {env} {tag?}` (R002 anchors at the source string, message has `{tag?}`, no `[tag]`),
+  overlap on `{tag?}` vs `{tag:int?}` (anchored in source, parser-form text), and the
+  `PatternSyntax` unit cases.
+- Full CI run (`dotnet run tests/ci-tests/run-ci-tests.cs`) passed with no failures.
+
+### How to validate
+
+The repo has no `timewarp-nuru-tests.csproj`; tests are runfiles.
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs
+```
+
+Expect: All 5 tests pass, including `Should_anchor_nuru_r002_at_optional_route_string_with_parseable_pattern`
+and `Should_anchor_nuru_r001_overlap_on_optional_tag`. The diagnostics are anchored at the source route
+string and the message contains `{tag?}` / `{tag:int?}`, never `[tag]`.
+
 ## Session
 
 - Created: 533403 (2026-10-03)
 - Body filled from task 482 review: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05)
+- Implemented: claude (ganda task work implement oracle) (2026-10-05)
 
 ## Notes
 

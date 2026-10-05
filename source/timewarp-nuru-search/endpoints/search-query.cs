@@ -113,6 +113,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<Unit>
         capabilities.Version,
         capabilities.RawJson,
         capabilities.Endpoints,
+        cliPath,
         cancellationToken).ConfigureAwait(false);
 
       await terminal.WriteLineAsync($"Auto-indexed {capabilities.Name} v{capabilities.Version} ({capabilities.Endpoints.Count} endpoints)").ConfigureAwait(false);

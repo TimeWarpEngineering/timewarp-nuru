@@ -163,6 +163,13 @@ Ship `3.0.0` after those children merge. `NuruAppBuilder.Services` and `AddReplO
 
 CI on baseline `5a06e900` exited 0: 3742 passed, 0 failed, 12 skipped. AOT publish of the delegates test app exited 0 with four CS0436 warnings and no IL2026 or IL3050. This node did not re-run that baseline. No product source changed in this pass.
 
+### Review disposition
+
+- Implementation review (`tw-implementation-review`): 1 round, effort 2, roster `general`.
+- Final counts: bug 0; suggestion 1 fixed; nit 1 fixed; 0 open, 0 wontfix.
+- Disposition: **clean**. M1: four public XML examples still called removed `CreateBuilder([])` (R-7 was incomplete). M2: the same stale call in two generator comments and `.agent/local/nuru-specific.md`. Both fixed on this task; `dotnet build source/timewarp-nuru` 0 warnings / 0 errors.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke**
@@ -187,3 +194,4 @@ grep -n 'fix-now' kanban/to-do/482-complete-code-review-of-timewarpnuru-before-t
 - Implementer: grok 01a102e3-e4f9-72a2-a86d-9e8206c8a56e (2026-10-04) — max turns, exit 1
 - Cockpit triage + relaunch: claude 2412bd45 (2026-10-04)
 - Implementer: grok 01a109e2-e070-73a0-991d-a38c4b580ef1 (2026-10-05) — area findings, dispositions, child bodies
+- Review oracle: claude (2026-10-05) — implementation review round 1, disposition clean

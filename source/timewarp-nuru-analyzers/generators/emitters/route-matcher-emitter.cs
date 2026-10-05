@@ -23,6 +23,11 @@
 // UnauthorizedAccessException, and SecurityException. Catch Exception so any of
 // those stay on the invalid-value exit instead of escaping the route.
 //
+// TYPED ARRAY CONVERSION: Catch-all parameters and repeated options call
+// GetBuiltInTryConversion once per element. A failed TryParse, including
+// overflow, writes the invalid-value line and returns 1. DateTimeOffset and
+// Version use that same TryParse map as scalar parameters.
+//
 // SHARED PREFIX HELP: Routes that share leading literals are printed together by
 // EmitSharedPrefixHelpChecks. EmitPerRouteHelpCheck skips those routes. A prefix
 // with one route keeps the single-route help check beside that route's matcher.
@@ -697,7 +702,7 @@ internal static class RouteMatcherEmitter
         if (baseType.Equals("string", StringComparison.OrdinalIgnoreCase))
           continue;
 
-        EmitCatchAllTypeConversion(sb, param, escapedVarName, uniqueVarName, routeIndex, baseType, indentStr);
+        EmitCatchAllTypeConversion(sb, param, escapedVarName, uniqueVarName, baseType, indentStr);
         continue;
       }
 
@@ -892,31 +897,23 @@ internal static class RouteMatcherEmitter
     ParameterDefinition param,
     string varName,
     string uniqueVarName,
-    int routeIndex,
     string baseType,
     string indentStr)
   {
-    // Get the CLR type for this constraint
-    (string ClrType, string _)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, "x", "y");
-
-    if (conversion is var (clrType, _))
-    {
-      // Get the parse expression for this type
-      string parseExpr = GetParseExpression(baseType, "__s");
-
-      // Emit array conversion with error handling
-      sb.AppendLine($"{indentStr}{clrType}[] {varName};");
-      sb.AppendLine($"{indentStr}try");
-      sb.AppendLine($"{indentStr}{{");
-      sb.AppendLine($"{indentStr}  {varName} = {uniqueVarName}.Select(__s => {parseExpr}).ToArray();");
-      sb.AppendLine($"{indentStr}}}");
-      sb.AppendLine($"{indentStr}catch (global::System.FormatException)");
-      sb.AppendLine($"{indentStr}{{");
-      sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value in '{param.Name}'. Expected: {baseType}[]\");");
-      sb.AppendLine($"{indentStr}  return 1;");
-      sb.AppendLine($"{indentStr}}}");
-    }
-    else
+    string errorStatement =
+      $"app.Terminal.WriteLine($\"Error: Invalid value in '{param.Name}'. Expected: {baseType}[]\");";
+    bool converted = EmitBuiltInArrayConversion(
+      sb,
+      indentStr,
+      baseType,
+      varName,
+      uniqueVarName,
+      $"{uniqueVarName}.Length",
+      $"{uniqueVarName}_i",
+      $"{uniqueVarName}_s",
+      $"{uniqueVarName}_parsed",
+      errorStatement);
+    if (!converted)
     {
       // Unknown type - emit as string[] (no conversion needed, just alias)
       sb.AppendLine($"{indentStr}string[] {varName} = {uniqueVarName};");
@@ -1077,24 +1074,21 @@ internal static class RouteMatcherEmitter
     // Built-in typed conversion when a type constraint is present (int, double, etc.)
     if (!string.IsNullOrEmpty(baseType))
     {
-      (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, "__item", "__parsed");
-
-      if (conversion is var (clrType, _))
-      {
-        string parseExpr = GetParseExpression(baseType, "__s");
-
-        sb.AppendLine($"      {clrType}[] {varName};");
-        sb.AppendLine("      try");
-        sb.AppendLine("      {");
-        sb.AppendLine($"        {varName} = {listVarName}.Select(__s => {parseExpr}).ToArray();");
-        sb.AppendLine("      }");
-        sb.AppendLine("      catch (global::System.FormatException)");
-        sb.AppendLine("      {");
-        sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value in option '{optionDisplay}'. Expected: {baseType}\");");
-        sb.AppendLine("        return 1;");
-        sb.AppendLine("      }");
+      string errorStatement =
+        $"app.Terminal.WriteLine($\"Error: Invalid value in option '{optionDisplay}'. Expected: {baseType}\");";
+      bool converted = EmitBuiltInArrayConversion(
+        sb,
+        "      ",
+        baseType,
+        varName,
+        listVarName,
+        $"{listVarName}.Count",
+        $"{listVarName}_i",
+        $"{listVarName}_s",
+        $"{listVarName}_parsed",
+        errorStatement);
+      if (converted)
         return;
-      }
     }
 
     // Enum element type from handler parameter (MyEnum[], IEnumerable<MyEnum>, etc.)
@@ -1222,24 +1216,41 @@ internal static class RouteMatcherEmitter
   }
 
   /// <summary>
-  /// Gets the parse expression for a given type.
+  /// Fills an array by TryParse-ing each string element.
+  /// Returns false when <paramref name="baseType"/> has no built-in TryParse.
   /// </summary>
-  private static string GetParseExpression(string baseType, string varName)
+  private static bool EmitBuiltInArrayConversion(
+    StringBuilder sb,
+    string indent,
+    string baseType,
+    string arrayVarName,
+    string sourceVarName,
+    string lengthExpression,
+    string indexVarName,
+    string itemVarName,
+    string parsedVarName,
+    string errorStatement)
   {
-    return baseType.ToLowerInvariant() switch
-    {
-      "int" => $"int.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "long" => $"long.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "short" => $"short.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "byte" => $"byte.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "double" => $"double.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "float" => $"float.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "decimal" => $"decimal.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "bool" => $"global::TimeWarp.Nuru.BooleanConverter.Parse({varName})",
-      "datetime" => $"global::System.DateTime.Parse({varName}, global::System.Globalization.CultureInfo.InvariantCulture)",
-      "guid" => $"global::System.Guid.Parse({varName})",
-      _ => varName // Unknown type - return as-is (string)
-    };
+    (string ClrType, string TryParseCondition)? conversion =
+      TypeConversionMap.GetBuiltInTryConversion(baseType, itemVarName, parsedVarName);
+    if (conversion is null)
+      return false;
+
+    string clrType = conversion.Value.ClrType;
+    string tryParseCondition = conversion.Value.TryParseCondition;
+    sb.AppendLine($"{indent}{clrType}[] {arrayVarName} = new {clrType}[{lengthExpression}];");
+    sb.AppendLine($"{indent}for (int {indexVarName} = 0; {indexVarName} < {lengthExpression}; {indexVarName}++)");
+    sb.AppendLine($"{indent}{{");
+    sb.AppendLine($"{indent}  string {itemVarName} = {sourceVarName}[{indexVarName}];");
+    sb.AppendLine($"{indent}  {clrType} {parsedVarName};");
+    sb.AppendLine($"{indent}  if (!({tryParseCondition}))");
+    sb.AppendLine($"{indent}  {{");
+    sb.AppendLine($"{indent}    {errorStatement}");
+    sb.AppendLine($"{indent}    return 1;");
+    sb.AppendLine($"{indent}  }}");
+    sb.AppendLine($"{indent}  {arrayVarName}[{indexVarName}] = {parsedVarName};");
+    sb.AppendLine($"{indent}}}");
+    return true;
   }
 
   /// <summary>

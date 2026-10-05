@@ -8,7 +8,7 @@ namespace TimeWarp.Nuru.Generators;
 /// Supports:
 /// - C# primitive keywords: int, bool, long, double, decimal, float, byte, sbyte, short, ushort, uint, ulong, char
 /// - CLR type names: Int32, Boolean, Int64, Double, Decimal, Single, Byte, SByte, Int16, UInt16, UInt32, UInt64, Char
-/// - PascalCase type names: DateTime, TimeSpan, Guid, Uri, FileInfo, DirectoryInfo, IPAddress, DateOnly, TimeOnly
+/// - PascalCase type names: DateTime, DateTimeOffset, TimeSpan, Guid, Uri, Version, FileInfo, DirectoryInfo, IPAddress, DateOnly, TimeOnly
 /// All matching is case-insensitive.
 /// </remarks>
 internal static class TypeConversionMap
@@ -44,10 +44,13 @@ internal static class TypeConversionMap
       // PascalCase type names (case-insensitive) - most have TryParse
       "guid" => ("global::System.Guid", $"global::System.Guid.TryParse({inputVarName}, out {outputVarName})"),
       "datetime" => ("global::System.DateTime", $"global::System.DateTime.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.None, out {outputVarName})"),
+      "datetimeoffset" => ("global::System.DateTimeOffset", $"global::System.DateTimeOffset.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.None, out {outputVarName})"),
       "timespan" => ("global::System.TimeSpan", $"global::System.TimeSpan.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
       "dateonly" => ("global::System.DateOnly", $"global::System.DateOnly.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.None, out {outputVarName})"),
       "timeonly" => ("global::System.TimeOnly", $"global::System.TimeOnly.TryParse({inputVarName}, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.None, out {outputVarName})"),
       "ipaddress" => ("global::System.Net.IPAddress", $"global::System.Net.IPAddress.TryParse({inputVarName}, out {outputVarName})"),
+      // Version.TryParse outs Version?. The generated file disables nullable warnings, same as IPAddress.
+      "version" => ("global::System.Version", $"global::System.Version.TryParse({inputVarName}, out {outputVarName})"),
 
       // Types without TryParse - use try/catch wrapper pattern (return null to signal special handling needed)
       "uri" or "fileinfo" or "directoryinfo" => null,

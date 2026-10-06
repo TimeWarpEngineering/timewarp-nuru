@@ -1,7 +1,7 @@
 # Migrating to TimeWarp.Nuru 3.0
 
 Guide for applications moving from the 2.x line, or from a 3.0 beta, to the
-stable 3.0 release. The package under review is `3.0.0-beta.78`.
+stable 3.0 release. The package under review is `3.0.0-beta.79`.
 
 `TimeWarp.Nuru` targets `net10.0`. Install the prerelease until `3.0.0` is
 published:

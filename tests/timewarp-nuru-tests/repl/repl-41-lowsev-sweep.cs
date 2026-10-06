@@ -104,7 +104,7 @@ public class LowSevSweepTests
     // Only the ':' directive line is stripped; a standalone number is a valid candidate.
     pwsh.Contains("^\\d+$").ShouldBeFalse("pwsh must not skip standalone-number completion candidates");
     fish.Contains("^0$").ShouldBeFalse("fish must not drop the '0' completion candidate");
-    fish.ShouldContain("string match -v -r '^:'");
+    fish.ShouldContain("string match -q -r '^:'");
     zsh.Contains("^[0-9]+$").ShouldBeFalse("zsh must not strip a trailing bare numeric line (M37)");
 
     await Task.CompletedTask;

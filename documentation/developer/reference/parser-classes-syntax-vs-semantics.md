@@ -2,52 +2,61 @@
 
 This document clarifies which parser classes represent **syntax** (the literal representation as written) versus **semantics** (the meaning or interpretation).
 
+All types below live in `source/timewarp-nuru-parsing/parsing/`.
+
 ## Lexer Layer (Pure Syntax)
 
 | Class | Type | Description |
 |-------|------|-------------|
-| `Token` | **Syntax** | Raw textual tokens from input (e.g., `-`, `m`, `{`, `}`) |
-| `TokenType` | **Syntax** | Categories of raw tokens (SingleDash, DoubleDash, Identifier, etc.) |
-| `Lexer` | **Syntax** | Breaks input string into syntactic tokens |
+| `Token` | **Syntax** | Raw textual token from input (type, value, position, length) |
+| `RouteTokenType` | **Syntax** | Categories of raw tokens (`SingleDash`, `DoubleDash`, `Identifier`, `LeftBrace`, etc.) |
+| `Lexer` | **Syntax** | Breaks the input string into syntactic tokens via `Tokenize()` |
 
-## AST Layer (Mixed)
+## Syntax Tree Layer (Mixed)
 
 | Class | Type | Description |
 |-------|------|-------------|
-| `RoutePatternAst` | **Structure** | Container for parsed segments |
-| `SegmentNode` | **Structure** | Base class for AST nodes |
-| `LiteralNode` | **Semantic** | Represents a literal string value to match |
-| `ParameterNode` | **Semantic** | Represents a parameter with name, type, optional flag |
-| `OptionNode` | **Mixed** | Contains both semantic names (LongName/ShortName) and structural info |
+| `Syntax` | **Structure** | Container for the parsed segments (`Segments`) |
+| `SyntaxNode` | **Structure** | Abstract base record for all syntax tree nodes |
+| `SegmentSyntax` | **Structure** | Abstract base record for segments; carries `Position` and `Length` in the original input |
+| `LiteralSyntax` | **Semantic** | A literal string value (`Value`) to match |
+| `ParameterSyntax` | **Semantic** | A parameter with `Name`, `Type`, `IsOptional`, `IsCatchAll`, `IsRepeated`, `Description` |
+| `OptionSyntax` | **Mixed** | Contains semantic names (`LongForm`/`ShortForm`) and structural info (`IsOptional`, `Parameter`, `Description`) |
+| `EndOfOptionsSyntax` | **Structure** | The standalone `--` end-of-options marker |
 
-### OptionNode Details
-- `LongName` (e.g., "verbose") - **Semantic**: the option name without dashes
-- `ShortName` (e.g., "v") - **Semantic**: the short form name without dash
+### OptionSyntax Details
+- `LongForm` (e.g., "verbose") - **Semantic**: the long option name, stored **without** the leading `--`
+- `ShortForm` (e.g., "v") - **Semantic**: the short option name, stored **without** the leading `-`
+- `Parameter` - the associated `ParameterSyntax` for options that take a value
 - The node itself represents the semantic concept of "an option"
 
-## Route Segments (Runtime Representation)
+## Runtime Representation
+
+`Compiler` converts the syntax tree into a `CompiledRoute` whose `Segments` are `RouteMatcher` objects.
 
 | Class | Type | Description |
 |-------|------|-------------|
-| `ParsedRoute` | **Mixed** | Runtime representation with both syntax and semantics |
-| `RouteSegment` | **Structure** | Base class for route matching |
-| `LiteralSegment` | **Semantic** | Value to match literally |
-| `ParameterSegment` | **Semantic** | Parameter definition with name, type, constraints |
-| `OptionSegment` | **Syntax** | Option as it appears on command line |
+| `CompiledRoute` | **Mixed** | Runtime representation with both syntax and semantics (`Segments`, `Specificity`, `CatchAllParameterName`) |
+| `RouteMatcher` | **Structure** | Abstract base class for matching |
+| `LiteralMatcher` | **Semantic** | Value to match literally |
+| `ParameterMatcher` | **Semantic** | Parameter definition with name, constraint, optional/catch-all flags |
+| `OptionMatcher` | **Syntax** | Option as it appears on the command line |
 
-### OptionSegment Details
-- `Name` (e.g., "-v", "--verbose") - **Syntax**: includes dashes as typed
-- `ExpectsValue` - **Semantic**: whether option takes a parameter
-- `ValueParameterName` - **Semantic**: name of the parameter
-- `ShortAlias` (e.g., "-v") - **Syntax**: alternative form with dash
+### OptionMatcher Details
+- `MatchPattern` (e.g., "--verbose", or "-v" when there is no long form) - **Syntax**: includes dashes as typed
+- `AlternateForm` (e.g., "-v") - **Syntax**: the short form with its dash, set only when both long and short forms exist
+- `ExpectsValue` - **Semantic**: whether the option takes a parameter
+- `ParameterName` - **Semantic**: name of the value parameter
+- `IsOptional`, `IsRepeated`, `ParameterIsOptional` - **Semantic**: optionality and repetition flags
 
 ## Parser Classes
 
 | Class | Type | Description |
 |-------|------|-------------|
-| `NewRoutePatternParser` | **Transformation** | Converts syntax (tokens) to semantics (AST) |
-| `ParsedRouteBuilder` | **Transformation** | Converts semantic AST to runtime representation |
-| `ImprovedRoutePatternParser` | **Facade** | Orchestrates parsing pipeline |
+| `Parser` | **Transformation** | Converts syntax (tokens) to a `Syntax` tree; returns a `ParseResult<Syntax>` |
+| `SemanticValidator` | **Validation** | Checks the `Syntax` tree for meaning-level errors (duplicate parameters, catch-all position, etc.) |
+| `Compiler` | **Transformation** | Converts the `Syntax` tree to the runtime `CompiledRoute` |
+| `PatternParser` | **Facade** | Static entry point (`Parse`, `TryParse`) that runs `Parser` and `Compiler` |
 
 ## Key Distinctions
 
@@ -71,8 +80,8 @@ This document clarifies which parser classes represent **syntax** (the literal r
 ## Example: Option Parsing Flow
 
 1. **Input**: `"git commit -m {message}"`
-2. **Tokens** (Syntax): `[git] [commit] [-] [m] [{] [message] [}]`
-3. **AST** (Semantic): `OptionNode(ShortName="m", Parameter=...)`
-4. **Route** (Syntax): `OptionSegment(Name="-m", ...)`
+2. **Tokens** (Syntax): `Identifier(git)`, `Identifier(commit)`, `SingleDash`, `Identifier(m)`, `LeftBrace`, `Identifier(message)`, `RightBrace`, `EndOfInput`
+3. **Syntax tree** (Semantic): `OptionSyntax(LongForm=null, ShortForm="m", Parameter=ParameterSyntax(Name="message"))`
+4. **Compiled route** (Syntax): `OptionMatcher(MatchPattern="-m", ExpectsValue=true, ParameterName="message")`
 
-Note how the option's semantic name "m" is stored without dash in the AST, but the runtime OptionSegment uses the syntactic form "-m" for matching.
+Note how the option's semantic name "m" is stored without a dash in `OptionSyntax`, but `Compiler.VisitOption` re-adds the dashes, so the runtime `OptionMatcher` holds the syntactic form "-m" in `MatchPattern` (and the short form in `AlternateForm` when a long form such as `--message,-m` is also declared).

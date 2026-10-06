@@ -5,7 +5,7 @@ TimeWarp.Nuru integrates with Microsoft.Extensions.Configuration and Microsoft.E
 ## Enabling Configuration
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Build();
 ```
 
@@ -50,7 +50,7 @@ public class ApiSettings
 Inject `IOptions<T>` or `IConfiguration` directly into handler parameters:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("db connect")
     .WithHandler(ConnectToDatabaseAsync)
     .AsCommand()
@@ -130,12 +130,12 @@ public class DatabaseOptions
 {
   [Required]
   public string ConnectionString { get; set; } = string.Empty;
-  
+
   [Range(1, 300)]
   public int TimeoutSeconds { get; set; } = 30;
 }
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices((services, config) =>
   {
     services.AddOptions<DatabaseOptions>()
@@ -154,7 +154,7 @@ Register services using `ConfigureServices`:
 
 ```csharp
 // When you don't need configuration access
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services =>
   {
     services.AddSingleton<IMyService, MyService>();
@@ -163,11 +163,11 @@ NuruApp app = NuruApp.CreateBuilder(args)
   .Build();
 
 // When you need access to configuration
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices((services, config) =>
   {
     services.Configure<DatabaseOptions>(config.GetSection("Database"));
-    
+
     string? environment = config["Environment"];
     if (environment == "Development")
       services.AddSingleton<INotificationService, ConsoleNotificationService>();

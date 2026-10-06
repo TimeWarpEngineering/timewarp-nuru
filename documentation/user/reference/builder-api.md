@@ -7,7 +7,7 @@ Complete reference for the `NuruApp.CreateBuilder()` fluent API.
 All Nuru applications start with `NuruApp.CreateBuilder()`:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   // ... configuration
   .Build();
 
@@ -234,20 +234,28 @@ Methods available on `NuruApp` after building:
 
 ### Exit Codes
 
-- **0**: Success
-- **Non-zero**: Failure (handler threw exception)
+`RunAsync` returns the process exit code:
 
-Handler return values are written to terminal output, not used as exit codes:
+- **0**: The matched route finished and `Environment.ExitCode` is still 0.
+- **Non-zero**: The handler set `Environment.ExitCode`, or the generated host returned 1 because argument binding failed or no route matched.
+
+Handler return values are written to the terminal. They are not the exit code. A handler exception is not turned into exit code 1. It propagates out of `RunAsync`. When telemetry is enabled, the host records `error.type` and rethrows.
 
 ```csharp
-// Outputs "42" to terminal, returns exit code 0
+// Writes "42" to the terminal. The exit code stays Environment.ExitCode (0 unless the handler sets it).
 .Map("answer")
   .WithHandler(() => 42)
+  .AsCommand()
   .Done()
 
-// To signal failure, throw an exception
+// Signal failure by setting the exit code. The return value is still terminal output.
 .Map("fail")
-  .WithHandler(() => throw new Exception("Something went wrong"))
+  .WithHandler(() =>
+  {
+    Environment.ExitCode = 2;
+    return "failed";
+  })
+  .AsCommand()
   .Done()
 ```
 
@@ -285,41 +293,41 @@ async (string p, CancellationToken ct) => await ProcessAsync(p, ct)
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .WithName("myapp")
   .WithDescription("My awesome CLI application")
-  
+
   // Configuration and DI
   .AddConfiguration()
   .ConfigureServices(services =>
   {
     services.AddSingleton<IDeployer, Deployer>();
   })
-  
+
   // Pipeline behaviors
   .AddBehavior(typeof(LoggingBehavior))
-  
+
   // Query command (safe to retry)
   .Map("status")
     .WithHandler(() => Console.WriteLine("All systems operational"))
     .WithDescription("Show system status")
     .AsQuery()
     .Done()
-  
+
   // Command with required parameter
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .WithDescription("Greet someone by name")
     .AsCommand()
     .Done()
-  
+
   // Command with typed parameters
   .Map("add {x:int} {y:int}")
     .WithHandler((int x, int y) => Console.WriteLine($"{x} + {y} = {x + y}"))
     .WithDescription("Add two integers")
     .AsQuery()
     .Done()
-  
+
   // Command with optional parameter
   .Map("deploy {env} {tag?}")
     .WithHandler((string env, string? tag) =>
@@ -330,7 +338,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
     .WithDescription("Deploy to environment with optional tag")
     .AsCommand()
     .Done()
-  
+
   // Command with boolean option
   .Map("build --release,-r")
     .WithHandler((bool release) =>
@@ -341,7 +349,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
     .WithDescription("Build the project")
     .AsCommand()
     .Done()
-  
+
   // Command with option value
   .Map("search {query} --limit,-l {count:int?}")
     .WithHandler((string query, int? count) =>
@@ -352,7 +360,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
     .WithDescription("Search with optional result limit")
     .AsQuery()
     .Done()
-  
+
   // Async command with injected service
   .Map("deploy-async {env}")
     .WithHandler(async (string env, IDeployer deployer) =>
@@ -362,18 +370,18 @@ NuruApp app = NuruApp.CreateBuilder(args)
     .WithDescription("Deploy asynchronously")
     .AsIdempotentCommand()
     .Done()
-  
+
   // Catch-all parameter
   .Map("echo {*words}")
     .WithHandler((string[] words) => Console.WriteLine(string.Join(" ", words)))
     .WithDescription("Echo all arguments")
     .AsQuery()
     .Done()
-  
+
   // REPL and completion
   .AddRepl(options => options.Prompt = "myapp> ")
   .EnableCompletion()
-  
+
   .Build();
 
 return await app.RunAsync(args);
@@ -383,5 +391,5 @@ return await app.RunAsync(args);
 
 - [Route Pattern Syntax](../features/route-patterns.md)
 - [Supported Types](supported-types.md)
-- [NuruAppOptions](nuru-app-options.md)
+- [Builder Configuration Options](nuru-app-options.md)
 - [Pipeline Behaviors](../features/pipeline-behaviors.md)

@@ -2,6 +2,11 @@
 
 AI-powered development assistance for TimeWarp.Nuru through the Model Context Protocol (MCP).
 
+> **Not part of 3.0.** The `TimeWarp.Nuru.Mcp` package is frozen and is not published
+> with TimeWarp.Nuru 3.0. Its syntax and handler-generation answers do not match the 3.0
+> surface. Use the Nuru skill (`skills/tw-nuru/SKILL.md`) and the `samples/` files instead.
+> The instructions below apply to older prereleases only.
+
 ## What is the MCP Server?
 
 The TimeWarp.Nuru MCP Server integrates with AI coding assistants (Claude Code, Roo Code, Continue) to provide real-time help while you build CLI applications:

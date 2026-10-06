@@ -15,10 +15,14 @@
 // This hosts NuruGenerator in a CSharpGeneratorDriver with
 // trackIncrementalGeneratorSteps enabled, runs it twice over a two-file compilation
 // (A = a Nuru app with an enum route parameter, B = unrelated code), edits ONLY the
-// unrelated file B between runs, and asserts every output of those two steps is
+// unrelated file B between runs (or re-parses the app file unchanged), and asserts every output of those two steps is
 // Cached or Unchanged. Before 454-010 these reported Modified/New on every edit
 // because the model carried ImmutableArray reference-equality (M5), a raw
 // CompilationProvider (M4), and live Roslyn Location objects.
+//
+// Task 482-008 extends this to an app whose ConfigureServices calls an opaque AddX
+// extension (NURU052). ExtensionMethodCall used to carry a live Roslyn Location, so any
+// such app missed the emit cache on every edit.
 //
 // CI cannot observe this via generated output (the output is identical either way);
 // only the step-reason assert catches a caching regression.
@@ -45,9 +49,10 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen37IncrementalityCaching
     private const string AppSource = """
       using TimeWarp.Nuru;
 
-      NuruApp.CreateBuilder(args)
+      NuruApp app = NuruApp.CreateBuilder()
         .Map("deploy {env}").WithHandler((DeployEnv env) => $"deploy {env}").AsCommand().Done()
         .Build();
+      return await app.RunAsync([]);
 
       enum DeployEnv { Dev, Staging, Prod }
       """;
@@ -60,6 +65,34 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen37IncrementalityCaching
         public static class Helper
         {
           public static string Tag => "{{marker}}";
+        }
+      }
+      """;
+
+    // A Nuru app whose ConfigureServices calls an opaque AddX: the extension mutates static
+    // state, so the lowerer refuses it and it is recorded as an ExtensionMethodCall (NURU052).
+    private const string OpaqueAddXAppSource = """
+      using TimeWarp.Nuru;
+      using Microsoft.Extensions.DependencyInjection;
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .ConfigureServices(static services => services.AddGen37Opaque())
+        .Map("gen37-opaque").WithHandler(static () => "ok").AsQuery().Done()
+        .Build();
+      return await app.RunAsync([]);
+
+      public interface IGen37Opaque { }
+      public sealed class Gen37Opaque : IGen37Opaque { }
+
+      public static class Gen37OpaqueExtensions
+      {
+        public static bool Enabled;
+
+        public static IServiceCollection AddGen37Opaque(this IServiceCollection services)
+        {
+          Enabled = true;
+          services.AddSingleton<IGen37Opaque, Gen37Opaque>();
+          return services;
         }
       }
       """;
@@ -96,6 +129,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen37IncrementalityCaching
         syntaxTrees: [appTree, unrelatedV1],
         references: BuildReferences(),
         options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
+      AssertNoCompileErrors(compilation1);
 
       GeneratorDriver driver = CreateTrackingDriver();
 
@@ -109,6 +143,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen37IncrementalityCaching
 
       GeneratorRunResult runResult = driver.GetRunResult().Results[0];
       runResult.Exception.ShouldBeNull();
+      runResult.GeneratedSources.ShouldNotBeEmpty();
 
       AssertStepsCachedOrUnchanged(runResult, "NuruGeneratorModel");
       AssertStepsCachedOrUnchanged(runResult, "NuruEnumInfo");
@@ -117,12 +152,14 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen37IncrementalityCaching
     }
 
     /// <summary>
-    /// A cosmetic edit AFTER all Nuru code in the app file re-parses tree A (so its node
-    /// transforms re-run) but leaves every emit-relevant value — including registration
-    /// spans — unchanged. This exercises the EquatableArray value equality (M5) and the
-    /// Location-stripping (3c): the model must still compare equal and cache.
+    /// Re-parsing the app file into a NEW syntax tree with identical text re-runs tree A's
+    /// node transforms (fresh Roslyn Location/SyntaxTree objects) while leaving every
+    /// emit-relevant value unchanged. This exercises the EquatableArray value equality (M5)
+    /// and the Location-stripping (3c): the model must still compare equal and cache.
+    /// A real text edit to the app file cannot cache: the [InterceptsLocation] data embeds a
+    /// checksum of the file content, so any edit legitimately changes the emitted output.
     /// </summary>
-    public static async Task Model_caches_on_cosmetic_edit_to_app_file()
+    public static async Task Model_caches_when_app_file_is_reparsed_unchanged()
     {
       SyntaxTree unrelatedTree = CSharpSyntaxTree.ParseText(UnrelatedSource("stable"));
       SyntaxTree appV1 = CSharpSyntaxTree.ParseText(AppSource);
@@ -132,23 +169,72 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen37IncrementalityCaching
         syntaxTrees: [appV1, unrelatedTree],
         references: BuildReferences(),
         options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
+      AssertNoCompileErrors(compilation1);
 
       GeneratorDriver driver = CreateTrackingDriver();
       driver = driver.RunGenerators(compilation1);
 
-      // Append a trailing comment line AFTER all app code — spans of Build()/Map()/handler
-      // are unchanged, so the emit model should be value-equal to run 1.
-      SyntaxTree appV2 = CSharpSyntaxTree.ParseText(AppSource + "\n// cosmetic trailing edit\n");
+      // Fresh tree, identical text — only live Roslyn objects differ from run 1.
+      SyntaxTree appV2 = CSharpSyntaxTree.ParseText(AppSource);
       Compilation compilation2 = compilation1.ReplaceSyntaxTree(appV1, appV2);
       driver = driver.RunGenerators(compilation2);
 
       GeneratorRunResult runResult = driver.GetRunResult().Results[0];
       runResult.Exception.ShouldBeNull();
+      runResult.GeneratedSources.ShouldNotBeEmpty();
 
       AssertStepsCachedOrUnchanged(runResult, "NuruGeneratorModel");
       AssertStepsCachedOrUnchanged(runResult, "NuruEnumInfo");
 
       await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// An app whose ConfigureServices calls an opaque AddX extension must still cache the
+    /// emit model when its file is re-parsed unchanged (task 482-008: ExtensionMethodCall
+    /// stores LocationInfo, not a live Roslyn Location), and NURU052 must still point at the
+    /// extension call.
+    /// </summary>
+    public static async Task Model_caches_with_opaque_extension_call_when_reparsed_unchanged()
+    {
+      const string AppPath = "gen37-opaque-app.cs";
+      SyntaxTree unrelatedTree = CSharpSyntaxTree.ParseText(UnrelatedSource("stable"));
+      SyntaxTree appV1 = CSharpSyntaxTree.ParseText(OpaqueAddXAppSource, path: AppPath);
+
+      CSharpCompilation compilation1 = CSharpCompilation.Create(
+        assemblyName: "NuruIncrementalReproOpaqueAddX",
+        syntaxTrees: [appV1, unrelatedTree],
+        references: BuildReferences(),
+        options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
+      AssertNoCompileErrors(compilation1);
+
+      GeneratorDriver driver = CreateTrackingDriver();
+      driver = driver.RunGenerators(compilation1);
+
+      SyntaxTree appV2 = CSharpSyntaxTree.ParseText(OpaqueAddXAppSource, path: AppPath);
+      Compilation compilation2 = compilation1.ReplaceSyntaxTree(appV1, appV2);
+      driver = driver.RunGenerators(compilation2);
+
+      GeneratorDriverRunResult driverResult = driver.GetRunResult();
+      GeneratorRunResult runResult = driverResult.Results[0];
+      runResult.Exception.ShouldBeNull();
+      runResult.GeneratedSources.ShouldNotBeEmpty();
+
+      AssertStepsCachedOrUnchanged(runResult, "NuruGeneratorModel");
+
+      Diagnostic? nuru052 = driverResult.Diagnostics.FirstOrDefault(static d => d.Id == "NURU052");
+      nuru052.ShouldNotBeNull(string.Join("\n", driverResult.Diagnostics));
+      nuru052!.Location.IsInSource.ShouldBeTrue();
+      nuru052.Location.SourceTree!.FilePath.ShouldBe(AppPath);
+      Microsoft.CodeAnalysis.Text.SourceText text = await nuru052.Location.SourceTree.GetTextAsync();
+      text.ToString(nuru052.Location.SourceSpan).ShouldContain("AddGen37Opaque");
+    }
+
+    private static void AssertNoCompileErrors(Compilation compilation)
+    {
+      string errors = string.Join("\n", compilation.GetDiagnostics()
+        .Where(static d => d.Severity == DiagnosticSeverity.Error));
+      errors.ShouldBe(string.Empty);
     }
 
     private static void AssertStepsCachedOrUnchanged(GeneratorRunResult runResult, string trackingName)

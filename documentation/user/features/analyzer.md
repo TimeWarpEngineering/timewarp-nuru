@@ -8,20 +8,20 @@ The analyzer prevents common mistakes that would otherwise fail at runtime:
 
 ```csharp
 // ❌ This compiles without analyzer, fails at runtime
-builder.Map("deploy <env>", handler);  // Wrong syntax
+builder.Map("deploy <env>").WithHandler(handler).AsCommand().Done();  // Wrong syntax
 
 // ❌ This compiles without analyzer, creates ambiguous routing
-builder.Map("run {file?} {*args}", handler);  // Invalid combination
+builder.Map("run {file?} {*args}").WithHandler(handler).AsCommand().Done();  // Invalid combination
 
 // ✅ With analyzer: Both caught at compile-time with clear error messages
 ```
 
 ## Installation
 
-**No separate installation needed!** The analyzer is automatically included with TimeWarp.Nuru (version 2.1.0-beta.9+).
+**No separate installation needed!** The analyzer ships inside the TimeWarp.Nuru package.
 
 ```xml
-<PackageReference Include="TimeWarp.Nuru" Version="2.1.0-beta.9" />
+<PackageReference Include="TimeWarp.Nuru" />
 ```
 
 The analyzer:
@@ -38,9 +38,6 @@ Syntax issues in route patterns - malformed brackets, invalid characters, unsupp
 ### Semantic Errors (NURU_S###)
 Logical issues that create ambiguity or conflicts - duplicate parameters, invalid parameter ordering, incompatible combinations.
 
-### Dependency Errors (NURU_D###)
-Missing package dependencies required for specific features.
-
 ## Common Errors and Fixes
 
 ### NURU_P001: Invalid Parameter Syntax
@@ -49,10 +46,10 @@ Missing package dependencies required for specific features.
 
 ```csharp
 // ❌ Error: Invalid syntax
-builder.Map("deploy <env>", handler);  // Should use curly braces
+builder.Map("deploy <env>").WithHandler(handler).AsCommand().Done();  // Should use curly braces
 
 // ✅ Correct
-builder.Map("deploy {env}", handler);
+builder.Map("deploy {env}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_P002: Unbalanced Braces
@@ -61,13 +58,13 @@ builder.Map("deploy {env}", handler);
 
 ```csharp
 // ❌ Error: Missing closing brace
-builder.Map("deploy {env", handler);
+builder.Map("deploy {env").WithHandler(handler).AsCommand().Done();
 
 // ❌ Error: Missing opening brace
-builder.Map("deploy env}", handler);
+builder.Map("deploy env}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct
-builder.Map("deploy {env}", handler);
+builder.Map("deploy {env}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_P003: Invalid Option Format
@@ -76,16 +73,16 @@ builder.Map("deploy {env}", handler);
 
 ```csharp
 // ✅ Correct: Double-dash for long options
-builder.Map("build --verbose", handler);
+builder.Map("build --verbose").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Single dash, single character
-builder.Map("build -v", handler);
+builder.Map("build -v").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Single dash, multi-character (dotnet/msbuild style)
-builder.Map("build -bl", handler);
+builder.Map("build -bl").WithHandler(handler).AsCommand().Done();
 
 // ✅ Best: Provide both long and short forms
-builder.Map("build --verbose,-v", handler);
+builder.Map("build --verbose,-v").WithHandler(handler).AsCommand().Done();
 ```
 
 Single-dash options support multi-character names (`-bl`, `-verbosity`) to model
@@ -98,13 +95,13 @@ grouping (`-la` meaning `-l -a`) is not supported.
 
 ```csharp
 // ❌ Error: 'integer' is not supported
-builder.Map("process {id:integer}", handler);
+builder.Map("process {id:integer}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Use 'int'
-builder.Map("process {id:int}", handler);
+builder.Map("process {id:int}").WithHandler(handler).AsCommand().Done();
 ```
 
-**Supported types**: `string`, `int`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`, `uri`
+**Supported types**: `string`, `int`, `float`, `double`, `bool`, `DateTime`, `Guid`, `long`, `decimal`, `TimeSpan`, `uri`
 
 See [Supported Types](../reference/supported-types.md) for complete list.
 
@@ -114,10 +111,10 @@ See [Supported Types](../reference/supported-types.md) for complete list.
 
 ```csharp
 // ❌ Error: Parameter 'arg' appears twice
-builder.Map("run {arg} {arg}", handler);
+builder.Map("run {arg} {arg}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Use unique names
-builder.Map("run {source} {dest}", handler);
+builder.Map("run {source} {dest}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_S002: Conflicting Optional Parameters
@@ -126,14 +123,14 @@ builder.Map("run {source} {dest}", handler);
 
 ```csharp
 // ❌ Error: Which parameter gets the value?
-builder.Map("deploy {env?} {version?}", handler);
+builder.Map("deploy {env?} {version?}").WithHandler(handler).AsCommand().Done();
 // If user types "deploy v2.0", is it env or version?
 
 // ✅ Correct: Only last parameter optional
-builder.Map("deploy {env} {version?}", handler);
+builder.Map("deploy {env} {version?}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Alternative: Use options for multiple optional values
-builder.Map("deploy {env} --version? {ver?}", handler);
+builder.Map("deploy {env} --version? {ver?}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_S003: Catch-all Not at End
@@ -142,10 +139,10 @@ builder.Map("deploy {env} --version? {ver?}", handler);
 
 ```csharp
 // ❌ Error: Catch-all in middle
-builder.Map("exec {*args} {script}", handler);
+builder.Map("exec {*args} {script}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Catch-all at end
-builder.Map("exec {script} {*args}", handler);
+builder.Map("exec {script} {*args}").WithHandler(handler).AsCommand().Done();
 ```
 
 ### NURU_S004: Mixed Catch-all with Optional
@@ -154,12 +151,12 @@ builder.Map("exec {script} {*args}", handler);
 
 ```csharp
 // ❌ Error: Invalid combination
-builder.Map("run {script?} {*args}", handler);
+builder.Map("run {script?} {*args}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Use one pattern:
-builder.Map("run {script} {*args}", handler);  // Required + catch-all
+builder.Map("run {script} {*args}").WithHandler(handler).AsCommand().Done();  // Required + catch-all
 // OR
-builder.Map("run {script?}", handler);          // Just optional
+builder.Map("run {script?}").WithHandler(handler).AsCommand().Done();          // Just optional
 ```
 
 ### NURU_S006: Optional Before Required
@@ -168,26 +165,31 @@ builder.Map("run {script?}", handler);          // Just optional
 
 ```csharp
 // ❌ Error: Optional before required
-builder.Map("copy {source?} {dest}", handler);
+builder.Map("copy {source?} {dest}").WithHandler(handler).AsCommand().Done();
 
 // ✅ Correct: Required first
-builder.Map("copy {source} {dest?}", handler);
+builder.Map("copy {source} {dest?}").WithHandler(handler).AsCommand().Done();
 ```
 
-### NURU_D001: Missing Mediator Packages
+### Typed endpoints
 
-**Problem**: Using `Map<TCommand>` without required Mediator packages
+`.Map<TEndpoint>()` takes no pattern argument. Put the route on `[NuruRoute]`. There is no `NURU_D001` diagnostic.
 
 ```csharp
-// ❌ Error: Mediator packages not installed
-builder.Map<PingCommand>("ping");
+using TimeWarp.Mediator;
+using TimeWarp.Nuru;
 
-// ✅ Fix: Install packages
-// dotnet add package Mediator.Abstractions
-// dotnet add package Mediator.SourceGenerator
+[NuruRoute("ping", Description = "Send a ping")]
+public sealed class PingCommand : ICommand<Unit>
+{
+}
+
+NuruApp app = NuruApp.CreateBuilder()
+  .Map<PingCommand>()
+  .Build();
 ```
 
-The `Map<TCommand>` pattern uses [Mediator](https://github.com/martinothamar/Mediator) for request handling. Both packages must be directly referenced (not transitive).
+`ICommand<T>` and `Unit` come from `TimeWarp.Mediator`. See [Endpoints](endpoints.md).
 
 ## IDE Integration
 
@@ -214,7 +216,7 @@ Errors appear in multiple places:
 
 ```csharp
 // This code would compile, then fail at runtime
-builder.Map("deploy <env?> <ver?>", handler);
+builder.Map("deploy <env?> <ver?>").WithHandler(handler).AsCommand().Done();
 //                      ↑       ↑
 //                Multiple problems invisible until runtime
 ```
@@ -225,14 +227,14 @@ builder.Map("deploy <env?> <ver?>", handler);
 // Build fails immediately with clear errors:
 // NURU_P001: Invalid parameter syntax - use {env} not <env>
 // NURU_S002: Conflicting optional parameters
-builder.Map("deploy <env?> <ver?>", handler);
+builder.Map("deploy <env?> <ver?>").WithHandler(handler).AsCommand().Done();
 ```
 
 ### Fixed Code
 
 ```csharp
 // Errors fixed, builds successfully
-builder.Map("deploy {env} --version? {ver?}", handler);
+builder.Map("deploy {env} --version? {ver?}").WithHandler(handler).AsCommand().Done();
 ```
 
 ## Benefits
@@ -252,7 +254,7 @@ If you have a valid reason to suppress an error (rare), you can:
 
 ```csharp
 #pragma warning disable NURU_S002
-builder.Map("risky {a?} {b?}", handler);  // NOT RECOMMENDED
+builder.Map("risky {a?} {b?}").WithHandler(handler).AsCommand().Done();  // NOT RECOMMENDED
 #pragma warning restore NURU_S002
 ```
 
@@ -275,23 +277,9 @@ dotnet_diagnostic.NURU_S002.severity = none     # Completely suppress
 
 ⚠️ **Warning**: Suppressing errors can lead to runtime failures. The analyzer exists to prevent patterns that will fail at runtime.
 
-## Debug Diagnostics
+## Severity Values
 
-TimeWarp.Nuru includes debug diagnostics (NURU_DEBUG*) that are hidden by default. These provide detailed information about the source generator's processing.
-
-### Enabling Debug Diagnostics
-
-Add to your `.editorconfig`:
-
-```ini
-[*.cs]
-# Enable specific debug diagnostics
-dotnet_diagnostic.NURU_DEBUG001.severity = suggestion
-dotnet_diagnostic.NURU_DEBUG002.severity = suggestion
-
-# Or enable all debug diagnostics
-dotnet_diagnostic.NURU_DEBUG.severity = suggestion
-```
+There is no `NURU_DEBUG` diagnostic id.
 
 ### Available Severity Values
 
@@ -304,15 +292,6 @@ dotnet_diagnostic.NURU_DEBUG.severity = suggestion
 | `error` | Shows as compiler error |
 
 **Note:** `info` is NOT a valid severity value (common mistake).
-
-### Why Hidden by Default?
-
-Debug diagnostics are verbose and primarily useful for:
-- Troubleshooting source generator issues
-- Understanding what routes are being generated
-- Debugging custom type converter registration
-
-For normal development, keep them hidden.
 
 ## All Error Codes
 
@@ -340,12 +319,6 @@ For normal development, keep them hidden.
 | NURU_S006 | Optional before required |
 | NURU_S007 | Invalid end-of-options separator |
 | NURU_S008 | Options after end-of-options separator |
-
-### Dependency Errors (NURU_D###)
-
-| Code | Description |
-|------|-------------|
-| NURU_D001 | Missing Mediator packages for Map&lt;TCommand&gt; |
 
 ## Related Documentation
 

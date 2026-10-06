@@ -110,7 +110,7 @@ The source files will be automatically included in your project's compilation vi
 The endpoints will be automatically discovered when you use `DiscoverEndpoints()`:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services =>
   {
     // Register required services

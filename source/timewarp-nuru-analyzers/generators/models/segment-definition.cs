@@ -36,13 +36,13 @@ public sealed record LiteralDefinition(int Position, string Value)
 
 /// <summary>
 /// Represents a parameter (variable) segment in a route pattern.
-/// Examples: "{env}", "{count:int}", "[optional]", "{*catchAll}"
+/// Examples: "{env}", "{count:int}", "{tag?}", "{*catchAll}"
 /// </summary>
 /// <param name="Position">Zero-based position of this segment in the route</param>
 /// <param name="Name">The parameter name</param>
 /// <param name="TypeConstraint">Optional type constraint (e.g., "int", "guid")</param>
 /// <param name="Description">Optional description for help text</param>
-/// <param name="IsOptional">Whether the parameter is optional (wrapped in [])</param>
+/// <param name="IsOptional">Whether the parameter is optional ({name?})</param>
 /// <param name="IsCatchAll">Whether this is a catch-all parameter (*)</param>
 /// <param name="ResolvedClrTypeName">The resolved CLR type name (e.g., "global::System.Int32")</param>
 /// <param name="DefaultValue">Default value expression, if any</param>
@@ -83,11 +83,14 @@ public sealed record ParameterDefinition(
   {
     get
     {
-      string typeSpec = HasTypeConstraint ? $":{TypeConstraint}" : "";
+      // Render in PatternParser syntax: optional is {name?} or {name:type?}, never [name].
+      // TypeConstraint keeps a trailing '?' when the source wrote {name:type?}.
+      string baseType = HasTypeConstraint ? TypeConstraint!.TrimEnd('?') : "";
+      string typeSpec = HasTypeConstraint ? $":{baseType}" : "";
       if (IsCatchAll)
         return $"{{*{Name}{typeSpec}}}";
       if (IsOptional)
-        return $"[{Name}{typeSpec}]";
+        return HasTypeConstraint ? $"{{{Name}{typeSpec}?}}" : $"{{{Name}?}}";
       return $"{{{Name}{typeSpec}}}";
     }
   }

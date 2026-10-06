@@ -313,6 +313,153 @@ public class TypedCatchAllTests
 
     await Task.CompletedTask;
   }
+
+  /// <summary>
+  /// Tests uint[] catch-all compiles with TryParse and binds values (task 482-005).
+  /// </summary>
+  public static async Task Should_bind_uint_array_catch_all()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("counts {*values:uint}").WithHandler((uint[] values) => $"values:[{string.Join(",", values)}]|len:{values.Length}").AsQuery().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["counts", "1", "4294967295"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("values:[1,4294967295]").ShouldBeTrue();
+    terminal.OutputContains("len:2").ShouldBeTrue();
+  }
+
+  /// <summary>
+  /// Tests negative value in uint[] catch-all writes the invalid-value line and exits 1.
+  /// </summary>
+  public static async Task Should_fail_on_negative_uint_catch_all()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("counts {*values:uint}").WithHandler((uint[] values) => values.Length).AsQuery().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["counts", "1", "-1"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.OutputContains("Error: Invalid value in 'values'. Expected: uint[]").ShouldBeTrue();
+  }
+
+  /// <summary>
+  /// Tests TimeSpan[] catch-all compiles with TryParse and binds values.
+  /// </summary>
+  public static async Task Should_bind_timespan_array_catch_all()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("waits {*values:TimeSpan}").WithHandler((TimeSpan[] values) => $"values:[{string.Join(",", values)}]").AsQuery().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["waits", "00:01:00", "00:00:30"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("values:[00:01:00,00:00:30]").ShouldBeTrue();
+  }
+
+  /// <summary>
+  /// Tests int overflow in a catch-all writes the invalid-value line and exits 1
+  /// instead of escaping as OverflowException.
+  /// </summary>
+  public static async Task Should_fail_on_int_overflow_catch_all()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("sum {*ids:int}").WithHandler((int[] ids) => ids.Length).AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["sum", "1", "99999999999"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.OutputContains("Error: Invalid value in 'ids'. Expected: int[]").ShouldBeTrue();
+  }
+
+  /// <summary>
+  /// Tests repeated uint option uses TryParse and rejects overflow with exit 1.
+  /// </summary>
+  public static async Task Should_bind_and_reject_repeated_uint_option()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("process --id {id:uint}*").WithHandler((uint[] id) => $"ids:[{string.Join(",", id)}]").AsCommand().Done()
+      .Build();
+
+    // Act
+    int okExit = await app.RunAsync(["process", "--id", "7", "--id", "8"]);
+    int badExit = await app.RunAsync(["process", "--id", "7", "--id", "-8"]);
+
+    // Assert
+    okExit.ShouldBe(0);
+    terminal.OutputContains("ids:[7,8]").ShouldBeTrue();
+    badExit.ShouldBe(1);
+    terminal.OutputContains("Error: Invalid value in option").ShouldBeTrue();
+  }
+
+  /// <summary>
+  /// Tests DateTimeOffset endpoint parameter emits TryParse and declares the variable.
+  /// </summary>
+  public static async Task Should_bind_datetimeoffset_parameter()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("at {when:DateTimeOffset}").WithHandler((DateTimeOffset when) => $"offset:{when.Offset.TotalHours}|year:{when.Year}").AsQuery().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["at", "2024-01-15T10:00:00+02:00"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("offset:2|year:2024").ShouldBeTrue();
+  }
+
+  /// <summary>
+  /// Tests Version endpoint parameter emits TryParse and rejects bad input with exit 1.
+  /// </summary>
+  public static async Task Should_bind_version_parameter()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("pin {v:Version}").WithHandler((Version v) => $"major:{v.Major}|minor:{v.Minor}").AsQuery().Done()
+      .Build();
+
+    // Act
+    int okExit = await app.RunAsync(["pin", "3.1.4"]);
+    int badExit = await app.RunAsync(["pin", "not-a-version"]);
+
+    // Assert
+    okExit.ShouldBe(0);
+    terminal.OutputContains("major:3|minor:1").ShouldBeTrue();
+    badExit.ShouldBe(1);
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Routing

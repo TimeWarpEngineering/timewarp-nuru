@@ -1,47 +1,45 @@
 # Built-in Routes
 
-When you use `NuruApp.CreateBuilder()`, several utility routes are automatically registered to provide common CLI functionality out of the box.
+When you use `NuruApp.CreateBuilder()`, several utility routes are built in to provide common CLI functionality out of the box.
 
 ## Overview
 
 | Route | Description |
 |-------|-------------|
-| `--version`, `-v` | Display version information |
-| `--check-updates` | Check GitHub for newer versions |
+| `--version` | Display version information. There is no `-v` alias. |
+| `--check-updates` | Check GitHub for newer versions (opt-in via `AddCheckUpdatesRoute()`) |
 | `--help`, `-h` | Show help (see [Auto-Help](auto-help.md)) |
-| `--interactive`, `-i` | Enter REPL mode |
+| `--interactive`, `-i` | Enter REPL mode (requires `AddRepl()`) |
 | `--capabilities` | Machine-readable endpoint catalog for agents |
 | `--json-args <value>` | Bind parameter and option values from JSON |
 
-## Version Route (`--version`, `-v`)
+## Version Route (`--version`)
 
-Displays version information about your application.
+Displays the application version. `CreateBuilder()` registers this route. There is no `-v` form.
 
 ### Output Format
 
 ```bash
 $ myapp --version
 1.2.3
-Commit: abc1234567890def1234567890abcdef12345678
-Date: 2024-01-15T10:30:00Z
+```
+
+When the app model has a name, that name is written on the same line before the version:
+
+```bash
+$ myapp --version
+MyApp 1.2.3
 ```
 
 ### What It Displays
 
-- **Version**: The assembly informational version (or simple version as fallback)
-- **Commit**: Full git commit hash (if available)
-- **Date**: Commit timestamp (if available)
+`VersionEmitter` writes one line:
 
-### Prerequisites
+1. The assembly informational version, when `AssemblyInformationalVersionAttribute` is present.
+2. Otherwise `AssemblyName.Version`.
+3. Otherwise `1.0.0`.
 
-The commit hash and date are automatically injected by **TimeWarp.Build.Tasks**, which is a transitive dependency of TimeWarp.Nuru. No additional configuration is required.
-
-If commit information isn't available, only the version number is displayed:
-
-```bash
-$ myapp --version
-1.2.3
-```
+It does not write a commit hash or a commit date.
 
 ## Check Updates Route (`--check-updates`)
 
@@ -83,8 +81,8 @@ Unable to check for updates: RepositoryUrl not configured in project
 ### Version Comparison Logic
 
 - Compares SemVer versions (major.minor.patch)
-- Pre-release versions (e.g., `1.0.0-beta.1`) only compare against other pre-releases
-- Stable versions only compare against stable releases
+- A stable current version is compared only with stable GitHub releases
+- A pre-release current version (the version string contains `-`, for example `1.0.0-beta.1`) is compared with every release, stable and pre-release
 - Colored output: green checkmark for up-to-date, yellow warning for updates
 
 ## Interactive Route (`--interactive`, `-i`)
@@ -118,42 +116,35 @@ See [Auto-Help](auto-help.md) for the shared-prefix case.
 
 `--json-args` is not an endpoint. It does not appear in the `endpoints` array. Root help lists it next to `--capabilities`.
 
-## Disabling Built-in Routes
+## Overriding Built-in Routes
 
-You can disable specific routes using `NuruAppOptions`:
-
-```csharp
-NuruApp.CreateBuilder(args, new NuruAppOptions
-{
-    DisableVersionRoute = true,      // Disable --version, -v
-    DisableCheckUpdatesRoute = true  // Disable --check-updates
-});
-```
-
-### When to Disable
-
-- **DisableVersionRoute**: If you want to implement custom version output
-- **DisableCheckUpdatesRoute**: If your app isn't hosted on GitHub, or you have a custom update mechanism
-
-## Customizing Route Patterns
-
-You can customize the interactive route patterns:
+There is no option to switch built-in routes off. The generator emits your own routes first and the built-in `--help`, `--version` and `--capabilities` handling after them, so a route you map with the same pattern takes precedence:
 
 ```csharp
-NuruApp.CreateBuilder(args, new NuruAppOptions
-{
-    InteractiveRoutePatterns = "--interactive,-i,--repl"  // Add --repl alias
-});
+NuruApp app = NuruApp.CreateBuilder()
+    .Map("--version")
+      .WithHandler(() => Console.WriteLine("MyApp 1.2.3 (custom)"))
+      .AsQuery()
+      .Done()
+    .Build();
 ```
+
+Two routes are different:
+
+- `--check-updates` is opt-in. It exists only when you call `AddCheckUpdatesRoute()` (see below).
+- `--interactive` / `-i` exists only when you call `AddRepl()`, and it is matched before your routes so a catch-all route cannot intercept it.
 
 ## Manual Feature Registration
 
-You can manually add specific features using the builder:
+You can manually add specific features using the builder, for example `AddCheckUpdatesRoute()`:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
-    .Map("greet {name}", (string name) => Console.WriteLine($"Hello, {name}!"))
-    .AddVersionRoute()  // Manually add version route
+NuruApp app = NuruApp.CreateBuilder()
+    .Map("greet {name}")
+      .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
+      .AsQuery()
+      .Done()
+    .AddCheckUpdatesRoute()  // Manually add the check-updates route
     .Build();
 ```
 

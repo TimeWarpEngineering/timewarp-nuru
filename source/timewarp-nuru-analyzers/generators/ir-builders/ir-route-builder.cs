@@ -20,6 +20,8 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   private readonly TParent Parent;
   private readonly Action<RouteDefinition> RegisterRoute;
   private readonly RouteDefinitionBuilder Builder = new();
+  private readonly bool IsValid;
+  private bool IsRegistered;
 
   /// <summary>
   /// Creates a new route builder.
@@ -29,15 +31,18 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   /// <param name="segments">The parsed segments from PatternStringExtractor (includes prefix segments).</param>
   /// <param name="registerRoute">Callback to register the completed route with parent.</param>
   /// <param name="groupPrefix">Optional group prefix for hierarchical organization.</param>
+  /// <param name="isValid">False when the pattern failed to parse; Done() then registers nothing.</param>
   internal IrRouteBuilder(
     TParent parent,
     string pattern,
     ImmutableArray<SegmentDefinition> segments,
     Action<RouteDefinition> registerRoute,
-    string? groupPrefix = null)
+    string? groupPrefix = null,
+    bool isValid = true)
   {
     Parent = parent;
     RegisterRoute = registerRoute;
+    IsValid = isValid;
 
     Builder.WithPattern(pattern);
     Builder.WithSegments(segments);
@@ -138,8 +143,15 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   /// </summary>
   public TParent Done()
   {
-    RouteDefinition route = Builder.Build();
-    RegisterRoute(route);
+    // An invalid pattern already reported a diagnostic; emitting it would register a bogus route.
+    // A route is registered at most once, even if both Done() and Build() complete it.
+    if (IsValid && !IsRegistered)
+    {
+      RouteDefinition route = Builder.Build();
+      RegisterRoute(route);
+      IsRegistered = true;
+    }
+
     return Parent;
   }
 

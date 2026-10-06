@@ -217,14 +217,14 @@ NuruApp app = NuruApp.CreateBuilder(args)
 
 ## 🤖 AI-Powered Development
 
-**For AI agents:** Load the built-in [Nuru Skill](skills/nuru/SKILL.md) for instant access to:
+**For AI agents:** Load the built-in [Nuru Skill](skills/tw-nuru/SKILL.md) for instant access to:
 - Complete DSL syntax and patterns
 - Testing with TestTerminal
 - Route examples and type conversion
 
 > 💡 **Tip:** No MCP installation needed - the skill provides all essential patterns.
 
-**For MCP Server:** Install for Claude Code, Roo Code, or Continue:
+**For MCP Server:** The `TimeWarp.Nuru.Mcp` package is frozen and is **not part of the 3.0 release**. Its answers do not match 3.0; use the Nuru skill above. Older prereleases install with:
 
 ```bash
 dotnet tool install --global TimeWarp.Nuru.Mcp

@@ -22,23 +22,34 @@ _{{APP_NAME}}_completions()
             directive="${value:1}"
             break
         fi
-        suggestions+=("$value")
+        [[ -n "$value" ]] && suggestions+=("$value")
     done <<< "$completions"
 
-    # Apply directive-based filtering.
+    # Directive bits (CompletionDirective): 4=NoFileComp 8=NoSpace 16=FilterDirs 64=KeepOrder.
     # Prefix-filter into COMPREPLY without unquoted $(compgen -W ...), which joins on
     # IFS and re-splits — corrupting spaced/glob candidates (M19 / 470-013).
-    if (( !(directive & 4) )) && [[ ${#suggestions[@]} -eq 0 ]]; then
-        # No suggestions and file completion allowed: fall back to files
-        _filedir
-    else
-        COMPREPLY=()
-        local s
-        for s in "${suggestions[@]}"; do
-            if [[ "$s" == "$cur"* ]]; then
-                COMPREPLY+=("$s")
-            fi
-        done
+    COMPREPLY=()
+    local s
+    for s in "${suggestions[@]}"; do
+        if [[ "$s" == "$cur"* ]]; then
+            COMPREPLY+=("$s")
+        fi
+    done
+
+    # File/Directory candidates clear NoFileComp: add the shell's own path completion.
+    if (( !(directive & 4) )); then
+        if (( directive & 16 )); then
+            _filedir -d
+        else
+            _filedir
+        fi
+    fi
+
+    if (( directive & 8 )); then
+        compopt -o nospace 2>/dev/null
+    fi
+    if (( directive & 64 )); then
+        compopt -o nosort 2>/dev/null
     fi
 
     return 0

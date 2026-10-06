@@ -192,7 +192,7 @@ Routes that currently require all options will continue to work but with differe
 For safer migration, consider a feature flag:
 
 ```csharp
-new NuruAppBuilder()
+NuruApp.CreateBuilder()
     .UseOptionalOptions()  // Opt-in to new behavior
     .Map(...)
 ```

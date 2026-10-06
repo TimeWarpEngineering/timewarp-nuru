@@ -44,6 +44,12 @@ public enum CompletionDirective
   NoSpace = 8,
 
   /// <summary>
+  /// Restrict file-completion fallback to directories.
+  /// Set automatically when only <see cref="CompletionType.Directory"/> candidates request path completion.
+  /// </summary>
+  FilterDirs = 16,
+
+  /// <summary>
   /// Keep the original order of completions (don't sort alphabetically).
   /// Use this when order is meaningful (e.g., priority-sorted results).
   /// </summary>

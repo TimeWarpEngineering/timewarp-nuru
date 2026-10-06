@@ -25,21 +25,27 @@ Console.WriteLine("Highlight".BrightYellow().Underline());
 ### Colored Output in Route Handlers
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
-builder.Map("status", (ITerminal terminal) =>
-{
-    terminal.WriteLine("All systems operational".Green());
-    terminal.WriteLine("2 warnings".Yellow());
-    terminal.WriteLine("1 error".Red());
-});
+builder.Map("status")
+  .WithHandler((ITerminal terminal) =>
+  {
+      terminal.WriteLine("All systems operational".Green());
+      terminal.WriteLine("2 warnings".Yellow());
+      terminal.WriteLine("1 error".Red());
+  })
+  .AsQuery()
+  .Done();
 
-builder.Map("deploy {env}", (string env, ITerminal terminal) =>
-{
-    terminal.WriteLine($"Deploying to {env}...".Cyan().Bold());
-    // ... do work
-    terminal.WriteLine("Deploy complete!".BrightGreen());
-});
+builder.Map("deploy {env}")
+  .WithHandler((string env, ITerminal terminal) =>
+  {
+      terminal.WriteLine($"Deploying to {env}...".Cyan().Bold());
+      // ... do work
+      terminal.WriteLine("Deploy complete!".BrightGreen());
+  })
+  .AsCommand()
+  .Done();
 
 return await builder.Build().RunAsync(args);
 ```
@@ -49,10 +55,12 @@ return await builder.Build().RunAsync(args);
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
-    .Map("greet {name}", (string name, ITerminal t) =>
-        t.WriteLine($"Hello, {name}!".Green()))
+    .Map("greet {name}")
+      .WithHandler((string name, ITerminal t) => t.WriteLine($"Hello, {name}!".Green()))
+      .AsQuery()
+      .Done()
     .Build();
 
 await app.RunAsync(["greet", "World"]);
@@ -227,15 +235,18 @@ Console.WriteLine($"{"Home".Link("https://example.com")} | {"Docs".Link("https:/
 Use `WriteLink()` and `WriteLinkLine()` for terminal-aware hyperlinks:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
-builder.Map("help", (ITerminal terminal) =>
-{
-    terminal.WriteLine("For more information:");
-    terminal.WriteLink("https://docs.example.com", "Documentation");
-    terminal.WriteLine();
-    terminal.WriteLinkLine("https://github.com/example", "Source Code");
-});
+builder.Map("help")
+  .WithHandler((ITerminal terminal) =>
+  {
+      terminal.WriteLine("For more information:");
+      terminal.WriteLink("https://docs.example.com", "Documentation");
+      terminal.WriteLine();
+      terminal.WriteLinkLine("https://github.com/example", "Source Code");
+  })
+  .AsQuery()
+  .Done();
 ```
 
 These methods automatically check `SupportsHyperlinks` and gracefully degrade:
@@ -245,17 +256,20 @@ These methods automatically check `SupportsHyperlinks` and gracefully degrade:
 ### Detecting Hyperlink Support
 
 ```csharp
-builder.Map("info", (ITerminal terminal) =>
-{
-    if (terminal.SupportsHyperlinks)
-    {
-        terminal.WriteLinkLine("https://docs.example.com", "Click here for docs");
-    }
-    else
-    {
-        terminal.WriteLine("Visit: https://docs.example.com");
-    }
-});
+builder.Map("info")
+  .WithHandler((ITerminal terminal) =>
+  {
+      if (terminal.SupportsHyperlinks)
+      {
+          terminal.WriteLinkLine("https://docs.example.com", "Click here for docs");
+      }
+      else
+      {
+          terminal.WriteLine("Visit: https://docs.example.com");
+      }
+  })
+  .AsQuery()
+  .Done();
 ```
 
 ### API Summary
@@ -286,9 +300,12 @@ Where:
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
-    .Map("hello", (ITerminal t) => t.WriteLine("Hello, World!"))
+    .Map("hello")
+      .WithHandler((ITerminal t) => t.WriteLine("Hello, World!"))
+      .AsCommand()
+      .Done()
     .Build();
 
 await app.RunAsync(["hello"]);
@@ -303,9 +320,12 @@ Assert.Equal(1, terminal.GetOutputLines().Length);
 ```csharp
 using TestTerminal terminal = new();
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
-    .Map("fail", (ITerminal t) => t.WriteErrorLine("Something went wrong"))
+    .Map("fail")
+      .WithHandler((ITerminal t) => t.WriteErrorLine("Something went wrong"))
+      .AsCommand()
+      .Done()
     .Build();
 
 await app.RunAsync(["fail"]);
@@ -325,9 +345,12 @@ terminal.QueueKey(ConsoleKey.Tab); // Press Tab for completion
 terminal.QueueKey(ConsoleKey.Enter); // Press Enter
 terminal.QueueLine("exit");       // Type "exit" and Enter
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
-    .Map("hello-world", () => Console.WriteLine("Hello!"))
+    .Map("hello-world")
+      .WithHandler(() => Console.WriteLine("Hello!"))
+      .AsCommand()
+      .Done()
     .Build();
 
 await app.RunReplAsync();
@@ -367,20 +390,26 @@ terminal.ClearKeys();
 
 ```csharp
 // Production (default)
-NuruApp app = NuruApp.CreateBuilder(args)
-    .Map("hello", () => Console.WriteLine("Hello!"))
+NuruApp app = NuruApp.CreateBuilder()
+    .Map("hello")
+      .WithHandler(() => Console.WriteLine("Hello!"))
+      .AsCommand()
+      .Done()
     .Build();
 // Uses TimeWarpTerminal.Default automatically
 
 // Testing
 using TestTerminal terminal = new();
-NuruApp testApp = NuruApp.CreateBuilder(args)
+NuruApp testApp = NuruApp.CreateBuilder()
     .UseTerminal(terminal)
-    .Map("hello", () => Console.WriteLine("Hello!"))
+    .Map("hello")
+      .WithHandler(() => Console.WriteLine("Hello!"))
+      .AsCommand()
+      .Done()
     .Build();
 
 // Custom terminal
-NuruApp customApp = NuruApp.CreateBuilder(args)
+NuruApp customApp = NuruApp.CreateBuilder()
     .UseTerminal(new MyCustomTerminal())
     .Build();
 ```
@@ -390,20 +419,23 @@ NuruApp customApp = NuruApp.CreateBuilder(args)
 ITerminal is automatically registered when using `NuruApp.CreateBuilder()`:
 
 ```csharp
-NuruAppBuilder builder = NuruApp.CreateBuilder(args);
+NuruAppBuilder builder = NuruApp.CreateBuilder();
 
 // ITerminal is injectable
-builder.Map("status", (ITerminal terminal) =>
-{
-    if (terminal.SupportsColor)
-    {
-        terminal.WriteLine("Status: OK".Green());
-    }
-    else
-    {
-        terminal.WriteLine("Status: OK");
-    }
-});
+builder.Map("status")
+  .WithHandler((ITerminal terminal) =>
+  {
+      if (terminal.SupportsColor)
+      {
+          terminal.WriteLine("Status: OK".Green());
+      }
+      else
+      {
+          terminal.WriteLine("Status: OK");
+      }
+  })
+  .AsQuery()
+  .Done();
 ```
 
 ## Custom Terminal Implementations
@@ -496,39 +528,47 @@ public class WebTerminal : ITerminal
 
 ```csharp
 // Good - testable
-builder.Map("status", (ITerminal terminal) =>
-    terminal.WriteLine("OK".Green()));
+builder.Map("status")
+  .WithHandler((ITerminal terminal) =>
+      terminal.WriteLine("OK".Green()));
 
-// Avoid - not testable
-builder.Map("status", () =>
-    Console.WriteLine("OK".Green()));
-```
+  // Avoid - not testable
+  builder.Map("status")
+  .WithHandler(() =>
+      Console.WriteLine("OK".Green()));
+  ```
 
-### 2. Check Color Support
+  ### 2. Check Color Support
 
-```csharp
-builder.Map("status", (ITerminal terminal) =>
-{
-    string message = terminal.SupportsColor
-        ? "Status: OK".Green()
-        : "Status: OK";
-    terminal.WriteLine(message);
-});
+  ```csharp
+  builder.Map("status")
+  .WithHandler((ITerminal terminal) =>
+  {
+      string message = terminal.SupportsColor
+          ? "Status: OK".Green()
+          : "Status: OK";
+      terminal.WriteLine(message);
+  })
+  .AsQuery()
+  .Done();
 ```
 
 ### 3. Use Error Output for Errors
 
 ```csharp
-builder.Map("validate", (ITerminal terminal) =>
-{
-    if (hasErrors)
-    {
-        terminal.WriteErrorLine("Validation failed".Red());
-        return 1;
-    }
-    terminal.WriteLine("Validation passed".Green());
-    return 0;
-});
+builder.Map("validate")
+  .WithHandler((ITerminal terminal) =>
+  {
+      if (hasErrors)
+      {
+          terminal.WriteErrorLine("Validation failed".Red());
+          return 1;
+      }
+      terminal.WriteLine("Validation passed".Green());
+      return 0;
+  })
+  .AsCommand()
+  .Done();
 ```
 
 ### 4. Dispose TestTerminal

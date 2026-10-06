@@ -12,6 +12,9 @@ NURU_P004 | RoutePattern.Syntax | Error | Invalid type constraint
 NURU_P005 | RoutePattern.Syntax | Error | Invalid character in route pattern
 NURU_P006 | RoutePattern.Syntax | Error | Unexpected token in route pattern
 NURU_P007 | RoutePattern.Syntax | Error | Null route pattern
+NURU_P008 | RoutePattern.Syntax | Error | Invalid identifier in route pattern
+NURU_P009 | RoutePattern.Syntax | Error | Invalid parameter modifier combination
+NURU_P010 | RoutePattern.Syntax | Error | Adjacent parameters in route pattern
 NURU_S001 | RoutePattern.Semantic | Error | Duplicate parameter names in route
 NURU_S002 | RoutePattern.Semantic | Error | Conflicting optional parameters
 NURU_S003 | RoutePattern.Semantic | Error | Catch-all parameter not at end of route

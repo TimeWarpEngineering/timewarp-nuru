@@ -1,52 +1,73 @@
 # Endpoint Source Generator
 
-Design documentation for the `NuruEndpointGenerator` source generator that enables auto-registration of routes from `[NuruRoute]` attributes.
+Design documentation for endpoint support in the Nuru source generator (`NuruGenerator`), which turns `[NuruRoute]` classes into routes without explicit `Map()` calls.
 
 ## Overview
 
-The endpoint generator scans for classes decorated with `[NuruRoute]` and generates:
-1. `CompiledRouteBuilder` calls for each endpoint
-2. `[ModuleInitializer]` registration code
-3. Pattern strings for help display
+The generator's `EndpointExtractor` scans for classes decorated with `[NuruRoute]` and extracts, for each one:
+1. The route definition (literal, group prefix, aliases, `[Parameter]` and `[Option]` properties)
+2. The message type (`ICommand<T>`, `IQuery<T>`) inferred from the implemented interface
+3. The nested `Handler` class that handles the request
 
-This enables zero-ceremony route registration - users decorate request classes and routes are automatically discovered.
+The extracted route feeds the same route model as the fluent `Map("pattern")` DSL, so matching, help and completion code is emitted the same way for both styles. Endpoint classes are collected globally across the compilation; `.DiscoverEndpoints()` or `.Map<TEndpoint>()` selects which ones an app includes.
 
 ## Motivation
 
-Without endpoints, users must explicitly call `Map()` for each route:
+With the fluent DSL, every route is declared inline in the app builder:
 
 ```csharp
-var app = NuruApp.CreateBuilder(args)
-  .Map("deploy {env}", (DeployRequest req) => mediator.Send(req))
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("deploy {env}")
+    .WithHandler((string env) => Console.WriteLine($"Deploying to {env}"))
+    .AsCommand().Done()
   .Build();
 ```
 
-With endpoints, registration is automatic:
+With endpoints, the route lives on a request class and the app only opts in:
 
 ```csharp
-[NuruRoute("deploy")]
-public sealed class DeployRequest {
+[NuruRoute("deploy", Description = "Deploy to an environment")]
+public sealed class DeployCommand : ICommand<Unit>
+{
   [Parameter]
   public string Env { get; set; } = string.Empty;
+
+  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  {
+    public Task<Unit> Handle(DeployCommand command, CancellationToken cancellationToken)
+    {
+      Console.WriteLine($"Deploying to {command.Env}");
+      return Task.FromResult(default(Unit));
+    }
+  }
 }
 
-// No Map() call needed - auto-registered via [ModuleInitializer]
-var app = NuruApp.CreateBuilder(args).Build();
+// Include every [NuruRoute] endpoint in the compilation
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints()
+  .Build();
+
+// Or include specific endpoints only
+NuruApp app2 = NuruApp.CreateBuilder()
+  .Map<DeployCommand>()
+  .Build();
 ```
+
+The mediator contracts (`ICommand<T>`, `IQuery<T>`, `Unit`, handlers) come from `TimeWarp.Mediator`; handlers return `Task<T>`.
 
 ## Attributes
 
 ### `[NuruRoute]`
 
-Applied to request classes. Specifies the route pattern (literals only).
+Applied to request classes. Specifies the route pattern: a single literal, or `""` for the default route. Multi-word patterns (e.g. `"deploy {env}"` or `"git status"`) are rejected with NURU_A001; use `[NuruRouteGroup]` on a base class for multi-word routes.
 
 ```csharp
 [NuruRoute("deploy", Description = "Deploy to an environment")]
-public sealed class DeployRequest { }
+public sealed class DeployCommand : ICommand<Unit> { /* nested Handler omitted */ }
 ```
 
 **Properties:**
-- `Pattern` (constructor) - Route literals, space-separated. Use `""` for default route.
+- `Pattern` (constructor) - A single route literal. Use `""` for default route.
 - `Description` - Help text for the route.
 
 ### `[NuruRouteAlias]`
@@ -92,6 +113,7 @@ public string[] Args { get; set; } = [];
 
 **Properties:**
 - `Name` - Override parameter name (defaults to property name in camelCase)
+- `Order` - Position in the argument list (required when a command has multiple parameters)
 - `Description` - Help text
 - `IsCatchAll` - Captures all remaining arguments
 
@@ -138,7 +160,9 @@ public abstract class DockerRequestBase
 }
 ```
 
-## Generated Code Structure
+## How the Generator Uses Endpoints
+
+Endpoint classes do not generate registration code of their own (there is no `[ModuleInitializer]` or runtime route registry). The route model they produce is merged into the app's intercepted `Build()` call and emitted alongside fluent routes.
 
 ### Simple Route
 
@@ -146,46 +170,23 @@ For a request like:
 
 ```csharp
 [NuruRoute("deploy", Description = "Deploy to an environment")]
-public sealed class DeployRequest {
+public sealed class DeployCommand : ICommand<Unit>
+{
   [Parameter]
   public string Env { get; set; } = string.Empty;
-  
+
   [Option("force", "f")]
   public bool Force { get; set; }
-}
-```
 
-The generator produces:
-
-```csharp
-// GeneratedEndpoints.g.cs
-namespace TimeWarp.Nuru.Generated;
-
-internal static class GeneratedEndpoints
-{
-  internal static readonly CompiledRoute __Route_DeployRequest = 
-    new CompiledRouteBuilder()
-      .WithLiteral("deploy")
-      .WithParameter("env")
-      .WithOption("force", shortForm: "f", isOptionalFlag: true)
-      .Build();
-      
-  internal const string __Pattern_DeployRequest = "deploy {env} --force,-f";
-}
-
-internal static class GeneratedEndpointRegistration
-{
-  [ModuleInitializer]
-  internal static void Register()
+  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
   {
-    NuruRouteRegistry.Register(
-      typeof(DeployRequest),
-      GeneratedEndpoints.__Route_DeployRequest,
-      GeneratedEndpoints.__Pattern_DeployRequest,
-      "Deploy to an environment");
+    public Task<Unit> Handle(DeployCommand command, CancellationToken cancellationToken) =>
+      Task.FromResult(default(Unit));
   }
 }
 ```
+
+The extractor builds the equivalent of the pattern `deploy {env} --force,-f` with the description "Deploy to an environment".
 
 ### Grouped Route
 
@@ -200,84 +201,47 @@ public abstract class DockerRequestBase
 }
 
 [NuruRoute("run", Description = "Run a container")]
-public sealed class DockerRunRequest : DockerRequestBase{
+public sealed class DockerRunCommand : DockerRequestBase, ICommand<Unit>
+{
   [Parameter(Description = "Image name")]
   public string Image { get; set; } = string.Empty;
-  
+
   [Option("detach", "d")]
   public bool Detach { get; set; }
-}
-```
 
-The generator produces:
-
-```csharp
-// GeneratedEndpoints.g.cs
-namespace TimeWarp.Nuru.Generated;
-
-internal static class GeneratedEndpoints
-{
-  internal static readonly CompiledRoute __Route_DockerRunRequest = 
-    new CompiledRouteBuilder()
-      .WithLiteral("docker")          // Group prefix
-      .WithLiteral("run")             // Route pattern
-      .WithParameter("image", type: "string", description: "Image name")
-      .WithOption("debug", shortForm: "D", description: "Enable debug mode", isOptionalFlag: true)  // From group
-      .WithOption("detach", shortForm: "d", isOptionalFlag: true)
-      .Build();
-      
-  internal const string __Pattern_DockerRunRequest = "docker run {image} --debug,-D --detach,-d";
-}
-
-internal static class GeneratedEndpointRegistration
-{
-  [ModuleInitializer]
-  internal static void Register()
+  public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
   {
-    NuruRouteRegistry.Register(
-      typeof(DockerRunRequest),
-      GeneratedEndpoints.__Route_DockerRunRequest,
-      GeneratedEndpoints.__Pattern_DockerRunRequest,
-      "Run a container");
+    public Task<Unit> Handle(DockerRunCommand command, CancellationToken cancellationToken) =>
+      Task.FromResult(default(Unit));
   }
 }
 ```
 
-Note how the group prefix `"docker"` and group option `--debug,-D` are inherited from `DockerRequestBase`.
+The extractor walks the inheritance chain, so the group prefix `docker` and the group option `--debug,-D` are inherited from `DockerRequestBase`, giving the pattern `docker run {image} --debug,-D --detach,-d`.
 
-## Registration Flow
+## Generation Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        COMPILE TIME                                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  1. Source Generator scans for [NuruRoute] classes                  │
+│  1. Generator collects all [NuruRoute] classes in the compilation   │
 │                     ↓                                                │
-│  2. Extracts attributes from class and properties                   │
+│  2. EndpointExtractor reads the attribute, [Parameter]/[Option]     │
+│     properties, message type and nested Handler                     │
 │                     ↓                                                │
 │  3. Walks inheritance chain for [NuruRouteGroup]                    │
 │                     ↓                                                │
-│  4. Generates CompiledRouteBuilder calls                            │
+│  4. Per app, .DiscoverEndpoints() / .Map<T>() select the endpoints  │
 │                     ↓                                                │
-│  5. Generates [ModuleInitializer] registration code                 │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────┐
-│                         RUNTIME                                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  1. [ModuleInitializer] runs before Main()                          │
-│                     ↓                                                │
-│  2. Routes registered in NuruRouteRegistry                          │
-│                     ↓                                                │
-│  3. NuruApp.Build() pulls routes from registry                      │
-│                     ↓                                                │
-│  4. Routes added to endpoint collection                             │
+│  5. Emitters generate matching, help and handler-invocation code    │
+│     in the interceptor for the app's Build()/RunAsync()             │
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+Nothing is registered at runtime: all routing code is generated at compile time, which keeps the result AOT-compatible.
 
 ## Design Decisions
 
@@ -288,7 +252,7 @@ Note how the group prefix `"docker"` and group option `--debug,-D` are inherited
 **Rationale:**
 - Primary constructors don't allow per-parameter attributes easily
 - Properties are clearer for binding semantics
-- Matches MediatR/Mediator pattern of request classes
+- Matches the Mediator pattern of request classes
 
 ### 2. No Dashes in Attribute Parameters
 
@@ -316,70 +280,44 @@ Note how the group prefix `"docker"` and group option `--debug,-D` are inherited
 - Group options inherited via normal property inheritance
 - No special container classes needed
 
-### 5. Separate Route Constants for Aliases
+### 5. Aliases Expand to Full Patterns
 
-**Decision:** Generate `__Route_X_Alias_Y` for each alias, not reuse main route
+**Decision:** Each `[NuruRouteAlias]` (and group alias) is expanded to a complete alias pattern that replaces the group prefix plus route literal
 
 **Rationale:**
-- Aliases might have different pattern strings in help
-- Cleaner separation in generated code
-- No runtime overhead (constants)
+- Aliases can have different pattern strings in help
+- The emitter does not need to re-match literal segments after an alias prefix
 
 ## Implementation Details
 
-### Source File
+### Source Files
 
-`source/timewarp-nuru-analyzers/analyzers/nuru-endpoint-generator.cs`
+- `source/timewarp-nuru-analyzers/generators/extractors/endpoint-extractor.cs` - Extracts route definitions from `[NuruRoute]` classes
+- `source/timewarp-nuru-analyzers/generators/nuru-generator.cs` - Collects endpoints globally and selects them per app
 
-### Key Methods
+### Key Concepts
 
-- `IsClassWithNuruRouteAttribute()` - Syntax predicate for incremental generator
-- `ExtractRouteInfo()` - Semantic analysis to extract attribute data
-- `GenerateRegistrationCode()` - Emits the C# source
+- `EndpointExtractor.Extract()` - Semantic analysis of one `[NuruRoute]` class into a route definition (or diagnostics, e.g. NURU_A001)
+- Endpoint scoping - All `[NuruRoute]` classes in a compilation are collected globally; `.DiscoverEndpoints()` includes all of them, `.Map<T>()` only that type
+- Nested `Handler` - A class without a nested `Handler` class is skipped
 
-### Data Types
+## Sample Applications
 
-```csharp
-record EndpointInfo(
-  string FullTypeName,
-  string TypeName,
-  string Pattern,
-  string? Description,
-  List<string> Aliases,
-  string? GroupPrefix,
-  List<GroupOptionInfo> GroupOptions,
-  List<ParameterInfo> Parameters,
-  List<OptionInfo> Options
-);
-```
-
-## Sample Application
-
-A complete working example is in [samples/endpoints/](../../../../samples/endpoints/).
+Working examples are in [samples/endpoints/](../../../../samples/endpoints/).
 
 Features demonstrated:
-- Simple routes with parameters and options (`GreetRequest`, `DeployRequest`)
-- Default route with empty pattern (`DefaultRequest`)
-- Route aliases (`GoodbyeRequest` with `bye`, `cya` aliases)
-- Grouped routes (`DockerRunRequest`, `DockerBuildRequest` inheriting from `DockerRequestBase`)
-- Catch-all parameters (`ExecRequest`)
+- Simple routes with parameters and options (`01-hello-world`, `02-calculator`, `03-syntax`)
+- Async handlers and pipeline behaviors (`04-async`, `05-pipeline`)
+- Grouped routes with shared options (`14-group-options`)
 
-Run the sample:
+Run a sample:
 ```bash
-dotnet run --project samples/endpoints -- greet Alice
-dotnet run --project samples/endpoints -- deploy prod --force --replicas 3
-dotnet run --project samples/endpoints -- docker run nginx --debug
-dotnet run --project samples/endpoints -- exec echo hello world
+dotnet run samples/endpoints/14-group-options/group-options.cs -- git status --verbose
 ```
 
 ## Testing
 
-Tests are in `tests/timewarp-nuru-analyzers-tests/auto/`:
-
-- `endpoint-generator-01-basic.cs` - Integration tests (routes registered correctly)
-- `endpoint-generator-02-source.cs` - Source verification tests (generated code correct)
-
-Shared utilities in `endpoint-test-helpers.cs`.
+Endpoint tests are in `tests/timewarp-nuru-tests/generator/`, for example `generator-11-endpoints.cs`.
 
 ## Related Documentation
 

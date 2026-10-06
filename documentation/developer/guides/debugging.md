@@ -16,47 +16,33 @@ This guide provides detailed information about the extensive debugging and loggi
 
 ## 🎯 Why Comprehensive Debugging?
 
-TimeWarp.Nuru includes **34 debug message types** across multiple components:
+`ParsingLoggerMessages` defines many delegates. Only three loggers call any of them. The categories are `TimeWarp.Nuru.Lexer`, `TimeWarp.Nuru.Parser`, and `TimeWarp.Nuru.Compiler`.
 
-- **Route Registration**: 2 messages
-- **Lexer Analysis**: 2 messages
-- **Parser Processing**: 4 messages (including AST dumping)
-- **Command Resolution**: 10 messages
-- **Positional Matching**: 12 messages (most detailed category)
-- **Option Processing**: 3 messages
-- **Type Conversion**: Reserved for future use
-- **Help Generation**: Reserved for future use
-- **Total: 34 debug/tracing message types**
+- **Lexer**: `StartingLexicalAnalysis` (1050, Trace), `CompletedLexicalAnalysis` (1051, Trace), `DumpingTokens` (1101, Trace)
+- **Parser**: `ParsingPattern` (1100, Debug), `DumpingTokens` (1101, Trace), `DumpingAst` (1102, Debug)
+- **Compiler**: `SettingBooleanOptionParameter` (1103, Debug)
+
+Registration (1000–1001), command resolution (1200–1210), positional matching (1300–1311), and option processing (1350–1355) are defined and have no callers. There is no `CommandResolver` type and no `TimeWarp.Nuru.Parsing` category. The tables later on this page are that unused catalog. They are not a trace you will see.
 
 ```mermaid
 graph TD
-    A[Route Pattern]<br/>'deploy {env:int} --force'<br/>--> B[Lexer]<br/>13 trace messages
-    B --> C[Parser]<br/>5 debug messages
-    C --> D[Route Compiler]<br/>
-    D --> E[Route Registration]<br/>2 info/debug messages
-    E --> F{Command}<br/>'myapp deploy prod --force'
-    F --> G[Command Resolver]<br/>10 debug/trace messages
-    G --> H[Parameter Binder]<br/>
-    H --> I[Handler Execution]<br/>1 success/info message
-
-    classDef infoClass fill:#e1f5fe
-    classDef debugClass fill:#f3e5f5
-    classDef traceClass fill:#fff3e0
-
-    A:::debugClass
-    B:::traceClass
-    C:::debugClass
-    G:::traceClass
-    I:::infoClass
+    A[Route pattern] --> B[Lexer<br/>TimeWarp.Nuru.Lexer]
+    B --> C[Parser<br/>TimeWarp.Nuru.Parser]
+    C --> D[Compiler<br/>TimeWarp.Nuru.Compiler]
+    D --> E[Generated matcher<br/>does not log]
+    E --> F[Handler]
 ```
 
-**This guide covers ALL 34 debug/tracing message types and debugging workflows**, unlike the basic [Logging.md](Logging.md) which only covers setup fundamentals.
+The tables below list defined delegates, including ones nothing calls. The basic [logging guide](logging.md) covers the categories that actually log.
 
 ---
 
 ## 📋 Debug Message Categories
 
 ### 🎨 Registration Messages (1000-1099)
+
+Nothing calls events 1000 or 1001. The "when to enable" lines in this catalog describe delegates that are not invoked.
+
 **When to Enable**: During application startup, route configuration issues
 **Log Level**: Information/Debug
 
@@ -99,7 +85,7 @@ dbug: Registering route: 'subtract {x:double} {y:double}'
 **Enable AST Dumping:**
 ```csharp
 .UseConsoleLogging(builder => {
-    builder.GetFilter("TimeWarp.Nuru.Parsing.*").Trace();  // Enable 1102 AST dumps
+    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug);  // ParsingPattern (1100) and DumpingAst (1102)
 })
 ```
 
@@ -135,9 +121,12 @@ The parser provides extensive debugging capabilities through multiple components
 ### 🎯 Enable Parser Debugging
 
 ```csharp
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .UseConsoleLogging(LogLevel.Trace)  // Enable ALL parser trace messages
-    .Map("test {param}", () => {})
+    .Map("test {param}")
+      .WithHandler((string param) => { })
+      .AsCommand()
+      .Done()
     .Build();
 
 await app.RunAsync(args);
@@ -172,7 +161,9 @@ Enables deep parser inspection:
 ```csharp
 // Enable full parser debugging
 .UseConsoleLogging(builder => {
-    builder.AddFilter("TimeWarp.Nuru.Parsing.*", LogLevel.Trace);
+    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+           .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace)
+           .AddFilter("TimeWarp.Nuru.Compiler", LogLevel.Debug);
 })
 ```
 
@@ -267,8 +258,8 @@ The debugging system works alongside [benchmarking](./TimeWarp.Nuru.Benchmarks/)
 ```csharp
 // Debug specific route performance
 .UseConsoleLogging(builder => {
-    builder.AddFilter("TimeWarp.Nuru.CommandResolver", LogLevel.Trace)
-           .AddFilter("TimeWarp.Nuru.CommandResolver.Matching", LogLevel.Trace);
+    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+           .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace);
 })
 
 // Combined with benchmark timing for performance debugging
@@ -290,15 +281,16 @@ public void BenchmarkWithDebugging() { /* ... */ }
 3. Verify parameter extraction
 
 ```csharp
-// Enable routing debug
+// Pattern parsing. Route matching itself does not log.
 .UseConsoleLogging(builder => {
-    builder.AddFilter("TimeWarp.Nuru.CommandResolver", LogLevel.Trace)
-           .AddFilter("TimeWarp.Nuru.CommandResolver.Positional", LogLevel.Trace)
-           .AddFilter("TimeWarp.Nuru.CommandResolver.Options", LogLevel.Trace);
+    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+           .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace);
 })
 ```
 
-**Expected Debug Flow:**
+The sample below is the text of delegates that nothing calls. You will not see it.
+
+**Defined, not emitted:**
 ```
 Trace: [1/3] Checking route: 'deploy {env}'          // Route being checked
 Trace: Matching 2 segments against 2 arguments       // Consumption setup
@@ -343,9 +335,8 @@ This debugging system was shaped by **community feedback analysis** in:
 - **[Roslyn Analyzers](../../community-feedback/001-api-naming-error-handling/)** - Compilation-time debugging
 
 ### 🪲 Implementation Details
-- **[Logger Message Definitions](../../Source/TimeWarp.Nuru.Parsing/Logging/LoggerMessageDefinitions.cs)** - Complete message catalog
-- **[Route Based Command Resolver](../../Source/TimeWarp.Nuru/CommandResolver/RouteBasedCommandResolver.cs)** - Debug implementation
-- **[Nuru Logging Extensions](../../Source/TimeWarp.Nuru.Logging/NuruLoggingExtensions.cs)** - Logging configuration API
+- **[Logger Message Definitions](../../../source/timewarp-nuru-parsing/logging/logger-message-definitions.cs)** - Message catalog. Parser, lexer, and compiler call a subset of these.
+- **[Nuru Logging Extensions](../../../source/timewarp-nuru/logging/nuru-logging-extensions.cs)** - Logging configuration API
 
 ### 🔧 Testing
 - **[Analyzer Test Cases](../../Tests/TimeWarp.Nuru.Analyzers.Tests/TestSamples.cs)** - Diagnostic test scenarios

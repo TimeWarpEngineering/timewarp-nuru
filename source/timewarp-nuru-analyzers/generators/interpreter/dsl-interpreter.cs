@@ -577,7 +577,7 @@ public sealed class DslInterpreter
 
       "Done" => DispatchDone(invocation, receiver),
 
-      "Build" => DispatchBuild(receiver),
+      "Build" => DispatchBuild(invocation, receiver),
 
       "WithName" => DispatchWithName(invocation, receiver),
 
@@ -865,6 +865,15 @@ public sealed class DslInterpreter
 
       NullPatternError =>
         Diagnostic.Create(DiagnosticDescriptors.NullPattern, location),
+
+      InvalidIdentifierError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidIdentifier, location, e.InvalidIdentifier),
+
+      InvalidModifierCombinationError e =>
+        Diagnostic.Create(DiagnosticDescriptors.InvalidModifierCombination, location, e.ParameterName),
+
+      AdjacentParametersError =>
+        Diagnostic.Create(DiagnosticDescriptors.AdjacentParameters, location, "{a} {b}", "{a}{b}"),
 
       _ => null
     };
@@ -1707,8 +1716,18 @@ public sealed class DslInterpreter
   /// <summary>
   /// Dispatches Build() call to IIrAppBuilder.
   /// </summary>
-  private object? DispatchBuild(object? receiver)
+  /// <remarks>
+  /// <c>EndpointBuilder.Build()</c> lets a chain end on an open route
+  /// (<c>.Map("ping").WithHandler(...).Build()</c>). That route must be completed exactly as
+  /// <c>Done()</c> would, then the app built; otherwise the route is silently dropped.
+  /// </remarks>
+  private object? DispatchBuild(InvocationExpressionSyntax invocation, object? receiver)
   {
+    if (receiver is IIrRouteBuilder routeBuilder)
+    {
+      receiver = TryDoneRoute(invocation, routeBuilder);
+    }
+
     // Ignore Build() calls on non-Nuru types (e.g., DotNet.Build().Build())
     if (receiver is not IrAppBuilder appBuilder)
     {

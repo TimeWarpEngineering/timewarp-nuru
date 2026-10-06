@@ -8,11 +8,13 @@ By default, logging is disabled (zero overhead). To enable console logging:
 
 ```csharp
 using TimeWarp.Nuru;
-using TimeWarp.Nuru.Logging;
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .UseConsoleLogging()  // Enable console logging
-    .Map("test", () => Console.WriteLine("Test"))
+    .Map("test")
+      .WithHandler(() => Console.WriteLine("Test"))
+      .AsCommand()
+      .Done()
     .Build();
 
 return await app.RunAsync(args);
@@ -20,17 +22,16 @@ return await app.RunAsync(args);
 
 ## Installation
 
-Add the logging package to enable console output:
+The logging extensions (`UseConsoleLogging`, `UseDebugLogging`, `ConfigureLogging`) are part of the main `TimeWarp.Nuru` package (namespace `TimeWarp.Nuru`). No separate logging package is needed:
 
 ```bash
-dotnet add package TimeWarp.Nuru.Logging
+dotnet add package TimeWarp.Nuru
 ```
 
 Or in a script file:
 ```csharp
 #!/usr/bin/env dotnet run
 #:package TimeWarp.Nuru
-#:package TimeWarp.Nuru.Logging
 ```
 
 ## Log Levels
@@ -69,8 +70,9 @@ The framework supports standard Microsoft.Extensions.Logging levels:
 {
     builder
         .SetMinimumLevel(LogLevel.Debug)
-        .AddFilter("TimeWarp.Nuru.CommandResolver", LogLevel.Trace)
-        .AddFilter("TimeWarp.Nuru.Parsing", LogLevel.Warning);
+        .AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+        .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace)
+        .AddFilter("TimeWarp.Nuru.Compiler", LogLevel.Warning);
 })
 ```
 
@@ -87,9 +89,12 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/app.log", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .UseLogging(new SerilogLoggerFactory(Log.Logger))
-    .Map("test", () => Console.WriteLine("Test"))
+    .Map("test")
+      .WithHandler(() => Console.WriteLine("Test"))
+      .AsCommand()
+      .Done()
     .Build();
 ```
 
@@ -103,9 +108,12 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
     builder.AddNLog();
 });
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .UseLogging(loggerFactory)
-    .Map("test", () => Console.WriteLine("Test"))
+    .Map("test")
+      .WithHandler(() => Console.WriteLine("Test"))
+      .AsCommand()
+      .Done()
     .Build();
 ```
 
@@ -119,9 +127,12 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
     builder.AddApplicationInsights("InstrumentationKey");
 });
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .UseLogging(loggerFactory)
-    .Map("test", () => Console.WriteLine("Test"))
+    .Map("test")
+      .WithHandler(() => Console.WriteLine("Test"))
+      .AsCommand()
+      .Done()
     .Build();
 ```
 
@@ -129,46 +140,29 @@ NuruApp app = new NuruAppBuilder()
 
 The framework logs key operations across several components:
 
-| Component | Namespace | Key Messages |
-|-----------|-----------|--------------|
-| Registration | TimeWarp.Nuru | Route registration during startup |
-| Parsing | TimeWarp.Nuru.Parsing | Route pattern parsing and compilation |
-| Command Resolution | TimeWarp.Nuru.CommandResolver | Route matching and argument extraction |
-| Parameter Binding | TimeWarp.Nuru.Binding | Binding arguments to method parameters |
-| Type Conversion | TimeWarp.Nuru.TypeConversion | Converting string arguments to typed parameters |
+| Component | Logger category | Messages that are logged |
+|-----------|-----------------|--------------------------|
+| Parser | `TimeWarp.Nuru.Parser` | `ParsingPattern` (1100), `DumpingTokens` (1101), `DumpingAst` (1102) |
+| Lexer | `TimeWarp.Nuru.Lexer` | `StartingLexicalAnalysis` (1050), `CompletedLexicalAnalysis` (1051), `DumpingTokens` (1101) |
+| Compiler | `TimeWarp.Nuru.Compiler` | `SettingBooleanOptionParameter` (1103) |
+
+There is no `TimeWarp.Nuru.CommandResolver` or `TimeWarp.Nuru.Parsing` category. Route matching does not write these log events. `ParsingLoggerMessages` still defines registration and matcher messages (events 1000–1001 and 1200–1355), and nothing calls them.
 
 ## Example Output
 
-### Debug Level
+### Debug and trace
+
+These lines are the messages the parser, lexer, and compiler actually write. The parser and lexer lines are one pattern (`add`, `{`, `x`, `:`, `double`, `}`, `{`, `y`, `:`, `double`, `}` is 11 tokens). The compiler line is a different pattern that has a boolean option. Token and AST dumps are omitted. Their text is whatever `DumpTokens` and `DumpAst` return.
 
 ```
-09:15:23 info: TimeWarp.Nuru.NuruAppBuilder[1000]
-      Starting route registration
-09:15:23 dbug: TimeWarp.Nuru.NuruAppBuilder[1001]
-      Registering route: 'add {x:double} {y:double}'
-09:15:23 dbug: TimeWarp.Nuru.NuruAppBuilder[1001]
-      Registering route: 'subtract {x:double} {y:double}'
-09:15:23 info: TimeWarp.Nuru.CommandResolver.RouteBasedCommandResolver[1200]
-      Resolving command: 'add 5 3'
-09:15:23 dbug: TimeWarp.Nuru.CommandResolver.RouteBasedCommandResolver[1204]
-      ✓ Matched route: 'add {x:double} {y:double}'
-```
-
-### Trace Level
-
-```
-09:15:23 trce: TimeWarp.Nuru.CommandResolver.RouteBasedCommandResolver[1202]
-      [1/2] Checking route: 'add {x:double} {y:double}'
-09:15:23 trce: TimeWarp.Nuru.CommandResolver.RouteBasedCommandResolver[1300]
-      Matching 3 positional segments against 3 arguments
-09:15:23 trce: TimeWarp.Nuru.CommandResolver.RouteBasedCommandResolver[1307]
-      Attempting to match 'add' against add
-09:15:23 trce: TimeWarp.Nuru.CommandResolver.RouteBasedCommandResolver[1310]
-      Literal 'add' matched
-09:15:23 trce: TimeWarp.Nuru.CommandResolver.RouteBasedCommandResolver[1307]
-      Attempting to match '5' against {x:double}
-09:15:23 trce: TimeWarp.Nuru.CommandResolver.RouteBasedCommandResolver[1309]
-      Extracted parameter 'x' = '5'
+09:15:23 dbug: TimeWarp.Nuru.Parser[1100]
+      Parsing pattern: 'add {x:double} {y:double}'
+09:15:23 trce: TimeWarp.Nuru.Lexer[1050]
+      Starting lexical analysis of: 'add {x:double} {y:double}'
+09:15:23 trce: TimeWarp.Nuru.Lexer[1051]
+      Lexical analysis complete. Generated 11 tokens
+09:15:23 dbug: TimeWarp.Nuru.Compiler[1103]
+      Setting boolean option parameter name to: 'verbose'
 ```
 
 ## Performance Characteristics
@@ -196,10 +190,9 @@ When no logger is configured:
 {
     builder
         .SetMinimumLevel(LogLevel.Information)
-        // Show all command resolution details
-        .AddFilter("TimeWarp.Nuru.CommandResolver", LogLevel.Trace)
-        // Suppress parsing logs
-        .AddFilter("TimeWarp.Nuru.Parsing", LogLevel.None);
+        .AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+        .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace)
+        .AddFilter("TimeWarp.Nuru.Compiler", LogLevel.None);
 })
 ```
 
@@ -211,8 +204,9 @@ When no logger is configured:
     "LogLevel": {
       "Default": "Information",
       "TimeWarp.Nuru": "Debug",
-      "TimeWarp.Nuru.CommandResolver": "Trace",
-      "TimeWarp.Nuru.Parsing": "Warning"
+      "TimeWarp.Nuru.Parser": "Debug",
+      "TimeWarp.Nuru.Lexer": "Trace",
+      "TimeWarp.Nuru.Compiler": "Warning"
     }
   }
 }
@@ -230,7 +224,7 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
     builder.AddConsole();
 });
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .UseLogging(loggerFactory)
     .Build();
 ```
@@ -239,32 +233,34 @@ NuruApp app = new NuruAppBuilder()
 
 ### "Why isn't my route matching?"
 
-Enable trace logging for command resolution:
+Route matching does not log. To see how the pattern was tokenized and parsed:
 
 ```csharp
 .UseConsoleLogging(builder =>
 {
-    builder.AddFilter("TimeWarp.Nuru.CommandResolver", LogLevel.Trace);
+    builder
+        .AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+        .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace);
 })
 ```
 
 ### "How are my routes being parsed?"
 
-Enable debug logging for parsing:
+Filter the parser. `ParsingPattern` is Debug (event 1100). Lexer detail is Trace.
 
 ```csharp
 .UseConsoleLogging(builder =>
 {
-    builder.AddFilter("TimeWarp.Nuru.Parsing", LogLevel.Debug);
+    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug);
 })
 ```
 
 ### "What routes are registered?"
 
-Registration logs are at Information level by default:
+Nothing logs route registration. The registration messages in `ParsingLoggerMessages` (events 1000 and 1001) have no callers. `ParsingPattern` logs each pattern as the parser reads it, at Debug:
 
 ```csharp
-.UseConsoleLogging(LogLevel.Information)
+.UseConsoleLogging(LogLevel.Debug)
 ```
 
 ### "I want to see everything!"
@@ -286,24 +282,24 @@ public class CustomLoggerProvider : ILoggerProvider
     {
         return new CustomLogger(categoryName);
     }
-    
+
     public void Dispose() { }
 }
 
 public class CustomLogger : ILogger
 {
     private readonly string categoryName;
-    
+
     public CustomLogger(string categoryName)
     {
         this.categoryName = categoryName;
     }
-    
+
     public IDisposable BeginScope<TState>(TState state) => null;
     public bool IsEnabled(LogLevel logLevel) => true;
-    
-    public void Log<TState>(LogLevel logLevel, EventId eventId, 
-        TState state, Exception exception, 
+
+    public void Log<TState>(LogLevel logLevel, EventId eventId,
+        TState state, Exception exception,
         Func<TState, Exception, string> formatter)
     {
         // Custom logging logic here
@@ -317,20 +313,20 @@ ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
     builder.AddProvider(new CustomLoggerProvider());
 });
 
-NuruApp app = new NuruAppBuilder()
+NuruApp app = NuruApp.CreateBuilder()
     .UseLogging(loggerFactory)
     .Build();
 ```
 
 ## Migration from Old System
 
-If you were using the old environment variable-based logging:
+`NURU_LOG_*` and `NURU_DEBUG` are not read. Use the logging API. There is no matcher category to replace `NURU_LOG_MATCHER`.
 
-| Old | New |
+| Old variable (not read) | Replacement |
 |-----|-----|
 | `NURU_LOG_LEVEL=Debug` | `.UseConsoleLogging(LogLevel.Debug)` |
-| `NURU_LOG_MATCHER=Trace` | `.AddFilter("TimeWarp.Nuru.CommandResolver", LogLevel.Trace)` |
-| `NURU_LOG_PARSER=Debug` | `.AddFilter("TimeWarp.Nuru.Parsing", LogLevel.Debug)` |
+| `NURU_LOG_MATCHER=Trace` | No matcher logger. Trace `TimeWarp.Nuru.Parser` and `TimeWarp.Nuru.Lexer` |
+| `NURU_LOG_PARSER=Debug` | `.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)` |
 | `NURU_DEBUG=true` | `.UseDebugLogging()` |
 
 ## Tips

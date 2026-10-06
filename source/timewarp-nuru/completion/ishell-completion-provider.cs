@@ -23,9 +23,10 @@ public interface IShellCompletionProvider
   /// <param name="cursorIndex">The zero-based index of the word being completed.</param>
   /// <param name="words">All words on the command line.</param>
   /// <param name="parameterName">The name of the parameter being completed, if detected.</param>
-  /// <param name="parameterTypeName">The fully qualified type name of the parameter, if detected.</param>
+  /// <param name="parameterType">The handler parameter's CLR type, if known. The generator emits
+  /// <c>typeof(T)</c> so user types and C# keyword constraints resolve without reflection.</param>
   /// <returns>True if a parameter was detected; otherwise, false.</returns>
-  bool TryGetParameterInfo(int cursorIndex, string[] words, out string? parameterName, out string? parameterTypeName);
+  bool TryGetParameterInfo(int cursorIndex, string[] words, out string? parameterName, out Type? parameterType);
 }
 
 /// <summary>
@@ -40,10 +41,10 @@ public sealed class EmptyShellCompletionProvider : IShellCompletionProvider
 
   public IEnumerable<CompletionCandidate> GetCompletions(int cursorIndex, string[] words) => [];
 
-  public bool TryGetParameterInfo(int cursorIndex, string[] words, out string? parameterName, out string? parameterTypeName)
+  public bool TryGetParameterInfo(int cursorIndex, string[] words, out string? parameterName, out Type? parameterType)
   {
     parameterName = null;
-    parameterTypeName = null;
+    parameterType = null;
     return false;
   }
 }

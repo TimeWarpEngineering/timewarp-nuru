@@ -15,7 +15,7 @@ First registered = outermost (called first, returns last).
 ## Basic Pattern
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .AddBehavior(typeof(LoggingBehavior))
   .AddBehavior(typeof(PerformanceBehavior))
   .Map("echo {message}")
@@ -112,7 +112,7 @@ public sealed class TelemetryBehavior : INuruBehavior
   {
     using var activity = Source.StartActivity(context.CommandName);
     activity?.SetTag("correlation.id", context.CorrelationId);
-    
+
     try
     {
       await proceed();
@@ -167,7 +167,7 @@ Registration order determines execution order:
 - **Last registered** = innermost (called last, returns first)
 
 ```csharp
-NuruApp.CreateBuilder(args)
+NuruApp.CreateBuilder()
   .AddBehavior(typeof(TelemetryBehavior))         // 1st - outermost
   .AddBehavior(typeof(LoggingBehavior))           // 2nd
   .AddBehavior(typeof(ExceptionHandlingBehavior)) // 3rd
@@ -218,10 +218,10 @@ public sealed class AuthorizationBehavior : INuruBehavior<IRequireAuthorization>
   {
     // context.Command is already IRequireAuthorization - no casting needed
     string permission = context.Command.RequiredPermission;
-    
+
     if (!HasPermission(permission))
       throw new UnauthorizedAccessException($"Required: {permission}");
-    
+
     await proceed();
   }
 }
@@ -230,20 +230,20 @@ public sealed class AuthorizationBehavior : INuruBehavior<IRequireAuthorization>
 Apply to routes with `.Implements<T>()`:
 
 ```csharp
-NuruApp.CreateBuilder(args)
+NuruApp.CreateBuilder()
   .AddBehavior(typeof(AuthorizationBehavior))
-  
+
   // No interface - AuthorizationBehavior does not run
   .Map("echo {message}")
     .WithHandler((string message) => Console.WriteLine(message))
     .Done()
-  
+
   // Has IRequireAuthorization - AuthorizationBehavior runs
   .Map("admin {action}")
     .Implements<IRequireAuthorization>(x => x.RequiredPermission = "admin:execute")
     .WithHandler((string action) => Console.WriteLine($"Admin: {action}"))
     .Done()
-  
+
   .Build();
 ```
 

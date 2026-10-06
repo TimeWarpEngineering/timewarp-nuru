@@ -38,9 +38,7 @@ internal static class ReplDefaultRouteValidator
       if (!IsTopLevelDefaultRoute(route))
         continue;
 
-      Location location = routeLocations.TryGetValue(route.EffectivePattern, out Location? loc)
-        ? loc
-        : Location.None;
+      Location location = RouteLocationLookup.FindOrNone(route, routeLocations);
 
       diagnostics.Add(Diagnostic.Create(
         DiagnosticDescriptors.ReplAutoStartConflictsWithDefaultRoute,

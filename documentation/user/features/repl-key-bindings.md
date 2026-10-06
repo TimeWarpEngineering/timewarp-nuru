@@ -23,7 +23,7 @@ TimeWarp.Nuru REPL supports multiple key binding profiles to match your muscle m
 The default profile is used automatically - no configuration needed:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .AsCommand()
@@ -42,7 +42,7 @@ await app.RunReplAsync();
 Choose a different profile via `KeyBindingProfileName`:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .AsCommand()
@@ -193,7 +193,7 @@ CustomKeyBindingProfile customProfile = new CustomKeyBindingProfile(new EmacsKey
   // Remove a binding (disable Ctrl+D EOF)
   .Remove(ConsoleKey.D, ConsoleModifiers.Control);
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .AsCommand()
@@ -215,7 +215,7 @@ See [samples/13-repl/02-repl-custom-keys.cs](../../../samples/13-repl/02-repl-cu
 ### Interactive Application with Emacs Bindings
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("add {a:int} {b:int}")
     .WithHandler((int a, int b) => Console.WriteLine($"{a} + {b} = {a + b}"))
     .AsQuery()

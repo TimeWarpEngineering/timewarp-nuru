@@ -110,7 +110,8 @@ internal static class ServiceValidator
   /// </summary>
   public static ImmutableArray<Diagnostic> ValidateExtensionMethods(
     ImmutableArray<ExtensionMethodCall> extensionMethods,
-    bool useMicrosoftDependencyInjection)
+    bool useMicrosoftDependencyInjection,
+    Compilation? compilation = null)
   {
     if (useMicrosoftDependencyInjection || extensionMethods.IsDefaultOrEmpty)
       return [];
@@ -119,7 +120,7 @@ internal static class ServiceValidator
       .Where(ext => !WhitelistedExtensionMethods.Contains(ext.MethodName))
       .Select(ext => Diagnostic.Create(
         DiagnosticDescriptors.ExtensionMethodRegistration,
-        ext.Location,
+        ext.Location?.ToLocation(compilation) ?? Location.None,
         ext.MethodName))];
   }
 
@@ -206,9 +207,8 @@ internal static class ServiceValidator
     {
       // Anchor unregistered-service diagnostics at the route when its location is known.
       Location routeLocation = routeLocations is not null
-        && routeLocations.TryGetValue(route.EffectivePattern, out Location? loc)
-          ? loc
-          : Location.None;
+        ? RouteLocationLookup.FindOrNone(route, routeLocations)
+        : Location.None;
 
       // Check handler service parameters
       foreach (ParameterBinding param in route.Handler.ServiceParameters)

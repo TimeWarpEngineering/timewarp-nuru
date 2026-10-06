@@ -2,8 +2,10 @@ namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;
 
+// The handler writes the human listing itself and returns Unit: a non-Unit return value would be
+// serialized by the generated invoker and appended to stdout after the listing (482-009 / S-1).
 [NuruRoute("", Description = "Search indexed CLI endpoints")]
-public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
+public sealed partial class SearchQuery : SearchGroup, IQuery<Unit>
 {
   [Option("--cli", Description = "Filter results to a specific CLI (will auto-index if not found)")]
   public string? Cli { get; set; }
@@ -14,7 +16,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
   [Option("--query", Description = "Search query (positional or named)")]
   public string? Query { get; set; }
 
-  [Option("--group", Description = "Filter results by group path prefix")]
+  [Option("--group", Description = "Filter results by group path (dotted, e.g. docker.remote) and its children")]
   public string? Group { get; set; }
 
   [Parameter(Order = 0, Description = "Search query terms", IsCatchAll = true)]
@@ -27,9 +29,9 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
     SearchIndex searchIndex,
     CapabilitiesClient capabilitiesClient,
     ITerminal terminal,
-    ILogger<Handler> logger) : IQueryHandler<SearchQuery, SearchResult[]>
+    ILogger<Handler> logger) : IQueryHandler<SearchQuery, Unit>
   {
-    public async Task<SearchResult[]> Handle(SearchQuery query, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(SearchQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
 
@@ -38,7 +40,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
       if (string.IsNullOrWhiteSpace(searchQuery))
       {
         await terminal.WriteLineAsync("Error: No search query provided. Use --query or pass search terms.").ConfigureAwait(false);
-        return [];
+        return default;
       }
 
       // On-demand indexing: if --cli is specified, ensure it's indexed
@@ -57,7 +59,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
       if (results.Count == 0)
       {
         await terminal.WriteLineAsync("No results found.").ConfigureAwait(false);
-        return [];
+        return default;
       }
 
       await terminal.WriteLineAsync($"Found {results.Count} result(s):").ConfigureAwait(false);
@@ -73,7 +75,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
         }
       }
 
-      return [.. results];
+      return default;
     }
 
     private async Task EnsureCliIndexedAsync(string cliName, CancellationToken cancellationToken)
@@ -111,6 +113,7 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<SearchResult[]>
         capabilities.Version,
         capabilities.RawJson,
         capabilities.Endpoints,
+        cliPath,
         cancellationToken).ConfigureAwait(false);
 
       await terminal.WriteLineAsync($"Auto-indexed {capabilities.Name} v{capabilities.Version} ({capabilities.Endpoints.Count} endpoints)").ConfigureAwait(false);

@@ -17,7 +17,7 @@ REPL mode is ideal for:
 ```csharp
 using TimeWarp.Nuru;
 
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .AsCommand()
@@ -161,7 +161,7 @@ Available Application Commands:
 Configure REPL behavior through the `.AddRepl(options => ...)` pattern:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("greet {name}")
     .WithHandler((string name) => Console.WriteLine($"Hello, {name}!"))
     .AsCommand()
@@ -277,7 +277,7 @@ not a guarantee. For hard control, set `PersistHistory = false` or point
 
 ## Integration with Completion
 
-REPL integrates with TimeWarp.Nuru.Completion for enhanced help:
+REPL integrates with shell completion (`EnableCompletion()`) for enhanced help:
 
 ```csharp
 // If CompletionProvider is available, help shows command descriptions
@@ -330,7 +330,7 @@ REPL works on Windows, Linux, and macOS:
 ### Simple Calculator REPL
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("add {a:int} {b:int}")
     .WithHandler((int a, int b) => Console.WriteLine($"{a} + {b} = {a + b}"))
     .AsQuery()
@@ -352,7 +352,7 @@ await app.RunReplAsync();
 ### CLI + REPL Dual Mode
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("status")
     .WithHandler(() => Console.WriteLine("System status: OK"))
     .AsQuery()

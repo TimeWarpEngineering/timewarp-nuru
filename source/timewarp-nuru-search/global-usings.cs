@@ -21,4 +21,6 @@ global using TimeWarp.Terminal;
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-02-version-formatter")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-03-search-index")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-04-database-path")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-05-search-query-output")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("search-06-index-rebuild-path")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("run-ci-tests")]

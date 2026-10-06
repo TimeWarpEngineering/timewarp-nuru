@@ -17,11 +17,11 @@ internal sealed class ErrorHandlingTool
     ["overview"] = "# Error Handling in TimeWarp.Nuru",
     ["architecture"] = "## Error Handling Architecture",
     ["philosophy"] = "## Error Handling Philosophy",
-    ["parsing"] = "### 2. **Route Parsing Errors**",
-    ["binding"] = "### 3. **Parameter Binding Errors**",
-    ["conversion"] = "### 4. **Type Conversion Errors**",
-    ["execution"] = "### 5. **Handler Execution Errors**",
-    ["matching"] = "### 6. **Command Matching Errors**"
+    ["parsing"] = "### 3. **Route Parsing Errors**",
+    ["binding"] = "### 4. **Parameter and Option Binding Errors**",
+    ["conversion"] = "### 4. **Parameter and Option Binding Errors**",
+    ["execution"] = "### 1. **Handler Exceptions Are Not Caught**",
+    ["matching"] = "### 5. **Command Matching Errors**"
   };
 
   private const string InternetRequiredMessage = "❌ **Internet access required.** Unable to fetch error handling documentation from GitHub. " +

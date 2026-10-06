@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Changes since `3.0.0-beta.76`, the last published beta. beta.77 was never published.
+## [3.0.0-beta.79] - 2026-10-06
+
+Changes since `3.0.0-beta.76`, the last published beta. beta.77 and beta.78 were never published.
+Dogfood release: this beta is meant to be consumed across the TimeWarp repos before `3.0.0` is cut.
+
+### Fixed
+- **Generator**: typed catch-all and repeated options use non-throwing `TryParse` for every built-in conversion, including `DateTimeOffset` and `Version` (482-005). Invalid route patterns report a diagnostic instead of emitting a fallback literal route (482-006). `Build()` on an endpoint registers the open route (482-001). Optional parameters render as `{name?}` in diagnostics (482-007). The emit cache key no longer holds a Roslyn `Location` (482-008).
+- **Completion**: later parameters bind, command prefixes match on token boundaries, user types resolve (482-002); `File` and `Directory` candidates and directive flags are honored (482-003).
+- **REPL**: the `RunReplAsync` stub tells the caller to enable the source generator (482-004).
+- **Search**: no JSON array after the listing (482-009); `--group` matches dotted group paths (482-010); index rebuild remembers the executable path (482-011).
+- **Docs**: guides, parser reference, error-handling guide, and public XML examples match the 3.0 API (482-013, 482 R-7).
 
 ### Removed
 - **`TimeWarp.Nuru.Mcp` is not part of the 3.0 package set**: the project is `IsPackable=false`, so the build and release pipeline no longer produce or publish `TimeWarp.Nuru.Mcp.*.nupkg`. The MCP server is frozen and its `GetSyntax` / `GenerateHandler` answers do not match 3.0. Use the Nuru skill instead. The source stays in the repo and still builds; `dotnet pack -p:NuruMcpPack=true` packs it locally.
@@ -27,9 +37,13 @@ Changes since `3.0.0-beta.76`, the last published beta. beta.77 was never publis
 - **TimeWarp.Mediator 14.0.0-beta.4**: TimeWarp.Nuru now depends on `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators`. The generator flows into consuming apps, so each app compilation emits its own source-generated `IMediator` / `ISender` / `IPublisher`. Apps using `.UseMicrosoftDependencyInjection()` get `AddGeneratedMediator()` called automatically, so handlers can inject `ISender` / `IPublisher`.
 - **`ISender` / `IPublisher` / `IMediator` under source-generated DI**: handlers, services, and behaviors in apps without `.UseMicrosoftDependencyInjection()` can inject the generated mediator. Nuru builds a small container on first use holding `AddGeneratedMediator()`, Nuru's `ITerminal` / `NuruApp` / `IConfiguration` / logging, and the services registered in `ConfigureServices`, so mediator handlers resolve their dependencies. Apps that never inject a mediator type get no container code.
 
+## [3.0.0-beta.78] - not published
+
+The version moved to `3.0.0-beta.78` on 2026-09-25 and to `3.0.0-beta.79` on 2026-10-06. No tag, GitHub release, or NuGet package was made for beta.78. Its changes are listed under 3.0.0-beta.79.
+
 ## [3.0.0-beta.77] - not published
 
-The version was set to `3.0.0-beta.77` on 2026-08-27 and moved to `3.0.0-beta.78` on 2026-09-25. No tag, GitHub release, or NuGet package was made for beta.77. Its changes are listed under Unreleased.
+The version was set to `3.0.0-beta.77` on 2026-08-27 and moved to `3.0.0-beta.78` on 2026-09-25. No tag, GitHub release, or NuGet package was made for beta.77. Its changes are listed under 3.0.0-beta.79.
 
 ## [3.0.0-beta.76] - 2026-08-14
 

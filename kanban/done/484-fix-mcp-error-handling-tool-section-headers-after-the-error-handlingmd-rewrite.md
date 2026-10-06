@@ -17,7 +17,7 @@ Fix is the header map only. MCP stays frozen; conversion maps to the merged bind
 
 - [x] `SectionHeaders` in `source/timewarp-nuru-mcp/tools/error-handling-tool.cs` match the current doc headings
 - [x] `dotnet run tests/timewarp-nuru-mcp-tests/mcp-05-error-documentation.cs` passes locally (reads master doc)
-- [ ] PR merged; PR #299 (beta.79 bump) CI re-run green
+- [x] PR #300 merged; PR #299 (beta.79 bump) CI green after master merged in; beta.79 released
 
 ## Notes
 

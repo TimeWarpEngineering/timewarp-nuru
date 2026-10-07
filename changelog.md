@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Dependencies**: Roslynator analyzers 5.0.1 and Spectre.Console.Cli 0.57.2 (benchmarks only); neither ships to consumers. `Microsoft.CodeAnalysis.CSharp` stays at 5.6.0, so the minimum consumer SDK is unchanged (10.0.3xx); 5.9.0 would require SDK 10.0.400. `Microsoft.Build.Utilities.Core` stays at 18.9.6 because 18.10.1 has no `net10.0` build.
+
 ## [3.0.0-beta.79] - 2026-10-06
 
 Changes since `3.0.0-beta.76`, the last published beta. beta.77 and beta.78 were never published.

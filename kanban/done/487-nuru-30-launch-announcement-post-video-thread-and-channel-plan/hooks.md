@@ -1,6 +1,8 @@
 # Hook candidates
 
-Decide one. Everything else (video, thread, blog title, HN title) derives from it.
+**Decision (2026-10-08, maintainer: "go with your choice"):** launch on **#1 Agent contract**;
+run **#2 Process story** as the second shot on day 7. #3 is the video's opening beat only.
+Everything else (video, thread, blog title, HN title) derives from #1.
 
 ## 1. Agent contract — recommended for the launch
 
@@ -18,7 +20,7 @@ Decide one. Everything else (video, thread, blog title, HN title) derives from i
 
 ## 2. Process story — recommended as the second shot, ~1 week later
 
-> I had a Grok + Claude agent team code-review Nuru 3.0. 21 findings, 15 PRs, merged in a day. Here's what they caught.
+> I had a Grok + Claude agent team code-review Nuru 3.0. 28 findings, 22 fixed before the tag. Here's what they caught.
 
 - Why: true, specific, novel. Names both models (X rewards this). The AI-dev audience engages with
   process more than with frameworks. Material already exists:

@@ -160,3 +160,4 @@ python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len
 - 2026-10-08: dropped the depends-on edge on `3.0.0`; only the Launch section is release-gated (maintainer direction)
 - 2026-10-09 claude (implement oracle): verified the launch claims against beta.79 from nuget.org. Wrote the blog, blips, release notes, final thread text, and HN/Reddit copy. Corrected the video script and the review counts. Measured AOT size and startup. Added Launch gates after finding CS9137 for package consumers.
 - 2026-10-09 grok (review oracle): session `01a11c82-bdbc-75d2-ad87-8d0ebcd6a339`. Effort 2, roster general. Round 1 reviewer `01a11c84-d196-7301-92f6-c2959d9d394a`. Round 2 reviewer `01a11c96-bbb5-7cf1-8a72-37c8cb0f2b03`. Disposition clean.
+- Review oracle: review by implementer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-08T17:40:53Z

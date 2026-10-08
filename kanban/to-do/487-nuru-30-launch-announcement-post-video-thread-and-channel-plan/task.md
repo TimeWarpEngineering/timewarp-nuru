@@ -38,7 +38,7 @@ characters for `ganda post`.
 ## Checklist
 
 ### Decide
-- [ ] Pick the hook (`hooks.md`), one sentence, recorded with the reason
+- [x] Pick the hook (`hooks.md`): #1 agent contract for launch, #2 process story on day 7 — decided 2026-10-08
 - [ ] Confirm the star/download/analytics baseline on launch day minus one (`channels.md` table)
 
 ### Produce

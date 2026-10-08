@@ -1,6 +1,8 @@
 # Hook candidates
 
-Decide one. Everything else (video, thread, blog title, HN title) derives from it.
+**Decision (2026-10-08, maintainer: "go with your choice"):** launch on **#1 Agent contract**;
+run **#2 Process story** as the second shot on day 7. #3 is the video's opening beat only.
+Everything else (video, thread, blog title, HN title) derives from #1.
 
 ## 1. Agent contract — recommended for the launch
 

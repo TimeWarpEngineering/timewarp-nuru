@@ -48,7 +48,7 @@ characters for `ganda post`.
 - [x] 280-char blip in `documentation/posts/blips/` for X post 1 and Nostr: `2026-xx-xx-nuru-3.0-release.md` (144 chars, X) and `…-nostr.md` (220 chars, with link)
 - [ ] Video recorded per `video-script.md`, rendered to mp4, under 90 s, with end card
 - [ ] Five code screenshots for thread posts 2–6 (one feature each)
-- [ ] Hero image: ask @Grok (MidJourney backend) in-thread, or make one; store beside the blog stub in TheFreezeTeamBlog
+- [ ] Hero image per `hero-image.md` (1600×900, same Nuru hero + robot sidekick); store beside the blog stub in TheFreezeTeamBlog. Blocks the stub PR: every FreezeTeam post has a cover image
 - [x] GitHub Release notes for `v3.0.0` drafted now in this folder (`release-notes.md`); pasted over `--generate-notes` output on release day: headline, agent contract, breaking changes, migration link
 
 ### Stage

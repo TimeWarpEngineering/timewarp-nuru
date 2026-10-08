@@ -21,10 +21,6 @@ pulled into thefreezeteam.com via the existing `Git` shortcode stub (see TheFree
 for the path-case trap). X/Nostr short form goes in `documentation/posts/blips/` and must be ≤ 280
 characters for `ganda post`.
 
-## Depends on
-
-- `3.0.0` tagged and released (follows the beta.79 dogfood pass; see 483 Results)
-
 ## Requirements
 
 - Hook chosen and recorded in `hooks.md` before video or thread work starts.
@@ -35,6 +31,9 @@ characters for `ganda post`.
 - Video is a terminal screencast (asciinema → mp4), uploaded natively to X, not a link.
 - Nothing is posted from this task. Publishing is a human action after review; the task ends with
   the assets ready and the sequence scheduled.
+- **Build everything before the release.** Decide, Produce, and Stage run now against `3.0.0-beta.79`,
+  which is API-identical to what `3.0.0` will ship. Only the Launch section waits for the `v3.0.0` tag;
+  the release day should be a push-button day, not a writing day.
 
 ## Checklist
 
@@ -48,7 +47,7 @@ characters for `ganda post`.
 - [ ] Video recorded per `video-script.md`, rendered to mp4, under 90 s, with end card
 - [ ] Five code screenshots for thread posts 2–6 (one feature each)
 - [ ] Hero image: ask @Grok (MidJourney backend) in-thread, or make one; store beside the blog stub in TheFreezeTeamBlog
-- [ ] GitHub Release notes for `v3.0.0` rewritten by hand (not just `--generate-notes`): headline, agent contract, breaking changes, migration link
+- [ ] GitHub Release notes for `v3.0.0` drafted now in this folder (`release-notes.md`); pasted over `--generate-notes` output on release day: headline, agent contract, breaking changes, migration link
 
 ### Stage
 - [ ] TheFreezeTeamBlog stub + image PR opened (frontmatter per the 2025 Nuru stub; lowercase shortcode path)
@@ -57,7 +56,7 @@ characters for `ganda post`.
 - [ ] r/dotnet post drafted in the "what I learned" framing (`channels.md`)
 - [ ] Nostr relays confirmed reachable (`ganda post config show`; both nostria relays returned 530 on 2026-10-08)
 
-### Launch (human, in order)
+### Launch (human, in order — gated on `v3.0.0` existing; everything above is done beforehand)
 - [ ] Day 0: GitHub Release published → blog live → X thread (Tue–Thu, US morning) → @Grok replies within the hour → Nostr
 - [ ] Day 1: Show HN → r/dotnet
 - [ ] Day 3–5: dev.to repost of the blog; LinkedIn with the video
@@ -80,3 +79,4 @@ characters for `ganda post`.
 ## Session
 
 - Created: claude 2412bd45 (2026-10-08), from a brainstorm with the maintainer
+- 2026-10-08: dropped the depends-on edge on `3.0.0`; only the Launch section is release-gated (maintainer direction)

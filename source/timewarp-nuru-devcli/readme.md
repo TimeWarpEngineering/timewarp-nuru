@@ -244,7 +244,8 @@ key material (hex).
 `source/Directory.Build.props`, runs the working-tree/branch/sync/tag-availability/publish-state/
 CI-run guards (in that order — see `release-guard.cs`'s Design region), then creates annotated tag
 `v{Version}` and the GitHub Release (`gh release create v{Version} --title v{Version}
---generate-notes --verify-tag`) on the verified commit. `--dry-run` runs every guard and prints the
+--generate-notes --verify-tag`, plus `--prerelease` when `<Version>` has a SemVer prerelease suffix
+such as `-beta.79`, mirroring NuGet) on the verified commit. `--dry-run` runs every guard and prints the
 exact commands without creating anything. Humans type the version exactly once — in the props bump
 PR; the tag is derived, never hand-typed.
 

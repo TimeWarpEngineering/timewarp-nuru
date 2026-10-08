@@ -23,7 +23,9 @@
 // DevCliJsonContext) IS reused.
 //
 // D3: annotated local tag at the verified sha -> push tag -> `gh release
-// create v{X} --title v{X} --generate-notes --verify-tag`. Not `--target`:
+// create v{X} --title v{X} --generate-notes --verify-tag [--prerelease]`
+// (--prerelease iff the version has a SemVer prerelease suffix, mirroring
+// NuGet — task 486). Not `--target`:
 // gh-created tags are lightweight and branch targets resolve server-side
 // (a race against anything landing on master between guard-check and
 // release-create) — pinning to the verified, already-pushed tag avoids both.
@@ -376,7 +378,8 @@ public sealed class ReleaseCommand : ICommand<Unit>
       // --- Step 9: --dry-run stops here ---------------------------------------
       string tagCommand = $"git tag -a {tag} -m \"Release {tag}\" {headSha}";
       string pushCommand = $"git push origin {tag}";
-      string releaseCommand = $"gh release create {tag} --title {tag} --generate-notes --verify-tag";
+      IReadOnlyList<string> releaseCreateArguments = ReleaseGuard.BuildReleaseCreateArguments(tag, version);
+      string releaseCommand = ReleaseGuard.FormatReleaseCreateCommand(releaseCreateArguments);
 
       if (command.DryRun)
       {
@@ -435,7 +438,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
       Terminal.WriteLine($"Pushed tag {tag} to origin.");
 
       CommandOutput releaseCreateResult = await Shell.Builder("gh")
-        .WithArguments("release", "create", tag, "--title", tag, "--generate-notes", "--verify-tag")
+        .WithArguments([.. releaseCreateArguments])
         .WithNoValidation()
         .CaptureAsync(cancellationToken)
         .ConfigureAwait(false);

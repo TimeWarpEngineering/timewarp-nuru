@@ -44,6 +44,14 @@
 // assumes a resumable, tag-pinned commit): here there is no tag to resume
 // from, so a NEW tag at this commit could pin a different source than the
 // partial push used. All means already fully released — bump. None passes.
+//
+// IsPrerelease / BuildReleaseCreateArguments (kanban task 486): the GitHub
+// Release prerelease flag mirrors the version the same way NuGet does — a
+// SemVer prerelease suffix (a `-` before any `+build` metadata) means
+// prerelease. NuGet.Versioning is not referenced by this source-only package,
+// so this is a plain string check, not NuGetVersion.IsPrerelease. The gh
+// argument list is built in ONE place so the --dry-run / recovery string and
+// the executed WithArguments(...) cannot drift.
 #endregion
 
 namespace DevCli;
@@ -160,5 +168,35 @@ public static class ReleaseGuard
       default:
         throw new InvalidOperationException($"Unknown publish state '{state}'.");
     }
+  }
+
+  public static bool IsPrerelease(string version)
+  {
+    ArgumentNullException.ThrowIfNull(version);
+
+    int buildMetadataStart = version.IndexOf('+', StringComparison.Ordinal);
+    string withoutBuildMetadata = buildMetadataStart >= 0 ? version[..buildMetadataStart] : version;
+    return withoutBuildMetadata.Contains('-', StringComparison.Ordinal);
+  }
+
+  public static IReadOnlyList<string> BuildReleaseCreateArguments(string tag, string version)
+  {
+    ArgumentNullException.ThrowIfNull(tag);
+    ArgumentNullException.ThrowIfNull(version);
+
+    List<string> arguments = ["release", "create", tag, "--title", tag, "--generate-notes", "--verify-tag"];
+    if (IsPrerelease(version))
+    {
+      arguments.Add("--prerelease");
+    }
+
+    return arguments;
+  }
+
+  public static string FormatReleaseCreateCommand(IReadOnlyList<string> arguments)
+  {
+    ArgumentNullException.ThrowIfNull(arguments);
+
+    return $"gh {string.Join(' ', arguments)}";
   }
 }

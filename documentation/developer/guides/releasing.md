@@ -26,7 +26,8 @@ attempt to restate the convention itself — only what is actually implemented h
   released with the identical guards and promotion steps as a stable one — the
   machinery does not distinguish them. When a line stops being prerelease is a
   maintainer judgment call (committing to the current API surface), not something
-  this pipeline enforces or tracks.
+  this pipeline enforces or tracks. The GitHub Release's prerelease flag mirrors the
+  suffix the same way NuGet does: `dev release` passes `--prerelease` for any `-` suffix.
 
 ## Normal release flow
 
@@ -92,7 +93,8 @@ With guards passed and not `--dry-run`, `dev release`:
 1. Creates an **annotated** tag `v{Version}` at the verified `HEAD` commit.
 2. Pushes the tag to `origin`. If the push fails, the local tag is deleted and the
    command refuses — nothing was made public, so it is safe to unwind.
-3. Runs `gh release create v{Version} --title v{Version} --generate-notes --verify-tag`.
+3. Runs `gh release create v{Version} --title v{Version} --generate-notes --verify-tag`,
+   adding `--prerelease` when the version has a prerelease suffix (e.g. `-beta.79`).
    If this fails *after* the tag was already pushed, the tag is **not** rolled
    back — it is already public, and re-running `dev release` will now refuse at
    guard 6 (tag availability) by design. The command instead prints the exact

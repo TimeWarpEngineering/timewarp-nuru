@@ -46,9 +46,9 @@ characters for `ganda post`.
 ### Produce
 - [x] Blog body in `documentation/posts/blogs/` (long form; the canonical link for HN/Reddit): `2026-xx-xx-nuru-3.0-release.md`
 - [x] 280-char blip in `documentation/posts/blips/` for X post 1 and Nostr: `2026-xx-xx-nuru-3.0-release.md` (144 chars, X) and `…-nostr.md` (220 chars, with link)
-- [ ] Video recorded per `video-script.md`, rendered to mp4, under 90 s, with end card
+- [x] Video recorded per `video-script.md`, rendered to mp4, under 90 s, with end card — **done 2026-10-09**: `assets/nuru-3-launch.mp4` (54 s, VHS)
 - [ ] Five code screenshots for thread posts 2–6 (one feature each)
-- [ ] Hero image per `hero-image.md` (1600×900, same Nuru hero + robot sidekick); store beside the blog stub in TheFreezeTeamBlog. Blocks the stub PR: every FreezeTeam post has a cover image
+- [x] Hero image per `hero-image.md` (1600×900, same Nuru hero + robot sidekick); store beside the blog stub in TheFreezeTeamBlog. Blocks the stub PR: every FreezeTeam post has a cover image — **done 2026-10-09**: `assets/nuru-3-hero.jpg` (Grok Imagine, 1600×900) + OG crop
 - [x] GitHub Release notes for `v3.0.0` drafted now in this folder (`release-notes.md`); pasted over `--generate-notes` output on release day: headline, agent contract, breaking changes, migration link
 
 ### Stage
@@ -59,6 +59,8 @@ characters for `ganda post`.
 - [ ] Nostr relays confirmed reachable (`ganda post config show`; both nostria relays returned 530 on 2026-10-08, and again on 2026-10-09)
 
 ### Launch gates (fix before the `v3.0.0` tag; each needs its own task)
+- [ ] **Generated bash completion hard-depends on bash-completion.** `--generate-completion bash` emits `_init_completion || return`; on a bash without `/usr/share/bash-completion` loaded, Tab prints `bash: _init_completion: command not found` and nothing completes (seen while recording the video). Add the usual fallback (`type _init_completion >/dev/null 2>&1 || _init_completion() { COMPREPLY=(); ... }` or the cobra-style shim).
+- [ ] **REPL crashes on redirected stdin.** `printf 'greet x\nexit\n' | app --interactive` throws `InvalidOperationException: Cannot read keys when ... console input has been redirected` from `ReplConsoleReader.ReadLineAsync` instead of falling back to line reads or exiting with a message. Agents and CI pipe input; this should degrade, not throw.
 - [ ] **The package does not enable interceptors.** On `3.0.0-beta.79`, a fresh `dotnet new console` with `dotnet add package TimeWarp.Nuru`, and a `#:package TimeWarp.Nuru` runfile, both fail with `CS9137: The 'interceptors' feature is not enabled in this namespace`. `build/TimeWarp.Nuru.targets` does not set `<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>`. Only the repo's own `Directory.Build.props` files do, and no user doc mentions it. Every first-time user from the launch hits this. The fix is to set the property in the package's build props/targets, and then drop the `#:property` line from `demo/app.cs.txt`.
 - [ ] **3.0.0 depends on prerelease `TimeWarp.Mediator 14.0.0-beta.4`.** A stable package with a prerelease dependency gets NU5104 and forces consumers onto a beta. Ship Mediator 14.0.0 first, or accept and document it.
 - [ ] `documentation/user/guides/migrating-to-3.0.md:41-45` still describes hierarchical `--capabilities` output (`groups`/`commands`). The shipped output is a flat `endpoints` list. Line 4 still says "under review is `3.0.0-beta.79`". The release notes and blog link to this guide.
@@ -158,6 +160,7 @@ python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len
 
 - Created: claude 2412bd45 (2026-10-08), from a brainstorm with the maintainer
 - 2026-10-08: dropped the depends-on edge on `3.0.0`; only the Launch section is release-gated (maintainer direction)
+- 2026-10-09: video + hero image produced by claude 2412bd45 (VHS, Grok Imagine); see `assets/readme.md`; two more launch gates found while recording
 - 2026-10-09 claude (implement oracle): verified the launch claims against beta.79 from nuget.org. Wrote the blog, blips, release notes, final thread text, and HN/Reddit copy. Corrected the video script and the review counts. Measured AOT size and startup. Added Launch gates after finding CS9137 for package consumers.
 - 2026-10-09 grok (review oracle): session `01a11c82-bdbc-75d2-ad87-8d0ebcd6a339`. Effort 2, roster general. Round 1 reviewer `01a11c84-d196-7301-92f6-c2959d9d394a`. Round 2 reviewer `01a11c96-bbb5-7cf1-8a72-37c8cb0f2b03`. Disposition clean.
 - Review oracle: review by implementer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-08T17:40:53Z

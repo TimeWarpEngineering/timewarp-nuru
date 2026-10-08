@@ -39,11 +39,14 @@ going forward: when `<Version>` in `source/Directory.Build.props` has a SemVer p
 - Found 2026-10-08 after cutting beta.79 (task 483). nuget.org side was always correct.
 - Existing releases: `v3.0.0-beta.74`–`beta.79` are flagged as full releases on GitHub. Whether to
   flip them with `gh release edit` is a one-off maintainer action, not part of this change.
+- 2026-10-08: review oracle (ganda task work, tw-implementation-review effort 1). Round 1 general — disposition clean. Next host nodes: open-pr / done (no apply-review sibling).
 
 ## Session
 
 - Created: claude 2412bd45 (2026-10-08)
 - Implement: claude (ganda task work, 2026-10-08)
+- Review: grok `01a11c3f-1285-7b72-a806-f65957b8dd6c` (2026-10-08)
+- Reviewer general: grok subagent `01a11c42-dfb4-7c70-abd0-131ee3ac6a7e` (2026-10-08)
 
 ## Results
 
@@ -76,4 +79,13 @@ dotnet run tools/dev-cli/dev.cs -- release --dry-run
 Expect: both test files pass (6/6, 22/22). The dry-run "Would run:" block ends with
 `gh release create v3.0.0-beta.N --title v3.0.0-beta.N --generate-notes --verify-tag --prerelease`;
 for a stable `<Version>` the line has no `--prerelease`.
+
+### Review disposition
+
+- **Outcome:** clean
+- **Effort / roster:** 1 — general only
+- **Rounds:** 1
+- **Final counts:** bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+- Re-verified during review: `dotnet run tests/timewarp-nuru-tests/devcli/release-02-prerelease-flag.cs` passed 6/6. `dotnet run tests/timewarp-nuru-tests/devcli/release-01-guard-matrix.cs` passed 22/22.
 

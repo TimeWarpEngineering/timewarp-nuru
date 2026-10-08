@@ -14,7 +14,9 @@ This folder holds the working drafts so the writing is reviewed like code:
 | `hooks.md` | Hook candidates with the recommendation; decide one before any production |
 | `video-script.md` | 60-second terminal screencast script |
 | `x-thread.md` | Seven-post X thread draft, with the @Grok reply prompts |
-| `channels.md` | Channel sequence, timing, formats per channel, and the measurement plan |
+| `channels.md` | Channel sequence, timing, formats per channel, Show HN and r/dotnet copy, and the measurement plan |
+| `release-notes.md` | `v3.0.0` GitHub Release notes, pasted over `--generate-notes` on release day |
+| `demo/` | `app.cs.txt` (copy out as `app.cs`), the one-file app used by the video, blog, and screenshots, plus how to run it |
 
 Blog body goes in `documentation/posts/blogs/2026-xx-xx-nuru-3.0-release.md` (this repo) and is
 pulled into thefreezeteam.com via the existing `Git` shortcode stub (see TheFreezeTeamBlog task 001
@@ -39,22 +41,28 @@ characters for `ganda post`.
 
 ### Decide
 - [x] Pick the hook (`hooks.md`): #1 agent contract for launch, #2 process story on day 7 — decided 2026-10-08
-- [ ] Confirm the star/download/analytics baseline on launch day minus one (`channels.md` table)
+- [ ] Confirm the star/download/analytics baseline on launch day minus one (`channels.md` table). This is a day −1 action and can't be done early.
 
 ### Produce
-- [ ] Blog body in `documentation/posts/blogs/` (long form; the canonical link for HN/Reddit)
-- [ ] 280-char blip in `documentation/posts/blips/` for X post 1 and Nostr
+- [x] Blog body in `documentation/posts/blogs/` (long form; the canonical link for HN/Reddit): `2026-xx-xx-nuru-3.0-release.md`
+- [x] 280-char blip in `documentation/posts/blips/` for X post 1 and Nostr: `2026-xx-xx-nuru-3.0-release.md` (144 chars, X) and `…-nostr.md` (220 chars, with link)
 - [ ] Video recorded per `video-script.md`, rendered to mp4, under 90 s, with end card
 - [ ] Five code screenshots for thread posts 2–6 (one feature each)
 - [ ] Hero image: ask @Grok (MidJourney backend) in-thread, or make one; store beside the blog stub in TheFreezeTeamBlog
-- [ ] GitHub Release notes for `v3.0.0` drafted now in this folder (`release-notes.md`); pasted over `--generate-notes` output on release day: headline, agent contract, breaking changes, migration link
+- [x] GitHub Release notes for `v3.0.0` drafted now in this folder (`release-notes.md`); pasted over `--generate-notes` output on release day: headline, agent contract, breaking changes, migration link
 
 ### Stage
 - [ ] TheFreezeTeamBlog stub + image PR opened (frontmatter per the 2025 Nuru stub; lowercase shortcode path)
-- [ ] X thread text final in `x-thread.md`, screenshots attached in order
-- [ ] Show HN title + first comment drafted (`channels.md`)
-- [ ] r/dotnet post drafted in the "what I learned" framing (`channels.md`)
-- [ ] Nostr relays confirmed reachable (`ganda post config show`; both nostria relays returned 530 on 2026-10-08)
+- [ ] X thread text final in `x-thread.md`, screenshots attached in order. The text is final (2026-10-09); `shot-2.png` … `shot-6.png` are still to capture.
+- [x] Show HN title + first comment drafted (`channels.md`)
+- [x] r/dotnet post drafted in the "what I learned" framing (`channels.md`)
+- [ ] Nostr relays confirmed reachable (`ganda post config show`; both nostria relays returned 530 on 2026-10-08, and again on 2026-10-09)
+
+### Launch gates (fix before the `v3.0.0` tag; each needs its own task)
+- [ ] **The package does not enable interceptors.** On `3.0.0-beta.79`, a fresh `dotnet new console` with `dotnet add package TimeWarp.Nuru`, and a `#:package TimeWarp.Nuru` runfile, both fail with `CS9137: The 'interceptors' feature is not enabled in this namespace`. `build/TimeWarp.Nuru.targets` does not set `<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>`. Only the repo's own `Directory.Build.props` files do, and no user doc mentions it. Every first-time user from the launch hits this. The fix is to set the property in the package's build props/targets, and then drop the `#:property` line from `demo/app.cs.txt`.
+- [ ] **3.0.0 depends on prerelease `TimeWarp.Mediator 14.0.0-beta.4`.** A stable package with a prerelease dependency gets NU5104 and forces consumers onto a beta. Ship Mediator 14.0.0 first, or accept and document it.
+- [ ] `documentation/user/guides/migrating-to-3.0.md:41-45` still describes hierarchical `--capabilities` output (`groups`/`commands`). The shipped output is a flat `endpoints` list. Line 4 still says "under review is `3.0.0-beta.79`". The release notes and blog link to this guide.
+- [ ] Optional: `NURU_H002` flags a nested lambda's own parameter as a capture (`ids.Sum(i => (long)i)` inside a handler). This is a false positive that a reader trying the blog's catch-all example may hit.
 
 ### Launch (human, in order — gated on `v3.0.0` existing; everything above is done beforehand)
 - [ ] Day 0: GitHub Release published → blog live → X thread (Tue–Thu, US morning) → @Grok replies within the hour → Nostr
@@ -76,7 +84,75 @@ characters for `ganda post`.
 - Avoid: a slide "presentation" video (won't be watched), "Announcing vX" framing on Reddit (gets
   removed or ignored), and leading with "web-style routing" (the 2025 hook; now table stakes).
 
+## Results
+
+The assets that can be produced from a repo session are done and verified against the published
+`TimeWarp.Nuru 3.0.0-beta.79`:
+
+- **Blog body:** `documentation/posts/blogs/2026-xx-xx-nuru-3.0-release.md`, titled "CLIs your agents can call".
+- **Blips:** `documentation/posts/blips/2026-xx-xx-nuru-3.0-release.md` for X post 1 (144 chars) and `…-nostr.md` (220 chars).
+- **Release notes:** `release-notes.md`, the `v3.0.0` GitHub Release body.
+- **X thread:** `x-thread.md`, final text. Every post is ≤ 280 chars.
+- **Show HN and r/dotnet copy:** in `channels.md`.
+- **Video and demo app:** `video-script.md` was corrected, and `demo/app.cs.txt` plus `demo/readme.md` were added.
+
+Earlier drafts had claims that didn't match shipped behavior. These are fixed:
+
+- `--json-args` JSON has no `command` key. The route literal stays on argv.
+- The REPL flag is `-i`, not `--repl`.
+- Completion covers bash, zsh, fish, and PowerShell, not just bash and zsh.
+- `invocation` is one top-level object, not one per route.
+- The review had 28 findings, of which 21 were fixed in 15 PRs (#283–#297, stacked in #298). The draft said 21 findings.
+- The skill is `tw-nuru`.
+- AOT numbers are now measured rather than copied from the docs. `demo/app.cs.txt` with REPL and completion is a **5.9 MB** binary that runs in a **2.9 ms median** (20 runs, linux-x64, WSL2). `performance.md` says 3.3 MB and 4.8 MB, which is for apps without REPL and completion.
+- An optional option is `--tag? {tag?}`. `--tag {tag?}` makes the option required.
+- `return await app.RunAsync(args)` is needed, because a bare `await` exits 0 on error.
+
+The new **Launch gates** section records four defects found while verifying. The first, CS9137 for
+every new package consumer, blocks the launch's main promise ("one package"). Each needs its own
+task. This task changes no product code.
+
+Still open, and outside what a repo session can do:
+
+- Record the video.
+- Capture the five screenshots.
+- Make the hero image (@Grok).
+- Open the TheFreezeTeamBlog stub PR. It needs the release date.
+- Replace the Nostr relays or wait for them to come back.
+- Record the day −1 baseline.
+- Run Launch and Measure.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd kanban/to-do/487-nuru-30-launch-announcement-post-video-thread-and-channel-plan/demo
+d=$(mktemp -d) && cp app.cs.txt "$d"/app.cs && cd "$d"
+dotnet run app.cs -- greet World
+dotnet run app.cs -- deploy staging
+dotnet run app.cs -- deploy --json-args '{"env":"staging","tag":"3.0.0"}'
+dotnet run app.cs -- --capabilities | grep -A6 '"invocation"'
+dotnet run app.cs -- deploy --json-args '{"env":"x","bogus":1}'; echo "exit=$?"
+sed -i '/^#:property InterceptorsNamespaces/d' app.cs && dotnet run app.cs -- greet World   # launch gate repro
+python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len(q) for q in re.findall(r'^\s*> (.+)$',t,re.M)])" \
+  "$OLDPWD/../x-thread.md"
+```
+
+**Expect**
+
+- The first five commands print, in order:
+  - `Hello, World!`
+  - `Deploying latest to staging`
+  - `Deploying 3.0.0 to staging`
+  - an `invocation` object with `"jsonArgs": "--json-args"`, `"stdin": "-"`, `"filePrefix": "@"`, `"merge": "argvOverridesJson"`, `"unknownKeys": "error"`
+  - `Error: Unknown key 'bogus' … Known names: env, tag.` with `exit=1`
+- With the `#:property` line removed, the build fails with `CS9137`. This is the open launch gate. Once the package fix ships, it prints `Hello, World!`.
+- Every thread post length is ≤ 280.
+- Every claim in the blog, the release notes, and the thread matches the outputs above, or `changelog.md` under `3.0.0-beta.79`.
+
 ## Session
 
 - Created: claude 2412bd45 (2026-10-08), from a brainstorm with the maintainer
 - 2026-10-08: dropped the depends-on edge on `3.0.0`; only the Launch section is release-gated (maintainer direction)
+- 2026-10-09 claude (implement oracle): verified the launch claims against beta.79 from nuget.org. Wrote the blog, blips, release notes, final thread text, and HN/Reddit copy. Corrected the video script and the review counts. Measured AOT size and startup. Added Launch gates after finding CS9137 for package consumers.

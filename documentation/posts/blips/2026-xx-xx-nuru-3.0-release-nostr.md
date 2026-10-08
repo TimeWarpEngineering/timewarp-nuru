@@ -1,0 +1,1 @@
+TimeWarp.Nuru 3.0 is out. Your .NET CLI is now a tool your AI agent can call: --capabilities describes every command, --json-args takes the values. No MCP server. One package. github.com/TimeWarpEngineering/timewarp-nuru

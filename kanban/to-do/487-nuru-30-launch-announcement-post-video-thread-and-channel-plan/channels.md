@@ -26,13 +26,69 @@
 
 ## Per-channel copy
 
-- **Show HN title:** `Show HN: Nuru 3.0 – .NET CLI framework where every command is agent-callable`
-  First comment (author): what it is in two sentences, why the agent contract exists, link to the
-  review record as proof of rigor, and one honest limitation (e.g. .NET 10 only; AOT trims
-  reflection-based converters).
-- **r/dotnet title:** `I rebuilt my CLI framework's source generator so apps are AOT and agent-callable. Here's what broke.`
-  Body: three concrete lessons from the 482 review, code snippets, link at the end.
-- **Nostr blip:** post 1 text, no thread.
+- **Nostr blip:** `documentation/posts/blips/2026-xx-xx-nuru-3.0-release-nostr.md` (220 chars, link
+  included, no thread). Relays `wss://rilo.nostria.app` and `wss://ribo.nostria.app` still returned
+  HTTP 530 on 2026-10-09. Replace them or wait for them to come back before day 0 (Stage checklist).
+
+### Show HN (day 1, US Eastern morning)
+
+**Title:** `Show HN: Nuru 3.0 – .NET CLI framework where every command is agent-callable`
+
+**URL:** the blog post (not the repo).
+
+**First comment (author, post immediately):**
+
+> Hi HN, I maintain Nuru. It's a .NET CLI framework. You map route patterns like
+> `deploy {env} --tag? {tag?}` to handlers, and a source generator emits the matcher at compile time,
+> so apps are Native AOT friendly and there's no reflection at runtime.
+>
+> 3.0 is about agents. Every app answers `--capabilities` with a JSON list of its commands (typed
+> parameters, options, query vs command) plus an `invocation` block. Then `--json-args` takes the
+> values as one JSON object (inline, `@file`, or stdin) and binds them on the same path argv uses.
+> I built it because watching agents fight shell quoting to call my own tools was painful, and an
+> MCP server per CLI felt like the wrong unit.
+>
+> Before tagging, I had a Grok + Claude agent team review the codebase: 28 findings, 21 fixed
+> before release. The review record, misses included, is in the repo:
+> https://github.com/TimeWarpEngineering/timewarp-nuru/tree/master/kanban/done/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review
+>
+> Honest limitations: it's .NET 10 only. 3.0 breaks 2.x (contracts moved to TimeWarp.Mediator;
+> there's a migration guide). The JSON contract is Nuru's own shape, not JSON Schema. Happy to answer
+> anything.
+
+### r/dotnet (day 1, afternoon)
+
+**Title:** `I rebuilt my CLI framework's source generator so apps are AOT and agent-callable. Here's what broke.`
+
+**Body:**
+
+> I've maintained TimeWarp.Nuru, a route-based CLI framework for .NET, since 2025. For 3.0 I wanted
+> two things: every app should be callable by an AI agent without an MCP server, and everything
+> should stay source-generated so Native AOT keeps working. Three things I learned:
+>
+> **1. Agents need values, not command lines.** Shell quoting is where agents fail. Each app now
+> prints its own contract (`--capabilities`) and takes values as JSON
+> (`./app deploy --json-args '{"env":"staging","tag":"3.0.0"}'`). The route literal stays on argv,
+> and unknown keys exit 1, so a wrong guess fails loudly instead of being ignored.
+>
+> **2. Fluent builders hide lifecycle bugs.** A review found that `.Map(...).WithHandler(...).Build()`
+> without `.Done()` silently dropped the last route. The generator saw the chain, but the route was
+> never registered. The fix was small. Finding it took a reviewer that reads every path.
+>
+> **3. Generated parsers need the same type coverage as handwritten ones.** Typed catch-alls
+> (`{*ids:uint}`) fell back to a parser that returned raw strings for `uint`, `TimeSpan`, and
+> `IPAddress`, so the generated array assignment didn't compile. It now emits `TryParse` for every
+> built-in conversion.
+>
+> The 1-file version: `#:package TimeWarp.Nuru`, map two routes, and `dotnet run app.cs` gives you
+> help, completion for bash/zsh/fish/pwsh, a REPL, and a 5.9 MB AOT binary that starts in ~3 ms.
+>
+> Write-up with code: <BLOG URL> · Repo: https://github.com/TimeWarpEngineering/timewarp-nuru
+>
+> What's your experience with agents calling your own CLIs? MCP, plain shell, something else?
+
+Checked 2026-10-09 on beta.79: `sum {*ids:uint}` binds `uint[]`, and `sum 1 x` prints
+`Error: Invalid value in 'ids'. Expected: uint[]`.
 
 ## Baseline and measurement
 

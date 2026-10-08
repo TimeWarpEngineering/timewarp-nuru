@@ -20,8 +20,9 @@ Production notes
 - The agent pane can be a real Claude Code / Grok session or a scripted replay; a real one is more
   credible if the output is short.
 - AOT numbers: measured on 2026-10-09 with `demo/app.cs.txt` on beta.79, linux-x64 (WSL2): 5.9 MB, median
-  2.9 ms over 20 runs. `documentation/user/reference/performance.md` claims 3.3 MB and 4.8 MB, but
-  that is for apps without REPL and completion. Caption what you measure, not the docs.
+  2.9 ms over 20 runs. `documentation/user/reference/performance.md` lists 3.3 MB and 4.8 MB for Direct
+  and Mediator AOT on .NET 9, with startup under 1 ms. It does not say those binaries omit REPL or
+  completion. Caption what you measure, not the docs.
 - `--json-args` carries values only. The route literal (`deploy`) stays on argv, and the JSON has no
   `command` key. An earlier draft of this script had it wrong.
 - Record outside the repo: CPM rejects `#:package …@version` inside it (see `demo/readme.md`). On

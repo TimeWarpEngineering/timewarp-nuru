@@ -142,8 +142,9 @@ walks through each change with before and after code.
 ## How it was reviewed
 
 Before tagging 3.0 I had a team of agents, Grok and Claude, review the whole codebase against the
-release. They filed 28 findings. The 21 that had to be fixed before release went through 15 PRs, and
-the rest are scheduled after 3.0 or declined, with reasons. Some of what they caught: a `Build()`
+release. They filed 28 findings. 22 were fixed before the tag. 20 of those, plus a changelog
+backfill, went through 15 PRs (#283–#297, stacked in #298). The other two were fixed on the review
+task (#282). The remaining 6 are scheduled after 3.0. Some of what they caught: a `Build()`
 call that silently dropped the route it closed, shell completion that never handed file and
 directory candidates to the shell, and a typed catch-all parser that produced code that didn't
 compile for `uint` or `TimeSpan`. The full record is in the repo under

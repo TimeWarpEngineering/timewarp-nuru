@@ -22,12 +22,14 @@ myapp apply_patch --json-args @./patch.json                 # or - for stdin
 ### Agent contract
 
 - **`--capabilities`** emits a flat `endpoints` list. Each endpoint carries `pattern`, `groupPath`,
-  `kind` (`query` / `command` / `idempotentCommand`), `parameters`, `options`, and `examples`. A
-  top-level **`invocation`** object names the transport: `jsonArgs`, `stdin: "-"`,
-  `filePrefix: "@"`, `merge: "argvOverridesJson"`, and `unknownKeys: "error"`.
+  `aliases`, `kind` (`query`, `command`, `idempotentCommand`, or `unspecified`), `parameters`, and
+  `options`. `examples` is included only when the route declares them. A top-level **`invocation`**
+  object names the transport: `jsonArgs`, `stdin: "-"`, `filePrefix: "@"`, `merge: "argvOverridesJson"`,
+  and `unknownKeys: "error"`.
 - **`--json-args`** binds parameter and option values from inline JSON, `@path`, or `-` (stdin) on
   the same code path as argv. Argv values override JSON. An unknown key is an error with exit code 1.
-- **`--capabilities --search <q>`** and **`--group-filter <g>`** narrow the document.
+- **`--group-filter <g>`** filters that JSON document. **`--capabilities --search <q>`** does not.
+  It runs `nuru search` and prints that tool's listing.
 - **`TimeWarp.Nuru.Search`** (`dotnet tool install -g TimeWarp.Nuru.Search`) adds `nuru index` and
   `nuru search`, which run full-text search over the capabilities of every CLI you index.
 - **`tw-nuru` skill** (`skills/tw-nuru/SKILL.md`) gives an agent the route syntax, the builder API,
@@ -42,8 +44,9 @@ myapp apply_patch --json-args @./patch.json                 # or - for stdin
 - Route examples appear in `--help` and in `--capabilities`.
 - Endpoint classes use `TimeWarp.Mediator` contracts. The generated `IMediator`, `ISender`, and
   `IPublisher` are available with or without Microsoft DI.
-- Pre-release review: Grok and Claude agents filed 28 findings. 21 were fixed before release across
-  15 PRs (#283–#297, stacked in #298). The record is in
+- Pre-release review: Grok and Claude agents filed 28 findings. 22 were fixed before the tag.
+  20 of those, plus a changelog backfill, landed in 15 PRs (#283–#297, stacked in #298). The other
+  two were fixed on the review task (#282). Six are scheduled after 3.0. The record is in
   `kanban/done/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review/`.
 
 ### ⚠️ Breaking changes

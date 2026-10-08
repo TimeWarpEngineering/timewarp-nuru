@@ -62,7 +62,7 @@ characters for `ganda post`.
 - [ ] **The package does not enable interceptors.** On `3.0.0-beta.79`, a fresh `dotnet new console` with `dotnet add package TimeWarp.Nuru`, and a `#:package TimeWarp.Nuru` runfile, both fail with `CS9137: The 'interceptors' feature is not enabled in this namespace`. `build/TimeWarp.Nuru.targets` does not set `<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>`. Only the repo's own `Directory.Build.props` files do, and no user doc mentions it. Every first-time user from the launch hits this. The fix is to set the property in the package's build props/targets, and then drop the `#:property` line from `demo/app.cs.txt`.
 - [ ] **3.0.0 depends on prerelease `TimeWarp.Mediator 14.0.0-beta.4`.** A stable package with a prerelease dependency gets NU5104 and forces consumers onto a beta. Ship Mediator 14.0.0 first, or accept and document it.
 - [ ] `documentation/user/guides/migrating-to-3.0.md:41-45` still describes hierarchical `--capabilities` output (`groups`/`commands`). The shipped output is a flat `endpoints` list. Line 4 still says "under review is `3.0.0-beta.79`". The release notes and blog link to this guide.
-- [ ] Optional: `NURU_H002` flags a nested lambda's own parameter as a capture (`ids.Sum(i => (long)i)` inside a handler). This is a false positive that a reader trying the blog's catch-all example may hit.
+- [ ] Optional: `NURU_H002` flags a nested lambda's own parameter as a capture (`ids.Sum(i => (long)i)` inside a handler). This is a false positive a reader can hit with that snippet. The blog has no catch-all example.
 
 ### Launch (human, in order — gated on `v3.0.0` existing; everything above is done beforehand)
 - [ ] Day 0: GitHub Release published → blog live → X thread (Tue–Thu, US morning) → @Grok replies within the hour → Nostr
@@ -75,6 +75,7 @@ characters for `ganda post`.
 
 ## Notes
 
+- Review trail: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Effort 2, roster general, two rounds, disposition clean.
 - Context that informed this plan: the linked X post from 2026-10-07 says Grok on X now routes to
   the best backend per task (Claude Opus 5.5 text, MidJourney images, Suno audio). @Grok replies and
   Grok-made media are native X content and get algorithmic preference over external links.
@@ -102,15 +103,17 @@ Earlier drafts had claims that didn't match shipped behavior. These are fixed:
 - The REPL flag is `-i`, not `--repl`.
 - Completion covers bash, zsh, fish, and PowerShell, not just bash and zsh.
 - `invocation` is one top-level object, not one per route.
-- The review had 28 findings, of which 21 were fixed in 15 PRs (#283–#297, stacked in #298). The draft said 21 findings.
+- The review had 28 findings. 22 were fixed before the tag: 20 of them, plus a changelog backfill, in 15 PRs (#283–#297, stacked in #298), and two more on the review task (#282). Six are scheduled after 3.0. The draft said 21 findings, all fixed in those 15 PRs.
 - The skill is `tw-nuru`.
-- AOT numbers are now measured rather than copied from the docs. `demo/app.cs.txt` with REPL and completion is a **5.9 MB** binary that runs in a **2.9 ms median** (20 runs, linux-x64, WSL2). `performance.md` says 3.3 MB and 4.8 MB, which is for apps without REPL and completion.
+- AOT numbers are now measured rather than copied from the docs. `demo/app.cs.txt` with REPL and completion is a **5.9 MB** binary that runs in a **2.9 ms median** (20 runs, linux-x64, WSL2). `performance.md` lists 3.3 MB and 4.8 MB for Direct and Mediator AOT on .NET 9, with startup under 1 ms. It does not say those binaries omit REPL or completion.
 - An optional option is `--tag? {tag?}`. `--tag {tag?}` makes the option required.
 - `return await app.RunAsync(args)` is needed, because a bare `await` exits 0 on error.
 
 The new **Launch gates** section records four defects found while verifying. The first, CS9137 for
 every new package consumer, blocks the launch's main promise ("one package"). Each needs its own
 task. This task changes no product code.
+
+Implementation review (effort 2, roster general) ran two rounds under `review/`. Round 1 raised 3 bugs, 2 suggestions, and 1 nit. All six are fixed. Round 2 raised nothing new. Disposition: **clean**. Final counts: bug 0 open / 3 fixed, suggestion 0 open / 2 fixed, nit 0 open / 1 fixed. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 Still open, and outside what a repo session can do:
 
@@ -156,3 +159,4 @@ python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len
 - Created: claude 2412bd45 (2026-10-08), from a brainstorm with the maintainer
 - 2026-10-08: dropped the depends-on edge on `3.0.0`; only the Launch section is release-gated (maintainer direction)
 - 2026-10-09 claude (implement oracle): verified the launch claims against beta.79 from nuget.org. Wrote the blog, blips, release notes, final thread text, and HN/Reddit copy. Corrected the video script and the review counts. Measured AOT size and startup. Added Launch gates after finding CS9137 for package consumers.
+- 2026-10-09 grok (review oracle): session `01a11c82-bdbc-75d2-ad87-8d0ebcd6a339`. Effort 2, roster general. Round 1 reviewer `01a11c84-d196-7301-92f6-c2959d9d394a`. Round 2 reviewer `01a11c96-bbb5-7cf1-8a72-37c8cb0f2b03`. Disposition clean.

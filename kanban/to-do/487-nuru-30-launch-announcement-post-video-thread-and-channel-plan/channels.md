@@ -48,7 +48,7 @@
 > I built it because watching agents fight shell quoting to call my own tools was painful, and an
 > MCP server per CLI felt like the wrong unit.
 >
-> Before tagging, I had a Grok + Claude agent team review the codebase: 28 findings, 21 fixed
+> Before tagging, I had a Grok + Claude agent team review the codebase: 28 findings, 22 fixed
 > before release. The review record, misses included, is in the repo:
 > https://github.com/TimeWarpEngineering/timewarp-nuru/tree/master/kanban/done/482-complete-code-review-of-timewarpnuru-before-the-official-30-release/review
 >
@@ -80,8 +80,10 @@
 > `IPAddress`, so the generated array assignment didn't compile. It now emits `TryParse` for every
 > built-in conversion.
 >
-> The 1-file version: `#:package TimeWarp.Nuru`, map two routes, and `dotnet run app.cs` gives you
-> help, completion for bash/zsh/fish/pwsh, a REPL, and a 5.9 MB AOT binary that starts in ~3 ms.
+> The 1-file version: `#:package TimeWarp.Nuru`, map two routes, call `.EnableCompletion()` and
+> `.AddRepl()`, and `dotnet run app.cs` gives you help, completion for bash/zsh/fish/pwsh, and a
+> REPL. `dotnet publish app.cs -c Release -r linux-x64` makes a 5.9 MB native binary that starts
+> in ~3 ms.
 >
 > Write-up with code: <BLOG URL> · Repo: https://github.com/TimeWarpEngineering/timewarp-nuru
 >

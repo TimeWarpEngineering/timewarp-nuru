@@ -28,7 +28,7 @@ this folder. Attach them in post order.
    > Native AOT: that one-file app, REPL and completion included, publishes to a 5.9 MB binary and runs a command in ~3 ms. The generator does the work so the runtime doesn't.
 
 7. **Ask** (265 chars, URL counts as 23 on X)
-   > 3.0 moves contracts to TimeWarp.Mediator, swaps the MCP server for an in-context agent skill, and fixed 21 issues an agent-run code review found before release. Migration guide and repo: github.com/TimeWarpEngineering/timewarp-nuru. A ⭐ helps more than you'd think.
+   > 3.0 moves contracts to TimeWarp.Mediator, swaps the MCP server for an in-context agent skill, and fixed 22 issues an agent-run code review found before release. Migration guide and repo: github.com/TimeWarpEngineering/timewarp-nuru. A ⭐ helps more than you'd think.
 
 ## @Grok replies (post within the hour, as replies to post 1)
 
@@ -41,7 +41,7 @@ native.
 
 ## Second-shot post (day 7): process story
 
-> I had a Grok + Claude agent team code-review Nuru 3.0 before release. 28 findings, 21 fixed in 15 PRs before the tag. The misses were the interesting part: 🧵
+> I had a Grok + Claude agent team code-review Nuru 3.0 before release. 28 findings, 22 fixed before the tag. The misses were the interesting part: 🧵
 
 Then four posts from `kanban/done/482-…/review/`:
 

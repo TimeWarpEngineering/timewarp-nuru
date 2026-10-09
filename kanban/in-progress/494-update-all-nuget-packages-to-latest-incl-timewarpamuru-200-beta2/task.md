@@ -15,10 +15,12 @@ Steven wants every repo on the newest packages, pre-releases included (latest, n
 
 - Created: 1429458 (2026-10-09)
 - Implementation: 01a120a3 (2026-10-09)
+- Review: review oracle, Claude Opus 5.5 headless (2026-10-09)
 
 ## Notes
 Filed 2026-10-09 at Steven's request (Amuru 2.0 sweep). If a package can't move (e.g. a dependency cycle), record why instead of forcing it.
 Related: task 481 (.NET 11 upgrade) touches the same package pins; coordinate ordering if both are in flight. Task 481 is unclaimed to-do, so this walk left the .NET 11 runtime-major pins for that task.
+Release gate: TimeWarp.Nuru and TimeWarp.Nuru.Search now depend on prerelease TimeWarp.Amuru 2.0.0-beta.2. A stable Nuru 3.0.0 pack would hit NU5104, so Amuru 2.0.0 stable has to ship first (review M1).
 
 ## Results
 
@@ -59,3 +61,10 @@ Expect:
 - CI tests report Total 1875, Passed 1869, Skipped 6, and exit 0. There is no Failed line.
 - `dotnet list` shows `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` at `2.0.0-beta.2`.
 - `ganda repo audit` reports Passed 30, Failed 0.
+
+### Review disposition
+
+- Rounds: 1. Effort 1, general reviewer only.
+- Final counts: bug 0, suggestion 1 (wontfix), nit 0. Open: 0.
+- Disposition: **accepted-exceptions**. M1 (prerelease Amuru dependency in shipped packages) is wontfix for now and recorded as a release gate for stable Nuru 3.0.0 in Notes.
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.

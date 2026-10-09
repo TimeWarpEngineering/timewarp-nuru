@@ -61,7 +61,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
 
     // Assert - session should exit after error
     // Note: With Task return type, we can't check exit code, but we verify error was shown
-    terminal.ErrorOutput.ShouldContain("Error");
+    terminal.ErrorOutput.ShouldContain("Test error");
   }
 
   public static async Task Should_handle_invalid_route()
@@ -175,7 +175,7 @@ namespace TimeWarp.Nuru.Tests.ReplTests.ErrorHandling
 
     // Assert - session should exit on error
     // Note: With Task return type, we can't check exit code, but we verify error was shown
-    terminal.ErrorOutput.ShouldContain("Error");
+    terminal.ErrorOutput.ShouldContain("Test error");
   }
 
   public static async Task Should_handle_multiple_errors()

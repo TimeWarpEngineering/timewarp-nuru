@@ -23,8 +23,8 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
   </ItemGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <PackageVersion Include="TimeWarp.Amuru" Version="1.1.1" />
-    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="1.1.1" />
+    <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="2.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Builder" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.2" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.15" />
@@ -34,7 +34,7 @@
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.4" />
   </ItemGroup>
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="Shouldly" Version="5.0.0-preview.2" />
   </ItemGroup>
   <ItemGroup Label="Logging - Serilog">
     <PackageVersion Include="Serilog" Version="4.4.0" />
@@ -61,7 +61,7 @@
     <PackageVersion Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta5.25306.1" />
   </ItemGroup>
   <ItemGroup Label="Benchmark - Performance">
-    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
   </ItemGroup>
   <ItemGroup Label="MCP Server">
     <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />

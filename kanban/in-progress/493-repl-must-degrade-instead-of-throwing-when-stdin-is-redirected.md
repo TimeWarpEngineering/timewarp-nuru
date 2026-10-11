@@ -37,11 +37,6 @@ must not be the one surface that throws on a pipe.
 
 - Found by task 487 (2026-10-09) while probing the launch demo. The REPL test files under `tests/timewarp-nuru-tests/repl/` already use `TestTerminal`; follow that pattern.
 
-## Session
-
-- Created: claude 2412bd45 (2026-10-09)
-- Implemented: claude sub-agent impl-493 (2026-10-11)
-
 ## Results
 
 **Fix** (`source/timewarp-nuru/repl/repl-session.cs`): `ReadCommandInputAsync` uses the key-driven reader only when `EnableArrowHistory && !Terminal.IsInputRedirected`; otherwise prompt + `Terminal.ReadLine()`. `null` (EOF) goes through the existing EOF path (newline, stop loop, Goodbye prints). An `InvalidOperationException` from the key reader writes one stderr line (`REPL: interactive input is unavailable (console input is redirected or absent).`), sets `Running = false`, and the session result is 1.
@@ -102,6 +97,8 @@ exit=0
 
 Test: `Should_keep_last_command_exit_code_when_eof_follows_a_failure` in `repl-49-redirected-input.cs` (6/6).
 
+## Session
 
+- Created: claude 2412bd45 (2026-10-09)
+- Implemented: claude sub-agent impl-493 (2026-10-11)
 - Reviewed + exit-code follow-up: claude (2026-10-11)
-

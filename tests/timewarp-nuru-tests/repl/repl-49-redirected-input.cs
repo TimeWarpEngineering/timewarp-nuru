@@ -101,12 +101,34 @@ namespace TimeWarp.Nuru.Tests.ReplTests.RedirectedInput
         .Build();
 
       // Act - must not throw
-      await app.RunAsync(["--interactive"]);
+      int exitCode = await app.RunAsync(["--interactive"]);
 
       // Assert
       terminal.ErrorContains("interactive input is unavailable")
         .ShouldBeTrue("Unusable console should produce one stderr line instead of an exception");
       terminal.OutputContains("Hello, w!").ShouldBeFalse("No command should run");
+      exitCode.ShouldBe(1);
+    }
+
+    public static async Task Should_return_one_from_run_repl_async_when_console_input_is_unusable()
+    {
+      // Arrange
+      using KeyReadFailingTerminal terminal = new("greet w\n", inputRedirected: false);
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .Map("greet {name}")
+          .WithHandler((string name) => $"Hello, {name}!")
+          .AsCommand()
+          .Done()
+        .AddRepl(options => options.EnableArrowHistory = true)
+        .Build();
+
+      // Act
+      int exitCode = await app.RunReplAsync();
+
+      // Assert
+      exitCode.ShouldBe(1);
     }
   }
 

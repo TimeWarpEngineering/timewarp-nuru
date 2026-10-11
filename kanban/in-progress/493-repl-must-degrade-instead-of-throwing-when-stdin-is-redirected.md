@@ -27,10 +27,10 @@ must not be the one surface that throws on a pipe.
 
 ## Checklist
 
-- [ ] Line-mode fallback when input is redirected
-- [ ] No unhandled exception path out of `RunReplAsync`
-- [ ] REPL test for piped input
-- [ ] `changelog.md` Unreleased: Fixed entry
+- [x] Line-mode fallback when input is redirected
+- [x] No unhandled exception path out of `RunReplAsync`
+- [x] REPL test for piped input
+- [x] `changelog.md` Unreleased: Fixed entry
 - [ ] PR merged
 
 ## Notes
@@ -40,3 +40,46 @@ must not be the one surface that throws on a pipe.
 ## Session
 
 - Created: claude 2412bd45 (2026-10-09)
+- Implemented: claude sub-agent impl-493 (2026-10-11)
+
+## Results
+
+**Fix** (`source/timewarp-nuru/repl/repl-session.cs`): `ReadCommandInputAsync` uses the key-driven reader only when `EnableArrowHistory && !Terminal.IsInputRedirected`; otherwise prompt + `Terminal.ReadLine()`. `null` (EOF) goes through the existing EOF path (newline, stop loop, Goodbye prints). An `InvalidOperationException` from the key reader writes one stderr line (`REPL: interactive input is unavailable (console input is redirected or absent).`), sets `Running = false`, and the session result is 1.
+
+**Exit-code propagation gap (not fixed, out of scope):** the generated `--interactive` / `AutoStartWhenEmpty` branches in `interceptor-emitter.cs` do `await RunReplAsync...(); return 0;`, and `RunReplAsync` and `ReplSession.RunAsync` return `Task`. The last command's exit code and the unusable-console code 1 reach `RunInstanceAsync` but are discarded, so the process exit code is 0 in both cases. Fixing needs generator changes (return `int` from the emitted RunReplAsync, `ReplSession.RunAsync`, and both call sites). Clean EOF exit 0 is satisfied.
+
+**Test** `tests/timewarp-nuru-tests/repl/repl-29-redirected-input.cs` (picked up by the `../timewarp-nuru-tests/**/*.cs` glob in `tests/ci-tests/Directory.Build.props`, line 94; it ran in CI). `TestTerminal.ReadKey` never throws (it falls back to ReadLine, then Ctrl+D), so against plain `TestTerminal` the tests pass even without the fix. The tests therefore use a small `ITerminal` wrapper whose `ReadKey` throws `InvalidOperationException` like `Console.ReadKey`. Added a fourth test for the stderr guard.
+
+```
+dotnet run tests/timewarp-nuru-tests/repl/repl-29-redirected-input.cs
+```
+- Before fix (source reverted): Total 4, Passed 1, Failed 3, `InvalidOperationException: Cannot read keys when console input has been redirected.`
+- After fix: Total 4, Passed 4.
+
+**Real process** (`samples/fluent/10-repl/fluent-repl-basic.cs`):
+```
+$ printf 'greet x
+exit
+' | dotnet run samples/fluent/10-repl/fluent-repl-basic.cs -- --interactive     # BEFORE
+... unhandled InvalidOperationException stack trace ...   exit=134
+$ printf 'greet x
+exit
+' | dotnet run <sample> -- --interactive                                       # AFTER
+Welcome to Interactive Mode!
+demo> Hello, x!
+demo> Goodbye!                                                                                         exit=0
+$ printf 'greet x
+' | dotnet run <sample> -- --interactive
+demo> Hello, x!
+demo>
+Goodbye!                                                                                               exit=0
+$ dotnet run <sample> -- --interactive < /dev/null
+demo>
+Goodbye!                                                                                               exit=0
+```
+
+**REPL tests** (after `ganda runfile cache --clear`, run individually): repl-01 11/11, repl-05 10/10, repl-09 8/8, repl-10 8/8, repl-13 8/8, repl-15 8/8, repl-29-redirected-input 4/4.
+
+**CI** `dotnet run tests/ci-tests/run-ci-tests.cs` (cache cleared first), summed per-file tables: Total 3862, Passed 3850, Skipped 12, Failed 0, no FAILED lines.
+
+**Build** `bin/dev build`: 0 Warning(s), 0 Error(s).

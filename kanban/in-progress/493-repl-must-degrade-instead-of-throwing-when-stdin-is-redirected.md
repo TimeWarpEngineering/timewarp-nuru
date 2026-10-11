@@ -85,3 +85,23 @@ Goodbye!                                                                        
 **Build** `bin/dev build`: 0 Warning(s), 0 Error(s).
 
 **Exit-code re-verification** (sample `fluent-repl-basic.cs`, piped): `greet x`+`exit`, `greet x` only, and `< /dev/null` all exit 0. `printf 'nope\n' | ... --interactive` prints `Unknown command. Use --help for usage.` and exits 0, because the final EOF read resets the last code to 0. `repl-18` 25/25, `repl-42` 6/6, `repl-48` 1/1.
+
+### Exit code is sticky across EOF and built-ins (2026-10-11, reviewer)
+
+Only executed route commands (and an unusable console) set the session exit code. EOF, `exit`/`quit`,
+blank lines, and built-ins leave it alone, so a piped script whose last command failed exits non-zero.
+
+```
+$ printf 'greet x\nnope\n' | dotnet run samples/fluent/10-repl/fluent-repl-basic.cs -- --interactive; echo exit=$?
+... Hello, x! ... Unknown command. Use --help for usage. ... Goodbye!
+exit=1
+$ printf 'greet x\nexit\n' | dotnet run samples/fluent/10-repl/fluent-repl-basic.cs -- --interactive; echo exit=$?
+... Hello, x! ... Goodbye!
+exit=0
+```
+
+Test: `Should_keep_last_command_exit_code_when_eof_follows_a_failure` in `repl-49-redirected-input.cs` (6/6).
+
+
+- Reviewed + exit-code follow-up: claude (2026-10-11)
+

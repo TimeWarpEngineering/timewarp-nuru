@@ -65,6 +65,28 @@ namespace TimeWarp.Nuru.Tests.ReplTests.RedirectedInput
       exitCode.ShouldBe(0);
     }
 
+    public static async Task Should_keep_last_command_exit_code_when_eof_follows_a_failure()
+    {
+      // Arrange: the last executed line fails (unknown command), then EOF. EOF must not reset the code to 0.
+      using KeyReadFailingTerminal terminal = new("greet z\nnope\n", inputRedirected: true);
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .Map("greet {name}")
+          .WithHandler((string name) => $"Hello, {name}!")
+          .AsCommand()
+          .Done()
+        .AddRepl(options => options.EnableArrowHistory = true)
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["--interactive"]);
+
+      // Assert
+      terminal.OutputContains("Hello, z!").ShouldBeTrue("First piped command should run");
+      exitCode.ShouldNotBe(0, "A failing last command must surface as the process exit code even when EOF follows it");
+    }
+
     public static async Task Should_not_throw_when_arrow_history_disabled_and_redirected()
     {
       // Arrange

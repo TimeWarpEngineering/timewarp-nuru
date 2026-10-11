@@ -170,17 +170,22 @@ public sealed class ReplSession : IDisposable
 
   private async Task<int> ProcessCommandLoopAsync(CancellationToken cancellationToken)
   {
+    // Kanban 493: only executed commands (and an unusable console) set the exit code.
+    // EOF, exit/quit, blank lines, and built-ins leave it alone, so a piped script whose
+    // last command failed still exits non-zero.
     int lastExitCode = 0;
 
     while (Running && !cancellationToken.IsCancellationRequested)
     {
-      lastExitCode = await ProcessSingleCommandAsync(cancellationToken).ConfigureAwait(false);
+      int? exitCode = await ProcessSingleCommandAsync(cancellationToken).ConfigureAwait(false);
+      if (exitCode is not null) lastExitCode = exitCode.Value;
     }
 
     return lastExitCode;
   }
 
-  private async Task<int> ProcessSingleCommandAsync(CancellationToken cancellationToken)
+  /// <returns>The command's exit code, or null when nothing was executed.</returns>
+  private async Task<int?> ProcessSingleCommandAsync(CancellationToken cancellationToken)
   {
     // Read input
     string? input = await ReadCommandInputAsync().ConfigureAwait(false);
@@ -193,19 +198,19 @@ public sealed class ReplSession : IDisposable
 
       await Terminal.WriteLineAsync().ConfigureAwait(false);
       Running = false;
-      return 0;
+      return null;
     }
 
     // Skip empty input
     string trimmedInput = input.Trim();
-    if (string.IsNullOrEmpty(trimmedInput)) return 0;
+    if (string.IsNullOrEmpty(trimmedInput)) return null;
 
     // Parse command
     string[] args = CommandLineParser.Parse(trimmedInput);
-    if (args.Length == 0) return 0;
+    if (args.Length == 0) return null;
 
     // Handle REPL built-in commands directly (not through route matcher)
-    if (HandleReplBuiltIn(args)) return 0;
+    if (HandleReplBuiltIn(args)) return null;
 
     // Add to history (after built-in check, so "exit" etc. don't get added)
     History.Add(trimmedInput);

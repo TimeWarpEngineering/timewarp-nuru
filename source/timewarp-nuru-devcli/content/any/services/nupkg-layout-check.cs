@@ -41,6 +41,8 @@ public static class NupkgLayoutCheck
   public static readonly string[] NuruRequiredPackageEntries =
   [
     "build/TimeWarp.Nuru.targets",
+    "build/TimeWarp.Nuru.props",
+    "buildTransitive/TimeWarp.Nuru.props",
     "build/net10.0/TimeWarp.Nuru.Build.dll",
     "build/net10.0/TimeWarp.Nuru.Analyzers.dll",
     "build/net10.0/ICSharpCode.Decompiler.dll",

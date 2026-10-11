@@ -25,7 +25,7 @@ Production notes
   completion. Caption what you measure, not the docs.
 - `--json-args` carries values only. The route literal (`deploy`) stays on argv, and the JSON has no
   `command` key. An earlier draft of this script had it wrong.
-- Record outside the repo: CPM rejects `#:package …@version` inside it (see `demo/readme.md`). On
-  beta.79 the app also needs the `#:property InterceptorsNamespaces=…` line. Keep it off screen, or
-  wait for the package fix (Launch gates in `task.md`).
+- Record outside the repo: CPM rejects `#:package …@version` inside it (see `demo/readme.md`). The
+  `#:property InterceptorsNamespaces=…` line that beta.79 needed is no longer required as of
+  beta.80 (task 488).
 - The REPL flag is `-i` / `--interactive`, not `--repl`.

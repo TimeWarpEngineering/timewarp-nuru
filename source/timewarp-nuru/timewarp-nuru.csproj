@@ -127,6 +127,15 @@
           Pack="true"
           PackagePath="build/TimeWarp.Nuru.targets" />
 
+    <!-- Enables the interceptors namespace for every consumer (kanban 488). Packed to both
+         build/ and buildTransitive/ so apps that reach Nuru through a library get it too. -->
+    <None Include="../timewarp-nuru-build/build/TimeWarp.Nuru.props"
+          Pack="true"
+          PackagePath="build/TimeWarp.Nuru.props" />
+    <None Include="../timewarp-nuru-build/build/TimeWarp.Nuru.props"
+          Pack="true"
+          PackagePath="buildTransitive/TimeWarp.Nuru.props" />
+
     <!-- Build task DLL and all dependencies — EXPLICIT paths, never wildcards.
          A wildcard here expands at project EVALUATION and silently packs an
          empty set when the files don't exist yet (kanban 461: nuget beta.72

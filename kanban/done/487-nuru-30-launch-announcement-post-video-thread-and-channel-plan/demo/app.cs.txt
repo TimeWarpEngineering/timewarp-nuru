@@ -1,8 +1,5 @@
 #!/usr/bin/env -S dotnet --
 #:package TimeWarp.Nuru@3.0.0-beta.79
-// Required on beta.79: the package does not enable the interceptors namespace (CS9137 without it).
-// Drop this line once the package ships it (see task 487 "Launch gates").
-#:property InterceptorsNamespaces=$(InterceptorsNamespaces);TimeWarp.Nuru.Generated
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()

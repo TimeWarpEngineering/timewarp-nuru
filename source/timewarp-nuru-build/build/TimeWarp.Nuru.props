@@ -1,0 +1,8 @@
+<Project>
+  <!-- Nuru's source generator emits interceptors in TimeWarp.Nuru.Generated (kanban 488).
+       Imported before the consumer's project body, so a consumer's own
+       $(InterceptorsNamespaces) append still composes. -->
+  <PropertyGroup>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+</Project>

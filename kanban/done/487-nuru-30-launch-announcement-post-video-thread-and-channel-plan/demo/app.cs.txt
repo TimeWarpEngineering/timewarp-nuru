@@ -1,5 +1,5 @@
 #!/usr/bin/env -S dotnet --
-#:package TimeWarp.Nuru@3.0.0-beta.79
+#:package TimeWarp.Nuru@3.0.0-beta.80
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()

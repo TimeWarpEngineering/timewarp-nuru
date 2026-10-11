@@ -106,7 +106,7 @@ public sealed class ReplSession : IDisposable
   /// <param name="commandExecutor">Delegate to execute commands.</param>
   /// <param name="loggerFactory">Logger factory for logging operations.</param>
   /// <param name="cancellationToken">Token to cancel the REPL loop.</param>
-  public static async Task RunAsync(
+  public static async Task<int> RunAsync(
     NuruApp nuruApp,
     ReplOptions replOptions,
     IReplRouteProvider routeProvider,
@@ -122,7 +122,7 @@ public sealed class ReplSession : IDisposable
 
     try
     {
-      await session.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
+      return await session.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
     }
     finally
     {

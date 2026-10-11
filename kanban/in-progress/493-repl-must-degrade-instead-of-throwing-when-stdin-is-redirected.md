@@ -46,12 +46,12 @@ must not be the one surface that throws on a pipe.
 
 **Fix** (`source/timewarp-nuru/repl/repl-session.cs`): `ReadCommandInputAsync` uses the key-driven reader only when `EnableArrowHistory && !Terminal.IsInputRedirected`; otherwise prompt + `Terminal.ReadLine()`. `null` (EOF) goes through the existing EOF path (newline, stop loop, Goodbye prints). An `InvalidOperationException` from the key reader writes one stderr line (`REPL: interactive input is unavailable (console input is redirected or absent).`), sets `Running = false`, and the session result is 1.
 
-**Exit-code propagation gap (not fixed, out of scope):** the generated `--interactive` / `AutoStartWhenEmpty` branches in `interceptor-emitter.cs` do `await RunReplAsync...(); return 0;`, and `RunReplAsync` and `ReplSession.RunAsync` return `Task`. The last command's exit code and the unusable-console code 1 reach `RunInstanceAsync` but are discarded, so the process exit code is 0 in both cases. Fixing needs generator changes (return `int` from the emitted RunReplAsync, `ReplSession.RunAsync`, and both call sites). Clean EOF exit 0 is satisfied.
+**Exit-code propagation:** `ReplSession.RunAsync`, `NuruApp.RunReplAsync()`, the generated `RunReplAsync` and its interceptor now return `Task<int>`. The `--interactive` and `AutoStartWhenEmpty` branches return that value instead of 0. The value is the last command's exit code (0 after clean EOF or `exit`), or 1 when the console is unusable. Tests assert 1 for both `app.RunAsync(["--interactive"])` and `app.RunReplAsync()` in the unusable-console case.
 
-**Test** `tests/timewarp-nuru-tests/repl/repl-29-redirected-input.cs` (picked up by the `../timewarp-nuru-tests/**/*.cs` glob in `tests/ci-tests/Directory.Build.props`, line 94; it ran in CI). `TestTerminal.ReadKey` never throws (it falls back to ReadLine, then Ctrl+D), so against plain `TestTerminal` the tests pass even without the fix. The tests therefore use a small `ITerminal` wrapper whose `ReadKey` throws `InvalidOperationException` like `Console.ReadKey`. Added a fourth test for the stderr guard.
+**Test** `tests/timewarp-nuru-tests/repl/repl-49-redirected-input.cs` (renumbered from repl-29, picked up by the `../timewarp-nuru-tests/**/*.cs` glob in `tests/ci-tests/Directory.Build.props`, line 94; it ran in CI). `TestTerminal.ReadKey` never throws (it falls back to ReadLine, then Ctrl+D), so against plain `TestTerminal` the tests pass even without the fix. The tests therefore use a small `ITerminal` wrapper whose `ReadKey` throws `InvalidOperationException` like `Console.ReadKey`. Added two tests for the unusable-console guard (stderr line and exit code 1 via RunAsync and RunReplAsync).
 
 ```
-dotnet run tests/timewarp-nuru-tests/repl/repl-29-redirected-input.cs
+dotnet run tests/timewarp-nuru-tests/repl/repl-49-redirected-input.cs
 ```
 - Before fix (source reverted): Total 4, Passed 1, Failed 3, `InvalidOperationException: Cannot read keys when console input has been redirected.`
 - After fix: Total 4, Passed 4.
@@ -78,8 +78,10 @@ demo>
 Goodbye!                                                                                               exit=0
 ```
 
-**REPL tests** (after `ganda runfile cache --clear`, run individually): repl-01 11/11, repl-05 10/10, repl-09 8/8, repl-10 8/8, repl-13 8/8, repl-15 8/8, repl-29-redirected-input 4/4.
+**REPL tests** (after `ganda runfile cache --clear`, run individually): repl-01 11/11, repl-05 10/10, repl-09 8/8, repl-10 8/8, repl-13 8/8, repl-15 8/8, repl-49-redirected-input 4/4.
 
-**CI** `dotnet run tests/ci-tests/run-ci-tests.cs` (cache cleared first), summed per-file tables: Total 3862, Passed 3850, Skipped 12, Failed 0, no FAILED lines.
+**CI** `dotnet run tests/ci-tests/run-ci-tests.cs` (cache cleared first), summed per-file tables: Total 3864, Passed 3852, Skipped 12, Failed 0 (re-run after exit-code propagation), no FAILED lines.
 
 **Build** `bin/dev build`: 0 Warning(s), 0 Error(s).
+
+**Exit-code re-verification** (sample `fluent-repl-basic.cs`, piped): `greet x`+`exit`, `greet x` only, and `< /dev/null` all exit 0. `printf 'nope\n' | ... --interactive` prints `Unknown command. Use --help for usage.` and exits 0, because the final EOF read resets the last code to 0. `repl-18` 25/25, `repl-42` 6/6, `repl-48` 1/1.

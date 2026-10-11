@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Packaging**: The package now ships `build/TimeWarp.Nuru.props` and `buildTransitive/TimeWarp.Nuru.props`, which append `TimeWarp.Nuru.Generated` to `InterceptorsNamespaces`. A fresh console app or a `#:package TimeWarp.Nuru` runfile builds with no extra properties; previously both failed with CS9137 (488).
 - **REPL**: `--interactive` no longer throws `InvalidOperationException` when stdin is redirected. With piped input the REPL reads whole lines, runs them in order, and exits cleanly at EOF; an unusable console prints one line to stderr and returns a non-zero exit code instead of crashing (493).
+- **REPL**: `NuruApp.RunReplAsync()` now returns `Task<int>` (the last command's exit code, or non-zero when the console is unusable) and `--interactive` propagates it as the process exit code instead of always returning 0 (493).
 
 ## [3.0.0-beta.79] - 2026-10-06
 

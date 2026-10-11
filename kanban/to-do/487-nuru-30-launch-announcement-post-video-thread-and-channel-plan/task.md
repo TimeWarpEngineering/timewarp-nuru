@@ -77,6 +77,7 @@ characters for `ganda post`.
 
 ## Notes
 
+- Reopened 2026-10-11 by Steven: moved to done while launch sequence and measurement were still open.
 - Review trail: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Effort 2, roster general, two rounds, disposition clean.
 - Context that informed this plan: the linked X post from 2026-10-07 says Grok on X now routes to
   the best backend per task (Claude Opus 5.5 text, MidJourney images, Suno audio). @Grok replies and

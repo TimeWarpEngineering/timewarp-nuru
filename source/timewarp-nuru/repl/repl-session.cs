@@ -25,6 +25,7 @@ public sealed class ReplSession : IDisposable
   private readonly ITerminal Terminal;
   private readonly ReplCommands Commands;
   private bool Running;
+  private bool InputUnavailable;
   private bool Disposed;
 
   // Profile the console reader actually resolved (explicit, named, or JSON config).
@@ -187,6 +188,9 @@ public sealed class ReplSession : IDisposable
     // Handle EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
     if (input is null)
     {
+      // Unusable console: error already reported, report failure instead of a clean EOF.
+      if (InputUnavailable) return 1;
+
       await Terminal.WriteLineAsync().ConfigureAwait(false);
       Running = false;
       return 0;
@@ -258,7 +262,9 @@ public sealed class ReplSession : IDisposable
 
   private async Task<string?> ReadCommandInputAsync()
   {
-    if (ReplOptions.EnableArrowHistory)
+    // Kanban 493: with redirected stdin the key-driven reader would throw from ReadKey.
+    // Read whole lines instead; null from ReadLine is EOF and ends the loop cleanly.
+    if (ReplOptions.EnableArrowHistory && !Terminal.IsInputRedirected)
     {
       ReplConsoleReader consoleReader = new(
         History.AsReadOnly,
@@ -267,7 +273,19 @@ public sealed class ReplSession : IDisposable
         LoggerFactory,
         Terminal);
       ActiveKeyBindingProfileName = consoleReader.ProfileName;
-      return await consoleReader.ReadLineAsync(ReplOptions.Prompt).ConfigureAwait(false);
+
+      try
+      {
+        return await consoleReader.ReadLineAsync(ReplOptions.Prompt).ConfigureAwait(false);
+      }
+      catch (InvalidOperationException)
+      {
+        // Kanban 493: console input is absent or unusable (ReadKey throws). Degrade, do not crash.
+        await Terminal.WriteErrorLineAsync("REPL: interactive input is unavailable (console input is redirected or absent).").ConfigureAwait(false);
+        Running = false;
+        InputUnavailable = true;
+        return null;
+      }
     }
 
     Terminal.Write(PromptFormatter.Format(ReplOptions));

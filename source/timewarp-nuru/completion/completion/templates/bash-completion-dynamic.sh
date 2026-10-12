@@ -1,11 +1,21 @@
 # Dynamic Bash completion for {{APP_NAME}}
 # This completion script calls back to the application at Tab-press time
 # to get context-aware completion suggestions.
+# Works with plain bash: the bash-completion package (_init_completion, _filedir)
+# is used when loaded, otherwise COMP_WORDS/COMP_CWORD and compgen are read directly.
 
 _{{APP_NAME}}_completions()
 {
     local cur prev words cword
-    _init_completion || return
+    if declare -F _init_completion >/dev/null 2>&1; then
+        _init_completion || return
+    else
+        COMPREPLY=()
+        words=("${COMP_WORDS[@]}")
+        cword=$COMP_CWORD
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        prev="${COMP_WORDS[COMP_CWORD-1]}"
+    fi
 
     # Call application for dynamic completions
     # Format: {{APP_NAME}} __complete <cursor_index> <word1> <word2> ...
@@ -38,10 +48,19 @@ _{{APP_NAME}}_completions()
 
     # File/Directory candidates clear NoFileComp: add the shell's own path completion.
     if (( !(directive & 4) )); then
-        if (( directive & 16 )); then
-            _filedir -d
+        if declare -F _filedir >/dev/null 2>&1; then
+            if (( directive & 16 )); then
+                _filedir -d
+            else
+                _filedir
+            fi
         else
-            _filedir
+            local mode=-f path
+            (( directive & 16 )) && mode=-d
+            while IFS= read -r path; do
+                COMPREPLY+=("$path")
+            done < <(compgen "$mode" -- "$cur")
+            compopt -o filenames 2>/dev/null
         fi
     fi
 

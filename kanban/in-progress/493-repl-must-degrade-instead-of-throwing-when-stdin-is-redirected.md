@@ -102,3 +102,7 @@ Test: `Should_keep_last_command_exit_code_when_eof_follows_a_failure` in `repl-4
 - Created: claude 2412bd45 (2026-10-09)
 - Implemented: claude sub-agent impl-493 (2026-10-11)
 - Reviewed + exit-code follow-up: claude (2026-10-11)
+
+## Notes
+
+- 2026-10-12: merged origin/master into the branch by hand (no ganda branch-sync command); only conflict was changelog.md, kept master 492/491 Fixed entries then the 493 REPL entries. PR #309 was CONFLICTING/DIRTY. Requested by QA Engineer PR watch.

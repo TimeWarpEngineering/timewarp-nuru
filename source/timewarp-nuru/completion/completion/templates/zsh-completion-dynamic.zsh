@@ -64,4 +64,9 @@ _{{APP_NAME}}() {
     return $ret
 }
 
+# _describe/_files ship with zsh's completion system; only compdef needs compinit.
+# Load it when the user's zshrc has not, instead of failing with "command not found: compdef".
+if (( ! $+functions[compdef] )); then
+    autoload -Uz compinit && compinit
+fi
 compdef _{{APP_NAME}} {{APP_NAME}}

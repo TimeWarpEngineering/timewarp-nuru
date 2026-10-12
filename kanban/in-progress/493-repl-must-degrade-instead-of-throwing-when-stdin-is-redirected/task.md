@@ -97,11 +97,39 @@ exit=0
 
 Test: `Should_keep_last_command_exit_code_when_eof_follows_a_failure` in `repl-49-redirected-input.cs` (6/6).
 
+### How to validate
+
+**Smoke** (from the repo root; needs the .NET SDK from `global.json`):
+
+```bash
+printf 'greet x\nexit\n' | dotnet run samples/fluent/10-repl/fluent-repl-basic.cs -- --interactive; echo exit=$?
+printf 'greet x\nnope\n' | dotnet run samples/fluent/10-repl/fluent-repl-basic.cs -- --interactive; echo exit=$?
+dotnet run samples/fluent/10-repl/fluent-repl-basic.cs -- --interactive < /dev/null; echo exit=$?
+```
+
+**Expect**
+
+- First command prints `Hello, x!` and `Goodbye!`, then `exit=0`. No `InvalidOperationException` and no stack trace.
+- Second command prints `Hello, x!`, `Unknown command. Use --help for usage.`, and `Goodbye!`, then `exit=1`. EOF after a failed command keeps that command's code.
+- Third command prints `Goodbye!` and `exit=0`. Empty redirected stdin is a clean EOF, not a crash.
+
+**Automated gate**
+
+```bash
+dotnet run tests/timewarp-nuru-tests/repl/repl-49-redirected-input.cs
+# expect: Total: 6, Passed: 6, Failed: 0
+```
+
+**Not in scope:** arrow-key history and key bindings. Those stay on a real console. Redirected stdin is line mode only.
+
+Re-checked 2026-10-12 after the origin/master merge: `repl-49-redirected-input.cs` was Total 6, Passed 6, and the three smoke commands matched Expect (`exit=0`, `exit=1`, `exit=0`) with no `InvalidOperationException`.
+
 ## Session
 
 - Created: claude 2412bd45 (2026-10-09)
 - Implemented: claude sub-agent impl-493 (2026-10-11)
 - Reviewed + exit-code follow-up: claude (2026-10-11)
+- Implementer: grok 01a12fb4-95f0-7ee0-9887-69ab630d9dd3 (2026-10-12)
 
 ## Notes
 

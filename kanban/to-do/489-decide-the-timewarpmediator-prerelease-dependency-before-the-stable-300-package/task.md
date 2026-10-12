@@ -10,6 +10,18 @@ of Mediator, which also surfaces as "prerelease" badges and `--prerelease` requi
 
 This task is the decision and its execution, not a code fix in Nuru by itself.
 
+## Decision
+
+**Option 1, with a dogfood step (maintainer, 2026-10-12):** TimeWarp.Mediator 14.0.0 ships *before* Nuru 3.0.0,
+but Mediator is dogfooded on its current beta across the TimeWarp consumers first. Sequence:
+
+1. Dogfood `TimeWarp.Mediator 14.0.0-beta.4` (or a newer beta if one is cut) in its consumers — Nuru is already on
+   beta.4; identify the others from `Directory.Packages.props` across the TimeWarp repos — and fix what breaks.
+2. Release `TimeWarp.Mediator 14.0.0` (task in timewarp-mediator; link it here).
+3. Bump Nuru's `Directory.Packages.props` to `14.0.0`, re-run CI, then the Nuru `3.0.0` bump task.
+
+No NU5104 suppression. The 3.0.0 release notes and migration guide must not need an "allow prerelease" caveat.
+
 ## Options
 
 1. **Ship TimeWarp.Mediator 14.0.0 first**, then bump Nuru's reference and tag 3.0.0. Cleanest for consumers.
@@ -28,8 +40,11 @@ This task is the decision and its execution, not a code fix in Nuru by itself.
 
 ## Checklist
 
-- [ ] Decision made and recorded (maintainer call)
-- [ ] Mediator side task filed / version bumped, or NU5104 handled, per the decision
+- [x] Decision made and recorded (maintainer call): option 1 + dogfood, 2026-10-12
+- [ ] Mediator consumers enumerated (which TimeWarp repos reference `TimeWarp.Mediator.*`, at which versions)
+- [ ] Dogfood task(s) filed for consumers not yet on the current Mediator beta (one per repo, `ganda kanban reserve --repo <repo>`)
+- [ ] Release task filed in timewarp-mediator for `14.0.0`, linked here; blocked on the dogfood tasks
+- [ ] After Mediator 14.0.0 ships: Nuru `Directory.Packages.props` → `14.0.0`, CI green
 - [ ] Release notes and migration guide say what consumers need to do
 - [ ] `dotnet pack` of `source/timewarp-nuru` on the 3.0.0 version shows no NU5104 (or the documented suppression)
 - [ ] PR merged
@@ -41,6 +56,7 @@ This task is the decision and its execution, not a code fix in Nuru by itself.
 ## Session
 
 - Created: claude 2412bd45 (2026-10-09)
+- Decision recorded for the maintainer: claude 2412bd45 (2026-10-12)
 
 ## Blocked
 

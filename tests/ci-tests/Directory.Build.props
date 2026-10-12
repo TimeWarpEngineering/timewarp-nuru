@@ -90,6 +90,10 @@
          (task 482-006 invalid route pattern diagnostics); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-53-invalid-route-patterns.cs" />
+    <!-- generator-54: same Roslyn-hosted generator test pattern as generator-28
+         (task 491 NURU_H002 nested lambda parameter); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-54-h002-nested-lambda-parameter.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

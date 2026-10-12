@@ -1,7 +1,7 @@
 # Migrating to TimeWarp.Nuru 3.0
 
 Guide for applications moving from the 2.x line, or from a 3.0 beta, to the
-stable 3.0 release. The package under review is `3.0.0-beta.79`.
+stable 3.0 release.
 
 `TimeWarp.Nuru` targets `net10.0`. Install the prerelease until `3.0.0` is
 published:
@@ -38,15 +38,89 @@ Endpoint kind classification uses explicit precedence: Query, then
 IdempotentCommand (`IIdempotentCommand<T>`, or `ICommand<T>` plus
 `IIdempotent`), then Command.
 
-## `--capabilities` JSON is hierarchical
+## `--capabilities` JSON is a flat `endpoints` list
 
-Grouped commands appear only inside the `groups` array. They are not repeated
-in the top-level `commands` array. Ungrouped commands stay in `commands`.
-Agents that walked a flat command list need to walk `groups` as well.
+2.x had no `--capabilities` route. Betas 3.0.0-beta.42 through beta.55 emitted a
+hierarchical document: grouped commands sat inside a nested `groups` array and
+ungrouped commands in a top-level `commands` array. From beta.56 on, and in
+3.0, those keys are gone. An agent that walks `groups` or `commands` finds
+nothing.
+
+3.0 emits one flat `endpoints` array. Each entry carries its group as a
+`groupPath` array of prefix segments. An ungrouped route has `groupPath: []`.
+A route under `WithGroupPrefix("admin")` then `WithGroupPrefix("config")` has
+`groupPath: ["admin", "config"]`, and its `pattern` is the full pattern
+(`admin config get {key}`). The top-level `invocation` object names the
+`--json-args` transport. See [Agent invocation](../features/agent-invocation.md).
+
+Each endpoint has:
+
+| Key | Meaning |
+|-----|---------|
+| `pattern` | Full route pattern, group prefix included |
+| `groupPath` | Group prefix segments, outermost first; `[]` when ungrouped |
+| `aliases` | Alternate patterns |
+| `description` | Route description; omitted when not set |
+| `kind` | `query`, `command`, `idempotentCommand`, or `unspecified` |
+| `parameters[]` | Positional parameters: `name`, `type`, `required`, `isCatchAll` |
+| `options[]` | Options: `name`, `type`, `required`, `isFlag`, `isRepeated` |
+
+Output of `app --capabilities` for this app:
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .Map("greet {name}").WithHandler((string name) => $"Hello, {name}!").AsQuery().Done()
+  .Map("deploy {env} --tag? {tag?}")
+    .WithHandler((string env, string? tag) => $"Deploying {tag ?? "latest"} to {env}")
+    .AsCommand().Done()
+  .Build();
+```
+
+```json
+{
+  "name": "app",
+  "version": "1.0.0",
+  "endpoints": [
+    {
+      "pattern": "greet {name}",
+      "groupPath": [],
+      "aliases": [],
+      "kind": "query",
+      "parameters": [
+        { "name": "name", "type": "string", "required": true, "isCatchAll": false }
+      ],
+      "options": []
+    },
+    {
+      "pattern": "deploy {env} --tag? {tag?}",
+      "groupPath": [],
+      "aliases": [],
+      "kind": "command",
+      "parameters": [
+        { "name": "env", "type": "string", "required": true, "isCatchAll": false }
+      ],
+      "options": [
+        { "name": "tag", "type": "string", "required": false, "isFlag": false, "isRepeated": false }
+      ]
+    }
+  ],
+  "invocation": {
+    "jsonArgs": "--json-args",
+    "stdin": "-",
+    "filePrefix": "@",
+    "merge": "argvOverridesJson",
+    "unknownKeys": "error"
+  }
+}
+```
+
+To select one group, filter `endpoints` on a `groupPath` prefix, or run
+`app --capabilities --group-filter admin` (short form `-g`; nested groups use
+dots, `admin.config`). The filtered document adds `"filter": { "group": "admin" }`.
 
 ## Members removed during the 3.0 betas
 
-These APIs are not on `NuruAppBuilder` in beta.78. Replace them before you
+These APIs are not on `NuruAppBuilder` in 3.0. Replace them before you
 compile against 3.0:
 
 | Removed | Use instead |

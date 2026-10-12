@@ -27,6 +27,7 @@ guide would look for keys that do not exist. Line 4 also still says "The package
 ## Notes
 
 - Found by task 487 (2026-10-09) while verifying the blog's capabilities claims.
+- Implementation review: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Outcome clean. One round, general, effort 1. No open findings.
 
 ## Results
 
@@ -58,7 +59,16 @@ endpoint has `pattern`, `groupPath: []`, `aliases`, `kind` (`query` for greet, `
 list" section of `documentation/user/guides/migrating-to-3.0.md`. `grep -n "under review\|beta.78" documentation/user/guides/migrating-to-3.0.md`
 returns nothing.
 
+### Review
+
+- Rounds: 1. Roster: general. Effort: 1 (185-line diff).
+- Counts: bug 0; suggestion 0; nit 0; open 0.
+- Disposition: clean. No wontfix. No escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Re-checked: the guide JSON block parses equal to `app --capabilities` from `kanban/to-do/487-*/demo/app.cs.txt` on `TimeWarp.Nuru` 3.0.0-beta.80, run outside the repo. Top-level keys are `name`, `version`, `endpoints`, `invocation`.
+
 ## Session
 
 - Created: claude 2412bd45 (2026-10-09)
 - Implemented: claude (ganda task work, 2026-10-12)
+- Review: grok 01a12ef7-fb61-7840-9643-175e64876bf4 (2026-10-12)

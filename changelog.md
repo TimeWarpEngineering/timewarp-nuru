@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Packaging**: The package now ships `build/TimeWarp.Nuru.props` and `buildTransitive/TimeWarp.Nuru.props`, which append `TimeWarp.Nuru.Generated` to `InterceptorsNamespaces`. A fresh console app or a `#:package TimeWarp.Nuru` runfile builds with no extra properties; previously both failed with CS9137 (488).
 - **Completion**: `--generate-completion bash` works in plain bash. The script uses the bash-completion package (`_init_completion`, `_filedir`) when it is loaded and otherwise reads `COMP_WORDS`/`COMP_CWORD` and calls `compgen` itself; previously Tab printed `_init_completion: command not found`. The zsh script runs `compinit` when `compdef` is not defined yet (492).
+- **Analyzers**: `NURU_H002` no longer reports a nested lambda's own parameter as a closure, so `(int[] ids) => ids.Sum(i => (long)i)` builds. The validator now checks whether a local or parameter is declared inside the handler instead of matching names, which also stops false reports on pattern variables declared in the handler (491).
 
 ## [3.0.0-beta.79] - 2026-10-06
 

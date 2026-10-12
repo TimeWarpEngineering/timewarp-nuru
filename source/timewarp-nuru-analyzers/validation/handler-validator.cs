@@ -246,20 +246,6 @@ internal static class HandlerValidator
   {
     List<string> capturedVariables = [];
 
-    // Get lambda parameters
-    HashSet<string> lambdaParameters = GetLambdaParameterNames(lambda);
-
-    // Track local variables declared inside the lambda
-    HashSet<string> localVariables = [];
-    if (lambda.Body is not null)
-    {
-      foreach (VariableDeclaratorSyntax declarator in lambda.Body.DescendantNodes()
-        .OfType<VariableDeclaratorSyntax>())
-      {
-        localVariables.Add(declarator.Identifier.Text);
-      }
-    }
-
     // Walk lambda body looking for identifiers. DescendantNodesAndSelf (not DescendantNodes)
     // so a body that IS a single identifier — e.g. `() => capturedLocal` — is checked too;
     // DescendantNodes excludes the body node itself, which silently missed that capture.
@@ -270,14 +256,6 @@ internal static class HandlerValidator
       .OfType<IdentifierNameSyntax>())
     {
       string name = identifier.Identifier.Text;
-
-      // Skip if it's a parameter
-      if (lambdaParameters.Contains(name))
-        continue;
-
-      // Skip if it's a local variable declared inside lambda
-      if (localVariables.Contains(name))
-        continue;
 
       // Skip if it's on the right side of a member access (obj.name - we care about 'obj', not 'name')
       if (identifier.Parent is MemberAccessExpressionSyntax ma && ma.Name == identifier)
@@ -318,14 +296,11 @@ internal static class HandlerValidator
       // Check what kind of symbol it is
       switch (symbol)
       {
-        case ILocalSymbol:
-          // Local variable from outer scope - closure!
-          capturedVariables.Add(name);
-          break;
-
-        case IParameterSymbol param:
-          // If not our lambda's parameter, it's from outer method - closure!
-          if (!lambdaParameters.Contains(param.Name))
+        case ILocalSymbol or IParameterSymbol:
+          // Locals and parameters declared inside the handler (its own parameters, nested
+          // lambda parameters, pattern/out/foreach variables) are not captures. Only ones
+          // declared in an enclosing scope are - closure!
+          if (!IsDeclaredWithin(symbol, lambda))
           {
             capturedVariables.Add(name);
           }
@@ -364,27 +339,6 @@ internal static class HandlerValidator
   {
     List<string> capturedVariables = [];
 
-    // Get anonymous method parameters
-    HashSet<string> parameters = [];
-    if (anonymousMethod.ParameterList is not null)
-    {
-      foreach (ParameterSyntax param in anonymousMethod.ParameterList.Parameters)
-      {
-        parameters.Add(param.Identifier.Text);
-      }
-    }
-
-    // Track local variables declared inside the method body
-    HashSet<string> localVariables = [];
-    if (anonymousMethod.Block is not null)
-    {
-      foreach (VariableDeclaratorSyntax declarator in anonymousMethod.Block.DescendantNodes()
-        .OfType<VariableDeclaratorSyntax>())
-      {
-        localVariables.Add(declarator.Identifier.Text);
-      }
-    }
-
     // Walk method body looking for identifiers
     if (anonymousMethod.Block is null)
       return capturedVariables;
@@ -393,14 +347,6 @@ internal static class HandlerValidator
       .OfType<IdentifierNameSyntax>())
     {
       string name = identifier.Identifier.Text;
-
-      // Skip if it's a parameter
-      if (parameters.Contains(name))
-        continue;
-
-      // Skip if it's a local variable declared inside the method
-      if (localVariables.Contains(name))
-        continue;
 
       // Skip if it's on the right side of a member access
       if (identifier.Parent is MemberAccessExpressionSyntax ma && ma.Name == identifier)
@@ -434,12 +380,8 @@ internal static class HandlerValidator
 
       switch (symbol)
       {
-        case ILocalSymbol:
-          capturedVariables.Add(name);
-          break;
-
-        case IParameterSymbol param:
-          if (!parameters.Contains(param.Name))
+        case ILocalSymbol or IParameterSymbol:
+          if (!IsDeclaredWithin(symbol, anonymousMethod))
           {
             capturedVariables.Add(name);
           }
@@ -506,27 +448,18 @@ internal static class HandlerValidator
   }
 
   /// <summary>
-  /// Gets the parameter names from a lambda expression.
+  /// Checks whether a local or parameter is declared inside the handler node, by symbol
+  /// containment rather than name matching. A nested lambda's own parameter (e.g. <c>i</c> in
+  /// <c>ids.Sum(i =&gt; (long)i)</c>) is declared inside the handler, so it is not a capture.
   /// </summary>
-  private static HashSet<string> GetLambdaParameterNames(LambdaExpressionSyntax lambda)
+  private static bool IsDeclaredWithin(ISymbol symbol, Microsoft.CodeAnalysis.SyntaxNode handler)
   {
-    HashSet<string> names = [];
-
-    switch (lambda)
+    foreach (SyntaxReference reference in symbol.DeclaringSyntaxReferences)
     {
-      case SimpleLambdaExpressionSyntax simple:
-        names.Add(simple.Parameter.Identifier.Text);
-        break;
-
-      case ParenthesizedLambdaExpressionSyntax parenthesized:
-        foreach (ParameterSyntax param in parenthesized.ParameterList.Parameters)
-        {
-          names.Add(param.Identifier.Text);
-        }
-
-        break;
+      if (reference.SyntaxTree == handler.SyntaxTree && handler.Span.Contains(reference.Span))
+        return true;
     }
 
-    return names;
+    return false;
   }
 }

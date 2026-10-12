@@ -31,11 +31,14 @@ The warning becomes an error under `TreatWarningsAsErrors`, which every TimeWarp
 
 - Found by task 487 (2026-10-09). The blog has no catch-all example, so it does not block copy; it blocks a
   reader who copies the pattern.
+- Review: `review/review-framework.md`, effort 2, roster general, 2 rounds, disposition clean.
+  `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Session
 
 - Created: claude 2412bd45 (2026-10-09)
 - Implemented: claude (ganda task work implement, 2026-10-12)
+- Review: 2026-10-12 — Grok session `01a12ee7-458f-7b23-9bfe-736891911b4d` (effort 2, general). Disposition clean. `review/`
 
 ## Results
 
@@ -57,10 +60,17 @@ Files:
   Roslyn-hosted test (3 cases). Fails 3/3 against the old validator, passes 3/3 now.
 - `tests/ci-tests/Directory.Build.props` — excludes generator-54 from the multi-mode build
   (same CS0433 analyzer/core collision as generator-28/29/38); run it standalone.
+- `tests/ci-tests/run-ci-tests.cs` — standalone phase runs generator-54 (review fix).
 - `changelog.md` — Unreleased Fixed entry.
 
-Verification: `dotnet run tests/ci-tests/run-ci-tests.cs` exit 0, no failures; generator-29
-and generator-38 (existing H002 tests) still pass standalone.
+Verification: generator-54 `Total: 3 Passed: 3`; generator-38 `Total: 2 Passed: 2`;
+generator-29 `Total: 4 Passed: 4` (review re-run, 2026-10-12).
+
+Review: 2 rounds, roster general, effort 2 (322 lines). Round 1 raised 1 bug (generator-54
+excluded from multi-mode and absent from `standaloneTests`, so CI never ran it). Fixed on
+this id. Round 2 raised nothing. Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion
+0; nit 0. Disposition: **clean** (0 open, 0 wontfix, no escalation). Trail:
+`review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 

@@ -21,7 +21,7 @@ myapp apply_patch --json-args @./apply-patch.json
 
 ## Capabilities
 
-`--capabilities` prints a `CapabilitiesResponse`. The optional `invocation` object names the transport. Every generated app emits it. An endpoint with no parameters accepts `--json-args '{}'` and rejects unknown keys.
+`--capabilities` prints a `CapabilitiesResponse`. Routes are one flat `endpoints` array. Each entry has `pattern`, `groupPath`, `aliases`, `kind`, `parameters[]`, and `options[]`. A grouped route carries its group prefix segments in `groupPath`, and an ungrouped route has `groupPath: []`. There is no nested `groups` array. The optional `invocation` object names the transport. Every generated app emits it. An endpoint with no parameters accepts `--json-args '{}'` and rejects unknown keys.
 
 ```json
 "invocation": {

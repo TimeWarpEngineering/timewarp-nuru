@@ -41,3 +41,9 @@ This task is the decision and its execution, not a code fix in Nuru by itself.
 ## Session
 
 - Created: claude 2412bd45 (2026-10-09)
+
+## Blocked
+
+2026-10-12: maintainer must choose option 1 (ship TimeWarp.Mediator 14.0.0 first), option 2 (ship Nuru 3.0.0 on Mediator 14.0.0-beta.4 with NU5104 suppressed and documented) or option 3 (delay 3.0.0), and record it on task 489; only 14.0.0-beta.4 exists today https://github.com/TimeWarpEngineering/timewarp-mediator/releases
+
+- https://github.com/TimeWarpEngineering/timewarp-mediator/releases

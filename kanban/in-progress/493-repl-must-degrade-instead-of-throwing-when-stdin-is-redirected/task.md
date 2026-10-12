@@ -124,12 +124,20 @@ dotnet run tests/timewarp-nuru-tests/repl/repl-49-redirected-input.cs
 
 Re-checked 2026-10-12 after the origin/master merge: `repl-49-redirected-input.cs` was Total 6, Passed 6, and the three smoke commands matched Expect (`exit=0`, `exit=1`, `exit=0`) with no `InvalidOperationException`.
 
+### Review disposition (2026-10-12)
+
+- Rounds: 1 · effort 2 · roster: general
+- Final counts: bug 0 · suggestion 1 wontfix · nit 1 wontfix · open 0
+- Disposition: **accepted-exceptions** — M1 (broad `InvalidOperationException` catch; failure still surfaced via stderr + exit 1) and M2 (prompt printed in line mode; matches documented output)
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`
+
 ## Session
 
 - Created: claude 2412bd45 (2026-10-09)
 - Implemented: claude sub-agent impl-493 (2026-10-11)
 - Reviewed + exit-code follow-up: claude (2026-10-11)
 - Implementer: grok 01a12fb4-95f0-7ee0-9887-69ab630d9dd3 (2026-10-12)
+- Review oracle: claude (ganda task work, 2026-10-12), effort 2, general
 
 ## Notes
 

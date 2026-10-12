@@ -36,6 +36,7 @@ VHS/ttyd recordings, CI shells, macOS default bash), pressing Tab prints
 
 - Created: claude 2412bd45 (2026-10-09)
 - Implement: claude (ganda task work, 2026-10-12)
+- Review: grok 01a12ecf-4f19-7bd1-827d-594d86c179c0 (2026-10-12)
 
 ## Results
 
@@ -53,6 +54,14 @@ VHS/ttyd recordings, CI shells, macOS default bash), pressing Tab prints
   driver prints `_init_completion: command not found` and an empty `COMPREPLY`.
 - `dotnet run tests/ci-tests/run-ci-tests.cs`: exit 0, 1975 passed, 0 failed.
 
+### Review
+
+- Rounds: 1. Roster: general. Effort: 2 (215-line diff).
+- Counts: bug 0; suggestion 0; nit 0; open 0.
+- Disposition: clean. No wontfix. No escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Re-checked: `completion-30-bare-bash` 2/2, `completion-20` 15/15, `completion-29` 11/11. A pty Tab on `app dep` under `bash --norc --noprofile` listed `deploy` and `deploy-notes.txt`.
+
 ### How to validate
 
 Smoke:
@@ -64,3 +73,7 @@ dotnet run tests/timewarp-nuru-tests/completion/completion-30-bare-bash.cs
 Expect: both `BareBash` tests pass (`Total: 2`, `Passed: 2`). Manually: in a shell without bash-completion
 (`bash --norc --noprofile`), `source <(app --generate-completion bash)` then `app dep<Tab>` completes to
 `deploy` with no `_init_completion: command not found`.
+
+## Notes
+
+- Implementation review: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`. Outcome clean. One round, general, effort 2. No open findings.

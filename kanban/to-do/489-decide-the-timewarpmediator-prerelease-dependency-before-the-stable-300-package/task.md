@@ -41,13 +41,72 @@ No NU5104 suppression. The 3.0.0 release notes and migration guide must not need
 ## Checklist
 
 - [x] Decision made and recorded (maintainer call): option 1 + dogfood, 2026-10-12
-- [ ] Mediator consumers enumerated (which TimeWarp repos reference `TimeWarp.Mediator.*`, at which versions)
-- [ ] Dogfood task(s) filed for consumers not yet on the current Mediator beta (one per repo, `ganda kanban reserve --repo <repo>`)
-- [ ] Release task filed in timewarp-mediator for `14.0.0`, linked here; blocked on the dogfood tasks
+- [x] Mediator consumers enumerated (which TimeWarp repos reference `TimeWarp.Mediator.*`, at which versions)
+- [x] Dogfood task(s) filed for consumers not yet on the current Mediator beta (one per repo, `ganda kanban reserve --repo <repo>`) — none needed: every consumer is already on beta.4
+- [x] Release task filed in timewarp-mediator for `14.0.0`, linked here: timewarp-mediator kanban 014 (depends on 013)
 - [ ] After Mediator 14.0.0 ships: Nuru `Directory.Packages.props` → `14.0.0`, CI green
-- [ ] Release notes and migration guide say what consumers need to do
+- [x] Release notes and migration guide say what consumers need to do
 - [ ] `dotnet pack` of `source/timewarp-nuru` on the 3.0.0 version shows no NU5104 (or the documented suppression)
 - [ ] PR merged
+
+## Results
+
+**Decision:** option 1 + dogfood (maintainer, 2026-10-12). TimeWarp.Mediator 14.0.0 ships before Nuru 3.0.0.
+**Reason:** a stable Nuru 3.0.0 referencing `14.0.0-beta.4` raises NU5104 and forces every consumer onto a
+Mediator beta. Suppressing it (option 2) would make "stable" partly untrue. Option 3 drops the interim Nuru betas
+that are already dogfooding Mediator.
+
+### Mediator consumers (origin master, 2026-10-12)
+
+| Repo | Reference | Mediator version |
+|------|-----------|------------------|
+| timewarp-nuru | `TimeWarp.Mediator.Contracts`, `.Generators` (direct) | 14.0.0-beta.4 |
+| timewarp-state | `.Contracts`, `.Generators`, `.Analyzers` (direct) | 14.0.0-beta.4 |
+| timewarp-architecture | `.Contracts`, `.Generators`, `.Analyzers` (direct) | 14.0.0-beta.4 |
+| timewarp-intel | via `TimeWarp.State` 12.0.0-beta.10 (nuspec: Contracts 14.0.0-beta.4) | 14.0.0-beta.4 |
+| timewarp-amuru, -bayline, -flow, -ganda, -session-lake-tools, -taratibu, -terminal, -mediator (dev CLI) | via `TimeWarp.Nuru` 3.0.0-beta.79 (nuspec: Contracts + Generators 14.0.0-beta.4) | 14.0.0-beta.4 |
+
+Every consumer already runs beta.4, so the dogfood is live and no per-repo bump task was filed.
+Known dogfood breakage: timewarp-mediator#64 (internal request types → CS0051), documented in the guide.
+
+### Filed
+
+- timewarp-mediator kanban **014** "Release TimeWarp.Mediator 14.0.0 stable (gates Nuru 3.0.0)", published to
+  origin master (`kanban/to-do/014-release-timewarpmediator-1400-stable-gates-nuru-300/`), depends on 013
+  (repository review children; 013-004 public API is a before-stable gate).
+
+### Docs updated
+
+- `documentation/user/guides/migrating-to-3.0.md`: betas use 14.0.0-beta.4; stable 3.0.0 references stable
+  14.0.0, no prerelease opt-in for Mediator; bump your own `TimeWarp.Mediator.*` pins with Nuru.
+- `kanban/to-do/487-*/release-notes.md`: states the stable Mediator dependency; pre-paste check names gate #2.
+- `kanban/to-do/487-*/task.md`: launch gate #2 records the decision.
+
+### Remaining (blocked on Mediator 14.0.0 shipping)
+
+- Bump `Directory.Packages.props:33-34` to `14.0.0`, CI green.
+- `dotnet pack source/timewarp-nuru` on 3.0.0 shows no NU5104.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+grep -n 'TimeWarp.Mediator' Directory.Packages.props
+grep -n 'Mediator' documentation/user/guides/migrating-to-3.0.md | head -5
+git -C ~/worktrees/github.com/TimeWarpEngineering/timewarp-mediator/master fetch -q && \
+  git -C ~/worktrees/github.com/TimeWarpEngineering/timewarp-mediator/master show \
+  origin/master:kanban/to-do/014-release-timewarpmediator-1400-stable-gates-nuru-300/task.md | head -5
+# after Mediator 14.0.0 ships and the bump lands:
+dotnet pack source/timewarp-nuru -c Release -p:Version=3.0.0 2>&1 | grep -c NU5104
+```
+
+**Expect:**
+
+- Today: props still show `14.0.0-beta.4`; after the bump, `14.0.0` on both lines.
+- The migration guide says stable 3.0.0 references stable `TimeWarp.Mediator` 14.0.0.
+- The mediator 014 kitchen exists on origin master with the title above.
+- After the bump, the pack grep prints `0`.
 
 ## Notes
 
@@ -57,6 +116,7 @@ No NU5104 suppression. The 3.0.0 release notes and migration guide must not need
 
 - Created: claude 2412bd45 (2026-10-09)
 - Decision recorded for the maintainer: claude 2412bd45 (2026-10-12)
+- Consumers enumerated, timewarp-mediator 014 filed, docs updated: claude implement oracle (2026-10-12)
 
 ## Blocked
 

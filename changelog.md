@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **DevCli**: `dev release` passes `--prerelease` to `gh release create` when `<Version>` has a SemVer prerelease suffix, so the GitHub Release flag matches NuGet. `--dry-run` prints the same command it runs (486).
-- **TimeWarp.Mediator 14.0.0-beta.5**: Contracts and Generators moved from 14.0.0-beta.4 (498). This is the dogfood pin ahead of Mediator 14.0.0 stable. Release, sample, and Native AOT builds report zero TWM005–TWM011 diagnostics.
+- **TimeWarp.Mediator 14.0.0**: Contracts and Generators moved from 14.0.0-beta.5 to stable 14.0.0 (489), after the beta.5 dogfood (498). Generated host types stay internal to the compilation that emits them. A stable Nuru package does not depend on a prerelease of Mediator, so consumers do not need a prerelease opt-in for it.
 - **Dependencies**: Roslynator analyzers 5.0.1 and Spectre.Console.Cli 0.57.2 (benchmarks only); neither ships to consumers. `Microsoft.CodeAnalysis.CSharp` stays at 5.6.0, so the minimum consumer SDK is unchanged (10.0.3xx); 5.9.0 would require SDK 10.0.400. `Microsoft.Build.Utilities.Core` stays at 18.9.6 because 18.10.1 has no `net10.0` build.
 
 ### Fixed

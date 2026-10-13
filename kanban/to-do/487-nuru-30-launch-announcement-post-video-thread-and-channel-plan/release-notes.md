@@ -2,7 +2,10 @@
 
 Paste everything below the line over the `--generate-notes` output on release day. Keep the
 generated "Full Changelog" compare link at the bottom. Before pasting, re-check the
-"Launch gates" in `task.md`. Every bullet here was verified against `3.0.0-beta.79` on 2026-10-09.
+"Launch gates" in `task.md`. Gate #2 (kanban 489) is the `Directory.Packages.props` pin on
+`TimeWarp.Mediator.*` `14.0.0`; if that pin changes, the Mediator bullet below is false.
+Every bullet was verified against `3.0.0-beta.79` on 2026-10-09, except the Mediator bullet,
+which was verified against the 14.0.0 pin on 2026-10-13.
 
 ---
 
@@ -43,7 +46,8 @@ myapp apply_patch --json-args @./patch.json                 # or - for stdin
   `--install-completion`. Completion can hand `File` and `Directory` candidates to the shell.
 - Route examples appear in `--help` and in `--capabilities`.
 - Endpoint classes use `TimeWarp.Mediator` contracts. The generated `IMediator`, `ISender`, and
-  `IPublisher` are available with or without Microsoft DI.
+  `IPublisher` are available with or without Microsoft DI. Nuru 3.0.0 depends on stable
+  `TimeWarp.Mediator` 14.0.0, so you don't need `--prerelease` or a prerelease opt-in for Mediator.
 - Pre-release review: Grok and Claude agents filed 28 findings. 22 were fixed before the tag.
   20 of those, plus a changelog backfill, landed in 15 PRs (#283–#297, stacked in #298). The other
   two were fixed on the review task (#282). Six are scheduled after 3.0. The record is in

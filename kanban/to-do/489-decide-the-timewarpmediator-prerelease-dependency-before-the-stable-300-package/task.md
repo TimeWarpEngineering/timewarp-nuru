@@ -77,7 +77,7 @@ Known dogfood breakage: timewarp-mediator#64 (internal request types → CS0051)
 
 ### Docs updated
 
-- `documentation/user/guides/migrating-to-3.0.md`: published betas through 3.0.0-beta.79 use
+- `documentation/user/guides/migrating-to-3.0.md`: published betas through 3.0.0-beta.80 use
   14.0.0-beta.4; later Nuru builds, including stable 3.0.0, reference stable 14.0.0. No prerelease
   opt-in for Mediator. Move your own `TimeWarp.Mediator.*` pins to 14.0.0 with those Nuru versions.
 - `kanban/to-do/487-*/release-notes.md`: states the stable Mediator dependency; the pre-paste check
@@ -130,13 +130,14 @@ dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.
 ### Review (round 1, 2026-10-13)
 
 - Effort 2 (by-diff, 220 lines). Roster: general (review oracle, Claude Opus 5.5). Rounds: 1.
-- Counts: bug 1 open, nit 1 open. Suggestion 0.
-- **M1 (bug, open):** the migration guide (`migrating-to-3.0.md:22`) and the "### Docs updated" bullet above say betas
+- Counts: bug 1 fixed, nit 1 fixed. Suggestion 0.
+- **M1 (bug, fixed):** the migration guide (`migrating-to-3.0.md:22`) and the "### Docs updated" bullet above say betas
   "through 3.0.0-beta.79" use Mediator beta.4. Published `3.0.0-beta.80` on nuget.org also depends on
   `TimeWarp.Mediator.*` `14.0.0-beta.4`. Change both to "through 3.0.0-beta.80".
-- **M2 (nit, open):** in 487 `release-notes.md:5-7`, rewrap the pre-paste line. The "verified against beta.79" header no
+- **M2 (nit, fixed):** in 487 `release-notes.md:5-7`, rewrap the pre-paste line. The "verified against beta.79" header no
   longer covers the Mediator bullet.
-- Disposition: **pending**. A fix pass on this id must close M1/M2 (fix or wontfix), and a round-2 re-review must follow.
+- Fix pass (2026-10-13): M1 wording moved to "through 3.0.0-beta.80" in the guide and the Docs updated bullet; M2 pre-paste note rewrapped and the verification header now covers the Mediator bullet.
+- Disposition: **pending round-2 re-review**.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger).
 
 ## Notes
@@ -149,6 +150,7 @@ dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.
 - Decision recorded for the maintainer: claude 2412bd45 (2026-10-12)
 - Consumers enumerated, timewarp-mediator 014 filed, docs updated: claude implement oracle (2026-10-12)
 - Mediator 14.0.0 release recorded, task unblocked: Claude (timewarp-mediator cockpit session) (2026-10-13)
+- Review round 1 fix pass (M1, M2): Claude Fable 5.1 (2026-10-13)
 - Pin moved to 14.0.0, CI green, pack checked: grok implement oracle (2026-10-13)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-13T15:33:39Z
 - Review oracle round 1: Claude Opus 5.5 (claude-opus-5-5), headless `ganda task work`, effort 2, general. 1 bug + 1 nit open,

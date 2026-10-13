@@ -127,6 +127,18 @@ dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.
 - The nuspec lists `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators` at `14.0.0`.
 - Pack exits non-zero with one NU5104, and that line names `TimeWarp.Amuru` `2.0.0-beta.2`. It does not name Mediator.
 
+### Review (round 1, 2026-10-13)
+
+- Effort 2 (by-diff, 220 lines). Roster: general (review oracle, Claude Opus 5.5). Rounds: 1.
+- Counts: bug 1 open, nit 1 open. Suggestion 0.
+- **M1 (bug, open):** the migration guide (`migrating-to-3.0.md:22`) and the "### Docs updated" bullet above say betas
+  "through 3.0.0-beta.79" use Mediator beta.4. Published `3.0.0-beta.80` on nuget.org also depends on
+  `TimeWarp.Mediator.*` `14.0.0-beta.4`. Change both to "through 3.0.0-beta.80".
+- **M2 (nit, open):** in 487 `release-notes.md:5-7`, rewrap the pre-paste line. The "verified against beta.79" header no
+  longer covers the Mediator bullet.
+- Disposition: **pending**. A fix pass on this id must close M1/M2 (fix or wontfix), and a round-2 re-review must follow.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger).
+
 ## Notes
 
 - Found by task 487 (2026-10-09). The blog and thread copy currently say nothing about Mediator being prerelease.
@@ -138,6 +150,9 @@ dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.
 - Consumers enumerated, timewarp-mediator 014 filed, docs updated: claude implement oracle (2026-10-12)
 - Mediator 14.0.0 release recorded, task unblocked: Claude (timewarp-mediator cockpit session) (2026-10-13)
 - Pin moved to 14.0.0, CI green, pack checked: grok implement oracle (2026-10-13)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-13T15:33:39Z
+- Review oracle round 1: Claude Opus 5.5 (claude-opus-5-5), headless `ganda task work`, effort 2, general. 1 bug + 1 nit open,
+  Blocked pending fix pass (2026-10-13)
 
 ## Unblocked
 

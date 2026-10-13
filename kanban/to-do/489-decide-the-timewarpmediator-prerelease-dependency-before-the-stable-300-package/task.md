@@ -120,6 +120,21 @@ dotnet pack source/timewarp-nuru -c Release -p:Version=3.0.0 2>&1 | grep -c NU51
 
 ## Blocked
 
-2026-10-12: maintainer must choose option 1 (ship TimeWarp.Mediator 14.0.0 first), option 2 (ship Nuru 3.0.0 on Mediator 14.0.0-beta.4 with NU5104 suppressed and documented) or option 3 (delay 3.0.0), and record it on task 489; only 14.0.0-beta.4 exists today https://github.com/TimeWarpEngineering/timewarp-mediator/releases
+2026-10-12: TimeWarp.Mediator 14.0.0 must ship (timewarp-mediator kanban 014) before Nuru's Directory.Packages.props can move to 14.0.0 and the NU5104-free pack can be checked https://github.com/TimeWarpEngineering/timewarp-mediator/releases
 
 - https://github.com/TimeWarpEngineering/timewarp-mediator/releases
+
+## Results
+
+**Decision: option 1.** TimeWarp.Mediator `14.0.0` stable shipped first; Nuru bumps to it and 3.0.0 carries no prerelease
+dependency, so NU5104 never needs suppressing.
+
+- Mediator side: timewarp-mediator kanban 017 (replaced archived 014). Tag `v14.0.0` at `96e3e42`, 2026-10-13.
+  Release: https://github.com/TimeWarpEngineering/timewarp-mediator/releases/tag/v14.0.0. Publish run 38408409563 pushed
+  Contracts, Mediator, Generators and Analyzers 14.0.0 at 13:53 UTC. The stable is `14.0.0-beta.5` unchanged (no source
+  change after beta.5), which Nuru already dogfooded in task 498 with zero TWM diagnostics.
+- Remaining here: bump `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators` in `Directory.Packages.props` from
+  `14.0.0-beta.5` to `14.0.0` (confirm nuget.org flat index lists 14.0.0 first), update the 3.0.0 release notes draft and
+  `migrating-to-3.0.md` to say the dependency is stable, and confirm `dotnet pack` of `source/timewarp-nuru` shows no NU5104.
+
+Recorded by Claude (timewarp-mediator cockpit session) on 2026-10-13 after cutting the Mediator release.

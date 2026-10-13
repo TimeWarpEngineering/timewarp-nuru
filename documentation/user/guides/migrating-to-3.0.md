@@ -19,11 +19,12 @@ dotnet add package TimeWarp.Nuru --prerelease
 TimeWarp.Nuru no longer defines `IMessage`, `IQuery<T>`, `ICommand<T>`,
 `IIdempotentCommand<T>`, `IIdempotent`, `IQueryHandler<,>`,
 `ICommandHandler<,>`, `IIdempotentCommandHandler<,>`, or `Unit`. Those types
-come from `TimeWarp.Mediator` (flowed in by the Nuru package). The 3.0 betas
-reference `TimeWarp.Mediator` 14.0.0-beta.4. Stable Nuru 3.0.0 references stable
-`TimeWarp.Mediator` 14.0.0, so you don't need a prerelease opt-in for Mediator.
-If you also pin `TimeWarp.Mediator.*` yourself (for example in
-`Directory.Packages.props`), move it to 14.0.0 when you move Nuru to 3.0.0.
+come from `TimeWarp.Mediator` (flowed in by the Nuru package). Published 3.0
+betas through 3.0.0-beta.79 reference `TimeWarp.Mediator` 14.0.0-beta.4. Later
+Nuru builds, including stable 3.0.0, reference stable `TimeWarp.Mediator` 14.0.0,
+so you don't need a prerelease opt-in for Mediator. If you also pin
+`TimeWarp.Mediator.*` yourself (for example in `Directory.Packages.props`),
+use 14.0.0 with those Nuru versions.
 
 1. Add `using TimeWarp.Mediator;` next to `using TimeWarp.Nuru;`, or a global
    `<Using Include="TimeWarp.Mediator" />`.

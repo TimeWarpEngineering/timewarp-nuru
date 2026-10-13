@@ -2,8 +2,8 @@
 
 Paste everything below the line over the `--generate-notes` output on release day. Keep the
 generated "Full Changelog" compare link at the bottom. Before pasting, re-check the
-"Launch gates" in `task.md` (gate #2, kanban 489: `Directory.Packages.props` must reference
-`TimeWarp.Mediator.*` `14.0.0`, not a beta, or the Mediator sentence below is false). Every bullet here was verified against
+"Launch gates" in `task.md` (gate #2, kanban 489: `Directory.Packages.props` references
+`TimeWarp.Mediator.*` `14.0.0`. Re-check that pin before pasting, or the Mediator sentence below is false). Every bullet here was verified against
 `3.0.0-beta.79` on 2026-10-09.
 
 ---

@@ -44,9 +44,9 @@ No NU5104 suppression. The 3.0.0 release notes and migration guide must not need
 - [x] Mediator consumers enumerated (which TimeWarp repos reference `TimeWarp.Mediator.*`, at which versions)
 - [x] Dogfood task(s) filed for consumers not yet on the current Mediator beta (one per repo, `ganda kanban reserve --repo <repo>`) — none needed: every consumer is already on beta.4
 - [x] Release task filed in timewarp-mediator for `14.0.0`, linked here: timewarp-mediator kanban 014 (depends on 013)
-- [ ] After Mediator 14.0.0 ships: Nuru `Directory.Packages.props` → `14.0.0`, CI green
+- [x] After Mediator 14.0.0 ships: Nuru `Directory.Packages.props` → `14.0.0`, CI green
 - [x] Release notes and migration guide say what consumers need to do
-- [ ] `dotnet pack` of `source/timewarp-nuru` on the 3.0.0 version shows no NU5104 (or the documented suppression)
+- [x] `dotnet pack` of `source/timewarp-nuru` at `Version=3.0.0` raises no NU5104 for `TimeWarp.Mediator.*`. The pack still errors NU5104 for `TimeWarp.Amuru` 2.0.0-beta.2 only (task 494). Not suppressed.
 - [ ] PR merged
 
 ## Results
@@ -77,16 +77,36 @@ Known dogfood breakage: timewarp-mediator#64 (internal request types → CS0051)
 
 ### Docs updated
 
-- `documentation/user/guides/migrating-to-3.0.md`: betas use 14.0.0-beta.4; stable 3.0.0 references stable
-  14.0.0, no prerelease opt-in for Mediator; bump your own `TimeWarp.Mediator.*` pins with Nuru.
-- `kanban/to-do/487-*/release-notes.md`: states the stable Mediator dependency; pre-paste check names gate #2.
-- `kanban/to-do/487-*/task.md`: launch gate #2 records the decision.
+- `documentation/user/guides/migrating-to-3.0.md`: published betas through 3.0.0-beta.79 use
+  14.0.0-beta.4; later Nuru builds, including stable 3.0.0, reference stable 14.0.0. No prerelease
+  opt-in for Mediator. Move your own `TimeWarp.Mediator.*` pins to 14.0.0 with those Nuru versions.
+- `kanban/to-do/487-*/release-notes.md`: states the stable Mediator dependency; the pre-paste check
+  names the 14.0.0 pin.
+- `kanban/to-do/487-*/task.md`: launch gate #2 is checked. The pin is 14.0.0.
 
-### Remaining (unblocked: Mediator 14.0.0 shipped 2026-10-13)
+### Bump (2026-10-13)
 
-- Bump `Directory.Packages.props:33-34` from `14.0.0-beta.5` (task 498) to `14.0.0`, CI green. Confirm the nuget.org flat index
-  lists `14.0.0` for Contracts and Generators first.
-- `dotnet pack source/timewarp-nuru` on 3.0.0 shows no NU5104.
+nuget.org flat index lists `14.0.0` for `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators`
+(also `TimeWarp.Mediator`). `Directory.Packages.props` pins both Nuru packages at `14.0.0`. The
+`TimeWarpMediatorAssembly` comment names 14.0.0. Changelog Unreleased records the move from beta.5.
+
+`dotnet build timewarp-nuru.slnx -c Release`: 0 warnings, 0 errors. `./bin/dev verify-samples`: 64/64.
+`dotnet tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode total 1883, passed 1877, skipped 6, failed 0.
+No TWM005–TWM011. `endpoint-hello-world` prints `Hello World`. `calculator add 2 3` prints `5`.
+`ganda repo audit`: 30 passed, 0 failed.
+
+The rebuilt `TimeWarp.Nuru.3.0.0-beta.80.nupkg` nuspec depends on `TimeWarp.Mediator.Contracts` and
+`TimeWarp.Mediator.Generators` at `14.0.0` (`include="All"` on Generators).
+
+### Pack at 3.0.0
+
+`dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.0` fails with one
+NU5104, promoted to an error:
+
+`A stable release of a package should not have a prerelease dependency. Either modify the version spec of dependency "TimeWarp.Amuru [2.0.0-beta.2, )" or update the version field in the nuspec.`
+
+Mediator is not named. No `NoWarn` was added. nuget.org has no `TimeWarp.Amuru` 2.0.0 (latest is
+`2.0.0-beta.2`). That remaining warning is task 494's stable-Nuru gate, outside this id.
 
 ### How to validate
 
@@ -94,20 +114,18 @@ Known dogfood breakage: timewarp-mediator#64 (internal request types → CS0051)
 
 ```bash
 grep -n 'TimeWarp.Mediator' Directory.Packages.props
-grep -n 'Mediator' documentation/user/guides/migrating-to-3.0.md | head -5
-git -C ~/worktrees/github.com/TimeWarpEngineering/timewarp-mediator/master fetch -q && \
-  git -C ~/worktrees/github.com/TimeWarpEngineering/timewarp-mediator/master show \
-  origin/master:kanban/to-do/014-release-timewarpmediator-1400-stable-gates-nuru-300/task.md | head -5
-# after Mediator 14.0.0 ships and the bump lands:
-dotnet pack source/timewarp-nuru -c Release -p:Version=3.0.0 2>&1 | grep -c NU5104
+grep -n '14.0.0' documentation/user/guides/migrating-to-3.0.md | head -5
+dotnet build source/timewarp-nuru/timewarp-nuru.csproj -c Release
+unzip -p artifacts/packages/TimeWarp.Nuru.3.0.0-beta.80.nupkg TimeWarp.Nuru.nuspec | grep Mediator
+dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.0 -o /tmp/nuru-489-pack
 ```
 
 **Expect:**
 
-- Today: props still show `14.0.0-beta.4`; after the bump, `14.0.0` on both lines.
-- The migration guide says stable 3.0.0 references stable `TimeWarp.Mediator` 14.0.0.
-- The mediator 014 kitchen exists on origin master with the title above.
-- After the bump, the pack grep prints `0`.
+- Both `PackageVersion` lines are `14.0.0`.
+- The migration guide says later Nuru builds, including stable 3.0.0, reference stable `TimeWarp.Mediator` 14.0.0.
+- The nuspec lists `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators` at `14.0.0`.
+- Pack exits non-zero with one NU5104, and that line names `TimeWarp.Amuru` `2.0.0-beta.2`. It does not name Mediator.
 
 ## Notes
 
@@ -119,13 +137,14 @@ dotnet pack source/timewarp-nuru -c Release -p:Version=3.0.0 2>&1 | grep -c NU51
 - Decision recorded for the maintainer: claude 2412bd45 (2026-10-12)
 - Consumers enumerated, timewarp-mediator 014 filed, docs updated: claude implement oracle (2026-10-12)
 - Mediator 14.0.0 release recorded, task unblocked: Claude (timewarp-mediator cockpit session) (2026-10-13)
+- Pin moved to 14.0.0, CI green, pack checked: grok implement oracle (2026-10-13)
 
 ## Unblocked
 
 2026-10-13: TimeWarp.Mediator `14.0.0` stable is released (timewarp-mediator kanban 017, which replaced archived 014).
 Tag `v14.0.0` at `96e3e42`; publish run 38408409563 pushed Contracts, Mediator, Generators and Analyzers at 13:53 UTC;
 https://github.com/TimeWarpEngineering/timewarp-mediator/releases/tag/v14.0.0. The stable is `14.0.0-beta.5` unchanged,
-which Nuru dogfooded in task 498 with zero TWM diagnostics. The Remaining items above can proceed.
+which Nuru dogfooded in task 498 with zero TWM diagnostics. The pin bump is in ### Bump above.
 
 ## Blocked (history)
 

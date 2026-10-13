@@ -36,19 +36,89 @@ Filed by Claude (timewarp-mediator cockpit session) at Steven's request.
 
 ## Checklist
 
-- [ ] `ganda nuget outdated` re-run at start
-- [ ] Bump `Directory.Packages.props` (Mediator x2, CodeAnalysis.CSharp, Build.Utilities.Core, or holds recorded)
-- [ ] Release build: no CS errors; zero TWM diagnostics or each triaged
-- [ ] CS0436 before/after recorded
-- [ ] Build, tests, samples, AOT publish pass
-- [ ] Breakages from the Mediator bump filed on timewarp-mediator
-- [ ] Changelog updated
-- [ ] Results: before/after versions table, TWM findings, verdict for Mediator 14.0.0 stable readiness
-- [ ] `ganda repo audit` clean; PR merged
+- [x] `ganda nuget outdated` re-run at start
+- [x] Bump `Directory.Packages.props` (Mediator x2, CodeAnalysis.CSharp, Build.Utilities.Core, or holds recorded)
+- [x] Release build: no CS errors; zero TWM diagnostics or each triaged
+- [x] CS0436 before/after recorded
+- [x] Build, tests, samples, AOT publish pass
+- [x] Breakages from the Mediator bump filed on timewarp-mediator (none)
+- [x] Changelog updated
+- [x] Results: before/after versions table, TWM findings, verdict for Mediator 14.0.0 stable readiness
+- [ ] `ganda repo audit` clean; PR merged (audit on this walk; PR is the host open-pr node)
 
 ## Session
 
 - Created: 1480458 (2026-10-13)
+- Implementation: grok `01a134e8-b551-7b50-99f2-bb4ea6c6e5e3` (2026-10-13)
+
+## Results
+
+`ganda nuget outdated` at start listed the same 4 packages as the filing. Both Mediator pins are now `14.0.0-beta.5`. The other two stay on their existing floors.
+
+| Package | From | Latest | Decision |
+|---------|------|--------|----------|
+| TimeWarp.Mediator.Contracts | 14.0.0-beta.4 | 14.0.0-beta.5 | updated |
+| TimeWarp.Mediator.Generators | 14.0.0-beta.4 | 14.0.0-beta.5 | updated |
+| Microsoft.CodeAnalysis.CSharp | 5.6.0 | 5.9.0 | **held at 5.6.0** |
+| Microsoft.Build.Utilities.Core | 18.9.6 | 18.10.1 | **held at 18.9.6** |
+
+- **Roslyn floor**: `TimeWarp.Nuru.Analyzers` compiles against `Microsoft.CodeAnalysis.CSharp` and does not pack it. SDK 10.0.3xx ships Roslyn 5.6.0; 5.9.0 ships only in SDK 10.0.400+. Raising the pin would stop the analyzer loading on 10.0.3xx consumers. The comment in `Directory.Packages.props` already records this. Confirmed still the right hold.
+- **MSBuild floor**: 18.10.1 drops `lib/net10.0` (net11.0 only) and stops copying `Microsoft.Build.Framework.dll` into the build-task output that TimeWarp.Nuru packs. 18.9.6 remains the latest stable with `net10.0`. Comment already records this.
+
+**TWM005–TWM011:** none.
+
+- `dotnet build timewarp-nuru.slnx -c Release`: 0 warnings, 0 errors. No TWM diagnostics.
+- `./bin/dev verify-samples`: 64/64. No TWM diagnostics.
+- `dotnet publish` of `tests/test-apps/timewarp-nuru-testapp-delegates` (`-c Release -r linux-x64 -p:PublishAot=true`): exit 0. No TWM diagnostics. No IL2026 or IL3050. Four CS0436 warnings, all `Mediator` imported from `TimeWarp.Nuru` (InternalsVisibleTo). The native binary runs (`status` prints `✓ System is running`).
+- CI runner build: no TWM diagnostics.
+
+Nothing from this bump was filed on timewarp-mediator.
+
+**CS0436** for `dotnet build tests/ci-tests/run-ci-tests.cs -c Release`:
+
+The runner's `NoWarn` includes CS0436 (`tests/Directory.Build.props` and `tests/ci-tests/Directory.Build.props`), so the stock command prints **0** before and **0** after. Task 475 recorded the warnings that suppression hides. With CS0436 removed from `NoWarn` and listed in `WarningsNotAsErrors` (not committed):
+
+- Before (14.0.0-beta.4): **4**
+- After (14.0.0-beta.5): **4**
+
+All four name `Mediator` imported from `TimeWarp.Nuru.Mcp`. Same cause as task 475: the multi-mode assembly needs MCP and search internals, and that friend access re-exposes the internal generated `Mediator`. Unchanged.
+
+**Tests:** `ganda runfile cache --clear` then `dotnet run tests/ci-tests/run-ci-tests.cs` exited 0. Multi-mode grand total 1883, passed 1877, skipped 6, failed 0. Standalone phase passed (generator-17 through generator-54, including the two check-version files).
+
+**Samples run:** `endpoint-hello-world` with no args prints `Hello World`; `greet Ada` prints `Hello, Ada!`. `calculator add 2 3` prints `5`.
+
+**Verdict:** ready for Mediator 14.0.0 stable. Nuru's generator hosts (library, MCP, search, samples, CI runner, Native AOT test app) build and run on 14.0.0-beta.5 with zero TWM005–TWM011 diagnostics and no runtime failures in the CI gate.
+
+The packed `TimeWarp.Nuru` nuspec depends on `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Generators` at `14.0.0-beta.5`.
+
+`ganda repo audit`: 30 passed, 0 failed. "Repository passes all audit checks."
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda nuget outdated
+dotnet build timewarp-nuru.slnx -c Release
+./bin/dev verify-samples
+dotnet run tests/ci-tests/run-ci-tests.cs
+dotnet publish tests/test-apps/timewarp-nuru-testapp-delegates/timewarp-nuru-testapp-delegates.csproj -c Release -r linux-x64 -p:PublishAot=true
+dotnet run samples/endpoints/01-hello-world/endpoint-hello-world.cs --
+dotnet run samples/endpoints/02-calculator/calculator.cs -- add 2 3
+unzip -p artifacts/packages/TimeWarp.Nuru.3.0.0-beta.80.nupkg TimeWarp.Nuru.nuspec | grep Mediator
+ganda repo audit
+```
+
+Expect:
+
+- `ganda nuget outdated` lists only `Microsoft.CodeAnalysis.CSharp` (5.6.0 → 5.9.0) and `Microsoft.Build.Utilities.Core` (18.9.6 → 18.10.1).
+- The Release solution build succeeds with 0 warnings and 0 errors, and prints no TWM005–TWM011.
+- `verify-samples` prints `64/64 samples built successfully`.
+- The CI runner exits 0. Multi-mode total 1883, passed 1877, skipped 6, failed 0.
+- AOT publish exits 0, prints no IL2026 or IL3050, and prints 4 CS0436 warnings for `Mediator` imported from `TimeWarp.Nuru`.
+- Hello world prints `Hello World`. Calculator prints `5`.
+- The nuspec lists both Mediator packages at `14.0.0-beta.5`.
+- Audit prints that the repository passes all audit checks.
 
 ## Notes
 

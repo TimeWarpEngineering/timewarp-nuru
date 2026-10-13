@@ -9,12 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **DevCli**: `dev release` passes `--prerelease` to `gh release create` when `<Version>` has a SemVer prerelease suffix, so the GitHub Release flag matches NuGet. `--dry-run` prints the same command it runs (486).
+- **TimeWarp.Mediator 14.0.0-beta.5**: Contracts and Generators moved from 14.0.0-beta.4 (498). This is the dogfood pin ahead of Mediator 14.0.0 stable. Release, sample, and Native AOT builds report zero TWM005–TWM011 diagnostics.
 - **Dependencies**: Roslynator analyzers 5.0.1 and Spectre.Console.Cli 0.57.2 (benchmarks only); neither ships to consumers. `Microsoft.CodeAnalysis.CSharp` stays at 5.6.0, so the minimum consumer SDK is unchanged (10.0.3xx); 5.9.0 would require SDK 10.0.400. `Microsoft.Build.Utilities.Core` stays at 18.9.6 because 18.10.1 has no `net10.0` build.
 
 ### Fixed
 - **Packaging**: The package now ships `build/TimeWarp.Nuru.props` and `buildTransitive/TimeWarp.Nuru.props`, which append `TimeWarp.Nuru.Generated` to `InterceptorsNamespaces`. A fresh console app or a `#:package TimeWarp.Nuru` runfile builds with no extra properties; previously both failed with CS9137 (488).
 - **Completion**: `--generate-completion bash` works in plain bash. The script uses the bash-completion package (`_init_completion`, `_filedir`) when it is loaded and otherwise reads `COMP_WORDS`/`COMP_CWORD` and calls `compgen` itself; previously Tab printed `_init_completion: command not found`. The zsh script runs `compinit` when `compdef` is not defined yet (492).
 - **Analyzers**: `NURU_H002` no longer reports a nested lambda's own parameter as a closure, so `(int[] ids) => ids.Sum(i => (long)i)` builds. The validator now checks whether a local or parameter is declared inside the handler instead of matching names, which also stops false reports on pattern variables declared in the handler (491).
+- **REPL**: `--interactive` no longer throws `InvalidOperationException` when stdin is redirected. With piped input the REPL reads whole lines, runs them in order, and exits cleanly at EOF; an unusable console prints one line to stderr and returns a non-zero exit code instead of crashing (493).
+- **REPL**: `NuruApp.RunReplAsync()` now returns `Task<int>` (the last command's exit code, or non-zero when the console is unusable) and `--interactive` propagates it as the process exit code instead of always returning 0 (493).
 
 ## [3.0.0-beta.79] - 2026-10-06
 

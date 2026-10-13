@@ -448,3 +448,10 @@ nuru.severity = off
 # generated/.generated — generator-emitted dirs mirror namespaces, recreated on build;
 # build — NuGet convention dirs whose props/targets MUST match the PackageId exactly.
 kebab-path-names.prune = workspace,presentations,generated,.generated,build
+# kanban-duplicate-ids (ganda >= 1.0.0-beta.38): 16 ids in kanban/done/ are used by two or
+# more unrelated tasks (002, 003, 007, 009, 013, 017, 018, 019, 026, 043, 070, 091, 148, 242,
+# 377, 406). They predate CAS-allocated ids via `ganda kanban create`, and they only exist in
+# closed history that commits, PRs, and changelog entries already cite by number. Renumbering
+# them would rewrite that history for no benefit; new ids are allocated by ganda and cannot
+# collide. The check stays off until a scoped variant (open columns only) exists.
+kanban-duplicate-ids.severity = off

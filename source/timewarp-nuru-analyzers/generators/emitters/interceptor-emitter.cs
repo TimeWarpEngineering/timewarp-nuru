@@ -203,13 +203,13 @@ internal static class InterceptorEmitter
     }
 
     // Method signature - matches NuruApp.RunReplAsync signature
-    sb.AppendLine($"  public static async global::System.Threading.Tasks.Task RunReplAsync_Intercepted{methodSuffix}");
+    sb.AppendLine($"  public static async global::System.Threading.Tasks.Task<int> RunReplAsync_Intercepted{methodSuffix}");
     sb.AppendLine("  (");
     sb.AppendLine("    this NuruApp app,");
     sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
-    sb.AppendLine($"    await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine($"    return await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
     sb.AppendLine("  }");
     sb.AppendLine();
   }
@@ -1490,8 +1490,7 @@ internal static class InterceptorEmitter
       sb.AppendLine("    // Emitted BEFORE user routes so catch-all routes don't intercept it");
       sb.AppendLine("    if (routeArgs is [\"--interactive\"] or [\"-i\"])");
       sb.AppendLine("    {");
-      sb.AppendLine($"      await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
-      sb.AppendLine("      return 0;");
+      sb.AppendLine($"      return await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
       sb.AppendLine("    }");
       sb.AppendLine();
 
@@ -1501,8 +1500,7 @@ internal static class InterceptorEmitter
         sb.AppendLine("    // Auto-start REPL when no arguments provided (AutoStartWhenEmpty = true)");
         sb.AppendLine("    if (routeArgs.Length == 0)");
         sb.AppendLine("    {");
-        sb.AppendLine($"      await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
-        sb.AppendLine("      return 0;");
+        sb.AppendLine($"      return await RunReplAsync{methodSuffix}(app, cancellationToken).ConfigureAwait(false);");
         sb.AppendLine("    }");
         sb.AppendLine();
       }

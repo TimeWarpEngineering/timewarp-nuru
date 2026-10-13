@@ -25,6 +25,7 @@ public sealed class ReplSession : IDisposable
   private readonly ITerminal Terminal;
   private readonly ReplCommands Commands;
   private bool Running;
+  private bool InputUnavailable;
   private bool Disposed;
 
   // Profile the console reader actually resolved (explicit, named, or JSON config).
@@ -105,7 +106,7 @@ public sealed class ReplSession : IDisposable
   /// <param name="commandExecutor">Delegate to execute commands.</param>
   /// <param name="loggerFactory">Logger factory for logging operations.</param>
   /// <param name="cancellationToken">Token to cancel the REPL loop.</param>
-  public static async Task RunAsync(
+  public static async Task<int> RunAsync(
     NuruApp nuruApp,
     ReplOptions replOptions,
     IReplRouteProvider routeProvider,
@@ -121,7 +122,7 @@ public sealed class ReplSession : IDisposable
 
     try
     {
-      await session.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
+      return await session.RunInstanceAsync(cancellationToken).ConfigureAwait(false);
     }
     finally
     {
@@ -169,17 +170,22 @@ public sealed class ReplSession : IDisposable
 
   private async Task<int> ProcessCommandLoopAsync(CancellationToken cancellationToken)
   {
+    // Kanban 493: only executed commands (and an unusable console) set the exit code.
+    // EOF, exit/quit, blank lines, and built-ins leave it alone, so a piped script whose
+    // last command failed still exits non-zero.
     int lastExitCode = 0;
 
     while (Running && !cancellationToken.IsCancellationRequested)
     {
-      lastExitCode = await ProcessSingleCommandAsync(cancellationToken).ConfigureAwait(false);
+      int? exitCode = await ProcessSingleCommandAsync(cancellationToken).ConfigureAwait(false);
+      if (exitCode is not null) lastExitCode = exitCode.Value;
     }
 
     return lastExitCode;
   }
 
-  private async Task<int> ProcessSingleCommandAsync(CancellationToken cancellationToken)
+  /// <returns>The command's exit code, or null when nothing was executed.</returns>
+  private async Task<int?> ProcessSingleCommandAsync(CancellationToken cancellationToken)
   {
     // Read input
     string? input = await ReadCommandInputAsync().ConfigureAwait(false);
@@ -187,21 +193,24 @@ public sealed class ReplSession : IDisposable
     // Handle EOF (Ctrl+D on Unix, Ctrl+Z on Windows)
     if (input is null)
     {
+      // Unusable console: error already reported, report failure instead of a clean EOF.
+      if (InputUnavailable) return 1;
+
       await Terminal.WriteLineAsync().ConfigureAwait(false);
       Running = false;
-      return 0;
+      return null;
     }
 
     // Skip empty input
     string trimmedInput = input.Trim();
-    if (string.IsNullOrEmpty(trimmedInput)) return 0;
+    if (string.IsNullOrEmpty(trimmedInput)) return null;
 
     // Parse command
     string[] args = CommandLineParser.Parse(trimmedInput);
-    if (args.Length == 0) return 0;
+    if (args.Length == 0) return null;
 
     // Handle REPL built-in commands directly (not through route matcher)
-    if (HandleReplBuiltIn(args)) return 0;
+    if (HandleReplBuiltIn(args)) return null;
 
     // Add to history (after built-in check, so "exit" etc. don't get added)
     History.Add(trimmedInput);
@@ -258,7 +267,9 @@ public sealed class ReplSession : IDisposable
 
   private async Task<string?> ReadCommandInputAsync()
   {
-    if (ReplOptions.EnableArrowHistory)
+    // Kanban 493: with redirected stdin the key-driven reader would throw from ReadKey.
+    // Read whole lines instead; null from ReadLine is EOF and ends the loop cleanly.
+    if (ReplOptions.EnableArrowHistory && !Terminal.IsInputRedirected)
     {
       ReplConsoleReader consoleReader = new(
         History.AsReadOnly,
@@ -267,7 +278,19 @@ public sealed class ReplSession : IDisposable
         LoggerFactory,
         Terminal);
       ActiveKeyBindingProfileName = consoleReader.ProfileName;
-      return await consoleReader.ReadLineAsync(ReplOptions.Prompt).ConfigureAwait(false);
+
+      try
+      {
+        return await consoleReader.ReadLineAsync(ReplOptions.Prompt).ConfigureAwait(false);
+      }
+      catch (InvalidOperationException)
+      {
+        // Kanban 493: console input is absent or unusable (ReadKey throws). Degrade, do not crash.
+        await Terminal.WriteErrorLineAsync("REPL: interactive input is unavailable (console input is redirected or absent).").ConfigureAwait(false);
+        Running = false;
+        InputUnavailable = true;
+        return null;
+      }
     }
 
     Terminal.Write(PromptFormatter.Format(ReplOptions));

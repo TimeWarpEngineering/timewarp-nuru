@@ -137,8 +137,16 @@ dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.
 - **M2 (nit, fixed):** in 487 `release-notes.md:5-7`, rewrap the pre-paste line. The "verified against beta.79" header no
   longer covers the Mediator bullet.
 - Fix pass (2026-10-13): M1 wording moved to "through 3.0.0-beta.80" in the guide and the Docs updated bullet; M2 pre-paste note rewrapped and the verification header now covers the Mediator bullet.
-- Disposition: **pending round-2 re-review**.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+### Review disposition (round 2, 2026-10-13)
+
+- Effort 2 (by-diff, 333 lines). Roster: general (review oracle, Claude Opus 5.5). Rounds: 2.
+- Round 2 re-checked M1 and M2 against the fix pass `ead0bf0b`: both fixed. A re-scan of the full product diff found nothing new.
+- Final counts: bug 0 open / 1 fixed; suggestion 0; nit 0 open / 1 fixed. Wontfix 0.
+- **Disposition: clean.** No exceptions, no escalations.
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md` (final ledger),
+  `review/disposition.md`.
 
 ## Notes
 
@@ -155,6 +163,8 @@ dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-13T15:33:39Z
 - Review oracle round 1: Claude Opus 5.5 (claude-opus-5-5), headless `ganda task work`, effort 2, general. 1 bug + 1 nit open,
   Blocked pending fix pass (2026-10-13)
+- Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), headless `ganda task work`, effort 2, general. M1/M2 verified
+  fixed, no new findings, disposition clean (2026-10-13)
 
 ## Unblocked
 

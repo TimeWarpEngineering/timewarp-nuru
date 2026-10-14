@@ -1,6 +1,6 @@
 # X thread: seven posts (text final 2026-10-09)
 
-Post 1 is `documentation/posts/blips/2026-xx-xx-nuru-3.0-release.md` (144 chars). Nostr gets its own
+Post 1 is `documentation/posts/blips/2026-10-15-nuru-3.0-release.md` (144 chars). Nostr gets its own
 blip with the link (`...-nostr.md`, 220 chars) because it is not threaded. Every post is ≤ 280 chars.
 
 Screenshots: one per feature, dark theme, code only, 1600×900. Capture them from
@@ -18,14 +18,14 @@ this folder. Attach them in post order.
 3. **JSON args**. `shot-3.png`: `./app deploy --json-args '{"env":"staging","tag":"3.0.0"}'` and its output, then the `bogus` key error (245 chars)
    > Agents are bad at shell quoting. --json-args takes inline JSON, @file, or - for stdin and binds it to the same handler a human calls. The command stays on argv. Only the values go in the JSON. Unknown keys fail loudly, so a wrong guess shows up.
 
-4. **Single file**. `shot-4.png`: `cat` of `demo/app.cs.txt` (beta.80, no `#:property` line) (205 chars)
+4. **Single file**. `shot-4.png`: `cat` of `demo/app.cs.txt` (pinned to `3.0.0`, no `#:property` line; recaptured 2026-10-15) (205 chars)
    > dotnet run app.cs. One file: routes, typed parameters, optional options, help, completion, REPL. A source generator emits the matcher at compile time, so there's no reflection and no runtime route parsing.
 
 5. **REPL + completion**. `shot-5.png`: `./app -i` session, then `key-bindings --profile Emacs` (191 chars)
    > A built-in REPL (-i) with Default, Emacs, Vi, and VSCode key-binding profiles. Shell completion for bash, zsh, fish, and PowerShell, generated from your routes: ./app --install-completion zsh
 
-6. **AOT**. `shot-6.png`: `ls -lh` prints `6.0M` and `time ./app greet x` prints `real 0m0.006s` (inside VHS, which loads the machine; every run in the recorder reads 5 to 6 ms). Quiet shell on the same binary: median 2.52 ms over 20 runs, 6,187,808 bytes (5.90 MiB). The post states no millisecond figure, so it cannot contradict the frame; the blog and r/dotnet carry the quiet `~3 ms`. These figures come from the Debug-built beta.80 package. **Release day: re-measure on Release-built 3.0.0, recapture `shot-6.png`, and update this post, the blog, and the r/dotnet draft to match (see `assets/readme.md`).**
-   > Native AOT: that one-file app, REPL and completion included, publishes to a 6.0 MB binary and runs a command in single-digit milliseconds. The generator does the work so the runtime doesn't.
+6. **AOT**. `shot-6.png`: `ls -lh` prints `5.9M` and `time ./app greet x` prints `real 0m0.006s` (inside VHS, which loads the machine). Recaptured 2026-10-15 on Release-built 3.0.0 from nuget.org. Quiet shell on the same binary: median 2.49 ms over 50 runs (5 warm-up), 6,092,832 bytes. The post states no millisecond figure, so it cannot contradict the frame; the blog and r/dotnet carry the quiet `~3 ms`.
+   > Native AOT: that one-file app, REPL and completion included, publishes to a 5.9 MB binary and runs a command in single-digit milliseconds. The generator does the work so the runtime doesn't.
 
 7. **Ask** (265 chars, URL counts as 23 on X)
    > 3.0 moves contracts to TimeWarp.Mediator, swaps the MCP server for an in-context agent skill, and fixed 22 issues an agent-run code review found before release. Migration guide and repo: github.com/TimeWarpEngineering/timewarp-nuru. A ⭐ helps more than you'd think.

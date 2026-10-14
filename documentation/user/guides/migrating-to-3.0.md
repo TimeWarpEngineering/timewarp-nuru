@@ -43,6 +43,18 @@ Endpoint kind classification uses explicit precedence: Query, then
 IdempotentCommand (`IIdempotentCommand<T>`, or `ICommand<T>` plus
 `IIdempotent`), then Command.
 
+## TimeWarp.Amuru is stable 2.0.0
+
+`TimeWarp.Nuru` depends on `TimeWarp.Amuru` for process execution (REPL clipboard
+and the generated `--capabilities` search call). This is a new dependency for 2.x
+users: Nuru 2.0.0 had no Amuru reference, so upgrading adds the `TimeWarp.Amuru`
+package to your app. Stable 3.0.0 depends on stable `TimeWarp.Amuru` 2.0.0, so
+you don't need a prerelease opt-in for Amuru (3.0.0-beta.80 was the one beta
+that depended on the 2.0.0-beta.2 prerelease). If you also pin `TimeWarp.Amuru`
+yourself (for example in `Directory.Packages.props`), use 2.0.0 with Nuru 3.0.0.
+`TimeWarp.Amuru.Tools` 2.0.0 is the matching pin for this repo's dev CLI; it
+does not flow from the Nuru package.
+
 ## `--capabilities` JSON is a flat `endpoints` list
 
 2.x had no `--capabilities` route. Betas 3.0.0-beta.42 through beta.55 emitted a

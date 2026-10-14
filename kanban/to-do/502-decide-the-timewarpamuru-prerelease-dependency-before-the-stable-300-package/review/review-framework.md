@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 115
-- Effort: 1
+- Lines changed: 238
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 80 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -17,6 +17,10 @@
 **Effort:** 1 (general only)
 **Reviewer roster:** general (the review oracle, Claude Opus 5.5)
 **Session IDs:** review oracle, Claude Opus 5.5 (session id not exposed to the headless oracle)
+
+**Round 2 (2026-10-14):** re-review of fix pass 06acf71a plus the full `master...HEAD` diff. Effort is 2 by diff
+size (238 lines). The roster stays `general`, because the host listed only that axis. The reviewer is the review
+oracle, Claude Opus 5.5.
 
 ## Ground rules
 

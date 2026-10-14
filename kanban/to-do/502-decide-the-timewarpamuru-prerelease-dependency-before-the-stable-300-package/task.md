@@ -146,6 +146,27 @@ Effort 1, roster `general` (review oracle, Claude Opus 5.5). **Disposition: pend
 - Fix on this id, then re-review in `review/round-2/`.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
+### Review (round 2, 2026-10-14)
+
+Effort 2 (by diff, 238 lines), roster `general` (review oracle, Claude Opus 5.5). **Disposition not reached: 1 bug
+and 1 nit are open.**
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 1 | 1 | 0 |
+| suggestion | 0 | 1 | 0 |
+| nit | 1 | 0 | 0 |
+
+- **M1 (bug, fixed)** and **M2 (suggestion, fixed):** both are resolved by 06acf71a.
+- **M3 (bug, open):** "earlier 3.0 betas depend on Amuru 1.x" is false. The nuget.org nuspecs show 3.0.0-beta.2
+  through beta.57 have no Amuru dependency, and only beta.58–79 use 1.x. Round 1's suggested wording caused this.
+  The same sentence appears in `changelog.md:13`, `migrating-to-3.0.md:51-52`, 487 `release-notes.md:54-55`,
+  487 `task.md:66`, and this file at lines 38, 88, and 129. Fix: "3.0.0-beta.58 through beta.79 depend on Amuru 1.x;
+  earlier betas have no Amuru dependency". Or drop the beta history from the guide and the release notes.
+- **M4 (nit, open):** `migrating-to-3.0.md:53` is 130 characters. Rewrap it to the guide's 80-column width.
+- Fix on this id, then re-review in `review/round-3/`.
+- Paths: `review/round-2/general.md`, `review/round-2/merged.md` (the live ledger).
+
 ## Notes
 
 - Found by 489 (2026-10-13) while verifying the Mediator pin; recorded there under "Pack at 3.0.0".
@@ -160,3 +181,4 @@ Effort 1, roster `general` (review oracle, Claude Opus 5.5). **Disposition: pend
 - Pin moved to 2.0.0, docs updated, CI green, pack checked: Grok implement oracle (2026-10-14)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T02:49:20Z
 - Review oracle round 1: Claude Opus 5.5 (tw-implementation-review, effort 1, general). 1 bug and 1 suggestion are open. Blocked on the fix loop. 2026-10-14
+- Review oracle round 2: Claude Opus 5.5 (tw-implementation-review, effort 2, general). M1 and M2 are fixed. M3 (bug, wrong 1.x beta range) and M4 (nit, line wrap) are open. Blocked on the fix loop. 2026-10-14

@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **DevCli**: `dev release` passes `--prerelease` to `gh release create` when `<Version>` has a SemVer prerelease suffix, so the GitHub Release flag matches NuGet. `--dry-run` prints the same command it runs (486).
 - **TimeWarp.Mediator 14.0.0**: Contracts and Generators moved from 14.0.0-beta.5 to stable 14.0.0 (489), after the beta.5 dogfood (498). Generated host types stay internal to the compilation that emits them. A stable Nuru package does not depend on a prerelease of Mediator, so consumers do not need a prerelease opt-in for it.
-- **TimeWarp.Amuru 2.0.0**: `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` moved from 2.0.0-beta.2 to stable 2.0.0 (502). A stable Nuru package does not depend on a prerelease of Amuru, so consumers do not need a prerelease opt-in for it. Only 3.0.0-beta.80 depends on 2.0.0-beta.2; earlier 3.0 betas depend on Amuru 1.x.
+- **TimeWarp.Amuru 2.0.0**: `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` moved from 2.0.0-beta.2 to stable 2.0.0 (502). A stable Nuru package does not depend on a prerelease of Amuru, so consumers do not need a prerelease opt-in for it. 3.0.0-beta.80 was the one beta that depended on the 2.0.0-beta.2 prerelease.
 - **Dependencies**: Roslynator analyzers 5.0.1 and Spectre.Console.Cli 0.57.2 (benchmarks only); neither ships to consumers. `Microsoft.CodeAnalysis.CSharp` stays at 5.6.0, so the minimum consumer SDK is unchanged (10.0.3xx); 5.9.0 would require SDK 10.0.400. `Microsoft.Build.Utilities.Core` stays at 18.9.6 because 18.10.1 has no `net10.0` build.
 
 ### Fixed

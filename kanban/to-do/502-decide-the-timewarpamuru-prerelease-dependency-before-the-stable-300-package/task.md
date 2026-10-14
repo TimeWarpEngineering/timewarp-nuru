@@ -35,7 +35,7 @@ https://github.com/TimeWarpEngineering/timewarp-amuru/releases/tag/v2.0.0, 2026-
 3. `dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.0` must exit 0 with **zero**
    NU5104. If any other prerelease dependency surfaces, record it in Results and stop; do not suppress.
 4. Release notes draft (`kanban/to-do/487-*/release-notes.md`) and `documentation/user/guides/migrating-to-3.0.md`:
-   state that 3.0.0 depends on stable Amuru 2.0.0 (only beta.80 depends on 2.0.0-beta.2; earlier betas on 1.x). Tick 487
+   state that 3.0.0 depends on stable Amuru 2.0.0 (beta.80 was the one beta on 2.0.0-beta.2). Tick 487
    launch gate #5.
 5. `bin/dev build`, 64 samples, and the full CI suite green (`ganda runfile cache --clear` first).
 
@@ -85,7 +85,7 @@ No public API changed between 2.0.0-beta.2 and 2.0.0, so this pin is a version b
 
 ### Docs updated
 
-- `changelog.md` Unreleased/Changed: `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` moved from 2.0.0-beta.2 to stable 2.0.0 (502). Consumers do not need a prerelease opt-in. Only 3.0.0-beta.80 depends on 2.0.0-beta.2; earlier 3.0 betas depend on Amuru 1.x.
+- `changelog.md` Unreleased/Changed: `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` moved from 2.0.0-beta.2 to stable 2.0.0 (502). Consumers do not need a prerelease opt-in. 3.0.0-beta.80 was the one beta on the 2.0.0-beta.2 prerelease. Full history (from nuget.org nuspecs): beta.2–57 no Amuru, beta.58–71 Amuru 1.0.0-beta.17…32, beta.72–76 1.0.0, beta.79 1.1.1, beta.80 2.0.0-beta.2.
 - `documentation/user/guides/migrating-to-3.0.md`: stable 3.0.0 depends on `TimeWarp.Amuru` 2.0.0. Own pins of `TimeWarp.Amuru` should be 2.0.0 with that Nuru version. `TimeWarp.Amuru.Tools` 2.0.0 is this repo's dev CLI pin and does not flow from the Nuru package.
 - `kanban/to-do/487-*/release-notes.md`: states the stable Amuru dependency. The pre-paste check names the 2.0.0 pin (gate #5).
 - `kanban/to-do/487-*/task.md`: launch gate #5 is checked. The pin is 2.0.0.
@@ -126,7 +126,7 @@ unzip -p /tmp/nuru-502-pack/TimeWarp.Nuru.3.0.0.nupkg TimeWarp.Nuru.nuspec | gre
 **Expect:**
 
 - Both `PackageVersion` lines are `2.0.0` (`TimeWarp.Amuru` and `TimeWarp.Amuru.Tools`).
-- The migration guide and changelog say stable 3.0.0 depends on `TimeWarp.Amuru` 2.0.0, and that only 3.0.0-beta.80 depends on 2.0.0-beta.2 (earlier 3.0 betas on Amuru 1.x).
+- The migration guide and changelog say stable 3.0.0 depends on `TimeWarp.Amuru` 2.0.0, and that beta.80 was the one beta on 2.0.0-beta.2. Beta-by-beta history stays in this kitchen only.
 - Pack exits 0. The nuspec lists `TimeWarp.Amuru` at `2.0.0`. The pack log does not contain `NU5104`.
 
 ### Review (round 1, 2026-10-14)
@@ -148,22 +148,22 @@ Effort 1, roster `general` (review oracle, Claude Opus 5.5). **Disposition: pend
 
 ### Review (round 2, 2026-10-14)
 
-Effort 2 (by diff, 238 lines), roster `general` (review oracle, Claude Opus 5.5). **Disposition not reached: 1 bug
-and 1 nit are open.**
+Effort 2 (by diff, 238 lines), roster `general` (review oracle, Claude Opus 5.5). **Disposition: pending round-3 re-review. M3 and M4 fixed
+on 2026-10-14.**
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
 | bug | 1 | 1 | 0 |
 | suggestion | 0 | 1 | 0 |
-| nit | 1 | 0 | 0 |
+| nit | 0 | 1 | 0 |
 
 - **M1 (bug, fixed)** and **M2 (suggestion, fixed):** both are resolved by 06acf71a.
-- **M3 (bug, open):** "earlier 3.0 betas depend on Amuru 1.x" is false. The nuget.org nuspecs show 3.0.0-beta.2
+- **M3 (bug, fixed):** "earlier 3.0 betas depend on Amuru 1.x" is false. The nuget.org nuspecs show 3.0.0-beta.2
   through beta.57 have no Amuru dependency, and only beta.58–79 use 1.x. Round 1's suggested wording caused this.
   The same sentence appears in `changelog.md:13`, `migrating-to-3.0.md:51-52`, 487 `release-notes.md:54-55`,
   487 `task.md:66`, and this file at lines 38, 88, and 129. Fix: "3.0.0-beta.58 through beta.79 depend on Amuru 1.x;
   earlier betas have no Amuru dependency". Or drop the beta history from the guide and the release notes.
-- **M4 (nit, open):** `migrating-to-3.0.md:53` is 130 characters. Rewrap it to the guide's 80-column width.
+- **M4 (nit, fixed):** `migrating-to-3.0.md:53` is 130 characters. Rewrap it to the guide's 80-column width.
 - Fix on this id, then re-review in `review/round-3/`.
 - Paths: `review/round-2/general.md`, `review/round-2/merged.md` (the live ledger).
 
@@ -178,6 +178,7 @@ and 1 nit are open.**
 - Created: Claude Fable 5.1, session 31dfb8d1 (2026-10-13), filed from the 489 merge
 - Decision recorded (ship Amuru first) and task unblocked on Amuru 2.0.0: Claude Fable 5.1 (2026-10-14)
 - Review round 1 fix pass (M1 beta-range wording in 5 places, M2 new-dependency note in the guide): Claude Fable 5.1 (2026-10-14). The wrong range came from the scope line above.
+- Review round 2 fix pass (M3, M4): user-facing docs no longer narrate beta-by-beta Amuru history; they state the stable dependency and that beta.80 was the one beta on the prerelease. Full history recorded in Results here. Guide rewrapped. Claude Fable 5.1 (2026-10-14)
 - Pin moved to 2.0.0, docs updated, CI green, pack checked: Grok implement oracle (2026-10-14)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T02:49:20Z
 - Review oracle round 1: Claude Opus 5.5 (tw-implementation-review, effort 1, general). 1 bug and 1 suggestion are open. Blocked on the fix loop. 2026-10-14

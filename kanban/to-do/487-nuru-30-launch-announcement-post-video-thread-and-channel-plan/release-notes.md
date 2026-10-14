@@ -51,8 +51,7 @@ myapp apply_patch --json-args @./patch.json                 # or - for stdin
 - Endpoint classes use `TimeWarp.Mediator` contracts. The generated `IMediator`, `ISender`, and
   `IPublisher` are available with or without Microsoft DI. Nuru 3.0.0 depends on stable
   `TimeWarp.Mediator` 14.0.0, so you don't need `--prerelease` or a prerelease opt-in for Mediator.
-- Nuru 3.0.0 depends on stable `TimeWarp.Amuru` 2.0.0 (new since 2.x). Only 3.0.0-beta.80
-  depended on `TimeWarp.Amuru` 2.0.0-beta.2; earlier 3.0 betas used Amuru 1.x. You don't need
+- Nuru 3.0.0 depends on stable `TimeWarp.Amuru` 2.0.0 (new since 2.x). You don't need
   `--prerelease` or a prerelease opt-in for Amuru.
 - Pre-release review: Grok and Claude agents filed 28 findings. 22 were fixed before the tag.
   20 of those, plus a changelog backfill, landed in 15 PRs (#283–#297, stacked in #298). The other

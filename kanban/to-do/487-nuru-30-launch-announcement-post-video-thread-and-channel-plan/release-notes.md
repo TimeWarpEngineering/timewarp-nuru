@@ -26,7 +26,7 @@ myapp deploy --json-args '{"env":"staging","tag":"3.0.0"}'  # route literal on a
 myapp apply_patch --json-args @./patch.json                 # or - for stdin
 ```
 
-📝 Blog: <BLOG URL> · 📖 [Migrating to 3.0](https://github.com/TimeWarpEngineering/timewarp-nuru/blob/master/documentation/user/guides/migrating-to-3.0.md)
+📝 Blog: https://thefreezeteam.com/posts/steven-t-cramer/2026/10/2026-10-15-nuru-3.0-release · 📖 [Migrating to 3.0](https://github.com/TimeWarpEngineering/timewarp-nuru/blob/master/documentation/user/guides/migrating-to-3.0.md)
 
 ### Agent contract
 

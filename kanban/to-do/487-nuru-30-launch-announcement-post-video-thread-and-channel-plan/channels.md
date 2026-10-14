@@ -26,7 +26,7 @@
 
 ## Per-channel copy
 
-- **Nostr blip:** `documentation/posts/blips/2026-xx-xx-nuru-3.0-release-nostr.md` (220 chars, link
+- **Nostr blip:** `documentation/posts/blips/2026-10-15-nuru-3.0-release-nostr.md` (220 chars, link
   included, no thread). Relays `wss://rilo.nostria.app` and `wss://ribo.nostria.app` still returned
   HTTP 530 on 2026-10-09. Replace them or wait for them to come back before day 0 (Stage checklist).
 
@@ -82,14 +82,14 @@
 >
 > The 1-file version: `#:package TimeWarp.Nuru`, map two routes, call `.EnableCompletion()` and
 > `.AddRepl()`, and `dotnet run app.cs` gives you help, completion for bash/zsh/fish/pwsh, and a
-> REPL. `dotnet publish app.cs -c Release -r linux-x64` makes a 6.0 MB native binary that starts
+> REPL. `dotnet publish app.cs -c Release -r linux-x64` makes a 5.9 MB native binary that starts
 > in ~3 ms.
 >
-> Write-up with code: <BLOG URL> · Repo: https://github.com/TimeWarpEngineering/timewarp-nuru
+> Write-up with code: https://thefreezeteam.com/posts/steven-t-cramer/2026/10/2026-10-15-nuru-3.0-release · Repo: https://github.com/TimeWarpEngineering/timewarp-nuru
 >
 > What's your experience with agents calling your own CLIs? MCP, plain shell, something else?
 
-Release-day note: the 6.0 MB and ~3 ms in this draft come from the Debug-built beta.80. Re-measure on Release-built 3.0.0 and update this draft, the blog and thread post 6 before posting.
+Re-measured 2026-10-15 on Release-built 3.0.0 from nuget.org: 5.9 MB (6,092,832 bytes), quiet median 2.49 ms over 50 runs. The blog and thread post 6 use the same 5.9 MB.
 
 Checked 2026-10-14 on published 3.0.0-beta.80: `sum {*ids:uint}` binds `uint[]` (`sum 1 2 3` runs), and `sum 1 x` prints
 `Error: Invalid value in 'ids'. Expected: uint[]`.

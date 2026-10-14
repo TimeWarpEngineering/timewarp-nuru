@@ -18,7 +18,7 @@ This folder holds the working drafts so the writing is reviewed like code:
 | `release-notes.md` | `v3.0.0` GitHub Release notes, pasted over `--generate-notes` on release day |
 | `demo/` | `app.cs.txt` (copy out as `app.cs`), the one-file app used by the video, blog, and screenshots, plus how to run it |
 
-Blog body goes in `documentation/posts/blogs/2026-xx-xx-nuru-3.0-release.md` (this repo) and is
+Blog body goes in `documentation/posts/blogs/2026-10-15-nuru-3.0-release.md` (this repo) and is
 pulled into thefreezeteam.com via the existing `Git` shortcode stub (see TheFreezeTeamBlog task 001
 for the path-case trap). X/Nostr short form goes in `documentation/posts/blips/` and must be ≤ 280
 characters for `ganda post`.
@@ -44,8 +44,8 @@ characters for `ganda post`.
 - [ ] Confirm the star/download/analytics baseline on launch day minus one (`channels.md` table). This is a day −1 action and can't be done early.
 
 ### Produce
-- [x] Blog body in `documentation/posts/blogs/` (long form; the canonical link for HN/Reddit): `2026-xx-xx-nuru-3.0-release.md`
-- [x] 280-char blip in `documentation/posts/blips/` for X post 1 and Nostr: `2026-xx-xx-nuru-3.0-release.md` (144 chars, X) and `…-nostr.md` (220 chars, with link)
+- [x] Blog body in `documentation/posts/blogs/` (long form; the canonical link for HN/Reddit): `2026-10-15-nuru-3.0-release.md`
+- [x] 280-char blip in `documentation/posts/blips/` for X post 1 and Nostr: `2026-10-15-nuru-3.0-release.md` (144 chars, X) and `…-nostr.md` (220 chars, with link)
 - [x] Video recorded per `video-script.md`, rendered to mp4, under 90 s, with end card — **done 2026-10-09**: `assets/nuru-3-launch.mp4` (54 s, VHS)
 - [x] Five code screenshots for thread posts 2–6 (one feature each) — **done 2026-10-14**: `assets/shot-2.png` … `shot-6.png` (VHS, 1600×900, published beta.80)
 - [x] Hero image per `hero-image.md` (1600×900, same Nuru hero + robot sidekick); store beside the blog stub in TheFreezeTeamBlog. Blocks the stub PR: every FreezeTeam post has a cover image — **done 2026-10-09**: `assets/nuru-3-hero.jpg` (Grok Imagine, 1600×900) + OG crop
@@ -79,7 +79,7 @@ will be API-identical to beta.80. The binaries differ: beta.80 is a Debug build 
 - [x] Do **not** bump `<Version>`, tag, post, or open the TheFreezeTeamBlog PR. This task changes no product code; the optional `NURU_H002` nested-lambda item stays out of scope.
 
 ### Launch (human, in order — gated on `v3.0.0` existing; everything above is done beforehand)
-- [ ] Release-day AOT re-measure, before posting: AOT-publish `demo/app.cs.txt` pinned to `3.0.0` (Release build), record `ls -lh` and the quiet median startup, recapture `shot-6.png`, and update the blog, the r/dotnet draft and thread post 6 to match (one startup figure everywhere). Steps in `assets/readme.md`. The current figures (6.0 MB, ~3 ms) come from the Debug-built beta.80.
+- [x] Release-day AOT re-measure, before posting (done 2026-10-15: 5.9 MB, 2.49 ms median): AOT-publish `demo/app.cs.txt` pinned to `3.0.0` (Release build), record `ls -lh` and the quiet median startup, recapture `shot-6.png`, and update the blog, the r/dotnet draft and thread post 6 to match (one startup figure everywhere). Steps in `assets/readme.md`. The current figures (6.0 MB, ~3 ms) come from the Debug-built beta.80.
 - [ ] Day 0: GitHub Release published → blog live → X thread (Tue–Thu, US morning) → @Grok replies within the hour → Nostr
 - [ ] Day 1: Show HN → r/dotnet
 - [ ] Day 3–5: dev.to repost of the blog; LinkedIn with the video
@@ -203,3 +203,5 @@ python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len
 - 2026-10-14 claude (review oracle, claude-opus-5-5, headless, session id not exposed): round 4, effort 2, roster general, on fix commit `76150f37`. M7 and M8 verified fixed, nothing new. Disposition clean (`review/disposition.md`).
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T09:57:22Z
 - 2026-10-14 claude (cockpit): moved back to to-do after the walk's kanban-done step; Launch and Measure stay open and this kitchen is the release-day runbook (same reason as the 2026-10-11 reopen). Moved the blog's RELEASE DAY comment below the feature list so it no longer splits it.
+- 2026-10-15 grok (Day 0 prep, executor for Nuru (Light)): `v3.0.0` released 2026-10-14 and on nuget.org, but the release body is the bare `--generate-notes` output; the curated `release-notes.md` (blog URL filled) is staged for a human `gh release edit`. Demo pinned to `3.0.0`. AOT re-measure on Release-built 3.0.0 (`dotnet publish app.cs -c Release -r linux-x64`, clean `NUGET_PACKAGES`, non-git dir): 6,092,832 bytes, `ls -lh` 5.9M; quiet median 2.49 ms over 50 runs after 5 warm-ups (python `perf_counter`, no hyperfine on the machine); `time` 0.003s. Recaptured `shot-4.png` (3.0.0 pin) and `shot-6.png` (5.9M, VHS frame 0.006s) with VHS. Blog, thread post 6 and r/dotnet now say 5.9 MB and keep ~3 ms. Blog and blips renamed to `2026-10-15-*`. The TheFreezeTeamBlog stub pulls the blog from timewarp-nuru master, so this branch must merge before the stub goes live. Nothing posted, no release edit, no merge.
+- 2026-10-15 (Nuru (Light)): merged to master by PR without the done-move. The Day 0 posts, Day 1 HN/Reddit, Day 3-7 reposts and Measure items are still open, so 487 stays in to-do. The blog file has to be on master for the TheFreezeTeamBlog stub to render, so this branch goes in now through `ganda pr merge`, on the maintainer's approval.

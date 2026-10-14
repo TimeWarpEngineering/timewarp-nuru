@@ -146,7 +146,14 @@ Still open, and outside this repo session:
 
 Earlier corrections that still hold: `--json-args` has no `command` key; the REPL flag is `-i`; completion is bash, zsh, fish, and PowerShell; one top-level `invocation`; 28 review findings, 22 fixed before the tag; the skill is `tw-nuru`; optional options use `--tag? {tag?}`; `return await app.RunAsync(args)`.
 
-Implementation review (effort 2, roster general) ran two rounds under `review/`. Disposition: **clean**. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+Implementation review (effort 2, roster general) ran two rounds under `review/` on the beta.79 pass. Disposition: **clean**. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
+Round 3 (2026-10-14, effort 2, roster general) reviewed the beta.80 re-verify delta: 273 lines, commits `70aec67b` and `94e68fd2`. **Disposition pending.** There are 2 open findings. bug: 1 open, 0 fixed, 0 wontfix. suggestion: 1 open. nit: 0. Prior M1–M6 stay fixed.
+
+- **M7 (bug):** the AOT figures in the blog, the r/dotnet draft and thread post 6 were measured on published beta.80. Kanban 503 showed that package is Debug-built. The diff also removed the release-day re-measure step, so `3.0.0` (Release, stable dependencies) would launch with numbers from a different build. Fix: add a release-day re-measure on `3.0.0`, recapture `shot-6.png`, update all three copies, and scope the "bit-identical" claim to the API.
+- **M8 (suggestion):** thread post 6 says ~6 ms (one VHS frame), and the blog and r/dotnet say ~3 ms for the same binary. Pick one figure.
+
+`review/disposition.md` is still the round-2 clean disposition. It gets rewritten after a fix pass on this id and a round-4 re-review. Ledger: `review/round-3/merged.md`.
 
 ### How to validate
 
@@ -187,3 +194,5 @@ python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len
 - 2026-10-09 grok (review oracle): session `01a11c82-bdbc-75d2-ad87-8d0ebcd6a339`. Effort 2, roster general. Round 1 reviewer `01a11c84-d196-7301-92f6-c2959d9d394a`. Round 2 reviewer `01a11c96-bbb5-7cf1-8a72-37c8cb0f2b03`. Disposition clean.
 - Review oracle: review by implementer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-08T17:40:53Z
 - 2026-10-14 grok (implement oracle): session `01a139bd-a2ce-7353-83cb-f2ed2ed16bc6`. Re-verified the launch assets against published nuget.org `3.0.0-beta.80`, captured `shot-2.png` … `shot-6.png`, and recorded Nostr 530.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T09:49:53Z
+- 2026-10-14 claude (review oracle, claude-opus-5-5, headless, session id not exposed): round 3, effort 2, roster general, on the beta.80 delta. 2 open findings (M7 bug, M8 suggestion) in `review/round-3/merged.md`. Blocked on a fix pass on this id.

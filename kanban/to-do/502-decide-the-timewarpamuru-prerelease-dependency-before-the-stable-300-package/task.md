@@ -165,7 +165,23 @@ on 2026-10-14.**
   earlier betas have no Amuru dependency". Or drop the beta history from the guide and the release notes.
 - **M4 (nit, fixed):** `migrating-to-3.0.md:53` is 130 characters. Rewrap it to the guide's 80-column width.
 - Fix on this id, then re-review in `review/round-3/`.
-- Paths: `review/round-2/general.md`, `review/round-2/merged.md` (the live ledger).
+- Paths: `review/round-2/general.md`, `review/round-2/merged.md`.
+
+### Review disposition (round 3, 2026-10-14)
+
+**Disposition: clean.** Rounds: 3. The roster is `general` (review oracle, Claude Opus 5.5): effort 1 in round 1, effort 2 by
+diff in rounds 2 and 3 (238 and 345 lines). Final counts (round 3):
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 2 | 0 |
+| suggestion | 0 | 1 | 0 |
+| nit | 0 | 1 | 0 |
+
+- M1–M4 are fixed (06acf71a, b3ab7c4c). No new findings in round 3. No wontfix and no escalations.
+- Round 3 checked the remaining claim "3.0.0-beta.80 was the one beta on 2.0.0-beta.2" against the nuget.org nuspecs.
+  beta.79 depends on Amuru `1.1.1`, beta.80 on `2.0.0-beta.2`, and beta.80 is the latest published Nuru version.
+- Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Notes
 
@@ -183,3 +199,4 @@ on 2026-10-14.**
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T02:49:20Z
 - Review oracle round 1: Claude Opus 5.5 (tw-implementation-review, effort 1, general). 1 bug and 1 suggestion are open. Blocked on the fix loop. 2026-10-14
 - Review oracle round 2: Claude Opus 5.5 (tw-implementation-review, effort 2, general). M1 and M2 are fixed. M3 (bug, wrong 1.x beta range) and M4 (nit, line wrap) are open. Blocked on the fix loop. 2026-10-14
+- Review oracle round 3: Claude Opus 5.5 (tw-implementation-review, effort 2, general). M3 and M4 are fixed, with no new findings. Disposition: clean, 0 open. 2026-10-14

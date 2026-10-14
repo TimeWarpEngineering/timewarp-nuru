@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 238
+- Lines changed: 345
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -29,3 +29,6 @@ oracle, Claude Opus 5.5.
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo and nuget.org
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+**Round 3 (2026-10-14):** re-review of fix pass b3ab7c4c (M3, M4) plus the full `master...HEAD` diff. Effort is 2 by
+diff size (345 lines). The roster is `general` (review oracle, Claude Opus 5.5). Outcome: 0 open, disposition `clean`.

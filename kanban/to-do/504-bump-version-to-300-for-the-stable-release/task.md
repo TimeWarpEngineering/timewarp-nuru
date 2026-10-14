@@ -63,7 +63,18 @@ unzip -p /tmp/504-pack/TimeWarp.Nuru.3.0.0.nupkg TimeWarp.Nuru.nuspec \
 
 Expect: `<Version>3.0.0</Version>`, `<version>3.0.0</version>`, `TimeWarp.Amuru` version `2.0.0`, `TimeWarp.Mediator.Contracts` version `14.0.0`, and `TimeWarp.Mediator.Generators` version `14.0.0`. The pack log contains no `NU5104`.
 
+### Review
+
+Round 1 (effort 1, roster: general) found 2 open issues: 1 bug and 1 nit. No disposition yet; a fix pass is needed.
+
+- **M1 (bug, open):** `documentation/user/guides/migrating-to-3.0.md:177` says beta.20 and later changes are under `## [3.0.0]` and that per-beta notes for beta.20–77 were not kept. `changelog.md` has a section for every beta from beta.20 through beta.79. `[3.0.0]` holds only the changes since beta.79.
+- **M2 (nit, open):** the `changelog.md:12` lead says "the Packaging entry", but `[3.0.0]` has two of them, and the lead does not give its "changes since beta.79" range.
+
+Files: `review/review-framework.md` and `review/round-1/merged.md` (the live ledger), plus `review/round-1/general.md`.
+
 ## Session
 
 - 2026-10-14: created and dispatched by claude 31dfb8d1 (cockpit) on the maintainer's "ok lets do it" after 487 merged (PR #318).
 - 2026-10-14: implement oracle (grok 01a13b33). Version bump, changelog heading, stable install wording, Release pack, and solution build.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T16:23:19Z
+- 2026-10-14: review oracle round 1 (claude opus-5.5, effort 1, general). 1 bug (M1) and 1 nit (M2) open; Blocked for a fix pass.

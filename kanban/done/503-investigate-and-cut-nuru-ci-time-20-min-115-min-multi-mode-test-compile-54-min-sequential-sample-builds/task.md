@@ -64,7 +64,27 @@ Get a PR / master run under ~8 minutes without losing coverage, and record what 
 - [x] Investigation done; per-phase numbers in Results
 - [x] At least the two cheap wins shipped (NuGet cache, parallel samples/standalone tests) with measured deltas
 - [x] Decision recorded on job split / larger runner
-- [ ] PR merged; master run under the target, run id in Results
+- [ ] PR merged; master run under the target, run id in Results (PR run 38518948328: 9.2 min wall clock, pipeline 8.0 min)
+
+### Hosted before/after (ubuntu-latest, ProcessorCount 4)
+
+| Phase | master run 38428046057 (before) | PR run 38518948328 (after, commit 7eb671e4) |
+|-------|------:|------:|
+| Step 3 build + layout/config gates | 0.5 min | 37.7 s |
+| Step 4 verify-samples (64) | 5.4 min | 196.1 s (3.3 min) |
+| Step 5 multi-mode compile (silent gap) | 11.5 min | 2.4 min |
+| Step 5 multi-mode execute | 0.5 min | 38.2 s |
+| Step 5 standalone (28) | 1.6 min | 58.7 s |
+| Pipeline total | 20.4 min | 478.8 s (8.0 min) |
+| Job wall clock | 20.6 min | 9.2 min |
+
+NuGet cache: hit. Gates on the hosted runner: "Package configuration verified: lib/net10.0/TimeWarp.Nuru.dll is a
+Release, optimized build." and "Package integrity verified: 4 packages unchanged since build." Suite: 1880 passed,
+0 failed. The first PR run before the fix pass (1b0a0c0e, run 38516878629) took 9.8 min wall clock.
+
+Remaining big item is the 2.4 min multi-mode compile and the 3.3 min sample step on 4 cores; a job split
+(samples and tests in parallel after build) would bring wall clock to ~max(phase) and is recorded as the next
+step if more is wanted. Not done here: it changes the single attested job shape (kanban 458).
 
 ## Notes
 
@@ -192,3 +212,4 @@ Effort 2 (by diff, 380 lines), roster `general` (review oracle, Claude Opus 5.5)
   roster general — 1 bug, 1 suggestion, 1 nit open; disposition pending fix loop (2026-10-14)
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T05:27:59Z
 - Fix pass: Claude Sonnet sub-agent for Claude Fable 5.1 (2026-10-14)
+- Lead review of the fix pass (round 2, by diff) and hosted before/after recorded: Claude Fable 5.1 (2026-10-14)

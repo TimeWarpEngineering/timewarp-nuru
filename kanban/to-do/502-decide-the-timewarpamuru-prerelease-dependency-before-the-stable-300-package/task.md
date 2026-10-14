@@ -61,9 +61,9 @@ https://github.com/TimeWarpEngineering/timewarp-amuru/releases/tag/v2.0.0, 2026-
 
 - [x] Decision made and recorded (maintainer call): option 1, ship Amuru 2.0.0 first (2026-10-13)
 - [x] Amuru 2.0.0 shipped (2026-10-14)
-- [ ] Nuru `Directory.Packages.props` -> Amuru 2.0.0, CI green
-- [ ] Release notes and migration guide say what consumers need to do
-- [ ] `dotnet pack source/timewarp-nuru -c Release -p:Version=3.0.0` exits 0 with no NU5104
+- [x] Nuru `Directory.Packages.props` -> Amuru 2.0.0, CI green
+- [x] Release notes and migration guide say what consumers need to do
+- [x] `dotnet pack source/timewarp-nuru -c Release -p:Version=3.0.0` exits 0 with no NU5104
 - [ ] PR merged
 
 ## How to validate
@@ -73,6 +73,61 @@ grep -n 'TimeWarp.Amuru' Directory.Packages.props
 curl -s https://api.nuget.org/v3-flatcontainer/timewarp.amuru/index.json
 dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.0 2>&1 | grep -c NU5104   # expect 0
 ```
+
+## Results
+
+**Decision:** option 1 (maintainer, 2026-10-13). Ship TimeWarp.Amuru 2.0.0 first, then pin Nuru to it. Do not pin back to 1.1.1 and do not suppress NU5104.
+**Reason:** a stable Nuru 3.0.0 referencing `TimeWarp.Amuru` 2.0.0-beta.2 raises NU5104 and forces every consumer onto an Amuru beta. Suppressing it (option 2) would make "stable" partly untrue. Pinning back (option 3) drops the 2.0 API Nuru already uses.
+
+Amuru 2.0.0 shipped 2026-10-14 (timewarp-amuru kanban 129, release
+[v2.0.0](https://github.com/TimeWarpEngineering/timewarp-amuru/releases/tag/v2.0.0)).
+No public API changed between 2.0.0-beta.2 and 2.0.0, so this pin is a version bump only.
+
+### Docs updated
+
+- `changelog.md` Unreleased/Changed: `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` moved from 2.0.0-beta.2 to stable 2.0.0 (502). Consumers do not need a prerelease opt-in. Published betas through 3.0.0-beta.80 depend on 2.0.0-beta.2.
+- `documentation/user/guides/migrating-to-3.0.md`: stable 3.0.0 depends on `TimeWarp.Amuru` 2.0.0. Own pins of `TimeWarp.Amuru` should be 2.0.0 with that Nuru version. `TimeWarp.Amuru.Tools` 2.0.0 is this repo's dev CLI pin and does not flow from the Nuru package.
+- `kanban/to-do/487-*/release-notes.md`: states the stable Amuru dependency. The pre-paste check names the 2.0.0 pin (gate #5).
+- `kanban/to-do/487-*/task.md`: launch gate #5 is checked. The pin is 2.0.0.
+- No csproj comment outside `kanban/done` still named `2.0.0-beta.2`. Historical mentions under `kanban/done` were left as the record of the beta pin.
+
+### Bump (2026-10-14)
+
+nuget.org flat index lists `2.0.0` for `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools`.
+`Directory.Packages.props` pins both at `2.0.0`.
+
+`ganda runfile cache --clear` cleared 1428 entries. `./bin/dev build`: each project 0 warnings, 0 errors.
+`./bin/dev verify-samples`: 64/64. `./bin/dev test` (`tests/ci-tests/run-ci-tests.cs`): exit 0.
+Multi-mode total 1883, passed 1877, skipped 6, failed 0. Standalone phase completed with no failures.
+`ganda repo audit`: 30 passed, 0 failed.
+
+### Pack at 3.0.0
+
+`dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.0 -o /tmp/nuru-502-pack`
+exited 0. `grep -c NU5104` on a second pack of the same command was 0. No other prerelease dependency
+surfaced. The `TimeWarp.Nuru.3.0.0.nupkg` nuspec depends on `TimeWarp.Amuru` at `2.0.0`. Every other
+dependency in that nuspec is a stable version (`TimeWarp.Mediator.Contracts` and
+`TimeWarp.Mediator.Generators` stay at `14.0.0`). No `NoWarn` was added.
+
+`TimeWarp.Nuru.Search` packed at `Version=3.0.0` also exited 0. It is a `DotnetTool` nuspec with no
+dependency group; the search project still takes `TimeWarp.Amuru` from the same central pin.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+grep -n 'TimeWarp.Amuru' Directory.Packages.props
+grep -n 'TimeWarp.Amuru 2.0.0' documentation/user/guides/migrating-to-3.0.md changelog.md
+dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.0 -o /tmp/nuru-502-pack
+unzip -p /tmp/nuru-502-pack/TimeWarp.Nuru.3.0.0.nupkg TimeWarp.Nuru.nuspec | grep Amuru
+```
+
+**Expect:**
+
+- Both `PackageVersion` lines are `2.0.0` (`TimeWarp.Amuru` and `TimeWarp.Amuru.Tools`).
+- The migration guide and changelog say stable 3.0.0 depends on `TimeWarp.Amuru` 2.0.0, and that betas through 3.0.0-beta.80 depend on 2.0.0-beta.2.
+- Pack exits 0. The nuspec lists `TimeWarp.Amuru` at `2.0.0`. The pack log does not contain `NU5104`.
 
 ## Notes
 
@@ -84,3 +139,4 @@ dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.
 
 - Created: Claude Fable 5.1, session 31dfb8d1 (2026-10-13), filed from the 489 merge
 - Decision recorded (ship Amuru first) and task unblocked on Amuru 2.0.0: Claude Fable 5.1 (2026-10-14)
+- Pin moved to 2.0.0, docs updated, CI green, pack checked: Grok implement oracle (2026-10-14)

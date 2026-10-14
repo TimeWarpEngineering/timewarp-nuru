@@ -30,8 +30,7 @@ REPL stdin fixes (492, 493), and Release-only packing with CI config/integrity g
 
 - Round 1: Blocked — open M1, M2
 - Fix pass (2026-10-14): M1 and M2 marked fixed on `review/round-1/merged.md`. Host runs review round 2.
-- Round 2: M1 and M2 re-verified fixed; no new findings. Disposition **clean** (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - Releasing guide: `documentation/developer/guides/releasing.md`. The promotion pipeline ships the

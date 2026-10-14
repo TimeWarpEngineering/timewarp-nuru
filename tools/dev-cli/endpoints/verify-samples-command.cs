@@ -139,7 +139,7 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       Terminal.WriteLine($"{passed}/{totalSamples} samples built successfully ({failedSamples.Count} failed)");
       Terminal.WriteLine("");
       Terminal.WriteLine("Failed samples:");
-      foreach (string failed in failedSamples)
+      foreach (string failed in failedSamples.Order(StringComparer.Ordinal))
       {
         Terminal.WriteLine($"  - {failed}");
       }

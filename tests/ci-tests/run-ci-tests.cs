@@ -66,6 +66,31 @@ int parallelism = Math.Max(1, Environment.ProcessorCount);
 WriteLine();
 WriteLine($"Standalone tests: {standaloneTests.Length} files, parallelism {parallelism}");
 
+// Build the shared ProjectReferences once (Debug, serially) so the parallel
+// `dotnet run` invocations below do not race on the same obj/bin outputs (task 503).
+string ciRepoRoot = Path.GetFullPath(Path.Combine(ciDir, "..", ".."));
+string[] sharedProjects =
+[
+  "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
+  "source/timewarp-nuru-build/timewarp-nuru-build.csproj",
+  "source/timewarp-nuru/timewarp-nuru.csproj"
+];
+
+foreach (string sharedProject in sharedProjects)
+{
+  CommandOutput sharedBuild = await Shell.Builder("dotnet")
+    .WithArguments("build", Path.Combine(ciRepoRoot, sharedProject), "-c", "Debug", "-v", "quiet")
+    .WithNoValidation()
+    .CaptureAsync();
+  if (sharedBuild.ExitCode != 0)
+  {
+    WriteLine(sharedBuild.Stdout);
+    WriteLine(sharedBuild.Stderr);
+    WriteLine($"❌ Shared project build failed: {sharedProject}");
+    return 1;
+  }
+}
+
 int standaloneFailures = 0;
 object writeLock = new();
 Stopwatch standaloneExecute = Stopwatch.StartNew();
@@ -78,7 +103,7 @@ await Parallel.ForEachAsync
     string fullPath = Path.GetFullPath(testFile);
     string name = Path.GetFileName(fullPath);
     CommandOutput result = await Shell.Builder("dotnet")
-      .WithArguments("run", fullPath)
+      .WithArguments("run", "-p:BuildProjectReferences=false", fullPath)
       .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
       .WithEnvironmentVariable("DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER", "1")
       .WithNoValidation()

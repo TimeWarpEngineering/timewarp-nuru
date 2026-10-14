@@ -19,6 +19,26 @@ Either modify the version spec of dependency "TimeWarp.Amuru [2.0.0-beta.2, )" o
 
 NU5104 is promoted to an error in this repo, so the 3.0.0 pack fails outright until this is resolved.
 
+## Decision
+
+**Option 1 (maintainer, 2026-10-13): ship TimeWarp.Amuru 2.0.0 first. Do not pin back.** Steven: "we need to ship
+amuru first I do NOT want to go backwards."
+
+**Unblocked 2026-10-14:** TimeWarp.Amuru `2.0.0` and `TimeWarp.Amuru.Tools` `2.0.0` are on nuget.org (release
+https://github.com/TimeWarpEngineering/timewarp-amuru/releases/tag/v2.0.0, 2026-10-14 01:54 UTC).
+
+## Scope for the implementer
+
+1. `Directory.Packages.props:26-27`: `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` `2.0.0-beta.2` -> `2.0.0`.
+2. Fix any stale `2.0.0-beta.2` Amuru mentions outside `kanban/done` (csproj comments, docs); add a changelog
+   line under Unreleased/Changed, same shape as the 489 Mediator line.
+3. `dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.0` must exit 0 with **zero**
+   NU5104. If any other prerelease dependency surfaces, record it in Results and stop; do not suppress.
+4. Release notes draft (`kanban/to-do/487-*/release-notes.md`) and `documentation/user/guides/migrating-to-3.0.md`:
+   state that 3.0.0 depends on stable Amuru 2.0.0 (betas through 3.0.0-beta.80 depend on 2.0.0-beta.2). Tick 487
+   launch gate #5.
+5. `bin/dev build`, 64 samples, and the full CI suite green (`ganda runfile cache --clear` first).
+
 ## Options
 
 1. **Ship TimeWarp.Amuru 2.0.0 first**, then bump Nuru's pin to `2.0.0` and tag 3.0.0. Cleanest for consumers;
@@ -39,8 +59,9 @@ NU5104 is promoted to an error in this repo, so the 3.0.0 pack fails outright un
 
 ## Checklist
 
-- [ ] Decision made and recorded (maintainer call)
-- [ ] Amuru side task filed / version bumped, or NU5104 handled, or 1.1.1 pin verified, per the decision
+- [x] Decision made and recorded (maintainer call): option 1, ship Amuru 2.0.0 first (2026-10-13)
+- [x] Amuru 2.0.0 shipped (2026-10-14)
+- [ ] Nuru `Directory.Packages.props` -> Amuru 2.0.0, CI green
 - [ ] Release notes and migration guide say what consumers need to do
 - [ ] `dotnet pack source/timewarp-nuru -c Release -p:Version=3.0.0` exits 0 with no NU5104
 - [ ] PR merged
@@ -61,4 +82,5 @@ dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=3.0.
 
 ## Session
 
-- Created: Claude Fable 5.1, session 31dfb8d1 (2026-10-13), filed from the 489 merge; unclaimed, awaiting maintainer decision
+- Created: Claude Fable 5.1, session 31dfb8d1 (2026-10-13), filed from the 489 merge
+- Decision recorded (ship Amuru first) and task unblocked on Amuru 2.0.0: Claude Fable 5.1 (2026-10-14)

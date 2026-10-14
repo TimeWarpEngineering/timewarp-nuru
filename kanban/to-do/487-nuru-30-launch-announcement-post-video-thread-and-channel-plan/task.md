@@ -91,7 +91,7 @@ will be API-identical to beta.80. The binaries differ: beta.80 is a Debug build 
 ## Notes
 
 - Reopened 2026-10-11 by Steven: moved to done while launch sequence and measurement were still open.
-- Review trail: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Effort 2, roster general, two rounds, disposition clean.
+- Review trail: `review/review-framework.md`, `review/round-4/merged.md`, `review/disposition.md`. Effort 2, roster general, four rounds, disposition clean.
 - Context that informed this plan: the linked X post from 2026-10-07 says Grok on X now routes to
   the best backend per task (Claude Opus 5.5 text, MidJourney images, Suno audio). @Grok replies and
   Grok-made media are native X content and get algorithmic preference over external links.
@@ -149,12 +149,14 @@ Earlier corrections that still hold: `--json-args` has no `command` key; the REP
 
 Implementation review (effort 2, roster general) ran two rounds under `review/` on the beta.79 pass. Disposition: **clean**. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
-Round 3 (2026-10-14, effort 2, roster general) reviewed the beta.80 re-verify delta: 273 lines, commits `70aec67b` and `94e68fd2`. **Disposition pending.** There are 2 open findings. bug: 1 open, 0 fixed, 0 wontfix. suggestion: 1 open. nit: 0. Prior M1–M6 stay fixed.
+Round 3 (2026-10-14, effort 2, roster general) reviewed the beta.80 re-verify delta: 273 lines, commits `70aec67b` and `94e68fd2`. It raised 2 findings. Prior M1–M6 stay fixed.
 
-- **M7 (bug):** the AOT figures in the blog, the r/dotnet draft and thread post 6 were measured on published beta.80. Kanban 503 showed that package is Debug-built. The diff also removed the release-day re-measure step, so `3.0.0` (Release, stable dependencies) would launch with numbers from a different build. Fix: add a release-day re-measure on `3.0.0`, recapture `shot-6.png`, update all three copies, and scope the "bit-identical" claim to the API.
-- **M8 (suggestion):** thread post 6 says ~6 ms (one VHS frame), and the blog and r/dotnet say ~3 ms for the same binary. Pick one figure.
+- **M7 (bug, fixed in `76150f37`):** the AOT figures in the blog, the r/dotnet draft and thread post 6 were measured on the Debug-built beta.80 (kanban 503), and the release-day re-measure step had been dropped. The fix adds a release-day re-measure on Release-built `3.0.0` to the Launch checklist, `assets/readme.md`, `demo/readme.md`, the post-6 note, the r/dotnet draft and the blog. It also scopes "bit-identical" to the API.
+- **M8 (suggestion, fixed in `76150f37`):** post 6 said ~6 ms while the blog and r/dotnet said ~3 ms. Post 6 now says "single-digit milliseconds" (190 chars), and the blog and r/dotnet keep ~3 ms.
 
-`review/disposition.md` is still the round-2 clean disposition. It gets rewritten after a fix pass on this id and a round-4 re-review. Ledger: `review/round-3/merged.md`.
+Round 4 (2026-10-14, effort 2, roster general) re-checked `76150f37` and raised nothing new.
+
+**Review disposition: clean.** Rounds: 4. Roster: general, effort 2. Final counts across M1–M8: bug 0 open / 4 fixed / 0 wontfix; suggestion 0 / 3 / 0; nit 0 / 1 / 0. Nothing was wontfix or escalated. Paths: `review/review-framework.md`, `review/round-4/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -198,3 +200,4 @@ python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T09:49:53Z
 - 2026-10-14 claude (review oracle, claude-opus-5-5, headless, session id not exposed): round 3, effort 2, roster general, on the beta.80 delta. 2 open findings (M7 bug, M8 suggestion) in `review/round-3/merged.md`. Blocked on a fix pass on this id.
 - 2026-10-14 claude (fix pass, claude-fable-5-1): round-3 M7 and M8. Added a release-day AOT re-measure step (Launch checklist, `assets/readme.md`, `demo/readme.md`, post 6 note); scoped "bit-identical" to the API and noted beta.80 is a Debug build. One startup figure: blog and r/dotnet keep the quiet ~3 ms median; post 6 now says "single-digit milliseconds" because a VHS retake (warm-up, five-run loop) still reads 5 to 6 ms in the recorder, so `shot-6.png` was not recaptured and the post no longer contradicts it. Disposition is left to round 4.
+- 2026-10-14 claude (review oracle, claude-opus-5-5, headless, session id not exposed): round 4, effort 2, roster general, on fix commit `76150f37`. M7 and M8 verified fixed, nothing new. Disposition clean (`review/disposition.md`).

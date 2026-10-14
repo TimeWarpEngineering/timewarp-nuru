@@ -175,7 +175,6 @@ syntax (literals, `{param}`, `{param?}`, `{param:int}`, `{*args}`, `--option`,
 `skills/tw-nuru/SKILL.md` for current examples.
 
 Changelog entries before `3.0.0-beta.19` are listed in `changelog.md`.
-Changes after beta.19 through stable `3.0.0` are under `## [3.0.0]` there.
-Per-beta notes for beta.20 through beta.77 were not kept; do not treat
-`## [3.0.0]` as a complete beta-by-beta history. Later work is under
-`## [Unreleased]`.
+The changelog has a section for each published 3.0 beta through
+`3.0.0-beta.79`. `## [3.0.0]` lists the changes since beta.79, including
+those that shipped in beta.80. Later work is under `## [Unreleased]`.

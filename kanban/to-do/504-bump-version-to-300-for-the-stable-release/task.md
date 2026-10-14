@@ -23,6 +23,13 @@ REPL stdin fixes (492, 493), and Release-only packing with CI config/integrity g
 - [x] `dotnet pack source/timewarp-nuru/timewarp-nuru.csproj -c Release -o /tmp/504-pack` (or the repo's pack entry point) must succeed with **zero NU5104** warnings and the nuspec version must read `3.0.0`. Paste the nuspec `<version>` and `<dependency>` lines for TimeWarp.Mediator.* and TimeWarp.Amuru.* into Results.
 - [x] `dotnet build` of the solution is clean (warnings are errors). Do not run the full CI suite locally; CI on the PR does that.
 - [x] Do **not** tag, run `dev release`, publish, or edit kanban 487. The release is a human action after merge.
+- [x] Review M1: the migration guide says `changelog.md` has a section for each published 3.0 beta through beta.79, and that `## [3.0.0]` lists only the changes since beta.79 (including beta.80).
+- [x] Review M2: the `[3.0.0]` lead opens with the range since beta.79 and names the first Packaging entry (503).
+
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Fix pass (2026-10-14): M1 and M2 marked fixed on `review/round-1/merged.md`. Host runs review round 2.
 
 ## Notes
 
@@ -51,26 +58,31 @@ REPL stdin fixes (492, 493), and Release-only packing with CI config/integrity g
 
 `dotnet build timewarp-nuru.slnx` succeeded: 0 Warning(s), 0 Error(s). Nothing was tagged, released, or published.
 
+Review round 1 M1 and M2 are fixed on this id. `documentation/user/guides/migrating-to-3.0.md` no longer says per-beta notes for beta.20–beta.77 were dropped, and it no longer puts those changes under `## [3.0.0]`. It says `changelog.md` has a section for each published 3.0 beta through `3.0.0-beta.79`, that `## [3.0.0]` lists the changes since beta.79 (including those that shipped in beta.80), and that later work is under `## [Unreleased]`. The `[3.0.0]` lead in `changelog.md` opens with "Changes since `3.0.0-beta.79`; beta.80 has no separate section." and points at the first Packaging entry under Fixed (task 503). Changed and Fixed entries were not rewritten. Every local tag `v3.0.0-beta.*` through beta.79 appears in a changelog heading. Disposition waits for review round 2.
+
 ### How to validate
 
-Smoke: from the task worktree, confirm the props version and the packed nuspec.
+Smoke: from the task worktree, confirm the props version, the packed nuspec, and the two wording fixes.
 
 ```bash
 grep -n '<Version>' source/Directory.Build.props
 unzip -p /tmp/504-pack/TimeWarp.Nuru.3.0.0.nupkg TimeWarp.Nuru.nuspec \
   | grep -E '<version>|TimeWarp\.(Mediator|Amuru)'
+grep -n -F -e 'were not kept' -e '3.0.0-beta.79' -e '## [Unreleased]' \
+  documentation/user/guides/migrating-to-3.0.md
+sed -n '10,13p' changelog.md
 ```
 
-Expect: `<Version>3.0.0</Version>`, `<version>3.0.0</version>`, `TimeWarp.Amuru` version `2.0.0`, `TimeWarp.Mediator.Contracts` version `14.0.0`, and `TimeWarp.Mediator.Generators` version `14.0.0`. The pack log contains no `NU5104`.
+Expect: `<Version>3.0.0</Version>`, `<version>3.0.0</version>`, `TimeWarp.Amuru` version `2.0.0`, `TimeWarp.Mediator.Contracts` version `14.0.0`, and `TimeWarp.Mediator.Generators` version `14.0.0`. The pack log contains no `NU5104`. The migration guide has no "were not kept" line. It names `3.0.0-beta.79` and `## [Unreleased]`, and the "What did not move" paragraph says `## [3.0.0]` lists the changes since beta.79, including those that shipped in beta.80. The `[3.0.0]` lead starts with `Changes since `3.0.0-beta.79`; beta.80 has no separate section.` and names the first Packaging entry under Fixed, task 503.
 
 ### Review
 
-Round 1 (effort 1, roster: general) found 2 open issues: 1 bug and 1 nit. No disposition yet; a fix pass is needed.
+Round 1 (effort 1, roster: general) found 1 bug (M1) and 1 nit (M2). The fix pass marked both fixed on the round-1 ledger (bug 0 open / 1 fixed, nit 0 open / 1 fixed, no wontfix). Disposition is not written; the host runs review round 2.
 
-- **M1 (bug, open):** `documentation/user/guides/migrating-to-3.0.md:177` says beta.20 and later changes are under `## [3.0.0]` and that per-beta notes for beta.20–77 were not kept. `changelog.md` has a section for every beta from beta.20 through beta.79. `[3.0.0]` holds only the changes since beta.79.
-- **M2 (nit, open):** the `changelog.md:12` lead says "the Packaging entry", but `[3.0.0]` has two of them, and the lead does not give its "changes since beta.79" range.
+- **M1 (bug, fixed):** the migration guide changelog pointer now matches the per-beta sections through beta.79.
+- **M2 (nit, fixed):** the `[3.0.0]` lead names its range since beta.79 and the first Packaging entry (503).
 
-Files: `review/review-framework.md` and `review/round-1/merged.md` (the live ledger), plus `review/round-1/general.md`.
+Files: `review/review-framework.md`, `review/round-1/merged.md` (live ledger), `review/round-1/general.md`.
 
 ## Session
 
@@ -78,3 +90,5 @@ Files: `review/review-framework.md` and `review/round-1/merged.md` (the live led
 - 2026-10-14: implement oracle (grok 01a13b33). Version bump, changelog heading, stable install wording, Release pack, and solution build.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T16:23:19Z
 - 2026-10-14: review oracle round 1 (claude opus-5.5, effort 1, general). 1 bug (M1) and 1 nit (M2) open; Blocked for a fix pass.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-14T16:24:53Z
+- 2026-10-14: implement-fix-2 oracle (grok 01a13b3b). Corrected the migration-guide changelog pointer (M1) and the `[3.0.0]` lead (M2).

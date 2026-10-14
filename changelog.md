@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0] - 2026-10-14
 
-First stable 3.0 release. It supersedes the `3.0.0-beta.*` line (last published beta is `3.0.0-beta.80`, 2026-10-12). This is the first 3.0 package built in Release; the betas were Debug (see the Packaging entry).
+Changes since `3.0.0-beta.79`; beta.80 has no separate section. First stable 3.0 release. It supersedes the `3.0.0-beta.*` line (last published beta is `3.0.0-beta.80`, 2026-10-12). This is the first 3.0 package built in Release; the betas were Debug (see the first Packaging entry under Fixed, task 503).
 
 ### Changed
 - **DevCli**: `dev release` passes `--prerelease` to `gh release create` when `<Version>` has a SemVer prerelease suffix, so the GitHub Release flag matches NuGet. `--dry-run` prints the same command it runs (486).

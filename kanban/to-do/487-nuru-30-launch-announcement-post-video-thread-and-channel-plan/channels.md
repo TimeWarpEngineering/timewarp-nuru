@@ -82,14 +82,14 @@
 >
 > The 1-file version: `#:package TimeWarp.Nuru`, map two routes, call `.EnableCompletion()` and
 > `.AddRepl()`, and `dotnet run app.cs` gives you help, completion for bash/zsh/fish/pwsh, and a
-> REPL. `dotnet publish app.cs -c Release -r linux-x64` makes a 5.9 MB native binary that starts
+> REPL. `dotnet publish app.cs -c Release -r linux-x64` makes a 6.0 MB native binary that starts
 > in ~3 ms.
 >
 > Write-up with code: <BLOG URL> · Repo: https://github.com/TimeWarpEngineering/timewarp-nuru
 >
 > What's your experience with agents calling your own CLIs? MCP, plain shell, something else?
 
-Checked 2026-10-09 on beta.79: `sum {*ids:uint}` binds `uint[]`, and `sum 1 x` prints
+Checked 2026-10-14 on published 3.0.0-beta.80: `sum {*ids:uint}` binds `uint[]` (`sum 1 2 3` runs), and `sum 1 x` prints
 `Error: Invalid value in 'ids'. Expected: uint[]`.
 
 ## Baseline and measurement

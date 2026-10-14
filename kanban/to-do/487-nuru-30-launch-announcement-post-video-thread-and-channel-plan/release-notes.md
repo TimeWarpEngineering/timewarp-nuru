@@ -6,9 +6,12 @@ generated "Full Changelog" compare link at the bottom. Before pasting, re-check 
 `TimeWarp.Mediator.*` `14.0.0`; if that pin changes, the Mediator bullet below is false.
 Gate #5 (kanban 502) is the pin on `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` `2.0.0`;
 if that pin changes, the Amuru sentence below is false.
-Every bullet was verified against `3.0.0-beta.79` on 2026-10-09, except the Mediator bullet
-(verified against the 14.0.0 pin on 2026-10-13) and the Amuru sentence (verified against
-the 2.0.0 pin on 2026-10-14).
+Behavior bullets were re-checked on 2026-10-14 against published `TimeWarp.Nuru` 3.0.0-beta.80
+from nuget.org (commit `ab5ccfb1`). The Mediator bullet matches the repo pin
+`TimeWarp.Mediator.*` 14.0.0. The Amuru sentence matches the repo pin `TimeWarp.Amuru` and
+`TimeWarp.Amuru.Tools` 2.0.0. Published beta.80 still depends on `TimeWarp.Mediator` 14.0.0-beta.4
+and `TimeWarp.Amuru` 2.0.0-beta.2; stable 3.0.0 picks up the repo pins. beta.80's package props
+enable interceptors, so the demo has no `InterceptorsNamespaces` workaround.
 
 ---
 

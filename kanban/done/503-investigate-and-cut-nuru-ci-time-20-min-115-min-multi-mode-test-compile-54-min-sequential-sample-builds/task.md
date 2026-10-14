@@ -138,27 +138,50 @@ Expect:
 ### Review (round 1, 2026-10-14)
 
 Effort 2 (by diff, 380 lines), roster `general` (review oracle, Claude Opus 5.5).
-**Disposition: pending. Three findings are open and need the fix loop on this id, then a round-2 re-review.**
+**Disposition: pending. M1, M2 and M3 are fixed (see Fix pass below); a round-2 re-review is still needed.**
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 1 | 0 | 0 |
-| suggestion | 1 | 0 | 0 |
-| nit | 1 | 0 | 0 |
+| bug | 0 | 1 | 0 |
+| suggestion | 0 | 1 | 0 |
+| nit | 0 | 1 | 0 |
 
-- **M1 (bug, open):** The parallel standalone `dotnet run`s each rebuild and repack the shared
+- **M1 (bug, fixed):** The parallel standalone `dotnet run`s each rebuild and repack the shared
   ProjectReferences. Locally, one standalone build printed "Successfully created package" for
   `TimeWarp.Nuru` and `TimeWarp.Nuru.Analyzers`. At `ProcessorCount`-wide, those processes race on
   `obj/Debug` and `artifacts/packages/*.nupkg`, the race `verify-samples` now avoids. The result can be a
   flaky merge gate or a torn nupkg in the master `Packages-*` artifact. Fix: build the standalone files
   without packing or rebuilding the shared projects.
-- **M2 (suggestion, open):** The analyzer and code-style switches are at `tests/` scope. That drops test-code
+- **M2 (suggestion, fixed):** The analyzer and code-style switches are at `tests/` scope. That drops test-code
   lint, RCS1037 included, for every single-file run, not only the multi-mode compile. Move them to
   `tests/ci-tests/Directory.Build.props`, or document that this is intended.
-- **M3 (nit, open):** Print the failed-sample summary in sorted order.
-- Out of scope: test-phase Debug builds overwrite the Release nupkg in `artifacts/packages/`. This was
-  already true before this change. Check separately whether promoted artifacts contain Debug assemblies.
+- **M3 (nit, fixed):** Print the failed-sample summary in sorted order.
+- Out of scope in round 1: test-phase Debug builds overwrite the Release nupkg in `artifacts/packages/`.
+  The lead confirmed this ships Debug assemblies; fixed in the Fix pass below (Finding A).
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+### Fix pass (round 1 findings + Debug-pack leak)
+
+- **Finding A, Debug packages shipped (release-critical).** `source/Directory.Build.props` set
+  `GeneratePackageOnBuild` unconditionally, so every Debug build of a shared project (samples, the
+  multi-mode compile, standalone `dotnet run`) repacked a Debug nupkg over the Release one in
+  `artifacts/packages`, and CI uploaded that artifact. Evidence: the published 3.0.0-beta.79 and
+  3.0.0-beta.80 `lib/net10.0/TimeWarp.Nuru.dll` and `analyzers/dotnet/cs/TimeWarp.Nuru.Analyzers.dll`
+  carry `AssemblyConfiguration("Debug")` and `DebuggableAttribute` flags 0x107 (DisableOptimizations).
+  Fixes: packing is Release-only; `dev workflow` now asserts the packed `lib/net10.0/TimeWarp.Nuru.dll`
+  is Release and optimized (new `NupkgLayoutCheck.ReadPackedAssemblyBuildInfo`, System.Reflection.Metadata)
+  and fails the pipeline if any nupkg hash differs, appears, or disappears between step 3 and the end of
+  step 5. Test: `nupkg-layout-03-release-configuration.cs` (in-memory PE fixtures, deterministic).
+- **M1 fixed.** `run-ci-tests.cs` builds the three shared projects once in Debug before the parallel
+  loop and runs each standalone test with `-p:BuildProjectReferences=false`. No "Successfully created
+  package" lines in the CI run.
+- **M2 fixed.** The analyzer/code-style switches moved to `tests/ci-tests/Directory.Build.props`;
+  single-file test runs keep lint.
+- **M3 fixed.** The failed-sample list is printed sorted (ordinal).
+- Verification: after `dev build`, `dev verify-samples` (64/64), and `run-ci-tests.cs` (1880 passed, 0 failed
+  in multi-mode, standalone 0 failed) the packed dll still reports Configuration=Release, Debuggable=0x2, and
+  the nupkg mtimes are unchanged. `dev workflow` end to end prints "Package integrity verified: 4 packages
+  unchanged since build." and succeeds.
 
 ## Session
 
@@ -168,3 +191,4 @@ Effort 2 (by diff, 380 lines), roster `general` (review oracle, Claude Opus 5.5)
 - Review oracle: round 1, Claude Opus 5.5 (headless `ganda task work`, session id not exposed), effort 2,
   roster general — 1 bug, 1 suggestion, 1 nit open; disposition pending fix loop (2026-10-14)
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T05:27:59Z
+- Fix pass: Claude Sonnet sub-agent for Claude Fable 5.1 (2026-10-14)

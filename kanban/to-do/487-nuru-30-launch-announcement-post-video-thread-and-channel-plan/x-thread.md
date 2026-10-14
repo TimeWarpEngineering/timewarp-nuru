@@ -24,8 +24,8 @@ this folder. Attach them in post order.
 5. **REPL + completion**. `shot-5.png`: `./app -i` session, then `key-bindings --profile Emacs` (191 chars)
    > A built-in REPL (-i) with Default, Emacs, Vi, and VSCode key-binding profiles. Shell completion for bash, zsh, fish, and PowerShell, generated from your routes: ./app --install-completion zsh
 
-6. **AOT**. `shot-6.png`: `ls -lh` prints `6.0M` and `time ./app greet x` prints `real 0m0.006s` (inside VHS). Quiet shell on the same binary: `time` `0.003s`, median 2.52 ms over 20 runs, 6,187,808 bytes (5.90 MiB). The post matches the frame.
-   > Native AOT: that one-file app, REPL and completion included, publishes to a 6.0 MB binary and runs a command in ~6 ms. The generator does the work so the runtime doesn't.
+6. **AOT**. `shot-6.png`: `ls -lh` prints `6.0M` and `time ./app greet x` prints `real 0m0.006s` (inside VHS, which loads the machine; every run in the recorder reads 5 to 6 ms). Quiet shell on the same binary: median 2.52 ms over 20 runs, 6,187,808 bytes (5.90 MiB). The post states no millisecond figure, so it cannot contradict the frame; the blog and r/dotnet carry the quiet `~3 ms`. These figures come from the Debug-built beta.80 package. **Release day: re-measure on Release-built 3.0.0, recapture `shot-6.png`, and update this post, the blog, and the r/dotnet draft to match (see `assets/readme.md`).**
+   > Native AOT: that one-file app, REPL and completion included, publishes to a 6.0 MB binary and runs a command in single-digit milliseconds. The generator does the work so the runtime doesn't.
 
 7. **Ask** (265 chars, URL counts as 23 on X)
    > 3.0 moves contracts to TimeWarp.Mediator, swaps the MCP server for an in-context agent skill, and fixed 22 issues an agent-run code review found before release. Migration guide and repo: github.com/TimeWarpEngineering/timewarp-nuru. A ⭐ helps more than you'd think.

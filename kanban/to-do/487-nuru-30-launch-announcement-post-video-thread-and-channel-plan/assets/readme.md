@@ -23,8 +23,10 @@ print(json.dumps(data, indent=2))
 
 Publish the demo outside a git repo before shooting capabilities or the AOT binary. A git checkout stamps `version` as `1.0.0+<commit>`, and this machine's global NuGet cache still holds a local task-488 pack of `3.0.0-beta.80` that is not the nuget.org package. The 2026-10-14 shots used `NUGET_PACKAGES` pointed at a clean folder and a non-git publish directory.
 
-Measured 2026-10-14 on that binary: `ls -lh` prints **6.0M** (6,187,808 bytes, 5.90 MiB). A quiet `time ./app greet x` prints **0.003s**. Median of 20 runs: **2.52 ms**. The VHS frame `shot-6.png` reads **0.006s**; the thread post matches the frame (`~6 ms`). The blog and the r/dotnet draft keep **~3 ms**.
+Measured 2026-10-14 on that binary: `ls -lh` prints **6.0M** (6,187,808 bytes, 5.90 MiB). A quiet `time ./app greet x` prints **0.003s**. Median of 20 runs: **2.52 ms**. The VHS frame `shot-6.png` reads **0.006s** (the recorder loads the machine; a retake with warm-up and a five-run loop still read 5 to 6 ms). Thread post 6 states no millisecond figure so it does not contradict the frame. The blog and the r/dotnet draft use **~3 ms**, the quiet median. These numbers are from the published beta.80 package, which is a Debug build (kanban 503); `3.0.0` is the first Release build, so they must be re-measured on release day.
 
 The 2026-10-09 recording measured 5.9 MB and a 2.7 ms median (`time` showed 6 ms). The mp4 is still that take.
+
+**Release-day AOT re-measure (before posting anything):** publish `demo/app.cs.txt` pinned to `3.0.0` outside the repo (see above), then record `ls -lh` size, a quiet `time ./app greet x`, and the median of 20 runs. Recapture `shot-6.png`. Update the blog (Native AOT bullet), the r/dotnet draft in `channels.md`, and thread post 6 in `x-thread.md` so the size and the one startup figure (the quiet median) match across all three.
 
 Re-record on release day: in `nuru-3-launch.tape` change `TimeWarp.Nuru@3.0.0-beta.79` to `@3.0.0`, drop the `app.full.cs` swap (launch gate #1 fixed means the shown file runs as-is), and recapture `shot-4.png` after `demo/app.cs.txt` pins `3.0.0`. VHS on this machine needs a Chrome binary. `~/.local/bin/google-chrome` points at a missing Playwright Chromium; prepend a wrapper that execs `chromium-1243` (or whatever is installed) with `--no-sandbox`.

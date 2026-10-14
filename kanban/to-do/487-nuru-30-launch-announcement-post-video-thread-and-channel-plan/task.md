@@ -70,7 +70,7 @@ characters for `ganda post`.
 ### Re-verify on 3.0.0-beta.80 (2026-10-14, before the version bump)
 All five launch gates have shipped (488, 492, 493, 489, 502). beta.80 is the last beta before `3.0.0`;
 every master CI run since PR #317 packs Release-only with a config and integrity gate, so `3.0.0`
-will be bit-identical in API to beta.80. This block is the last pre-bump pass over the assets.
+will be API-identical to beta.80. The binaries differ: beta.80 is a Debug build (kanban 503) and `3.0.0` is the first Release build, with stable Mediator and Amuru, so AOT size and startup must be re-measured on release day (see Launch). This block is the last pre-bump pass over the assets.
 - [x] Run the **How to validate** smoke against `demo/app.cs.txt` (already `#:package TimeWarp.Nuru@3.0.0-beta.80`, no `#:property` line). Record the outputs in Results. The old CS9137 repro line is obsolete: without the property the app must now build and print `Hello, World!`.
 - [x] Re-verify the three fixed gates on beta.80 from the demo app: `--generate-completion bash` output sources without `_init_completion` present; `printf 'greet x\nexit\n' | app -i` exits cleanly; fresh `#:package` runfile compiles. One line each in Results.
 - [x] Re-read `release-notes.md`, `x-thread.md`, `channels.md`, the blog, and both blips against beta.80 `changelog.md` and the shipped dependency pins (Mediator 14.0.0, Amuru 2.0.0). Fix stale beta.79 references and anything the fixed gates changed (e.g. no "add InterceptorsNamespaces" workaround anywhere). Every thread post stays ≤ 280 chars.
@@ -79,6 +79,7 @@ will be bit-identical in API to beta.80. This block is the last pre-bump pass ov
 - [x] Do **not** bump `<Version>`, tag, post, or open the TheFreezeTeamBlog PR. This task changes no product code; the optional `NURU_H002` nested-lambda item stays out of scope.
 
 ### Launch (human, in order — gated on `v3.0.0` existing; everything above is done beforehand)
+- [ ] Release-day AOT re-measure, before posting: AOT-publish `demo/app.cs.txt` pinned to `3.0.0` (Release build), record `ls -lh` and the quiet median startup, recapture `shot-6.png`, and update the blog, the r/dotnet draft and thread post 6 to match (one startup figure everywhere). Steps in `assets/readme.md`. The current figures (6.0 MB, ~3 ms) come from the Debug-built beta.80.
 - [ ] Day 0: GitHub Release published → blog live → X thread (Tue–Thu, US morning) → @Grok replies within the hour → Nostr
 - [ ] Day 1: Show HN → r/dotnet
 - [ ] Day 3–5: dev.to repost of the blog; LinkedIn with the video
@@ -130,7 +131,7 @@ Dependency pins: the **repo** (`Directory.Packages.props`) has `TimeWarp.Mediato
 
 Other checks: `sum {*ids:uint}` on beta.80 binds `uint[]`, and `sum 1 x` prints `Error: Invalid value in 'ids'. Expected: uint[].` `--capabilities --search deploy` exits 1 with "Search requires TimeWarp.Nuru.Search" (it does not return a filtered capabilities document). `--group-filter nope` returns `"endpoints": []`. The migration guide describes a flat `endpoints` list. No launch copy tells a reader to add `InterceptorsNamespaces`.
 
-AOT of `demo/app.cs.txt` with `dotnet publish app.cs -c Release -r linux-x64` (PublishAot default) is a native ELF, **6,187,808 bytes**. `ls -lh` prints **6.0M**. Quiet `time` prints **0.003s**. Median of 20 runs: **2.52 ms**. The VHS frame `shot-6.png` reads **0.006s**, so thread post 6 says **6.0 MB** and **~6 ms**. The blog and the r/dotnet draft say **6.0 MB** and **~3 ms** (the quiet measurement).
+AOT of `demo/app.cs.txt` with `dotnet publish app.cs -c Release -r linux-x64` (PublishAot default) is a native ELF, **6,187,808 bytes**. `ls -lh` prints **6.0M**. Quiet `time` prints **0.003s**. Median of 20 runs: **2.52 ms**. The VHS frame `shot-6.png` reads **0.006s**, so thread post 6 now states no millisecond figure ("single-digit milliseconds"). The blog and the r/dotnet draft say **6.0 MB** and **~3 ms** (the quiet measurement). These are from the Debug-built beta.80; re-measure on 3.0.0 on release day.
 
 Screenshots: `assets/shot-2.png` … `shot-6.png`, 1600×900. `shot-4.png` still shows the beta.80 package pin. Recapture it when the demo pin becomes `3.0.0`.
 
@@ -183,7 +184,7 @@ python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len
 - `Error: Unknown key 'bogus' for 'deploy {env} --tag? {tag?}'. Known names: env, tag.` and `exit=1`.
 - The piped REPL prints `Hello, x!` and `Goodbye!`, and `repl_exit=0`.
 - `source_exit=0` with no `_init_completion: command not found`. There is no `#:property` line to delete; `greet World` already succeeded.
-- Every thread post length is ≤ 280. Post 6 matches `shot-6.png` (`6.0 MB`, `~6 ms`). The blog's startup sentence stays at about 3 ms, which is the quiet-shell median, not the VHS frame.
+- Every thread post length is ≤ 280. Post 6 matches `shot-6.png` (`6.0 MB`, no ms figure). The blog's startup sentence stays at about 3 ms, which is the quiet-shell median, not the VHS frame.
 
 ## Session
 
@@ -196,3 +197,4 @@ python3 -c "import re,sys;t=open(sys.argv[1],encoding='utf-8').read();print([len
 - 2026-10-14 grok (implement oracle): session `01a139bd-a2ce-7353-83cb-f2ed2ed16bc6`. Re-verified the launch assets against published nuget.org `3.0.0-beta.80`, captured `shot-2.png` … `shot-6.png`, and recorded Nostr 530.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T09:49:53Z
 - 2026-10-14 claude (review oracle, claude-opus-5-5, headless, session id not exposed): round 3, effort 2, roster general, on the beta.80 delta. 2 open findings (M7 bug, M8 suggestion) in `review/round-3/merged.md`. Blocked on a fix pass on this id.
+- 2026-10-14 claude (fix pass, claude-fable-5-1): round-3 M7 and M8. Added a release-day AOT re-measure step (Launch checklist, `assets/readme.md`, `demo/readme.md`, post 6 note); scoped "bit-identical" to the API and noted beta.80 is a Debug build. One startup figure: blog and r/dotnet keep the quiet ~3 ms median; post 6 now says "single-digit milliseconds" because a VHS retake (warm-up, five-run loop) still reads 5 to 6 ms in the recorder, so `shot-6.png` was not recaptured and the post no longer contradicts it. Disposition is left to round 4.

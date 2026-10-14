@@ -22,8 +22,8 @@ Production notes
 - AOT numbers: the shipped mp4 is the 2026-10-09 beta.79 take (5.9 MB, median 2.9 ms). Re-measured
   2026-10-14 on published beta.80, linux-x64: `ls -lh` prints `6.0M` (6,187,808 bytes, 5.90 MiB),
   a quiet `time` prints `0.003s`, median 2.52 ms over 20 runs. The VHS frame in `shot-6.png` reads
-  `0.006s` because the recorder is loaded; the thread post matches that frame (`~6 ms`). The blog
-  and the r/dotnet draft keep the quiet-shell figure (`~3 ms`).
+  `0.006s` because the recorder is loaded; thread post 6 states no millisecond figure so it does not contradict the frame. The blog
+  and the r/dotnet draft use the quiet-shell figure (`~3 ms`). beta.80 is a Debug build; re-measure on Release-built 3.0.0 on release day.
   `documentation/user/reference/performance.md` lists 3.3 MB and 4.8 MB for Direct and Mediator AOT
   on .NET 9, with startup under 1 ms. It does not say those binaries omit REPL or completion.
   Caption what you measure, not the docs.

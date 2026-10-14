@@ -89,6 +89,8 @@
 >
 > What's your experience with agents calling your own CLIs? MCP, plain shell, something else?
 
+Release-day note: the 6.0 MB and ~3 ms in this draft come from the Debug-built beta.80. Re-measure on Release-built 3.0.0 and update this draft, the blog and thread post 6 before posting.
+
 Checked 2026-10-14 on published 3.0.0-beta.80: `sum {*ids:uint}` binds `uint[]` (`sum 1 2 3` runs), and `sum 1 x` prints
 `Error: Invalid value in 'ids'. Expected: uint[]`.
 

@@ -14,7 +14,7 @@ dotnet run app.cs -- deploy --json-args '{"env":"x","bogus":1}'; echo $?  # Erro
 
 Verified 2026-10-14 against published `TimeWarp.Nuru` 3.0.0-beta.80 from nuget.org, with no
 `#:property` line. `greet World` prints `Hello, World!`. On release day change the
-version pin to `3.0.0` and re-run every line.
+version pin to `3.0.0` and re-run every line. Also AOT-publish it (`dotnet publish app.cs -c Release -r linux-x64`) and re-measure size and startup on the Release-built package: the beta.80 figures in the launch copy came from a Debug build. See `assets/readme.md`.
 
 Gotchas found while building it:
 

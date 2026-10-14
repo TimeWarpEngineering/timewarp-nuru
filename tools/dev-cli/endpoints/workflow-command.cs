@@ -2,6 +2,11 @@
 // Dev CLI command for TimeWarp.Nuru development workflow
 #endregion
 
+#region Design
+// PR/merge prints ProcessorCount and a duration after each step so a hosted
+// log can be compared phase by phase without scraping timestamps.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORKFLOW COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -82,6 +87,15 @@ public sealed class WorkflowCommand : ICommand<Unit>
       return Unit.Value;
     }
 
+    private void WriteStepDuration(Stopwatch step, string label)
+    {
+      Terminal.WriteLine($"{label} finished in {FormatSeconds(step.Elapsed)}");
+      step.Restart();
+    }
+
+    private static string FormatSeconds(TimeSpan elapsed)
+      => elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s";
+
     private CiMode DetermineMode(string? explicitMode)
     {
       string? eventName = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME");
@@ -99,9 +113,12 @@ public sealed class WorkflowCommand : ICommand<Unit>
     private async Task RunPrWorkflowAsync(string? cliAttestationMode)
     {
       Terminal.WriteLine("Pipeline: attestation -> clean -> build -> verify-samples -> test");
+      Terminal.WriteLine($"ProcessorCount: {Environment.ProcessorCount}");
       Terminal.WriteLine("");
 
       string repoRoot = ResolveRepoRoot();
+      Stopwatch pipeline = Stopwatch.StartNew();
+      Stopwatch step = Stopwatch.StartNew();
 
       // Step 1: Attestation
       Terminal.WriteLine("===============================================================================");
@@ -111,6 +128,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
         repoRoot,
         cliAttestationMode,
         AttestationConfigResolver.DefaultPrMode).ConfigureAwait(false);
+      WriteStepDuration(step, "Step 1/5");
 
       if (attestationResult.ShouldAbort)
       {
@@ -125,6 +143,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
       await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
+      WriteStepDuration(step, "Step 2/5");
 
       // Step 3: Build
       Terminal.WriteLine("");
@@ -165,6 +184,24 @@ public sealed class WorkflowCommand : ICommand<Unit>
 
       Terminal.WriteLine($"Package layout verified: TimeWarp.Nuru.{layoutVersion}.nupkg contains all {NupkgLayoutCheck.NuruRequiredPackageEntries.Length} required payload entries.");
 
+      // Release-configuration gate (task 503): published betas up to beta.80 shipped
+      // Debug assemblies because later steps repacked over the Release package.
+      AssemblyBuildInfo packedBuildInfo = NupkgLayoutCheck.ReadPackedAssemblyBuildInfo(nuruNupkg, "lib/net10.0/TimeWarp.Nuru.dll");
+      if (!string.Equals(packedBuildInfo.Configuration, "Release", StringComparison.Ordinal) || !packedBuildInfo.IsOptimized)
+      {
+        Terminal.WriteErrorLine($"Package layout gate failed: TimeWarp.Nuru.{layoutVersion}.nupkg lib/net10.0/TimeWarp.Nuru.dll is not a Release build (Configuration='{packedBuildInfo.Configuration}', Debuggable flags=0x{packedBuildInfo.DebuggableFlags:X}). Do not ship this artifact.");
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      Terminal.WriteLine("Package configuration verified: lib/net10.0/TimeWarp.Nuru.dll is a Release, optimized build.");
+
+      // Package integrity gate (task 503), part 1: snapshot the hash of every nupkg
+      // so step 5 can prove the samples/tests steps did not rebuild or repack them.
+      string packagesDir = Path.Combine(layoutRepoRoot, "artifacts", "packages");
+      Dictionary<string, string> packageHashes = HashPackages(packagesDir);
+      WriteStepDuration(step, "Step 3/5");
+
       // Step 4: Verify Samples
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
@@ -172,6 +209,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       VerifySamplesCommand.Handler verifySamplesHandler = new(Terminal);
       await verifySamplesHandler.Handle(new VerifySamplesCommand(), CancellationToken.None);
+      WriteStepDuration(step, "Step 4/5");
 
       // Step 5: Test
       Terminal.WriteLine("");
@@ -180,6 +218,42 @@ public sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       TestCommand.Handler testHandler = new(Terminal);
       await testHandler.Handle(new TestCommand(), CancellationToken.None);
+      WriteStepDuration(step, "Step 5/5");
+
+      // Package integrity gate (task 503), part 2: the artifact uploaded after this
+      // pipeline must be byte-identical to the Release packages verified in step 3.
+      Dictionary<string, string> finalHashes = HashPackages(packagesDir);
+      List<string> changedPackages = [];
+      foreach ((string packageName, string packageHash) in packageHashes)
+      {
+        if (!finalHashes.TryGetValue(packageName, out string? finalHash))
+        {
+          changedPackages.Add($"{packageName} (disappeared)");
+        }
+        else if (!string.Equals(packageHash, finalHash, StringComparison.Ordinal))
+        {
+          changedPackages.Add($"{packageName} (changed)");
+        }
+      }
+
+      foreach (string packageName in finalHashes.Keys)
+      {
+        if (!packageHashes.ContainsKey(packageName))
+        {
+          changedPackages.Add($"{packageName} (appeared)");
+        }
+      }
+
+      if (changedPackages.Count > 0)
+      {
+        Terminal.WriteErrorLine($"Package integrity gate failed: the samples/tests steps rebuilt or repacked a package after the verified build: {string.Join(", ", changedPackages.Order(StringComparer.Ordinal))}. The artifact must not ship.");
+        Environment.ExitCode = 1;
+        return;
+      }
+
+      Terminal.WriteLine($"Package integrity verified: {packageHashes.Count} packages unchanged since build.");
+      pipeline.Stop();
+      Terminal.WriteLine($"Pipeline finished in {FormatSeconds(pipeline.Elapsed)}");
 
       // Attestation advisory (warn mode only) is repeated here, immediately
       // before the SUCCEEDED banner, so it is not lost above scrollback from
@@ -507,6 +581,23 @@ public sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("  Pipeline SUCCEEDED - Packages published to NuGet.org");
       Terminal.WriteLine("===============================================================================");
+    }
+
+    private static Dictionary<string, string> HashPackages(string packagesDir)
+    {
+      Dictionary<string, string> hashes = new(StringComparer.Ordinal);
+      if (!Directory.Exists(packagesDir))
+      {
+        return hashes;
+      }
+
+      foreach (string file in Directory.EnumerateFiles(packagesDir, "*.nupkg"))
+      {
+        using FileStream stream = File.OpenRead(file);
+        hashes[Path.GetFileName(file)] = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream));
+      }
+
+      return hashes;
     }
 
     private void AbortPipeline(string reason)

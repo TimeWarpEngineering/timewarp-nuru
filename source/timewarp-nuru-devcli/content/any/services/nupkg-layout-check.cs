@@ -23,10 +23,22 @@
 namespace DevCli;
 
 using System.IO.Compression;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
+
+/// <summary>
+/// Build configuration facts read from an assembly's metadata.
+/// </summary>
+/// <param name="Configuration">AssemblyConfigurationAttribute value, or empty when absent.</param>
+/// <param name="DebuggableFlags">DebuggableAttribute DebuggingModes flags, or 0 when absent.</param>
+/// <param name="IsOptimized">True when the DisableOptimizations flag (0x100) is not set.</param>
+public sealed record AssemblyBuildInfo(string Configuration, int DebuggableFlags, bool IsOptimized);
 
 public static class NupkgLayoutCheck
 {
+  private const int DisableOptimizationsFlag = 0x100;
+
   private static readonly Regex TfmSegmentPattern = new(
     @"^net\d+(\.\d+)*$",
     RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -86,6 +98,110 @@ public static class NupkgLayoutCheck
     }
 
     return missing;
+  }
+
+  /// <summary>
+  /// Reads the AssemblyConfiguration and Debuggable build facts of an assembly
+  /// packed inside a nupkg (task 503). Used by the gate that refuses to ship a
+  /// Debug build: the entry is read into memory and inspected with
+  /// System.Reflection.Metadata, so nothing is loaded into the process.
+  /// </summary>
+  public static AssemblyBuildInfo ReadPackedAssemblyBuildInfo(string nupkgPath, string entryName)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(nupkgPath);
+    ArgumentException.ThrowIfNullOrWhiteSpace(entryName);
+
+    using ZipArchive zip = ZipFile.OpenRead(nupkgPath);
+    ZipArchiveEntry entry = zip.GetEntry(entryName)
+      ?? throw new FileNotFoundException($"Entry '{entryName}' not found in {nupkgPath}.");
+
+    using MemoryStream buffer = new();
+    using (Stream entryStream = entry.Open())
+    {
+      entryStream.CopyTo(buffer);
+    }
+
+    buffer.Position = 0;
+    return ReadAssemblyBuildInfo(buffer);
+  }
+
+  /// <summary>
+  /// Reads build configuration facts from a PE assembly stream.
+  /// </summary>
+  public static AssemblyBuildInfo ReadAssemblyBuildInfo(Stream assemblyStream)
+  {
+    ArgumentNullException.ThrowIfNull(assemblyStream);
+
+    using PEReader peReader = new(assemblyStream, PEStreamOptions.LeaveOpen);
+    MetadataReader reader = peReader.GetMetadataReader();
+    string configuration = string.Empty;
+    int debuggableFlags = 0;
+
+    foreach (CustomAttributeHandle handle in reader.GetAssemblyDefinition().GetCustomAttributes())
+    {
+      CustomAttribute attribute = reader.GetCustomAttribute(handle);
+      string? typeName = GetAttributeTypeName(reader, attribute);
+      if (typeName is null)
+      {
+        continue;
+      }
+
+      BlobReader blob = reader.GetBlobReader(attribute.Value);
+      if (typeName == "System.Reflection.AssemblyConfigurationAttribute")
+      {
+        blob.ReadUInt16(); // prolog
+        configuration = blob.ReadSerializedString() ?? string.Empty;
+      }
+      else if (typeName == "System.Diagnostics.DebuggableAttribute")
+      {
+        blob.ReadUInt16(); // prolog
+        if (blob.RemainingBytes >= 6)
+        {
+          // DebuggableAttribute(DebuggingModes) -- Int32 flags.
+          debuggableFlags = blob.ReadInt32();
+        }
+        else
+        {
+          // Legacy DebuggableAttribute(bool isJITTrackingEnabled, bool isJITOptimizerDisabled).
+          bool tracking = blob.ReadBoolean();
+          bool optimizerDisabled = blob.ReadBoolean();
+          debuggableFlags = (tracking ? 1 : 0) | (optimizerDisabled ? DisableOptimizationsFlag : 0);
+        }
+      }
+    }
+
+    return new AssemblyBuildInfo(configuration, debuggableFlags, (debuggableFlags & DisableOptimizationsFlag) == 0);
+  }
+
+  private static string? GetAttributeTypeName(MetadataReader reader, CustomAttribute attribute)
+  {
+    EntityHandle parent;
+    if (attribute.Constructor.Kind == HandleKind.MemberReference)
+    {
+      parent = reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor).Parent;
+    }
+    else if (attribute.Constructor.Kind == HandleKind.MethodDefinition)
+    {
+      parent = reader.GetMethodDefinition((MethodDefinitionHandle)attribute.Constructor).GetDeclaringType();
+    }
+    else
+    {
+      return null;
+    }
+
+    if (parent.Kind == HandleKind.TypeReference)
+    {
+      TypeReference typeRef = reader.GetTypeReference((TypeReferenceHandle)parent);
+      return $"{reader.GetString(typeRef.Namespace)}.{reader.GetString(typeRef.Name)}";
+    }
+
+    if (parent.Kind == HandleKind.TypeDefinition)
+    {
+      TypeDefinition typeDef = reader.GetTypeDefinition((TypeDefinitionHandle)parent);
+      return $"{reader.GetString(typeDef.Namespace)}.{reader.GetString(typeDef.Name)}";
+    }
+
+    return null;
   }
 
   /// <summary>

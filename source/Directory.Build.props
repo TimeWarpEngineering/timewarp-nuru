@@ -26,7 +26,15 @@
   <PropertyGroup Label="MsBuild Packaging Defaults">
     <IsPackable>true</IsPackable>
     <PackageOutputPath>$(ArtifactsDirectory)packages/</PackageOutputPath>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <!-- Pack only Release builds. Samples, tests, and file-based programs reference
+       these projects and build them in Debug; with GeneratePackageOnBuild
+       unconditional, any Debug build repacked a Debug nupkg over the Release one
+       in artifacts/packages, and CI uploaded/promoted that artifact (published
+       3.0.0-beta.79 and beta.80 carry Debug assemblies; task 503). -->
+  <PropertyGroup Label="Release-only packing">
+    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Label="Source Link Settings">

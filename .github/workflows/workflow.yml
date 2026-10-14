@@ -44,6 +44,22 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          # Global-packages cache. The key is package manifests, so a source-only
+          # change restores packages and restore downloads anything new.
+          # The file-based runfile directory is not cached: the SDK skips a rebuild
+          # from source mtimes versus build-success.cache, and checkout stamps
+          # sources at checkout time, so a restored cache either misses or can
+          # skip work that should run. Local invalidation stays
+          # `ganda runfile cache --clear`.
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            global.json
+            nuget.config
+            **/*.csproj
+
+      - name: Runner size
+        run: nproc && free -h
 
       - name: Validate break-glass confirmation
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm != 'release'

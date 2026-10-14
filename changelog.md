@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-14
+
+First stable 3.0 release. It supersedes the `3.0.0-beta.*` line (last published beta is `3.0.0-beta.80`, 2026-10-12). This is the first 3.0 package built in Release; the betas were Debug (see the Packaging entry).
+
 ### Changed
 - **DevCli**: `dev release` passes `--prerelease` to `gh release create` when `<Version>` has a SemVer prerelease suffix, so the GitHub Release flag matches NuGet. `--dry-run` prints the same command it runs (486).
 - **TimeWarp.Mediator 14.0.0**: Contracts and Generators moved from 14.0.0-beta.5 to stable 14.0.0 (489), after the beta.5 dogfood (498). Generated host types stay internal to the compilation that emits them. A stable Nuru package does not depend on a prerelease of Mediator, so consumers do not need a prerelease opt-in for it.

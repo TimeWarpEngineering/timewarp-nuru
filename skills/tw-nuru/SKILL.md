@@ -491,8 +491,8 @@ string[] lines = terminal.GetOutputLines();
 ## Installation
 
 ```bash
-# Add to a .csproj project (--prerelease gets the latest version)
-dotnet add package TimeWarp.Nuru --prerelease
+# Add to a .csproj project
+dotnet add package TimeWarp.Nuru
 ```
 
 ```csharp

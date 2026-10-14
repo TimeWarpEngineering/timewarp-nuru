@@ -3,11 +3,10 @@
 Guide for applications moving from the 2.x line, or from a 3.0 beta, to the
 stable 3.0 release.
 
-`TimeWarp.Nuru` targets `net10.0`. Install the prerelease until `3.0.0` is
-published:
+`TimeWarp.Nuru` targets `net10.0`. Install the stable package:
 
 ```bash
-dotnet add package TimeWarp.Nuru --prerelease
+dotnet add package TimeWarp.Nuru
 ```
 
 ```csharp
@@ -176,6 +175,7 @@ syntax (literals, `{param}`, `{param?}`, `{param:int}`, `{*args}`, `--option`,
 `skills/tw-nuru/SKILL.md` for current examples.
 
 Changelog entries before `3.0.0-beta.19` are listed in `changelog.md`.
-Changes after beta.19 are under `## [Unreleased]` there. Per-beta notes for
-beta.20 through beta.77 were not kept; do not treat `## [Unreleased]` as a
-complete beta-by-beta history.
+Changes after beta.19 through stable `3.0.0` are under `## [3.0.0]` there.
+Per-beta notes for beta.20 through beta.77 were not kept; do not treat
+`## [3.0.0]` as a complete beta-by-beta history. Later work is under
+`## [Unreleased]`.

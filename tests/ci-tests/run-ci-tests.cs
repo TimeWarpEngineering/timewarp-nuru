@@ -12,7 +12,13 @@ using TimeWarp.Amuru;
 WriteLine("TimeWarp.Nuru Multi-Mode Test Runner");
 WriteLine();
 
+Stopwatch multiExecute = Stopwatch.StartNew();
 int multiResult = await RunAllTests();
+multiExecute.Stop();
+WriteLine
+(
+  $"Multi-mode execute finished in {multiExecute.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}s"
+);
 
 // Files that cannot run (or whose gated cases cannot run) inside the JARIBU_MULTI
 // assembly are listed in CiTestExcludes (Directory.Build.props) and/or executed here
@@ -56,26 +62,46 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-54-h002-nested-lambda-parameter.cs"),
 ];
 
+int parallelism = Math.Max(1, Environment.ProcessorCount);
+WriteLine();
+WriteLine($"Standalone tests: {standaloneTests.Length} files, parallelism {parallelism}");
+
 int standaloneFailures = 0;
-foreach (string testFile in standaloneTests)
-{
-  string fullPath = Path.GetFullPath(testFile);
-  WriteLine();
-  WriteLine($"Running standalone: {Path.GetFileName(fullPath)}");
-
-  CommandOutput result = await Shell.Builder("dotnet")
-    .WithArguments("run", fullPath)
-    .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
-    .WithNoValidation()
-    .CaptureAsync();
-
-  WriteLine(result.Stdout);
-  if (result.ExitCode != 0)
+object writeLock = new();
+Stopwatch standaloneExecute = Stopwatch.StartNew();
+await Parallel.ForEachAsync
+(
+  standaloneTests,
+  new ParallelOptions { MaxDegreeOfParallelism = parallelism },
+  async (testFile, cancellationToken) =>
   {
-    standaloneFailures++;
-    WriteLine(result.Stderr);
-    WriteLine($"❌ {Path.GetFileName(fullPath)} failed with exit code {result.ExitCode}");
+    string fullPath = Path.GetFullPath(testFile);
+    string name = Path.GetFileName(fullPath);
+    CommandOutput result = await Shell.Builder("dotnet")
+      .WithArguments("run", fullPath)
+      .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
+      .WithEnvironmentVariable("DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER", "1")
+      .WithNoValidation()
+      .CaptureAsync(cancellationToken);
+
+    lock (writeLock)
+    {
+      WriteLine();
+      WriteLine($"Running standalone: {name}");
+      WriteLine(result.Stdout);
+      if (result.ExitCode != 0)
+      {
+        standaloneFailures++;
+        WriteLine(result.Stderr);
+        WriteLine($"❌ {name} failed with exit code {result.ExitCode}");
+      }
+    }
   }
-}
+);
+standaloneExecute.Stop();
+WriteLine
+(
+  $"Standalone finished in {standaloneExecute.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}s ({standaloneFailures} failed)"
+);
 
 return multiResult != 0 ? multiResult : (standaloneFailures > 0 ? 1 : 0);

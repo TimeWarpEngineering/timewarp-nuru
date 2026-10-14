@@ -2,6 +2,11 @@
 // Dev CLI command for TimeWarp.Nuru development workflow
 #endregion
 
+#region Design
+// PR/merge prints ProcessorCount and a duration after each step so a hosted
+// log can be compared phase by phase without scraping timestamps.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORKFLOW COMMAND
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -82,6 +87,15 @@ public sealed class WorkflowCommand : ICommand<Unit>
       return Unit.Value;
     }
 
+    private void WriteStepDuration(Stopwatch step, string label)
+    {
+      Terminal.WriteLine($"{label} finished in {FormatSeconds(step.Elapsed)}");
+      step.Restart();
+    }
+
+    private static string FormatSeconds(TimeSpan elapsed)
+      => elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s";
+
     private CiMode DetermineMode(string? explicitMode)
     {
       string? eventName = Environment.GetEnvironmentVariable("GITHUB_EVENT_NAME");
@@ -99,9 +113,12 @@ public sealed class WorkflowCommand : ICommand<Unit>
     private async Task RunPrWorkflowAsync(string? cliAttestationMode)
     {
       Terminal.WriteLine("Pipeline: attestation -> clean -> build -> verify-samples -> test");
+      Terminal.WriteLine($"ProcessorCount: {Environment.ProcessorCount}");
       Terminal.WriteLine("");
 
       string repoRoot = ResolveRepoRoot();
+      Stopwatch pipeline = Stopwatch.StartNew();
+      Stopwatch step = Stopwatch.StartNew();
 
       // Step 1: Attestation
       Terminal.WriteLine("===============================================================================");
@@ -111,6 +128,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
         repoRoot,
         cliAttestationMode,
         AttestationConfigResolver.DefaultPrMode).ConfigureAwait(false);
+      WriteStepDuration(step, "Step 1/5");
 
       if (attestationResult.ShouldAbort)
       {
@@ -125,6 +143,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
       await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
+      WriteStepDuration(step, "Step 2/5");
 
       // Step 3: Build
       Terminal.WriteLine("");
@@ -164,6 +183,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine($"Package layout verified: TimeWarp.Nuru.{layoutVersion}.nupkg contains all {NupkgLayoutCheck.NuruRequiredPackageEntries.Length} required payload entries.");
+      WriteStepDuration(step, "Step 3/5");
 
       // Step 4: Verify Samples
       Terminal.WriteLine("");
@@ -172,6 +192,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       VerifySamplesCommand.Handler verifySamplesHandler = new(Terminal);
       await verifySamplesHandler.Handle(new VerifySamplesCommand(), CancellationToken.None);
+      WriteStepDuration(step, "Step 4/5");
 
       // Step 5: Test
       Terminal.WriteLine("");
@@ -180,6 +201,9 @@ public sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       TestCommand.Handler testHandler = new(Terminal);
       await testHandler.Handle(new TestCommand(), CancellationToken.None);
+      WriteStepDuration(step, "Step 5/5");
+      pipeline.Stop();
+      Terminal.WriteLine($"Pipeline finished in {FormatSeconds(pipeline.Elapsed)}");
 
       // Attestation advisory (warn mode only) is repeated here, immediately
       // before the SUCCEEDED banner, so it is not lost above scrollback from

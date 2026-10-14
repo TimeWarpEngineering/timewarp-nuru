@@ -5,6 +5,17 @@
   <PropertyGroup>
     <!-- Tests should not be packaged -->
     <IsPackable>false</IsPackable>
+    <!-- The multi-mode CI compile is one compilation of every included test file.
+         Repo-root AnalysisMode=All, Roslynator, NetAnalyzers, and IDE code-style
+         (EnforceCodeStyleInBuild) dominate that csc on a 4-core runner
+         (local pin, task 503: 437s with analyzers, 83s without). Product
+         projects still analyze during `dev build`. RunAnalyzersDuringBuild=false
+         skips diagnostic analyzers on this build and leaves source generators
+         running, including the Nuru generator. Roslyn-hosted analyzer tests
+         execute the Nuru analyzer themselves; they do not need it on this compile. -->
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <ReportAnalyzer>false</ReportAnalyzer>
     <!-- Tests treat warnings as errors. Suppress only the diagnostics listed below. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Suppress warnings for test projects:

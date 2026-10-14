@@ -88,6 +88,8 @@ Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 open
 
 Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md` (final ledger), `review/disposition.md`.
 
+CI fix: CI run 38599053804 failed because two tests assumed a prerelease source version. mcp-06 `Should_include_version_number` looked for "2.", "beta" or "Unknown"; it now matches a semver (optional prerelease/build suffix) after "Version:" or "Unknown". check-version-07 read the real props version and needed a prerelease number; `CheckVersionCommand` gained a documented, non-CLI `SourceVersion` override (used only when set) and the tests pin `3.0.0-beta.80` through it. The 3.0.0 bump is unchanged.
+
 ## Session
 
 - 2026-10-14: created and dispatched by claude 31dfb8d1 (cockpit) on the maintainer's "ok lets do it" after 487 merged (PR #318).
@@ -97,3 +99,4 @@ Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-14T16:24:53Z
 - 2026-10-14: implement-fix-2 oracle (grok 01a13b3b). Corrected the migration-guide changelog pointer (M1) and the `[3.0.0]` lead (M2).
 - 2026-10-14: review oracle round 2 (claude opus-5.5, effort 1, general; session id not exposed to the headless run). M1 and M2 re-verified fixed, no new findings; disposition clean.
+- 2026-10-14: CI fix, made mcp-06 and check-version-07 tests version-agnostic (SourceVersion seam on CheckVersionCommand); both suites and check-version-01..08 pass, solution builds clean.

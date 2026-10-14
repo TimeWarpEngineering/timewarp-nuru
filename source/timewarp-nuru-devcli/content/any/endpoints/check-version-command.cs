@@ -42,6 +42,12 @@ public sealed class CheckVersionCommand : ICommand<Unit>
   [Option("strict", Description = "Exit non-zero when source is more than one prerelease increment ahead of the latest published version")]
   public bool Strict { get; set; }
 
+  /// <summary>
+  /// Test seam, not a CLI option: when set, used instead of the Version read from
+  /// source/Directory.Build.props so tests can pin a prerelease source version.
+  /// </summary>
+  public string? SourceVersion { get; set; }
+
   public sealed class Handler : ICommandHandler<CheckVersionCommand, Unit>
   {
     private readonly ITerminal Terminal;
@@ -120,7 +126,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
         return Unit.Value;
       }
 
-      string? version = PropsVersionReader.Read(repoRoot);
+      string? version = command.SourceVersion ?? PropsVersionReader.Read(repoRoot);
       if (version is null)
       {
         Terminal.WriteErrorLine("Error: could not read Version from source/Directory.Build.props");

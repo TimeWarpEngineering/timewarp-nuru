@@ -129,7 +129,7 @@ public class CheckVersionEndpointFailClosedTests
     string source = ReadSourceVersion();
     await RunAsync
     (
-      new CheckVersionCommand { Package = "TimeWarp.Nuru" },
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = source },
       Versions(source),
       terminal =>
       {
@@ -144,7 +144,7 @@ public class CheckVersionEndpointFailClosedTests
 
     await RunAsync
     (
-      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true },
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true, SourceVersion = source },
       Versions(source),
       terminal =>
       {
@@ -165,7 +165,7 @@ public class CheckVersionEndpointFailClosedTests
 
     await RunAsync
     (
-      new CheckVersionCommand { Package = "TimeWarp.Nuru" },
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = source },
       Versions(latest),
       terminal =>
       {
@@ -178,7 +178,7 @@ public class CheckVersionEndpointFailClosedTests
 
     await RunAsync
     (
-      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true },
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true, SourceVersion = source },
       Versions(latest),
       _ => Environment.ExitCode.ShouldBe(0)
     );
@@ -197,7 +197,7 @@ public class CheckVersionEndpointFailClosedTests
 
     await RunAsync
     (
-      new CheckVersionCommand { Package = "TimeWarp.Nuru" },
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = source },
       Versions(latest),
       terminal =>
       {
@@ -216,7 +216,7 @@ public class CheckVersionEndpointFailClosedTests
 
     await RunAsync
     (
-      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true },
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true, SourceVersion = source },
       Versions(latest),
       terminal =>
       {
@@ -235,7 +235,7 @@ public class CheckVersionEndpointFailClosedTests
 
     await RunAsync
     (
-      new CheckVersionCommand { Package = "TimeWarp.Nuru" },
+      new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = source },
       Versions(Latest),
       terminal =>
       {
@@ -251,8 +251,8 @@ public class CheckVersionEndpointFailClosedTests
 
   private static string ReadSourceVersion()
   {
-    string? source = PropsVersionReader.Read(Git.FindRoot());
-    source.ShouldNotBeNullOrWhiteSpace();
+    // Fixed prerelease, independent of the repo's real (possibly stable) version.
+    const string source = "3.0.0-beta.80";
     PrereleaseDistance.TryGetIncrements(source, source).ShouldBe(0);
     return source;
   }

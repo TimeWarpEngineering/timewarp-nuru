@@ -12,8 +12,9 @@ dotnet run app.cs -- --capabilities                                      # endpo
 dotnet run app.cs -- deploy --json-args '{"env":"x","bogus":1}'; echo $?  # Error: Unknown key 'bogus' ... / 1
 ```
 
-Verified 2026-10-09 against `TimeWarp.Nuru 3.0.0-beta.79` from nuget.org (with the interceptors workaround line), and 2026-10-11 against a locally packed `3.0.0-beta.80` without it (task 488). On release day change the
-version pin to `3.0.0` and re-run every line.
+Verified 2026-10-14 against published `TimeWarp.Nuru` 3.0.0-beta.80 from nuget.org, with no
+`#:property` line. `greet World` prints `Hello, World!`. On release day change the
+version pin to `3.0.0` and re-run every line. Also AOT-publish it (`dotnet publish app.cs -c Release -r linux-x64`) and re-measure size and startup on the Release-built package: the beta.80 figures in the launch copy came from a Debug build. See `assets/readme.md`.
 
 Gotchas found while building it:
 

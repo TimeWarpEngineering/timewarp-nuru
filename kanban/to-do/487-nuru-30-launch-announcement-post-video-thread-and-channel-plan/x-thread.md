@@ -12,20 +12,20 @@ this folder. Attach them in post order.
 
    No link here. Links in post 1 cut reach, so the link goes in post 7.
 
-2. **Agent contract**. `shot-2.png`: `./app --capabilities` showing one endpoint plus the `invocation` block (244 chars)
+2. **Agent contract**. `shot-2.png`: `./app --capabilities` filtered to the deploy endpoint plus `invocation` (the full document is 51 lines). `version` is `1.0.0`. (244 chars)
    > Every Nuru app answers --capabilities with a machine-readable map of its commands: typed parameters, options, and whether each one is a query or a command. Plus an invocation block that says how to call them. Agents read it. You don't write it.
 
 3. **JSON args**. `shot-3.png`: `./app deploy --json-args '{"env":"staging","tag":"3.0.0"}'` and its output, then the `bogus` key error (245 chars)
    > Agents are bad at shell quoting. --json-args takes inline JSON, @file, or - for stdin and binds it to the same handler a human calls. The command stays on argv. Only the values go in the JSON. Unknown keys fail loudly, so a wrong guess shows up.
 
-4. **Single file**. `shot-4.png`: `demo/app.cs.txt` (beta.79 needs the `#:property` line. Drop it from the shot if the package fix lands, see the gates in task.md) (205 chars)
+4. **Single file**. `shot-4.png`: `cat` of `demo/app.cs.txt` (beta.80, no `#:property` line) (205 chars)
    > dotnet run app.cs. One file: routes, typed parameters, optional options, help, completion, REPL. A source generator emits the matcher at compile time, so there's no reflection and no runtime route parsing.
 
 5. **REPL + completion**. `shot-5.png`: `./app -i` session, then `key-bindings --profile Emacs` (191 chars)
    > A built-in REPL (-i) with Default, Emacs, Vi, and VSCode key-binding profiles. Shell completion for bash, zsh, fish, and PowerShell, generated from your routes: ./app --install-completion zsh
 
-6. **AOT**. `shot-6.png`: `ls -lh` of the published binary and `time ./app greet x`. Measured 2026-10-09 on beta.79, linux-x64 (WSL2): 5.9 MB, median 2.9 ms over 20 runs. Re-measure on the day and keep the text equal to the screenshot
-   > Native AOT: that one-file app, REPL and completion included, publishes to a 5.9 MB binary and runs a command in ~3 ms. The generator does the work so the runtime doesn't.
+6. **AOT**. `shot-6.png`: `ls -lh` prints `6.0M` and `time ./app greet x` prints `real 0m0.006s` (inside VHS, which loads the machine; every run in the recorder reads 5 to 6 ms). Quiet shell on the same binary: median 2.52 ms over 20 runs, 6,187,808 bytes (5.90 MiB). The post states no millisecond figure, so it cannot contradict the frame; the blog and r/dotnet carry the quiet `~3 ms`. These figures come from the Debug-built beta.80 package. **Release day: re-measure on Release-built 3.0.0, recapture `shot-6.png`, and update this post, the blog, and the r/dotnet draft to match (see `assets/readme.md`).**
+   > Native AOT: that one-file app, REPL and completion included, publishes to a 6.0 MB binary and runs a command in single-digit milliseconds. The generator does the work so the runtime doesn't.
 
 7. **Ask** (265 chars, URL counts as 23 on X)
    > 3.0 moves contracts to TimeWarp.Mediator, swaps the MCP server for an in-context agent skill, and fixed 22 issues an agent-run code review found before release. Migration guide and repo: github.com/TimeWarpEngineering/timewarp-nuru. A ⭐ helps more than you'd think.

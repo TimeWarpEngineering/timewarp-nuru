@@ -12,17 +12,21 @@ to 9:16 if needed) and the blog.
 | 24–30 s | `./app dep<TAB>` → completes `deploy`; `./app deploy staging --t<TAB>` → `--tag` (after `./app --install-completion bash`) | *Shell completion generated for you.* |
 | 30–36 s | `./app -i`, run `greet Ada` and `deploy staging`, Ctrl-R history, `exit` | *Built-in REPL.* |
 | 36–50 s | Split pane. Left: agent prompt "deploy staging with tag 3.0.0 using ./app". Right: the agent runs `./app --capabilities`, then `./app deploy --json-args '{"env":"staging","tag":"3.0.0"}'` → `Deploying 3.0.0 to staging` | *Your agent reads the contract and calls it. No MCP server.* |
-| 50–56 s | `dotnet publish app.cs -c Release -r linux-x64 -p:PublishAot=true` (sped up) → `ls -lh` → `time ./app greet x` | *AOT. 5.9 MB. 3 ms.* (beta.79 measurement; re-caption to what the take shows) |
+| 50–56 s | `dotnet publish app.cs -c Release -r linux-x64 -p:PublishAot=true` (sped up) → `ls -lh` → `time ./app greet x` | *AOT. 5.9 MB. 3 ms.* (the 2026-10-09 take; re-caption to what a release-day take shows) |
 | 56–60 s | End card: logo, `github.com/TimeWarpEngineering/timewarp-nuru`, "⭐ if useful" | |
 
 Production notes
 - Prewrite every command in a script so the take is clean; use `asciinema rec --idle-time-limit 1`.
 - The agent pane can be a real Claude Code / Grok session or a scripted replay; a real one is more
   credible if the output is short.
-- AOT numbers: measured on 2026-10-09 with `demo/app.cs.txt` on beta.79, linux-x64 (WSL2): 5.9 MB, median
-  2.9 ms over 20 runs. `documentation/user/reference/performance.md` lists 3.3 MB and 4.8 MB for Direct
-  and Mediator AOT on .NET 9, with startup under 1 ms. It does not say those binaries omit REPL or
-  completion. Caption what you measure, not the docs.
+- AOT numbers: the shipped mp4 is the 2026-10-09 beta.79 take (5.9 MB, median 2.9 ms). Re-measured
+  2026-10-14 on published beta.80, linux-x64: `ls -lh` prints `6.0M` (6,187,808 bytes, 5.90 MiB),
+  a quiet `time` prints `0.003s`, median 2.52 ms over 20 runs. The VHS frame in `shot-6.png` reads
+  `0.006s` because the recorder is loaded; thread post 6 states no millisecond figure so it does not contradict the frame. The blog
+  and the r/dotnet draft use the quiet-shell figure (`~3 ms`). beta.80 is a Debug build; re-measure on Release-built 3.0.0 on release day.
+  `documentation/user/reference/performance.md` lists 3.3 MB and 4.8 MB for Direct and Mediator AOT
+  on .NET 9, with startup under 1 ms. It does not say those binaries omit REPL or completion.
+  Caption what you measure, not the docs.
 - `--json-args` carries values only. The route literal (`deploy`) stays on argv, and the JSON has no
   `command` key. An earlier draft of this script had it wrong.
 - Record outside the repo: CPM rejects `#:package …@version` inside it (see `demo/readme.md`). The

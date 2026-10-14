@@ -10,11 +10,24 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 529
+- Lines changed: 369
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
 - Turn cap: 120 (--max-turns; cursor uncapped)
+
+## Round 3 scope (2026-10-14)
+
+- **Diff scope:** branch vs `origin/master` (merge-base `27ed3d92`), commits `70aec67b` and `94e68fd2`: the beta.80 re-verify pass. 18 files, 273 lines changed. The budget above counts this delta.
+- **Plan / brief:** task.md "Re-verify on 3.0.0-beta.80" block: smoke, the three fixed gates, a copy re-read, `shot-2.png` … `shot-6.png`, and a Nostr probe. No product code.
+- **Effort / roster:** 2, general.
+- **Session IDs:** review oracle — Claude (claude-opus-5-5) under headless `ganda task work`, session id not exposed to the oracle.
+
+## Round 4 scope (2026-10-14)
+
+- **Diff scope:** fix commit `76150f37` (round-3 M7, M8), cross-checked against the full branch vs `origin/master` (merge-base `27ed3d92`). The budget above (369 lines) counts the branch delta.
+- **Effort / roster:** 2, general.
+- **Session IDs:** review oracle — Claude (claude-opus-5-5) under headless `ganda task work`, session id not exposed to the oracle.
 
 ## Ground rules
 

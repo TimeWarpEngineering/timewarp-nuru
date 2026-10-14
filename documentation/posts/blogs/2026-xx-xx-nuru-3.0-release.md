@@ -119,10 +119,12 @@ running.
   command that lists what each key does.
 - **Shell completion** generated from your routes: `./app --install-completion zsh`.
 - **Native AOT**: `dotnet publish app.cs -c Release -r linux-x64` turns the single-file app above,
-  REPL and completion included, into a 5.9 MB native binary that runs a command in about 3 ms. That
+  REPL and completion included, into a 6.0 MB native binary that runs a command in about 3 ms. That
   matters more than it sounds, because dynamic tab completion runs your binary on every Tab press.
 - **Endpoints as classes** when an app outgrows lambdas: `[NuruRoute]` classes with
   `TimeWarp.Mediator` handlers and pipeline behaviors, discovered at compile time.
+
+<!-- RELEASE DAY: 6.0 MB and ~3 ms were measured on the Debug-built beta.80. Re-measure on Release-built 3.0.0 and update the Native AOT bullet above, the r/dotnet draft and thread post 6 (kanban 487, assets/readme.md). -->
 
 ## What changed from 2.x
 

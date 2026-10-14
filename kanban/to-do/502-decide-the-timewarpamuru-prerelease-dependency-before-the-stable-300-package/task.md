@@ -129,6 +129,23 @@ unzip -p /tmp/nuru-502-pack/TimeWarp.Nuru.3.0.0.nupkg TimeWarp.Nuru.nuspec | gre
 - The migration guide and changelog say stable 3.0.0 depends on `TimeWarp.Amuru` 2.0.0, and that betas through 3.0.0-beta.80 depend on 2.0.0-beta.2.
 - Pack exits 0. The nuspec lists `TimeWarp.Amuru` at `2.0.0`. The pack log does not contain `NU5104`.
 
+### Review (round 1, 2026-10-14)
+
+Effort 1, roster `general` (review oracle, Claude Opus 5.5). **Disposition: not reached. 2 findings are open.**
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 1 | 0 | 0 |
+| suggestion | 1 | 0 | 0 |
+
+- **M1 (bug):** The claim "betas through 3.0.0-beta.80 depend on Amuru 2.0.0-beta.2" is false. Only beta.80 does.
+  beta.79 depends on `1.1.1`, beta.72–76 on `1.0.0`, and beta.58–71 on `1.0.0-beta.N`, per the nuget.org
+  nuspecs. The claim appears in `changelog.md:13`, `migrating-to-3.0.md:48-49`, 487 `release-notes.md:54-55`,
+  487 `task.md:66`, and the Results above. It came from this task's Scope step 4.
+- **M2 (suggestion):** Nuru 2.0.0 has no Amuru dependency. The migration guide should say that 3.0 adds it.
+- Fix on this id, then re-review in `review/round-2/`.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ## Notes
 
 - Found by 489 (2026-10-13) while verifying the Mediator pin; recorded there under "Pack at 3.0.0".
@@ -140,3 +157,5 @@ unzip -p /tmp/nuru-502-pack/TimeWarp.Nuru.3.0.0.nupkg TimeWarp.Nuru.nuspec | gre
 - Created: Claude Fable 5.1, session 31dfb8d1 (2026-10-13), filed from the 489 merge
 - Decision recorded (ship Amuru first) and task unblocked on Amuru 2.0.0: Claude Fable 5.1 (2026-10-14)
 - Pin moved to 2.0.0, docs updated, CI green, pack checked: Grok implement oracle (2026-10-14)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T02:49:20Z
+- Review oracle round 1: Claude Opus 5.5 (tw-implementation-review, effort 1, general). 1 bug and 1 suggestion are open. Blocked on the fix loop. 2026-10-14

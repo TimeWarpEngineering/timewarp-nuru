@@ -30,6 +30,7 @@ REPL stdin fixes (492, 493), and Release-only packing with CI config/integrity g
 
 - Round 1: Blocked — open M1, M2
 - Fix pass (2026-10-14): M1 and M2 marked fixed on `review/round-1/merged.md`. Host runs review round 2.
+- Round 2: M1 and M2 re-verified fixed; no new findings. Disposition **clean** (`review/disposition.md`).
 
 ## Notes
 
@@ -77,12 +78,16 @@ Expect: `<Version>3.0.0</Version>`, `<version>3.0.0</version>`, `TimeWarp.Amuru`
 
 ### Review
 
-Round 1 (effort 1, roster: general) found 1 bug (M1) and 1 nit (M2). The fix pass marked both fixed on the round-1 ledger (bug 0 open / 1 fixed, nit 0 open / 1 fixed, no wontfix). Disposition is not written; the host runs review round 2.
+Two rounds ran at effort 1 with one reviewer (roster: general). Round 1 found 1 bug (M1) and 1 nit (M2). The fix pass (b007143a) fixed both. Round 2 reviewed the fix delta `89a3351a..b007143a`, confirmed both fixes against the changelog headings and local tags, and found nothing new.
 
-- **M1 (bug, fixed):** the migration guide changelog pointer now matches the per-beta sections through beta.79.
+Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 open / 1 fixed / 0 wontfix.
+
+**Disposition: clean.** No wontfix and no escalations.
+
+- **M1 (bug, fixed):** the migration guide's changelog pointer now matches the per-beta sections through beta.79.
 - **M2 (nit, fixed):** the `[3.0.0]` lead names its range since beta.79 and the first Packaging entry (503).
 
-Files: `review/review-framework.md`, `review/round-1/merged.md` (live ledger), `review/round-1/general.md`.
+Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md` (final ledger), `review/disposition.md`.
 
 ## Session
 
@@ -92,3 +97,4 @@ Files: `review/review-framework.md`, `review/round-1/merged.md` (live ledger), `
 - 2026-10-14: review oracle round 1 (claude opus-5.5, effort 1, general). 1 bug (M1) and 1 nit (M2) open; Blocked for a fix pass.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-14T16:24:53Z
 - 2026-10-14: implement-fix-2 oracle (grok 01a13b3b). Corrected the migration-guide changelog pointer (M1) and the `[3.0.0]` lead (M2).
+- 2026-10-14: review oracle round 2 (claude opus-5.5, effort 1, general; session id not exposed to the headless run). M1 and M2 re-verified fixed, no new findings; disposition clean.

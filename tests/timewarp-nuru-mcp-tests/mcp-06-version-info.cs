@@ -34,8 +34,8 @@ public class VersionInfoTests
 
     // Assert
     result.ShouldContain("Version:");
-    // Should contain a version pattern (e.g., "2.1.0" or "beta")
-    (result.Contains("2.") || result.Contains("beta") || result.Contains("Unknown")).ShouldBeTrue();
+    // Should contain a semver after "Version:" (optional prerelease suffix) or "Unknown"
+    (System.Text.RegularExpressions.Regex.IsMatch(result, @"Version:\s*\d+\.\d+\.\d+(-[0-9A-Za-z.\-]+)?(\+[0-9A-Za-z.\-]+)?") || result.Contains("Unknown", StringComparison.Ordinal)).ShouldBeTrue();
 
     await Task.CompletedTask;
   }

@@ -45,10 +45,12 @@ IdempotentCommand (`IIdempotentCommand<T>`, or `ICommand<T>` plus
 
 ## TimeWarp.Amuru is stable 2.0.0
 
-`TimeWarp.Nuru` depends on `TimeWarp.Amuru` for process execution. Published 3.0
-betas through 3.0.0-beta.80 depend on `TimeWarp.Amuru` 2.0.0-beta.2. Stable 3.0.0
-depends on stable `TimeWarp.Amuru` 2.0.0, so you don't need a prerelease opt-in
-for Amuru. If you also pin `TimeWarp.Amuru` yourself (for example in
+`TimeWarp.Nuru` depends on `TimeWarp.Amuru` for process execution (REPL clipboard
+and the generated `--capabilities` search call). This is a new dependency for 2.x
+users: Nuru 2.0.0 had no Amuru reference, so upgrading adds the `TimeWarp.Amuru`
+package to your app. Only 3.0.0-beta.80 depends on `TimeWarp.Amuru` 2.0.0-beta.2;
+earlier 3.0 betas depend on Amuru 1.x. Stable 3.0.0 depends on stable
+`TimeWarp.Amuru` 2.0.0, so you don't need a prerelease opt-in for Amuru. If you also pin `TimeWarp.Amuru` yourself (for example in
 `Directory.Packages.props`), use 2.0.0 with Nuru 3.0.0. `TimeWarp.Amuru.Tools`
 2.0.0 is the matching pin for this repo's dev CLI; it does not flow from the
 Nuru package.

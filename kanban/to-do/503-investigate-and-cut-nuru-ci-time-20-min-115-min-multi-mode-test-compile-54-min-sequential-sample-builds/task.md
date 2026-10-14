@@ -135,7 +135,35 @@ Expect:
    Log contains `Standalone tests: 28 files` and `Standalone finished in` with `0 failed`.
 3. The setup-dotnet step sets `cache: true` and does not cache `~/.local/share/dotnet/runfile`.
 
+### Review (round 1, 2026-10-14)
+
+Effort 2 (by diff, 380 lines), roster `general` (review oracle, Claude Opus 5.5).
+**Disposition: pending. Three findings are open and need the fix loop on this id, then a round-2 re-review.**
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 1 | 0 | 0 |
+| suggestion | 1 | 0 | 0 |
+| nit | 1 | 0 | 0 |
+
+- **M1 (bug, open):** The parallel standalone `dotnet run`s each rebuild and repack the shared
+  ProjectReferences. Locally, one standalone build printed "Successfully created package" for
+  `TimeWarp.Nuru` and `TimeWarp.Nuru.Analyzers`. At `ProcessorCount`-wide, those processes race on
+  `obj/Debug` and `artifacts/packages/*.nupkg`, the race `verify-samples` now avoids. The result can be a
+  flaky merge gate or a torn nupkg in the master `Packages-*` artifact. Fix: build the standalone files
+  without packing or rebuilding the shared projects.
+- **M2 (suggestion, open):** The analyzer and code-style switches are at `tests/` scope. That drops test-code
+  lint, RCS1037 included, for every single-file run, not only the multi-mode compile. Move them to
+  `tests/ci-tests/Directory.Build.props`, or document that this is intended.
+- **M3 (nit, open):** Print the failed-sample summary in sorted order.
+- Out of scope: test-phase Debug builds overwrite the Release nupkg in `artifacts/packages/`. This was
+  already true before this change. Check separately whether promoted artifacts contain Debug assemblies.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ## Session
 
 - Created: Claude Fable 5.1, session 31dfb8d1 (2026-10-14), from the nuru cockpit; unclaimed
 - Implementation: implementer-grok (2026-10-14)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-14T05:23:12Z
+- Review oracle: round 1, Claude Opus 5.5 (headless `ganda task work`, session id not exposed), effort 2,
+  roster general — 1 bug, 1 suggestion, 1 nit open; disposition pending fix loop (2026-10-14)

@@ -12,10 +12,6 @@ An optional package that turns an MCP server's `[McpServerTool]` / `[Description
 
 `TimeWarp.Nuru.Mcp` is already the PackageId of Nuru's dev-assist MCP server (`source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj`), which goes the other way (an MCP server that helps write Nuru apps). `McpBridge` names the direction (MCP tools into Nuru routes), keeps the two packages apart on NuGet, and keeps the bridge out of Nuru core. Busara rated this name GREEN.
 
-## Dependencies
-
-- Depends on task 506 (Roslynk CLI spike on Nuru).
-
 ## Go/no-go gate (after task 506)
 
 Decide go or no-go from task 506's results before any implementation:

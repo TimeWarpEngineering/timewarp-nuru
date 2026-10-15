@@ -33,6 +33,10 @@ Posts 2–6 attach `assets/shot-2.png` … `assets/shot-6.png` as static PNG ima
 7. **Ask** (210 chars)
    > 3.0 moves contracts to TimeWarp.Mediator, swaps the MCP server for an in-context agent skill, and fixed 22 issues an agent-run code review found before release.  Migration guide and repo are in the reply below.
 
+8. **Links reply** (reply to post 7, no media)
+   > Repo: https://github.com/TimeWarpEngineering/timewarp-nuru
+   > Release post: https://thefreezeteam.com/posts/steven-t-cramer/2026/10/2026-10-15-nuru-3.0-release
+
 ## @Grok replies (post within the hour, as replies to post 1)
 
 - "@Grok compare this to System.CommandLine and Spectre.Console.Cli for building CLIs that AI agents call."

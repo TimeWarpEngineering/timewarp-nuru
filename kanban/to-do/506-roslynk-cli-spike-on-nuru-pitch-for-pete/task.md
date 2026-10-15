@@ -44,3 +44,4 @@ Explicit deliverable, because the optional daemon package (`TimeWarp.Nuru.Daemon
 ## Session
 
 - Created: 4064788 (2026-10-15)
+- Boy-scout audit fix: ran `ganda repo audit --fix` (root .gitignore porcelain + routine-journal lines; untracked kanban review-round markers) to unblock publish.

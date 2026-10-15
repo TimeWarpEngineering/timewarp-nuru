@@ -143,7 +143,7 @@ Still open, and outside this repo session:
 - Replace the Nostr relays or wait until they stop returning 530.
 - Day −1 baseline.
 - Launch and Measure, after the `v3.0.0` tag.
-- Re-record `assets/nuru-3-launch.mp4` (it is the 2026-10-09 beta.79 take).
+- ~~Re-record `assets/nuru-3-launch.mp4`~~ Superseded 2026-10-15: silent video removed; post 1 uses narrated `assets/nuru-3-pitch-v5.mp4`. Owner: Masoko (Markets). Rule: no video ships without narration.
 
 Earlier corrections that still hold: `--json-args` has no `command` key; the REPL flag is `-i`; completion is bash, zsh, fish, and PowerShell; one top-level `invocation`; 28 review findings, 22 fixed before the tag; the skill is `tw-nuru`; optional options use `--tag? {tag?}`; `return await app.RunAsync(args)`.
 

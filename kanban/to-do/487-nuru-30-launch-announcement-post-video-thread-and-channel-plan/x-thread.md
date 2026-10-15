@@ -1,14 +1,17 @@
 # X thread: seven posts (text final 2026-10-09)
 
+Owner: Masoko (Markets) is responsible for content creation and social media posting for this launch going forward. Rule: no video ships without narration.
+
 Post 1 is `documentation/posts/blips/2026-10-15-nuru-3.0-release.md` (144 chars). Nostr gets its own
 blip with the link (`...-nostr.md`, 220 chars) because it is not threaded. Every post is ≤ 280 chars.
 
 Screenshots: one per feature, dark theme, code only, 1600×900. Capture them from
 `demo/app.cs.txt`, run outside the repo (see `demo/readme.md`). File names `shot-2.png` … `shot-6.png` in
 this folder. Attach them in post order.
+Posts 2–6 attach `assets/shot-2.png` … `assets/shot-6.png` as static PNG images (no GIF, no animation). The v5 pitch video in post 1 is the only moving media in the thread.
 
-1. **Hook + video (native upload)** (144 chars)
-   > TimeWarp.Nuru 3.0 is out. Your .NET CLI is now a tool your AI agent can call. No MCP server. One package. 60 seconds, start to agent-callable: 🧵
+1. **Hook + video (native upload)** (144 chars). Video: `assets/nuru-3-pitch-v5.mp4` (narrated pitch, xAI grok-tts `helix` voice, 29.5 s, 1920×1080). No silent videos anywhere in the thread.
+   > TimeWarp.Nuru 3.0 is out. Your .NET CLI is now a tool your AI agent can call. No MCP server. One package. 30 seconds, start to agent-callable: 🧵
 
    No link here. Links in post 1 cut reach, so the link goes in post 7.
 

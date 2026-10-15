@@ -2,7 +2,7 @@
 
 Owner: Masoko (Markets) is responsible for content creation and social media posting for this launch going forward. Rule: no video ships without narration.
 
-Post 1 is `documentation/posts/blips/2026-10-15-nuru-3.0-release.md` (148 chars). Nostr gets its own
+Post 1 is `documentation/posts/blips/2026-10-15-nuru-3.0-release.md` (146 chars). Nostr gets its own
 blip with the link (`...-nostr.md`, 220 chars) because it is not threaded. Every post is ≤ 280 chars.
 
 Screenshots: one per feature, dark theme, code only, 1600×900. Capture them from
@@ -10,8 +10,8 @@ Screenshots: one per feature, dark theme, code only, 1600×900. Capture them fro
 this folder. Attach them in post order.
 Posts 2–6 attach `assets/shot-2.png` … `assets/shot-6.png` as static PNG images (no GIF, no animation). The v5 pitch video in post 1 is the only moving media in the thread.
 
-1. **Hook + video (native upload)** (148 chars). Video: `assets/nuru-3-pitch-v5.mp4` (narrated pitch, xAI grok-tts `helix` voice, 29.5 s, 1920×1080). No silent videos anywhere in the thread.
-   > TimeWarp.Nuru 3.0 is out.  Your .NET CLI is now a tool your AI agent can call.  No MCP server.  One package.  30 seconds, start to agent-callable: 🧵
+1. **Hook + video (native upload)** (146 chars). Video: `assets/nuru-3-pitch-v5.mp4` (narrated pitch, xAI grok-tts `helix` voice, 29.5 s, 1920×1080). No silent videos anywhere in the thread.
+   > TimeWarp.Nuru 3.0 is out.  Your .NET CLI is now a tool your AI agent can call.  No MCP server.  One package.  30 seconds, start to agent-callable:
 
    No link here. Links in post 1 cut reach, so the link goes in post 7.
 
@@ -30,8 +30,8 @@ Posts 2–6 attach `assets/shot-2.png` … `assets/shot-6.png` as static PNG ima
 6. **AOT**. `shot-6.png`: `ls -lh` prints `5.9M` and `time ./app greet x` prints `real 0m0.006s` (inside VHS, which loads the machine). Recaptured 2026-10-15 on Release-built 3.0.0 from nuget.org. Quiet shell on the same binary: median 2.49 ms over 50 runs (5 warm-up), 6,092,832 bytes. The post states no millisecond figure, so it cannot contradict the frame; the blog and r/dotnet carry the quiet `~3 ms`.
    > Native AOT: that one-file app, REPL and completion included, publishes to a 5.9 MB binary and runs a command in single-digit milliseconds.  The generator does the work so the runtime doesn't.
 
-7. **Ask** (244 chars)
-   > 3.0 moves contracts to TimeWarp.Mediator, swaps the MCP server for an in-context agent skill, and fixed 22 issues an agent-run code review found before release.  Migration guide and repo are in the reply below.  A ⭐ helps more than you'd think.
+7. **Ask** (210 chars)
+   > 3.0 moves contracts to TimeWarp.Mediator, swaps the MCP server for an in-context agent skill, and fixed 22 issues an agent-run code review found before release.  Migration guide and repo are in the reply below.
 
 ## @Grok replies (post within the hour, as replies to post 1)
 
@@ -44,7 +44,7 @@ native.
 
 ## Second-shot post (day 7): process story
 
-> I had a Grok + Claude agent team code-review Nuru 3.0 before release.  28 findings, 22 fixed before the tag.  The misses were the interesting part: 🧵
+> I had a Grok + Claude agent team code-review Nuru 3.0 before release.  28 findings, 22 fixed before the tag.  The misses were the interesting part:
 
 Then four posts from `kanban/done/482-…/review/`:
 

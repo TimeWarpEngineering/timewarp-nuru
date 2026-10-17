@@ -31,6 +31,6 @@ dotnet run -c Release --file spikes/roslynk-cli/roslynk-nuru.cs -- \
 
 `--json-args -` reads stdin. `--json-args @path` reads a file. An inline `{...}` object is the third form. Keys are the `name` values from `--capabilities`. Positional names are lowercased (`solutionid`, `symbolname`). Option names keep the long form passed to `[Option]`.
 
-`timing/warm-pair.cs` is the same host with two top-level `RunAsync` calls. It prints `warmPair.firstMs` and `warmPair.secondMs` on stderr. The first call loads the solution. The second call uses that loaded solution. It is not a route on the pitch CLI.
+`timing/warm-pair.cs` is the same host with two top-level `RunAsync` calls. It prints `warmPair.firstMs` and `warmPair.secondMs` on stderr. The first call loads the solution and compiles. The second call uses that loaded solution. Repeating the same `diagnostics` arguments hits Roslynk's diagnostics memo, whose key is `includeAnalyzers` alone. A second `refs` call still searches. That search is the warm cost that is not a cache hit. The entry is not a route on the pitch CLI.
 
 `binding/` is a separate probe for nested objects, maps, arrays, and enums. `schema/` lists every `[McpServerTool]` parameter and whether that CLR shape fits `--json-args`.

@@ -6,6 +6,10 @@
 #region Design
 // Nuru binds bool, number, string, enum, and arrays of those. It has no object, map, or
 // array-of-object shape. CancellationToken is a host argument and is not an input.
+// A non-nullable bool whose default is true still maps clean. The generated flag starts
+// false, so parameters.boolDefaultTrue names the ones a generator emits as bool? and
+// defaults in the handler. A non-nullable enum is still counted clean; that shape does
+// not compile, and this Roslynk commit has no top-level enum parameter.
 // Token estimates use the common four-characters-per-token rule. The live --capabilities
 // measurement is separate and uses the same rule on the generated document.
 #endregion
@@ -50,6 +54,7 @@ tools.Sort(static (left, right) => string.Compare(left.Name, right.Name, StringC
 int clean = 0;
 int blocked = 0;
 int host = 0;
+List<string> boolDefaultTrue = [];
 Console.WriteLine($"tools={tools.Count}");
 foreach (ToolRow tool in tools)
 {
@@ -57,6 +62,11 @@ foreach (ToolRow tool in tools)
   foreach (ParameterRow parameter in tool.Parameters)
   {
     Console.WriteLine($"  {parameter.Name} type={parameter.Type} shape={parameter.Shape} maps={parameter.Maps}");
+    if (parameter.BoolDefaultTrue)
+    {
+      boolDefaultTrue.Add($"{tool.Name}.{parameter.Name}");
+    }
+
     switch (parameter.Maps)
     {
       case "clean":
@@ -72,9 +82,16 @@ foreach (ToolRow tool in tools)
   }
 }
 
+boolDefaultTrue.Sort(StringComparer.Ordinal);
 Console.WriteLine($"parameters.clean={clean}");
 Console.WriteLine($"parameters.blocked={blocked}");
 Console.WriteLine($"parameters.host={host}");
+foreach (string name in boolDefaultTrue)
+{
+  Console.WriteLine($"boolDefaultTrue={name}");
+}
+
+Console.WriteLine($"parameters.boolDefaultTrue={boolDefaultTrue.Count}");
 
 string synthetic = BuildSyntheticCatalog(tools);
 Console.WriteLine($"syntheticCapabilities.chars={synthetic.Length}");
@@ -93,20 +110,24 @@ static ParameterRow Classify(ParameterInfo parameter)
   Type type = parameter.ParameterType;
   string typeName = type.ToString();
   string description = parameter.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "";
+  bool boolDefaultTrue = IsNonNullableBoolDefaultTrue(parameter);
+  ParameterRow Row(string shape, string maps) =>
+    new(parameter.Name ?? "", typeName, shape, maps, description, boolDefaultTrue);
+
   if (type == typeof(CancellationToken))
   {
-    return new ParameterRow(parameter.Name ?? "", typeName, "cancellation", "host", description);
+    return Row("cancellation", "host");
   }
 
   Type core = Nullable.GetUnderlyingType(type) ?? type;
   if (IsScalar(core))
   {
-    return new ParameterRow(parameter.Name ?? "", typeName, ShapeName(core), "clean", description);
+    return Row(ShapeName(core), "clean");
   }
 
   if (core.IsEnum)
   {
-    return new ParameterRow(parameter.Name ?? "", typeName, "enum", "clean", description);
+    return Row("enum", "clean");
   }
 
   if (TryGetSequenceElement(core, out Type? element))
@@ -115,24 +136,29 @@ static ParameterRow Classify(ParameterInfo parameter)
     if (IsScalar(item) || item.IsEnum)
     {
       string itemShape = item.IsEnum ? "enum" : ShapeName(item);
-      return new ParameterRow(parameter.Name ?? "", typeName, itemShape + "[]", "clean", description);
+      return Row(itemShape + "[]", "clean");
     }
 
-    return new ParameterRow(parameter.Name ?? "", typeName, "object[]", "blocked", description);
+    return Row("object[]", "blocked");
   }
 
   if (IsMap(core))
   {
-    return new ParameterRow(parameter.Name ?? "", typeName, "object", "blocked", description);
+    return Row("object", "blocked");
   }
 
   if (core.IsClass || core.IsValueType)
   {
-    return new ParameterRow(parameter.Name ?? "", typeName, "object", "blocked", description);
+    return Row("object", "blocked");
   }
 
-  return new ParameterRow(parameter.Name ?? "", typeName, "unknown", "blocked", description);
+  return Row("unknown", "blocked");
 }
+
+static bool IsNonNullableBoolDefaultTrue(ParameterInfo parameter) =>
+  parameter.ParameterType == typeof(bool)
+  && parameter.HasDefaultValue
+  && parameter.DefaultValue is true;
 
 static bool IsScalar(Type type) =>
   type == typeof(string)
@@ -321,7 +347,13 @@ static void AppendJson(StringBuilder json, string value)
 
 internal sealed record ToolRow(string Name, string Description, List<ParameterRow> Parameters);
 
-internal sealed record ParameterRow(string Name, string Type, string Shape, string Maps, string Description);
+internal sealed record ParameterRow(
+  string Name,
+  string Type,
+  string Shape,
+  string Maps,
+  string Description,
+  bool BoolDefaultTrue);
 
 internal sealed record SyntheticEndpoint(
   string Pattern,

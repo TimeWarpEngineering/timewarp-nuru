@@ -8,6 +8,9 @@
 // Both RunAsync calls are top-level statements. The source generator does not walk if
 // statements, so a flag on the pitch CLI cannot hide the second call and still intercept it.
 // One static service provider is shared by both intercepted calls.
+// Repeating diagnostics hits Roslynk's memo. That cache key is includeAnalyzers alone,
+// so this entry measures a cache hit when those arguments do not change. The refs route
+// is the warm cost that still does work.
 #endregion
 
 using System.Diagnostics;

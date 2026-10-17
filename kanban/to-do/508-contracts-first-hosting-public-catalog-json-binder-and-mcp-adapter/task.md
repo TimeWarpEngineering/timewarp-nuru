@@ -28,6 +28,23 @@ Driving consumer: Roslynk (Peter Morris's Roslyn MCP server): one contract class
 
 - (cross-repo) timewarp-architecture 384 defines the shared package; 508-001 waits for its first published version. Not a board edge because depends-on is same-repo.
 
+## Implementation order (serial, decided 2026-10-17)
+
+One item at a time across the three repos:
+
+1. timewarp-nuru 506 spike (decision data for 507 and 508-005)
+2. timewarp-architecture 384: `TimeWarp.Contracts` 1.0.0-beta.1 published
+3. Roslynk: typed request/response/outcome refactor, no surface change
+4. timewarp-nuru 508-002 public catalog
+5. timewarp-nuru 508-003 public binder and invoke
+6. timewarp-nuru 508-001 consume the package, derive endpoints, handler placement, mediator dispatch
+7. Roslynk: CLI written directly with `[Operation]`, forwarding handlers, daemon over the existing loopback `tools/call`; CLI-first skill
+8. timewarp-nuru 508-004 McpHost
+9. Roslynk: host McpHost in the daemon, delete reflection registration and the `multi_query` binder
+10. timewarp-nuru 507 gate: archive or narrow
+11. timewarp-architecture: roles slice, info analyzer, skill and docs; promote `TimeWarp.Contracts` to 1.0.0
+12. timewarp-nuru 508-005 decided from step 1 timing
+
 ## Checklist
 
 - [ ] 508-001 merged
@@ -47,3 +64,4 @@ Driving consumer: Roslynk (Peter Morris's Roslyn MCP server): one contract class
 
 - Created: 1479989 (2026-10-17)
 - Revised to the shared neutral-contract model: 1479989 (2026-10-17)
+- Serial implementation order recorded: 1479989 (2026-10-17)

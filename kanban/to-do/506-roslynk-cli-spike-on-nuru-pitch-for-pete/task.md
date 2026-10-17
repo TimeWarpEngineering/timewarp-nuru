@@ -51,7 +51,8 @@ This fix pass is done when the pitch states that cache distinction, the 507 para
 
 ## Review
 
-- Round 1: M1, M2, M3 addressed on this branch. Round 2 has not run.
+- Round 1: M1, M2, M3 addressed on this branch.
+- Round 2: M1–M3 verified fixed, no new findings. Disposition: clean (`review/disposition.md`).
 
 ## Notes
 
@@ -68,6 +69,7 @@ This fix pass is done when the pitch states that cache distinction, the 507 para
 - Review oracle round 1 (2026-10-18): general reviewer (claude-opus-5-5), effort 3, turn cap 200, session id not exposed. Re-ran the smoke tests, the json-args forms on the real solution, warm-pair, and `ganda repo audit`. Findings: 0 bug, 2 suggestion, 1 nit, all open. Fix pass requested for M1–M3 (`review/round-1/merged.md`).
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-17T17:38:02Z
 - 2026-10-18: Fix pass for review round 1 (M1–M3). The pitch calls the 0.679 ms diagnostics warm time a cache hit on `includeAnalyzers` and cites the `refs` warm median (25.9 ms) as the uncached warm cost. Cold is load plus the first compile. No new changed-key timing run: the finding asks to cite that existing `refs` median. `schema-report` prints `parameters.boolDefaultTrue` and the six names. The 507 paragraph says those bools become `bool?` and the handler supplies `true`. Option long forms and positional lowercasing are separate sentences.
+- Review oracle round 2 (2026-10-18): general reviewer (claude-opus-5-5), effort 1, turn cap 80, session id not exposed. Reviewed the fix delta `08d3d19f..3cd65ee7`. M1–M3 fixed, no new findings. Disposition clean (`review/disposition.md`).
 
 ## Results
 
@@ -188,4 +190,4 @@ A solution load is slower. With `Morris.Roslynk.csproj` available, `diagnostics`
 
 ### Review
 
-Round 1 (general, effort 3): 0 bug, 2 suggestion, 1 nit. The fix pass addressed M1–M3 on this branch. Round 2 has not run. Ledger: `review/round-1/merged.md`. Framework: `review/review-framework.md`. M1: the 0.679 ms diagnostics warm time is a memo hit on `includeAnalyzers`, and the uncached warm cost is the `refs` median of 25.9 ms. Cold is load plus the first compile. M2: six clean `bool` parameters default to `true` and become `bool?`, with the handler supplying `true`; `schema-report` counts them. M3: option long forms and positional names are separate sentences.
+Round 1 (general, effort 3): 0 bug, 2 suggestion, 1 nit. The fix pass addressed M1–M3 on this branch. Round 2 (general, effort 1) re-verified the fix delta, re-ran `schema-report` (`parameters.boolDefaultTrue=6`) and `ganda repo audit` (pass), and found nothing new. Final counts: bug 0, suggestion 2 fixed, nit 1 fixed, 0 open, 0 wontfix. Disposition: clean, 2 rounds. Ledger: `review/round-2/merged.md` (round 1: `review/round-1/merged.md`). Disposition: `review/disposition.md`. Framework: `review/review-framework.md`. M1: the 0.679 ms diagnostics warm time is a memo hit on `includeAnalyzers`, and the uncached warm cost is the `refs` median of 25.9 ms. Cold is load plus the first compile. M2: six clean `bool` parameters default to `true` and become `bool?`, with the handler supplying `true`; `schema-report` counts them. M3: option long forms and positional names are separate sentences.

@@ -15,3 +15,7 @@ The fix pass changes wording in the pitch, readme, and warm-pair Design region, 
 ## Issues
 
 None.
+
+## Headless re-run (2026-10-18)
+
+The Herdr review-2 pane wrote this round and committed it in `fc0b58c8`, then hung waiting on `ORACLE_EXIT`. The host resumed headless and re-ran review-2. HEAD is still `fc0b58c8`, and there are no product changes since `3cd65ee7`. Re-ran `schema-report` (Release): `tools=29`, `parameters.clean=137`, `parameters.blocked=2`, `parameters.host=13`, `parameters.boolDefaultTrue=6`, with the same six names. `ganda repo audit` exit 0. The goal restatement matches the Description, Requirements, and timing deliverable, so there is no misread. The findings and the disposition above stand.

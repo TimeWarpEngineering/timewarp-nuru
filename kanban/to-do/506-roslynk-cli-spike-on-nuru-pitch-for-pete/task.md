@@ -70,6 +70,7 @@ This fix pass is done when the pitch states that cache distinction, the 507 para
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-17T17:38:02Z
 - 2026-10-18: Fix pass for review round 1 (M1–M3). The pitch calls the 0.679 ms diagnostics warm time a cache hit on `includeAnalyzers` and cites the `refs` warm median (25.9 ms) as the uncached warm cost. Cold is load plus the first compile. No new changed-key timing run: the finding asks to cite that existing `refs` median. `schema-report` prints `parameters.boolDefaultTrue` and the six names. The 507 paragraph says those bools become `bool?` and the handler supplies `true`. Option long forms and positional lowercasing are separate sentences.
 - Review oracle round 2 (2026-10-18): general reviewer (claude-opus-5-5), effort 1, turn cap 80, session id not exposed. Reviewed the fix delta `08d3d19f..3cd65ee7`. M1–M3 fixed, no new findings. Disposition clean (`review/disposition.md`).
+- Review oracle round 2, headless re-run (2026-10-18): reviewer-claude (claude-opus-5-5), effort 1, turn cap 80, session id not exposed. The Herdr review-2 pane hung after it committed round 2. Re-verified `schema-report` (`parameters.boolDefaultTrue=6`) and `ganda repo audit` (pass). No product change since `3cd65ee7`, and no new findings. Disposition stays clean.
 
 ## Results
 

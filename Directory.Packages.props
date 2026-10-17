@@ -47,6 +47,9 @@
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.19.1" />
   </ItemGroup>
   <ItemGroup Label="Aspire">
+    <!-- Lifts the transitive MessagePack 2.5.302 pulled in by Aspire.AppHost.Sdk 13.5.3 above
+         GHSA-qhrr-8q5h-9q3h (nested arrays blow past buffer limits); NU1902 is warn-as-error. -->
+    <PackageVersion Include="MessagePack" Version="2.5.303" />
   </ItemGroup>
   <ItemGroup Label="Benchmark - CLI Frameworks">
     <PackageVersion Include="CliFx" Version="3.0.1" />

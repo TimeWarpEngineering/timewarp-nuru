@@ -1,0 +1,15 @@
+<Project>
+  <!--
+    File-based apps default PublishAot. That imports the trimmer and the native compiler,
+    which turn reflection JSON and dynamic code off in runtimeconfig.json. Roslynk's
+    MSBuild workspace load uses both. This host stays on CoreCLR.
+  -->
+  <PropertyGroup>
+    <PublishAot>false</PublishAot>
+    <PublishTrimmed>false</PublishTrimmed>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <DynamicCodeSupport>true</DynamicCodeSupport>
+    <MetadataUpdaterSupport>true</MetadataUpdaterSupport>
+    <EventSourceSupport>true</EventSourceSupport>
+  </PropertyGroup>
+</Project>

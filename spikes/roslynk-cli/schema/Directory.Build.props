@@ -1,0 +1,32 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <!-- Reflection over a referenced assembly. This report is not published AOT. -->
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <NoWarn>$(NoWarn);IL2026;IL2075;IL3050</NoWarn>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <RoslynkProject Condition="'$(RoslynkProject)' == '' and Exists('$(MSBuildThisFileDirectory)../../../../../Roslynk/master/Source/App/Morris.Roslynk/Morris.Roslynk.csproj')">$(MSBuildThisFileDirectory)../../../../../Roslynk/master/Source/App/Morris.Roslynk/Morris.Roslynk.csproj</RoslynkProject>
+    <RoslynkProject Condition="'$(RoslynkProject)' == '' and Exists('$(MSBuildThisFileDirectory)../../../../../../mrpmorris/Roslynk/master/Source/App/Morris.Roslynk/Morris.Roslynk.csproj')">$(MSBuildThisFileDirectory)../../../../../../mrpmorris/Roslynk/master/Source/App/Morris.Roslynk/Morris.Roslynk.csproj</RoslynkProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="schema-report.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RoslynkProject)" Condition="'$(RoslynkProject)' != ''" />
+  </ItemGroup>
+
+  <Target Name="RequireRoslynkProject" BeforeTargets="ResolveProjectReferences">
+    <Error
+      Condition="'$(RoslynkProject)' == ''"
+      Text="Set RoslynkProject to Morris.Roslynk.csproj." />
+  </Target>
+</Project>

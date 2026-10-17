@@ -1,0 +1,30 @@
+<Project>
+  <!-- Sample rules, not the repo analyzer set. This spike is outside samples/ so verify-samples does not build it. -->
+  <Import Project="$(MSBuildThisFileDirectory)../../samples/Directory.Build.props" />
+
+  <PropertyGroup>
+    <!-- Overridden again in Directory.Build.targets, after the file-based app sets PublishAot. -->
+    <PublishAot>false</PublishAot>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <DynamicCodeSupport>true</DynamicCodeSupport>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
+    <RoslynkProject Condition="'$(RoslynkProject)' == '' and Exists('$(MSBuildThisFileDirectory)../../../../Roslynk/master/Source/App/Morris.Roslynk/Morris.Roslynk.csproj')">$(MSBuildThisFileDirectory)../../../../Roslynk/master/Source/App/Morris.Roslynk/Morris.Roslynk.csproj</RoslynkProject>
+    <RoslynkProject Condition="'$(RoslynkProject)' == '' and Exists('$(MSBuildThisFileDirectory)../../../../../mrpmorris/Roslynk/master/Source/App/Morris.Roslynk/Morris.Roslynk.csproj')">$(MSBuildThisFileDirectory)../../../../../mrpmorris/Roslynk/master/Source/App/Morris.Roslynk/Morris.Roslynk.csproj</RoslynkProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)endpoints/**/*.cs;$(MSBuildThisFileDirectory)services/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../source/timewarp-nuru/timewarp-nuru.csproj" />
+    <ProjectReference Include="$(RoslynkProject)" Condition="'$(RoslynkProject)' != ''" />
+  </ItemGroup>
+
+  <Target Name="RequireRoslynkProject" BeforeTargets="ResolveProjectReferences">
+    <Error
+      Condition="'$(RoslynkProject)' == ''"
+      Text="Set RoslynkProject to Morris.Roslynk.csproj. Checked TimeWarpEngineering/Roslynk and mrpmorris/Roslynk beside this repo." />
+  </Target>
+</Project>

@@ -60,6 +60,7 @@ Acceptance is the checklist below, plus a short pitch in `## Results` (what the 
 - Created: 4064788 (2026-10-15)
 - Boy-scout audit fix: ran `ganda repo audit --fix` (root .gitignore porcelain + routine-journal lines; untracked kanban review-round markers) to unblock publish.
 - 2026-10-18: Hand-wrote the spike under `spikes/roslynk-cli`, then measured mapping, token size, and cold versus warm.
+- 2026-10-18: Set the executable bit on the four spike shebangs so `runfile-executable` passes.
 
 ## Results
 

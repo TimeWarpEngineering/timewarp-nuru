@@ -61,6 +61,8 @@ Acceptance is the checklist below, plus a short pitch in `## Results` (what the 
 - Boy-scout audit fix: ran `ganda repo audit --fix` (root .gitignore porcelain + routine-journal lines; untracked kanban review-round markers) to unblock publish.
 - 2026-10-18: Hand-wrote the spike under `spikes/roslynk-cli`, then measured mapping, token size, and cold versus warm.
 - 2026-10-18: Set the executable bit on the four spike shebangs so `runfile-executable` passes.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T17:33:19Z
+- Review oracle round 1 (2026-10-18): general reviewer (claude-opus-5-5), effort 3, turn cap 200, session id not exposed. Re-ran the smoke tests, the json-args forms on the real solution, warm-pair, and `ganda repo audit`. Findings: 0 bug, 2 suggestion, 1 nit, all open. Fix pass requested for M1–M3 (`review/round-1/merged.md`).
 
 ## Results
 
@@ -177,3 +179,7 @@ Expect:
 - The probe prints a line containing `includeAnalyzers=False`, `ids=CS0246`, and `tool=find_references`, and exits 0.
 
 A solution load is slower. With `Morris.Roslynk.csproj` available, `diagnostics` against `timewarp-nuru.slnx` and `--json-args` setting `includeErrors` true and `includeAnalyzers` false exits 0 and prints `errors=0`.
+
+### Review
+
+Round 1 (general, effort 3): 0 bug, 2 suggestion, 1 nit, all open. There is no disposition yet: a fix pass is requested for M1–M3. Ledger: `review/round-1/merged.md`. Framework: `review/review-framework.md`.

@@ -52,8 +52,7 @@ This fix pass is done when the pitch states that cache distinction, the 507 para
 ## Review
 
 - Round 1: M1, M2, M3 addressed on this branch.
-- Round 2: M1–M3 verified fixed, no new findings. Disposition: clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - Nuru's `RunAsync` must be intercepted by the source generator (`source/timewarp-nuru/nuru-app.cs`), so the spike uses normal compile-time routes.

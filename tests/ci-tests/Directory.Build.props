@@ -105,6 +105,10 @@
          (task 491 NURU_H002 nested lambda parameter); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-54-h002-nested-lambda-parameter.cs" />
+    <!-- generator-55: same Roslyn-hosted generator test pattern as generator-28
+         (task 508-001 NURU_H008 missing operation handler); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

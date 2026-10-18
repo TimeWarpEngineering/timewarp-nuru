@@ -1,0 +1,20 @@
+<Project>
+  <!-- Inherit from parent samples Directory.Build.props for analyzer support -->
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+
+  <PropertyGroup>
+    <!-- Disable default globbing to prevent duplicate Compile items -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RunfileGlobbingEnabled>true</RunfileGlobbingEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all .cs files recursively for endpoint discovery -->
+    <!-- Exclude the entry point; it is the runfile -->
+    <Compile Include="**/*.cs" Exclude="obj/**/*;bin/**/*;calculator-contracts.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../source/timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+</Project>

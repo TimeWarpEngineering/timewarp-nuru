@@ -68,7 +68,8 @@ internal static class RouteMatcherEmitter
     bool useRuntimeDI = false,
     string runtimeDISuffix = "",
     ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default,
-    HashSet<RouteDefinition>? sharedPrefixHelpRoutes = null)
+    HashSet<RouteDefinition>? sharedPrefixHelpRoutes = null,
+    bool useDirectInvoke = false)
   {
     // Use empty array if optional parameters not provided
     if (behaviors.IsDefault)
@@ -85,12 +86,12 @@ internal static class RouteMatcherEmitter
     RouteHelpEmitter.EmitPerRouteHelpCheck(sb, route, routeIndex, sharedPrefixHelpRoutes);
 
     // Use unified matching for all routes
-    EmitMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
+    EmitMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke);
 
     // Emit alias matches
     foreach (string alias in route.Aliases)
     {
-      EmitAliasMatch(sb, route, routeIndex, alias, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
+      EmitAliasMatch(sb, route, routeIndex, alias, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke);
     }
 
     sb.AppendLine();
@@ -113,7 +114,8 @@ internal static class RouteMatcherEmitter
     string? loggerFactoryFieldName,
     bool useRuntimeDI,
     string runtimeDISuffix,
-    ImmutableArray<HttpClientConfiguration> httpClientConfigurations)
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    bool useDirectInvoke)
   {
     // Calculate minimum required positional args (positional match segments + required non-catch-all params)
     // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
@@ -237,13 +239,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke));
 
       sb.AppendLine("      return global::System.Environment.ExitCode;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke);
       sb.AppendLine("      return global::System.Environment.ExitCode;");
     }
 
@@ -265,7 +267,8 @@ internal static class RouteMatcherEmitter
     string? loggerFactoryFieldName,
     bool useRuntimeDI,
     string runtimeDISuffix,
-    ImmutableArray<HttpClientConfiguration> httpClientConfigurations)
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    bool useDirectInvoke)
   {
     sb.AppendLine($"    // Alias: {EscapeXmlComment(alias)}");
 
@@ -348,13 +351,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke));
 
       sb.AppendLine("      return global::System.Environment.ExitCode;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke);
       sb.AppendLine("      return global::System.Environment.ExitCode;");
     }
 
@@ -508,6 +511,12 @@ internal static class RouteMatcherEmitter
   {
     string varName = option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     string escapedVarName = CSharpIdentifierUtils.EscapeIfKeyword(varName);
+    if (option.IsJsonValue)
+    {
+      EmitJsonMemberGuard(sb, option, escapedVarName, routeIndex);
+      return;
+    }
+
     string flagFoundVar = $"__{varName}_flagFound_{routeIndex}";
 
     // For typed options, extract to a temp string first, then convert
@@ -1545,10 +1554,25 @@ internal static class RouteMatcherEmitter
     // EnumTypeConverter<T> requires the non-nullable enum type
     string baseEnumType = enumTypeName.EndsWith('?') ? enumTypeName[..^1] : enumTypeName;
 
-    if (option.ParameterIsOptional || option.DefaultValueLiteral is not null)
+    if (option.ParameterIsOptional)
     {
-      // Optional option or has default: check for null before conversion
+      // Nullable enum: omission stays null. A default literal still parses only when argv supplied a value.
       sb.AppendLine($"      {baseEnumType}? {varName} = null;");
+      sb.AppendLine($"      if ({rawVarName} is not null)");
+      sb.AppendLine("      {");
+      sb.AppendLine($"        var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
+      sb.AppendLine($"        if (!{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
+      sb.AppendLine("        {");
+      sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine("          return 1;");
+      sb.AppendLine("        }");
+      sb.AppendLine($"        {varName} = ({baseEnumType}){tempVarName}!;");
+      sb.AppendLine("      }");
+    }
+    else if (option.DefaultValueLiteral is not null)
+    {
+      // Non-nullable enum with an initializer. Omission keeps that initializer.
+      sb.AppendLine($"      {baseEnumType} {varName} = {option.DefaultValueLiteral};");
       sb.AppendLine($"      if ({rawVarName} is not null)");
       sb.AppendLine("      {");
       sb.AppendLine($"        var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
@@ -1572,6 +1596,25 @@ internal static class RouteMatcherEmitter
       sb.AppendLine("      }");
       sb.AppendLine($"      {baseEnumType} {varName} = {tempVarName} is not null ? ({baseEnumType}){tempVarName} : default;");
     }
+  }
+
+  /// <summary>
+  /// Declares a JSON member local and rejects argv. The value arrives through <c>--json-args</c>.
+  /// </summary>
+  private static void EmitJsonMemberGuard(StringBuilder sb, OptionDefinition option, string varName, int routeIndex)
+  {
+    string typeName = option.ResolvedClrTypeName ?? "object";
+    string initializer = option.DefaultValueLiteral ?? "default!";
+    string longForm = option.LongForm ?? option.ShortForm ?? "value";
+    sb.AppendLine($"      {typeName} {varName} = {initializer};");
+    sb.AppendLine($"      for (int __i = 0; __i < __endOfOptions_{routeIndex}; __i++)");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        if (routeArgs[__i] == \"--{longForm}\" || routeArgs[__i].StartsWith(\"--{longForm}=\", global::System.StringComparison.Ordinal))");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          app.Terminal.WriteErrorLine(\"Error: --{longForm} is JSON. Pass it with --json-args.\");");
+    sb.AppendLine("          return 1;");
+    sb.AppendLine("        }");
+    sb.AppendLine("      }");
   }
 
   private static string ToCamelCase(string value) => CSharpIdentifierUtils.ToCamelCase(value);

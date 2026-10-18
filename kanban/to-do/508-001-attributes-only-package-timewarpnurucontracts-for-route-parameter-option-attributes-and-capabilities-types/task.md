@@ -32,12 +32,12 @@ Acceptance:
 
 ## Checklist
 
-- [ ] Package reference and metadata-name resolution
-- [ ] Derivation rules, generator and tests (including complex members as JSON, boolean initializer defaults, grouping, non-nullable enums per the 506 findings)
-- [ ] Handler placement: registered handlers, diagnostics
-- [ ] Mediator dispatch with Nuru behaviors as middleware; overhead measured
-- [ ] `IResponseRenderer` and problem rendering
-- [ ] Sample and docs
+- [x] Package reference and metadata-name resolution
+- [x] Derivation rules, generator and tests (including complex members as JSON, boolean initializer defaults, grouping, non-nullable enums per the 506 findings)
+- [x] Handler placement: registered handlers, diagnostics
+- [x] Mediator dispatch with Nuru behaviors as middleware; overhead measured
+- [x] `IResponseRenderer` and problem rendering
+- [x] Sample and docs
 
 ## Notes
 
@@ -48,6 +48,7 @@ Acceptance:
   - **Grouping.** A flat catalog of Roslynk's 29 tools is about 16,000 tokens; `--group-filter` is the intended cut but only works when routes have a group path. Derived endpoints need a group: from a containing `[NuruRouteGroup]` when present, otherwise from an optional group argument on the CLI binding, otherwise ungrouped. Record the decision; 508-004 projects the same group into MCP tool filtering.
   - **Enums.** A non-nullable enum option does not compile today (the argv path yields a nullable enum). Roslynk has no top-level enum parameter, so the gap is latent; derivation should handle non-nullable enums or diagnose them.
 - Earlier scope of this task (a Nuru-only attributes and capabilities package) is superseded: the capabilities DTOs become the neutral catalog in the shared package (508-002 projects it).
+- Group decision (2026-10-18): the group path is the containing `[NuruRouteGroup]` full prefix when one is present; otherwise `[NuruCliBinding(Group = "segment")]`, one prefix whose spaces are extra literals; otherwise the endpoint is ungrouped. `TimeWarp.Contracts.CliOperationBinding` has `Pattern` only, so the group argument lives on the Nuru attribute. `[NuruCliBinding]` does not add a group type, and `DiscoverEndpoints(typeof(SomeGroup))` still follows `[NuruRouteGroup]` only. 508-004 should read this same `groupPath`.
 
 ## Session
 
@@ -57,6 +58,7 @@ Acceptance:
 - Implement walk stopped before product code (2026-10-18). `TimeWarp.Contracts` 2.0.0-beta.20 is on nuget.org and contains only `lib/net11.0`. This repo's `Directory.Build.props` targets `net10.0`. Restoring a net10.0 project that references that package fails with NU1202. `TimeWarp.Mediator.Contracts` 14.0.0 (this repo) and 14.0.0-beta.5 (the contracts package dependency) both ship `lib/net10.0`, so the contracts library can be packed for net10.0 without a mediator bump. `CliOperationBinding` in that package has `Pattern` only; the optional group argument the derivation notes describe is not on the published type. No product files changed.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Blocked — 2026-10-18T05:19:31Z
 - Block cleared (2026-10-18): TimeWarp.Contracts 2.0.0-beta.21 published multi-targeted net10.0 + net11.0; relaunched headless.
+- Implemented (2026-10-18): implementer-grok, session 01a14e4f-7534-72d0-b741-b68ae80e4fc4. Derived endpoints from TimeWarp.Contracts 2.0.0-beta.21. JSON members deserialize through the source-generated `NuruJsonMemberContext` (property names as declared). `tests/Directory.Build.targets` imports the Nuru build task so file-based tests get that context. A problem outcome sets `Environment.ExitCode` and each `ExecuteRouteAsync` starts by clearing it, so a later success is 0. Direct invoke stays behind `UseDirectInvoke()` and still requires a nested handler.
 
 ## Blocked
 
@@ -65,3 +67,46 @@ Resolved 2026-10-18: TimeWarp.Contracts 2.0.0-beta.21 ships `lib/net10.0` and `l
 2026-10-18: TimeWarp.Contracts must ship a net10.0 asset (its source and TimeWarp.Mediator.Contracts 14.0.0-beta.5 already support net10.0), or timewarp-nuru task 481 must move this repo to net11.0. https://www.nuget.org/packages/TimeWarp.Contracts/2.0.0-beta.20
 
 - https://www.nuget.org/packages/TimeWarp.Contracts/2.0.0-beta.20
+
+## Results
+
+Nuru derives a complete endpoint from a `TimeWarp.Contracts` 2.0.0-beta.21 request that carries `[Operation]` and a TimeWarp.Mediator kind. CLI attributes stay in `TimeWarp.Nuru` as overrides. The group path is the containing `[NuruRouteGroup]` prefix, otherwise `[NuruCliBinding(Group)]`, otherwise empty. Dispatch goes through TimeWarp.Mediator. `UseDirectInvoke()` still calls a nested `Handler` and is the opt-out. One local timing run (not a budget) wrote `mediator-first-ms=5 mediator-30-ms=0 direct-first-ms=4 direct-30-ms=0`. Both paths returned `direct:ok`. The 30-call loops were under 1 ms.
+
+JSON members bind only from `--json-args`, through the source-generated `NuruJsonMemberContext`, with property names as declared. A `true` bool initializer is a value option, not a flag. Non-nullable enums keep their initializer. `SharedProblemDetails` goes to stderr with a non-zero exit code, and each route invocation clears `Environment.ExitCode` first.
+
+### Files changed
+
+- Package reference: `Directory.Packages.props`, `source/timewarp-nuru/timewarp-nuru.csproj`, `source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj`
+- Derivation and dispatch: `source/timewarp-nuru-analyzers/generators/extractors/operation-endpoint-extractor.cs` and the generator emitters, models, and `NuruCliBinding`
+- AOT JSON member context: `source/timewarp-nuru-build/GenerateNuruJsonContextTask.cs`, `tests/Directory.Build.targets`
+- Tests: `tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs`, `operation-endpoint-dispatch.cs`, `tests/timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs`
+- Sample and docs: `samples/endpoints/02-calculator-contracts/`, `documentation/user/features/neutral-contracts.md`
+
+### Test outcomes
+
+- `operation-endpoint-derivation.cs`: 19 passed
+- `operation-endpoint-dispatch.cs`: 4 passed. Overhead file `/tmp/t508-overhead.txt` matched the numbers above. Generated direct-invoke code calls `__handler.Handle`; the default calls `__mediator.Send`.
+- `generator-55-missing-operation-handler.cs`: 2 passed (NURU_H008)
+- `endpoint-nullable-option-01`: 7 passed (nested-handler routes still compile)
+- Sample smoke on 2026-10-18: `calc add --X 2 --Y 3` printed `5` and exited 0. `calc round --Value 1.2` printed `1`. `calc round --Value 1.2 --Mode Up` printed `2`. `calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":1}]}'` printed `total:6|average:3|notes:1`. `--Notes` on argv printed `Error: --Notes is JSON. Pass it with --json-args.` and exited 1. `--capabilities --group-filter calc` listed the three routes with `groupPath` `calc`, `IncludeAverage` default `true` and `isFlag` false, `Mode` allowed values, and `Notes` type `json global::CalculatorContracts.Endpoints.LabeledAmount[]`.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-508-001-attributes-only-package-timewarpnurucontracts-for
+dotnet run tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs
+dotnet run tests/timewarp-nuru-tests/auto/operation-endpoint-dispatch.cs
+dotnet run tests/timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs
+dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc add --X 2 --Y 3
+dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc round --Value 1.2
+dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":1}]}'
+```
+
+**Expect**
+
+- Derivation: 19 passed. A handlerless `[Operation]` is not in that file. JSON members come from `--json-args` with the property name as declared. A `bool` initialized to `true` stays true when omitted. A non-nullable enum compiles and keeps its initializer. `--group-filter` matches the `[NuruRouteGroup]` prefix, and `[NuruCliBinding(Group)]` supplies the prefix when no route group is present.
+- Dispatch: 4 passed. The trace behavior runs around mediator dispatch. The renderer output wins over JSON. `--Fail` exits 17 and writes the problem type and title on the first stderr line; the next call without `--Fail` exits 0. `/tmp/t508-overhead.txt` records both paths. The numbers move with the machine. Both paths print `direct:ok`.
+- generator-55: 2 passed. NURU_H008 is reported when the compilation can see no handler, and the route still exists so startup can report a missing registration.
+- Sample: `5`, then `1`, then `total:6|average:3|notes:1`, each with exit 0. App arguments start after `--`. A token before that separator, such as `--nologo`, is not an application argument and the route will not match.

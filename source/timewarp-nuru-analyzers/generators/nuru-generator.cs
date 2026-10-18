@@ -26,6 +26,7 @@ using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 public sealed class NuruGenerator : IIncrementalGenerator
 {
   private const string NuruRouteAttributeFullName = "TimeWarp.Nuru.NuruRouteAttribute";
+  private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
 
   /// <summary>
   /// Initializes the incremental generator pipeline.
@@ -42,12 +43,25 @@ public sealed class NuruGenerator : IIncrementalGenerator
         transform: static (ctx, ct) => AppExtractor.ExtractFromBuildCall(ctx, ct));
 
     // 2. Locate endpoints ([NuruRoute] decorated classes) with locations and diagnostics
-    IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> endpointsWithDiagnostics = context.SyntaxProvider
+    IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> routeEndpoints = context.SyntaxProvider
       .ForAttributeWithMetadataName(
         NuruRouteAttributeFullName,
         predicate: static (node, _) => node is ClassDeclarationSyntax,
         transform: static (ctx, ct) => ExtractEndpointWithLocation(ctx, ct))
       .Where(static result => result is not null);
+
+    IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> operationEndpoints = context.SyntaxProvider
+      .ForAttributeWithMetadataName(
+        OperationAttributeFullName,
+        predicate: static (node, _) => node is ClassDeclarationSyntax,
+        transform: static (ctx, ct) => ExtractEndpointWithLocation(ctx, ct))
+      .Where(static result => result is not null);
+
+    IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> endpointsWithDiagnostics = routeEndpoints
+      .Collect()
+      .Combine(operationEndpoints.Collect())
+      .Select(static (pair, _) => pair.Left.AddRange(pair.Right))
+      .SelectMany(static (endpoints, _) => endpoints);
 
     // 3. Collect endpoints into an array (extract just the RouteDefinition)
     IncrementalValueProvider<ImmutableArray<RouteDefinition?>> collectedEndpoints =
@@ -321,6 +335,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
           location = attribute.GetLocation();
           break;
         }
+
+        if (name is "Operation" or "OperationAttribute" && location == Location.None)
+          location = attribute.GetLocation();
       }
 
       if (location != Location.None)
@@ -423,7 +440,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .Distinct()];
 
     // Collect endpoints (non-null only)
-    ImmutableArray<RouteDefinition> allEndpoints = [.. endpoints.Where(r => r is not null)!];
+    ImmutableArray<RouteDefinition> allEndpoints = [.. endpoints
+      .OfType<RouteDefinition>()
+      .DistinctBy(route => route.Handler.FullTypeName ?? route.EffectivePattern)];
 
     // Validate each app's combined routes (fluent + filtered endpoints)
     // This catches duplicate routes between fluent and endpoint definitions

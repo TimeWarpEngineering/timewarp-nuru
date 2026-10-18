@@ -35,6 +35,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="ExtensionMethods">Extension method calls detected in ConfigureServices (for NURU052 warnings)</param>
 /// <param name="HttpClientConfigurations">HttpClient configurations from AddHttpClient() for typed client generation</param>
 /// <param name="FilterGroupTypeNames">Group type names to filter endpoints by for subset CLI editions</param>
+/// <param name="UseDirectInvoke">When true, nested handlers are invoked directly instead of through TimeWarp.Mediator.</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -66,7 +67,8 @@ public sealed record AppModel(
   string? ConfigureServicesLambdaBody = null,
   EquatableArray<ExtensionMethodCall> ExtensionMethods = default,
   EquatableArray<HttpClientConfiguration> HttpClientConfigurations = default,
-  EquatableArray<string> FilterGroupTypeNames = default)
+  EquatableArray<string> FilterGroupTypeNames = default,
+  bool UseDirectInvoke = false)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.

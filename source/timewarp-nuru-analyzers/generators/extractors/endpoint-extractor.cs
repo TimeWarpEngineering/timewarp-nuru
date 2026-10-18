@@ -25,10 +25,9 @@ using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 /// <summary>
 /// Extracts route definitions from classes decorated with [NuruRoute] attribute.
 /// </summary>
-internal static class EndpointExtractor
+internal static partial class EndpointExtractor
 {
   private const string NuruRouteAttributeName = "NuruRoute";
-  private const string NuruRouteGroupAttributeName = "NuruRouteGroup";
   private const string NuruRouteAliasAttributeName = "NuruRouteAlias";
   private const string NuruRouteExampleAttributeName = "NuruRouteExample";
   private const string ParameterAttributeName = "Parameter";
@@ -61,8 +60,13 @@ internal static class EndpointExtractor
     CancellationToken cancellationToken
   )
   {
-    // Find the [NuruRoute] attribute
-    (string? pattern, string? description, Location attributeLocation) = ExtractNuruRouteAttribute(classDeclaration);
+    RouteIdentity identity = ResolveRouteIdentity(classDeclaration, semanticModel, cancellationToken);
+    if (!identity.HasNuruRoute && !identity.HasOperation)
+      return EndpointExtractionResult.Empty;
+
+    string? pattern = identity.Pattern;
+    string? description = identity.Description;
+    Location attributeLocation = identity.Location;
     if (pattern is null)
       return EndpointExtractionResult.Empty;
 
@@ -75,12 +79,17 @@ internal static class EndpointExtractor
 
     // Get the group info from base class hierarchy - always collect full hierarchy
     GroupInfo groupInfo = ExtractGroupInfo(classDeclaration, semanticModel, cancellationToken);
+    groupInfo = ApplyCliBindingGroup(groupInfo, classDeclaration, semanticModel, cancellationToken);
 
     // Infer message type from interfaces
     string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
 
     // Extract parameters and options from properties
-    ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(classDeclaration, semanticModel, cancellationToken);
+    ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(
+      classDeclaration,
+      semanticModel,
+      cancellationToken,
+      identity.HasOperation);
 
     // For validated patterns, we know they are either empty or single literal
     // So we can safely use the pattern as-is (no need to parse for parameters/options)
@@ -92,11 +101,32 @@ internal static class EndpointExtractor
     ImmutableArray<SegmentDefinition> mergedSegments = MergeSegments(patternSegments, segments);
 
     // Get handler info (requires nested Handler class)
-    HandlerDefinition? handler = ExtractHandler(classDeclaration, semanticModel, cancellationToken);
+    HandlerDefinition? handler = ExtractHandler(classDeclaration, semanticModel, cancellationToken, identity.HasOperation);
+    Diagnostic? missingHandler = null;
     if (handler is null)
     {
-      // No nested Handler class found - skip this route
-      return EndpointExtractionResult.Empty;
+      INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+      if (classSymbol is null)
+        return EndpointExtractionResult.Empty;
+
+      bool visible = HasVisibleHandler(semanticModel.Compilation, classSymbol);
+      if (!identity.HasOperation && !visible)
+        return EndpointExtractionResult.Empty;
+
+      handler = CreateMediatorHandler(
+        classSymbol,
+        messageType,
+        handlerVisible: visible,
+        semanticModel.Compilation,
+        cancellationToken);
+
+      if (identity.HasOperation && !visible)
+      {
+        missingHandler = Diagnostic.Create(
+          DiagnosticDescriptors.MissingHandler,
+          attributeLocation,
+          classSymbol.Name);
+      }
     }
 
     // Extract filter interfaces (for behavior filtering)
@@ -132,6 +162,9 @@ internal static class EndpointExtractor
       aliases: aliases,
       implements: filterInterfaces,
       examples: examples);
+
+    if (missingHandler is not null)
+      return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);
 
     return EndpointExtractionResult.Success(route);
   }
@@ -403,8 +436,7 @@ internal static class EndpointExtractor
       string? prefix = null;
       foreach (AttributeData attribute in current.GetAttributes())
       {
-        string? attributeName = attribute.AttributeClass?.Name;
-        if (attributeName != NuruRouteGroupAttributeName && attributeName != $"{NuruRouteGroupAttributeName}Attribute")
+        if (!IsMetadataAttribute(attribute, NuruRouteGroupAttributeMetadataName))
           continue;
 
         // Get the prefix from the first constructor argument
@@ -754,7 +786,8 @@ internal static class EndpointExtractor
   (
     ClassDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
-    CancellationToken cancellationToken
+    CancellationToken cancellationToken,
+    bool deriveUnmarkedMembers = false
   )
   {
     ImmutableArray<SegmentDefinition>.Builder segments = ImmutableArray.CreateBuilder<SegmentDefinition>();
@@ -769,6 +802,8 @@ internal static class EndpointExtractor
     foreach (IPropertySymbol propertySymbol in classSymbol.GetMembers().OfType<IPropertySymbol>())
     {
       SegmentDefinition? segment = ExtractSegmentFromPropertySymbol(propertySymbol, position++, semanticModel.Compilation, cancellationToken);
+      if (segment is null && deriveUnmarkedMembers)
+        segment = TryDeriveSegment(propertySymbol, position - 1, semanticModel.Compilation, cancellationToken);
       if (segment is not null)
         segments.Add(segment);
     }
@@ -1048,7 +1083,8 @@ internal static class EndpointExtractor
   (
     ClassDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
-    CancellationToken cancellationToken
+    CancellationToken cancellationToken,
+    bool hasOperation = false
   )
   {
     INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
@@ -1069,89 +1105,27 @@ internal static class EndpointExtractor
     // 2. Extract constructor dependencies from the Handler class
     ImmutableArray<ParameterBinding> constructorDeps = ExtractConstructorDependencies(handlerClass);
 
-    // 3. Extract property bindings from the command class
-    ImmutableArray<ParameterBinding>.Builder propertyBindings = ImmutableArray.CreateBuilder<ParameterBinding>();
-
-    foreach (IPropertySymbol property in classSymbol.GetMembers().OfType<IPropertySymbol>())
-    {
-      // Skip properties without setters
-      if (property.SetMethod is null && property.IsReadOnly)
-        continue;
-
-      // Check for [Parameter] or [Option] attributes
-      foreach (AttributeData attribute in property.GetAttributes())
-      {
-        string? attributeName = attribute.AttributeClass?.Name;
-
-        if (attributeName == ParameterAttributeName || attributeName == $"{ParameterAttributeName}Attribute")
-        {
-          string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-          // Check if this is a catch-all parameter
-          bool isCatchAll = attribute.NamedArguments.Any(na =>
-            na.Key == "IsCatchAll" && na.Value.Value is true);
-
-          if (isCatchAll)
-          {
-            propertyBindings.Add(ParameterBinding.FromCatchAll(
-              parameterName: property.Name,
-              typeName: typeName,
-              segmentName: property.Name.ToLowerInvariant()));
-          }
-          else
-          {
-            propertyBindings.Add(ParameterBinding.FromParameter(
-              parameterName: property.Name,
-              typeName: typeName,
-              segmentName: property.Name.ToLowerInvariant(),
-              isOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
-              requiresConversion: typeName != "global::System.String"));
-          }
-
-          break;
-        }
-
-        if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
-        {
-          string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-          // Extract the actual option long form from the attribute (e.g., "no-cache" from [Option("no-cache", null)])
-          // This must match what ExtractOptionFromAttribute extracts for OptionDefinition.LongForm
-          string optionLongForm = ExtractOptionLongForm(attribute, property.Name);
-
-          if (typeName is "bool" or "global::System.Boolean")
-          {
-            propertyBindings.Add(ParameterBinding.FromFlag(property.Name, optionLongForm));
-          }
-          else
-          {
-            propertyBindings.Add(ParameterBinding.FromOption(
-              parameterName: property.Name,
-              typeName: typeName,
-              optionName: optionLongForm,
-              isOptional: true,
-              isArray: IsRepeatedOptionType(property.Type),
-              requiresConversion: typeName != "global::System.String",
-              isEnumType: HandlerExtractor.IsEnumBindableType(property.Type)));
-          }
-
-          break;
-        }
-      }
-    }
-
-    // 3b. Extract GroupOption bindings from base classes
-    ExtractGroupOptionBindingsFromBaseClasses(classSymbol, propertyBindings);
-
     // 4. Infer return type from interface
     HandlerReturnType returnType = InferReturnTypeFromInterfaces(classSymbol);
+    ResponseShape shape = DescribeResponse(semanticModel.Compilation, classSymbol, InferMessageType(classDeclaration, semanticModel, cancellationToken));
+    ImmutableArray<ParameterBinding> propertyBindings = BuildPropertyBindings(
+      classSymbol,
+      hasOperation,
+      semanticModel.Compilation,
+      cancellationToken);
 
     return HandlerDefinition.ForCommand(
       commandTypeName: commandTypeName,
       nestedHandlerTypeName: handlerTypeName,
-      propertyBindings: propertyBindings.ToImmutable(),
+      propertyBindings: propertyBindings,
       constructorDependencies: constructorDeps,
-      returnType: returnType);
+      returnType: returnType) with
+    {
+      HandlerInterfaceName = shape.HandlerInterfaceName,
+      ReturnsProblemPair = shape.ReturnsProblemPair,
+      SuccessTypeName = shape.SuccessTypeName,
+      RendererTypeName = shape.RendererTypeName
+    };
   }
 
   /// <summary>

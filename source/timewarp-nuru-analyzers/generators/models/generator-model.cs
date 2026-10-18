@@ -79,7 +79,18 @@ public sealed record GeneratorModel(
         .SelectMany(b => b.ConstructorDependencies)
         .Select(p => p.ParameterTypeName);
 
-      return handlerTypes.Concat(serviceTypes).Concat(behaviorTypes).Any(FrameworkServices.IsMediatorServiceType);
+      if (handlerTypes.Concat(serviceTypes).Concat(behaviorTypes).Any(FrameworkServices.IsMediatorServiceType))
+        return true;
+
+      // Mediator dispatch is the default for command endpoints. Direct invoke opts out per app.
+      bool mediatorApp = sourceGenApps.Any(app => !app.UseDirectInvoke);
+      if (!mediatorApp)
+        return false;
+
+      return sourceGenApps
+        .SelectMany(app => app.Routes)
+        .Concat(Endpoints)
+        .Any(route => route.Handler.HandlerKind == HandlerKind.Command);
     }
   }
 

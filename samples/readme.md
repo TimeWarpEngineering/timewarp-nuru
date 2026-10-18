@@ -116,6 +116,7 @@ samples/
 ├── endpoints/        # 24+ Endpoint DSL samples
 │   ├── 01-hello-world/
 │   ├── 02-calculator/
+│   ├── 02-calculator-contracts/
 │   ├── 03-syntax/
 │   ├── 04-async/
 │   ├── 05-pipeline/

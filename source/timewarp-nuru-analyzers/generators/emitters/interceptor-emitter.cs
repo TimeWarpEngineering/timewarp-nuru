@@ -162,6 +162,8 @@ internal static class InterceptorEmitter
     sb.AppendLine("    bool fromRepl = false");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
+    // A previous command may have stored a problem status. This invocation starts clean.
+    sb.AppendLine("    global::System.Environment.ExitCode = 0;");
 
     // Set up completion support (only when completion or REPL is enabled)
     if (app.HasCompletion || app.HasRepl)
@@ -1151,6 +1153,8 @@ internal static class InterceptorEmitter
     // Using model.AllRoutes would cause route index collisions between different apps
     List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(endpointsForApp)];
 
+    EmitMissingHandlerStartup(sb, endpointsForApp, app, model, methodSuffix);
+
     // JSON selection returns. Calls without --json-args leave __jsonDoc null and fall through.
     JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName);
 
@@ -1179,7 +1183,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke);
     }
 
     sb.AppendLine("    }");
@@ -1191,6 +1195,48 @@ internal static class InterceptorEmitter
 
     // No match fallback
     EmitNoMatch(sb);
+  }
+
+  /// <summary>
+  /// Fails startup when an operation's handler was not visible at build time and is still unregistered.
+  /// </summary>
+  private static void EmitMissingHandlerStartup(
+    StringBuilder sb,
+    ImmutableArray<RouteDefinition> routes,
+    AppModel app,
+    GeneratorModel model,
+    string methodSuffix)
+  {
+    foreach (RouteDefinition route in routes)
+    {
+      if (route.Handler.HandlerVisible || string.IsNullOrEmpty(route.Handler.HandlerInterfaceName))
+        continue;
+
+      string typeName = route.Handler.FullTypeName ?? route.OriginalPattern;
+      string iface = route.Handler.HandlerInterfaceName;
+      sb.AppendLine($"    // {typeName} had no visible handler at build time.");
+      if (!app.UseMicrosoftDependencyInjection && !model.HasGeneratedMediator)
+      {
+        sb.AppendLine($"    app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
+        sb.AppendLine("    return 1;");
+        continue;
+      }
+
+      if (app.UseMicrosoftDependencyInjection)
+      {
+        sb.AppendLine($"    if (global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{iface}>(GetResolutionProvider{methodSuffix}(app)) is null)");
+      }
+      else
+      {
+        sb.AppendLine("    __GetMediator();");
+        sb.AppendLine($"    if (global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{iface}>(__mediatorServiceProvider!) is null)");
+      }
+
+      sb.AppendLine("    {");
+      sb.AppendLine($"      app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
+      sb.AppendLine("      return 1;");
+      sb.AppendLine("    }");
+    }
   }
 
   /// <summary>

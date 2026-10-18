@@ -39,6 +39,15 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "calculator-contracts",
+      "name": "Calculator - Neutral contracts",
+      "description": "Calculator whose endpoints are TimeWarp.Contracts [Operation] requests. The route, options, and group come from the contract.",
+      "path": "samples/endpoints/02-calculator-contracts/calculator-contracts.cs",
+      "dsl": "endpoint",
+      "tags": ["calculator", "endpoint", "contracts", "operation"],
+      "difficulty": "intermediate"
+    },
+    {
       "id": "syntax-fluent",
       "name": "Syntax Examples - Fluent DSL",
       "description": "Comprehensive syntax reference using Fluent DSL",

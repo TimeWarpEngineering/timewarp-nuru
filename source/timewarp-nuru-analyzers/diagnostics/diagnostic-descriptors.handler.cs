@@ -98,4 +98,16 @@ internal static partial class DiagnosticDescriptors
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
     description: "When ILogger<T> is injected into a behavior or handler but no logging is configured via AddLogging(), a NullLogger is used which discards all log output. Add ConfigureServices with AddLogging to enable actual logging.");
+
+  /// <summary>
+  /// NURU_H008: An [Operation] request has no visible mediator handler.
+  /// </summary>
+  public static readonly DiagnosticDescriptor MissingHandler = new(
+    id: "NURU_H008",
+    title: "No handler visible for operation",
+    messageFormat: "No IQueryHandler, ICommandHandler, or IIdempotentCommandHandler for '{0}' is visible to this compilation. Register one, or the app fails at startup.",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "An [Operation] endpoint needs a registered TimeWarp.Mediator handler. The generator reports this when it can see that none is present. Suppress the diagnostic only when the handler is registered in a way this compilation cannot see; startup then reports the missing handler.");
 }

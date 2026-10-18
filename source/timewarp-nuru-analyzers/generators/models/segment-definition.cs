@@ -124,7 +124,10 @@ public sealed record OptionDefinition(
   bool IsRepeated,
   bool ParameterIsOptional,
   string? ResolvedClrTypeName,
-  string? DefaultValueLiteral = null)
+  string? DefaultValueLiteral = null,
+  bool IsJsonValue = false,
+  bool? CapabilityRequired = null,
+  string? CapabilityType = null)
   : SegmentDefinition(Position)
 {
   /// <summary>

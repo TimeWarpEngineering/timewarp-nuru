@@ -19,7 +19,8 @@ internal static class JsonArgsEmitter
     Enum,
     TextList,
     NumberList,
-    EnumList
+    EnumList,
+    Json
   }
 
   private sealed class Slot
@@ -841,6 +842,14 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}  }}");
         sb.AppendLine($"{ind}}}");
         break;
+
+      case ValueShape.Json:
+        sb.AppendLine($"{ind}if ({element}.ValueKind is not (global::System.Text.Json.JsonValueKind.Object or global::System.Text.Json.JsonValueKind.Array))");
+        sb.AppendLine($"{ind}{{");
+        sb.AppendLine($"{ind}  __ok = false;");
+        sb.AppendLine($"{ind}  __fail ??= {fail};");
+        sb.AppendLine($"{ind}}}");
+        break;
     }
   }
 
@@ -887,7 +896,13 @@ internal static class JsonArgsEmitter
     string argvFail = $"$\"Error: Invalid value for '{Escape(slot.Key)}' on '{pattern}'. Expected {expected}.\"";
     sb.AppendLine($"{ind}if (__av_{slot.Id})");
     sb.AppendLine($"{ind}{{");
-    if (slot.IsList)
+    if (slot.Shape == ValueShape.Json)
+    {
+      string form = slot.Option?.LongForm ?? slot.Key;
+      sb.AppendLine($"{ind}  __ok = false;");
+      sb.AppendLine($"{ind}  __fail ??= \"Error: --{Escape(form)} is JSON. Pass it with --json-args.\";");
+    }
+    else if (slot.IsList)
     {
       EmitAssignListFromStrings(sb, slot, $"__al_{slot.Id}", argvFail, indent + 2);
     }
@@ -1003,6 +1018,11 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}{{");
         EmitAssignListFromStrings(sb, slot, $"__items_{slot.Id}", fail, indent + 2);
         sb.AppendLine($"{ind}}}");
+        break;
+
+      case ValueShape.Json:
+        string jsonType = slot.DeclaredType ?? "object";
+        sb.AppendLine($"{ind}{slot.VariableName} = ({jsonType})global::System.Text.Json.JsonSerializer.Deserialize({element}, typeof({jsonType}), global::TimeWarp.Nuru.Generated.NuruJsonMemberContext.Default)!;");
         break;
     }
   }
@@ -1243,7 +1263,8 @@ internal static class JsonArgsEmitter
           loggerFactoryFieldName: loggerFactoryFieldName,
           useRuntimeDI: app.UseMicrosoftDependencyInjection,
           runtimeDISuffix: methodSuffix,
-          httpClientConfigurations: app.HttpClientConfigurations));
+          httpClientConfigurations: app.HttpClientConfigurations,
+          useDirectInvoke: app.UseDirectInvoke));
     }
     else
     {
@@ -1256,7 +1277,8 @@ internal static class JsonArgsEmitter
         loggerFactoryFieldName: loggerFactoryFieldName,
         useRuntimeDI: app.UseMicrosoftDependencyInjection,
         runtimeDISuffix: methodSuffix,
-        httpClientConfigurations: app.HttpClientConfigurations);
+        httpClientConfigurations: app.HttpClientConfigurations,
+        useDirectInvoke: app.UseDirectInvoke);
     }
 
     _ = ind;
@@ -1442,6 +1464,26 @@ internal static class JsonArgsEmitter
     HashSet<string> ids)
   {
     string key = option.LongForm ?? option.ShortForm ?? "option";
+    if (option.IsJsonValue)
+    {
+      return new Slot
+      {
+        Key = key,
+        Id = AllocId(key, ids),
+        IsOption = true,
+        IsFlag = false,
+        IsList = false,
+        IsCatchAll = false,
+        Required = option.CapabilityRequired == true,
+        RequiredFlag = false,
+        IsNullable = option.ParameterIsOptional,
+        DeclaredType = option.ResolvedClrTypeName,
+        Option = option,
+        Shape = ValueShape.Json,
+        ExpectedType = "json"
+      };
+    }
+
     string? constraint = StripQuestion(option.TypeConstraint);
     bool nullable = (option.TypeConstraint?.EndsWith('?') ?? false) || option.ParameterIsOptional;
     bool requiredFlag = option.IsFlag && !option.IsOptional && !option.IsFlagBound(route);

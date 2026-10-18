@@ -47,6 +47,12 @@ How an agent calls a route with a large payload:
 - Exact `name` keys and argv-overrides-JSON
 - App-level fat field when the app does not emit `invocation`
 
+### [Neutral contracts](neutral-contracts.md)
+Endpoints derived from `TimeWarp.Contracts` `[Operation]` requests:
+- Option names, required members, defaults, enums, repeated scalars, and JSON members
+- Group path from `[NuruRouteGroup]` or `[NuruCliBinding]`
+- Mediator dispatch, `IResponseRenderer`, and problem details
+
 ### [Configuration](configuration.md)
 Microsoft.Extensions.Configuration and DependencyInjection integration:
 - Automatic loading from JSON files and environment variables

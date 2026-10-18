@@ -69,4 +69,12 @@ _{{APP_NAME}}() {
 if (( ! $+functions[compdef] )); then
     autoload -Uz compinit && compinit
 fi
-compdef _{{APP_NAME}} {{APP_NAME}}
+
+# compinit autoloads this file as the completion function. zsh runs the file as that
+# function and, because the file also defines the function, does not run the new body.
+# Call it so the first Tab completes. source and eval are not autoloads; register there.
+if [[ "${zsh_eval_context[-1]}" == loadautofunc ]]; then
+    _{{APP_NAME}} "$@"
+else
+    compdef _{{APP_NAME}} {{APP_NAME}}
+fi

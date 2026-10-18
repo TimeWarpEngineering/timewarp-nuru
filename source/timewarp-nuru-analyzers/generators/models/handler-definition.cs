@@ -31,7 +31,13 @@ public sealed record HandlerDefinition(
   bool RequiresServiceProvider,
   string? NestedHandlerTypeName = null,
   EquatableArray<ParameterBinding> ConstructorDependencies = default,
-  bool HasAsyncModifier = false)
+  bool HasAsyncModifier = false,
+  bool HandlerVisible = true,
+  string? HandlerInterfaceName = null,
+  bool ReturnsProblemPair = false,
+  string? SuccessTypeName = null,
+  string? RendererTypeName = null,
+  EquatableArray<string> ConstructorArguments = default)
 {
   /// <summary>
   /// Creates a handler definition for a delegate-based handler.
@@ -91,6 +97,41 @@ public sealed record HandlerDefinition(
       RequiresServiceProvider: constructorDependencies.Length > 0,
       NestedHandlerTypeName: nestedHandlerTypeName,
       ConstructorDependencies: constructorDependencies);
+  }
+
+  /// <summary>
+  /// Creates a command handler that dispatches through <c>IMediator.Send</c>.
+  /// <paramref name="handlerVisible"/> is false when no handler type is visible at build time.
+  /// </summary>
+  public static HandlerDefinition ForMediator(
+    string commandTypeName,
+    EquatableArray<ParameterBinding> propertyBindings,
+    HandlerReturnType returnType,
+    bool handlerVisible,
+    string? handlerInterfaceName,
+    bool returnsProblemPair,
+    string? successTypeName,
+    string? rendererTypeName,
+    EquatableArray<string> constructorArguments = default)
+  {
+    return new HandlerDefinition(
+      HandlerKind: HandlerKind.Command,
+      FullTypeName: commandTypeName,
+      MethodName: null,
+      LambdaBodySource: null,
+      IsExpressionBody: false,
+      Parameters: propertyBindings,
+      ReturnType: returnType,
+      IsAsync: true,
+      RequiresCancellationToken: true,
+      RequiresServiceProvider: false,
+      NestedHandlerTypeName: null,
+      HandlerVisible: handlerVisible,
+      HandlerInterfaceName: handlerInterfaceName,
+      ReturnsProblemPair: returnsProblemPair,
+      SuccessTypeName: successTypeName,
+      RendererTypeName: rendererTypeName,
+      ConstructorArguments: constructorArguments);
   }
 
   /// <summary>

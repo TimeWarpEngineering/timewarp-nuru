@@ -42,7 +42,7 @@ internal static class HandlerInvokerEmitter
   /// <param name="loggerFactoryFieldName">Logger factory source (static field name or "app.LoggerFactory"), or null if no logging.</param>
   /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
   /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false, bool jsonArgsPath = false)
   {
     string indentStr = new(' ', indent);
     HandlerDefinition handler = route.Handler;
@@ -61,7 +61,7 @@ internal static class HandlerInvokerEmitter
         break;
 
       case HandlerKind.Command:
-        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations);
+        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, jsonArgsPath);
         break;
 
       case HandlerKind.Method:
@@ -292,90 +292,209 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a command/query handler class.
   /// Creates the command object (unless already created), resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false, bool jsonArgsPath = false)
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
     string handlerTypeName = handler.NestedHandlerTypeName ?? $"{commandTypeName}.Handler";
+    // Nested handlers keep the 3.0 direct call when the app opts out or when no generated mediator exists.
+    bool directInvoke = handler.NestedHandlerTypeName is not null
+      && (useDirectInvoke || !hasGeneratedMediator);
 
     // 1. Create the command object with property initializers (skip if already created by behavior emitter)
     if (!commandAlreadyCreated)
-    {
-      // Property names are PascalCase, local variables use route-unique names for catch-all to avoid collision
-      sb.AppendLine($"{indent}// Create command instance with bound properties");
-      sb.AppendLine($"{indent}{commandTypeName} __command = new()");
-      sb.AppendLine($"{indent}{{");
+      CommandConstructionEmitter.Emit(sb, route, routeIndex, indent, jsonArgsPath);
 
-      foreach (ParameterBinding param in handler.RouteParameters)
+    if (directInvoke)
+    {
+      // 2. Resolve handler constructor dependencies
+      if (handler.ConstructorDependencies.Length > 0)
       {
-        string propName = ToPascalCase(param.ParameterName);
-        // Variable name must match what route-matcher-emitter generates:
-        // - Catch-all: __varName_routeIndex to avoid collision with 'args' parameter
-        // - Flags: ToCamelCase of LongForm (handles kebab-case like "no-cache" → "noCache")
-        // - Options (value): property name lowercased (e.g., "configfile" for ConfigFile property)
-        // - Parameters: lowercase of parameter name
-        // Note: Non-unique names need keyword escaping to match route-matcher-emitter
-        string varName = param.Source switch
+        sb.AppendLine($"{indent}// Resolve handler constructor dependencies");
+        foreach (ParameterBinding dep in handler.ConstructorDependencies)
         {
-          BindingSource.CatchAll => $"__{ToCamelCase(param.ParameterName)}_{routeIndex}",
-          BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(param.SourceName)),
-          BindingSource.Option => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant()),
-          _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
-        };
-        sb.AppendLine(
-          $"{indent}  {propName} = {varName},");
+          string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
+          sb.AppendLine(
+            $"{indent}{dep.ParameterTypeName} __{dep.ParameterName} = {resolution};");
+        }
+
+        sb.AppendLine();
       }
 
-      sb.AppendLine($"{indent}}};");
-      sb.AppendLine();
-    }
+      // 3. Create handler instance
+      sb.AppendLine($"{indent}// Create handler and invoke");
+      string constructorArgs = string.Join(", ", handler.ConstructorDependencies.Select(d => $"__{d.ParameterName}"));
+      sb.AppendLine(
+        $"{indent}{handlerTypeName} __handler = new({constructorArgs});");
 
-    // 2. Resolve handler constructor dependencies
-    if (handler.ConstructorDependencies.Length > 0)
-    {
-      sb.AppendLine($"{indent}// Resolve handler constructor dependencies");
-      foreach (ParameterBinding dep in handler.ConstructorDependencies)
+      if (handler.ReturnType.HasValue)
       {
-        string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
+        string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
         sb.AppendLine(
-          $"{indent}{dep.ParameterTypeName} __{dep.ParameterName} = {resolution};");
+          $"{indent}{resultTypeName} result = await __handler.Handle(__command, cancellationToken);");
+        EmitCommandResult(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
+      }
+      else
+      {
+        sb.AppendLine(
+          $"{indent}await __handler.Handle(__command, cancellationToken);");
       }
 
-      sb.AppendLine();
+      return;
     }
 
-    // 3. Create handler instance
-    sb.AppendLine($"{indent}// Create handler and invoke");
-    string constructorArgs = string.Join(", ", handler.ConstructorDependencies.Select(d => $"__{d.ParameterName}"));
-    sb.AppendLine(
-      $"{indent}{handlerTypeName} __handler = new({constructorArgs});");
+    // No generated mediator: InterceptorEmitter.EmitMissingHandlerOnDispatch already
+    // returned 1 before the behavior pipeline. Emit nothing here, so a behavior lambda
+    // never holds a `return 1;` and __GetMediator() is never referenced.
+    if (!useRuntimeDI && !hasGeneratedMediator)
+    {
+      sb.AppendLine($"{indent}// Unreachable: exited 1 before dispatch (no generated mediator).");
+      return;
+    }
 
-    // 4. Invoke Handle method
-    // cancellationToken is ExecuteRouteAsync's parameter — flows from the REPL's per-command
-    // linked CTS (Ctrl+C, 454-017) or default for direct RunAsync invocations.
+    // Mediator dispatch. INuruBehavior already wraps this invocation.
+    string mediatorExpression = useRuntimeDI
+      ? $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::TimeWarp.Mediator.IMediator>(GetResolutionProvider{runtimeDISuffix}(app))"
+      : "__GetMediator()";
+    sb.AppendLine($"{indent}global::TimeWarp.Mediator.IMediator __mediator = {mediatorExpression};");
     if (handler.ReturnType.HasValue)
     {
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(
-        $"{indent}{resultTypeName} result = await __handler.Handle(__command, cancellationToken);");
-      EmitResultOutput(sb, indent, resultTypeName);
+        $"{indent}{resultTypeName} result = await __mediator.Send(__command, cancellationToken);");
+      EmitCommandResult(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
     }
     else
     {
       sb.AppendLine(
-        $"{indent}await __handler.Handle(__command, cancellationToken);");
+        $"{indent}await __mediator.Send(__command, cancellationToken);");
     }
   }
 
   /// <summary>
-  /// Resolves a service type to its instantiation expression for command handlers.
-  /// Uses the static Lazy&lt;T&gt; fields generated by InterceptorEmitter.
+  /// Writes a command result. A registered <c>IResponseRenderer&lt;T&gt;</c> wins over
+  /// <see cref="OutputStrategy"/>. <c>SharedProblemDetails</c> goes to stderr.
   /// </summary>
-  /// <param name="serviceTypeName">The service type to resolve.</param>
-  /// <param name="services">Registered services.</param>
-  /// <param name="loggerFactoryFieldName">Logger factory source (static field or "app.LoggerFactory"), or null if no logging.</param>
-  /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
-  /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
+  private static void EmitCommandResult(
+    StringBuilder sb,
+    string indent,
+    HandlerDefinition handler,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI,
+    string runtimeDISuffix)
+  {
+    if (!handler.ReturnType.HasValue)
+      return;
+
+    string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
+    string valueName = "result";
+    string valueType = resultTypeName;
+
+    // Problem details set ExitCode and skip success rendering. The branch must not
+    // `return` a value: INuruBehavior proceeds with Func<ValueTask>, and the caller
+    // returns Environment.ExitCode after the behavior pipeline.
+    string bodyIndent = indent;
+    bool problemPair = false;
+    if (handler.ReturnsProblemPair && handler.SuccessTypeName is string successType)
+    {
+      problemPair = true;
+      sb.AppendLine($"{indent}if (result.IsT1)");
+      sb.AppendLine($"{indent}{{");
+      sb.AppendLine($"{indent}  global::TimeWarp.Foundation.Types.SharedProblemDetails __problem = result.AsT1;");
+      sb.AppendLine($"{indent}  app.Terminal.WriteErrorLine($\"{{__problem.Type}} {{__problem.Title}}\");");
+      sb.AppendLine($"{indent}  if (!string.IsNullOrEmpty(__problem.Detail))");
+      sb.AppendLine($"{indent}    app.Terminal.WriteErrorLine(__problem.Detail);");
+      sb.AppendLine($"{indent}  int __status = __problem.Status is >= 1 and <= 255 ? __problem.Status.Value : 1;");
+      sb.AppendLine($"{indent}  global::System.Environment.ExitCode = __status;");
+      sb.AppendLine($"{indent}}}");
+      sb.AppendLine($"{indent}else");
+      sb.AppendLine($"{indent}{{");
+      bodyIndent = indent + "  ";
+      sb.AppendLine($"{bodyIndent}{successType} __success = result.AsT0;");
+      valueName = "__success";
+      valueType = successType;
+    }
+
+    string rendererService = $"global::TimeWarp.Contracts.IResponseRenderer<{valueType}>";
+    string? registeredRenderer = TryResolveRegisteredService(
+      rendererService,
+      services,
+      httpClientConfigurations,
+      loggerFactoryFieldName,
+      useRuntimeDI,
+      runtimeDISuffix);
+    if (useRuntimeDI)
+    {
+      sb.AppendLine($"{bodyIndent}global::TimeWarp.Contracts.IResponseRenderer<{valueType}>? __renderer = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<global::TimeWarp.Contracts.IResponseRenderer<{valueType}>>(GetResolutionProvider{runtimeDISuffix}(app));");
+      sb.AppendLine($"{bodyIndent}if (__renderer is not null)");
+      sb.AppendLine($"{bodyIndent}{{");
+      sb.AppendLine($"{bodyIndent}  app.Terminal.WriteLine(__renderer.Render({valueName}));");
+      sb.AppendLine($"{bodyIndent}}}");
+      if (handler.RendererTypeName is not null)
+      {
+        sb.AppendLine($"{bodyIndent}else");
+        sb.AppendLine($"{bodyIndent}{{");
+        sb.AppendLine($"{bodyIndent}  app.Terminal.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
+        sb.AppendLine($"{bodyIndent}}}");
+      }
+      else
+      {
+        sb.AppendLine($"{bodyIndent}else");
+        sb.AppendLine($"{bodyIndent}{{");
+        EmitResultOutput(sb, bodyIndent + "  ", valueType, valueName);
+        sb.AppendLine($"{bodyIndent}}}");
+      }
+    }
+    else if (registeredRenderer is not null)
+    {
+      sb.AppendLine($"{bodyIndent}app.Terminal.WriteLine({registeredRenderer}.Render({valueName}));");
+    }
+    else if (handler.RendererTypeName is not null)
+    {
+      sb.AppendLine($"{bodyIndent}app.Terminal.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
+    }
+    else
+    {
+      EmitResultOutput(sb, bodyIndent, valueType, valueName);
+    }
+
+    if (problemPair)
+      sb.AppendLine($"{indent}}}");
+  }
+
+  /// <summary>
+  /// Resolves a service that ConfigureServices registered. Returns null when nothing matches,
+  /// so a missing <c>IResponseRenderer&lt;T&gt;</c> can fall through to a visible renderer.
+  /// </summary>
+  private static string? TryResolveRegisteredService(
+    string serviceTypeName,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI,
+    string runtimeDISuffix)
+  {
+    if (useRuntimeDI || services.IsDefaultOrEmpty)
+      return null;
+
+    string resolved = ResolveServiceForCommand(
+      serviceTypeName,
+      services,
+      httpClientConfigurations,
+      loggerFactoryFieldName,
+      useRuntimeDI: false,
+      runtimeDISuffix);
+    if (resolved.Contains("ERROR: Service", StringComparison.Ordinal))
+      return null;
+
+    return resolved;
+  }
+
+  /// <summary>
+  /// Resolves a service type to its instantiation expression for command handlers.
+  /// </summary>
   private static string ResolveServiceForCommand(string? serviceTypeName, ImmutableArray<ServiceDefinition> services, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, string? loggerFactoryFieldName, bool useRuntimeDI = false, string runtimeDISuffix = "")
   {
     if (string.IsNullOrEmpty(serviceTypeName))
@@ -589,7 +708,7 @@ internal static class HandlerInvokerEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="indent">The indentation string.</param>
   /// <param name="resultTypeName">The result type name to determine output strategy.</param>
-  private static void EmitResultOutput(StringBuilder sb, string indent, string? resultTypeName = null)
+  private static void EmitResultOutput(StringBuilder sb, string indent, string? resultTypeName = null, string valueName = "result")
   {
     OutputStrategy strategy = GetOutputStrategy(resultTypeName);
 
@@ -602,14 +721,14 @@ internal static class HandlerInvokerEmitter
     if (isValueType)
     {
       // Value types can never be null - output directly
-      EmitOutputForStrategy(sb, indent, strategy, resultTypeName);
+      EmitOutputForStrategy(sb, indent, strategy, resultTypeName, valueName);
     }
     else
     {
       // Reference types - check for null before outputting
-      sb.AppendLine($"{indent}if (result is not null)");
+      sb.AppendLine($"{indent}if ({valueName} is not null)");
       sb.AppendLine($"{indent}{{");
-      EmitOutputForStrategy(sb, $"{indent}  ", strategy, resultTypeName);
+      EmitOutputForStrategy(sb, $"{indent}  ", strategy, resultTypeName, valueName);
       sb.AppendLine($"{indent}}}");
     }
   }
@@ -621,22 +740,22 @@ internal static class HandlerInvokerEmitter
   /// <param name="indent">The indentation string.</param>
   /// <param name="strategy">The output strategy to use.</param>
   /// <param name="typeName">The type name for JSON serialization context.</param>
-  private static void EmitOutputForStrategy(StringBuilder sb, string indent, OutputStrategy strategy, string? typeName = null)
+  private static void EmitOutputForStrategy(StringBuilder sb, string indent, OutputStrategy strategy, string? typeName = null, string valueName = "result")
   {
     switch (strategy)
     {
       case OutputStrategy.Raw:
-        sb.AppendLine($"{indent}app.Terminal.WriteLine(result.ToString());");
+        sb.AppendLine($"{indent}app.Terminal.WriteLine({valueName}.ToString());");
         break;
 
       case OutputStrategy.Iso8601:
         // Use "o" format for round-trip ISO 8601
-        sb.AppendLine($"{indent}app.Terminal.WriteLine(result.ToString(\"o\", global::System.Globalization.CultureInfo.InvariantCulture));");
+        sb.AppendLine($"{indent}app.Terminal.WriteLine({valueName}.ToString(\"o\", global::System.Globalization.CultureInfo.InvariantCulture));");
         break;
 
       case OutputStrategy.Invariant:
         // Use "c" format for culture-invariant (TimeSpan)
-        sb.AppendLine($"{indent}app.Terminal.WriteLine(result.ToString(\"c\", global::System.Globalization.CultureInfo.InvariantCulture));");
+        sb.AppendLine($"{indent}app.Terminal.WriteLine({valueName}.ToString(\"c\", global::System.Globalization.CultureInfo.InvariantCulture));");
         break;
 
       case OutputStrategy.Json:
@@ -647,19 +766,19 @@ internal static class HandlerInvokerEmitter
         sb.AppendLine($"{indent}try");
         sb.AppendLine($"{indent}{{");
         sb.AppendLine($"{indent}  // Try user-types context first (generated by TimeWarp.Nuru.Build MSBuild task)");
-        sb.AppendLine($"{indent}  app.Terminal.WriteLine(global::System.Text.Json.JsonSerializer.Serialize(result, global::TimeWarp.Nuru.Generated.NuruUserTypesJsonContext.Default.Options));");
+        sb.AppendLine($"{indent}  app.Terminal.WriteLine(global::System.Text.Json.JsonSerializer.Serialize({valueName}, global::TimeWarp.Nuru.Generated.NuruUserTypesJsonContext.Default.Options));");
         sb.AppendLine($"{indent}}}");
         sb.AppendLine($"{indent}catch");
         sb.AppendLine($"{indent}{{");
         sb.AppendLine($"{indent}  try");
         sb.AppendLine($"{indent}  {{");
         sb.AppendLine($"{indent}    // Fall back to built-in context");
-        sb.AppendLine($"{indent}    app.Terminal.WriteLine(global::System.Text.Json.JsonSerializer.Serialize(result, global::TimeWarp.Nuru.NuruJsonSerializerContext.Default.Options));");
+        sb.AppendLine($"{indent}    app.Terminal.WriteLine(global::System.Text.Json.JsonSerializer.Serialize({valueName}, global::TimeWarp.Nuru.NuruJsonSerializerContext.Default.Options));");
         sb.AppendLine($"{indent}  }}");
         sb.AppendLine($"{indent}  catch");
         sb.AppendLine($"{indent}  {{");
         sb.AppendLine($"{indent}    // Type not in any context - fall back to ToString()");
-        sb.AppendLine($"{indent}    app.Terminal.WriteLine(result?.ToString() ?? \"\");");
+        sb.AppendLine($"{indent}    app.Terminal.WriteLine({valueName}?.ToString() ?? \"\");");
         sb.AppendLine($"{indent}  }}");
         sb.AppendLine($"{indent}}}");
         break;

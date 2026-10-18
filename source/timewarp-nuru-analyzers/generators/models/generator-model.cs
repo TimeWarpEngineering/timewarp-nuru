@@ -79,8 +79,37 @@ public sealed record GeneratorModel(
         .SelectMany(b => b.ConstructorDependencies)
         .Select(p => p.ParameterTypeName);
 
-      return handlerTypes.Concat(serviceTypes).Concat(behaviorTypes).Any(FrameworkServices.IsMediatorServiceType);
+      if (handlerTypes.Concat(serviceTypes).Concat(behaviorTypes).Any(FrameworkServices.IsMediatorServiceType))
+        return true;
+
+      // A nested handler skips the mediator when the app opts out, and also when this
+      // compilation has no generated mediator (the 3.0 direct call). Every other command
+      // endpoint, including one with no nested handler, still needs __GetMediator().
+      foreach (AppModel app in sourceGenApps)
+      {
+        foreach (RouteDefinition route in app.Routes.Concat(Endpoints))
+        {
+          if (RouteDispatchesThroughMediator(route, app.UseDirectInvoke))
+            return true;
+        }
+      }
+
+      return false;
     }
+  }
+
+  private bool RouteDispatchesThroughMediator(RouteDefinition route, bool useDirectInvoke)
+  {
+    if (route.Handler.HandlerKind != HandlerKind.Command)
+      return false;
+
+    if (route.Handler.NestedHandlerTypeName is not null
+        && (useDirectInvoke || !HasGeneratedMediator))
+    {
+      return false;
+    }
+
+    return true;
   }
 
   /// <summary>

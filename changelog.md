@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Neutral contracts**: `UseDirectInvoke()` calls a nested `Handler` directly. `[NuruCliBinding(Group)]` sets the group path when no `[NuruRouteGroup]` is present. NURU_H008 warns when an `[Operation]` endpoint has no visible mediator handler. NURU_H009 is an error when an endpoint type is abstract, static, or has no constructor Nuru can call; the type is skipped. A visible or registered `IResponseRenderer<T>` renders the response before the output strategy. `OneOf<TSuccess, SharedProblemDetails>` writes the problem to stderr and sets the exit code (508-001).
+
+### Fixed
+- **Neutral contracts**: Omitting an option whose initializer cannot be copied (`new()`, a method call) keeps that initializer on argv and on `--json-args`. `--capabilities` omits it, shows plain numbers, and shows an enum member name. `init` members and positional records are derived. A JSON member whose name is a C# keyword still generates a valid rejection flag. A derived type that redeclares a base property does not derive the base property again. NURU_H008 says invoking the route exits 1. A build with no generated mediator calls a nested handler directly and exits 1 for a visible external handler, including when an `INuruBehavior` applies. A `required` member whose initializer cannot be copied is always set, and several such `init` members no longer multiply the generated code. A positional record takes its constructor parameter defaults. A nullable enum keeps its initializer when omitted, including `= null`. `--capabilities` shows a `[Flags]` combination as member names (508-001).
+
+### Changed
+- **Neutral contracts**: Nuru derives endpoints from `TimeWarp.Contracts` `[Operation]` plus a TimeWarp.Mediator kind (508-001). The reference is `TimeWarp.Contracts` 2.0.0-beta.21, still a prerelease, so the package version is `4.0.0-beta.1` until that dependency is stable. A stable Nuru package does not take a prerelease dependency.
+- **Dispatch**: With a generated mediator, endpoints go through the mediator unless `UseDirectInvoke()` selects a nested handler. A nested handler still uses the 3.0 direct call when no generated mediator exists. An endpoint with no nested handler still uses the mediator. Each command resets `Environment.ExitCode` before it runs. A `[NuruRoute]` class whose handler is registered elsewhere is an endpoint (508-001).
+- **Dispatch overhead**: `benchmarks/operation-dispatch/operation-dispatch-overhead.cs` warms shared Nuru code with a delegate route, then times each path's first call in microseconds and each later call in nanoseconds. One run (50 warm-up calls, 2000 measured calls, `Unit` response so the loop does not write the handler result) reported `mediator-first-us=22708`, `direct-first-us=2548`, `mediator-per-call-ns=3296`, and `direct-per-call-ns=1788`. The mediator first call still includes building its service provider. Startup is compared with `--aot`, which publishes both paths and times three alternating cold starts: mediator `4,3,3` ms and direct `3,2,2` ms. Direct is lower per call, so `UseDirectInvoke()` stays (508-001).
+
 ## [3.0.0] - 2026-10-14
 
 Changes since `3.0.0-beta.79`; beta.80 has no separate section. First stable 3.0 release. It supersedes the `3.0.0-beta.*` line (last published beta is `3.0.0-beta.80`, 2026-10-12). This is the first 3.0 package built in Release; the betas were Debug (see the first Packaging entry under Fixed, task 503).

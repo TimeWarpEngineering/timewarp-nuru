@@ -137,6 +137,7 @@ public class GenerateNuruJsonContextTask : Task
 
     // 4. Extract return types from all routes using the IR infrastructure
     HashSet<string> jsonTypes = [];
+    HashSet<string> jsonMemberTypes = [];
     CancellationToken cancellationToken = CancellationToken.None;
 
     foreach (SyntaxTree tree in syntaxTrees)
@@ -145,14 +146,14 @@ public class GenerateNuruJsonContextTask : Task
       CompilationUnitSyntax root = tree.GetCompilationUnitRoot(cancellationToken);
 
       // 4a. Extract from delegate routes using DslInterpreter
-      ExtractFromDelegateRoutes(root, semanticModel, jsonTypes, cancellationToken);
+      ExtractFromDelegateRoutes(root, semanticModel, jsonTypes, jsonMemberTypes, cancellationToken);
 
-      // 4b. Extract from [NuruRoute] endpoint classes
-      ExtractFromEndpoints(root, semanticModel, jsonTypes, cancellationToken);
+      // 4b. Extract from [NuruRoute] and [Operation] endpoint classes
+      ExtractFromEndpoints(root, semanticModel, jsonTypes, jsonMemberTypes, cancellationToken);
     }
 
     // 5. If no types need JSON serialization, skip generation
-    if (jsonTypes.Count == 0)
+    if (jsonTypes.Count == 0 && jsonMemberTypes.Count == 0)
     {
       Log.LogMessage(MessageImportance.Normal, "TimeWarp.Nuru.Build: No user-defined types need JSON serialization");
       GeneratedFiles = [];
@@ -161,7 +162,7 @@ public class GenerateNuruJsonContextTask : Task
 
     // 6. Generate the JsonSerializerContext file
     string outputFile = Path.Combine(IntermediateOutputPath, "NuruUserTypesJsonContext.g.cs");
-    string content = GenerateContextFile(jsonTypes);
+    string content = GenerateContextFile(jsonTypes, jsonMemberTypes);
 
     // Ensure directory exists
     string? directory = Path.GetDirectoryName(outputFile);
@@ -186,6 +187,7 @@ public class GenerateNuruJsonContextTask : Task
     CompilationUnitSyntax root,
     SemanticModel semanticModel,
     HashSet<string> jsonTypes,
+    HashSet<string> jsonMemberTypes,
     CancellationToken cancellationToken)
   {
     try
@@ -204,6 +206,8 @@ public class GenerateNuruJsonContextTask : Task
             jsonTypes.Add(returnTypeName);
             Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from delegate route: {returnTypeName}");
           }
+
+          AddJsonMemberTypes(route, jsonMemberTypes);
         }
       }
 
@@ -219,6 +223,7 @@ public class GenerateNuruJsonContextTask : Task
             {
               foreach (RouteDefinition route in model.Routes)
               {
+                AddJsonMemberTypes(route, jsonMemberTypes);
                 string? returnTypeName = GetReturnTypeName(route.Handler.ReturnType);
                 if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
                 {
@@ -243,25 +248,27 @@ public class GenerateNuruJsonContextTask : Task
   }
 
   /// <summary>
-  /// Extracts return types from [NuruRoute] endpoint classes using EndpointExtractor.
+  /// Extracts return types from [NuruRoute] and [Operation] endpoint classes using EndpointExtractor.
   /// </summary>
   private void ExtractFromEndpoints(
     CompilationUnitSyntax root,
     SemanticModel semanticModel,
     HashSet<string> jsonTypes,
+    HashSet<string> jsonMemberTypes,
     CancellationToken cancellationToken)
   {
-    // Find all class declarations with [NuruRoute] attribute
-    IEnumerable<ClassDeclarationSyntax> classDeclarations = root
+    IEnumerable<TypeDeclarationSyntax> typeDeclarations = root
       .DescendantNodes()
-      .OfType<ClassDeclarationSyntax>()
-      .Where(HasNuruRouteAttribute);
+      .OfType<TypeDeclarationSyntax>()
+      .Where(static declaration => declaration is ClassDeclarationSyntax
+        || (declaration is RecordDeclarationSyntax record
+            && !record.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)))
+      .Where(HasContractAttribute);
 
-    foreach (ClassDeclarationSyntax classDecl in classDeclarations)
+    foreach (TypeDeclarationSyntax classDecl in typeDeclarations)
     {
       try
       {
-        // Use EndpointExtractor to get the full RouteDefinition
         EndpointExtractionResult result = EndpointExtractor.Extract(classDecl, semanticModel, cancellationToken);
         if (result.Route is not null)
         {
@@ -270,13 +277,34 @@ public class GenerateNuruJsonContextTask : Task
           if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
           {
             jsonTypes.Add(returnTypeName);
-            Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from [NuruRoute]: {returnTypeName}");
+            Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from endpoint: {returnTypeName}");
           }
+
+          AddJsonMemberTypes(route, jsonMemberTypes);
         }
       }
       catch (Exception ex)
       {
         Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to extract endpoint from {classDecl.Identifier}: {ex.Message}");
+      }
+    }
+  }
+
+  /// <summary>
+  /// Registers complex members that bind as one JSON value. Property names stay as declared.
+  /// </summary>
+  private void AddJsonMemberTypes(RouteDefinition route, HashSet<string> jsonMemberTypes)
+  {
+    foreach (OptionDefinition option in route.Options)
+    {
+      string? resolvedType = option.ResolvedClrTypeName;
+      if (!option.IsJsonValue || string.IsNullOrEmpty(resolvedType))
+        continue;
+
+      string typeName = resolvedType.TrimEnd('?');
+      if (jsonMemberTypes.Add(typeName))
+      {
+        Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON member type: {typeName}");
       }
     }
   }
@@ -302,18 +330,20 @@ public class GenerateNuruJsonContextTask : Task
   }
 
   /// <summary>
-  /// Checks if a class declaration has a [NuruRoute] attribute.
+  /// Checks if a class declaration has [NuruRoute] or [Operation].
   /// </summary>
-  private static bool HasNuruRouteAttribute(ClassDeclarationSyntax classDecl)
+  private static bool HasContractAttribute(TypeDeclarationSyntax classDecl)
   {
     return classDecl.AttributeLists
       .SelectMany(al => al.Attributes)
       .Any(attr =>
       {
         string name = attr.Name.ToString();
-        return name is "NuruRoute" or "NuruRouteAttribute"
+        return name is "NuruRoute" or "NuruRouteAttribute" or "Operation" or "OperationAttribute"
           || name.EndsWith(".NuruRoute", StringComparison.Ordinal)
-          || name.EndsWith(".NuruRouteAttribute", StringComparison.Ordinal);
+          || name.EndsWith(".NuruRouteAttribute", StringComparison.Ordinal)
+          || name.EndsWith(".Operation", StringComparison.Ordinal)
+          || name.EndsWith(".OperationAttribute", StringComparison.Ordinal);
       });
   }
 
@@ -363,7 +393,7 @@ public class GenerateNuruJsonContextTask : Task
   /// <summary>
   /// Generates the JsonSerializerContext file content.
   /// </summary>
-  private static string GenerateContextFile(HashSet<string> types)
+  private static string GenerateContextFile(HashSet<string> types, HashSet<string> jsonMemberTypes)
   {
     StringBuilder sb = new();
 
@@ -375,18 +405,34 @@ public class GenerateNuruJsonContextTask : Task
     sb.AppendLine("namespace TimeWarp.Nuru.Generated;");
     sb.AppendLine();
 
-    // Emit [JsonSerializable] attribute for each type
-    foreach (string typeName in types.OrderBy(t => t, StringComparer.Ordinal))
+    if (types.Count > 0)
     {
-      string fullTypeName = EnsureGlobalPrefix(typeName);
-      sb.AppendLine($"[global::System.Text.Json.Serialization.JsonSerializable(typeof({fullTypeName}))]");
+      foreach (string typeName in types.OrderBy(t => t, StringComparer.Ordinal))
+      {
+        string fullTypeName = EnsureGlobalPrefix(typeName);
+        sb.AppendLine($"[global::System.Text.Json.Serialization.JsonSerializable(typeof({fullTypeName}))]");
+      }
+
+      // Return values keep the camelCase output used by the existing JSON strategy.
+      sb.AppendLine("[global::System.Text.Json.Serialization.JsonSourceGenerationOptions(");
+      sb.AppendLine("  PropertyNamingPolicy = global::System.Text.Json.Serialization.JsonKnownNamingPolicy.CamelCase)]");
+      sb.AppendLine("internal partial class NuruUserTypesJsonContext");
+      sb.AppendLine("  : global::System.Text.Json.Serialization.JsonSerializerContext;");
+      sb.AppendLine();
     }
 
-    // Emit the context class
-    sb.AppendLine("[global::System.Text.Json.Serialization.JsonSourceGenerationOptions(");
-    sb.AppendLine("  PropertyNamingPolicy = global::System.Text.Json.Serialization.JsonKnownNamingPolicy.CamelCase)]");
-    sb.AppendLine("internal partial class NuruUserTypesJsonContext");
-    sb.AppendLine("  : global::System.Text.Json.Serialization.JsonSerializerContext;");
+    if (jsonMemberTypes.Count > 0)
+    {
+      foreach (string typeName in jsonMemberTypes.OrderBy(t => t, StringComparer.Ordinal))
+      {
+        string fullTypeName = EnsureGlobalPrefix(typeName);
+        sb.AppendLine($"[global::System.Text.Json.Serialization.JsonSerializable(typeof({fullTypeName}))]");
+      }
+
+      // JSON members keep the declared property names. --json-args keys are those names.
+      sb.AppendLine("internal partial class NuruJsonMemberContext");
+      sb.AppendLine("  : global::System.Text.Json.Serialization.JsonSerializerContext;");
+    }
 
     return sb.ToString();
   }

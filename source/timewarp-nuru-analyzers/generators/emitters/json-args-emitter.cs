@@ -19,7 +19,8 @@ internal static class JsonArgsEmitter
     Enum,
     TextList,
     NumberList,
-    EnumList
+    EnumList,
+    Json
   }
 
   private sealed class Slot
@@ -143,7 +144,8 @@ internal static class JsonArgsEmitter
     IReadOnlyList<RouteDefinition> routes,
     AppModel app,
     string methodSuffix,
-    string? loggerFactoryFieldName)
+    string? loggerFactoryFieldName,
+    bool hasGeneratedMediator)
   {
     sb.AppendLine("    if (__jsonDoc is not null)");
     sb.AppendLine("    {");
@@ -260,7 +262,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        {");
     for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
     {
-      EmitBindCase(sb, routes[routeIndex], routeIndex, app, methodSuffix, loggerFactoryFieldName);
+      EmitBindCase(sb, routes[routeIndex], routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator);
     }
 
     sb.AppendLine("          default:");
@@ -314,7 +316,8 @@ internal static class JsonArgsEmitter
     int routeIndex,
     AppModel app,
     string methodSuffix,
-    string? loggerFactoryFieldName)
+    string? loggerFactoryFieldName,
+    bool hasGeneratedMediator)
   {
     List<Slot> slots = BuildSlots(route, routeIndex, app.CustomConverters);
     string pattern = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
@@ -339,6 +342,12 @@ internal static class JsonArgsEmitter
       {
         sb.AppendLine($"            {type} {slot.VariableName} = {DefaultInitializer(slot)};");
       }
+    }
+
+    foreach (Slot slot in slots)
+    {
+      if (slot.Option is not null && NeedsJsonSuppliedFlag(route, slot.Option))
+        sb.AppendLine($"            bool __supplied_{slot.Id} = false;");
     }
 
     sb.AppendLine("            bool __ok;");
@@ -372,7 +381,14 @@ internal static class JsonArgsEmitter
     sb.AppendLine("            }");
     sb.AppendLine();
     sb.AppendLine("            _ = __lit;");
-    EmitInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, indent: 12);
+    InterceptorEmitter.EmitMissingHandlerOnDispatch(
+      sb,
+      route,
+      app.UseMicrosoftDependencyInjection,
+      hasGeneratedMediator,
+      methodSuffix,
+      "            ");
+    EmitInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, indent: 12);
     sb.AppendLine("            return global::System.Environment.ExitCode;");
     sb.AppendLine("          }");
   }
@@ -545,6 +561,11 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}{{");
       foreach (Slot slot in slots)
       {
+        if (slot.Option is not null && NeedsJsonSuppliedFlag(route, slot.Option))
+        {
+          sb.AppendLine($"{ind}  __supplied_{slot.Id} = __av_{slot.Id} || __jsonMap.ContainsKey(\"{Escape(slot.Key)}\");");
+        }
+
         if (slot.VariableName is null)
           continue;
 
@@ -841,6 +862,14 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}  }}");
         sb.AppendLine($"{ind}}}");
         break;
+
+      case ValueShape.Json:
+        sb.AppendLine($"{ind}if ({element}.ValueKind is not (global::System.Text.Json.JsonValueKind.Object or global::System.Text.Json.JsonValueKind.Array))");
+        sb.AppendLine($"{ind}{{");
+        sb.AppendLine($"{ind}  __ok = false;");
+        sb.AppendLine($"{ind}  __fail ??= {fail};");
+        sb.AppendLine($"{ind}}}");
+        break;
     }
   }
 
@@ -887,7 +916,13 @@ internal static class JsonArgsEmitter
     string argvFail = $"$\"Error: Invalid value for '{Escape(slot.Key)}' on '{pattern}'. Expected {expected}.\"";
     sb.AppendLine($"{ind}if (__av_{slot.Id})");
     sb.AppendLine($"{ind}{{");
-    if (slot.IsList)
+    if (slot.Shape == ValueShape.Json)
+    {
+      string form = slot.Option?.LongForm ?? slot.Key;
+      sb.AppendLine($"{ind}  __ok = false;");
+      sb.AppendLine($"{ind}  __fail ??= \"Error: --{Escape(form)} is JSON. Pass it with --json-args.\";");
+    }
+    else if (slot.IsList)
     {
       EmitAssignListFromStrings(sb, slot, $"__al_{slot.Id}", argvFail, indent + 2);
     }
@@ -1003,6 +1038,11 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}{{");
         EmitAssignListFromStrings(sb, slot, $"__items_{slot.Id}", fail, indent + 2);
         sb.AppendLine($"{ind}}}");
+        break;
+
+      case ValueShape.Json:
+        string jsonType = slot.DeclaredType ?? "object";
+        sb.AppendLine($"{ind}{slot.VariableName} = ({jsonType})global::System.Text.Json.JsonSerializer.Deserialize({element}, typeof({jsonType}), global::TimeWarp.Nuru.Generated.NuruJsonMemberContext.Default)!;");
         break;
     }
   }
@@ -1217,6 +1257,7 @@ internal static class JsonArgsEmitter
     AppModel app,
     string methodSuffix,
     string? loggerFactoryFieldName,
+    bool hasGeneratedMediator,
     int indent)
   {
     string ind = new(' ', indent);
@@ -1243,7 +1284,11 @@ internal static class JsonArgsEmitter
           loggerFactoryFieldName: loggerFactoryFieldName,
           useRuntimeDI: app.UseMicrosoftDependencyInjection,
           runtimeDISuffix: methodSuffix,
-          httpClientConfigurations: app.HttpClientConfigurations));
+          httpClientConfigurations: app.HttpClientConfigurations,
+          useDirectInvoke: app.UseDirectInvoke,
+          hasGeneratedMediator: hasGeneratedMediator,
+          jsonArgsPath: true),
+        jsonArgsPath: true);
     }
     else
     {
@@ -1256,7 +1301,10 @@ internal static class JsonArgsEmitter
         loggerFactoryFieldName: loggerFactoryFieldName,
         useRuntimeDI: app.UseMicrosoftDependencyInjection,
         runtimeDISuffix: methodSuffix,
-        httpClientConfigurations: app.HttpClientConfigurations);
+        httpClientConfigurations: app.HttpClientConfigurations,
+        useDirectInvoke: app.UseDirectInvoke,
+        hasGeneratedMediator: hasGeneratedMediator,
+        jsonArgsPath: true);
     }
 
     _ = ind;
@@ -1442,6 +1490,26 @@ internal static class JsonArgsEmitter
     HashSet<string> ids)
   {
     string key = option.LongForm ?? option.ShortForm ?? "option";
+    if (option.IsJsonValue)
+    {
+      return new Slot
+      {
+        Key = key,
+        Id = AllocId(key, ids),
+        IsOption = true,
+        IsFlag = false,
+        IsList = false,
+        IsCatchAll = false,
+        Required = option.CapabilityRequired == true,
+        RequiredFlag = false,
+        IsNullable = option.ParameterIsOptional,
+        DeclaredType = option.ResolvedClrTypeName,
+        Option = option,
+        Shape = ValueShape.Json,
+        ExpectedType = "json"
+      };
+    }
+
     string? constraint = StripQuestion(option.TypeConstraint);
     bool nullable = (option.TypeConstraint?.EndsWith('?') ?? false) || option.ParameterIsOptional;
     bool requiredFlag = option.IsFlag && !option.IsOptional && !option.IsFlagBound(route);
@@ -1507,11 +1575,15 @@ internal static class JsonArgsEmitter
       }
       else if (param.Source is BindingSource.Option or BindingSource.Flag)
       {
-        slot = slots.FirstOrDefault(s =>
-          s.IsOption &&
-          (string.Equals(s.Key, param.SourceName, StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(s.Option?.ShortForm, param.SourceName, StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(s.Option?.ParameterName, param.ParameterName, StringComparison.OrdinalIgnoreCase)));
+        // Exact name first. --Quiet and --quiet are different options. The same matcher
+        // drives command construction, so both agree on the slot and its __supplied_ flag.
+        OptionDefinition? matched = OptionBindingMatcher.Match(route, param);
+        slot = matched is not null
+          ? slots.FirstOrDefault(s => s.IsOption && ReferenceEquals(s.Option, matched))
+          : null;
+        slot ??= slots.FirstOrDefault(s => s.IsOption && OptionSlotMatches(s, param, StringComparison.Ordinal))
+          ?? slots.FirstOrDefault(s =>
+            s.IsOption && s.VariableName is null && OptionSlotMatches(s, param, StringComparison.OrdinalIgnoreCase));
         option = slot?.Option;
       }
 
@@ -1562,6 +1634,40 @@ internal static class JsonArgsEmitter
         Parameter = slot.Parameter
       };
     }
+  }
+
+  private static bool OptionSlotMatches(Slot slot, ParameterBinding param, StringComparison comparison)
+  {
+    return string.Equals(slot.Key, param.SourceName, comparison)
+      || string.Equals(slot.Option?.ShortForm, param.SourceName, comparison)
+      || string.Equals(slot.Option?.ParameterName, param.ParameterName, comparison);
+  }
+
+  /// <summary>
+  /// True when command construction reads <c>__supplied_{id}</c> for this option.
+  /// Constructor arguments are always passed, so they do not need the flag.
+  /// </summary>
+  private static bool NeedsJsonSuppliedFlag(RouteDefinition route, OptionDefinition option)
+  {
+    // A required member is always in the object initializer, so it reads no flag.
+    if (option.DefaultValueLiteral != EndpointExtractor.UnemittableDefaultLiteral || option.IsRequiredMember)
+      return false;
+
+    ParameterBinding? match = route.Handler.RouteParameters.FirstOrDefault(param =>
+      ReferenceEquals(OptionBindingMatcher.Match(route, param), option));
+    if (match is null)
+      return false;
+
+    if (!route.Handler.ConstructorArguments.IsDefaultOrEmpty)
+    {
+      foreach (string propertyName in route.Handler.ConstructorArguments)
+      {
+        if (string.Equals(match.ParameterName, propertyName, StringComparison.Ordinal))
+          return false;
+      }
+    }
+
+    return true;
   }
 
   private static string CaptureName(
@@ -1788,6 +1894,26 @@ internal static class JsonArgsEmitter
       return name[(start + 1)..end];
 
     return name;
+  }
+
+  /// <summary>
+  /// Slot id for an option, using the same parameter-then-option allocation as <see cref="BuildSlots"/>.
+  /// </summary>
+  internal static string OptionSlotId(RouteDefinition route, OptionDefinition option)
+  {
+    HashSet<string> ids = new(StringComparer.Ordinal);
+    foreach (ParameterDefinition param in route.Parameters)
+      AllocId(param.Name, ids);
+
+    foreach (OptionDefinition candidate in route.Options)
+    {
+      string key = candidate.LongForm ?? candidate.ShortForm ?? "option";
+      string id = AllocId(key, ids);
+      if (ReferenceEquals(candidate, option))
+        return id;
+    }
+
+    return AllocId(option.LongForm ?? option.ShortForm ?? "option", ids);
   }
 
   private static string AllocId(string key, HashSet<string> ids)

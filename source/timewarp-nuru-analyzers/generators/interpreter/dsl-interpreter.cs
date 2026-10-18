@@ -601,6 +601,8 @@ public sealed class DslInterpreter
 
       "UseMicrosoftDependencyInjection" => DispatchUseMicrosoftDependencyInjection(receiver),
 
+      "UseDirectInvoke" => DispatchUseDirectInvoke(receiver),
+
       "EnableCompletion" => DispatchEnableCompletion(receiver),
 
       "AddTypeConverter" => DispatchAddTypeConverter(invocation, receiver),
@@ -1472,6 +1474,18 @@ public sealed class DslInterpreter
     }
 
     return appBuilder.UseMicrosoftDependencyInjection();
+  }
+
+  /// <summary>
+  /// Dispatches UseDirectInvoke() to IIrAppBuilder.
+  /// Nested handlers are invoked directly and the mediator container is not required for those apps.
+  /// </summary>
+  private static object? DispatchUseDirectInvoke(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+      throw new InvalidOperationException("UseDirectInvoke() must be called on an app builder.");
+
+    return appBuilder.UseDirectInvoke();
   }
 
   /// <summary>

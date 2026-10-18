@@ -112,6 +112,12 @@ public sealed record ParameterDefinition(
 /// <param name="ParameterIsOptional">Whether the option's value parameter is optional</param>
 /// <param name="ResolvedClrTypeName">The resolved CLR type name for the value</param>
 /// <param name="DefaultValueLiteral">The literal representation of the property's default value, if any (e.g., "1", "\"default\"")</param>
+/// <param name="IsJsonValue">Whether the member binds as one JSON value through <c>--json-args</c></param>
+/// <param name="CapabilityRequired">Required as reported by <c>--capabilities</c>, when it differs from <paramref name="IsOptional"/></param>
+/// <param name="CapabilityType">Type as reported by <c>--capabilities</c>, when it differs from the constraint</param>
+/// <param name="IsInitOnly">Whether the property has an <c>init</c> accessor</param>
+/// <param name="CapabilityDefaultValue">The default <c>--capabilities</c> shows, or null to omit it</param>
+/// <param name="IsRequiredMember">Whether the property has the C# <c>required</c> modifier</param>
 public sealed record OptionDefinition(
   int Position,
   string? LongForm,
@@ -124,7 +130,13 @@ public sealed record OptionDefinition(
   bool IsRepeated,
   bool ParameterIsOptional,
   string? ResolvedClrTypeName,
-  string? DefaultValueLiteral = null)
+  string? DefaultValueLiteral = null,
+  bool IsJsonValue = false,
+  bool? CapabilityRequired = null,
+  string? CapabilityType = null,
+  bool IsInitOnly = false,
+  string? CapabilityDefaultValue = null,
+  bool IsRequiredMember = false)
   : SegmentDefinition(Position)
 {
   /// <summary>

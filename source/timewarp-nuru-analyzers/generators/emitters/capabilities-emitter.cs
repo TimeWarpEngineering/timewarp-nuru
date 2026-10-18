@@ -300,8 +300,10 @@ internal static class CapabilitiesEmitter
   private static void EmitOptionCapability(StringBuilder sb, OptionDefinition option, bool isLast, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues, string? handlerTypeName = null)
   {
     string name = EmitterStringUtils.EscapeForStringLiteral(option.LongForm ?? option.ShortForm ?? "");
-    string type = EmitterStringUtils.EscapeForStringLiteral(option.TypeConstraint ?? (option.IsFlag ? "bool" : "string"));
-    string required = option.IsOptional ? "false" : "true";
+    string typeSource = option.CapabilityType ?? option.TypeConstraint ?? (option.IsFlag ? "bool" : "string");
+    string type = EmitterStringUtils.EscapeForStringLiteral(typeSource);
+    bool capabilityRequired = option.CapabilityRequired ?? !option.IsOptional;
+    string required = capabilityRequired ? "true" : "false";
     string isFlag = option.IsFlag ? "true" : "false";
     string isRepeated = option.IsRepeated ? "true" : "false";
 
@@ -326,9 +328,11 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              Description = \"{description}\",");
     }
 
-    if (option.DefaultValueLiteral is not null)
+    // Only the display value. The code literal can be default!, null!, or a field reference.
+    string? shownDefault = option.CapabilityDefaultValue;
+    if (!string.IsNullOrEmpty(shownDefault))
     {
-      string defaultValue = EmitterStringUtils.EscapeForStringLiteral(option.DefaultValueLiteral);
+      string defaultValue = EmitterStringUtils.EscapeForStringLiteral(shownDefault);
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 

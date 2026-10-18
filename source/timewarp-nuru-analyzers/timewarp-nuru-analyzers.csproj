@@ -39,6 +39,11 @@
       <PrivateAssets>all</PrivateAssets>
       <GeneratePathProperty>true</GeneratePathProperty>
     </PackageReference>
+    <!-- Metadata-name resolution of TimeWarp.Contracts.OperationAttribute. The generator
+         compares attribute metadata names and does not call into this assembly. -->
+    <PackageReference Include="TimeWarp.Contracts">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <!-- Decompile referenced AddX method bodies (lib/ implementation, not ref/). -->
     <PackageReference Include="ICSharpCode.Decompiler">
       <PrivateAssets>all</PrivateAssets>

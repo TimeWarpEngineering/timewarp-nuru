@@ -202,6 +202,14 @@ internal static class DefaultTypeConverters
         return true;
       }
     }
+    else if (targetType == typeof(global::System.Numerics.BigInteger))
+    {
+      if (global::System.Numerics.BigInteger.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out global::System.Numerics.BigInteger bigIntegerValue))
+      {
+        result = bigIntegerValue;
+        return true;
+      }
+    }
     else if (targetType.IsEnum)
     {
       try
@@ -292,6 +300,7 @@ internal static class DefaultTypeConverters
       "ipaddress" => typeof(IPAddress),
       "dateonly" => typeof(DateOnly),
       "timeonly" => typeof(TimeOnly),
+      "biginteger" => typeof(global::System.Numerics.BigInteger),
 
       _ => null
     };

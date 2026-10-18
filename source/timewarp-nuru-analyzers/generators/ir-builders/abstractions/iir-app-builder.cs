@@ -140,6 +140,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseMicrosoftDependencyInjection();
 
   /// <summary>
+  /// Invokes nested handlers directly instead of through TimeWarp.Mediator.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseDirectInvoke();
+
+  /// <summary>
   /// Sets the raw ConfigureServices lambda body for runtime invocation.
   /// Used when UseMicrosoftDependencyInjection is enabled to invoke the user's
   /// delegate at runtime instead of replaying extracted registrations.

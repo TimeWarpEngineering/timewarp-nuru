@@ -175,6 +175,9 @@ dotnet run samples/endpoints/02-calculator/endpoint-calculator.cs -- add 5 3
 
 # Show help
 dotnet run samples/endpoints/02-calculator/endpoint-calculator.cs -- --help
+
+# Contracts-first sibling (options are the property names)
+dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc add --X 2 --Y 3
 ```
 
 ## Comparison with Fluent DSL

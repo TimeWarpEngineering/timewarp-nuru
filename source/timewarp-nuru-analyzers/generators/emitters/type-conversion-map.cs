@@ -51,6 +51,7 @@ internal static class TypeConversionMap
       "ipaddress" => ("global::System.Net.IPAddress", $"global::System.Net.IPAddress.TryParse({inputVarName}, out {outputVarName})"),
       // Version.TryParse outs Version?. The generated file disables nullable warnings, same as IPAddress.
       "version" => ("global::System.Version", $"global::System.Version.TryParse({inputVarName}, out {outputVarName})"),
+      "biginteger" => ("global::System.Numerics.BigInteger", $"global::System.Numerics.BigInteger.TryParse({inputVarName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture, out {outputVarName})"),
 
       // Types without TryParse - use try/catch wrapper pattern (return null to signal special handling needed)
       "uri" or "fileinfo" or "directoryinfo" => null,
@@ -96,6 +97,7 @@ internal static class TypeConversionMap
       "fileinfo" => ("global::System.IO.FileInfo", $"new global::System.IO.FileInfo({varName})"),
       "directoryinfo" => ("global::System.IO.DirectoryInfo", $"new global::System.IO.DirectoryInfo({varName})"),
       "ipaddress" => ("global::System.Net.IPAddress", $"global::System.Net.IPAddress.Parse({varName})"),
+      "biginteger" => ("global::System.Numerics.BigInteger", $"global::System.Numerics.BigInteger.Parse({varName}, global::System.Globalization.NumberStyles.Integer, global::System.Globalization.CultureInfo.InvariantCulture)"),
 
       _ => null
     };
@@ -147,6 +149,7 @@ internal static class TypeConversionMap
       "fileinfo" => "global::System.IO.FileInfo",
       "directoryinfo" => "global::System.IO.DirectoryInfo",
       "ipaddress" => "global::System.Net.IPAddress",
+      "biginteger" => "global::System.Numerics.BigInteger",
 
       _ => null
     };

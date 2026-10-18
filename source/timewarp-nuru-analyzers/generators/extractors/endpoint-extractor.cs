@@ -16,6 +16,21 @@
 // groupPrefix + pattern. For group aliases, the alias replaces one GROUP's entire prefix (which
 // may be multi-word, e.g. "git remote") by index into GroupInfo.GroupPrefixes. The emitter should
 // NOT re-match literal segments after the alias prefix.
+//
+// DEFAULT LITERALS: A finite constant is formatted with the suffix its type needs (1.5m, 2.0f).
+// NaN and the infinities use the named constants. An enum member stays a member name.
+// A const field whose type is an enum stays a symbol. A flags combination or a cast
+// becomes a cast to the enum type. A field or property symbol is fully qualified.
+// Object creation, an invocation, or a method group becomes default!.
+// = null! on a non-nullable reference is copied as null!.
+// A positional record property takes its primary-constructor parameter default.
+// An initializer that is only a parameter (= Name) takes that parameter default.
+// Any other initializer that reads a parameter has no default.
+// Capabilities omit default!, null!, and a non-const field or property. They show a
+// plain number, the enum member name, or the member names of a [Flags] combination.
+// The object initializer omits default! until the caller supplies a value, so the
+// declared initializer runs. A type with no parameterless constructor is new(args)
+// for the constructor whose parameters match property names.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -25,10 +40,9 @@ using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 /// <summary>
 /// Extracts route definitions from classes decorated with [NuruRoute] attribute.
 /// </summary>
-internal static class EndpointExtractor
+internal static partial class EndpointExtractor
 {
   private const string NuruRouteAttributeName = "NuruRoute";
-  private const string NuruRouteGroupAttributeName = "NuruRouteGroup";
   private const string NuruRouteAliasAttributeName = "NuruRouteAlias";
   private const string NuruRouteExampleAttributeName = "NuruRouteExample";
   private const string ParameterAttributeName = "Parameter";
@@ -48,6 +62,22 @@ internal static class EndpointExtractor
     memberOptions: SymbolDisplayMemberOptions.IncludeContainingType);
 
   /// <summary>
+  /// Sentinel stored when the initializer cannot be copied into generated code.
+  /// </summary>
+  internal const string UnemittableDefaultLiteral = "default!";
+
+  /// <summary>
+  /// Literal for <c>= null!</c> on a non-nullable reference. It is copied as code, so it
+  /// needs no supplied test, and capabilities omit it.
+  /// </summary>
+  internal const string NullForgivingDefaultLiteral = "null!";
+
+  /// <summary>
+  /// C# literal for an initializer, and the separate value <c>--capabilities</c> shows.
+  /// </summary>
+  private readonly record struct PropertyDefault(string? Code, string? Display);
+
+  /// <summary>
   /// Extracts a RouteDefinition from a class with [NuruRoute] attribute.
   /// </summary>
   /// <param name="classDeclaration">The class declaration with [NuruRoute].</param>
@@ -56,14 +86,26 @@ internal static class EndpointExtractor
   /// <returns>An extraction result containing the route definition and any diagnostics.</returns>
   public static EndpointExtractionResult Extract
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken
   )
   {
-    // Find the [NuruRoute] attribute
-    (string? pattern, string? description, Location attributeLocation) = ExtractNuruRouteAttribute(classDeclaration);
+    RouteIdentity identity = ResolveRouteIdentity(classDeclaration, semanticModel, cancellationToken);
+    if (!identity.HasNuruRoute && !identity.HasOperation)
+      return EndpointExtractionResult.Empty;
+
+    string? pattern = identity.Pattern;
+    string? description = identity.Description;
+    Location attributeLocation = identity.Location;
     if (pattern is null)
+      return EndpointExtractionResult.Empty;
+
+    // [Operation] without a mediator kind is not an endpoint. [NuruRoute] still is.
+    // Run this before pattern validation so a non-endpoint operation does not
+    // report a route-pattern diagnostic.
+    string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
+    if (!identity.HasNuruRoute && messageType == "Unspecified")
       return EndpointExtractionResult.Empty;
 
     // VALIDATE: Pattern must be empty string OR a single literal only
@@ -75,12 +117,28 @@ internal static class EndpointExtractor
 
     // Get the group info from base class hierarchy - always collect full hierarchy
     GroupInfo groupInfo = ExtractGroupInfo(classDeclaration, semanticModel, cancellationToken);
+    groupInfo = ApplyCliBindingGroup(groupInfo, classDeclaration, semanticModel, cancellationToken);
 
-    // Infer message type from interfaces
-    string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
+    INamedTypeSymbol? endpointSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (endpointSymbol is null)
+      return EndpointExtractionResult.Empty;
+
+    if (!TrySelectConstructorArguments(
+      endpointSymbol,
+      attributeLocation,
+      identity.HasOperation,
+      out EquatableArray<string> constructorArguments,
+      out Diagnostic? constructorDiagnostic))
+    {
+      return EndpointExtractionResult.Failure(constructorDiagnostic!);
+    }
 
     // Extract parameters and options from properties
-    ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(classDeclaration, semanticModel, cancellationToken);
+    ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(
+      classDeclaration,
+      semanticModel,
+      cancellationToken,
+      identity.HasOperation);
 
     // For validated patterns, we know they are either empty or single literal
     // So we can safely use the pattern as-is (no need to parse for parameters/options)
@@ -92,11 +150,38 @@ internal static class EndpointExtractor
     ImmutableArray<SegmentDefinition> mergedSegments = MergeSegments(patternSegments, segments);
 
     // Get handler info (requires nested Handler class)
-    HandlerDefinition? handler = ExtractHandler(classDeclaration, semanticModel, cancellationToken);
+    HandlerDefinition? handler = ExtractHandler(
+      classDeclaration,
+      semanticModel,
+      cancellationToken,
+      identity.HasOperation,
+      constructorArguments);
+    Diagnostic? missingHandler = null;
     if (handler is null)
     {
-      // No nested Handler class found - skip this route
-      return EndpointExtractionResult.Empty;
+      INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+      if (classSymbol is null)
+        return EndpointExtractionResult.Empty;
+
+      bool visible = HasVisibleHandler(semanticModel.Compilation, classSymbol);
+      if (!identity.HasOperation && !visible)
+        return EndpointExtractionResult.Empty;
+
+      handler = CreateMediatorHandler(
+        classSymbol,
+        messageType,
+        handlerVisible: visible,
+        semanticModel.Compilation,
+        cancellationToken,
+        constructorArguments);
+
+      if (identity.HasOperation && !visible)
+      {
+        missingHandler = Diagnostic.Create(
+          DiagnosticDescriptors.MissingHandler,
+          attributeLocation,
+          classSymbol.Name);
+      }
     }
 
     // Extract filter interfaces (for behavior filtering)
@@ -133,6 +218,9 @@ internal static class EndpointExtractor
       implements: filterInterfaces,
       examples: examples);
 
+    if (missingHandler is not null)
+      return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);
+
     return EndpointExtractionResult.Success(route);
   }
 
@@ -140,7 +228,7 @@ internal static class EndpointExtractor
   /// Extracts and combines aliases from the command class and group hierarchy.
   /// </summary>
   private static ImmutableArray<string> ExtractAndCombineAliases(
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     GroupInfo groupInfo,
     string pattern,
@@ -206,7 +294,7 @@ internal static class EndpointExtractor
   /// <summary>
   /// Extracts pattern, description, and location from [NuruRoute] attribute.
   /// </summary>
-  private static (string? Pattern, string? Description, Location Location) ExtractNuruRouteAttribute(ClassDeclarationSyntax classDeclaration)
+  private static (string? Pattern, string? Description, Location Location) ExtractNuruRouteAttribute(TypeDeclarationSyntax classDeclaration)
   {
     foreach (AttributeListSyntax attributeList in classDeclaration.AttributeLists)
     {
@@ -231,7 +319,7 @@ internal static class EndpointExtractor
   /// Extracts aliases from [NuruRouteAlias] attribute on the command class.
   /// </summary>
   private static ImmutableArray<string> ExtractNuruRouteAliasAttribute(
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken)
   {
@@ -278,7 +366,7 @@ internal static class EndpointExtractor
   /// null or empty command are silently skipped.
   /// </summary>
   private static ImmutableArray<ExampleDefinition> ExtractNuruRouteExampleAttributes(
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken)
   {
@@ -356,7 +444,7 @@ internal static class EndpointExtractor
   /// </summary>
   private static GroupInfo ExtractGroupInfo
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken
   )
@@ -403,8 +491,7 @@ internal static class EndpointExtractor
       string? prefix = null;
       foreach (AttributeData attribute in current.GetAttributes())
       {
-        string? attributeName = attribute.AttributeClass?.Name;
-        if (attributeName != NuruRouteGroupAttributeName && attributeName != $"{NuruRouteGroupAttributeName}Attribute")
+        if (!IsMetadataAttribute(attribute, NuruRouteGroupAttributeMetadataName))
           continue;
 
         // Get the prefix from the first constructor argument
@@ -496,7 +583,7 @@ internal static class EndpointExtractor
   /// </summary>
   private static ImmutableArray<SegmentDefinition> ExtractGroupOptionsFromBaseClasses
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     int startPosition,
     CancellationToken cancellationToken
@@ -589,7 +676,7 @@ internal static class EndpointExtractor
     isRepeated = IsRepeatedOptionType(property.Type);
 
     // Extract default value from property initializer
-    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+    PropertyDefault propertyDefault = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
 
     return new OptionDefinition(
       Position: position,
@@ -603,7 +690,10 @@ internal static class EndpointExtractor
       IsRepeated: isRepeated,
       ParameterIsOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
       ResolvedClrTypeName: typeName,
-      DefaultValueLiteral: defaultValueLiteral);
+      DefaultValueLiteral: propertyDefault.Code,
+      IsInitOnly: PropertyIsInitOnly(property),
+      CapabilityDefaultValue: propertyDefault.Display,
+      IsRequiredMember: property.IsRequired);
   }
 
   /// <summary>
@@ -699,7 +789,7 @@ internal static class EndpointExtractor
   /// </remarks>
   private static string InferMessageType
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken
   )
@@ -752,9 +842,10 @@ internal static class EndpointExtractor
   /// </summary>
   private static ImmutableArray<SegmentDefinition> ExtractSegmentsFromProperties
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
-    CancellationToken cancellationToken
+    CancellationToken cancellationToken,
+    bool deriveUnmarkedMembers = false
   )
   {
     ImmutableArray<SegmentDefinition>.Builder segments = ImmutableArray.CreateBuilder<SegmentDefinition>();
@@ -765,12 +856,50 @@ internal static class EndpointExtractor
     if (classSymbol is null)
       return segments.ToImmutable();
 
+    // A derived member can redeclare a base property under a different option name.
+    // Skip the base property by the declared name, not by the option spelling.
+    HashSet<string> seenPropertyNames = new(StringComparer.Ordinal);
+
     // Iterate over all properties from the type symbol (handles partial classes correctly)
     foreach (IPropertySymbol propertySymbol in classSymbol.GetMembers().OfType<IPropertySymbol>())
     {
+      seenPropertyNames.Add(propertySymbol.Name);
       SegmentDefinition? segment = ExtractSegmentFromPropertySymbol(propertySymbol, position++, semanticModel.Compilation, cancellationToken);
+      if (segment is null && deriveUnmarkedMembers)
+        segment = TryDeriveSegment(propertySymbol, position - 1, semanticModel.Compilation, cancellationToken);
       if (segment is not null)
         segments.Add(segment);
+    }
+
+    // Inherited public settable members are options too. Bindings already include them;
+    // the route has to declare the same locals or the initializer names do not exist.
+    if (deriveUnmarkedMembers)
+    {
+      for (INamedTypeSymbol? baseType = classSymbol.BaseType;
+           baseType is not null && baseType.SpecialType != SpecialType.System_Object;
+           baseType = baseType.BaseType)
+      {
+        // Group options stay on ExtractGroupOptionsFromBaseClasses.
+        if (HasNuruRouteGroup(baseType))
+          continue;
+
+        foreach (IPropertySymbol propertySymbol in baseType.GetMembers().OfType<IPropertySymbol>())
+        {
+          if (!seenPropertyNames.Add(propertySymbol.Name))
+            continue;
+
+          SegmentDefinition? inherited = TryDeriveSegment(
+            propertySymbol,
+            position,
+            semanticModel.Compilation,
+            cancellationToken);
+          if (inherited is null)
+            continue;
+
+          segments.Add(inherited);
+          position++;
+        }
+      }
     }
 
     // Extract GroupOptions from base classes and add them to segments
@@ -942,7 +1071,7 @@ internal static class EndpointExtractor
 
     // Extract default value from property initializer via DeclaringSyntaxReferences
     // This handles properties defined in partial class files correctly
-    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+    PropertyDefault propertyDefault = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
 
     return new OptionDefinition(
       Position: position,
@@ -956,7 +1085,10 @@ internal static class EndpointExtractor
       IsRepeated: isRepeated,
       ParameterIsOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
       ResolvedClrTypeName: typeName,
-      DefaultValueLiteral: defaultValueLiteral);
+      DefaultValueLiteral: propertyDefault.Code,
+      IsInitOnly: PropertyIsInitOnly(property),
+      CapabilityDefaultValue: propertyDefault.Display,
+      IsRequiredMember: property.IsRequired);
   }
 
   /// <summary>
@@ -969,52 +1101,424 @@ internal static class EndpointExtractor
   /// <param name="property">The property symbol.</param>
   /// <param name="compilation">Compilation used to obtain a SemanticModel for the initializer, if available.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>The default value literal (e.g., "1", "\"default\"", "global::MyApp.Environment.Production"), or null if no initializer.</returns>
-  private static string? ExtractPropertyDefaultValueFromSymbol(IPropertySymbol property, Compilation? compilation, CancellationToken cancellationToken)
+  /// <returns>The C# literal and the capabilities display, or nulls when the property has no initializer.</returns>
+  private static PropertyDefault ExtractPropertyDefaultValueFromSymbol(IPropertySymbol property, Compilation? compilation, CancellationToken cancellationToken)
   {
     // Get syntax references for this property (handles partial classes correctly)
     ImmutableArray<SyntaxReference> syntaxReferences = property.DeclaringSyntaxReferences;
     if (syntaxReferences.Length == 0)
-      return null;
+      return default;
 
-    // Get the first syntax reference and locate the PropertyDeclarationSyntax
+    // A positional record property is declared by its primary-constructor parameter.
+    // The parameter default, when there is one, is the default.
     Microsoft.CodeAnalysis.SyntaxNode? syntaxNode = syntaxReferences[0].GetSyntax(cancellationToken);
+    if (syntaxNode is Microsoft.CodeAnalysis.CSharp.Syntax.ParameterSyntax parameterSyntax)
+    {
+      if (compilation is null)
+        return default;
+
+      SemanticModel parameterModel = compilation.GetSemanticModel(syntaxReferences[0].SyntaxTree);
+      return parameterModel.GetDeclaredSymbol(parameterSyntax, cancellationToken) is IParameterSymbol declared
+        ? ParameterDefault(declared, property.Type)
+        : default;
+    }
+
     if (syntaxNode is not PropertyDeclarationSyntax propertySyntax)
-      return null;
+      return default;
 
     // Check for property initializer (e.g., public int X { get; set; } = 1;)
     if (propertySyntax.Initializer?.Value is not { } initializerValue)
-      return null;
+      return default;
 
     if (compilation is not null)
     {
       SemanticModel semanticModel = compilation.GetSemanticModel(syntaxReferences[0].SyntaxTree);
-
-      // Member/type references (e.g. Environment.Production, SomeStaticClass.Default)
-      // resolve directly to a symbol; emit fully-qualified so the reference resolves
-      // outside the initializer's original using scope.
       SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(initializerValue, cancellationToken);
-      if (symbolInfo.Symbol is not null)
-        return symbolInfo.Symbol.ToDisplayString(FullyQualifiedMemberFormat);
+      ISymbol? symbol = symbolInfo.Symbol;
+      ITypeSymbol valueType = UnwrapNullableType(property.Type);
 
-      // Otherwise, prefer the compile-time constant value (numbers, bools, strings, chars).
-      Optional<object?> constantValue = semanticModel.GetConstantValue(initializerValue, cancellationToken);
-      if (constantValue.HasValue)
+      // `= Name` copies a primary-constructor parameter. Its default is the parameter default.
+      // Any other initializer that reads a parameter cannot be copied and has no default.
+      if (symbol is IParameterSymbol initializerParameter)
+        return ParameterDefault(initializerParameter, property.Type);
+
+      if (ReferencesParameter(initializerValue, semanticModel, cancellationToken))
+        return default;
+
+      // Enum members have a numeric constant value. Keep the member so the generated
+      // assignment stays typed. Capabilities show the member name only.
+      if (symbol is IFieldSymbol enumField && enumField.ContainingType.TypeKind == TypeKind.Enum)
       {
-        return constantValue.Value switch
-        {
-          string s => SymbolDisplay.FormatLiteral(s, quote: true),
-          char c => SymbolDisplay.FormatLiteral(c, quote: true),
-          bool b => b ? "true" : "false",
-          null => "null",
-          IFormattable formattable => formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
-          _ => constantValue.Value.ToString()
-        };
+        return new PropertyDefault(enumField.ToDisplayString(FullyQualifiedMemberFormat), enumField.Name);
+      }
+
+      Optional<object?> constantValue = semanticModel.GetConstantValue(initializerValue, cancellationToken);
+      if (constantValue.HasValue
+          && constantValue.Value is not null
+          && valueType.TypeKind == TypeKind.Enum
+          && valueType is INamedTypeSymbol enumType)
+      {
+        string display = EnumDisplay(enumType, constantValue.Value);
+        if (symbol is IFieldSymbol or IPropertySymbol)
+          return new PropertyDefault(symbol.ToDisplayString(FullyQualifiedMemberFormat), display);
+
+        return new PropertyDefault(FormatEnumCast(enumType, constantValue.Value), display);
+      }
+
+      if (constantValue.HasValue)
+        return FormatConstantLiteral(constantValue.Value, property.Type);
+
+      // A static readonly field or a property is copied as code. Its value is not known
+      // at build time, so capabilities omit it.
+      if (symbol is IFieldSymbol or IPropertySymbol)
+        return new PropertyDefault(symbol.ToDisplayString(FullyQualifiedMemberFormat), null);
+
+      // new(), new Foo(), and method calls are not a capabilities default.
+      // Collection expressions stay as syntax so `[]` still compiles.
+      if (initializerValue is CollectionExpressionSyntax
+          or ArrayCreationExpressionSyntax
+          or ImplicitArrayCreationExpressionSyntax)
+      {
+        string syntax = initializerValue.ToString();
+        return new PropertyDefault(syntax, syntax);
+      }
+
+      if (initializerValue is ObjectCreationExpressionSyntax
+          or ImplicitObjectCreationExpressionSyntax
+          or InvocationExpressionSyntax
+          || symbol is IMethodSymbol)
+      {
+        return new PropertyDefault(UnemittableDefaultLiteral, null);
       }
     }
 
-    // Fall back to raw syntax text if semantic resolution is unavailable or fails.
-    return initializerValue.ToString();
+    string text = initializerValue.ToString();
+    return new PropertyDefault(text, text);
+  }
+
+  /// <summary>
+  /// Emits a C# literal for a compile-time constant, and a suffix-free display value.
+  /// </summary>
+  private static PropertyDefault FormatConstantLiteral(object? value, ITypeSymbol propertyType)
+  {
+    switch (value)
+    {
+      case string text:
+      {
+        string quoted = SymbolDisplay.FormatLiteral(text, quote: true);
+        return new PropertyDefault(quoted, quoted);
+      }
+      case char character:
+      {
+        string quoted = SymbolDisplay.FormatLiteral(character, quote: true);
+        return new PropertyDefault(quoted, quoted);
+      }
+      case bool flag:
+      {
+        string text = flag ? "true" : "false";
+        return new PropertyDefault(text, text);
+      }
+      case null:
+      {
+        if (propertyType.IsReferenceType && propertyType.NullableAnnotation != NullableAnnotation.Annotated)
+          return new PropertyDefault(NullForgivingDefaultLiteral, null);
+
+        // `= default` on a non-nullable struct, typically a parameter default.
+        if (propertyType.IsValueType && propertyType.OriginalDefinition.SpecialType != SpecialType.System_Nullable_T)
+          return new PropertyDefault("default", null);
+
+        return new PropertyDefault("null", "null");
+      }
+      case float number:
+      {
+        if (float.IsNaN(number))
+          return new PropertyDefault("float.NaN", "NaN");
+
+        if (float.IsPositiveInfinity(number))
+          return new PropertyDefault("float.PositiveInfinity", "Infinity");
+
+        if (float.IsNegativeInfinity(number))
+          return new PropertyDefault("float.NegativeInfinity", "-Infinity");
+
+        string plain = number.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(FormatRealLiteral(plain, "f"), TrimRealDisplay(plain));
+      }
+      case double number:
+      {
+        if (double.IsNaN(number))
+          return new PropertyDefault("double.NaN", "NaN");
+
+        if (double.IsPositiveInfinity(number))
+          return new PropertyDefault("double.PositiveInfinity", "Infinity");
+
+        if (double.IsNegativeInfinity(number))
+          return new PropertyDefault("double.NegativeInfinity", "-Infinity");
+
+        string plain = number.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain, TrimRealDisplay(plain));
+      }
+      case decimal number:
+      {
+        string plain = number.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(FormatRealLiteral(plain, "m"), TrimRealDisplay(plain));
+      }
+      case uint number:
+      {
+        string plain = number.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain + "u", plain);
+      }
+      case long number:
+      {
+        string plain = number.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain + "L", plain);
+      }
+      case ulong number:
+      {
+        string plain = number.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain + "UL", plain);
+      }
+      case IFormattable formattable:
+      {
+        string plain = formattable.ToString(null, global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain, plain);
+      }
+      default:
+      {
+        string plain = value.ToString() ?? UnemittableDefaultLiteral;
+        return new PropertyDefault(plain, plain == UnemittableDefaultLiteral ? null : plain);
+      }
+    }
+  }
+
+  private static string TrimRealDisplay(string text)
+  {
+    if (text.EndsWith(".0", StringComparison.Ordinal))
+      return text[..^2];
+
+    return text;
+  }
+
+  private static ITypeSymbol UnwrapNullableType(ITypeSymbol type)
+  {
+    if (type is INamedTypeSymbol named
+        && named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+        && named.TypeArguments.Length == 1)
+    {
+      return named.TypeArguments[0];
+    }
+
+    return type;
+  }
+
+  private static bool PropertyIsInitOnly(IPropertySymbol property) =>
+    property.SetMethod is { IsInitOnly: true };
+
+  /// <summary>
+  /// Default from a primary-constructor parameter: its explicit default, or none.
+  /// </summary>
+  private static PropertyDefault ParameterDefault(IParameterSymbol parameter, ITypeSymbol propertyType)
+  {
+    if (!parameter.HasExplicitDefaultValue)
+      return default;
+
+    object? value = parameter.ExplicitDefaultValue;
+    if (value is not null
+        && UnwrapNullableType(propertyType) is INamedTypeSymbol { TypeKind: TypeKind.Enum } enumType)
+    {
+      return new PropertyDefault(FormatEnumCast(enumType, value), EnumDisplay(enumType, value));
+    }
+
+    return FormatConstantLiteral(value, propertyType);
+  }
+
+  private static bool ReferencesParameter(ExpressionSyntax initializer, SemanticModel semanticModel, CancellationToken cancellationToken)
+  {
+    foreach (IdentifierNameSyntax identifier in initializer.DescendantNodesAndSelf().OfType<IdentifierNameSyntax>())
+    {
+      if (semanticModel.GetSymbolInfo(identifier, cancellationToken).Symbol is IParameterSymbol)
+        return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// The member name, the comma-joined member names of an exact <c>[Flags]</c> decomposition,
+  /// or the number.
+  /// </summary>
+  private static string EnumDisplay(INamedTypeSymbol enumType, object value)
+  {
+    if (MatchingEnumMemberName(enumType, value) is { } memberName)
+      return memberName;
+
+    if (FlagsMemberNames(enumType, value) is { } flagNames)
+      return flagNames;
+
+    return IntegralDisplay(value);
+  }
+
+  private static string? FlagsMemberNames(INamedTypeSymbol enumType, object value)
+  {
+    bool isFlags = enumType.GetAttributes().Any(attribute =>
+      attribute.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
+    if (!isFlags || !TryIntegralBits(UnwrapEnumBox(value), out ulong remaining) || remaining == 0)
+      return null;
+
+    // Same order as Enum.ToString: largest members first, listed smallest first.
+    List<(ulong Bits, string Name)> members = [];
+    foreach (IFieldSymbol field in enumType.GetMembers().OfType<IFieldSymbol>())
+    {
+      if (field.HasConstantValue
+          && TryIntegralBits(UnwrapEnumBox(field.ConstantValue), out ulong bits)
+          && bits != 0)
+      {
+        members.Add((bits, field.Name));
+      }
+    }
+
+    List<string> names = [];
+    foreach ((ulong bits, string name) in members.OrderByDescending(member => member.Bits))
+    {
+      if ((remaining & bits) == bits)
+      {
+        names.Add(name);
+        remaining &= ~bits;
+      }
+    }
+
+    if (remaining != 0)
+      return null;
+
+    names.Reverse();
+    return string.Join(", ", names);
+  }
+
+  private static string? MatchingEnumMemberName(INamedTypeSymbol enumType, object? value)
+  {
+    if (value is null)
+      return null;
+
+    foreach (IFieldSymbol field in enumType.GetMembers().OfType<IFieldSymbol>())
+    {
+      if (!field.HasConstantValue || field.ConstantValue is null)
+        continue;
+
+      if (EnumBitsEqual(field.ConstantValue, value))
+        return field.Name;
+    }
+
+    return null;
+  }
+
+  private static string FormatEnumCast(INamedTypeSymbol enumType, object? value)
+  {
+    string typeName = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    return $"({typeName}){FormatIntegralLiteral(value)}";
+  }
+
+  private static string IntegralDisplay(object? value)
+  {
+    object? unwrapped = UnwrapEnumBox(value);
+    return unwrapped switch
+    {
+      byte number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      sbyte number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      short number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      ushort number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      int number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      uint number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      long number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      ulong number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      _ => "0"
+    };
+  }
+
+  private static string FormatIntegralLiteral(object? value)
+  {
+    object? unwrapped = UnwrapEnumBox(value);
+    return unwrapped switch
+    {
+      byte number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      sbyte number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      short number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      ushort number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      int number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      uint number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "u",
+      long number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "L",
+      ulong number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "UL",
+      _ => "0"
+    };
+  }
+
+  private static object? UnwrapEnumBox(object? value)
+  {
+    if (value is Enum enumValue)
+    {
+      return Convert.ChangeType(
+        enumValue,
+        Enum.GetUnderlyingType(enumValue.GetType()),
+        global::System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    return value;
+  }
+
+  private static bool EnumBitsEqual(object fieldValue, object defaultValue)
+  {
+    object? fieldBox = UnwrapEnumBox(fieldValue);
+    object? defaultBox = UnwrapEnumBox(defaultValue);
+    if (object.Equals(fieldBox, defaultBox))
+      return true;
+
+    return TryIntegralBits(fieldBox, out ulong fieldBits)
+      && TryIntegralBits(defaultBox, out ulong defaultBits)
+      && fieldBits == defaultBits;
+  }
+
+  private static bool TryIntegralBits(object? value, out ulong bits)
+  {
+    switch (value)
+    {
+      case byte number:
+        bits = number;
+        return true;
+      case sbyte number:
+        bits = unchecked((ulong)number);
+        return true;
+      case short number:
+        bits = unchecked((ulong)number);
+        return true;
+      case ushort number:
+        bits = number;
+        return true;
+      case int number:
+        bits = unchecked((ulong)number);
+        return true;
+      case uint number:
+        bits = number;
+        return true;
+      case long number:
+        bits = unchecked((ulong)number);
+        return true;
+      case ulong number:
+        bits = number;
+        return true;
+      default:
+        bits = 0;
+        return false;
+    }
+  }
+
+  private static string FormatRealLiteral(string text, string suffix)
+  {
+    if (text.IndexOf('.', StringComparison.Ordinal) < 0
+        && text.IndexOf('E', StringComparison.Ordinal) < 0
+        && text.IndexOf('e', StringComparison.Ordinal) < 0)
+    {
+      text += ".0";
+    }
+
+    return text + suffix;
   }
 
   /// <summary>
@@ -1046,9 +1550,11 @@ internal static class EndpointExtractor
   /// <returns>The handler definition, or null if no nested Handler class is found.</returns>
   private static HandlerDefinition? ExtractHandler
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
-    CancellationToken cancellationToken
+    CancellationToken cancellationToken,
+    bool hasOperation = false,
+    EquatableArray<string> constructorArguments = default
   )
   {
     INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
@@ -1069,89 +1575,28 @@ internal static class EndpointExtractor
     // 2. Extract constructor dependencies from the Handler class
     ImmutableArray<ParameterBinding> constructorDeps = ExtractConstructorDependencies(handlerClass);
 
-    // 3. Extract property bindings from the command class
-    ImmutableArray<ParameterBinding>.Builder propertyBindings = ImmutableArray.CreateBuilder<ParameterBinding>();
-
-    foreach (IPropertySymbol property in classSymbol.GetMembers().OfType<IPropertySymbol>())
-    {
-      // Skip properties without setters
-      if (property.SetMethod is null && property.IsReadOnly)
-        continue;
-
-      // Check for [Parameter] or [Option] attributes
-      foreach (AttributeData attribute in property.GetAttributes())
-      {
-        string? attributeName = attribute.AttributeClass?.Name;
-
-        if (attributeName == ParameterAttributeName || attributeName == $"{ParameterAttributeName}Attribute")
-        {
-          string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-          // Check if this is a catch-all parameter
-          bool isCatchAll = attribute.NamedArguments.Any(na =>
-            na.Key == "IsCatchAll" && na.Value.Value is true);
-
-          if (isCatchAll)
-          {
-            propertyBindings.Add(ParameterBinding.FromCatchAll(
-              parameterName: property.Name,
-              typeName: typeName,
-              segmentName: property.Name.ToLowerInvariant()));
-          }
-          else
-          {
-            propertyBindings.Add(ParameterBinding.FromParameter(
-              parameterName: property.Name,
-              typeName: typeName,
-              segmentName: property.Name.ToLowerInvariant(),
-              isOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
-              requiresConversion: typeName != "global::System.String"));
-          }
-
-          break;
-        }
-
-        if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
-        {
-          string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-          // Extract the actual option long form from the attribute (e.g., "no-cache" from [Option("no-cache", null)])
-          // This must match what ExtractOptionFromAttribute extracts for OptionDefinition.LongForm
-          string optionLongForm = ExtractOptionLongForm(attribute, property.Name);
-
-          if (typeName is "bool" or "global::System.Boolean")
-          {
-            propertyBindings.Add(ParameterBinding.FromFlag(property.Name, optionLongForm));
-          }
-          else
-          {
-            propertyBindings.Add(ParameterBinding.FromOption(
-              parameterName: property.Name,
-              typeName: typeName,
-              optionName: optionLongForm,
-              isOptional: true,
-              isArray: IsRepeatedOptionType(property.Type),
-              requiresConversion: typeName != "global::System.String",
-              isEnumType: HandlerExtractor.IsEnumBindableType(property.Type)));
-          }
-
-          break;
-        }
-      }
-    }
-
-    // 3b. Extract GroupOption bindings from base classes
-    ExtractGroupOptionBindingsFromBaseClasses(classSymbol, propertyBindings);
-
     // 4. Infer return type from interface
     HandlerReturnType returnType = InferReturnTypeFromInterfaces(classSymbol);
+    ResponseShape shape = DescribeResponse(semanticModel.Compilation, classSymbol, InferMessageType(classDeclaration, semanticModel, cancellationToken));
+    ImmutableArray<ParameterBinding> propertyBindings = BuildPropertyBindings(
+      classSymbol,
+      hasOperation,
+      semanticModel.Compilation,
+      cancellationToken);
 
     return HandlerDefinition.ForCommand(
       commandTypeName: commandTypeName,
       nestedHandlerTypeName: handlerTypeName,
-      propertyBindings: propertyBindings.ToImmutable(),
+      propertyBindings: propertyBindings,
       constructorDependencies: constructorDeps,
-      returnType: returnType);
+      returnType: returnType) with
+    {
+      HandlerInterfaceName = shape.HandlerInterfaceName,
+      ReturnsProblemPair = shape.ReturnsProblemPair,
+      SuccessTypeName = shape.SuccessTypeName,
+      RendererTypeName = shape.RendererTypeName,
+      ConstructorArguments = constructorArguments
+    };
   }
 
   /// <summary>
@@ -1212,7 +1657,7 @@ internal static class EndpointExtractor
   /// </summary>
   private static ImmutableArray<InterfaceImplementationDefinition> ExtractFilterInterfaces
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken
   )
@@ -1463,6 +1908,13 @@ internal static class EndpointExtractor
       "global::System.DateTime" or "System.DateTime" or "DateTime" => "datetime",
       "global::System.DateTimeOffset" or "System.DateTimeOffset" or "DateTimeOffset" => "datetimeoffset",
       "global::System.TimeSpan" or "System.TimeSpan" or "TimeSpan" => "timespan",
+      "sbyte" or "global::System.SByte" => "sbyte",
+      "ushort" or "global::System.UInt16" => "ushort",
+      "uint" or "global::System.UInt32" => "uint",
+      "ulong" or "global::System.UInt64" => "ulong",
+      "global::System.DateOnly" or "System.DateOnly" or "DateOnly" => "dateonly",
+      "global::System.TimeOnly" or "System.TimeOnly" or "TimeOnly" => "timeonly",
+      "global::System.Numerics.BigInteger" or "System.Numerics.BigInteger" or "BigInteger" => "biginteger",
       "global::System.Uri" or "System.Uri" or "Uri" => "uri",
       "global::System.Version" or "System.Version" or "Version" => "version",
       _ => null

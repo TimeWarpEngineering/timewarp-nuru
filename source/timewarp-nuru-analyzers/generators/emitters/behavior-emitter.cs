@@ -63,7 +63,8 @@ internal static class BehaviorEmitter
     ImmutableArray<BehaviorDefinition> behaviors,
     ImmutableArray<ServiceDefinition> services,
     int indent,
-    Action emitHandler)
+    Action emitHandler,
+    bool jsonArgsPath = false)
   {
     if (behaviors.Length == 0)
     {
@@ -83,7 +84,7 @@ internal static class BehaviorEmitter
       // because HandlerInvokerEmitter.Emit() expects it to exist for Command handlers
       if (route.Handler.HandlerKind == HandlerKind.Command)
       {
-        EmitCommandCreation(sb, route, routeIndex, ind);
+        EmitCommandCreation(sb, route, routeIndex, ind, jsonArgsPath);
       }
 
       emitHandler();
@@ -91,7 +92,7 @@ internal static class BehaviorEmitter
     }
 
     // Create command instance (for both delegate and endpoint routes)
-    EmitCommandCreation(sb, route, routeIndex, ind);
+    EmitCommandCreation(sb, route, routeIndex, ind, jsonArgsPath);
 
     // Create the BehaviorContext
     EmitContextCreation(sb, route, routeIndex, ind);
@@ -145,7 +146,8 @@ internal static class BehaviorEmitter
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
-    string indent)
+    string indent,
+    bool jsonArgsPath)
   {
     if (route.Handler.HandlerKind == HandlerKind.Delegate)
     {
@@ -187,33 +189,7 @@ internal static class BehaviorEmitter
     }
     else if (route.Handler.HandlerKind == HandlerKind.Command)
     {
-      // Endpoints: create the actual command class instance
-      string commandTypeName = route.Handler.FullTypeName ?? "UnknownCommand";
-
-      sb.AppendLine($"{indent}// Create command instance for behaviors");
-      sb.AppendLine($"{indent}{commandTypeName} __command = new()");
-      sb.AppendLine($"{indent}{{");
-
-      // Bind properties from route parameters and options
-      foreach (ParameterBinding param in route.Handler.RouteParameters)
-      {
-        string propName = ToPascalCase(param.ParameterName);
-        // Variable name must match what route-matcher-emitter generates:
-        // - Parameters: lowercase of parameter name
-        // - Flags: camelCase of option name (SourceName) to match route-matcher
-        // - Options: lowercase of parameter name (for value options)
-        // - CatchAll: __{name}_{routeIndex}
-        string varName = param.Source switch
-        {
-          BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(param.SourceName)),
-          BindingSource.CatchAll => $"__{ToCamelCase(param.ParameterName)}_{routeIndex}",
-          _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
-        };
-        sb.AppendLine($"{indent}  {propName} = {varName},");
-      }
-
-      sb.AppendLine($"{indent}}};");
-      sb.AppendLine();
+      CommandConstructionEmitter.Emit(sb, route, routeIndex, indent, jsonArgsPath);
     }
   }
 

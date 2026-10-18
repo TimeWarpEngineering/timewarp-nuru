@@ -232,4 +232,14 @@ public partial class NuruAppBuilder
     // This stub exists for API compatibility.
     return this;
   }
+
+  /// <summary>
+  /// Invokes a nested <c>Handler</c> directly instead of dispatching through TimeWarp.Mediator.
+  /// </summary>
+  /// <remarks>
+  /// Mediator dispatch is the default so mediator behaviors run in every host.
+  /// Direct invoke skips that pipeline. Use it when the measured mediator cost matters for an AOT CLI
+  /// and the endpoint has a nested handler. Endpoints with no nested handler still go through the mediator.
+  /// </remarks>
+  public virtual NuruAppBuilder UseDirectInvoke() => this;
 }

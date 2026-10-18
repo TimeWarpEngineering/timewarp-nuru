@@ -42,6 +42,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private TelemetryModel? TelemetryOptions;
   private bool CompletionEnabled;
   private bool MicrosoftDependencyInjectionEnabled;
+  private bool DirectInvokeEnabled;
   private string? ConfigureServicesBody;
   private readonly List<string> ExplicitEndpointTypes = [];
   private readonly List<ExtensionMethodCall> ExtensionMethods = [];
@@ -251,6 +252,15 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Opts this app out of mediator dispatch. Nested handlers are constructed and invoked directly.
+  /// </summary>
+  public TSelf UseDirectInvoke()
+  {
+    DirectInvokeEnabled = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Sets the raw ConfigureServices lambda body for runtime invocation.
   /// Used when UseMicrosoftDependencyInjection is enabled.
   /// </summary>
@@ -401,7 +411,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       ConfigureServicesLambdaBody: ConfigureServicesBody,
       ExtensionMethods: [.. ExtensionMethods],
       HttpClientConfigurations: [.. HttpClientConfigurations],
-      FilterGroupTypeNames: [.. FilterGroupTypeNames]);
+      FilterGroupTypeNames: [.. FilterGroupTypeNames],
+      UseDirectInvoke: DirectInvokeEnabled);
   }
 
   /// <summary>
@@ -436,6 +447,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.UseTelemetry() => UseTelemetry();
   IIrAppBuilder IIrAppBuilder.UseTelemetry(TelemetryModel telemetryOptions) => UseTelemetry(telemetryOptions);
   IIrAppBuilder IIrAppBuilder.UseMicrosoftDependencyInjection() => UseMicrosoftDependencyInjection();
+  IIrAppBuilder IIrAppBuilder.UseDirectInvoke() => UseDirectInvoke();
   IIrAppBuilder IIrAppBuilder.SetConfigureServicesBody(string lambdaBody) => SetConfigureServicesBody(lambdaBody);
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);

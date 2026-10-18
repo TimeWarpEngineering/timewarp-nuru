@@ -98,4 +98,28 @@ internal static partial class DiagnosticDescriptors
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
     description: "When ILogger<T> is injected into a behavior or handler but no logging is configured via AddLogging(), a NullLogger is used which discards all log output. Add ConfigureServices with AddLogging to enable actual logging.");
+
+  /// <summary>
+  /// NURU_H008: An [Operation] request has no visible mediator handler.
+  /// </summary>
+  public static readonly DiagnosticDescriptor MissingHandler = new(
+    id: "NURU_H008",
+    title: "No handler visible for operation",
+    messageFormat: "No IQueryHandler, ICommandHandler, or IIdempotentCommandHandler for '{0}' is visible to this compilation. Register one, or invoking this route exits 1.",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Warning,
+    isEnabledByDefault: true,
+    description: "An [Operation] endpoint needs a registered TimeWarp.Mediator handler. The generator warns when it can see that none is present, and the project still builds. Invoking that route returns exit code 1 when the handler is unregistered. A project that treats warnings as errors must suppress NURU_H008 when the handler is registered in a way this compilation cannot see.");
+
+  /// <summary>
+  /// NURU_H009: The endpoint type has no constructor the generator can call.
+  /// </summary>
+  public static readonly DiagnosticDescriptor UnconstructableEndpoint = new(
+    id: "NURU_H009",
+    title: "Endpoint type has no callable constructor",
+    messageFormat: "Nuru cannot construct '{0}': {1}",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Nuru builds the endpoint with new() when an accessible constructor takes no arguments (every parameter optional counts). Otherwise it calls an accessible constructor whose parameters all match, ignoring case, public settable properties that are bound as route parameters or options. An abstract or static type cannot be an endpoint. A type that fails these rules is skipped.");
 }

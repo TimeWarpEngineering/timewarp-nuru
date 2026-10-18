@@ -116,6 +116,11 @@
     <Compile
       Include="../timewarp-nuru-search-tests/**/*.cs"
       Exclude="../timewarp-nuru-search-tests/**/obj/**;../timewarp-nuru-search-tests/**/bin/**" />
+    <!-- McpHost tests (timewarp-nuru-mcphost: routes as MCP tools, task 508-004). Usings are
+         per file so ModelContextProtocol types do not become global usings here. -->
+    <Compile
+      Include="../timewarp-nuru-mcphost-tests/**/*.cs"
+      Exclude="../timewarp-nuru-mcphost-tests/**/obj/**;../timewarp-nuru-mcphost-tests/**/bin/**" />
     <!-- MCP server tests -->
     <!-- mcp-02: GetSyntaxTool's default (endpoint) path asserts MCP:endpoint-* regions
          that exist nowhere — only the fluent syntax file is embedded. Product bug tracked
@@ -158,6 +163,7 @@
   <ItemGroup>
     <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
     <ProjectReference Include="$(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj" />
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj" />
     <ProjectReference Include="$(SourceDirectory)timewarp-nuru-search/timewarp-nuru-search.csproj" />
   </ItemGroup>
 

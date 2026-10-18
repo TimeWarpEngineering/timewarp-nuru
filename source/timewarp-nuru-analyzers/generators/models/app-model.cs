@@ -37,6 +37,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="FilterGroupTypeNames">Group type names to filter endpoints by for subset CLI editions</param>
 /// <param name="UseDirectInvoke">When true, nested handlers are invoked directly instead of through TimeWarp.Mediator.</param>
 /// <param name="BuildSite">The Build() call that creates this app, intercepted to attach the capabilities catalog</param>
+/// <param name="McpRoute">Options for the built-in mcp route when AddMcpRoute() was called (TimeWarp.Nuru.McpHost), otherwise null</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -70,7 +71,8 @@ public sealed record AppModel(
   EquatableArray<HttpClientConfiguration> HttpClientConfigurations = default,
   EquatableArray<string> FilterGroupTypeNames = default,
   bool UseDirectInvoke = false,
-  BuildInterceptSite? BuildSite = null)
+  BuildInterceptSite? BuildSite = null,
+  McpRouteModel? McpRoute = null)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.

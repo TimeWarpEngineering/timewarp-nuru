@@ -93,6 +93,13 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder AddCheckUpdatesRoute();
 
   /// <summary>
+  /// Enables the built-in mcp route (TimeWarp.Nuru.McpHost).
+  /// </summary>
+  /// <param name="mcpRoute">Options from the AddMcpRoute() arguments.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddMcpRoute(McpRouteModel mcpRoute);
+
+  /// <summary>
   /// Adds a behavior (pipeline middleware).
   /// </summary>
   /// <param name="behavior">The behavior definition.</param>

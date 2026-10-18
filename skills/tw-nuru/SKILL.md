@@ -531,6 +531,8 @@ Each endpoint ends with `returnType` (`name`, and `kind` of `unit`, `primitive`,
 
 To run a route from JSON in process (an MCP host, a batch), call `app.TryBind(pattern, jsonElement, out var request, out var error)`, then `await app.InvokeAsync(request)` for the typed result, and `await app.RenderAsync(request, result, terminal)` for the CLI text. Binding is the `--json-args` binder; `error.Message` is what `--json-args` prints.
 
+To serve the routes as MCP tools, reference `TimeWarp.Nuru.McpHost` and call `.AddMcpRoute()` (stdio `myapp mcp`), or `builder.Services.AddMcpServer().WithNuruTools(app)` in an existing MCP host such as ASP.NET Core with `WithHttpTransport()`. MCP and the CLI share names and arguments exactly: the tool for `config set {key} {value}` is `config_set`, its input schema is the route's `parameters[]` and `options[]`, and `tools/call` uses the `--json-args` binder (unknown keys are a tool error). Queries are read-only and idempotent, idempotent commands are idempotent, and `destructiveHint` comes only from `[Destructive]` on an endpoint class. See [MCP hosting](../../documentation/user/features/mcp-hosting.md).
+
 The agent loop, the exact-name rule, argv-overrides-JSON, and the app-level fat-field pattern are in [Agent invocation](../../documentation/user/features/agent-invocation.md).
 
 ## General Rules

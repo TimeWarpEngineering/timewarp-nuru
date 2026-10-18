@@ -591,6 +591,8 @@ public sealed class DslInterpreter
 
       "AddCheckUpdatesRoute" => DispatchAddCheckUpdatesRoute(receiver),
 
+      "AddMcpRoute" => DispatchAddMcpRoute(invocation, receiver),
+
       "ConfigureServices" => DispatchConfigureServices(invocation, receiver),
 
       "AddBehavior" => DispatchAddBehavior(invocation, receiver),
@@ -1106,6 +1108,56 @@ public sealed class DslInterpreter
     }
 
     return appBuilder.AddCheckUpdatesRoute();
+  }
+
+  /// <summary>
+  /// Dispatches AddMcpRoute() (TimeWarp.Nuru.McpHost) to IIrAppBuilder.
+  /// Arguments are read as compile-time constants; the generated mcp route passes them to the host.
+  /// </summary>
+  private object? DispatchAddMcpRoute(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"AddMcpRoute() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? instructions = ExtractConstantArgument<string>(invocation, 0, "instructions");
+    string? groupFilter = ExtractConstantArgument<string>(invocation, 1, "groupFilter");
+    int contentFormat = ExtractConstantArgument<int?>(invocation, 2, "contentFormat") ?? 0;
+
+    return appBuilder.AddMcpRoute(new McpRouteModel(instructions, groupFilter, contentFormat));
+  }
+
+  /// <summary>
+  /// Reads a compile-time constant argument by name or position. Absent arguments and
+  /// <c>null</c> return default; any other non-constant expression is an error.
+  /// </summary>
+  private T? ExtractConstantArgument<T>(InvocationExpressionSyntax invocation, int index, string parameterName)
+  {
+    ArgumentSyntax? argument = ResolveArgumentAt(invocation, index, parameterName);
+    if (argument is null)
+      return default;
+
+    // A later positional slot may hold a named argument for another parameter.
+    if (argument.NameColon is not null && argument.NameColon.Name.Identifier.Text != parameterName)
+      return default;
+
+    Optional<object?> constant = SemanticModel.GetConstantValue(argument.Expression, CancellationToken);
+    if (!constant.HasValue)
+    {
+      throw new InvalidOperationException(
+        $"AddMcpRoute() argument '{parameterName}' must be a compile-time constant. Location: {argument.GetLocation().GetLineSpan()}");
+    }
+
+    return constant.Value switch
+    {
+      null => default,
+      T value => value,
+      int intValue when typeof(T) == typeof(int?) => (T)(object)intValue,
+      _ => throw new InvalidOperationException(
+        $"AddMcpRoute() argument '{parameterName}' has an unexpected type. Location: {argument.GetLocation().GetLineSpan()}")
+    };
   }
 
   /// <summary>

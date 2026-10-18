@@ -1539,11 +1539,44 @@ internal static class InterceptorEmitter
       sb.AppendLine();
     }
 
+    // mcp route (opt-in via AddMcpRoute() from TimeWarp.Nuru.McpHost)
+    if (app.McpRoute is McpRouteModel mcpRoute)
+    {
+      EmitMcpRoute(sb, mcpRoute);
+    }
+
     // Shell completion routes (opt-in via EnableCompletion())
     if (app.HasCompletion)
     {
       EmitCompletionRoutes(sb, methodSuffix);
     }
+  }
+
+  /// <summary>
+  /// Emits the built-in mcp route. It runs the TimeWarp.Nuru.McpHost stdio server over this app,
+  /// with the options from the AddMcpRoute() arguments.
+  /// </summary>
+  private static void EmitMcpRoute(StringBuilder sb, McpRouteModel mcpRoute)
+  {
+    string instructions = mcpRoute.Instructions is null
+      ? "null"
+      : $"\"{EmitterStringUtils.EscapeForStringLiteral(mcpRoute.Instructions)}\"";
+    string groupFilter = mcpRoute.GroupFilter is null
+      ? "null"
+      : $"\"{EmitterStringUtils.EscapeForStringLiteral(mcpRoute.GroupFilter)}\"";
+
+    sb.AppendLine("    // Built-in: mcp (opt-in via AddMcpRoute())");
+    sb.AppendLine($"    if (routeArgs is [\"{BuiltInFlags.McpRouteForm}\"])");
+    sb.AppendLine("    {");
+    sb.AppendLine("      global::TimeWarp.Nuru.McpHost.NuruMcpHostOptions __mcpOptions = new()");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        Instructions = {instructions},");
+    sb.AppendLine($"        GroupFilter = {groupFilter},");
+    sb.AppendLine($"        ContentFormat = (global::TimeWarp.Nuru.McpHost.NuruMcpContentFormat){mcpRoute.ContentFormat.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+    sb.AppendLine("      };");
+    sb.AppendLine("      return await global::TimeWarp.Nuru.McpHost.NuruMcpServer.RunStdioAsync(app, __mcpOptions, cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
   }
 
   /// <summary>
@@ -1667,12 +1700,11 @@ internal static class InterceptorEmitter
       AppModel app = model.Apps[appIndex];
       string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
-      // Enrich app with version metadata and routes for help/capabilities
-      // For DiscoverEndpoints() or Map<T>() apps, routes come from model.Endpoints
-      // For Map() with inline lambdas, routes are already in app.Routes
-      ImmutableArray<RouteDefinition> appRoutes = app.Routes.Length > 0
-        ? app.Routes
-        : FilterEndpointsForApp(app, model.Endpoints);
+      // Enrich app with version metadata and routes for help/capabilities.
+      // Fluent Map() routes are in app.Routes; DiscoverEndpoints() / Map<T>() endpoints come from
+      // model.Endpoints. An app can use both, so help and the catalog list the same routes the
+      // matcher and the JSON binder dispatch (RoutesInIndexOrder), not only the fluent ones.
+      ImmutableArray<RouteDefinition> appRoutes = [.. RoutesInIndexOrder(app, model)];
       AppModel enrichedApp = app with
       {
         Version = model.Version,

@@ -52,6 +52,8 @@ Each endpoint ends with `returnType`: the CLR type name of the result (the await
 | `primitive` | `string`, numeric types, `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `TimeSpan` | text |
 | `json` | anything else, including nullable value types, enums, arrays, and records | JSON |
 
+An endpoint that returns `OneOf<TSuccess, SharedProblemDetails>` is described by `TSuccess`, because the CLI writes the success value to stdout and the problem to stderr with an exit code. `IQuery<OneOf<string, SharedProblemDetails>>` is `{"name": "string", "kind": "primitive"}`. Any other `OneOf` is `json` under its own name.
+
 `returnType` is nullable for the same reason as `invocation`: a document from a CLI built before it existed still deserializes, with `ReturnType` null.
 
 ## In-process catalog

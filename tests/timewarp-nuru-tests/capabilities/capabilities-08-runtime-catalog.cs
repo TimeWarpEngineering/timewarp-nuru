@@ -211,6 +211,25 @@ public class CapabilitiesRuntimeCatalogTests
     await Task.CompletedTask;
   }
 
+  public static async Task Should_describe_problem_pair_endpoints_by_their_success_type()
+  {
+    // Arrange: the invoker unwraps OneOf<TSuccess, SharedProblemDetails> and writes TSuccess.
+    NuruApp app = NuruApp.CreateBuilder()
+      .Map<RtProblemTextQuery>()
+      .Map<RtProblemReportQuery>()
+      .Build();
+
+    // Act
+    Dictionary<string, ReturnTypeCapability> returnTypes = app.Capabilities.Endpoints
+      .ToDictionary(e => e.Pattern, e => e.ReturnType!);
+
+    // Assert
+    AssertReturnType(returnTypes["rt-problem-text"], "string", ReturnTypeKind.Primitive);
+    AssertReturnType(returnTypes["rt-problem-report"], "TimeWarp.Nuru.Tests.Core.CapabilitiesRuntimeCatalog.RtReport", ReturnTypeKind.Json);
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Should_serialize_return_type_last_in_camel_case()
   {
     // Arrange
@@ -327,6 +346,32 @@ public sealed class RtReportQuery : IQuery<RtReport>
   public sealed class Handler : IQueryHandler<RtReportQuery, RtReport>
   {
     public Task<RtReport> Handle(RtReportQuery query, CancellationToken cancellationToken) => Task.FromResult(new RtReport("r", 2));
+  }
+}
+
+[NuruRoute("rt-problem-text", Description = "Problem pair with a text success")]
+public sealed class RtProblemTextQuery : IQuery<OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails>>
+{
+  public sealed class Handler : IQueryHandler<RtProblemTextQuery, OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails>>
+  {
+    public Task<OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails>> Handle(RtProblemTextQuery query, CancellationToken cancellationToken)
+    {
+      OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails> ok = "text";
+      return Task.FromResult(ok);
+    }
+  }
+}
+
+[NuruRoute("rt-problem-report", Description = "Problem pair with a record success")]
+public sealed class RtProblemReportQuery : IQuery<OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails>>
+{
+  public sealed class Handler : IQueryHandler<RtProblemReportQuery, OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails>>
+  {
+    public Task<OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails>> Handle(RtProblemReportQuery query, CancellationToken cancellationToken)
+    {
+      OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails> ok = new RtReport("r", 1);
+      return Task.FromResult(ok);
+    }
   }
 }
 

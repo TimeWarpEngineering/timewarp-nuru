@@ -389,8 +389,10 @@ internal static class CapabilitiesEmitter
   }
 
   /// <summary>
-  /// Describes a handler's result: the awaited CLR type name without <c>global::</c>, and the
-  /// ReturnTypeKind member name from the same output strategy the generated invoker uses.
+  /// Describes a handler's result: the CLR type name the invoker writes, without <c>global::</c>,
+  /// and the ReturnTypeKind member name from the same output strategy the generated invoker uses.
+  /// For <c>OneOf&lt;TSuccess, SharedProblemDetails&gt;</c> that is <c>TSuccess</c>, because the
+  /// invoker unwraps the pair and sends the problem to stderr. Any other type is the awaited type.
   /// </summary>
   internal static (string Name, string Kind) DescribeReturnType(HandlerDefinition handler)
   {
@@ -398,7 +400,9 @@ internal static class CapabilitiesEmitter
     if (!returnType.HasValue)
       return ("void", "Unit");
 
-    string typeName = returnType.UnwrappedTypeName ?? returnType.FullTypeName;
+    string typeName = handler.ReturnsProblemPair && handler.SuccessTypeName is string successType
+      ? successType
+      : returnType.UnwrappedTypeName ?? returnType.FullTypeName;
     string kind = HandlerInvokerEmitter.GetOutputStrategy(typeName) switch
     {
       OutputStrategy.None => "Unit",

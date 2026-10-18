@@ -41,7 +41,7 @@ Acceptance:
 - Round 1: Blocked — open M1
 - Fix pass for round 2 (2026-10-19): M1 fixed. `DescribeReturnType` describes `SuccessTypeName` when `ReturnsProblemPair` is set.
 - Round 2 (2026-10-19): M1 fixed. No new findings. Disposition clean. See `review/round-2/merged.md` and `review/disposition.md`.
-
+- Round 2: Done
 ## Notes
 
 - Parent: 508. 508-004 depends on this.

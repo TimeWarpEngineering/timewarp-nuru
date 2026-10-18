@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2802
+- Lines changed: 1788
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -16,6 +16,14 @@
 **Plan / brief:** `task.md` `## Goal (implementer restatement)` and `## Requirements` — derive Nuru endpoints from `TimeWarp.Contracts` `[Operation]` requests, mediator dispatch, `IResponseRenderer`, problem rendering, sample and docs
 **Effort:** 3
 **Reviewer roster:** general (generator correctness), tests (runs builds, unit tests, full CI suite, sample smoke), plan_alignment (requirements, docs, restatement misread check)
+**Session IDs:** review oracle (claude-opus-5-5, headless `ganda task work`), three Claude subagents; vendor session ids not reported
+
+## Scope — round 2
+
+**Date:** 2026-10-18
+**Diff scope:** fix delta `git diff d769f8b1..e316fd32 -- . ':!kanban'` (22 product files, +1341/−293), plus re-verification of round-1 M1–M21 against `e316fd32`
+**Effort:** 3
+**Reviewer roster:** general (generator correctness on the fix delta, M2–M7, M9–M14, M18–M20), tests (builds, focused tests, full CI suite after `ganda runfile cache --clear`, sample and benchmark smoke, M1, M15, M16, M21), plan_alignment (requirements, docs, changelog, restatement, M8, M17)
 **Session IDs:** review oracle (claude-opus-5-5, headless `ganda task work`), three Claude subagents; vendor session ids not reported
 
 ## Ground rules

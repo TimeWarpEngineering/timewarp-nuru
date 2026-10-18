@@ -41,7 +41,8 @@ Acceptance:
 
 ## Review
 
-- Round 1: 21 findings, all marked fixed in `review/round-1/merged.md` (8 bugs, 9 suggestions, 4 nits). Round 2 has not run.
+- Round 1: 21 findings, all marked fixed in `review/round-1/merged.md` (8 bugs, 9 suggestions, 4 nits).
+- Round 2 (2026-10-18, `e316fd32`): 20 of the 21 round-1 findings are verified fixed. M20 is reopened. 11 new findings: M22–M32. 12 findings are open: bugs M22, M23, M24, M25; suggestions M26, M27, M28, M29; nits M20, M30, M31, M32. CI is green. A fix pass is needed. See `review/round-2/merged.md`.
 
 ## Notes
 
@@ -69,6 +70,9 @@ Acceptance:
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-18T10:50:50Z
 - Fix pass (2026-10-18): implementer-grok, session 01a14ea2-bf2e-7013-aaf9-b6dae6d313fb. Disposed M1–M21 as fixed. Nested handlers fall back to direct invoke when no generated mediator exists. External handlers and typed HttpClients stay on the mediator. NURU_H008 is a Warning. Required JSON members are checked after the route matches. AOT cold start was not run.
 - Fix pass verified (2026-10-18): implementer-grok, session 01a14f63-0ae5-7df2-a802-244af765040e. Focused tests passed. `ganda runfile cache --clear`, then `tests/ci-tests/run-ci-tests.cs`: multi-mode 1916 total, 1910 passed, 6 skipped, 0 failed; standalone 0 failed. Overhead re-run: warmup 50, iterations 2000, mediator-ticks 6275013, direct-ticks 3483383. `ganda repo audit` passed.
+- Review round 2 (2026-10-18): review oracle claude-opus-5-5 (headless `ganda task work`), effort 3, roster general + tests + plan_alignment (Claude subagents), reviewed the fix delta `d769f8b1..e316fd32`.
+  - Full CI after `ganda runfile cache --clear`: multi-mode 1916 total, 1910 passed, 6 skipped (all of them already skipped on master), 0 failed. Standalone: 0 failed.
+  - Open: 12 findings, 4 of them bugs. A fix pass is needed. See `review/round-2/merged.md`.
 
 ## Blocked
 
@@ -84,16 +88,27 @@ Resolved 2026-10-18: TimeWarp.Contracts 2.0.0-beta.21 ships `lib/net10.0` and `l
 - NURU_H008 is a Warning. The build is accepted, and invoking a route whose handler the compilation cannot see exits 1 (M8).
 - A nested handler uses direct invoke when this compilation has no generated mediator. An external handler still uses the mediator, including under `UseDirectInvoke()` (M2, M4).
 - The DSL interpreter does not record `RunAsync` inside a `for` loop or a local function. The overhead benchmark assigns `Build()` to a field and calls `RunAsync` on that field. The benchmark folder has its own `Directory.Build.props` because `benchmarks/Directory.Build.props` does not load the Nuru analyzer.
+- Restatement check (review round 2): no misread of substance. Falling back to direct invoke when there is no generated mediator is a documented compatibility carve-out. The acceptance bullet still says mediator behaviors "run in every host" (it dropped "identically"), but the Goal paragraph above it limits that to builds with a generated mediator. Make the bullet match the Goal paragraph.
+- A `default!` sentinel for an initializer the generator cannot emit must not reach the runtime assignment. It overwrites the contract's own initializer (M22). Omit it from capabilities only.
 - Run tests standalone *and* through `tests/ci-tests/run-ci-tests.cs`. `.DiscoverEndpoints()` fails in CI multi-mode because another file's `[NuruRoute("")]` matches inputs these tests reject (M1). The tests use `.Map<T>()`.
 
 ## Results
 
-### Review status (round 1 disposed, round 2 not run)
+### Review status (round 2: open findings, no disposition yet)
 
-- Rounds: 1 reviewed `f522c6e2`. Effort 3, roster general, tests and plan_alignment.
-- Counts after the fix pass: bug 0 open / 8 fixed; suggestion 0 open / 9 fixed; nit 0 open / 4 fixed; 0 wontfix.
-- Disposition: all 21 findings marked fixed in `review/round-1/merged.md`. Round 2 has not run.
-- Paths: `review/review-framework.md`, `review/round-1/{general,tests,plan-alignment,merged}.md`.
+- Rounds: 2. Round 1 reviewed `f522c6e2`. Round 2 reviewed the fix delta `d769f8b1..e316fd32`. Both rounds ran at effort 3 with the general, tests, and plan_alignment reviewers.
+- Counts after round 2:
+  - bug: 4 open (M22–M25), 8 fixed
+  - suggestion: 4 open (M26–M29), 9 fixed
+  - nit: 4 open (M20 reopened, M30–M32), 3 fixed
+  - wontfix: 0
+- Disposition: none yet. 12 findings are open, so a fix pass is needed. `review/disposition.md` is not written.
+- Round 2 runs at `e316fd32`:
+  - Focused tests: derivation 24/24, dispatch 7/7, generator-55 3/3.
+  - Full CI: multi-mode 1910 passed, 6 skipped (they are skipped on master too), 0 failed. Standalone: 0 failed.
+  - Samples: 02-calculator built without a generated mediator uses direct invoke. 15-httpclient runs with no DI error.
+  - Benchmark `--aot` cold start: mediator 3.66 ms, direct 2.86 ms, one sample each. That gap is noise.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/{general,tests,plan-alignment,merged}.md`.
 
 Nuru derives a complete endpoint from a `TimeWarp.Contracts` 2.0.0-beta.21 request that carries `[Operation]` and a TimeWarp.Mediator kind, including a record class. An `[Operation]` type with no mediator kind is skipped. CLI attributes stay in `TimeWarp.Nuru` as overrides. The group path is the containing `[NuruRouteGroup]` prefix, otherwise `[NuruCliBinding(Group)]`, otherwise empty. Inherited public settable members are options too.
 

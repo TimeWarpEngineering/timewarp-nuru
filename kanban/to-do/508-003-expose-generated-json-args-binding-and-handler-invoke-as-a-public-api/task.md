@@ -44,6 +44,10 @@ Acceptance criteria:
 - [x] Parity tests
 - [x] Docs in `agent-invocation.md`
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Parent: 508. 508-004 depends on this.
@@ -56,6 +60,7 @@ Acceptance criteria:
 - Implemented (implementer-claude, headless task work): 2026-10-19
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-18T18:40:45Z
 - Reviewer: grok session 01a15050-f688-7a92-90d7-22dde54dec50 (2026-10-19), effort 3, roster general
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-18T18:52:05Z
 
 ## Results
 

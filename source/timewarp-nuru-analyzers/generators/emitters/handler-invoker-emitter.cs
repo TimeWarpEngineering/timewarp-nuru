@@ -42,7 +42,11 @@ internal static class HandlerInvokerEmitter
   /// <param name="loggerFactoryFieldName">Logger factory source (static field name or "app.LoggerFactory"), or null if no logging.</param>
   /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
   /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false, bool jsonArgsPath = false)
+  /// <param name="captureResultInto">
+  /// When set, the handler result is assigned to this <c>object?</c> expression instead of being written
+  /// to the terminal. <c>NuruApp.InvokeAsync</c> uses it; <see cref="EmitRender"/> writes the text later.
+  /// </param>
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false, bool jsonArgsPath = false, string? captureResultInto = null)
   {
     string indentStr = new(' ', indent);
     HandlerDefinition handler = route.Handler;
@@ -57,15 +61,15 @@ internal static class HandlerInvokerEmitter
     switch (handler.HandlerKind)
     {
       case HandlerKind.Delegate:
-        EmitDelegateInvocation(sb, route, routeIndex, indentStr);
+        EmitDelegateInvocation(sb, route, routeIndex, indentStr, captureResultInto);
         break;
 
       case HandlerKind.Command:
-        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, jsonArgsPath);
+        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, jsonArgsPath, captureResultInto);
         break;
 
       case HandlerKind.Method:
-        EmitMethodInvocation(sb, route, indentStr);
+        EmitMethodInvocation(sb, route, indentStr, captureResultInto);
         break;
     }
   }
@@ -74,7 +78,7 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a delegate-based handler.
   /// Transforms the lambda into a local function and invokes it.
   /// </summary>
-  private static void EmitDelegateInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, string indent)
+  private static void EmitDelegateInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, string indent, string? captureResultInto)
   {
     HandlerDefinition handler = route.Handler;
 
@@ -93,19 +97,19 @@ internal static class HandlerInvokerEmitter
     if (handler.IsExpressionBody)
     {
       // Expression body: () => "pong" or (string name) => $"Hello {name}"
-      EmitExpressionBodyHandler(sb, route, routeIndex, handler, handlerName, indent);
+      EmitExpressionBodyHandler(sb, route, routeIndex, handler, handlerName, indent, captureResultInto);
     }
     else
     {
       // Block body: () => { DoWork(); return "done"; }
-      EmitBlockBodyHandler(sb, route, routeIndex, handler, handlerName, indent);
+      EmitBlockBodyHandler(sb, route, routeIndex, handler, handlerName, indent, captureResultInto);
     }
   }
 
   /// <summary>
   /// Emits a local function for an expression-body lambda.
   /// </summary>
-  private static void EmitExpressionBodyHandler(StringBuilder sb, RouteDefinition route, int routeIndex, HandlerDefinition handler, string handlerName, string indent)
+  private static void EmitExpressionBodyHandler(StringBuilder sb, RouteDefinition route, int routeIndex, HandlerDefinition handler, string handlerName, string indent, string? captureResultInto)
   {
     string returnTypeName = GetReturnTypeName(handler);
     string asyncModifier = handler.IsAsync ? "async " : "";
@@ -131,7 +135,7 @@ internal static class HandlerInvokerEmitter
       sb.AppendLine(
         $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}({argList});");
 
-      EmitResultOutput(sb, indent, resultTypeName);
+      EmitResultOrCapture(sb, indent, resultTypeName, captureResultInto);
     }
     else
     {
@@ -157,7 +161,7 @@ internal static class HandlerInvokerEmitter
   /// <summary>
   /// Emits a local function for a block-body lambda.
   /// </summary>
-  private static void EmitBlockBodyHandler(StringBuilder sb, RouteDefinition route, int routeIndex, HandlerDefinition handler, string handlerName, string indent)
+  private static void EmitBlockBodyHandler(StringBuilder sb, RouteDefinition route, int routeIndex, HandlerDefinition handler, string handlerName, string indent, string? captureResultInto)
   {
     string returnTypeName = GetReturnTypeName(handler);
     string asyncModifier = handler.IsAsync ? "async " : "";
@@ -182,7 +186,7 @@ internal static class HandlerInvokerEmitter
       sb.AppendLine(
         $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}({argList});");
 
-      EmitResultOutput(sb, indent, resultTypeName);
+      EmitResultOrCapture(sb, indent, resultTypeName, captureResultInto);
     }
     else
     {
@@ -292,7 +296,7 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a command/query handler class.
   /// Creates the command object (unless already created), resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false, bool jsonArgsPath = false)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false, bool jsonArgsPath = false, string? captureResultInto = null)
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
@@ -332,7 +336,7 @@ internal static class HandlerInvokerEmitter
         string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
         sb.AppendLine(
           $"{indent}{resultTypeName} result = await __handler.Handle(__command, cancellationToken);");
-        EmitCommandResult(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
+        EmitCommandResultOrCapture(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, captureResultInto);
       }
       else
       {
@@ -362,13 +366,36 @@ internal static class HandlerInvokerEmitter
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(
         $"{indent}{resultTypeName} result = await __mediator.Send(__command, cancellationToken);");
-      EmitCommandResult(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
+      EmitCommandResultOrCapture(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, captureResultInto);
     }
     else
     {
       sb.AppendLine(
         $"{indent}await __mediator.Send(__command, cancellationToken);");
     }
+  }
+
+  /// <summary>
+  /// Writes a command result, or assigns it to <paramref name="captureResultInto"/> when set.
+  /// </summary>
+  private static void EmitCommandResultOrCapture(
+    StringBuilder sb,
+    string indent,
+    HandlerDefinition handler,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI,
+    string runtimeDISuffix,
+    string? captureResultInto)
+  {
+    if (captureResultInto is not null)
+    {
+      sb.AppendLine($"{indent}{captureResultInto} = result;");
+      return;
+    }
+
+    EmitCommandResult(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
   }
 
   /// <summary>
@@ -383,7 +410,8 @@ internal static class HandlerInvokerEmitter
     ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
     string? loggerFactoryFieldName,
     bool useRuntimeDI,
-    string runtimeDISuffix)
+    string runtimeDISuffix,
+    string terminal = "app.Terminal")
   {
     if (!handler.ReturnType.HasValue)
       return;
@@ -403,9 +431,9 @@ internal static class HandlerInvokerEmitter
       sb.AppendLine($"{indent}if (result.IsT1)");
       sb.AppendLine($"{indent}{{");
       sb.AppendLine($"{indent}  global::TimeWarp.Foundation.Types.SharedProblemDetails __problem = result.AsT1;");
-      sb.AppendLine($"{indent}  app.Terminal.WriteErrorLine($\"{{__problem.Type}} {{__problem.Title}}\");");
+      sb.AppendLine($"{indent}  {terminal}.WriteErrorLine($\"{{__problem.Type}} {{__problem.Title}}\");");
       sb.AppendLine($"{indent}  if (!string.IsNullOrEmpty(__problem.Detail))");
-      sb.AppendLine($"{indent}    app.Terminal.WriteErrorLine(__problem.Detail);");
+      sb.AppendLine($"{indent}    {terminal}.WriteErrorLine(__problem.Detail);");
       sb.AppendLine($"{indent}  int __status = __problem.Status is >= 1 and <= 255 ? __problem.Status.Value : 1;");
       sb.AppendLine($"{indent}  global::System.Environment.ExitCode = __status;");
       sb.AppendLine($"{indent}}}");
@@ -430,34 +458,34 @@ internal static class HandlerInvokerEmitter
       sb.AppendLine($"{bodyIndent}global::TimeWarp.Contracts.IResponseRenderer<{valueType}>? __renderer = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<global::TimeWarp.Contracts.IResponseRenderer<{valueType}>>(GetResolutionProvider{runtimeDISuffix}(app));");
       sb.AppendLine($"{bodyIndent}if (__renderer is not null)");
       sb.AppendLine($"{bodyIndent}{{");
-      sb.AppendLine($"{bodyIndent}  app.Terminal.WriteLine(__renderer.Render({valueName}));");
+      sb.AppendLine($"{bodyIndent}  {terminal}.WriteLine(__renderer.Render({valueName}));");
       sb.AppendLine($"{bodyIndent}}}");
       if (handler.RendererTypeName is not null)
       {
         sb.AppendLine($"{bodyIndent}else");
         sb.AppendLine($"{bodyIndent}{{");
-        sb.AppendLine($"{bodyIndent}  app.Terminal.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
+        sb.AppendLine($"{bodyIndent}  {terminal}.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
         sb.AppendLine($"{bodyIndent}}}");
       }
       else
       {
         sb.AppendLine($"{bodyIndent}else");
         sb.AppendLine($"{bodyIndent}{{");
-        EmitResultOutput(sb, bodyIndent + "  ", valueType, valueName);
+        EmitResultOutput(sb, bodyIndent + "  ", valueType, valueName, terminal);
         sb.AppendLine($"{bodyIndent}}}");
       }
     }
     else if (registeredRenderer is not null)
     {
-      sb.AppendLine($"{bodyIndent}app.Terminal.WriteLine({registeredRenderer}.Render({valueName}));");
+      sb.AppendLine($"{bodyIndent}{terminal}.WriteLine({registeredRenderer}.Render({valueName}));");
     }
     else if (handler.RendererTypeName is not null)
     {
-      sb.AppendLine($"{bodyIndent}app.Terminal.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
+      sb.AppendLine($"{bodyIndent}{terminal}.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
     }
     else
     {
-      EmitResultOutput(sb, bodyIndent, valueType, valueName);
+      EmitResultOutput(sb, bodyIndent, valueType, valueName, terminal);
     }
 
     if (problemPair)
@@ -675,7 +703,7 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a method-based handler (method group).
   /// Calls the static method directly.
   /// </summary>
-  private static void EmitMethodInvocation(StringBuilder sb, RouteDefinition route, string indent)
+  private static void EmitMethodInvocation(StringBuilder sb, RouteDefinition route, string indent, string? captureResultInto)
   {
     HandlerDefinition handler = route.Handler;
     string typeName = handler.FullTypeName ?? "UnknownHandler";
@@ -692,7 +720,7 @@ internal static class HandlerInvokerEmitter
 
       sb.AppendLine(
         $"{indent}{resultType} result = {awaitKeyword}{typeName}.{methodName}({args});");
-      EmitResultOutput(sb, indent, resultTypeName);
+      EmitResultOrCapture(sb, indent, resultTypeName, captureResultInto);
     }
     else
     {
@@ -702,13 +730,73 @@ internal static class HandlerInvokerEmitter
   }
 
   /// <summary>
+  /// Writes <c>result</c> to the terminal, or assigns it to <paramref name="captureResultInto"/> when set.
+  /// </summary>
+  private static void EmitResultOrCapture(StringBuilder sb, string indent, string? resultTypeName, string? captureResultInto)
+  {
+    if (captureResultInto is not null)
+    {
+      sb.AppendLine($"{indent}{captureResultInto} = result;");
+      return;
+    }
+
+    EmitResultOutput(sb, indent, resultTypeName);
+  }
+
+  /// <summary>
+  /// Writes a result captured by <see cref="Emit"/> (<c>captureResultInto</c>) the way the CLI writes it:
+  /// a registered or declared <c>IResponseRenderer&lt;T&gt;</c>, problem details to stderr, otherwise
+  /// <see cref="OutputStrategy"/>. A null value writes nothing, as the CLI does.
+  /// </summary>
+  /// <param name="valueExpression">The captured <c>object?</c> value.</param>
+  /// <param name="terminal">Terminal expression to write to.</param>
+  internal static void EmitRender(
+    StringBuilder sb,
+    RouteDefinition route,
+    string valueExpression,
+    string terminal,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI,
+    string runtimeDISuffix,
+    string indent)
+  {
+    HandlerDefinition handler = route.Handler;
+    if (!handler.ReturnType.HasValue)
+      return;
+
+    string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
+    string localType = handler.HandlerKind switch
+    {
+      HandlerKind.Command => resultTypeName,
+      HandlerKind.Method when !handler.IsAsync => handler.ReturnType.ShortTypeName,
+      _ => GetUnwrappedReturnTypeName(handler)
+    };
+
+    sb.AppendLine($"{indent}if ({valueExpression} is not null)");
+    sb.AppendLine($"{indent}{{");
+    sb.AppendLine($"{indent}  {localType} result = ({localType}){valueExpression};");
+    if (handler.HandlerKind == HandlerKind.Command)
+    {
+      EmitCommandResult(sb, indent + "  ", handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, terminal);
+    }
+    else
+    {
+      EmitResultOutput(sb, indent + "  ", resultTypeName, "result", terminal);
+    }
+
+    sb.AppendLine($"{indent}}}");
+  }
+
+  /// <summary>
   /// Emits code to output the handler result to the terminal.
   /// Uses type-based strategy: Unit/null = no output, primitives = raw, dates = ISO 8601, complex = JSON.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="indent">The indentation string.</param>
   /// <param name="resultTypeName">The result type name to determine output strategy.</param>
-  private static void EmitResultOutput(StringBuilder sb, string indent, string? resultTypeName = null, string valueName = "result")
+  private static void EmitResultOutput(StringBuilder sb, string indent, string? resultTypeName = null, string valueName = "result", string terminal = "app.Terminal")
   {
     OutputStrategy strategy = GetOutputStrategy(resultTypeName);
 
@@ -721,14 +809,14 @@ internal static class HandlerInvokerEmitter
     if (isValueType)
     {
       // Value types can never be null - output directly
-      EmitOutputForStrategy(sb, indent, strategy, resultTypeName, valueName);
+      EmitOutputForStrategy(sb, indent, strategy, resultTypeName, valueName, terminal);
     }
     else
     {
       // Reference types - check for null before outputting
       sb.AppendLine($"{indent}if ({valueName} is not null)");
       sb.AppendLine($"{indent}{{");
-      EmitOutputForStrategy(sb, $"{indent}  ", strategy, resultTypeName, valueName);
+      EmitOutputForStrategy(sb, $"{indent}  ", strategy, resultTypeName, valueName, terminal);
       sb.AppendLine($"{indent}}}");
     }
   }
@@ -740,22 +828,22 @@ internal static class HandlerInvokerEmitter
   /// <param name="indent">The indentation string.</param>
   /// <param name="strategy">The output strategy to use.</param>
   /// <param name="typeName">The type name for JSON serialization context.</param>
-  private static void EmitOutputForStrategy(StringBuilder sb, string indent, OutputStrategy strategy, string? typeName = null, string valueName = "result")
+  private static void EmitOutputForStrategy(StringBuilder sb, string indent, OutputStrategy strategy, string? typeName = null, string valueName = "result", string terminal = "app.Terminal")
   {
     switch (strategy)
     {
       case OutputStrategy.Raw:
-        sb.AppendLine($"{indent}app.Terminal.WriteLine({valueName}.ToString());");
+        sb.AppendLine($"{indent}{terminal}.WriteLine({valueName}.ToString());");
         break;
 
       case OutputStrategy.Iso8601:
         // Use "o" format for round-trip ISO 8601
-        sb.AppendLine($"{indent}app.Terminal.WriteLine({valueName}.ToString(\"o\", global::System.Globalization.CultureInfo.InvariantCulture));");
+        sb.AppendLine($"{indent}{terminal}.WriteLine({valueName}.ToString(\"o\", global::System.Globalization.CultureInfo.InvariantCulture));");
         break;
 
       case OutputStrategy.Invariant:
         // Use "c" format for culture-invariant (TimeSpan)
-        sb.AppendLine($"{indent}app.Terminal.WriteLine({valueName}.ToString(\"c\", global::System.Globalization.CultureInfo.InvariantCulture));");
+        sb.AppendLine($"{indent}{terminal}.WriteLine({valueName}.ToString(\"c\", global::System.Globalization.CultureInfo.InvariantCulture));");
         break;
 
       case OutputStrategy.Json:
@@ -766,19 +854,19 @@ internal static class HandlerInvokerEmitter
         sb.AppendLine($"{indent}try");
         sb.AppendLine($"{indent}{{");
         sb.AppendLine($"{indent}  // Try user-types context first (generated by TimeWarp.Nuru.Build MSBuild task)");
-        sb.AppendLine($"{indent}  app.Terminal.WriteLine(global::System.Text.Json.JsonSerializer.Serialize({valueName}, global::TimeWarp.Nuru.Generated.NuruUserTypesJsonContext.Default.Options));");
+        sb.AppendLine($"{indent}  {terminal}.WriteLine(global::System.Text.Json.JsonSerializer.Serialize({valueName}, global::TimeWarp.Nuru.Generated.NuruUserTypesJsonContext.Default.Options));");
         sb.AppendLine($"{indent}}}");
         sb.AppendLine($"{indent}catch");
         sb.AppendLine($"{indent}{{");
         sb.AppendLine($"{indent}  try");
         sb.AppendLine($"{indent}  {{");
         sb.AppendLine($"{indent}    // Fall back to built-in context");
-        sb.AppendLine($"{indent}    app.Terminal.WriteLine(global::System.Text.Json.JsonSerializer.Serialize({valueName}, global::TimeWarp.Nuru.NuruJsonSerializerContext.Default.Options));");
+        sb.AppendLine($"{indent}    {terminal}.WriteLine(global::System.Text.Json.JsonSerializer.Serialize({valueName}, global::TimeWarp.Nuru.NuruJsonSerializerContext.Default.Options));");
         sb.AppendLine($"{indent}  }}");
         sb.AppendLine($"{indent}  catch");
         sb.AppendLine($"{indent}  {{");
         sb.AppendLine($"{indent}    // Type not in any context - fall back to ToString()");
-        sb.AppendLine($"{indent}    app.Terminal.WriteLine({valueName}?.ToString() ?? \"\");");
+        sb.AppendLine($"{indent}    {terminal}.WriteLine({valueName}?.ToString() ?? \"\");");
         sb.AppendLine($"{indent}  }}");
         sb.AppendLine($"{indent}}}");
         break;

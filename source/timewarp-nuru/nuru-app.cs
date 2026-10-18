@@ -73,6 +73,116 @@ public partial class NuruApp
       "The source generator attaches it to apps whose Build() or RunAsync() call it intercepts.");
 
   /// <summary>
+  /// The generated JSON binder for this app. Set by generated interceptor code, like
+  /// <see cref="CapabilitiesProvider"/>. Use <see cref="TryBind"/> instead of calling it.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public NuruJsonBinder? JsonBinder { get; set; }
+
+  /// <summary>
+  /// Runs or renders a bound request through generated route execution. Set by generated
+  /// interceptor code. Use <see cref="InvokeAsync"/> and <see cref="RenderAsync"/> instead of calling it.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public Func<NuruApp, NuruInvocation, CancellationToken, Task<int>>? InvocationExecutor { get; set; }
+
+  /// <summary>
+  /// Binds a JSON object to a route with the same rules as <c>--json-args</c>, without argv.
+  /// </summary>
+  /// <param name="route">The route pattern, as in <see cref="EndpointCapability.Pattern"/> (ordinal match).</param>
+  /// <param name="arguments">
+  /// A JSON object whose keys are the route's parameter and option names. <c>default(JsonElement)</c>
+  /// binds no arguments.
+  /// </param>
+  /// <param name="request">The bound request. Pass it to <see cref="InvokeAsync"/>.</param>
+  /// <param name="error">Why binding failed; its message is what <c>--json-args</c> prints.</param>
+  /// <returns>True when the arguments bind to the route.</returns>
+  /// <remarks>
+  /// Keys match parameter and option names exactly (ordinal). Unknown keys fail. Values must have the
+  /// member's JSON kind; <c>null</c> is accepted only for nullable members; repeated options and
+  /// catch-alls take arrays. Absent keys keep the member's default. The binder is generated, so this
+  /// needs no reflection and works under AOT.
+  /// </remarks>
+  /// <exception cref="InvalidOperationException">No generated binder is attached to this app.</exception>
+  public bool TryBind(
+    string route,
+    JsonElement arguments,
+    [NotNullWhen(true)] out NuruBoundRequest? request,
+    [NotNullWhen(false)] out NuruBindError? error)
+  {
+    ArgumentNullException.ThrowIfNull(route);
+    NuruJsonBinder binder = JsonBinder ?? throw MissingGeneratedCode();
+    if (binder(route, arguments, out NuruBoundRequest? bound, out NuruBindError? failure) && bound is not null)
+    {
+      request = bound;
+      error = null;
+      return true;
+    }
+
+    request = null;
+    error = failure ?? new NuruBindError(NuruBindErrorKind.UnknownRoute, null, $"Error: Unknown route '{route}'.");
+    return false;
+  }
+
+  /// <summary>
+  /// Runs a request bound by <see cref="TryBind"/>: the same configuration, services, command scope,
+  /// Nuru behaviors and handler as the CLI, without writing the result.
+  /// </summary>
+  /// <param name="request">A request bound by this app's <see cref="TryBind"/>.</param>
+  /// <param name="cancellationToken">Token passed to the handler and behaviors.</param>
+  /// <returns>
+  /// The handler's result, boxed (for an <c>OneOf&lt;T, SharedProblemDetails&gt;</c> handler, the
+  /// <c>OneOf</c> itself), or null for a void or <c>Unit</c> handler. Pass it to
+  /// <see cref="RenderAsync"/> for the CLI's text.
+  /// </returns>
+  /// <remarks>
+  /// Calls run one at a time: generated route execution uses process-wide service state and
+  /// <see cref="Environment.ExitCode"/>, as <see cref="RunAsync"/> does. Handler exceptions propagate.
+  /// </remarks>
+  /// <exception cref="ArgumentException"><paramref name="request"/> was bound by another app.</exception>
+  /// <exception cref="InvalidOperationException">
+  /// No generated code is attached to this app, or route execution stopped before the handler ran
+  /// (for example, no handler is registered); the reason is on the app's terminal error output.
+  /// </exception>
+  public async Task<object?> InvokeAsync(NuruBoundRequest request, CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(request);
+    Func<NuruApp, NuruInvocation, CancellationToken, Task<int>> executor = InvocationExecutor ?? throw MissingGeneratedCode();
+    NuruInvocation invocation = new(request);
+    int exitCode = await executor(this, invocation, cancellationToken).ConfigureAwait(false);
+    if (!invocation.Dispatched)
+    {
+      throw new InvalidOperationException(
+        $"'{request.Route}' exited with code {exitCode} before its handler ran. See the app's error output.");
+    }
+
+    return invocation.Result;
+  }
+
+  /// <summary>
+  /// Writes a result from <see cref="InvokeAsync"/> as the CLI writes it for that route: a registered
+  /// <c>IResponseRenderer&lt;T&gt;</c>, problem details to stderr, otherwise the CLI output strategy
+  /// (raw text, ISO 8601, JSON).
+  /// </summary>
+  /// <param name="request">The request the result came from.</param>
+  /// <param name="result">The value <see cref="InvokeAsync"/> returned.</param>
+  /// <param name="terminal">Terminal to write to, for example a <c>TestTerminal</c> to capture the text.</param>
+  /// <returns>The exit code the CLI returns for this result: problem details give their status, otherwise 0.</returns>
+  public Task<int> RenderAsync(NuruBoundRequest request, object? result, ITerminal terminal)
+  {
+    ArgumentNullException.ThrowIfNull(request);
+    ArgumentNullException.ThrowIfNull(terminal);
+    Func<NuruApp, NuruInvocation, CancellationToken, Task<int>> executor = InvocationExecutor ?? throw MissingGeneratedCode();
+    NuruInvocation invocation = new(request) { RenderTerminal = terminal, Result = result };
+    return executor(this, invocation, CancellationToken.None);
+  }
+
+  private static InvalidOperationException MissingGeneratedCode() =>
+    new(
+      "No generated binder is attached to this NuruApp. " +
+      "The source generator attaches it to apps whose Build() or RunAsync() call it intercepts.");
+
+  /// <summary>
   /// Tracer provider for distributed tracing. Set by generated telemetry code.
   /// </summary>
   public TracerProvider? TracerProvider { get; set; }

@@ -301,9 +301,9 @@ public static partial class KeyBindingCatalog
     builder.Append("  ");
     builder.AppendLine("Description");
 
-    builder.Append(new string('-', keyWidth));
+    builder.Append('-', keyWidth);
     builder.Append("  ");
-    builder.Append(new string('-', functionWidth));
+    builder.Append('-', functionWidth);
     builder.Append("  ");
     builder.AppendLine(new string('-', "Description".Length));
 

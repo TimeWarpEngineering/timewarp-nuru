@@ -111,6 +111,12 @@ internal static class InterceptorEmitter
     sb.AppendLine("  {");
     sb.AppendLine("    global::TimeWarp.Nuru.NuruApp app = builder.Build();");
     sb.AppendLine($"    app.CapabilitiesProvider = GetCapabilities{methodSuffix};");
+    if (EmitsExecuteRoute(app, model))
+    {
+      sb.AppendLine($"    app.JsonBinder = {JsonArgsEmitter.TryBindMethodName(methodSuffix)};");
+      sb.AppendLine($"    app.InvocationExecutor = __InvokeJson{methodSuffix};");
+    }
+
     sb.AppendLine("    return app;");
     sb.AppendLine("  }");
     sb.AppendLine();
@@ -127,11 +133,7 @@ internal static class InterceptorEmitter
     // Get RunAsync intercept sites from the dictionary
     bool hasRunAsyncSites = app.InterceptSitesByMethod.TryGetSites("RunAsync", out EquatableArray<InterceptSiteModel> runAsyncSites);
 
-    // Emit ExecuteRouteAsync when:
-    // - App has routes (needs route matching)
-    // - App has REPL (REPL calls ExecuteRouteAsync)
-    // - App has RunAsync intercept sites (RunAsync_Intercepted calls ExecuteRouteAsync)
-    if (app.HasRoutes || app.HasRepl || hasRunAsyncSites)
+    if (EmitsExecuteRoute(app, model))
     {
       EmitExecuteRouteAsyncMethod(sb, app, appIndex, model, methodSuffix, loggerFactoryFieldName);
     }
@@ -177,6 +179,25 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
+  /// True when ExecuteRouteAsync is emitted for <paramref name="app"/>: it has routes or endpoints
+  /// (route matching, and NuruApp.InvokeAsync on a Build()-only app), a REPL (the REPL calls
+  /// ExecuteRouteAsync), or RunAsync intercept sites (RunAsync_Intercepted calls it). The public bind
+  /// and invoke entry points exist exactly when it does.
+  /// </summary>
+  private static bool EmitsExecuteRoute(AppModel app, GeneratorModel model) =>
+    app.HasRoutes
+    || app.HasRepl
+    || app.InterceptSitesByMethod.TryGetSites("RunAsync", out _)
+    || FilterEndpointsForApp(app, model.Endpoints).Length > 0;
+
+  /// <summary>
+  /// Routes in route-index order: the app's routes, then its endpoints. Route indices name the
+  /// generated command classes and the JSON bind methods.
+  /// </summary>
+  private static List<RouteDefinition> RoutesInIndexOrder(AppModel app, GeneratorModel model) =>
+    [.. app.Routes.Concat(FilterEndpointsForApp(app, model.Endpoints))];
+
+  /// <summary>
   /// Emits the core route execution method that handles all route matching.
   /// This is called by both RunAsync_Intercepted and the REPL command executor.
   /// </summary>
@@ -190,13 +211,17 @@ internal static class InterceptorEmitter
     // and doubles as the declaration that handler CancellationToken parameters bind to.
     // fromRepl is true only for the REPL command callback. --json-args - is rejected there.
     sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default,");
-    sb.AppendLine("    bool fromRepl = false");
+    sb.AppendLine("    bool fromRepl = false,");
+    // Set only by NuruApp.InvokeAsync / RenderAsync: run (or render) a request bound by TryBind.
+    sb.AppendLine("    global::TimeWarp.Nuru.NuruInvocation? __invocation = null");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
     // A previous command may have stored a problem status. This invocation starts clean.
     sb.AppendLine("    global::System.Environment.ExitCode = 0;");
     // Fallback for an app whose Build() call was not intercepted.
     sb.AppendLine($"    app.CapabilitiesProvider ??= GetCapabilities{methodSuffix};");
+    sb.AppendLine($"    app.JsonBinder ??= {JsonArgsEmitter.TryBindMethodName(methodSuffix)};");
+    sb.AppendLine($"    app.InvocationExecutor ??= __InvokeJson{methodSuffix};");
 
     // Set up completion support (only when completion or REPL is enabled)
     if (app.HasCompletion || app.HasRepl)
@@ -212,6 +237,12 @@ internal static class InterceptorEmitter
     EmitMethodBody(sb, app, appIndex, model, loggerFactoryFieldName);
 
     sb.AppendLine("  }");
+    sb.AppendLine();
+
+    // Public bind and invoke: NuruApp.TryBind / InvokeAsync / RenderAsync.
+    JsonArgsEmitter.EmitBindMethods(sb, RoutesInIndexOrder(app, model), app, methodSuffix);
+    sb.AppendLine($"  private static global::System.Threading.Tasks.Task<int> __InvokeJson{methodSuffix}(NuruApp app, global::TimeWarp.Nuru.NuruInvocation invocation, global::System.Threading.CancellationToken cancellationToken) =>");
+    sb.AppendLine($"    ExecuteRouteAsync{methodSuffix}(app, [], cancellationToken, fromRepl: false, __invocation: invocation);");
     sb.AppendLine();
   }
 
@@ -1163,7 +1194,7 @@ internal static class InterceptorEmitter
     // await using disposes that scope on every later return, including early exits.
     string enteringRepl = EnteringReplExpression(app);
     sb.AppendLine("    // Initialize services with app and configuration");
-    sb.AppendLine($"    bool __enteringRepl = {enteringRepl};");
+    sb.AppendLine($"    bool __enteringRepl = __invocation is null && ({enteringRepl});");
     string scopeSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
     if (app.UseMicrosoftDependencyInjection)
     {
@@ -1196,7 +1227,10 @@ internal static class InterceptorEmitter
     // Build a lookup from route to its original index for command class naming
     // IMPORTANT: Use only this app's routes (plus filtered endpoints), not all routes from all apps
     // Using model.AllRoutes would cause route index collisions between different apps
-    List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(endpointsForApp)];
+    List<RouteDefinition> allRoutesOrdered = RoutesInIndexOrder(app, model);
+
+    // A request bound by NuruApp.TryBind runs here, after services and the command scope.
+    JsonArgsEmitter.EmitInvocationDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);
 
     // JSON selection returns. Calls without --json-args leave __jsonDoc null and fall through.
     JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);

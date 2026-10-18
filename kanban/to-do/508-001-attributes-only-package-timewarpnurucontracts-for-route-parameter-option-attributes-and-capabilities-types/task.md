@@ -59,6 +59,7 @@ Acceptance:
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Blocked — 2026-10-18T05:19:31Z
 - Block cleared (2026-10-18): TimeWarp.Contracts 2.0.0-beta.21 published multi-targeted net10.0 + net11.0; relaunched headless.
 - Implemented (2026-10-18): implementer-grok, session 01a14e4f-7534-72d0-b741-b68ae80e4fc4. Derived endpoints from TimeWarp.Contracts 2.0.0-beta.21. JSON members deserialize through the source-generated `NuruJsonMemberContext` (property names as declared). `tests/Directory.Build.targets` imports the Nuru build task so file-based tests get that context. A problem outcome sets `Environment.ExitCode` and each `ExecuteRouteAsync` starts by clearing it, so a later success is 0. Direct invoke stays behind `UseDirectInvoke()` and still requires a nested handler.
+- Pack fix (2026-10-18): `TimeWarp.Nuru` 3.0.0 is the published stable package. Packing it with a prerelease `TimeWarp.Contracts` dependency fails NU5104. `source/Directory.Build.props` version is now `3.1.0-beta.1`. `ganda repo audit --fix` set the executable bit on the four new shebang runfiles.
 
 ## Blocked
 
@@ -76,7 +77,7 @@ JSON members bind only from `--json-args`, through the source-generated `NuruJso
 
 ### Files changed
 
-- Package reference: `Directory.Packages.props`, `source/timewarp-nuru/timewarp-nuru.csproj`, `source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj`
+- Package reference: `Directory.Packages.props`, `source/timewarp-nuru/timewarp-nuru.csproj`, `source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj`. Package version is `3.1.0-beta.1` so the stable `3.0.0` package does not gain a prerelease dependency.
 - Derivation and dispatch: `source/timewarp-nuru-analyzers/generators/extractors/operation-endpoint-extractor.cs` and the generator emitters, models, and `NuruCliBinding`
 - AOT JSON member context: `source/timewarp-nuru-build/GenerateNuruJsonContextTask.cs`, `tests/Directory.Build.targets`
 - Tests: `tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs`, `operation-endpoint-dispatch.cs`, `tests/timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs`

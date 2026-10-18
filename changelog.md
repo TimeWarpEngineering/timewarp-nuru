@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Neutral contracts**: Nuru derives endpoints from `TimeWarp.Contracts` `[Operation]` requests (508-001). The reference is `TimeWarp.Contracts` 2.0.0-beta.21, still a prerelease, so the package version is `3.1.0-beta.1` until that dependency is stable. A stable Nuru package does not take a prerelease dependency.
+
 ## [3.0.0] - 2026-10-14
 
 Changes since `3.0.0-beta.79`; beta.80 has no separate section. First stable 3.0 release. It supersedes the `3.0.0-beta.*` line (last published beta is `3.0.0-beta.80`, 2026-10-12). This is the first 3.0 package built in Release; the betas were Debug (see the first Packaging entry under Fixed, task 503).

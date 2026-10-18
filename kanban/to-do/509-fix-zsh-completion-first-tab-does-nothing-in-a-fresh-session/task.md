@@ -65,6 +65,8 @@ Acceptance:
 
 - Created: 3431885 (2026-10-18)
 - Implementation: task-work (2026-10-19)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-18T18:40:39Z
+- Review oracle: tw-implementation-review, effort 2, roster general (claude-opus-5-5, headless, session id not exposed), round 1, disposition accepted-exceptions — 2026-10-19
 
 ## Results
 
@@ -94,3 +96,11 @@ Expect:
 - `Should_complete_when_sourced_and_when_evald` prints `COMP:_app`, `HITS:SOURCE:1`, and `HITS:EVAL:1`.
 - `Should_list_the_candidate_on_the_first_tab` prints `TAB_HITS:1` and `TAB_OK`. The pty listing contains `nuru509candidate`.
 - None of the runs print `FILES_CALLED` or `command not found`.
+
+### Review
+
+- Rounds: 1. Effort 2, roster general (review oracle).
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). Open: 0.
+- Disposition: **accepted-exceptions**. M1 (nit): the `Install zsh` step in `workflow.yml` has no probe-mode `if:`. It is harmless because of the `command -v` guard. Tidy it the next time `workflow.yml` changes.
+- Verified by the reviewer: completion-31 passes 4 of 4 locally on zsh 5.9. The master template fails the same autoload driver (`HITS:0`) and the branch template passes it (`HITS:1`). A `zcompile`d `.zwc` also completes on the first call.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

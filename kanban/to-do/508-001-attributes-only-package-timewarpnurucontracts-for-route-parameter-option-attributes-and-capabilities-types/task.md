@@ -74,6 +74,7 @@ Acceptance:
 
   CI is green: 1920 total, 1914 passed, 6 skipped, 0 failed. A fix pass is needed. See `review/round-3/merged.md`.
 - Round 4 (2026-10-18, `50e92396`): M33–M49 are fixed. No new findings. Disposition is clean. See `review/round-4/merged.md` and `review/disposition.md`.
+- Round 4: Done
 ## Notes
 
 - Parent: 508. Waits for the first published `TimeWarp.Contracts` (architecture task 384); until then develop against a project reference or a local feed.

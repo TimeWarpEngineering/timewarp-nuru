@@ -56,6 +56,10 @@ Acceptance:
 - Tests lock the template text, the first autoloaded call, a `zpty` Tab, and both `source <(…)` and `eval`.
 - Sourcing or eval'ing the script still registers the completer and completes.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Context: the known-issue mention in Masoko's blog draft `/workspace/masoko/same-cli-every-shell/blog-post.md` (on the Grok Bot box).
@@ -67,6 +71,7 @@ Acceptance:
 - Implementation: task-work (2026-10-19)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-18T18:40:39Z
 - Review oracle: tw-implementation-review, effort 2, roster general (claude-opus-5-5, headless, session id not exposed), round 1, disposition accepted-exceptions — 2026-10-19
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-18T18:43:30Z
 
 ## Results
 

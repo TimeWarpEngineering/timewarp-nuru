@@ -19,7 +19,7 @@ This task also owns the three framework changes the neutral model needs from Nur
 ## Checklist
 
 - [ ] Package reference and metadata-name resolution
-- [ ] Derivation rules, generator and tests
+- [ ] Derivation rules, generator and tests (including complex members as JSON, boolean initializer defaults, grouping, non-nullable enums per the 506 findings)
 - [ ] Handler placement: registered handlers, diagnostics
 - [ ] Mediator dispatch with Nuru behaviors as middleware; overhead measured
 - [ ] `IResponseRenderer` and problem rendering
@@ -28,9 +28,15 @@ This task also owns the three framework changes the neutral model needs from Nur
 ## Notes
 
 - Parent: 508. Waits for the first published `TimeWarp.Contracts` (architecture task 384); until then develop against a project reference or a local feed.
+- Findings from task 506 (Roslynk spike, 2026-10-18) that the derivation rules must cover:
+  - **Complex members.** Two Roslynk inputs are arrays of objects (`multi_query.operations`: list of `{tool: enum, arguments: dictionary}`; `apply_patch.baseVersions`: list of `{Path, Version}`). The generator today maps a nested object to `string` and an object array to `string[]`, and the binding probes for these do not compile. Rule to add: a member whose type is not a scalar, enum, or array of scalars binds as one JSON value (the whole object or array) under its member name; `--capabilities` reports its type as `json` plus the CLR type name. Document that argv cannot supply such a member and `--json-args` must.
+  - **Boolean defaults.** Six Roslynk parameters are non-nullable `bool` with initializer `= true` (`get_diagnostics.includeAnalyzers`; `get_members.includeMethods`, `includeFields`, `includeProperties`, `includeEvents`, `includeNestedTypes`). A Nuru flag's generated local starts `false`, so omission is indistinguishable from `false` and the default flips. A derived `bool` member with a `true` initializer must keep that default when omitted: emit it as a non-flag option whose omitted value is the initializer (the `bool?` shape the spike used by hand), and show the default in `--capabilities`.
+  - **Grouping.** A flat catalog of Roslynk's 29 tools is about 16,000 tokens; `--group-filter` is the intended cut but only works when routes have a group path. Derived endpoints need a group: from a containing `[NuruRouteGroup]` when present, otherwise from an optional group argument on the CLI binding, otherwise ungrouped. Record the decision; 508-004 projects the same group into MCP tool filtering.
+  - **Enums.** A non-nullable enum option does not compile today (the argv path yields a nullable enum). Roslynk has no top-level enum parameter, so the gap is latent; derivation should handle non-nullable enums or diagnose them.
 - Earlier scope of this task (a Nuru-only attributes and capabilities package) is superseded: the capabilities DTOs become the neutral catalog in the shared package (508-002 projects it).
 
 ## Session
 
 - Created: 1479989 (2026-10-17)
 - Rescoped to the shared neutral-contract model: 1479989 (2026-10-17)
+- 506 findings folded into requirements: 1479989 (2026-10-18)

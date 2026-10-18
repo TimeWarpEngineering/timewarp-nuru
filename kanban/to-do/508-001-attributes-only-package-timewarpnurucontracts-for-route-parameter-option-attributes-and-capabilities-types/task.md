@@ -16,6 +16,20 @@ This task also owns the three framework changes the neutral model needs from Nur
 - `--capabilities` entries for derived endpoints are indistinguishable from attribute-declared ones.
 - Calculator sample gets a sibling written contracts-first; docs page on neutral contracts in `documentation/user/features/`.
 
+## Goal (implementer restatement)
+
+A request class that carries `TimeWarp.Contracts.OperationAttribute` and a TimeWarp.Mediator kind (`IQuery<T>`, `ICommand<T>`, or `IIdempotentCommand<T>`) is a complete Nuru endpoint. The generator builds the route literal from the operation name and one option per public settable member: the option name is the property name, the description comes from `System.ComponentModel.DescriptionAttribute`, required comes from the `required` modifier and nullability, the default comes from the initializer, and allowed values come from enum constants. `[NuruRoute]`, `[Parameter]`, `[Option]`, and `[NuruRouteExample]` stay in `TimeWarp.Nuru` as CLI overrides and keep working for existing apps. This task does not split those attributes into their own package.
+
+Acceptance:
+
+- `TimeWarp.Nuru` and the generator/analyzers reference `TimeWarp.Contracts`. They recognize `[Operation]` and the CLI attributes by metadata name.
+- Derivation is documented and tested: route literal, option names, required and defaults, enums including non-nullable enums, repeated values for arrays of scalars, a non-scalar member (or array of non-scalars) bound as one JSON value reported as `json` plus the CLR type name, a non-nullable `bool` whose initializer is `true` kept when the option is omitted and shown in `--capabilities`, and a group path taken from a containing `[NuruRouteGroup]` when present, otherwise from an optional group on the CLI binding, otherwise ungrouped.
+- A nested `Handler` is optional. The handler is any registered `IQueryHandler<TQuery, T>` or `ICommandHandler<TCommand, T>`. The generator emits a diagnostic when it can see that none is registered; otherwise startup reports an error.
+- Endpoints dispatch through TimeWarp.Mediator so mediator behaviors run in every host. `INuruBehavior` stays CLI middleware around that dispatch. Startup and per-call cost against today's direct invoke is measured, and direct invoke stays available as an opt-out.
+- A registered `IResponseRenderer<TResponse>` supplies the text before the existing `OutputStrategy` JSON fallback. A `SharedProblemDetails` outcome is written to stderr with a non-zero exit code, and the first line is the problem type and title.
+- `--capabilities` entries for derived endpoints match attribute-declared entries.
+- The calculator sample has a contracts-first sibling, and `documentation/user/features/` has a page on neutral contracts.
+
 ## Checklist
 
 - [ ] Package reference and metadata-name resolution
@@ -40,3 +54,4 @@ This task also owns the three framework changes the neutral model needs from Nur
 - Created: 1479989 (2026-10-17)
 - Rescoped to the shared neutral-contract model: 1479989 (2026-10-17)
 - 506 findings folded into requirements: 1479989 (2026-10-18)
+- Implement walk stopped before product code (2026-10-18). `TimeWarp.Contracts` 2.0.0-beta.20 is on nuget.org and contains only `lib/net11.0`. This repo's `Directory.Build.props` targets `net10.0`. Restoring a net10.0 project that references that package fails with NU1202. `TimeWarp.Mediator.Contracts` 14.0.0 (this repo) and 14.0.0-beta.5 (the contracts package dependency) both ship `lib/net10.0`, so the contracts library can be packed for net10.0 without a mediator bump. `CliOperationBinding` in that package has `Pattern` only; the optional group argument the derivation notes describe is not on the published type. No product files changed.

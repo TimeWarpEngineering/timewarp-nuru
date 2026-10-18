@@ -50,8 +50,7 @@ Acceptance criteria:
 
 - Round 1: Blocked — open M1
 - Fix pass: M1 fixed (structured content no longer reads captured console output).
-- Round 2: clean. Effort 1, roster general. M1 fixed. 0 open. See `review/disposition.md`.
-
+- Round 2: Done
 ## Notes
 
 - Parent: 508.

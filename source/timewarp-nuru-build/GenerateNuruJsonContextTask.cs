@@ -257,12 +257,15 @@ public class GenerateNuruJsonContextTask : Task
     HashSet<string> jsonMemberTypes,
     CancellationToken cancellationToken)
   {
-    IEnumerable<ClassDeclarationSyntax> classDeclarations = root
+    IEnumerable<TypeDeclarationSyntax> typeDeclarations = root
       .DescendantNodes()
-      .OfType<ClassDeclarationSyntax>()
+      .OfType<TypeDeclarationSyntax>()
+      .Where(static declaration => declaration is ClassDeclarationSyntax
+        || (declaration is RecordDeclarationSyntax record
+            && !record.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)))
       .Where(HasContractAttribute);
 
-    foreach (ClassDeclarationSyntax classDecl in classDeclarations)
+    foreach (TypeDeclarationSyntax classDecl in typeDeclarations)
     {
       try
       {
@@ -329,7 +332,7 @@ public class GenerateNuruJsonContextTask : Task
   /// <summary>
   /// Checks if a class declaration has [NuruRoute] or [Operation].
   /// </summary>
-  private static bool HasContractAttribute(ClassDeclarationSyntax classDecl)
+  private static bool HasContractAttribute(TypeDeclarationSyntax classDecl)
   {
     return classDecl.AttributeLists
       .SelectMany(al => al.Attributes)

@@ -42,7 +42,7 @@ internal static class HandlerInvokerEmitter
   /// <param name="loggerFactoryFieldName">Logger factory source (static field name or "app.LoggerFactory"), or null if no logging.</param>
   /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
   /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false)
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false)
   {
     string indentStr = new(' ', indent);
     HandlerDefinition handler = route.Handler;
@@ -61,7 +61,7 @@ internal static class HandlerInvokerEmitter
         break;
 
       case HandlerKind.Command:
-        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke);
+        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator);
         break;
 
       case HandlerKind.Method:
@@ -292,12 +292,14 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a command/query handler class.
   /// Creates the command object (unless already created), resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false)
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
     string handlerTypeName = handler.NestedHandlerTypeName ?? $"{commandTypeName}.Handler";
-    bool directInvoke = useDirectInvoke && handler.NestedHandlerTypeName is not null;
+    // Nested handlers keep the 3.0 direct call when the app opts out or when no generated mediator exists.
+    bool directInvoke = handler.NestedHandlerTypeName is not null
+      && (useDirectInvoke || !hasGeneratedMediator);
 
     // 1. Create the command object with property initializers (skip if already created by behavior emitter)
     if (!commandAlreadyCreated)
@@ -358,7 +360,7 @@ internal static class HandlerInvokerEmitter
         string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
         sb.AppendLine(
           $"{indent}{resultTypeName} result = await __handler.Handle(__command, cancellationToken);");
-        EmitCommandResult(sb, indent, handler, useRuntimeDI, runtimeDISuffix);
+        EmitCommandResult(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
       }
       else
       {
@@ -379,7 +381,7 @@ internal static class HandlerInvokerEmitter
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
       sb.AppendLine(
         $"{indent}{resultTypeName} result = await __mediator.Send(__command, cancellationToken);");
-      EmitCommandResult(sb, indent, handler, useRuntimeDI, runtimeDISuffix);
+      EmitCommandResult(sb, indent, handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
     }
     else
     {
@@ -396,6 +398,9 @@ internal static class HandlerInvokerEmitter
     StringBuilder sb,
     string indent,
     HandlerDefinition handler,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    string? loggerFactoryFieldName,
     bool useRuntimeDI,
     string runtimeDISuffix)
   {
@@ -431,21 +436,43 @@ internal static class HandlerInvokerEmitter
       valueType = successType;
     }
 
-    if (handler.RendererTypeName is not null)
-    {
-      sb.AppendLine($"{bodyIndent}app.Terminal.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
-    }
-    else if (useRuntimeDI)
+    string rendererService = $"global::TimeWarp.Contracts.IResponseRenderer<{valueType}>";
+    string? registeredRenderer = TryResolveRegisteredService(
+      rendererService,
+      services,
+      httpClientConfigurations,
+      loggerFactoryFieldName,
+      useRuntimeDI,
+      runtimeDISuffix);
+    if (useRuntimeDI)
     {
       sb.AppendLine($"{bodyIndent}global::TimeWarp.Contracts.IResponseRenderer<{valueType}>? __renderer = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<global::TimeWarp.Contracts.IResponseRenderer<{valueType}>>(GetResolutionProvider{runtimeDISuffix}(app));");
       sb.AppendLine($"{bodyIndent}if (__renderer is not null)");
       sb.AppendLine($"{bodyIndent}{{");
       sb.AppendLine($"{bodyIndent}  app.Terminal.WriteLine(__renderer.Render({valueName}));");
       sb.AppendLine($"{bodyIndent}}}");
-      sb.AppendLine($"{bodyIndent}else");
-      sb.AppendLine($"{bodyIndent}{{");
-      EmitResultOutput(sb, bodyIndent + "  ", valueType, valueName);
-      sb.AppendLine($"{bodyIndent}}}");
+      if (handler.RendererTypeName is not null)
+      {
+        sb.AppendLine($"{bodyIndent}else");
+        sb.AppendLine($"{bodyIndent}{{");
+        sb.AppendLine($"{bodyIndent}  app.Terminal.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
+        sb.AppendLine($"{bodyIndent}}}");
+      }
+      else
+      {
+        sb.AppendLine($"{bodyIndent}else");
+        sb.AppendLine($"{bodyIndent}{{");
+        EmitResultOutput(sb, bodyIndent + "  ", valueType, valueName);
+        sb.AppendLine($"{bodyIndent}}}");
+      }
+    }
+    else if (registeredRenderer is not null)
+    {
+      sb.AppendLine($"{bodyIndent}app.Terminal.WriteLine({registeredRenderer}.Render({valueName}));");
+    }
+    else if (handler.RendererTypeName is not null)
+    {
+      sb.AppendLine($"{bodyIndent}app.Terminal.WriteLine(new {handler.RendererTypeName}().Render({valueName}));");
     }
     else
     {
@@ -457,14 +484,36 @@ internal static class HandlerInvokerEmitter
   }
 
   /// <summary>
-  /// Resolves a service type to its instantiation expression for command handlers.
-  /// Uses the static Lazy&lt;T&gt; fields generated by InterceptorEmitter.
+  /// Resolves a service that ConfigureServices registered. Returns null when nothing matches,
+  /// so a missing <c>IResponseRenderer&lt;T&gt;</c> can fall through to a visible renderer.
   /// </summary>
-  /// <param name="serviceTypeName">The service type to resolve.</param>
-  /// <param name="services">Registered services.</param>
-  /// <param name="loggerFactoryFieldName">Logger factory source (static field or "app.LoggerFactory"), or null if no logging.</param>
-  /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
-  /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
+  private static string? TryResolveRegisteredService(
+    string serviceTypeName,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI,
+    string runtimeDISuffix)
+  {
+    if (useRuntimeDI || services.IsDefaultOrEmpty)
+      return null;
+
+    string resolved = ResolveServiceForCommand(
+      serviceTypeName,
+      services,
+      httpClientConfigurations,
+      loggerFactoryFieldName,
+      useRuntimeDI: false,
+      runtimeDISuffix);
+    if (resolved.Contains("ERROR: Service", StringComparison.Ordinal))
+      return null;
+
+    return resolved;
+  }
+
+  /// <summary>
+  /// Resolves a service type to its instantiation expression for command handlers.
+  /// </summary>
   private static string ResolveServiceForCommand(string? serviceTypeName, ImmutableArray<ServiceDefinition> services, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, string? loggerFactoryFieldName, bool useRuntimeDI = false, string runtimeDISuffix = "")
   {
     if (string.IsNullOrEmpty(serviceTypeName))

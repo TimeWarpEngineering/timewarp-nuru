@@ -3,8 +3,9 @@
 #:project $(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj
 #:package Microsoft.CodeAnalysis.CSharp
 
-// NURU_H008: an [Operation] with no visible handler is an error, and the app
-// fails at startup when that handler is still unregistered.
+// NURU_H008: an [Operation] with no visible handler is a warning. The build is
+// accepted. Invoking that route returns exit code 1 when the handler is still
+// unregistered. An [Operation] with no mediator kind is not an endpoint.
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -45,9 +46,13 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
       return ran.GetRunResult();
     }
 
+    private static IEnumerable<Diagnostic> H008Diagnostics(GeneratorDriverRunResult result) =>
+      result.Diagnostics
+        .Concat(result.Results.SelectMany(generatorResult => generatorResult.Diagnostics))
+        .Where(diagnostic => diagnostic.Id == "NURU_H008");
+
     private static bool HasH008(GeneratorDriverRunResult result) =>
-      result.Diagnostics.Any(diagnostic => diagnostic.Id == "NURU_H008")
-      || result.Results.SelectMany(generatorResult => generatorResult.Diagnostics).Any(diagnostic => diagnostic.Id == "NURU_H008");
+      H008Diagnostics(result).Any();
 
     private static string GeneratedText(GeneratorDriverRunResult result) =>
       string.Join("\n", result.Results.SelectMany(generator => generator.GeneratedSources).Select(source => source.SourceText.ToString()));
@@ -73,7 +78,35 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
 
       GeneratorDriverRunResult result = RunNuruGenerator(Source);
       HasH008(result).ShouldBeTrue();
+      H008Diagnostics(result).First().Severity.ShouldBe(DiagnosticSeverity.Warning);
       GeneratedText(result).ShouldContain("No handler is registered for");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_skip_an_operation_that_is_not_a_mediator_message()
+    {
+      const string Source = """
+        using TimeWarp.Contracts;
+        using TimeWarp.Nuru;
+
+        [Operation("t508plain")]
+        public sealed class T508PlainOperation
+        {
+          public string Name { get; set; } = "";
+        }
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .DiscoverEndpoints()
+          .Build();
+
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      HasH008(result).ShouldBeFalse();
+      string generated = GeneratedText(result);
+      generated.ShouldNotContain("No handler is registered for");
+      generated.ShouldNotContain("t508plain");
       await Task.CompletedTask;
     }
 

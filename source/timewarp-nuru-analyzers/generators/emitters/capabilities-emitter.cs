@@ -328,7 +328,7 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              Description = \"{description}\",");
     }
 
-    if (option.DefaultValueLiteral is not null)
+    if (option.DefaultValueLiteral is not null && option.DefaultValueLiteral != "default!")
     {
       string defaultValue = EmitterStringUtils.EscapeForStringLiteral(option.DefaultValueLiteral);
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");

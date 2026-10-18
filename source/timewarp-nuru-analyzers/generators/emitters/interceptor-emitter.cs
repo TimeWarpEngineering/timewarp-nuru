@@ -47,7 +47,14 @@ internal static class InterceptorEmitter
       .DistinctBy(s => s.ImplementationTypeName);
 
     // Emit static Lazy<T> fields for source-gen DI apps
-    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.HasGeneratedMediator, GetFirstLoggerFactoryFieldName(model));
+    ImmutableArray<HttpClientConfiguration> sourceGenHttpClients =
+    [
+      .. model.Apps
+        .Where(app => !app.UseMicrosoftDependencyInjection && app.HasHttpClients)
+        .SelectMany(app => app.HttpClientConfigurations)
+        .DistinctBy(config => config.ServiceTypeName)
+    ];
+    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.HasGeneratedMediator, GetFirstLoggerFactoryFieldName(model), sourceGenHttpClients);
 
     // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     // Each app gets its own __ConfigureServices and GetServiceProvider methods
@@ -334,7 +341,7 @@ internal static class InterceptorEmitter
   /// These are initialized lazily in EnsureServicesInitialized.
   /// Services are sorted topologically to ensure dependencies are emitted first.
   /// </summary>
-  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, bool hasGeneratedMediator, string? loggerFactoryFieldName)
+  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, bool hasGeneratedMediator, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
   {
     // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
     ImmutableArray<ServiceDefinition> allServices = [.. services];
@@ -426,7 +433,7 @@ internal static class InterceptorEmitter
     EmitSourceGenScopeMethods(sb, allServices, sortedProcessServices);
 
     if (requiresMediator)
-      EmitSourceGenMediator(sb, allServices, hasGeneratedMediator, loggerFactoryFieldName);
+      EmitSourceGenMediator(sb, allServices, hasGeneratedMediator, loggerFactoryFieldName, httpClientConfigurations);
   }
 
   /// <summary>
@@ -435,7 +442,7 @@ internal static class InterceptorEmitter
   /// <see cref="System.IServiceProvider"/>, so this builds a small container per app holding
   /// <c>AddGeneratedMediator()</c> plus Nuru's framework services and the statically registered services.
   /// </summary>
-  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, bool hasGeneratedMediator, string? loggerFactoryFieldName)
+  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, bool hasGeneratedMediator, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
   {
     const string Sce = "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions";
 
@@ -477,6 +484,18 @@ internal static class InterceptorEmitter
         ? ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.Command)
         : ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
       sb.AppendLine($"      {Sce}.AddTransient<{service.ServiceTypeName}>(services, static _ => {factory});");
+    }
+
+    if (!httpClientConfigurations.IsDefaultOrEmpty)
+    {
+      foreach (HttpClientConfiguration config in httpClientConfigurations)
+      {
+        if (config.ServiceTypeName is null || config.ImplementationTypeName is null)
+          continue;
+
+        string httpClientField = GetHttpClientFieldName(config.ServiceTypeName);
+        sb.AppendLine($"      {Sce}.AddTransient<{config.ServiceTypeName}>(services, static _ => new {config.ImplementationTypeName}({httpClientField}));");
+      }
     }
 
     sb.AppendLine("      global::Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions.AddGeneratedMediator(services);");
@@ -1153,10 +1172,8 @@ internal static class InterceptorEmitter
     // Using model.AllRoutes would cause route index collisions between different apps
     List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(endpointsForApp)];
 
-    EmitMissingHandlerStartup(sb, endpointsForApp, app, model, methodSuffix);
-
     // JSON selection returns. Calls without --json-args leave __jsonDoc null and fall through.
-    JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName);
+    JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);
 
     sb.AppendLine("    if (!__jsonBuiltInOnly)");
     sb.AppendLine("    {");
@@ -1183,7 +1200,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke, model.HasGeneratedMediator);
     }
 
     sb.AppendLine("    }");
@@ -1198,45 +1215,44 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Fails startup when an operation's handler was not visible at build time and is still unregistered.
+  /// Fails the matched route when its handler was not visible at build time and is still unregistered.
+  /// Built-ins and other routes run first; one missing handler does not exit the process.
   /// </summary>
-  private static void EmitMissingHandlerStartup(
+  internal static void EmitMissingHandlerOnDispatch(
     StringBuilder sb,
-    ImmutableArray<RouteDefinition> routes,
-    AppModel app,
-    GeneratorModel model,
-    string methodSuffix)
+    RouteDefinition route,
+    bool useRuntimeDI,
+    bool hasGeneratedMediator,
+    string runtimeDISuffix,
+    string indent)
   {
-    foreach (RouteDefinition route in routes)
+    if (route.Handler.HandlerVisible || string.IsNullOrEmpty(route.Handler.HandlerInterfaceName))
+      return;
+
+    string typeName = route.Handler.FullTypeName ?? route.OriginalPattern;
+    string iface = route.Handler.HandlerInterfaceName;
+    sb.AppendLine($"{indent}// {typeName} had no visible handler at build time.");
+    if (!useRuntimeDI && !hasGeneratedMediator)
     {
-      if (route.Handler.HandlerVisible || string.IsNullOrEmpty(route.Handler.HandlerInterfaceName))
-        continue;
-
-      string typeName = route.Handler.FullTypeName ?? route.OriginalPattern;
-      string iface = route.Handler.HandlerInterfaceName;
-      sb.AppendLine($"    // {typeName} had no visible handler at build time.");
-      if (!app.UseMicrosoftDependencyInjection && !model.HasGeneratedMediator)
-      {
-        sb.AppendLine($"    app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
-        sb.AppendLine("    return 1;");
-        continue;
-      }
-
-      if (app.UseMicrosoftDependencyInjection)
-      {
-        sb.AppendLine($"    if (global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{iface}>(GetResolutionProvider{methodSuffix}(app)) is null)");
-      }
-      else
-      {
-        sb.AppendLine("    __GetMediator();");
-        sb.AppendLine($"    if (global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{iface}>(__mediatorServiceProvider!) is null)");
-      }
-
-      sb.AppendLine("    {");
-      sb.AppendLine($"      app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
-      sb.AppendLine("      return 1;");
-      sb.AppendLine("    }");
+      sb.AppendLine($"{indent}app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
+      sb.AppendLine($"{indent}return 1;");
+      return;
     }
+
+    if (useRuntimeDI)
+    {
+      sb.AppendLine($"{indent}if (global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{iface}>(GetResolutionProvider{runtimeDISuffix}(app)) is null)");
+    }
+    else
+    {
+      sb.AppendLine($"{indent}__GetMediator();");
+      sb.AppendLine($"{indent}if (global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{iface}>(__mediatorServiceProvider!) is null)");
+    }
+
+    sb.AppendLine($"{indent}{{");
+    sb.AppendLine($"{indent}  app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
+    sb.AppendLine($"{indent}  return 1;");
+    sb.AppendLine($"{indent}}}");
   }
 
   /// <summary>

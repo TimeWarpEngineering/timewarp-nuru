@@ -107,7 +107,7 @@ internal static partial class DiagnosticDescriptors
     title: "No handler visible for operation",
     messageFormat: "No IQueryHandler, ICommandHandler, or IIdempotentCommandHandler for '{0}' is visible to this compilation. Register one, or the app fails at startup.",
     category: HandlerCategory,
-    defaultSeverity: DiagnosticSeverity.Error,
+    defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
-    description: "An [Operation] endpoint needs a registered TimeWarp.Mediator handler. The generator reports this when it can see that none is present. Suppress the diagnostic only when the handler is registered in a way this compilation cannot see; startup then reports the missing handler.");
+    description: "An [Operation] endpoint needs a registered TimeWarp.Mediator handler. The generator warns when it can see that none is present, and the project still builds. Invoking that route returns exit code 1 when the handler is unregistered. A project that treats warnings as errors must suppress NURU_H008 when the handler is registered in a way this compilation cannot see.");
 }

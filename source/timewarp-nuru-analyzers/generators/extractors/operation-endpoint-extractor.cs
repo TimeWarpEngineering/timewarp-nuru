@@ -1,11 +1,18 @@
-// Derives a Nuru endpoint from TimeWarp.Contracts.OperationAttribute.
-//
-// A request that carries [Operation] and a TimeWarp.Mediator kind is a complete endpoint.
-// The route literal is the operation name. Each public settable member is an option named
-// after the property. [NuruRoute], [Parameter], and [Option] stay CLI overrides.
-//
-// Group path: a containing [NuruRouteGroup] wins, otherwise [NuruCliBinding(Group = "...")],
-// otherwise the endpoint is ungrouped. TimeWarp.Contracts CliOperationBinding has Pattern only.
+#region Purpose
+// Derives a Nuru endpoint from TimeWarp.Contracts.OperationAttribute plus a mediator kind.
+#endregion
+
+#region Design
+// The route literal is the operation name. Each public settable member is an option,
+// including members inherited from a base that is not a [NuruRouteGroup].
+// [NuruRoute], [Parameter], and [Option] stay CLI overrides.
+// An [Operation] type with no mediator kind is not an endpoint.
+// Group path: a containing [NuruRouteGroup] wins, otherwise [NuruCliBinding(Group)],
+// otherwise the endpoint is ungrouped. CliOperationBinding has Pattern only.
+// Handler and renderer lookups are cached per compilation and skip framework assemblies.
+// A registered IResponseRenderer<T> wins; otherwise one visible parameterless renderer.
+// An absent [NuruRoute] description keeps the [Operation] description. Empty clears it.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -41,7 +48,7 @@ internal static partial class EndpointExtractor
   /// A [NuruRoute] pattern and description override the operation when both are present.
   /// </summary>
   private static RouteIdentity ResolveRouteIdentity(
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken)
   {
@@ -79,7 +86,11 @@ internal static partial class EndpointExtractor
     }
 
     if (hasNuruRoute)
-      return new RouteIdentity(routePattern, routeDescription, routeLocation, true, hasOperation);
+    {
+      // An absent [NuruRoute] description keeps the operation description.
+      // An explicit empty description still clears it.
+      return new RouteIdentity(routePattern, routeDescription ?? operationDescription, routeLocation, true, hasOperation);
+    }
 
     if (hasOperation)
       return new RouteIdentity(operationName, operationDescription, operationLocation, false, true);
@@ -92,7 +103,7 @@ internal static partial class EndpointExtractor
   /// </summary>
   private static GroupInfo ApplyCliBindingGroup(
     GroupInfo groupInfo,
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken)
   {
@@ -220,18 +231,38 @@ internal static partial class EndpointExtractor
     Compilation? compilation,
     CancellationToken cancellationToken)
   {
-    foreach (IPropertySymbol property in classSymbol.GetMembers().OfType<IPropertySymbol>())
+    for (INamedTypeSymbol? type = classSymbol;
+         type is not null && type.SpecialType != SpecialType.System_Object;
+         type = type.BaseType)
     {
-      if (!IsDerivableProperty(property) || HasCliMemberAttribute(property))
+      // Group options stay on ExtractGroupOptionBindingsFromBaseClasses.
+      if (!SymbolEqualityComparer.Default.Equals(type, classSymbol) && HasNuruRouteGroup(type))
         continue;
 
-      if (propertyBindings.Any(binding => binding.ParameterName == property.Name))
-        continue;
+      foreach (IPropertySymbol property in type.GetMembers().OfType<IPropertySymbol>())
+      {
+        if (!IsDerivableProperty(property) || HasCliMemberAttribute(property))
+          continue;
 
-      ParameterBinding? binding = TryDeriveBinding(property, compilation, cancellationToken);
-      if (binding is not null)
-        propertyBindings.Add(binding);
+        if (propertyBindings.Any(binding => binding.ParameterName == property.Name))
+          continue;
+
+        ParameterBinding? binding = TryDeriveBinding(property, compilation, cancellationToken);
+        if (binding is not null)
+          propertyBindings.Add(binding);
+      }
     }
+  }
+
+  private static bool HasNuruRouteGroup(INamedTypeSymbol type)
+  {
+    foreach (AttributeData attribute in type.GetAttributes())
+    {
+      if (IsMetadataAttribute(attribute, NuruRouteGroupAttributeMetadataName))
+        return true;
+    }
+
+    return false;
   }
 
   private static OptionDefinition? TryDeriveSegment(
@@ -269,7 +300,7 @@ internal static partial class EndpointExtractor
         DefaultValueLiteral: defaultLiteral,
         IsJsonValue: true,
         CapabilityRequired: contractRequired,
-        CapabilityType: "json " + typeName);
+        CapabilityType: "json " + StripGlobalPrefix(typeName));
     }
 
     if (isBool && defaultLiteral == "true")
@@ -436,58 +467,95 @@ internal static partial class EndpointExtractor
     return idempotent ?? command;
   }
 
+  private sealed class MediatorScan
+  {
+    public required List<(INamedTypeSymbol Handler, INamedTypeSymbol Request)> Handlers { get; init; }
+
+    public required List<(INamedTypeSymbol Renderer, string SuccessTypeName, bool SameAssembly)> Renderers { get; init; }
+  }
+
+  private static readonly global::System.Runtime.CompilerServices.ConditionalWeakTable<Compilation, MediatorScan> MediatorScans = [];
+
+  private static MediatorScan ScanMediator(Compilation compilation) =>
+    MediatorScans.GetValue(compilation, static compilation => BuildMediatorScan(compilation));
+
+  private static MediatorScan BuildMediatorScan(Compilation compilation)
+  {
+    List<(INamedTypeSymbol Handler, INamedTypeSymbol Request)> handlers = [];
+    List<(INamedTypeSymbol Renderer, string SuccessTypeName, bool SameAssembly)> renderers = [];
+    CollectMediatorTypes(compilation.Assembly.GlobalNamespace, publicOnly: false, sameAssembly: true, handlers, renderers);
+    foreach (MetadataReference reference in compilation.References)
+    {
+      if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assembly)
+        continue;
+
+      if (IsFrameworkAssembly(assembly.Name))
+        continue;
+
+      CollectMediatorTypes(assembly.GlobalNamespace, publicOnly: true, sameAssembly: false, handlers, renderers);
+    }
+
+    return new MediatorScan { Handlers = handlers, Renderers = renderers };
+  }
+
+  private static bool IsFrameworkAssembly(string? name) =>
+    string.IsNullOrEmpty(name)
+    || name.StartsWith("System", StringComparison.Ordinal)
+    || name.StartsWith("Microsoft", StringComparison.Ordinal)
+    || name is "mscorlib" or "netstandard";
+
+  private static void CollectMediatorTypes(
+    INamespaceSymbol ns,
+    bool publicOnly,
+    bool sameAssembly,
+    List<(INamedTypeSymbol Handler, INamedTypeSymbol Request)> handlers,
+    List<(INamedTypeSymbol Renderer, string SuccessTypeName, bool SameAssembly)> renderers)
+  {
+    foreach (INamedTypeSymbol type in ns.GetTypeMembers())
+      CollectMediatorType(type, publicOnly, sameAssembly, handlers, renderers);
+
+    foreach (INamespaceSymbol child in ns.GetNamespaceMembers())
+      CollectMediatorTypes(child, publicOnly, sameAssembly, handlers, renderers);
+  }
+
+  private static void CollectMediatorType(
+    INamedTypeSymbol type,
+    bool publicOnly,
+    bool sameAssembly,
+    List<(INamedTypeSymbol Handler, INamedTypeSymbol Request)> handlers,
+    List<(INamedTypeSymbol Renderer, string SuccessTypeName, bool SameAssembly)> renderers)
+  {
+    if (IsAccessibleHandler(type, publicOnly))
+    {
+      foreach (INamedTypeSymbol iface in type.AllInterfaces)
+      {
+        if (iface.ContainingNamespace?.ToDisplayString() != MediatorNamespace)
+          continue;
+
+        if (iface.Name is not ("IQueryHandler" or "ICommandHandler" or "IIdempotentCommandHandler"))
+          continue;
+
+        if (iface.TypeArguments.Length > 0 && iface.TypeArguments[0] is INamedTypeSymbol request)
+          handlers.Add((type, request));
+      }
+    }
+
+    foreach (string successTypeName in RendererSuccessTypes(type, publicOnly))
+      renderers.Add((type, successTypeName, sameAssembly));
+
+    foreach (INamedTypeSymbol nested in type.GetTypeMembers())
+      CollectMediatorType(nested, publicOnly, sameAssembly, handlers, renderers);
+  }
+
   private static bool HasVisibleHandler(Compilation compilation, INamedTypeSymbol requestType)
   {
     INamedTypeSymbol? nestedHandler = requestType.GetTypeMembers("Handler").FirstOrDefault();
     if (nestedHandler is not null && ImplementsRequestHandler(nestedHandler, requestType))
       return true;
 
-    if (NamespaceHasHandler(compilation.Assembly.GlobalNamespace, requestType, publicOnly: false))
-      return true;
-
-    foreach (MetadataReference reference in compilation.References)
+    foreach ((INamedTypeSymbol _, INamedTypeSymbol request) in ScanMediator(compilation).Handlers)
     {
-      if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assembly)
-        continue;
-
-      if (assembly.Name.StartsWith("System", StringComparison.Ordinal)
-          || assembly.Name.StartsWith("Microsoft", StringComparison.Ordinal))
-      {
-        continue;
-      }
-
-      if (NamespaceHasHandler(assembly.GlobalNamespace, requestType, publicOnly: true))
-        return true;
-    }
-
-    return false;
-  }
-
-  private static bool NamespaceHasHandler(INamespaceSymbol ns, INamedTypeSymbol requestType, bool publicOnly)
-  {
-    foreach (INamedTypeSymbol type in ns.GetTypeMembers())
-    {
-      if (TypeOrNestedHasHandler(type, requestType, publicOnly))
-        return true;
-    }
-
-    foreach (INamespaceSymbol child in ns.GetNamespaceMembers())
-    {
-      if (NamespaceHasHandler(child, requestType, publicOnly))
-        return true;
-    }
-
-    return false;
-  }
-
-  private static bool TypeOrNestedHasHandler(INamedTypeSymbol type, INamedTypeSymbol requestType, bool publicOnly)
-  {
-    if (IsAccessibleHandler(type, publicOnly) && ImplementsRequestHandler(type, requestType))
-      return true;
-
-    foreach (INamedTypeSymbol nested in type.GetTypeMembers())
-    {
-      if (TypeOrNestedHasHandler(nested, requestType, publicOnly))
+      if (SymbolEqualityComparer.Default.Equals(request, requestType))
         return true;
     }
 
@@ -527,69 +595,46 @@ internal static partial class EndpointExtractor
 
   private static string? FindRenderer(Compilation? compilation, string successTypeName, INamedTypeSymbol requestType)
   {
+    _ = requestType;
     if (compilation is null)
       return null;
 
     List<INamedTypeSymbol> sameAssembly = [];
-    CollectRenderers(compilation.Assembly.GlobalNamespace, successTypeName, publicOnly: false, sameAssembly);
+    List<INamedTypeSymbol> referenced = [];
+    foreach ((INamedTypeSymbol renderer, string success, bool same) in ScanMediator(compilation).Renderers)
+    {
+      if (success != successTypeName)
+        continue;
+
+      if (same)
+        sameAssembly.Add(renderer);
+      else
+        referenced.Add(renderer);
+    }
+
     if (sameAssembly.Count == 1)
       return sameAssembly[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
     if (sameAssembly.Count > 1)
       return null;
 
-    List<INamedTypeSymbol> referenced = [];
-    foreach (MetadataReference reference in compilation.References)
-    {
-      if (compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assembly)
-        continue;
-
-      CollectRenderers(assembly.GlobalNamespace, successTypeName, publicOnly: true, referenced);
-    }
-
-    _ = requestType;
     if (referenced.Count == 1 && HasParameterlessConstructor(referenced[0]))
       return referenced[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
     return null;
   }
 
-  private static void CollectRenderers(
-    INamespaceSymbol ns,
-    string successTypeName,
-    bool publicOnly,
-    List<INamedTypeSymbol> matches)
+  private static List<string> RendererSuccessTypes(INamedTypeSymbol type, bool publicOnly)
   {
-    foreach (INamedTypeSymbol type in ns.GetTypeMembers())
-      CollectRendererType(type, successTypeName, publicOnly, matches);
-
-    foreach (INamespaceSymbol child in ns.GetNamespaceMembers())
-      CollectRenderers(child, successTypeName, publicOnly, matches);
-  }
-
-  private static void CollectRendererType(
-    INamedTypeSymbol type,
-    string successTypeName,
-    bool publicOnly,
-    List<INamedTypeSymbol> matches)
-  {
-    if (IsRenderer(type, successTypeName, publicOnly))
-      matches.Add(type);
-
-    foreach (INamedTypeSymbol nested in type.GetTypeMembers())
-      CollectRendererType(nested, successTypeName, publicOnly, matches);
-  }
-
-  private static bool IsRenderer(INamedTypeSymbol type, string successTypeName, bool publicOnly)
-  {
+    List<string> successTypes = [];
     if (type.TypeKind != TypeKind.Class || type.IsAbstract || !HasParameterlessConstructor(type))
-      return false;
+      return successTypes;
 
     if (publicOnly && type.DeclaredAccessibility != Accessibility.Public)
-      return false;
+      return successTypes;
 
     if (!publicOnly && type.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal))
-      return false;
+      return successTypes;
 
     foreach (INamedTypeSymbol iface in type.AllInterfaces)
     {
@@ -599,12 +644,10 @@ internal static partial class EndpointExtractor
       if (iface.ContainingNamespace?.ToDisplayString() != "TimeWarp.Contracts")
         continue;
 
-      string argument = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-      if (argument == successTypeName)
-        return true;
+      successTypes.Add(iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
     }
 
-    return false;
+    return successTypes;
   }
 
   private static bool HasParameterlessConstructor(INamedTypeSymbol type) =>
@@ -620,8 +663,13 @@ internal static partial class EndpointExtractor
     if (property.DeclaredAccessibility != Accessibility.Public)
       return false;
 
-    return property.SetMethod is { DeclaredAccessibility: Accessibility.Public };
+    return property.SetMethod is { DeclaredAccessibility: Accessibility.Public, IsInitOnly: false };
   }
+
+  private static string StripGlobalPrefix(string typeName) =>
+    typeName.StartsWith("global::", StringComparison.Ordinal)
+      ? typeName["global::".Length..]
+      : typeName;
 
   private static bool HasCliMemberAttribute(IPropertySymbol property)
   {
@@ -745,7 +793,7 @@ internal static partial class EndpointExtractor
     return null;
   }
 
-  private static Location AttributeLocation(AttributeData attribute, ClassDeclarationSyntax fallback)
+  private static Location AttributeLocation(AttributeData attribute, TypeDeclarationSyntax fallback)
   {
     SyntaxReference? reference = attribute.ApplicationSyntaxReference;
     if (reference is null)

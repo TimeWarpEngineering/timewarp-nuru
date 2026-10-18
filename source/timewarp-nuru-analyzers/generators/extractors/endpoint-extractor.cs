@@ -16,6 +16,10 @@
 // groupPrefix + pattern. For group aliases, the alias replaces one GROUP's entire prefix (which
 // may be multi-word, e.g. "git remote") by index into GroupInfo.GroupPrefixes. The emitter should
 // NOT re-match literal segments after the alias prefix.
+//
+// DEFAULT LITERALS: A constant is formatted with the suffix its type needs (1.5m, 2.0f).
+// An enum member stays a member name. A field or property symbol is fully qualified.
+// Object creation, an invocation, or a method group becomes default!, which capabilities omit.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -55,7 +59,7 @@ internal static partial class EndpointExtractor
   /// <returns>An extraction result containing the route definition and any diagnostics.</returns>
   public static EndpointExtractionResult Extract
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken
   )
@@ -83,6 +87,10 @@ internal static partial class EndpointExtractor
 
     // Infer message type from interfaces
     string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
+
+    // [Operation] without a mediator kind is not an endpoint. [NuruRoute] still is.
+    if (!identity.HasNuruRoute && messageType == "Unspecified")
+      return EndpointExtractionResult.Empty;
 
     // Extract parameters and options from properties
     ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(
@@ -173,7 +181,7 @@ internal static partial class EndpointExtractor
   /// Extracts and combines aliases from the command class and group hierarchy.
   /// </summary>
   private static ImmutableArray<string> ExtractAndCombineAliases(
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     GroupInfo groupInfo,
     string pattern,
@@ -239,7 +247,7 @@ internal static partial class EndpointExtractor
   /// <summary>
   /// Extracts pattern, description, and location from [NuruRoute] attribute.
   /// </summary>
-  private static (string? Pattern, string? Description, Location Location) ExtractNuruRouteAttribute(ClassDeclarationSyntax classDeclaration)
+  private static (string? Pattern, string? Description, Location Location) ExtractNuruRouteAttribute(TypeDeclarationSyntax classDeclaration)
   {
     foreach (AttributeListSyntax attributeList in classDeclaration.AttributeLists)
     {
@@ -264,7 +272,7 @@ internal static partial class EndpointExtractor
   /// Extracts aliases from [NuruRouteAlias] attribute on the command class.
   /// </summary>
   private static ImmutableArray<string> ExtractNuruRouteAliasAttribute(
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken)
   {
@@ -311,7 +319,7 @@ internal static partial class EndpointExtractor
   /// null or empty command are silently skipped.
   /// </summary>
   private static ImmutableArray<ExampleDefinition> ExtractNuruRouteExampleAttributes(
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken)
   {
@@ -389,7 +397,7 @@ internal static partial class EndpointExtractor
   /// </summary>
   private static GroupInfo ExtractGroupInfo
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken
   )
@@ -528,7 +536,7 @@ internal static partial class EndpointExtractor
   /// </summary>
   private static ImmutableArray<SegmentDefinition> ExtractGroupOptionsFromBaseClasses
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     int startPosition,
     CancellationToken cancellationToken
@@ -731,7 +739,7 @@ internal static partial class EndpointExtractor
   /// </remarks>
   private static string InferMessageType
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken
   )
@@ -784,7 +792,7 @@ internal static partial class EndpointExtractor
   /// </summary>
   private static ImmutableArray<SegmentDefinition> ExtractSegmentsFromProperties
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken,
     bool deriveUnmarkedMembers = false
@@ -808,6 +816,37 @@ internal static partial class EndpointExtractor
         segments.Add(segment);
     }
 
+    // Inherited public settable members are options too. Bindings already include them;
+    // the route has to declare the same locals or the initializer names do not exist.
+    if (deriveUnmarkedMembers)
+    {
+      for (INamedTypeSymbol? baseType = classSymbol.BaseType;
+           baseType is not null && baseType.SpecialType != SpecialType.System_Object;
+           baseType = baseType.BaseType)
+      {
+        // Group options stay on ExtractGroupOptionsFromBaseClasses.
+        if (HasNuruRouteGroup(baseType))
+          continue;
+
+        foreach (IPropertySymbol propertySymbol in baseType.GetMembers().OfType<IPropertySymbol>())
+        {
+          if (segments.Any(segment => SegmentBindsProperty(segment, propertySymbol.Name)))
+            continue;
+
+          SegmentDefinition? inherited = TryDeriveSegment(
+            propertySymbol,
+            position,
+            semanticModel.Compilation,
+            cancellationToken);
+          if (inherited is null)
+            continue;
+
+          segments.Add(inherited);
+          position++;
+        }
+      }
+    }
+
     // Extract GroupOptions from base classes and add them to segments
     ImmutableArray<SegmentDefinition> groupOptions = ExtractGroupOptionsFromBaseClasses(
       classDeclaration,
@@ -817,6 +856,17 @@ internal static partial class EndpointExtractor
     segments.AddRange(groupOptions);
 
     return segments.ToImmutable();
+  }
+
+  private static bool SegmentBindsProperty(SegmentDefinition segment, string propertyName)
+  {
+    if (segment is OptionDefinition option)
+      return string.Equals(option.LongForm, propertyName, StringComparison.Ordinal);
+
+    if (segment is ParameterDefinition parameter)
+      return string.Equals(parameter.Name, propertyName, StringComparison.Ordinal);
+
+    return false;
   }
 
   /// <summary>
@@ -1024,32 +1074,88 @@ internal static partial class EndpointExtractor
     if (compilation is not null)
     {
       SemanticModel semanticModel = compilation.GetSemanticModel(syntaxReferences[0].SyntaxTree);
-
-      // Member/type references (e.g. Environment.Production, SomeStaticClass.Default)
-      // resolve directly to a symbol; emit fully-qualified so the reference resolves
-      // outside the initializer's original using scope.
       SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(initializerValue, cancellationToken);
-      if (symbolInfo.Symbol is not null)
-        return symbolInfo.Symbol.ToDisplayString(FullyQualifiedMemberFormat);
+      ISymbol? symbol = symbolInfo.Symbol;
 
-      // Otherwise, prefer the compile-time constant value (numbers, bools, strings, chars).
+      // Enum members have a numeric constant value. Keep the member so the generated
+      // assignment stays typed and --capabilities shows the name.
+      if (symbol is IFieldSymbol enumField && enumField.ContainingType.TypeKind == TypeKind.Enum)
+        return enumField.ToDisplayString(FullyQualifiedMemberFormat);
+
       Optional<object?> constantValue = semanticModel.GetConstantValue(initializerValue, cancellationToken);
       if (constantValue.HasValue)
+        return FormatConstantLiteral(constantValue.Value, property.Type);
+
+      if (symbol is IFieldSymbol or IPropertySymbol)
+        return symbol.ToDisplayString(FullyQualifiedMemberFormat);
+
+      // new(), new Foo(), and method calls are not a capabilities default.
+      // Collection expressions stay as syntax so `[]` still compiles.
+      if (initializerValue is CollectionExpressionSyntax
+          or ArrayCreationExpressionSyntax
+          or ImplicitArrayCreationExpressionSyntax)
       {
-        return constantValue.Value switch
-        {
-          string s => SymbolDisplay.FormatLiteral(s, quote: true),
-          char c => SymbolDisplay.FormatLiteral(c, quote: true),
-          bool b => b ? "true" : "false",
-          null => "null",
-          IFormattable formattable => formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
-          _ => constantValue.Value.ToString()
-        };
+        return initializerValue.ToString();
+      }
+
+      if (initializerValue is ObjectCreationExpressionSyntax
+          or ImplicitObjectCreationExpressionSyntax
+          or InvocationExpressionSyntax
+          || symbol is IMethodSymbol)
+      {
+        return "default!";
       }
     }
 
-    // Fall back to raw syntax text if semantic resolution is unavailable or fails.
     return initializerValue.ToString();
+  }
+
+  /// <summary>
+  /// Emits a C# literal for a compile-time constant, including suffixes the property type needs.
+  /// </summary>
+  private static string FormatConstantLiteral(object? value, ITypeSymbol propertyType)
+  {
+    switch (value)
+    {
+      case string text:
+        return SymbolDisplay.FormatLiteral(text, quote: true);
+      case char character:
+        return SymbolDisplay.FormatLiteral(character, quote: true);
+      case bool flag:
+        return flag ? "true" : "false";
+      case null:
+        return propertyType.IsReferenceType && propertyType.NullableAnnotation != NullableAnnotation.Annotated
+          ? "default!"
+          : "null";
+      case float number:
+        return FormatRealLiteral(number.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture), "f");
+      case double number:
+        return number.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture);
+      case decimal number:
+        return FormatRealLiteral(number.ToString(global::System.Globalization.CultureInfo.InvariantCulture), "m");
+      case uint number:
+        return number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "u";
+      case long number:
+        return number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "L";
+      case ulong number:
+        return number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "UL";
+      case IFormattable formattable:
+        return formattable.ToString(null, global::System.Globalization.CultureInfo.InvariantCulture);
+      default:
+        return value.ToString() ?? "default!";
+    }
+  }
+
+  private static string FormatRealLiteral(string text, string suffix)
+  {
+    if (text.IndexOf('.', StringComparison.Ordinal) < 0
+        && text.IndexOf('E', StringComparison.Ordinal) < 0
+        && text.IndexOf('e', StringComparison.Ordinal) < 0)
+    {
+      text += ".0";
+    }
+
+    return text + suffix;
   }
 
   /// <summary>
@@ -1081,7 +1187,7 @@ internal static partial class EndpointExtractor
   /// <returns>The handler definition, or null if no nested Handler class is found.</returns>
   private static HandlerDefinition? ExtractHandler
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken,
     bool hasOperation = false
@@ -1186,7 +1292,7 @@ internal static partial class EndpointExtractor
   /// </summary>
   private static ImmutableArray<InterfaceImplementationDefinition> ExtractFilterInterfaces
   (
-    ClassDeclarationSyntax classDeclaration,
+    TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken
   )
@@ -1437,6 +1543,13 @@ internal static partial class EndpointExtractor
       "global::System.DateTime" or "System.DateTime" or "DateTime" => "datetime",
       "global::System.DateTimeOffset" or "System.DateTimeOffset" or "DateTimeOffset" => "datetimeoffset",
       "global::System.TimeSpan" or "System.TimeSpan" or "TimeSpan" => "timespan",
+      "sbyte" or "global::System.SByte" => "sbyte",
+      "ushort" or "global::System.UInt16" => "ushort",
+      "uint" or "global::System.UInt32" => "uint",
+      "ulong" or "global::System.UInt64" => "ulong",
+      "global::System.DateOnly" or "System.DateOnly" or "DateOnly" => "dateonly",
+      "global::System.TimeOnly" or "System.TimeOnly" or "TimeOnly" => "timeonly",
+      "global::System.Numerics.BigInteger" or "System.Numerics.BigInteger" or "BigInteger" => "biginteger",
       "global::System.Uri" or "System.Uri" or "Uri" => "uri",
       "global::System.Version" or "System.Version" or "Version" => "version",
       _ => null

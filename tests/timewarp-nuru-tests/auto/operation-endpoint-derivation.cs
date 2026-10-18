@@ -10,6 +10,7 @@ return await RunAllTests();
 namespace TimeWarp.Nuru.Tests.Auto
 {
 using System.ComponentModel;
+using System.Numerics;
 using System.Text.Json;
 using TimeWarp.Contracts;
 
@@ -30,7 +31,27 @@ public class OperationEndpointDerivationTests
   {
     App = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<T508QuoteQuery>()
+      .Map<T508BoolQuery>()
+      .Map<T508ForceQuery>()
+      .Map<T508EnumQuery>()
+      .Map<T508RepeatQuery>()
+      .Map<T508JsonQuery>()
+      .Map<T508JsonRequiredQuery>()
+      .Map<T508GroupedAddQuery>()
+      .Map<T508CliGroupQuery>()
+      .Map<T508PrecedenceQuery>()
+      .Map<T508BothQuery>()
+      .Map<T508PosQuery>()
+      .Map<T508MixedQuery>()
+      .Map<T508ExternalCommand>()
+      .Map<T508AttrQuery>()
+      .Map<T508ScalarQuery>()
+      .Map<T508DefaultQuery>()
+      .Map<T508RecordQuery>()
+      .Map<T508InheritedQuery>()
+      .Map<T508KeepDescriptionQuery>()
+      .Map<T508HandlerlessQuery>()
       .Build();
   }
 
@@ -282,6 +303,7 @@ public class OperationEndpointDerivationTests
     JsonElement notes = FindOption(FindEndpoint(terminal.Output, "t508json"), "Notes");
     notes.GetProperty("type").GetString()!.ShouldStartWith("json ");
     notes.GetProperty("type").GetString()!.ShouldContain("T508Note");
+    notes.GetProperty("type").GetString()!.ShouldNotContain("global::");
 
     JsonElement grouped = FindEndpoint(terminal.Output, "t508calc add");
     grouped.GetProperty("groupPath").EnumerateArray().Select(value => value.GetString()).ShouldBe(["t508calc"]);
@@ -292,12 +314,17 @@ public class OperationEndpointDerivationTests
     JsonElement ungrouped = FindEndpoint(terminal.Output, "t508quote");
     ungrouped.GetProperty("groupPath").GetArrayLength().ShouldBe(0);
 
-    string[] derivedKeys = [.. label.EnumerateObject().Select(property => property.Name).Order()];
-    string[] attributeKeys = [.. FindOption(FindEndpoint(terminal.Output, "t508attr"), "label")
-      .EnumerateObject()
-      .Select(property => property.Name)
-      .Order()];
-    derivedKeys.ShouldBe(attributeKeys);
+    JsonElement attributeLabel = FindOption(FindEndpoint(terminal.Output, "t508attr"), "label");
+    ShouldMatchExceptName(label, attributeLabel);
+
+    JsonElement quoteEndpoint = FindEndpoint(terminal.Output, "t508quote");
+    JsonElement attributeEndpoint = FindEndpoint(terminal.Output, "t508attr");
+    string[] derivedEndpointKeys = [.. quoteEndpoint.EnumerateObject().Select(property => property.Name).Order()];
+    string[] attributeEndpointKeys = [.. attributeEndpoint.EnumerateObject().Select(property => property.Name).Order()];
+    derivedEndpointKeys.ShouldBe(attributeEndpointKeys);
+
+    JsonElement kept = FindEndpoint(terminal.Output, "t508keepdesc");
+    kept.GetProperty("description").GetString().ShouldBe("Kept from operation");
   }
 
   public static async Task Should_filter_derived_groups()
@@ -310,6 +337,125 @@ public class OperationEndpointDerivationTests
     terminal.OutputContains("t508calc add").ShouldBeTrue();
     terminal.OutputContains("t508quote").ShouldBeFalse();
     terminal.OutputContains("\"group\": \"t508calc\"").ShouldBeTrue();
+  }
+
+  public static async Task Should_bind_the_wider_scalar_set()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int exitCode = await App.RunAsync(
+    [
+      "t508scalars",
+      "--Narrow", "-2",
+      "--Words", "4",
+      "--Ticks", "8",
+      "--Huge", "16",
+      "--Day", "2020-01-02",
+      "--Clock", "13:45",
+      "--Big", "99",
+      "--More", "1",
+      "--More", "2"
+    ]);
+
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("signed:-2|words:4|ticks:8|huge:16|day:2020-01-02|clock:13:45|big:99|more:1,2").ShouldBeTrue();
+  }
+
+  public static async Task Should_keep_decimal_float_const_bool_and_skip_unrepresentable_defaults()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int exitCode = await App.RunAsync(["t508defaults"]);
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("price:1.5|ratio:2|const:true|items:null").ShouldBeTrue();
+
+    using TestTerminal describedTerminal = new();
+    CreateApp(describedTerminal);
+    int described = await App.RunAsync(["--capabilities"]);
+    described.ShouldBe(0);
+    JsonElement price = FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Price");
+    price.GetProperty("defaultValue").GetString().ShouldBe("1.5m");
+    JsonElement ratio = FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Ratio");
+    ratio.GetProperty("defaultValue").GetString().ShouldBe("2.0f");
+    JsonElement flag = FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "ConstFlag");
+    flag.GetProperty("defaultValue").GetString().ShouldBe("true");
+    flag.GetProperty("isFlag").GetBoolean().ShouldBeFalse();
+    FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Items").TryGetProperty("defaultValue", out _).ShouldBeFalse();
+  }
+
+  public static async Task Should_derive_a_record_class_and_an_inherited_property()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int recordExit = await App.RunAsync(["t508record", "--Title", "ada"]);
+    recordExit.ShouldBe(0);
+    terminal.OutputContains("record:ada").ShouldBeTrue();
+
+    int inherited = await App.RunAsync(["t508inherited", "--Owner", "grace"]);
+    inherited.ShouldBe(0);
+    terminal.OutputContains("owner:grace").ShouldBeTrue();
+  }
+
+  public static async Task Should_reject_argv_for_a_required_json_member()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int argv = await App.RunAsync(["t508jsonreq", "--Body", "nope"]);
+    argv.ShouldBe(1);
+    terminal.ErrorContains("--Body is JSON. Pass it with --json-args.").ShouldBeTrue();
+
+    int missing = await App.RunAsync(["t508jsonreq"]);
+    missing.ShouldBe(1);
+    terminal.ErrorContains("Error: pass --Body via --json-args.").ShouldBeTrue();
+
+    int exitCode = await App.RunAsync(["t508jsonreq", "--json-args", """{"Body":{"Name":"ada"}}"""]);
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("body:ada").ShouldBeTrue();
+  }
+
+  public static async Task Should_keep_help_available_when_one_handler_is_missing()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int help = await App.RunAsync(["--help"]);
+    help.ShouldBe(0);
+    terminal.ErrorContains("No handler is registered").ShouldBeFalse();
+    terminal.OutputContains("No handler is registered").ShouldBeFalse();
+
+    int capabilities = await App.RunAsync(["--capabilities"]);
+    capabilities.ShouldBe(0);
+
+    int missing = await App.RunAsync(["t508handlerless"]);
+    missing.ShouldBe(1);
+    terminal.ErrorContains("No handler is registered for").ShouldBeTrue();
+  }
+
+  private static void ShouldMatchExceptName(JsonElement derived, JsonElement attribute)
+  {
+    Dictionary<string, string> derivedValues = PropertiesExceptName(derived);
+    Dictionary<string, string> attributeValues = PropertiesExceptName(attribute);
+    derivedValues.Keys.Order().ShouldBe(attributeValues.Keys.Order());
+    foreach (string key in derivedValues.Keys.Order())
+      derivedValues[key].ShouldBe(attributeValues[key]);
+  }
+
+  private static Dictionary<string, string> PropertiesExceptName(JsonElement element)
+  {
+    Dictionary<string, string> values = [];
+    foreach (JsonProperty property in element.EnumerateObject())
+    {
+      if (property.NameEquals("name"))
+        continue;
+
+      values[property.Name] = property.Value.GetRawText();
+    }
+
+    return values;
   }
 
   private static JsonElement FindEndpoint(string json, string pattern)
@@ -592,5 +738,155 @@ public sealed class T508AttrQuery : IQuery<string>
     }
   }
 }
+
+[Operation("t508scalars")]
+public sealed class T508ScalarQuery : IQuery<string>
+{
+  public sbyte Narrow { get; set; }
+
+  public ushort Words { get; set; }
+
+  public uint Ticks { get; set; }
+
+  public ulong Huge { get; set; }
+
+  public DateOnly Day { get; set; }
+
+  public TimeOnly Clock { get; set; }
+
+  public BigInteger Big { get; set; }
+
+  public ushort[] More { get; set; } = [];
+
+  public sealed class Handler : IQueryHandler<T508ScalarQuery, string>
+  {
+    public Task<string> Handle(T508ScalarQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult(
+        $"signed:{query.Narrow.ToString(CultureInfo.InvariantCulture)}"
+        + $"|words:{query.Words.ToString(CultureInfo.InvariantCulture)}"
+        + $"|ticks:{query.Ticks.ToString(CultureInfo.InvariantCulture)}"
+        + $"|huge:{query.Huge.ToString(CultureInfo.InvariantCulture)}"
+        + $"|day:{query.Day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}"
+        + $"|clock:{query.Clock.ToString("HH:mm", CultureInfo.InvariantCulture)}"
+        + $"|big:{query.Big.ToString(CultureInfo.InvariantCulture)}"
+        + $"|more:{string.Join(',', query.More)}");
+    }
+  }
+}
+
+public sealed class T508Fresh
+{
+}
+
+public static class T508Const
+{
+  public const bool On = true;
+}
+
+[Operation("t508defaults")]
+public sealed class T508DefaultQuery : IQuery<string>
+{
+  public decimal Price { get; set; } = 1.5m;
+
+  public float Ratio { get; set; } = 2f;
+
+  public bool ConstFlag { get; set; } = T508Const.On;
+
+  // `= new()` is not a constant. The catalog omits it and an omitted call leaves the member null.
+  public T508Fresh? Items { get; set; } = new();
+
+  public sealed class Handler : IQueryHandler<T508DefaultQuery, string>
+  {
+    public Task<string> Handle(T508DefaultQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      string items = query.Items is null ? "null" : "set";
+      return Task.FromResult(
+        $"price:{query.Price.ToString(CultureInfo.InvariantCulture)}"
+        + $"|ratio:{query.Ratio.ToString(CultureInfo.InvariantCulture)}"
+        + $"|const:{(query.ConstFlag ? "true" : "false")}"
+        + $"|items:{items}");
+    }
+  }
+}
+
+[Operation("t508record")]
+public sealed record class T508RecordQuery : IQuery<string>
+{
+  public string Title { get; set; } = "rec";
+
+  public sealed class Handler : IQueryHandler<T508RecordQuery, string>
+  {
+    public Task<string> Handle(T508RecordQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult("record:" + query.Title);
+    }
+  }
+}
+
+public abstract class T508InheritedBase
+{
+  public string Owner { get; set; } = "ada";
+}
+
+[Operation("t508inherited")]
+public sealed class T508InheritedQuery : T508InheritedBase, IQuery<string>
+{
+  public sealed class Handler : IQueryHandler<T508InheritedQuery, string>
+  {
+    public Task<string> Handle(T508InheritedQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult("owner:" + query.Owner);
+    }
+  }
+}
+
+[NuruRoute("t508keepdesc")]
+[Operation("t508wiped", Description = "Kept from operation")]
+public sealed class T508KeepDescriptionQuery : IQuery<string>
+{
+  public sealed class Handler : IQueryHandler<T508KeepDescriptionQuery, string>
+  {
+    public Task<string> Handle(T508KeepDescriptionQuery query, CancellationToken cancellationToken)
+    {
+      _ = query;
+      _ = cancellationToken;
+      return Task.FromResult("kept");
+    }
+  }
+}
+
+public sealed class T508Body
+{
+  public string Name { get; set; } = "";
+}
+
+[Operation("t508jsonreq")]
+public sealed class T508JsonRequiredQuery : IQuery<string>
+{
+  public required T508Body Body { get; set; }
+
+  public sealed class Handler : IQueryHandler<T508JsonRequiredQuery, string>
+  {
+    public Task<string> Handle(T508JsonRequiredQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult("body:" + query.Body.Name);
+    }
+  }
+}
+
+#pragma warning disable NURU_H008 // The handler is registered outside this compilation.
+#pragma warning disable TWM001
+[Operation("t508handlerless")]
+public sealed class T508HandlerlessQuery : IQuery<string>
+{
+}
+#pragma warning restore TWM001
+#pragma warning restore NURU_H008
 
 } // namespace TimeWarp.Nuru.Tests.Auto

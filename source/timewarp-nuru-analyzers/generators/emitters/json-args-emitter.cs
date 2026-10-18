@@ -144,7 +144,8 @@ internal static class JsonArgsEmitter
     IReadOnlyList<RouteDefinition> routes,
     AppModel app,
     string methodSuffix,
-    string? loggerFactoryFieldName)
+    string? loggerFactoryFieldName,
+    bool hasGeneratedMediator)
   {
     sb.AppendLine("    if (__jsonDoc is not null)");
     sb.AppendLine("    {");
@@ -261,7 +262,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        {");
     for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
     {
-      EmitBindCase(sb, routes[routeIndex], routeIndex, app, methodSuffix, loggerFactoryFieldName);
+      EmitBindCase(sb, routes[routeIndex], routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator);
     }
 
     sb.AppendLine("          default:");
@@ -315,7 +316,8 @@ internal static class JsonArgsEmitter
     int routeIndex,
     AppModel app,
     string methodSuffix,
-    string? loggerFactoryFieldName)
+    string? loggerFactoryFieldName,
+    bool hasGeneratedMediator)
   {
     List<Slot> slots = BuildSlots(route, routeIndex, app.CustomConverters);
     string pattern = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
@@ -373,7 +375,14 @@ internal static class JsonArgsEmitter
     sb.AppendLine("            }");
     sb.AppendLine();
     sb.AppendLine("            _ = __lit;");
-    EmitInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, indent: 12);
+    InterceptorEmitter.EmitMissingHandlerOnDispatch(
+      sb,
+      route,
+      app.UseMicrosoftDependencyInjection,
+      hasGeneratedMediator,
+      methodSuffix,
+      "            ");
+    EmitInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, indent: 12);
     sb.AppendLine("            return global::System.Environment.ExitCode;");
     sb.AppendLine("          }");
   }
@@ -1237,6 +1246,7 @@ internal static class JsonArgsEmitter
     AppModel app,
     string methodSuffix,
     string? loggerFactoryFieldName,
+    bool hasGeneratedMediator,
     int indent)
   {
     string ind = new(' ', indent);
@@ -1264,7 +1274,8 @@ internal static class JsonArgsEmitter
           useRuntimeDI: app.UseMicrosoftDependencyInjection,
           runtimeDISuffix: methodSuffix,
           httpClientConfigurations: app.HttpClientConfigurations,
-          useDirectInvoke: app.UseDirectInvoke));
+          useDirectInvoke: app.UseDirectInvoke,
+          hasGeneratedMediator: hasGeneratedMediator));
     }
     else
     {
@@ -1278,7 +1289,8 @@ internal static class JsonArgsEmitter
         useRuntimeDI: app.UseMicrosoftDependencyInjection,
         runtimeDISuffix: methodSuffix,
         httpClientConfigurations: app.HttpClientConfigurations,
-        useDirectInvoke: app.UseDirectInvoke);
+        useDirectInvoke: app.UseDirectInvoke,
+        hasGeneratedMediator: hasGeneratedMediator);
     }
 
     _ = ind;

@@ -46,15 +46,15 @@ public sealed class NuruGenerator : IIncrementalGenerator
     IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> routeEndpoints = context.SyntaxProvider
       .ForAttributeWithMetadataName(
         NuruRouteAttributeFullName,
-        predicate: static (node, _) => node is ClassDeclarationSyntax,
+        predicate: static (node, _) => IsRouteTypeDeclaration(node),
         transform: static (ctx, ct) => ExtractEndpointWithLocation(ctx, ct))
       .Where(static result => result is not null);
 
     IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> operationEndpoints = context.SyntaxProvider
       .ForAttributeWithMetadataName(
         OperationAttributeFullName,
-        predicate: static (node, _) => node is ClassDeclarationSyntax,
-        transform: static (ctx, ct) => ExtractEndpointWithLocation(ctx, ct))
+        predicate: static (node, _) => IsRouteTypeDeclaration(node),
+        transform: static (ctx, ct) => HasNuruRouteAttribute(ctx) ? null : ExtractEndpointWithLocation(ctx, ct))
       .Where(static result => result is not null);
 
     IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> endpointsWithDiagnostics = routeEndpoints
@@ -300,7 +300,33 @@ public sealed class NuruGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Extracts a RouteDefinition and location from a class with [NuruRoute] attribute.
+  /// Classes and record classes are endpoints. Record structs are not.
+  /// </summary>
+  private static bool IsRouteTypeDeclaration(RoslynSyntaxNode node) =>
+    node is ClassDeclarationSyntax
+    || (node is RecordDeclarationSyntax record
+        && !record.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword));
+
+  /// <summary>
+  /// The route pipeline already extracts a type that also has [NuruRoute].
+  /// Skipping it here keeps diagnostics from being reported twice.
+  /// </summary>
+  private static bool HasNuruRouteAttribute(GeneratorAttributeSyntaxContext context)
+  {
+    if (context.TargetSymbol is not INamedTypeSymbol type)
+      return false;
+
+    foreach (AttributeData attribute in type.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() == NuruRouteAttributeFullName)
+        return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Extracts a RouteDefinition and location from a class or record with [NuruRoute] or [Operation].
   /// Also captures any diagnostics from the extraction process.
   /// </summary>
   private static EndpointWithLocationAndDiagnostics? ExtractEndpointWithLocation
@@ -309,17 +335,17 @@ public sealed class NuruGenerator : IIncrementalGenerator
     CancellationToken cancellationToken
   )
   {
-    if (context.TargetNode is not ClassDeclarationSyntax classDeclaration)
+    if (context.TargetNode is not TypeDeclarationSyntax typeDeclaration || !IsRouteTypeDeclaration(typeDeclaration))
       return null;
 
     EndpointExtractionResult result = EndpointExtractor.Extract(
-      classDeclaration,
+      typeDeclaration,
       context.SemanticModel,
       cancellationToken);
 
     // Get location from the [NuruRoute] attribute
     Location location = Location.None;
-    foreach (AttributeListSyntax attributeList in classDeclaration.AttributeLists)
+    foreach (AttributeListSyntax attributeList in typeDeclaration.AttributeLists)
     {
       foreach (AttributeSyntax attribute in attributeList.Attributes)
       {

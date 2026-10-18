@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Neutral contracts**: `UseDirectInvoke()` calls a nested `Handler` directly. `[NuruCliBinding(Group)]` sets the group path when no `[NuruRouteGroup]` is present. NURU_H008 warns when an `[Operation]` endpoint has no visible mediator handler. A visible or registered `IResponseRenderer<T>` renders the response before the output strategy. `OneOf<TSuccess, SharedProblemDetails>` writes the problem to stderr and sets the exit code (508-001).
+
 ### Changed
-- **Neutral contracts**: Nuru derives endpoints from `TimeWarp.Contracts` `[Operation]` requests (508-001). The reference is `TimeWarp.Contracts` 2.0.0-beta.21, still a prerelease, so the package version is `3.1.0-beta.1` until that dependency is stable. A stable Nuru package does not take a prerelease dependency.
+- **Neutral contracts**: Nuru derives endpoints from `TimeWarp.Contracts` `[Operation]` plus a TimeWarp.Mediator kind (508-001). The reference is `TimeWarp.Contracts` 2.0.0-beta.21, still a prerelease, so the package version is `3.1.0-beta.1` until that dependency is stable. A stable Nuru package does not take a prerelease dependency.
+- **Dispatch**: With a generated mediator, endpoints go through the mediator unless `UseDirectInvoke()` selects a nested handler. A nested handler still uses the 3.0 direct call when no generated mediator exists. An endpoint with no nested handler still uses the mediator. Each command resets `Environment.ExitCode` before it runs. A `[NuruRoute]` class whose handler is registered elsewhere is an endpoint (508-001).
+- **Dispatch overhead**: `benchmarks/operation-dispatch/operation-dispatch-overhead.cs` times both paths after a warm-up. One run (50 warm-up calls, 2000 measured calls, `Unit` response so the loop does not write the handler result) reported Stopwatch ticks `mediator-ticks=6275013` and `direct-ticks=3483383`. Direct is lower, so `UseDirectInvoke()` stays. AOT cold start is the same script with `--aot` and was not recorded in this run (508-001).
 
 ## [3.0.0] - 2026-10-14
 

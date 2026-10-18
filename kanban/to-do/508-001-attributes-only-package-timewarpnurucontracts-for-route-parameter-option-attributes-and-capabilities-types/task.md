@@ -73,7 +73,7 @@ Acceptance:
   - Suggestions: M40–M43. Nits: M44–M49.
 
   CI is green: 1920 total, 1914 passed, 6 skipped, 0 failed. A fix pass is needed. See `review/round-3/merged.md`.
-- Round 3: Blocked — open M33, M34, M35, M36, M37, M38, M39, M40, M41, M42, M43, M44, M45, M46, M47, M48, M49
+- Round 4 (2026-10-18, `50e92396`): M33–M49 are fixed. No new findings. Disposition is clean. See `review/round-4/merged.md` and `review/disposition.md`.
 ## Notes
 
 - Parent: 508. Waits for the first published `TimeWarp.Contracts` (architecture task 384); until then develop against a project reference or a local feed.
@@ -108,10 +108,13 @@ Acceptance:
   - Full CI after `ganda runfile cache --clear`: multi-mode 1920 total, 1914 passed, 6 skipped (all of them already skipped on master), 0 failed. Standalone: 0 failed.
   - Open at review time: 17 findings, 7 of them bugs (M33–M39). The general reviewer reproduced every bug in a throwaway app. A fix pass is needed. See `review/round-3/merged.md`.
 - Fix pass 4 (2026-10-18): implementer claude-opus-5-5 (headless `ganda task work`, implement-fix-4). Marked M33–M49 fixed in `review/round-3/merged.md`, with disposition notes. Full CI after `ganda runfile cache --clear`: multi-mode 1927 total, 1921 passed, 6 skipped, 0 failed. Standalone: 30 files, 0 failed. `ganda repo audit` passed with nothing to fix. Review round 4 has not run.
+- Review round 4 (2026-10-18): review oracle grok-4.7 (headless `ganda task work`), session `01a14fcd-3a2e-7e22-abc9-51e42db9f7fc`, effort 3, roster general, reviewed the fix delta `bb2d2b9f..50e92396`.
+  - `operation-endpoint-derivation.cs`: 35 passed. `generator-55-missing-operation-handler.cs`: 12 passed. Full CI and the AOT script were not re-run.
+  - Open at review time: 0. Disposition is clean. See `review/round-4/merged.md` and `review/disposition.md`.
 
 ## Blocked
 
-Resolved 2026-10-18: the host raised the review-round limit, and fix pass 4 implemented M33–M49 for review round 4. Original block follows.
+Resolved 2026-10-18: review round 4 disposition is clean (0 open). The host raised the review-round limit, and fix pass 4 implemented M33–M49. Original block follows.
 
 2026-10-18: 3 rounds, M33, M34, M35, M36, M37, M38, M39, M40, M41, M42, M43, M44, M45, M46, M47, M48, M49 still open (raise --review-rounds or mark findings fixed or wontfix in review/round-3/merged.md)
 
@@ -129,10 +132,13 @@ Resolved 2026-10-18: the host raised the review-round limit, and fix pass 4 impl
 - Pre-existing bug found during fix pass 4 and not fixed here (master behaves the same): the argv matcher converts a typed option value with a default before it checks that route's literal. `t508special` has `[Option("quiet")] double`, so `t508case --quiet loud` fails with "Invalid value 'loud' for option '--quiet'. Expected: double" before `t508case` is tried. The test uses `--mute`. Moving that conversion after the literal check needs its own task and review.
 - Copying an initializer that has side effects is not the only safe linear form. An init-only member can read a second instance built only for defaults: `P = supplied ? p : __commandDefaults.P` (M33).
 - Every matcher that finds an option for a member must match exact names first. The JSON path fixed this in round 2, and the new construction emitter brought the case mix-up back (M36).
+- Restatement check (review round 4): no misread of substance. The acceptance bullet now says invoking the route exits 1, which matches the Goal paragraph and the deliberate change recorded above.
 
 ## Results
 
-Fix pass 4 implements the 17 round-3 findings (bugs M33–M39, suggestions M40–M43, nits M44–M49). Each one is marked fixed in `review/round-3/merged.md` with a disposition note. Round 4 has not reviewed them yet.
+Review round 4 disposition is **clean**. 4 rounds, roster general on this round (rounds 1–3 also used tests and plan_alignment), effort 3. Final counts: bug 0 open / 11 fixed, suggestion 0 open / 8 fixed, nit 0 open / 10 fixed, 0 wontfix. Paths: `review/review-framework.md`, `review/round-4/merged.md`, `review/disposition.md`.
+
+Fix pass 4 implements the 17 round-3 findings (bugs M33–M39, suggestions M40–M43, nits M44–M49). Round 4 verified each one against `50e92396`. No new findings.
 
 - M33: Init-only members whose initializers cannot be copied now read `__commandDefaults`, a second instance built once, instead of one object initializer per combination. Generated code grows linearly. `= null!` on a non-nullable reference is copied as `null!` (`NullForgivingDefaultLiteral`) and needs no supplied test. `--capabilities` omits it.
 - M34: `OptionDefinition.IsRequiredMember` carries the `required` modifier. A required member always goes in the object initializer, and `--json-args` declares no supplied flag for it.

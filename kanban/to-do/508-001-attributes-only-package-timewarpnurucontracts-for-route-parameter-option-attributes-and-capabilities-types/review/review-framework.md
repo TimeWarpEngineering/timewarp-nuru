@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1615
+- Lines changed: 1154
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -33,6 +33,14 @@
 **Effort:** 3
 **Reviewer roster:** general (generator correctness on the fix delta, M22–M26, M20, M30, M31), tests (builds, focused tests, full CI suite after `ganda runfile cache --clear`, sample and benchmark smoke, M27, M28), plan_alignment (restatement fix-pass acceptance, docs, changelog, diagnostics, M29, M32)
 **Session IDs:** review oracle (claude-opus-5-5, headless `ganda task work`), three Claude subagents; vendor session ids not reported
+
+## Scope — round 4
+
+**Date:** 2026-10-18
+**Diff scope:** fix delta `git diff bb2d2b9f..50e92396 -- . ':!kanban'` (16 product files, +823/−160), plus re-verification of the round-3 findings M33–M49 against `50e92396`
+**Effort:** 3
+**Reviewer roster:** general (generator correctness, focused tests, restatement and docs on the fix delta)
+**Session IDs:** review oracle (grok-4.7, headless `ganda task work`), session `01a14fcd-3a2e-7e22-abc9-51e42db9f7fc`
 
 ## Ground rules
 

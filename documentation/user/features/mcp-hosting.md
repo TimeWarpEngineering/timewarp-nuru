@@ -121,7 +121,7 @@ The attribute also adds `"destructive": true` to the endpoint in `--capabilities
 - A route that writes nothing, such as one returning `Unit` without printing, returns empty content.
 - Calls run one at a time, because route execution uses process-wide state, as the CLI does.
 
-With `contentFormat: NuruMcpContentFormat.Json`, a successful result also carries `structuredContent`. A `json` route that returns an object passes that object through. Any other value is wrapped as `{"result": value}`, with numbers and booleans kept as JSON numbers and booleans. A `unit` route has no structured content. When a response renderer writes text that is not JSON, the result carries only the text.
+With `contentFormat: NuruMcpContentFormat.Json`, a successful result also carries `structuredContent`. A `json` route that returns an object passes that object through. Any other value is wrapped as `{"result": value}`, with numbers and booleans kept as JSON numbers and booleans. A `unit` route has no structured content. Structured content comes from the route's value only: console output the handler writes stays in the text content. When a response renderer writes text that is not JSON, the result carries only the text.
 
 ## Instructions
 

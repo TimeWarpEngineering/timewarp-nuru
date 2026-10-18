@@ -46,6 +46,11 @@ Acceptance criteria:
 - [x] Group filter
 - [x] Tests and docs
 
+## Review
+
+- Round 1: Blocked — open M1
+- Fix pass for round 2: M1 fixed (structured content no longer reads captured console output).
+
 ## Notes
 
 - Parent: 508.
@@ -57,6 +62,8 @@ Acceptance criteria:
 - Implemented: implementer-claude under `ganda task work` (2026-10-19). Package, generator `AddMcpRoute()` and `[Destructive]`, mixed-app catalog fix, tests, docs. Full CI and `ganda repo audit` green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-18T20:01:27Z
 - Reviewer: grok session `01a1509a-db8a-7711-a1d9-777aacf447b5` (2026-10-19). Round 1, effort 3, roster general. M1 open. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-18T20:23:31Z
+- Fix oracle (implement-fix-2): implementer-claude (claude-opus-5-5), 2026-10-19. Fixed M1, added a regression test, updated the doc. Full CI and `ganda repo audit` green.
 
 ## Results
 
@@ -73,6 +80,7 @@ Acceptance criteria:
   - Console output from handlers (`Console.*` and the default terminal) is captured into the result.
   - A bind error, a handler exception, or a non-zero CLI exit code (problem details) is `isError: true` with the message. A bind error's message is the exact `--json-args` message.
   - `ContentFormat.Json` adds `structuredContent`: an object result as is, other values as `{"result": v}`, none for `unit`.
+  - `structuredContent` is built from the CLR result and the text `RenderAsync` wrote, never from captured console output. Console lines stay in the text content only (M1 fix). Numbers, booleans, and strings wrap the CLR value. Other scalars (char, Guid, dates) wrap the rendered text.
 - `NuruMcpTool : McpServerTool`. `NuruMcpServer.CreateTools`, `CreateServerOptions` (server info and instructions from the catalog), `RunStdioAsync` (points `Console.Out` at stderr for the session), and `RunAsync(app, input, output)`.
 - `IMcpServerBuilder.WithNuruTools(app, configure)` is the hosting extension for any MCP host, including ASP.NET Core `WithHttpTransport()` + `MapMcp()`. It does not reference AspNetCore.
 - `AddMcpRoute(instructions, groupFilter, contentFormat)` is a builder stub that the generator interprets.
@@ -94,7 +102,7 @@ Acceptance criteria:
 
 ### Tests
 
-- `tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs` (13 tests):
+- `tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs` (14 tests):
   - Tool names, separator, collisions, and the default route.
   - Schema: string, integer, boolean flag (not required), repeated, catch-all, enum, nullable, endpoint option description.
   - Annotation mapping and `[Destructive]` in the catalog and annotations.
@@ -102,13 +110,14 @@ Acceptance criteria:
   - `initialize`, `tools/list`, and `tools/call` over real newline-delimited JSON-RPC (in-memory pipes into `NuruMcpServer.RunAsync`).
   - Unknown, missing, and wrong-type keys and problem details come back as `isError` results, not JSON-RPC errors. The bind message equals `TryBind`'s.
   - Console and default-terminal capture, JSON structured content, and the help row from `AddMcpRoute`.
+  - `Should_keep_console_output_out_of_structured_content` (M1 regression): `mh-log-report` logs a line and returns an object, and `mh-log-text` logs a line and returns a string. Under `ContentFormat.Json` both keep clean structured content, and the text block still has the log line.
 - `tests/timewarp-nuru-mcphost-tests/mcphost-02-calculator-parity.cs` (2 tests):
   - Runs `calculator --capabilities`, then a real MCP client (`StdioClientTransport`) on `calculator mcp`.
   - Checks one tool per endpoint with the same name, description, schema (deep-equal to the projection, and member by member: names, required, JSON types, enum), and annotations.
   - Round trips `add`, `factorial` (`Console.WriteLine` captured), an unknown key (`isError`), and `stats`.
 - CI wiring: `tests/ci-tests/Directory.Build.props` glob and McpHost ProjectReference. `timewarp-nuru.slnx` and `dev build` (`tools/dev-cli/endpoints/build-command.cs`) include the project, after `timewarp-nuru`. The packable set is discovered from `source/*.csproj`.
-- Full CI after `ganda runfile cache --clear`: multi-mode 1964 total, 1958 passed, 6 skipped, 0 failed. Standalone 30 files, 0 failed.
-- `ganda repo audit`: 30 passed, 0 failed. Nothing to fix.
+- Full CI after `ganda runfile cache --clear` (fix pass): multi-mode 1965 total, 1959 passed, 6 skipped, 0 failed. Standalone 0 failed.
+- `ganda repo audit`: all checks pass. Nothing to fix in either pass.
 
 ### Docs
 
@@ -140,18 +149,18 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 
 Expect:
 
-- `mcphost-01-tools.cs`: Total 13, Passed 13.
+- `mcphost-01-tools.cs`: Total 14, Passed 14, including `Should_keep_console_output_out_of_structured_content`.
 - `mcphost-02-calculator-parity.cs`: Total 2, Passed 2 (about 20 s each, because each test launches the sample).
 - The stdio pipe prints three JSON-RPC responses:
   - id 1 has `serverInfo.name` `calculator` and the instructions text.
   - id 2 is `{"content":[{"type":"text","text":"5.5"}],"isError":false}`.
   - id 3 is `isError: true` with `Error: Missing required value 'y' for 'add'.`.
   - Nothing else appears on stdout.
-- CI runner: multi-mode 1964 total, 1958 passed, 6 skipped, 0 failed. Standalone 0 failed.
+- CI runner: multi-mode 1965 total, 1959 passed, 6 skipped, 0 failed. Standalone 0 failed.
 
 ### Review
 
-Round 1 (effort 3, general) is in `review/round-1/merged.md`. One open bug (M1): `NuruMcpContentFormat.Json` builds `structuredContent` from captured console text plus the rendered body, so a handler that logs and returns a value drops or corrupts the structured payload. Disposition is not written while M1 is open.
+Round 1 (effort 3, general) is in `review/round-1/merged.md`. One open bug (M1): `NuruMcpContentFormat.Json` builds `structuredContent` from captured console text plus the rendered body, so a handler that logs and returns a value drops or corrupts the structured payload. Fix pass: `CreateStructuredContent` now takes the `RenderAsync` terminal text, not `capturedOut + terminal.Output`, and `WriteScalar` writes a `string` result from the CLR value. The regression test is above. `mcp-hosting.md` now says console output stays in the text content.
 
 ## Learnings
 

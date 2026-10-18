@@ -81,6 +81,7 @@ public sealed class NuruMcpToolInvoker
 
     string stdout;
     string stderr;
+    string rendered;
     int exitCode;
     object? result;
 
@@ -91,7 +92,8 @@ public sealed class NuruMcpToolInvoker
       using TestTerminal terminal = new();
       exitCode = await App.RenderAsync(request, result, terminal).ConfigureAwait(false);
 
-      stdout = capturedOut + terminal.Output;
+      rendered = terminal.Output;
+      stdout = capturedOut + rendered;
       stderr = capturedError + terminal.ErrorOutput;
     }
     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -128,7 +130,7 @@ public sealed class NuruMcpToolInvoker
       success.Content.Add(new TextContentBlock { Text = diagnostics });
 
     if (Options.ContentFormat == NuruMcpContentFormat.Json)
-      success.StructuredContent = CreateStructuredContent(endpoint, result, text);
+      success.StructuredContent = CreateStructuredContent(endpoint, result, TrimTrailingNewLine(rendered));
 
     return success;
   }
@@ -137,6 +139,10 @@ public sealed class NuruMcpToolInvoker
   /// The JSON for <see cref="NuruMcpContentFormat.Json"/>: a JSON object result as is, any other value
   /// as <c>{"result": value}</c>, and nothing for a route that returns no value.
   /// </summary>
+  /// <remarks>
+  /// Built from <paramref name="result"/> and the text RenderAsync wrote, never from captured console
+  /// output: a handler's log lines stay in the text content and do not corrupt the structured value.
+  /// </remarks>
   private static JsonElement? CreateStructuredContent(EndpointCapability endpoint, object? result, string text)
   {
     ReturnTypeKind? kind = endpoint.ReturnType?.Kind;
@@ -193,6 +199,8 @@ public sealed class NuruMcpToolInvoker
       case float value when float.IsFinite(value): writer.WriteNumberValue(value); break;
       case double value when double.IsFinite(value): writer.WriteNumberValue(value); break;
       case decimal value: writer.WriteNumberValue(value); break;
+      case string value: writer.WriteStringValue(value); break;
+      // Other scalars (char, Guid, dates) use the CLI's rendering of the value.
       default: writer.WriteStringValue(text); break;
     }
   }

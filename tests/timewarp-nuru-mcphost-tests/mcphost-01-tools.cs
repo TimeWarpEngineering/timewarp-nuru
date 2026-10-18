@@ -45,6 +45,7 @@ public class McpHostToolsTests
       .Map("mh-note {text} --level {level:int?}").WithHandler((string text, int? level) => $"{text}:{level?.ToString(CultureInfo.InvariantCulture) ?? "none"}").AsCommand().Done()
 #pragma warning disable RS0030 // The handler writes to the console directly, like the calculator sample.
       .Map("mh-echo").WithHandler(() => Console.Out.WriteLine("from console")).AsCommand().Done()
+      .Map("mh-log-text").WithHandler(() => { Console.Out.WriteLine("log line"); return "value"; }).AsQuery().Done()
 #pragma warning restore RS0030
       .WithGroupPrefix("mh-admin")
         .Map("reset").WithHandler(() => "reset").AsCommand().Done()
@@ -52,6 +53,7 @@ public class McpHostToolsTests
       .Map<MhWipeCommand>()
       .Map<MhReportQuery>()
       .Map<MhProblemQuery>()
+      .Map<MhLoggingReportQuery>()
       .Build();
     return app;
   }
@@ -308,6 +310,25 @@ public class McpHostToolsTests
     plain.StructuredContent.ShouldBeNull();
   }
 
+  public static async Task Should_keep_console_output_out_of_structured_content()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = CreateApp(terminal);
+    NuruMcpToolInvoker invoker = new(app, new NuruMcpHostOptions { ContentFormat = NuruMcpContentFormat.Json });
+    IReadOnlyList<EndpointCapability> endpoints = app.Capabilities.Endpoints;
+
+    CallToolResult report = await invoker.CallAsync(endpoints.Single(e => e.Pattern == "mh-log-report"), Args("""{"name":"q4"}"""));
+    report.IsError.ShouldBe(false);
+    report.StructuredContent.ShouldNotBeNull();
+    report.StructuredContent!.Value.GetProperty("name").GetString().ShouldBe("q4");
+    ((TextContentBlock)report.Content[0]).Text.ShouldStartWith("building q4");
+
+    CallToolResult scalar = await invoker.CallAsync(endpoints.Single(e => e.Pattern == "mh-log-text"), Args("{}"));
+    scalar.IsError.ShouldBe(false);
+    scalar.StructuredContent!.Value.GetProperty("result").GetString().ShouldBe("value");
+    ((TextContentBlock)scalar.Content[0]).Text.ShouldBe("log line\nvalue");
+  }
+
   public static async Task Should_list_the_mcp_route_in_help_when_added()
   {
     using TestTerminal terminal = new();
@@ -445,6 +466,26 @@ public sealed class MhReportQuery : IQuery<MhReport>
       ArgumentNullException.ThrowIfNull(query);
       _ = cancellationToken;
       return Task.FromResult(new MhReport(query.Name, query.Name.Length));
+    }
+  }
+}
+
+[NuruRoute("mh-log-report", Description = "Build a report and log progress")]
+public sealed class MhLoggingReportQuery : IQuery<MhReport>
+{
+  [Option("name", Description = "Report name")]
+  public string Name { get; set; } = "";
+
+  public sealed class Handler : IQueryHandler<MhLoggingReportQuery, MhReport>
+  {
+    public async Task<MhReport> Handle(MhLoggingReportQuery query, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+      _ = cancellationToken;
+#pragma warning disable RS0030 // The handler logs to the console directly, as a real handler might.
+      await Console.Out.WriteLineAsync($"building {query.Name}").ConfigureAwait(false);
+#pragma warning restore RS0030
+      return new MhReport(query.Name, query.Name.Length);
     }
   }
 }

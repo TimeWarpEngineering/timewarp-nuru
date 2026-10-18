@@ -529,6 +529,8 @@ For CLIs with multiple endpoint files, use a `Directory.Build.props` to include 
 
 Each endpoint ends with `returnType` (`name`, and `kind` of `unit`, `primitive`, or `json`). In process, `app.Capabilities` returns the same `CapabilitiesResponse` right after `Build()` (no reflection, AOT-safe), and `app.Capabilities.FilterByGroup("admin")` matches `--group-filter admin`.
 
+To run a route from JSON in process (an MCP host, a batch), call `app.TryBind(pattern, jsonElement, out var request, out var error)`, then `await app.InvokeAsync(request)` for the typed result, and `await app.RenderAsync(request, result, terminal)` for the CLI text. Binding is the `--json-args` binder; `error.Message` is what `--json-args` prints.
+
 The agent loop, the exact-name rule, argv-overrides-JSON, and the app-level fat-field pattern are in [Agent invocation](../../documentation/user/features/agent-invocation.md).
 
 ## General Rules

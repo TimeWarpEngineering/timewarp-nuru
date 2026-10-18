@@ -48,6 +48,25 @@ internal static class JsonArgsEmitter
   }
 
   /// <summary>
+  /// One bind failure site: the <c>NuruBindErrorKind</c> member, the key expression, and the message expression.
+  /// </summary>
+  private readonly record struct Fail(string Kind, string KeyExpression, string Message)
+  {
+    /// <summary>The statement that records this failure unless an earlier one is recorded.</summary>
+    /// <param name="suffix">Expression appended to the message, or null.</param>
+    public string Assign(string? suffix = null)
+    {
+      string message = suffix is null ? Message : $"{Message} + {suffix}";
+      return $"__fail ??= new global::TimeWarp.Nuru.NuruBindError(global::TimeWarp.Nuru.NuruBindErrorKind.{Kind}, {KeyExpression}, {message});";
+    }
+  }
+
+  private static string KeyLiteral(string key) => $"\"{Escape(key)}\"";
+
+  private static Fail MissingValue(Slot slot, string pattern) =>
+    new("MissingValue", KeyLiteral(slot.Key), $"\"Error: Missing required value '{Escape(slot.Key)}' for '{pattern}'.\"");
+
+  /// <summary>
   /// Peels <c>--json-args</c> from the original args, rejects attached forms, filters
   /// config args, and either leaves a built-in for later dispatch or parses the payload.
   /// </summary>
@@ -161,7 +180,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        int __jsonBestLiterals = -1;");
     sb.AppendLine("        int __jsonWinnerAttempt = 0;");
     sb.AppendLine("        global::System.Collections.Generic.List<string> __jsonTied = new();");
-    sb.AppendLine("        global::System.Collections.Generic.List<string> __jsonFailures = new();");
+    sb.AppendLine("        global::System.Collections.Generic.List<global::TimeWarp.Nuru.NuruBindError> __jsonFailures = new();");
 
     for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
     {
@@ -169,7 +188,7 @@ internal static class JsonArgsEmitter
       List<Slot> slots = BuildSlots(route, routeIndex, app.CustomConverters);
       string pattern = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
       sb.AppendLine();
-      sb.AppendLine($"        bool __TryJson_{routeIndex}(out int literalCount, out int attempt, out bool literalsMatched, out string? failure)");
+      sb.AppendLine($"        bool __TryJson_{routeIndex}(out int literalCount, out int attempt, out bool literalsMatched, out global::TimeWarp.Nuru.NuruBindError? failure)");
       sb.AppendLine("        {");
       sb.AppendLine("          literalCount = 0;");
       sb.AppendLine("          attempt = 0;");
@@ -178,12 +197,12 @@ internal static class JsonArgsEmitter
       sb.AppendLine("          bool __ok;");
       sb.AppendLine("          int __lit;");
       sb.AppendLine("          bool __litOk;");
-      sb.AppendLine("          string? __fail;");
+      sb.AppendLine("          global::TimeWarp.Nuru.NuruBindError? __fail;");
       sb.AppendLine("          int __best = -1;");
       sb.AppendLine("          int __bestAttempt = 0;");
       sb.AppendLine("          bool __any = false;");
       sb.AppendLine("          bool __anyLit = false;");
-      sb.AppendLine("          string? __anyFail = null;");
+      sb.AppendLine("          global::TimeWarp.Nuru.NuruBindError? __anyFail = null;");
 
       EmitCheckCall(sb, route, slots, pattern, routeIndex, attempt: 0, prefix: GroupWords(route), aliasMode: false, indent: 10);
       List<string> aliases = route.Aliases.IsDefaultOrEmpty ? [] : [.. route.Aliases];
@@ -214,7 +233,7 @@ internal static class JsonArgsEmitter
     for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
     {
       string pattern = EmitterStringUtils.EscapeForStringLiteral(routes[routeIndex].FullPattern);
-      sb.AppendLine($"        if (__TryJson_{routeIndex}(out int __jl_{routeIndex}, out int __ja_{routeIndex}, out bool __jm_{routeIndex}, out string? __jf_{routeIndex}))");
+      sb.AppendLine($"        if (__TryJson_{routeIndex}(out int __jl_{routeIndex}, out int __ja_{routeIndex}, out bool __jm_{routeIndex}, out global::TimeWarp.Nuru.NuruBindError? __jf_{routeIndex}))");
       sb.AppendLine("        {");
       sb.AppendLine($"          if (__jl_{routeIndex} > __jsonBestLiterals)");
       sb.AppendLine("          {");
@@ -248,7 +267,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        {");
     sb.AppendLine("          if (__jsonFailures.Count > 0)");
     sb.AppendLine("          {");
-    sb.AppendLine("            await app.Terminal.WriteErrorLineAsync(__jsonFailures[0]!).ConfigureAwait(false);");
+    sb.AppendLine("            await app.Terminal.WriteErrorLineAsync(__jsonFailures[0].Message).ConfigureAwait(false);");
     sb.AppendLine("          }");
     sb.AppendLine("          else");
     sb.AppendLine("          {");
@@ -319,11 +338,173 @@ internal static class JsonArgsEmitter
     string? loggerFactoryFieldName,
     bool hasGeneratedMediator)
   {
-    List<Slot> slots = BuildSlots(route, routeIndex, app.CustomConverters);
-    string pattern = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
-    List<string> aliases = route.Aliases.IsDefaultOrEmpty ? [] : [.. route.Aliases];
+    string bound = BoundClassName(methodSuffix, routeIndex);
     sb.AppendLine($"          case {routeIndex}:");
     sb.AppendLine("          {");
+    sb.AppendLine($"            if (!{BindMethodName(methodSuffix, routeIndex)}(routeArgs, __jsonMap, __jsonWinnerAttempt, out {bound}? __bound, out global::TimeWarp.Nuru.NuruBindError? __bindFail) || __bound is null)");
+    sb.AppendLine("            {");
+    sb.AppendLine("              await app.Terminal.WriteErrorLineAsync(__bindFail?.Message ?? \"Unknown command. Use --help for usage.\").ConfigureAwait(false);");
+    sb.AppendLine("              return 1;");
+    sb.AppendLine("            }");
+    sb.AppendLine();
+    EmitUnpackAndInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, "__bound", captureResultInto: null, indent: 12);
+    sb.AppendLine("            return global::System.Environment.ExitCode;");
+    sb.AppendLine("          }");
+  }
+
+  /// <summary>
+  /// Copies the bound values into the locals the invoker reads, then runs the missing-handler
+  /// check, the Nuru behaviors and the handler.
+  /// </summary>
+  private static void EmitUnpackAndInvoke(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    AppModel app,
+    string methodSuffix,
+    string? loggerFactoryFieldName,
+    bool hasGeneratedMediator,
+    string boundVariable,
+    string? captureResultInto,
+    int indent)
+  {
+    string ind = new(' ', indent);
+    List<Slot> slots = BuildSlots(route, routeIndex, app.CustomConverters);
+    foreach (Slot slot in slots)
+    {
+      if (slot.VariableName is not null)
+        sb.AppendLine($"{ind}{slot.DeclaredType ?? "string"} {slot.VariableName} = {boundVariable}.{slot.VariableName};");
+    }
+
+    foreach (Slot slot in slots)
+    {
+      if (slot.Option is not null && NeedsJsonSuppliedFlag(route, slot.Option))
+        sb.AppendLine($"{ind}bool __supplied_{slot.Id} = {boundVariable}.__supplied_{slot.Id};");
+    }
+
+    InterceptorEmitter.EmitMissingHandlerOnDispatch(
+      sb,
+      route,
+      app.UseMicrosoftDependencyInjection,
+      hasGeneratedMediator,
+      methodSuffix,
+      ind);
+    EmitInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, indent, captureResultInto);
+  }
+
+  /// <summary>
+  /// Runs a request bound by <c>NuruApp.TryBind</c> (or renders its captured result) inside
+  /// ExecuteRouteAsync, after configuration, services and the command scope are set up.
+  /// Always returns from the generated method on this path.
+  /// </summary>
+  public static void EmitInvocationDispatch(
+    StringBuilder sb,
+    IReadOnlyList<RouteDefinition> routes,
+    AppModel app,
+    string methodSuffix,
+    string? loggerFactoryFieldName,
+    bool hasGeneratedMediator)
+  {
+    sb.AppendLine("    if (__invocation is not null)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      switch (__invocation.Request)");
+    sb.AppendLine("      {");
+    for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
+    {
+      RouteDefinition route = routes[routeIndex];
+      sb.AppendLine($"        case {BoundClassName(methodSuffix, routeIndex)} __bound:");
+      sb.AppendLine("        {");
+      sb.AppendLine("          if (__invocation.RenderTerminal is not null)");
+      sb.AppendLine("          {");
+      HandlerInvokerEmitter.EmitRender(
+        sb,
+        route,
+        "__invocation.Result",
+        "__invocation.RenderTerminal",
+        app.Services,
+        app.HttpClientConfigurations,
+        loggerFactoryFieldName,
+        app.UseMicrosoftDependencyInjection,
+        methodSuffix,
+        "            ");
+      sb.AppendLine("            return global::System.Environment.ExitCode;");
+      sb.AppendLine("          }");
+      sb.AppendLine();
+      sb.AppendLine("          {");
+      EmitUnpackAndInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, "__bound", captureResultInto: "__invocation.Result", indent: 12);
+      sb.AppendLine("            __invocation.Dispatched = true;");
+      sb.AppendLine("            return global::System.Environment.ExitCode;");
+      sb.AppendLine("          }");
+      sb.AppendLine("        }");
+    }
+
+    sb.AppendLine("        default:");
+    sb.AppendLine("          throw new global::System.ArgumentException(\"The request was not bound by this NuruApp.\", \"request\");");
+    sb.AppendLine("      }");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits, at class level, one bound-request class and one bind method per route, and the
+  /// <c>TryBind</c> entry point. <c>--json-args</c> and <c>NuruApp.TryBind</c> both call the bind
+  /// method, so they share one binder.
+  /// </summary>
+  public static void EmitBindMethods(StringBuilder sb, IReadOnlyList<RouteDefinition> routes, AppModel app, string methodSuffix)
+  {
+    for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
+    {
+      EmitBoundClass(sb, routes[routeIndex], routeIndex, app, methodSuffix);
+      EmitBindMethod(sb, routes[routeIndex], routeIndex, app, methodSuffix);
+    }
+
+    EmitTryBind(sb, routes, methodSuffix);
+  }
+
+  private static string BoundClassName(string methodSuffix, int routeIndex) => $"__JsonBound{methodSuffix}_{routeIndex}";
+
+  private static string BindMethodName(string methodSuffix, int routeIndex) => $"__JsonBind{methodSuffix}_{routeIndex}";
+
+  /// <summary>Name of the generated <c>TryBind</c> entry point that <c>NuruApp.JsonBinder</c> points to.</summary>
+  internal static string TryBindMethodName(string methodSuffix) => $"__TryBindJson{methodSuffix}";
+
+  private static void EmitBoundClass(StringBuilder sb, RouteDefinition route, int routeIndex, AppModel app, string methodSuffix)
+  {
+    List<Slot> slots = BuildSlots(route, routeIndex, app.CustomConverters);
+    string name = BoundClassName(methodSuffix, routeIndex);
+    string pattern = Escape(route.FullPattern);
+    sb.AppendLine($"  private sealed class {name} : global::TimeWarp.Nuru.NuruBoundRequest");
+    sb.AppendLine("  {");
+    sb.AppendLine($"    public {name}() : base(\"{pattern}\") {{ }}");
+    foreach (Slot slot in slots)
+    {
+      if (slot.VariableName is not null)
+        sb.AppendLine($"    public {slot.DeclaredType ?? "string"} {slot.VariableName} = default!;");
+    }
+
+    foreach (Slot slot in slots)
+    {
+      if (slot.Option is not null && NeedsJsonSuppliedFlag(route, slot.Option))
+        sb.AppendLine($"    public bool __supplied_{slot.Id};");
+    }
+
+    sb.AppendLine("  }");
+    sb.AppendLine();
+  }
+
+  private static void EmitBindMethod(StringBuilder sb, RouteDefinition route, int routeIndex, AppModel app, string methodSuffix)
+  {
+    List<Slot> slots = BuildSlots(route, routeIndex, app.CustomConverters);
+    string pattern = Escape(route.FullPattern);
+    string bound = BoundClassName(methodSuffix, routeIndex);
+    List<string> aliases = route.Aliases.IsDefaultOrEmpty ? [] : [.. route.Aliases];
+    sb.AppendLine($"  private static bool {BindMethodName(methodSuffix, routeIndex)}(");
+    sb.AppendLine("    string[] routeArgs,");
+    sb.AppendLine("    global::System.Collections.Generic.Dictionary<string, global::System.Text.Json.JsonElement> __jsonMap,");
+    sb.AppendLine("    int __jsonWinnerAttempt,");
+    sb.AppendLine($"    out {bound}? __boundOut,");
+    sb.AppendLine("    out global::TimeWarp.Nuru.NuruBindError? __failOut)");
+    sb.AppendLine("  {");
     foreach (Slot slot in slots)
     {
       if (slot.VariableName is null)
@@ -332,65 +513,147 @@ internal static class JsonArgsEmitter
       string type = slot.DeclaredType ?? "string";
       if (slot.IsList)
       {
-        sb.AppendLine($"            {type} {slot.VariableName} = [];");
+        sb.AppendLine($"    {type} {slot.VariableName} = [];");
       }
       else if (slot.IsFlag)
       {
-        sb.AppendLine($"            {type} {slot.VariableName} = false;");
+        sb.AppendLine($"    {type} {slot.VariableName} = false;");
       }
       else
       {
-        sb.AppendLine($"            {type} {slot.VariableName} = {DefaultInitializer(slot)};");
+        sb.AppendLine($"    {type} {slot.VariableName} = {DefaultInitializer(slot)};");
       }
     }
 
     foreach (Slot slot in slots)
     {
       if (slot.Option is not null && NeedsJsonSuppliedFlag(route, slot.Option))
-        sb.AppendLine($"            bool __supplied_{slot.Id} = false;");
+        sb.AppendLine($"    bool __supplied_{slot.Id} = false;");
     }
 
-    sb.AppendLine("            bool __ok;");
-    sb.AppendLine("            int __lit;");
-    sb.AppendLine("            bool __litOk;");
-    sb.AppendLine("            string? __fail;");
-    sb.AppendLine("            if (__jsonWinnerAttempt == 0)");
-    sb.AppendLine("            {");
-    sb.AppendLine("              __ok = true; __lit = 0; __litOk = true; __fail = null;");
-    EmitAttemptBody(sb, route, slots, pattern, GroupWords(route), aliasMode: false, bind: true, indent: 14);
-    sb.AppendLine("            }");
+    sb.AppendLine("    bool __ok;");
+    sb.AppendLine("    int __lit;");
+    sb.AppendLine("    bool __litOk;");
+    sb.AppendLine("    global::TimeWarp.Nuru.NuruBindError? __fail;");
+    sb.AppendLine("    if (__jsonWinnerAttempt == 0)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      __ok = true; __lit = 0; __litOk = true; __fail = null;");
+    EmitAttemptBody(sb, route, slots, pattern, GroupWords(route), aliasMode: false, bind: true, indent: 6);
+    sb.AppendLine("    }");
     for (int aliasIndex = 0; aliasIndex < aliases.Count; aliasIndex++)
     {
       string[] aliasWords = aliases[aliasIndex].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-      sb.AppendLine($"            else if (__jsonWinnerAttempt == {aliasIndex + 1})");
-      sb.AppendLine("            {");
-      sb.AppendLine("              __ok = true; __lit = 0; __litOk = true; __fail = null;");
-      EmitAttemptBody(sb, route, slots, pattern, aliasWords, aliasMode: true, bind: true, indent: 14);
-      sb.AppendLine("            }");
+      sb.AppendLine($"    else if (__jsonWinnerAttempt == {aliasIndex + 1})");
+      sb.AppendLine("    {");
+      sb.AppendLine("      __ok = true; __lit = 0; __litOk = true; __fail = null;");
+      EmitAttemptBody(sb, route, slots, pattern, aliasWords, aliasMode: true, bind: true, indent: 6);
+      sb.AppendLine("    }");
     }
 
-    sb.AppendLine("            else");
-    sb.AppendLine("            {");
-    sb.AppendLine("              __ok = false; __lit = 0; __litOk = false; __fail = \"Unknown command. Use --help for usage.\";");
-    sb.AppendLine("            }");
+    sb.AppendLine("    else");
+    sb.AppendLine("    {");
+    sb.AppendLine("      __ok = false; __lit = 0; __litOk = false; __fail = null;");
+    sb.AppendLine("    }");
     sb.AppendLine();
-    sb.AppendLine("            if (!__ok)");
-    sb.AppendLine("            {");
-    sb.AppendLine("              await app.Terminal.WriteErrorLineAsync(__fail ?? \"Unknown command. Use --help for usage.\").ConfigureAwait(false);");
-    sb.AppendLine("              return 1;");
-    sb.AppendLine("            }");
+    sb.AppendLine("    _ = __lit;");
+    sb.AppendLine("    _ = __litOk;");
+    sb.AppendLine("    if (!__ok)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      __boundOut = null;");
+    sb.AppendLine("      __failOut = __fail ?? new global::TimeWarp.Nuru.NuruBindError(global::TimeWarp.Nuru.NuruBindErrorKind.UnknownRoute, null, \"Unknown command. Use --help for usage.\");");
+    sb.AppendLine("      return false;");
+    sb.AppendLine("    }");
     sb.AppendLine();
-    sb.AppendLine("            _ = __lit;");
-    InterceptorEmitter.EmitMissingHandlerOnDispatch(
-      sb,
-      route,
-      app.UseMicrosoftDependencyInjection,
-      hasGeneratedMediator,
-      methodSuffix,
-      "            ");
-    EmitInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, indent: 12);
-    sb.AppendLine("            return global::System.Environment.ExitCode;");
-    sb.AppendLine("          }");
+    sb.AppendLine($"    __boundOut = new {bound}");
+    sb.AppendLine("    {");
+    foreach (Slot slot in slots)
+    {
+      if (slot.VariableName is not null)
+        sb.AppendLine($"      {slot.VariableName} = {slot.VariableName},");
+    }
+
+    foreach (Slot slot in slots)
+    {
+      if (slot.Option is not null && NeedsJsonSuppliedFlag(route, slot.Option))
+        sb.AppendLine($"      __supplied_{slot.Id} = __supplied_{slot.Id},");
+    }
+
+    sb.AppendLine("    };");
+    sb.AppendLine("    __failOut = null;");
+    sb.AppendLine("    return true;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits the static <c>TryBind</c> entry point. The route is named by its pattern, so it binds
+  /// through the same per-route method as <c>--json-args</c> with argv holding only the route's
+  /// literal words: every parameter and option then comes from the JSON object.
+  /// </summary>
+  private static void EmitTryBind(StringBuilder sb, IReadOnlyList<RouteDefinition> routes, string methodSuffix)
+  {
+    for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
+    {
+      string words = string.Join(", ", LiteralWords(routes[routeIndex]).Select(w => $"\"{Escape(w)}\""));
+      sb.AppendLine($"  private static readonly string[] __JsonRouteWords{methodSuffix}_{routeIndex} = [{words}];");
+    }
+
+    sb.AppendLine();
+    sb.AppendLine($"  private static bool {TryBindMethodName(methodSuffix)}(");
+    sb.AppendLine("    string route,");
+    sb.AppendLine("    global::System.Text.Json.JsonElement arguments,");
+    sb.AppendLine("    out global::TimeWarp.Nuru.NuruBoundRequest? request,");
+    sb.AppendLine("    out global::TimeWarp.Nuru.NuruBindError? error)");
+    sb.AppendLine("  {");
+    sb.AppendLine("    request = null;");
+    sb.AppendLine("    global::System.Collections.Generic.Dictionary<string, global::System.Text.Json.JsonElement> __jsonMap = new(global::System.StringComparer.Ordinal);");
+    sb.AppendLine("    if (arguments.ValueKind == global::System.Text.Json.JsonValueKind.Object)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      foreach (global::System.Text.Json.JsonProperty __prop in arguments.EnumerateObject())");
+    sb.AppendLine("      {");
+    sb.AppendLine("        __jsonMap[__prop.Name] = __prop.Value;");
+    sb.AppendLine("      }");
+    sb.AppendLine("    }");
+    sb.AppendLine("    else if (arguments.ValueKind != global::System.Text.Json.JsonValueKind.Undefined)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      error = new global::TimeWarp.Nuru.NuruBindError(global::TimeWarp.Nuru.NuruBindErrorKind.NotAnObject, null, \"Error: arguments must be a JSON object.\");");
+    sb.AppendLine("      return false;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+    for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
+    {
+      string pattern = Escape(routes[routeIndex].FullPattern);
+      sb.AppendLine($"    if (string.Equals(route, \"{pattern}\", global::System.StringComparison.Ordinal))");
+      sb.AppendLine("    {");
+      sb.AppendLine($"      bool __bound = {BindMethodName(methodSuffix, routeIndex)}(__JsonRouteWords{methodSuffix}_{routeIndex}, __jsonMap, 0, out {BoundClassName(methodSuffix, routeIndex)}? __request, out error);");
+      sb.AppendLine("      request = __request;");
+      sb.AppendLine("      return __bound;");
+      sb.AppendLine("    }");
+      sb.AppendLine();
+    }
+
+    sb.AppendLine("    error = new global::TimeWarp.Nuru.NuruBindError(global::TimeWarp.Nuru.NuruBindErrorKind.UnknownRoute, null, \"Error: Unknown route '\" + route + \"'.\");");
+    sb.AppendLine("    return false;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// The argv a named route matches with no parameter or option tokens: group words, literal
+  /// segments and <c>--</c> separators, in pattern order.
+  /// </summary>
+  private static List<string> LiteralWords(RouteDefinition route)
+  {
+    List<string> words = [.. GroupWords(route)];
+    foreach (SegmentDefinition segment in route.Segments)
+    {
+      if (segment is LiteralDefinition literal)
+        words.Add(literal.Value);
+      else if (segment is EndOfOptionsSeparatorDefinition)
+        words.Add("--");
+    }
+
+    return words;
   }
 
   private static void EmitAttemptBody(
@@ -501,9 +764,9 @@ internal static class JsonArgsEmitter
             }
             else
             {
-              string missing = $"\"Error: Missing required value '{Escape(slot.Key)}' for '{pattern}'.\"";
+              Fail missing = new("MissingValue", KeyLiteral(slot.Key), $"\"Error: Missing required value '{Escape(slot.Key)}' for '{pattern}'.\"");
               sb.AppendLine($"{ind}    __ok = false;");
-              sb.AppendLine($"{ind}    __fail ??= {missing};");
+              sb.AppendLine($"{ind}    {missing.Assign()}");
               // Later literals still run. They clear __litOk when they do not match,
               // so this failure is reported only when the route's literals match.
             }
@@ -534,7 +797,8 @@ internal static class JsonArgsEmitter
     sb.AppendLine($"{ind}if (__litOk && __pi != __pos.Length)");
     sb.AppendLine($"{ind}{{");
     sb.AppendLine($"{ind}  __ok = false;");
-    sb.AppendLine($"{ind}  __fail ??= \"Error: Unexpected argument for '{pattern}'.\";");
+    Fail unexpected = new("UnexpectedArgument", "null", $"\"Error: Unexpected argument for '{pattern}'.\"");
+    sb.AppendLine($"{ind}  {unexpected.Assign()}");
     sb.AppendLine($"{ind}}}");
 
     EmitUnknownKeys(sb, slots, pattern, indent);
@@ -695,6 +959,7 @@ internal static class JsonArgsEmitter
       ? "(none)"
       : string.Join(", ", slots.Select(s => s.Key).Distinct(StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal));
     known = ForInterpolation(Escape(known));
+    Fail unknown = new("UnknownKey", "__prop.Key", $"$\"Error: Unknown key '{{__prop.Key}}' for '{pattern}'. Known names: {known}.\"");
     sb.AppendLine($"{ind}if (__ok && __litOk)");
     sb.AppendLine($"{ind}{{");
     if (slots.Count == 0)
@@ -702,7 +967,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}  foreach (global::System.Collections.Generic.KeyValuePair<string, global::System.Text.Json.JsonElement> __prop in __jsonMap)");
       sb.AppendLine($"{ind}  {{");
       sb.AppendLine($"{ind}    __ok = false;");
-      sb.AppendLine($"{ind}    __fail ??= $\"Error: Unknown key '{{__prop.Key}}' for '{pattern}'. Known names: {known}.\";");
+      sb.AppendLine($"{ind}    {unknown.Assign()}");
       sb.AppendLine($"{ind}    break;");
       sb.AppendLine($"{ind}  }}");
     }
@@ -714,7 +979,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}    if (__prop.Key is not ({arms}))");
       sb.AppendLine($"{ind}    {{");
       sb.AppendLine($"{ind}      __ok = false;");
-      sb.AppendLine($"{ind}      __fail ??= $\"Error: Unknown key '{{__prop.Key}}' for '{pattern}'. Known names: {known}.\";");
+      sb.AppendLine($"{ind}      {unknown.Assign()}");
       sb.AppendLine($"{ind}      break;");
       sb.AppendLine($"{ind}    }}");
       sb.AppendLine($"{ind}  }}");
@@ -745,7 +1010,7 @@ internal static class JsonArgsEmitter
     string ind = new(' ', indent);
     string element = $"__el_{slot.Id}";
     string expected = Escape(slot.ExpectedType);
-    string fail = $"$\"Error: Key '{Escape(slot.Key)}' for '{pattern}' has the wrong JSON type. Expected {expected}.\"";
+    Fail fail = new("WrongType", KeyLiteral(slot.Key), $"$\"Error: Key '{Escape(slot.Key)}' for '{pattern}' has the wrong JSON type. Expected {expected}.\"");
     if (slot.IsNullable)
     {
       sb.AppendLine($"{ind}if ({element}.ValueKind == global::System.Text.Json.JsonValueKind.Null)");
@@ -761,7 +1026,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}if ({element}.ValueKind == global::System.Text.Json.JsonValueKind.Null)");
       sb.AppendLine($"{ind}{{");
       sb.AppendLine($"{ind}  __ok = false;");
-      sb.AppendLine($"{ind}  __fail ??= {fail};");
+      sb.AppendLine($"{ind}  {fail.Assign()}");
       sb.AppendLine($"{ind}}}");
       sb.AppendLine($"{ind}else");
       sb.AppendLine($"{ind}{{");
@@ -770,7 +1035,7 @@ internal static class JsonArgsEmitter
     }
   }
 
-  private static void EmitKindGateCore(StringBuilder sb, Slot slot, string element, string fail, int indent)
+  private static void EmitKindGateCore(StringBuilder sb, Slot slot, string element, Fail fail, int indent)
   {
     string ind = new(' ', indent);
     switch (slot.Shape)
@@ -779,7 +1044,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}if ({element}.ValueKind is not (global::System.Text.Json.JsonValueKind.True or global::System.Text.Json.JsonValueKind.False))");
         sb.AppendLine($"{ind}{{");
         sb.AppendLine($"{ind}  __ok = false;");
-        sb.AppendLine($"{ind}  __fail ??= {fail};");
+        sb.AppendLine($"{ind}  {fail.Assign()}");
         sb.AppendLine($"{ind}}}");
         break;
 
@@ -788,7 +1053,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}if ({element}.ValueKind != global::System.Text.Json.JsonValueKind.Number || !{TryGetDiscard(slot, element)})");
         sb.AppendLine($"{ind}{{");
         sb.AppendLine($"{ind}  __ok = false;");
-        sb.AppendLine($"{ind}  __fail ??= {fail};");
+        sb.AppendLine($"{ind}  {fail.Assign()}");
         sb.AppendLine($"{ind}}}");
         _ = tryGet;
         break;
@@ -798,7 +1063,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}if ({element}.ValueKind != global::System.Text.Json.JsonValueKind.String)");
         sb.AppendLine($"{ind}{{");
         sb.AppendLine($"{ind}  __ok = false;");
-        sb.AppendLine($"{ind}  __fail ??= {fail};");
+        sb.AppendLine($"{ind}  {fail.Assign()}");
         sb.AppendLine($"{ind}}}");
         if (slot.Shape == ValueShape.Enum && slot.EnumTypeName is not null)
         {
@@ -808,7 +1073,8 @@ internal static class JsonArgsEmitter
           sb.AppendLine($"{ind}  if (!__enumGate_{slot.Id}.TryConvert({element}.GetString(), out _))");
           sb.AppendLine($"{ind}  {{");
           sb.AppendLine($"{ind}    __ok = false;");
-          sb.AppendLine($"{ind}    __fail ??= {fail} + \" \" + __enumGate_{slot.Id}.GetValidValuesMessage();");
+          string validValues = $"\" \" + __enumGate_{slot.Id}.GetValidValuesMessage()";
+          sb.AppendLine($"{ind}    {fail.Assign(validValues)}");
           sb.AppendLine($"{ind}  }}");
           sb.AppendLine($"{ind}}}");
         }
@@ -821,7 +1087,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}if ({element}.ValueKind != global::System.Text.Json.JsonValueKind.Array)");
         sb.AppendLine($"{ind}{{");
         sb.AppendLine($"{ind}  __ok = false;");
-        sb.AppendLine($"{ind}  __fail ??= {fail};");
+        sb.AppendLine($"{ind}  {fail.Assign()}");
         sb.AppendLine($"{ind}}}");
         sb.AppendLine($"{ind}else");
         sb.AppendLine($"{ind}{{");
@@ -842,7 +1108,7 @@ internal static class JsonArgsEmitter
 
         sb.AppendLine($"{ind}    {{");
         sb.AppendLine($"{ind}      __ok = false;");
-        sb.AppendLine($"{ind}      __fail ??= {fail};");
+        sb.AppendLine($"{ind}      {fail.Assign()}");
         sb.AppendLine($"{ind}      break;");
         sb.AppendLine($"{ind}    }}");
         if (slot.Shape == ValueShape.EnumList && slot.EnumTypeName is not null)
@@ -853,7 +1119,8 @@ internal static class JsonArgsEmitter
           sb.AppendLine($"{ind}      if (!__enumItem_{slot.Id}.TryConvert(__item.GetString(), out _))");
           sb.AppendLine($"{ind}      {{");
           sb.AppendLine($"{ind}        __ok = false;");
-          sb.AppendLine($"{ind}        __fail ??= {fail} + \" \" + __enumItem_{slot.Id}.GetValidValuesMessage();");
+          string validValues = $"\" \" + __enumItem_{slot.Id}.GetValidValuesMessage()";
+          sb.AppendLine($"{ind}        {fail.Assign(validValues)}");
           sb.AppendLine($"{ind}        break;");
           sb.AppendLine($"{ind}      }}");
           sb.AppendLine($"{ind}    }}");
@@ -867,7 +1134,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}if ({element}.ValueKind is not (global::System.Text.Json.JsonValueKind.Object or global::System.Text.Json.JsonValueKind.Array))");
         sb.AppendLine($"{ind}{{");
         sb.AppendLine($"{ind}  __ok = false;");
-        sb.AppendLine($"{ind}  __fail ??= {fail};");
+        sb.AppendLine($"{ind}  {fail.Assign()}");
         sb.AppendLine($"{ind}}}");
         break;
     }
@@ -887,7 +1154,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}    if (!__jsonMap.TryGetValue(\"{Escape(slot.Key)}\", out global::System.Text.Json.JsonElement __flagEl_{slot.Id}) || __flagEl_{slot.Id}.ValueKind != global::System.Text.Json.JsonValueKind.True)");
         sb.AppendLine($"{ind}    {{");
         sb.AppendLine($"{ind}      __ok = false;");
-        sb.AppendLine($"{ind}      __fail ??= \"Error: Missing required value '{Escape(slot.Key)}' for '{pattern}'.\";");
+        sb.AppendLine($"{ind}      {MissingValue(slot, pattern).Assign()}");
         sb.AppendLine($"{ind}    }}");
         sb.AppendLine($"{ind}  }}");
       }
@@ -896,7 +1163,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}  if (!__av_{slot.Id} && !__jsonMap.ContainsKey(\"{Escape(slot.Key)}\"))");
         sb.AppendLine($"{ind}  {{");
         sb.AppendLine($"{ind}    __ok = false;");
-        sb.AppendLine($"{ind}    __fail ??= \"Error: Missing required value '{Escape(slot.Key)}' for '{pattern}'.\";");
+        sb.AppendLine($"{ind}    {MissingValue(slot, pattern).Assign()}");
         sb.AppendLine($"{ind}  }}");
       }
     }
@@ -912,15 +1179,16 @@ internal static class JsonArgsEmitter
     pattern = ForInterpolation(pattern);
     string ind = new(' ', indent);
     string expected = Escape(slot.ExpectedType);
-    string jsonFail = $"$\"Error: Key '{Escape(slot.Key)}' for '{pattern}' has the wrong JSON type. Expected {expected}.\"";
-    string argvFail = $"$\"Error: Invalid value for '{Escape(slot.Key)}' on '{pattern}'. Expected {expected}.\"";
+    Fail jsonFail = new("WrongType", KeyLiteral(slot.Key), $"$\"Error: Key '{Escape(slot.Key)}' for '{pattern}' has the wrong JSON type. Expected {expected}.\"");
+    Fail argvFail = new("InvalidValue", KeyLiteral(slot.Key), $"$\"Error: Invalid value for '{Escape(slot.Key)}' on '{pattern}'. Expected {expected}.\"");
     sb.AppendLine($"{ind}if (__av_{slot.Id})");
     sb.AppendLine($"{ind}{{");
     if (slot.Shape == ValueShape.Json)
     {
       string form = slot.Option?.LongForm ?? slot.Key;
       sb.AppendLine($"{ind}  __ok = false;");
-      sb.AppendLine($"{ind}  __fail ??= \"Error: --{Escape(form)} is JSON. Pass it with --json-args.\";");
+      Fail argvJson = new("InvalidValue", KeyLiteral(slot.Key), $"\"Error: --{Escape(form)} is JSON. Pass it with --json-args.\"");
+      sb.AppendLine($"{ind}  {argvJson.Assign()}");
     }
     else if (slot.IsList)
     {
@@ -953,7 +1221,7 @@ internal static class JsonArgsEmitter
     return "default!";
   }
 
-  private static void EmitAssignFromJson(StringBuilder sb, Slot slot, string element, string fail, int indent)
+  private static void EmitAssignFromJson(StringBuilder sb, Slot slot, string element, Fail fail, int indent)
   {
     string ind = new(' ', indent);
     if (slot.IsNullable)
@@ -973,7 +1241,7 @@ internal static class JsonArgsEmitter
     }
   }
 
-  private static void EmitAssignFromJsonCore(StringBuilder sb, Slot slot, string element, string fail, int indent)
+  private static void EmitAssignFromJsonCore(StringBuilder sb, Slot slot, string element, Fail fail, int indent)
   {
     string ind = new(' ', indent);
     switch (slot.Shape)
@@ -988,7 +1256,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}if (!{call})");
         sb.AppendLine($"{ind}{{");
         sb.AppendLine($"{ind}  __ok = false;");
-        sb.AppendLine($"{ind}  __fail ??= {fail};");
+        sb.AppendLine($"{ind}  {fail.Assign()}");
         sb.AppendLine($"{ind}}}");
         sb.AppendLine($"{ind}else");
         sb.AppendLine($"{ind}{{");
@@ -1016,7 +1284,7 @@ internal static class JsonArgsEmitter
           sb.AppendLine($"{ind}  if (!{itemCall})");
           sb.AppendLine($"{ind}  {{");
           sb.AppendLine($"{ind}    __ok = false;");
-          sb.AppendLine($"{ind}    __fail ??= {fail};");
+          sb.AppendLine($"{ind}    {fail.Assign()}");
           sb.AppendLine($"{ind}    break;");
           sb.AppendLine($"{ind}  }}");
           sb.AppendLine($"{ind}  __items_{slot.Id}.Add(__itemNum.ToString(global::System.Globalization.CultureInfo.InvariantCulture));");
@@ -1047,7 +1315,7 @@ internal static class JsonArgsEmitter
     }
   }
 
-  private static void EmitAssignScalarFromString(StringBuilder sb, Slot slot, string raw, string fail, int indent)
+  private static void EmitAssignScalarFromString(StringBuilder sb, Slot slot, string raw, Fail fail, int indent)
   {
     string ind = new(' ', indent);
     if (slot.Shape == ValueShape.Enum && slot.EnumTypeName is not null)
@@ -1056,7 +1324,8 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}if (!__enum_{slot.Id}.TryConvert({raw}, out object? __enumObj_{slot.Id}))");
       sb.AppendLine($"{ind}{{");
       sb.AppendLine($"{ind}  __ok = false;");
-      sb.AppendLine($"{ind}  __fail ??= {fail} + \" \" + __enum_{slot.Id}.GetValidValuesMessage();");
+      string validValues = $"\" \" + __enum_{slot.Id}.GetValidValuesMessage()";
+      sb.AppendLine($"{ind}  {fail.Assign(validValues)}");
       sb.AppendLine($"{ind}}}");
       sb.AppendLine($"{ind}else");
       sb.AppendLine($"{ind}{{");
@@ -1071,7 +1340,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}if ({raw} is null || !__conv_{slot.Id}.TryConvert({raw}, out object? __convObj_{slot.Id}))");
       sb.AppendLine($"{ind}{{");
       sb.AppendLine($"{ind}  __ok = false;");
-      sb.AppendLine($"{ind}  __fail ??= {fail};");
+      sb.AppendLine($"{ind}  {fail.Assign()}");
       sb.AppendLine($"{ind}}}");
       sb.AppendLine($"{ind}else");
       sb.AppendLine($"{ind}{{");
@@ -1096,7 +1365,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}if ({raw} is null || !({condition}))");
       sb.AppendLine($"{ind}{{");
       sb.AppendLine($"{ind}  __ok = false;");
-      sb.AppendLine($"{ind}  __fail ??= {fail};");
+      sb.AppendLine($"{ind}  {fail.Assign()}");
       sb.AppendLine($"{ind}}}");
       sb.AppendLine($"{ind}else");
       sb.AppendLine($"{ind}{{");
@@ -1112,7 +1381,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}if ({raw} is null || !({condition}))");
       sb.AppendLine($"{ind}{{");
       sb.AppendLine($"{ind}  __ok = false;");
-      sb.AppendLine($"{ind}  __fail ??= {fail};");
+      sb.AppendLine($"{ind}  {fail.Assign()}");
       sb.AppendLine($"{ind}}}");
       sb.AppendLine($"{ind}else");
       sb.AppendLine($"{ind}{{");
@@ -1124,7 +1393,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine($"{ind}{slot.VariableName} = {raw}!;");
   }
 
-  private static void EmitAssignListFromStrings(StringBuilder sb, Slot slot, string list, string fail, int indent)
+  private static void EmitAssignListFromStrings(StringBuilder sb, Slot slot, string list, Fail fail, int indent)
   {
     string ind = new(' ', indent);
     if (slot.Shape == ValueShape.TextList && IsPlainString(slot))
@@ -1142,7 +1411,8 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}  if (!__enumList_{slot.Id}.TryConvert({list}[__ei], out object? __enumObj))");
       sb.AppendLine($"{ind}  {{");
       sb.AppendLine($"{ind}    __ok = false;");
-      sb.AppendLine($"{ind}    __fail ??= {fail} + \" \" + __enumList_{slot.Id}.GetValidValuesMessage();");
+      string validValues = $"\" \" + __enumList_{slot.Id}.GetValidValuesMessage()";
+      sb.AppendLine($"{ind}    {fail.Assign(validValues)}");
       sb.AppendLine($"{ind}    break;");
       sb.AppendLine($"{ind}  }}");
       sb.AppendLine($"{ind}  __enumArr_{slot.Id}[__ei] = ({slot.EnumTypeName})__enumObj!;");
@@ -1166,7 +1436,7 @@ internal static class JsonArgsEmitter
         sb.AppendLine($"{ind}  if (!({condition}))");
         sb.AppendLine($"{ind}  {{");
         sb.AppendLine($"{ind}    __ok = false;");
-        sb.AppendLine($"{ind}    __fail ??= {fail};");
+        sb.AppendLine($"{ind}    {fail.Assign()}");
         sb.AppendLine($"{ind}    break;");
         sb.AppendLine($"{ind}  }}");
         sb.AppendLine($"{ind}  __typed_{slot.Id}[__ni] = __parsed_{slot.Id};");
@@ -1187,7 +1457,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}  if (!({condition}))");
       sb.AppendLine($"{ind}  {{");
       sb.AppendLine($"{ind}    __ok = false;");
-      sb.AppendLine($"{ind}    __fail ??= {fail};");
+      sb.AppendLine($"{ind}    {fail.Assign()}");
       sb.AppendLine($"{ind}    break;");
       sb.AppendLine($"{ind}  }}");
       sb.AppendLine($"{ind}  __numArr_{slot.Id}[__ni] = __parsed_{slot.Id};");
@@ -1199,14 +1469,14 @@ internal static class JsonArgsEmitter
     sb.AppendLine($"{ind}{slot.VariableName} = [.. {list}];");
   }
 
-  private static void EmitSpecialParse(StringBuilder sb, Slot slot, string raw, string fail, int indent)
+  private static void EmitSpecialParse(StringBuilder sb, Slot slot, string raw, Fail fail, int indent)
   {
     string ind = new(' ', indent);
     string constraint = slot.BaseConstraint!.ToLowerInvariant();
     sb.AppendLine($"{ind}if ({raw} is null)");
     sb.AppendLine($"{ind}{{");
     sb.AppendLine($"{ind}  __ok = false;");
-    sb.AppendLine($"{ind}  __fail ??= {fail};");
+    sb.AppendLine($"{ind}  {fail.Assign()}");
     sb.AppendLine($"{ind}}}");
     sb.AppendLine($"{ind}else");
     sb.AppendLine($"{ind}{{");
@@ -1215,7 +1485,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}  if (!global::System.Uri.TryCreate({raw}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? __uri_{slot.Id}) || __uri_{slot.Id} is null)");
       sb.AppendLine($"{ind}  {{");
       sb.AppendLine($"{ind}    __ok = false;");
-      sb.AppendLine($"{ind}    __fail ??= {fail};");
+      sb.AppendLine($"{ind}    {fail.Assign()}");
       sb.AppendLine($"{ind}  }}");
       sb.AppendLine($"{ind}  else");
       sb.AppendLine($"{ind}  {{");
@@ -1231,7 +1501,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}  catch (global::System.Exception)");
       sb.AppendLine($"{ind}  {{");
       sb.AppendLine($"{ind}    __ok = false;");
-      sb.AppendLine($"{ind}    __fail ??= {fail};");
+      sb.AppendLine($"{ind}    {fail.Assign()}");
       sb.AppendLine($"{ind}  }}");
     }
     else
@@ -1243,7 +1513,7 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}  catch (global::System.Exception)");
       sb.AppendLine($"{ind}  {{");
       sb.AppendLine($"{ind}    __ok = false;");
-      sb.AppendLine($"{ind}    __fail ??= {fail};");
+      sb.AppendLine($"{ind}    {fail.Assign()}");
       sb.AppendLine($"{ind}  }}");
     }
 
@@ -1258,7 +1528,8 @@ internal static class JsonArgsEmitter
     string methodSuffix,
     string? loggerFactoryFieldName,
     bool hasGeneratedMediator,
-    int indent)
+    int indent,
+    string? captureResultInto)
   {
     string ind = new(' ', indent);
     ImmutableArray<BehaviorDefinition> behaviors = app.Behaviors.IsDefault ? [] : app.Behaviors;
@@ -1287,7 +1558,8 @@ internal static class JsonArgsEmitter
           httpClientConfigurations: app.HttpClientConfigurations,
           useDirectInvoke: app.UseDirectInvoke,
           hasGeneratedMediator: hasGeneratedMediator,
-          jsonArgsPath: true),
+          jsonArgsPath: true,
+          captureResultInto: captureResultInto),
         jsonArgsPath: true);
     }
     else
@@ -1304,7 +1576,8 @@ internal static class JsonArgsEmitter
         httpClientConfigurations: app.HttpClientConfigurations,
         useDirectInvoke: app.UseDirectInvoke,
         hasGeneratedMediator: hasGeneratedMediator,
-        jsonArgsPath: true);
+        jsonArgsPath: true,
+        captureResultInto: captureResultInto);
     }
 
     _ = ind;

@@ -80,6 +80,32 @@ foreach (EndpointCapability endpoint in catalog.Endpoints)
 - `FilterByGroup` splits the filter on `.` and compares each segment ignoring case. It returns a new response with `filter.group` set.
 - Each app built in one assembly has its own catalog with only its own routes.
 
+## In-process bind and invoke
+
+A host that gets a JSON object from somewhere other than argv (an MCP `tools/call`, a batch file, a daemon request) binds it to a route and runs that route in the same process. Binding uses the same generated code as `--json-args`, so the rules below apply unchanged.
+
+```csharp
+using JsonDocument doc = JsonDocument.Parse("""{"env":"prod","count":3}""");
+
+if (!app.TryBind("deploy {env} --count {count:int}", doc.RootElement, out NuruBoundRequest? request, out NuruBindError? error))
+{
+  // error.Kind, error.Key, and error.Message (the text --json-args prints)
+  return Fail(error.Message);
+}
+
+object? result = await app.InvokeAsync(request, cancellationToken); // typed result, nothing written
+
+using TestTerminal text = new();
+int exitCode = await app.RenderAsync(request, result, text);        // the CLI's text, when a host wants it
+```
+
+- `TryBind(route, arguments, out request, out error)` names the route by its catalog `pattern` (ordinal). `arguments` is a JSON object; `default(JsonElement)` binds no arguments. No argv is parsed: the binder sees only the route's literal words, so every parameter and option comes from JSON. Keys, types, `null`, arrays, defaults, and the first failure reported are the same as `--json-args` without argv.
+- `NuruBindError.Kind` is `UnknownRoute`, `NotAnObject`, `UnknownKey`, `MissingValue`, `WrongType`, `InvalidValue`, or `UnexpectedArgument`. `Key` is the JSON key the failure is about, or null. `Message` is the line `--json-args` writes to stderr.
+- `InvokeAsync(request, cancellationToken)` runs the same configuration, services, command scope, `INuruBehavior` chain, and handler (or mediator dispatch) as the CLI. It returns the handler's result boxed, without writing it: for `OneOf<T, SharedProblemDetails>` the `OneOf` itself, and null for `void` or `Unit`. Handler exceptions propagate. It throws `InvalidOperationException` when route execution stops before the handler (for example, no handler is registered), and `ArgumentException` for a request another app bound.
+- `RenderAsync(request, result, terminal)` writes the result as the CLI does for that route: a registered or declared `IResponseRenderer<T>`, problem details to stderr, otherwise the output strategy (`returnType.kind`). It returns the exit code the CLI would: the problem status, otherwise 0.
+- The binder and invoker are attached with the catalog, by the generated `Build()` interceptor, so an app that is built but never run supports them. The code is generated: no reflection, AOT-safe.
+- Calls run one at a time. Route execution uses process-wide service state and `Environment.ExitCode`, as `RunAsync` does.
+
 ## `--json-args`
 
 `--json-args` takes one value. There is no short alias. The value is a separate argv token.

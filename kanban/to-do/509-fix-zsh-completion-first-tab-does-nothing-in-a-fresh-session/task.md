@@ -42,9 +42,19 @@ Keep the existing `compinit` guard above it for the source/eval path.
 
 ## Acceptance criteria
 
-- [ ] First Tab completes in a fresh zsh session (autoloaded from `fpath`).
-- [ ] A test covers it: a zsh pty-driven (`zpty`) test, or at minimum a template-content test plus a scripted zsh check.
-- [ ] The existing source/eval path (`source <(app --generate-completion zsh)`) keeps working.
+- [x] First Tab completes in a fresh zsh session (autoloaded from `fpath`).
+- [x] A test covers it: a zsh pty-driven (`zpty`) test, or at minimum a template-content test plus a scripted zsh check.
+- [x] The existing source/eval path (`source <(app --generate-completion zsh)`) keeps working.
+
+## Goal (implementer restatement)
+
+The generated zsh script is one file with two entry paths. `compinit` autoloads it from `fpath` on the first Tab. Zsh runs that file as the completion function and, because the file also defines the function, does not run the new body. A trailing `compdef` only registers the command, so the first Tab shows nothing and the second Tab works. When zsh is loading the file (`zsh_eval_context` ends in `loadautofunc`), the script has to call the function it just defined. When the user sources or evals the script, it has to `compdef` instead, and it still runs `compinit` when `compdef` is missing.
+
+Acceptance:
+
+- A fresh `zsh -f` with the script on `fpath` lists candidates on the first Tab.
+- Tests lock the template text, the first autoloaded call, a `zpty` Tab, and both `source <(…)` and `eval`.
+- Sourcing or eval'ing the script still registers the completer and completes.
 
 ## Notes
 
@@ -54,3 +64,33 @@ Keep the existing `compinit` guard above it for the source/eval path.
 ## Session
 
 - Created: 3431885 (2026-10-18)
+- Implementation: task-work (2026-10-19)
+
+## Results
+
+The generated zsh script calls `_{{APP_NAME}}` when zsh is autoloading the file, and still calls `compdef` when the file is sourced or eval'd. The `compinit` guard above that branch is unchanged.
+
+- Template: `source/timewarp-nuru/completion/completion/templates/zsh-completion-dynamic.zsh`. On `loadautofunc` (the context `compinit` uses for the first Tab) the script runs the function the file just defined. `source` and `eval` see a different `zsh_eval_context` and register with `compdef`.
+- Test: `tests/timewarp-nuru-tests/completion/completion-31-zsh-autoload.cs`. It checks the template order, drives the first autoloaded `_app` call, drives `source <(cat _app)` and `eval`, and drives one Tab through `zpty` in `zsh -f -i`. The callback stub records one hit. A regression to a bare trailing `compdef` leaves that hit at 0 and the Tab times out.
+- CI: `.github/workflows/workflow.yml` installs zsh when the runner image does not have it, so the zsh checks run in GitHub Actions.
+- Changelog: Unreleased Fixed entry (509).
+- Docs: `documentation/user/features/shell-completion.md` already describes both the `source <(…)` path and the `fpath` + `compinit` path. The install steps did not change.
+- `ganda repo audit`: 30 passed, 0 failed.
+- Related script tests: `completion-20-dynamic-script-gen.cs` 15 passed, `completion-29-directive.cs` 11 passed.
+- CI runner (`dotnet run tests/ci-tests/run-ci-tests.cs`): multi-mode 1943 total, 1937 passed, 6 skipped, 0 failed. `ZshAutoload` passed 4 inside that run. Standalone: 0 failed.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run tests/timewarp-nuru-tests/completion/completion-31-zsh-autoload.cs
+```
+
+Expect:
+
+- Total 4, Passed 4.
+- `Should_complete_on_the_first_autoloaded_call` prints `CANDIDATES`, `nuru509candidate:Unique desc`, `status`, and `HITS:1` on that first call.
+- `Should_complete_when_sourced_and_when_evald` prints `COMP:_app`, `HITS:SOURCE:1`, and `HITS:EVAL:1`.
+- `Should_list_the_candidate_on_the_first_tab` prints `TAB_HITS:1` and `TAB_OK`. The pty listing contains `nuru509candidate`.
+- None of the runs print `FILES_CALLED` or `command not found`.

@@ -116,6 +116,8 @@ See [Auto-Help](auto-help.md) for the shared-prefix case.
 
 `--json-args` is not an endpoint. It does not appear in the `endpoints` array. Root help lists it next to `--capabilities`.
 
+The same catalog is available in process as `NuruApp.Capabilities`, with `CapabilitiesResponse.FilterByGroup(group)` for `--group-filter`. `--capabilities` prints that instance. See [In-process catalog](agent-invocation.md#in-process-catalog).
+
 ## Overriding Built-in Routes
 
 There is no option to switch built-in routes off. The generator emits your own routes first and the built-in `--help`, `--version` and `--capabilities` handling after them, so a route you map with the same pattern takes precedence:

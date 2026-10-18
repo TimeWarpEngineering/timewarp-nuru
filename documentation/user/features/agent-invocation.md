@@ -37,6 +37,47 @@ myapp apply_patch --json-args @./apply-patch.json
 
 `parameters[]` and `options[]` remain the schema. `--capabilities` does not emit a JSON Schema.
 
+Each endpoint ends with `returnType`: the CLR type name of the result (the awaited type for an async handler, without `global::`) and how the CLI writes it.
+
+```json
+"returnType": {
+  "name": "double",
+  "kind": "primitive"
+}
+```
+
+| `kind` | Result types | CLI output |
+|--------|--------------|------------|
+| `unit` | `void`, `Task`, `TimeWarp.Mediator.Unit` (name `void` for the first two) | nothing |
+| `primitive` | `string`, numeric types, `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `TimeSpan` | text |
+| `json` | anything else, including nullable value types, enums, arrays, and records | JSON |
+
+`returnType` is nullable for the same reason as `invocation`: a document from a CLI built before it existed still deserializes, with `ReturnType` null.
+
+## In-process catalog
+
+A host that runs in the same process as the app reads the catalog without spawning the CLI. `NuruApp.Capabilities` returns the `CapabilitiesResponse` that `--capabilities` prints, and `CapabilitiesResponse.FilterByGroup(group)` returns the document `--capabilities --group-filter {group}` prints. The source generator builds the catalog at compile time, so neither call uses reflection, and both work under AOT.
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("myapp")
+  .DiscoverEndpoints()
+  .Build();
+
+CapabilitiesResponse catalog = app.Capabilities;            // same as: myapp --capabilities
+CapabilitiesResponse admin = catalog.FilterByGroup("admin"); // same as: myapp --capabilities --group-filter admin
+
+foreach (EndpointCapability endpoint in catalog.Endpoints)
+{
+  Console.WriteLine($"{endpoint.Pattern} -> {endpoint.ReturnType?.Kind}");
+}
+```
+
+- The catalog is attached by the generated interceptor for the app's `Build()` call, so it is available before `RunAsync()`. An app whose `Build()` the generator did not see gets it at the start of `RunAsync()`. A `NuruApp` with no generated catalog throws `InvalidOperationException`.
+- `Capabilities` is built on first access and cached. `--capabilities` serializes that same instance, so the two cannot drift. Treat it as read-only.
+- `FilterByGroup` splits the filter on `.` and compares each segment ignoring case. It returns a new response with `filter.group` set.
+- Each app built in one assembly has its own catalog with only its own routes.
+
 ## `--json-args`
 
 `--json-args` takes one value. There is no short alias. The value is a separate argv token.

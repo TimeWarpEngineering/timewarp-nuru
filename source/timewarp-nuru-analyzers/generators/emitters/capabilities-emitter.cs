@@ -1,5 +1,7 @@
 // Emits capabilities DTO construction code for AI agent discovery.
-// Generates the PrintCapabilities method for --capabilities flag handling.
+// Generates a lazily built, cached CapabilitiesResponse per app (GetCapabilities), which
+// NuruApp.Capabilities exposes in process, and the PrintCapabilities method for --capabilities
+// that serializes that same instance.
 // Outputs a flat list of EndpointCapability objects with GroupPath arrays.
 
 namespace TimeWarp.Nuru.Generators;
@@ -8,13 +10,14 @@ using System.Text;
 
 /// <summary>
 /// Emits code to build and serialize a CapabilitiesResponse DTO for AI agents.
-/// Creates the PrintCapabilities method that outputs structured JSON endpoint information.
+/// Creates the cached GetCapabilities method that builds the catalog once and the PrintCapabilities
+/// method that writes it as JSON.
 /// All routes are emitted as a flat list; group hierarchy is encoded in the GroupPath array.
 /// </summary>
 internal static class CapabilitiesEmitter
 {
   /// <summary>
-  /// Emits the PrintCapabilities method for an application.
+  /// Emits the GetCapabilities, BuildCapabilities and PrintCapabilities methods for an application.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="model">The application model containing routes and metadata.</param>
@@ -22,11 +25,23 @@ internal static class CapabilitiesEmitter
   /// <param name="enumValues">Precomputed enum member names keyed by normalized metadata type name.</param>
   public static void Emit(StringBuilder sb, AppModel model, string methodSuffix, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
-    sb.AppendLine($"  private static void PrintCapabilities{methodSuffix}(ITerminal terminal, string? groupFilter = null)");
+    sb.AppendLine($"  private static global::TimeWarp.Nuru.CapabilitiesResponse? __capabilities{methodSuffix};");
+    sb.AppendLine();
+    sb.AppendLine("  // Built on first use and cached. NuruApp.Capabilities and --capabilities share this instance.");
+    sb.AppendLine($"  private static global::TimeWarp.Nuru.CapabilitiesResponse GetCapabilities{methodSuffix}() =>");
+    sb.AppendLine($"    global::System.Threading.LazyInitializer.EnsureInitialized(ref __capabilities{methodSuffix}, BuildCapabilities{methodSuffix});");
+    sb.AppendLine();
+    sb.AppendLine($"  private static global::TimeWarp.Nuru.CapabilitiesResponse BuildCapabilities{methodSuffix}()");
     sb.AppendLine("  {");
 
     EmitResponseConstruction(sb, model, enumValues);
 
+    sb.AppendLine("    return response;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+    sb.AppendLine($"  private static void PrintCapabilities{methodSuffix}(ITerminal terminal, string? groupFilter = null)");
+    sb.AppendLine("  {");
+    sb.AppendLine($"    global::TimeWarp.Nuru.CapabilitiesResponse response = groupFilter is null ? GetCapabilities{methodSuffix}() : GetCapabilities{methodSuffix}().FilterByGroup(groupFilter);");
     sb.AppendLine("    string json = global::System.Text.Json.JsonSerializer.Serialize(response, global::TimeWarp.Nuru.CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse);");
     sb.AppendLine("    terminal.WriteLine(json);");
     sb.AppendLine("  }");
@@ -111,19 +126,6 @@ internal static class CapabilitiesEmitter
     }
 
     sb.AppendLine();
-    sb.AppendLine("    // Filter endpoints by group prefix if groupFilter is provided");
-    sb.AppendLine("    global::System.Collections.Generic.IReadOnlyList<global::TimeWarp.Nuru.EndpointCapability> __filteredEndpoints = __endpoints;");
-    sb.AppendLine("    if (groupFilter is not null)");
-    sb.AppendLine("    {");
-    sb.AppendLine("      string[] __groupParts = groupFilter.Split('.');");
-    sb.AppendLine("      __filteredEndpoints = __endpoints");
-    sb.AppendLine("        .Where(e => e.GroupPath.Count >= __groupParts.Length &&");
-    sb.AppendLine("          global::System.Linq.Enumerable.Zip(__groupParts, e.GroupPath)");
-    sb.AppendLine("            .All(p => string.Equals(p.First, p.Second, global::System.StringComparison.OrdinalIgnoreCase)))");
-    sb.AppendLine("        .ToList();");
-    sb.AppendLine("    }");
-    sb.AppendLine();
-
     sb.AppendLine("    global::TimeWarp.Nuru.CapabilitiesResponse response = new()");
     sb.AppendLine("    {");
     sb.AppendLine($"      Name = {nameLiteral ?? "global::System.Reflection.Assembly.GetEntryAssembly()!.GetName().Name!"},");
@@ -135,8 +137,7 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"      Description = \"{description}\",");
     }
 
-    sb.AppendLine("      Filter = groupFilter is null ? null : new global::TimeWarp.Nuru.CapabilitiesFilter { Group = groupFilter },");
-    sb.AppendLine("      Endpoints = __filteredEndpoints,");
+    sb.AppendLine("      Endpoints = __endpoints.AsReadOnly(),");
     sb.AppendLine("      Invocation = global::TimeWarp.Nuru.InvocationCapability.Standard");
     sb.AppendLine("    };");
   }
@@ -222,9 +223,7 @@ internal static class CapabilitiesEmitter
       EmitOptionCapability(sb, option, optionIsLast, enumValues, handlerTypeName);
     }
 
-    // Options array closes with a trailing comma only when an Examples block follows -
-    // routes with no examples must emit byte-identical code to before this feature existed.
-    sb.AppendLine(route.HasExamples ? "        ]," : "        ]");
+    sb.AppendLine("        ],");
 
     // Examples (omitted entirely when the route has none)
     if (route.HasExamples)
@@ -238,9 +237,16 @@ internal static class CapabilitiesEmitter
         EmitExampleCapability(sb, examples[i], exampleIsLast);
       }
 
-      sb.AppendLine("        ]");
+      sb.AppendLine("        ],");
     }
 
+    // ReturnType (always emitted, last)
+    (string returnTypeName, string returnTypeKind) = DescribeReturnType(route.Handler);
+    sb.AppendLine("        ReturnType = new global::TimeWarp.Nuru.ReturnTypeCapability");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          Name = \"{EmitterStringUtils.EscapeForStringLiteral(returnTypeName)}\",");
+    sb.AppendLine($"          Kind = global::TimeWarp.Nuru.ReturnTypeKind.{returnTypeKind}");
+    sb.AppendLine("        }");
     sb.AppendLine("      });");
   }
 
@@ -380,6 +386,27 @@ internal static class CapabilitiesEmitter
 
     string comma = isLast ? "" : ",";
     sb.AppendLine($"            }}{comma}");
+  }
+
+  /// <summary>
+  /// Describes a handler's result: the awaited CLR type name without <c>global::</c>, and the
+  /// ReturnTypeKind member name from the same output strategy the generated invoker uses.
+  /// </summary>
+  internal static (string Name, string Kind) DescribeReturnType(HandlerDefinition handler)
+  {
+    HandlerReturnType returnType = handler.ReturnType;
+    if (!returnType.HasValue)
+      return ("void", "Unit");
+
+    string typeName = returnType.UnwrappedTypeName ?? returnType.FullTypeName;
+    string kind = HandlerInvokerEmitter.GetOutputStrategy(typeName) switch
+    {
+      OutputStrategy.None => "Unit",
+      OutputStrategy.Json => "Json",
+      _ => "Primitive"
+    };
+
+    return (typeName.Replace("global::", "", StringComparison.Ordinal), kind);
   }
 
   /// <summary>

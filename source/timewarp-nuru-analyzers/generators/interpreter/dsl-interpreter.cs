@@ -1748,14 +1748,29 @@ public sealed class DslInterpreter
       return null;
     }
 
-    // Mark as built
-    appBuilder.Build();
+    // Mark as built, recording the Build() call so the emitter can attach the capabilities catalog
+    appBuilder.Build(ExtractBuildInterceptSite(invocation));
 
     // Track this built app for finalization
     BuiltApps.Add(appBuilder);
 
     // Return a marker for RunAsync detection
     return new BuiltAppMarker(appBuilder);
+  }
+
+  /// <summary>
+  /// Extracts the intercept site of a Build() call and the type that declares that Build().
+  /// Returns null when the call cannot be intercepted.
+  /// </summary>
+  private BuildInterceptSite? ExtractBuildInterceptSite(InvocationExpressionSyntax invocation)
+  {
+    if (SemanticModel.GetSymbolInfo(invocation, CancellationToken).Symbol is not IMethodSymbol { ContainingType: INamedTypeSymbol containingType })
+      return null;
+
+    InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, invocation);
+    return site is null
+      ? null
+      : new BuildInterceptSite(site, containingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
   }
 
   /// <summary>

@@ -80,9 +80,12 @@ internal static class InterceptorEmitter
     BehaviorEmitter.EmitBehaviorFields(sb, [.. model.AllBehaviors], [.. model.AllServices], loggerFactoryFieldName);
 
     // Emit per-app interceptor methods
+    // A Build() site is emitted once even when two app models share it.
+    HashSet<string> emittedBuildSites = new(StringComparer.Ordinal);
     for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
     {
       AppModel app = model.Apps[appIndex];
+      EmitBuildInterceptorMethod(sb, app, appIndex, model, emittedBuildSites);
       EmitAppInterceptorMethod(sb, app, appIndex, model, loggerFactoryFieldName);
       EmitRunReplAsyncInterceptorMethod(sb, app, appIndex, model);
     }
@@ -90,6 +93,27 @@ internal static class InterceptorEmitter
     EmitClassEnd(sb, model, enumValues);
 
     return sb.ToString();
+  }
+
+  /// <summary>
+  /// Emits the Build() interceptor for one app. It calls the original Build() and attaches the
+  /// app's generated capabilities catalog, so NuruApp.Capabilities works before RunAsync().
+  /// </summary>
+  private static void EmitBuildInterceptorMethod(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, HashSet<string> emittedBuildSites)
+  {
+    if (app.BuildSite is not BuildInterceptSite buildSite || !emittedBuildSites.Add(buildSite.Site.AttributeSyntax))
+      return;
+
+    string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+
+    sb.AppendLine($"  {buildSite.Site.AttributeSyntax}");
+    sb.AppendLine($"  public static global::TimeWarp.Nuru.NuruApp Build_Intercepted{methodSuffix}_{emittedBuildSites.Count}(this {buildSite.ReceiverTypeName} builder)");
+    sb.AppendLine("  {");
+    sb.AppendLine("    global::TimeWarp.Nuru.NuruApp app = builder.Build();");
+    sb.AppendLine($"    app.CapabilitiesProvider = GetCapabilities{methodSuffix};");
+    sb.AppendLine("    return app;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
   }
 
   /// <summary>
@@ -171,6 +195,8 @@ internal static class InterceptorEmitter
     sb.AppendLine("  {");
     // A previous command may have stored a problem status. This invocation starts clean.
     sb.AppendLine("    global::System.Environment.ExitCode = 0;");
+    // Fallback for an app whose Build() call was not intercepted.
+    sb.AppendLine($"    app.CapabilitiesProvider ??= GetCapabilities{methodSuffix};");
 
     // Set up completion support (only when completion or REPL is enabled)
     if (app.HasCompletion || app.HasRepl)

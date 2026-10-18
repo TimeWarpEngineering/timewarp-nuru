@@ -45,6 +45,17 @@ public sealed record InterceptSiteModel(
 }
 
 /// <summary>
+/// A <c>Build()</c> call site and the type that declares the intercepted <c>Build()</c>.
+/// </summary>
+/// <remarks>
+/// <c>Build()</c> is declared on <c>NuruAppBuilder</c> and on <c>EndpointBuilder&lt;TBuilder&gt;</c>,
+/// so the interceptor's <c>this</c> parameter type comes from the call's method symbol.
+/// </remarks>
+/// <param name="Site">The intercept site of the Build() call.</param>
+/// <param name="ReceiverTypeName">Fully qualified containing type of the Build() method (with <c>global::</c>).</param>
+public sealed record BuildInterceptSite(InterceptSiteModel Site, string ReceiverTypeName);
+
+/// <summary>
 /// Intercept sites for a single builder method (e.g. "RunAsync", "RunReplAsync"), grouped so
 /// AppModel can carry the map as an equatable <see cref="EquatableArray{T}"/> of groups rather
 /// than a reference-equality <c>ImmutableDictionary</c> (which defeats caching — 454-010).

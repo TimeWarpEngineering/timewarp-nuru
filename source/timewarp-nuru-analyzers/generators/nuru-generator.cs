@@ -429,7 +429,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
 
     foreach (ExtractionResult result in extractionResults)
     {
-      if (result.Model is null || result.Model.InterceptSitesByMethod.Length == 0)
+      // An app with no entry-point call is still emitted when its Build() can be intercepted,
+      // so an in-process host can read NuruApp.Capabilities without calling RunAsync().
+      if (result.Model is null || (result.Model.InterceptSitesByMethod.Length == 0 && result.Model.BuildSite is null))
         continue;
 
       // Use BuildLocation as the deduplication key

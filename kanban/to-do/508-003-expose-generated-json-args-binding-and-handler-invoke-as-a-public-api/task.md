@@ -85,6 +85,7 @@ On `NuruApp` (core, `source/timewarp-nuru/nuru-app.cs`; types in `source/timewar
 ### Boy-scout
 
 - `source/timewarp-nuru/repl/key-bindings/key-binding-catalog.cs`: CA1830 (`Append(new string('-', n))` → `Append('-', n)`), which failed the core build when it was built from a runfile (the AOT smoke).
+- `ganda repo audit` `runfile-executable`: the new `routing-34-json-bind-invoke.cs` runfile was committed without the executable bit; set it (commit 3cd44746). Audit passes and the tree is attested.
 
 ### Not done / notes
 

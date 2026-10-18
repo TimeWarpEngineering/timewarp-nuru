@@ -22,14 +22,29 @@ Direction: Nuru routes are the contract, MCP tools are derived. Task 507 (`TimeW
 - Tests: schema parity between `--capabilities` and `tools/list` for the calculator sample; a `tools/call` round trip; annotation mapping; filter.
 - Docs: a page beside `agent-invocation.md`; note in the Roslynk-facing guidance that MCP and CLI share names and arguments exactly.
 
+## Goal (implementer restatement)
+
+Ship `TimeWarp.Nuru.McpHost` (`source/timewarp-nuru-mcphost/`), an opt-in package that serves any Nuru app's routes as MCP tools with no per-route code. Everything comes from the public catalog (`NuruApp.Capabilities`, 508-002) and the public binder (`TryBind` / `InvokeAsync` / `RenderAsync`, 508-003). No reflection over app types.
+
+Acceptance criteria:
+
+1. One tool per catalog endpoint. Tool name = the route's literal words (group path included) joined by `_`, sanitized to MCP tool-name characters, with a numeric suffix on a collision. Description = route description. Input schema = JSON Schema generated from `parameters[]` and `options[]`: same key names `--json-args` accepts, JSON types matching what the binder accepts (integer, number, boolean, string, arrays for repeated options and catch-alls), `required`, `default`, `enum` from allowed values, `additionalProperties: false`.
+2. Annotations from `EndpointKind`: Query is `readOnlyHint` + `idempotentHint`, IdempotentCommand is `idempotentHint`, Command is neither. `destructiveHint` only from an explicit per-route attribute (`[Destructive]` on an endpoint class, carried in the catalog as `destructive: true`), never inferred.
+3. Server instructions = app description plus optional app text.
+4. `tools/call` binds with `TryBind`. A bind error (unknown key and the rest) is a tool result with `isError: true`, not a JSON-RPC error. It then invokes and returns the text the CLI would print (`RenderAsync` plus console output). A content-format option also returns JSON structured content. Calls are serialized.
+5. Group filter option, using the catalog's `FilterByGroup`.
+6. Hosting: `AddMcpRoute()` on the builder gives the app a built-in `mcp` route that serves stdio (generator-emitted like `--check-updates`). `IMcpServerBuilder.WithNuruTools(app)` serves the same tools from any MCP host, including ASP.NET Core streamable HTTP (`WithHttpTransport()` + `MapMcp()`).
+7. Package name `TimeWarp.Nuru.McpHost`, which pairs with 507's `TimeWarp.Nuru.McpBridge` (McpHost hosts Nuru routes as MCP, McpBridge bridges MCP tools into Nuru).
+8. Tests: `--capabilities` vs `tools/list` schema parity for the calculator sample, a `tools/call` round trip over the real protocol, annotation mapping, filter. Docs: a page beside `agent-invocation.md` and a note that MCP and CLI share names and arguments exactly.
+
 ## Checklist
 
-- [ ] Package scaffold, `ModelContextProtocol` reference (already pinned in `Directory.Packages.props`)
-- [ ] Catalog to tool definitions, including annotations and schema
-- [ ] `tools/call` through binder and invoke, text and JSON content
-- [ ] `mcp` built-in route (stdio) and HTTP hosting extension
-- [ ] Group filter
-- [ ] Tests and docs
+- [x] Package scaffold, `ModelContextProtocol` reference (already pinned in `Directory.Packages.props`)
+- [x] Catalog to tool definitions, including annotations and schema
+- [x] `tools/call` through binder and invoke, text and JSON content
+- [x] `mcp` built-in route (stdio) and HTTP hosting extension
+- [x] Group filter
+- [x] Tests and docs
 
 ## Notes
 
@@ -39,3 +54,95 @@ Direction: Nuru routes are the contract, MCP tools are derived. Task 507 (`TimeW
 ## Session
 
 - Created: 1479989 (2026-10-17)
+- Implemented: implementer-claude under `ganda task work` (2026-10-19). Package, generator `AddMcpRoute()` and `[Destructive]`, mixed-app catalog fix, tests, docs. Full CI and `ganda repo audit` green.
+
+## Results
+
+### Package `TimeWarp.Nuru.McpHost` (`source/timewarp-nuru-mcphost/`)
+
+- `NuruMcpToolCatalog` (pure functions over `CapabilitiesResponse`):
+  - `CreateTools(catalog, options)` returns `NuruMcpToolDefinition(Tool, EndpointCapability)` per endpoint, after `GroupFilter` (via `FilterByGroup`).
+  - `GetToolName`: the pattern's literal words (group words first) joined by `ToolNameSeparator` (default `_`). Characters outside `A-Za-z0-9_-.` become `_`. A route with no literal words is `default`. Collisions get `_2`, `_3`.
+  - `CreateInputSchema`: object schema keyed by the catalog names. Integer/number/boolean/string from the catalog type, `?` adds `"null"`, catch-all, repeated options and `[]` types are arrays, `enum` from `allowedValues`, typed `default` (C# quotes and numeric suffixes removed, `Env.Dev` becomes `Dev`), `description`, `required`, and `additionalProperties: false`.
+  - `CreateAnnotations`: Query is readOnly + idempotent, IdempotentCommand is idempotent, Command is neither, Unspecified has no hints. `destructiveHint` is true only when the catalog has `destructive: true`, otherwise unset.
+  - `CreateInstructions`: the app description, then the options text, separated by a blank line.
+- `NuruMcpToolInvoker.CallAsync(endpoint, arguments)`:
+  - Calls `TryBind`, `InvokeAsync`, and `RenderAsync` (to a `TestTerminal`). Calls go through one process-wide gate.
+  - Console output from handlers (`Console.*` and the default terminal) is captured into the result.
+  - A bind error, a handler exception, or a non-zero CLI exit code (problem details) is `isError: true` with the message. A bind error's message is the exact `--json-args` message.
+  - `ContentFormat.Json` adds `structuredContent`: an object result as is, other values as `{"result": v}`, none for `unit`.
+- `NuruMcpTool : McpServerTool`. `NuruMcpServer.CreateTools`, `CreateServerOptions` (server info and instructions from the catalog), `RunStdioAsync` (points `Console.Out` at stderr for the session), and `RunAsync(app, input, output)`.
+- `IMcpServerBuilder.WithNuruTools(app, configure)` is the hosting extension for any MCP host, including ASP.NET Core `WithHttpTransport()` + `MapMcp()`. It does not reference AspNetCore.
+- `AddMcpRoute(instructions, groupFilter, contentFormat)` is a builder stub that the generator interprets.
+- Console access is confined to `console-redirect.cs` (scoped `RS0030` pragma with the reason).
+- `IsAotCompatible`, with no reflection. Release build packs `TimeWarp.Nuru.McpHost.4.0.0-beta.1.nupkg` with 0 warnings.
+- Name check against 507: `McpHost` (host Nuru routes as MCP tools) and `McpBridge` (bridge MCP tool methods into Nuru routes) read as the two directions, so the working name stays.
+
+### Generator and core
+
+- `AddMcpRoute()`:
+  - `DslInterpreter` reads its arguments as compile-time constants (non-constant is an error) into `McpRouteModel`, stored on `AppModel.McpRoute`.
+  - `InterceptorEmitter` emits a built-in `mcp` route after user routes (like `--check-updates`) that calls `NuruMcpServer.RunStdioAsync(app, options, cancellationToken)`.
+  - Help lists the row and the json-args built-in predicate knows it. `BuiltInFlags.McpRouteForm`.
+- `[Destructive]` (`source/timewarp-nuru/attributes/destructive-attribute.cs`):
+  - `EndpointExtractor` sets `RouteDefinition.IsDestructive`.
+  - `CapabilitiesEmitter` emits `Destructive = true`, and only then. `EndpointCapability.Destructive` is `bool?` and omitted when null, so documents for other routes are byte-identical.
+  - Endpoint classes only. Fluent routes cannot carry it.
+- Fixed a pre-existing bug. `InterceptorEmitter.EmitClassEnd` built help and the catalog from `app.Routes` when the app had any fluent route. So an app with fluent routes plus `Map<T>()` / `DiscoverEndpoints()` omitted the endpoints from root help, `--capabilities`, and `app.Capabilities`, although the matcher and `TryBind` dispatched them. It now uses `RoutesInIndexOrder(app, model)`, the same list as the matcher and binder. Without the fix those endpoints would be missing from `tools/list`.
+
+### Tests
+
+- `tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs` (13 tests):
+  - Tool names, separator, collisions, and the default route.
+  - Schema: string, integer, boolean flag (not required), repeated, catch-all, enum, nullable, endpoint option description.
+  - Annotation mapping and `[Destructive]` in the catalog and annotations.
+  - Group filter and instructions.
+  - `initialize`, `tools/list`, and `tools/call` over real newline-delimited JSON-RPC (in-memory pipes into `NuruMcpServer.RunAsync`).
+  - Unknown, missing, and wrong-type keys and problem details come back as `isError` results, not JSON-RPC errors. The bind message equals `TryBind`'s.
+  - Console and default-terminal capture, JSON structured content, and the help row from `AddMcpRoute`.
+- `tests/timewarp-nuru-mcphost-tests/mcphost-02-calculator-parity.cs` (2 tests):
+  - Runs `calculator --capabilities`, then a real MCP client (`StdioClientTransport`) on `calculator mcp`.
+  - Checks one tool per endpoint with the same name, description, schema (deep-equal to the projection, and member by member: names, required, JSON types, enum), and annotations.
+  - Round trips `add`, `factorial` (`Console.WriteLine` captured), an unknown key (`isError`), and `stats`.
+- CI wiring: `tests/ci-tests/Directory.Build.props` glob and McpHost ProjectReference. `timewarp-nuru.slnx` and `dev build` (`tools/dev-cli/endpoints/build-command.cs`) include the project, after `timewarp-nuru`. The packable set is discovered from `source/*.csproj`.
+- Full CI after `ganda runfile cache --clear`: multi-mode 1964 total, 1958 passed, 6 skipped, 0 failed. Standalone 30 files, 0 failed.
+- `ganda repo audit`: 30 passed, 0 failed. Nothing to fix.
+
+### Docs
+
+- New `documentation/user/features/mcp-hosting.md`, beside `agent-invocation.md`.
+- `agent-invocation.md` gains an MCP section and the `destructive` member. `built-in-routes.md` gains the `mcp` row and section. `overview.md` gains an entry.
+- `skills/tw-nuru/SKILL.md` gains the Roslynk-facing note that MCP and the CLI share names and arguments exactly.
+- Changelog: Added McpHost and `[Destructive]`. Fixed the mixed-app help and catalog bug.
+- The calculator sample has `.AddMcpRoute(...)`, so `calculator mcp` works.
+
+### Notes (pre-existing, not changed)
+
+- Catalog `required` describes argv, which is stricter than the JSON binder in two cases:
+  - A flag option is `required: true` but binds `false` when absent. The schema drops flags from `required`.
+  - An option with an optional value (`--name {n?}`, `--level {level:int?}`) is `required: true`, and the binder accepts the key absent. The schema keeps the catalog's `required`. That is stricter than the binder, so every schema-valid call still binds.
+- Enum `allowedValues` are missing from the catalog when the enum is a nested type (an enum declared inside a class). The test uses a namespace-level enum. Worth its own task.
+- The next release publishes a new package ID, `TimeWarp.Nuru.McpHost`. Trusted publishing is per repository and workflow, but confirm the NuGet.org policy covers new IDs before the release.
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs
+dotnet run tests/timewarp-nuru-mcphost-tests/mcphost-02-calculator-parity.cs
+(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}' '{"jsonrpc":"2.0","method":"notifications/initialized"}' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"add","arguments":{"x":2,"y":3.5}}}' '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"add","arguments":{"x":2}}}'; sleep 15) | dotnet run samples/endpoints/02-calculator/calculator.cs -- mcp
+dotnet run tests/ci-tests/run-ci-tests.cs
+```
+
+Expect:
+
+- `mcphost-01-tools.cs`: Total 13, Passed 13.
+- `mcphost-02-calculator-parity.cs`: Total 2, Passed 2 (about 20 s each, because each test launches the sample).
+- The stdio pipe prints three JSON-RPC responses:
+  - id 1 has `serverInfo.name` `calculator` and the instructions text.
+  - id 2 is `{"content":[{"type":"text","text":"5.5"}],"isError":false}`.
+  - id 3 is `isError: true` with `Error: Missing required value 'y' for 'add'.`.
+  - Nothing else appears on stdout.
+- CI runner: multi-mode 1964 total, 1958 passed, 6 skipped, 0 failed. Standalone 0 failed.

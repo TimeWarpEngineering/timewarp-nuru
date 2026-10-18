@@ -112,6 +112,7 @@ Acceptance:
 - Review round 4 (2026-10-18): review oracle grok-4.7 (headless `ganda task work`), session `01a14fcd-3a2e-7e22-abc9-51e42db9f7fc`, effort 3, roster general, reviewed the fix delta `bb2d2b9f..50e92396`.
   - `operation-endpoint-derivation.cs`: 35 passed. `generator-55-missing-operation-handler.cs`: 12 passed. Full CI and the AOT script were not re-run.
   - Open at review time: 0. Disposition is clean. See `review/round-4/merged.md` and `review/disposition.md`.
+- Version changed to 4.0.0-beta.1 at the merge gate (2026-10-18), per Steven: the neutral-contract derivation and mediator dispatch are a major change, not a 3.1 minor.
 
 ## Blocked
 

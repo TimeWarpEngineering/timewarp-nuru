@@ -89,7 +89,7 @@ Resolved 2026-10-18: TimeWarp.Contracts 2.0.0-beta.21 ships `lib/net10.0` and `l
   - Build: 0 warnings.
   - The three new test files pass standalone.
   - `run-ci-tests.cs` exits 1: multi-mode 1897/1909 passed, 6 failed, all in `OperationEndpointDerivationTests`.
-- Paths: `review/review-framework.md`, `review/round-1/{general,tests,plan_alignment,merged}.md`.
+- Paths: `review/review-framework.md`, `review/round-1/{general,tests,plan-alignment,merged}.md` (the plan_alignment reviewer's file uses a kebab-case name for the `kebab-path-names` audit).
 
 Nuru derives a complete endpoint from a `TimeWarp.Contracts` 2.0.0-beta.21 request that carries `[Operation]` and a TimeWarp.Mediator kind. CLI attributes stay in `TimeWarp.Nuru` as overrides. The group path is the containing `[NuruRouteGroup]` prefix, otherwise `[NuruCliBinding(Group)]`, otherwise empty. Dispatch goes through TimeWarp.Mediator. `UseDirectInvoke()` still calls a nested `Handler` and is the opt-out. One local timing run (not a budget) wrote `mediator-first-ms=5 mediator-30-ms=0 direct-first-ms=4 direct-30-ms=0`. Both paths returned `direct:ok`. The 30-call loops were under 1 ms.
 

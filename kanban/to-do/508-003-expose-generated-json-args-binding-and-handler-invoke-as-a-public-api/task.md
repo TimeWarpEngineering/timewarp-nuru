@@ -48,11 +48,14 @@ Acceptance criteria:
 
 - Parent: 508. 508-004 depends on this.
 - Roslynk's `multi_query` batch binder (string/bool/int coercions, unknown keys fail) is the kind of per-app binder this replaces.
+- Review: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Session
 
 - Created: 1479989 (2026-10-17)
 - Implemented (implementer-claude, headless task work): 2026-10-19
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-18T18:40:45Z
+- Reviewer: grok session 01a15050-f688-7a92-90d7-22dde54dec50 (2026-10-19), effort 3, roster general
 
 ## Results
 
@@ -92,6 +95,14 @@ On `NuruApp` (core, `source/timewarp-nuru/nuru-app.cs`; types in `source/timewar
 - Pre-existing, not fixed: delegate-route command classes (`__Route_{i}_Command`, used when an `INuruBehavior` applies) are named by the global route index but used with the per-app index, so two apps in one file collide when one of them has behaviors on delegate routes. The behavior test uses a `[NuruRoute]` endpoint to avoid it. Worth its own task.
 - Calls into `InvokeAsync`/`RenderAsync` run one at a time (process-wide service state and `Environment.ExitCode`), documented. An MCP host (508-004) must serialize `tools/call`.
 - The REPL runs commands through the same `ExecuteRouteAsync`; `InvokeAsync` uses `fromRepl: false` (a standalone command scope), like `RunAsync`.
+
+### Review
+
+Round 1, reviewer roster general, effort 3. Counts: bug 0 open / 0 fixed / 0 wontfix, suggestion 0, nit 0. Disposition: **clean**. No wontfix and no escalation. The implementer restatement matches the original task (the public shape was left open; the restatement names `TryBind` / `InvokeAsync` / `RenderAsync` and the shared binder).
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+Re-checked this round: `dotnet run tests/timewarp-nuru-tests/routing/routing-34-json-bind-invoke.cs` (Total 10, Passed 10) and `dotnet run tests/timewarp-nuru-tests/routing/routing-33-json-args.cs` (Total 19, Passed 19).
 
 ### How to validate
 

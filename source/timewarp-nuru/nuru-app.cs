@@ -46,6 +46,33 @@ public partial class NuruApp
   }
 
   /// <summary>
+  /// Returns this app's generated capabilities catalog. Set by generated interceptor code when
+  /// <see cref="NuruAppBuilder.Build"/> returns, or at the start of <see cref="RunAsync"/> when
+  /// that Build() call was not intercepted.
+  /// Use <see cref="Capabilities"/> instead of calling it.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public Func<CapabilitiesResponse>? CapabilitiesProvider { get; set; }
+
+  /// <summary>
+  /// The full capabilities catalog for this app: the same document <c>--capabilities</c> prints.
+  /// </summary>
+  /// <remarks>
+  /// The source generator builds the catalog at compile time, so this needs no reflection and works
+  /// under AOT. The instance is built on first access and cached; treat it as read-only.
+  /// <see cref="CapabilitiesResponse.FilterByGroup(string)"/> returns the document
+  /// <c>--capabilities --group-filter {group}</c> prints.
+  /// </remarks>
+  /// <exception cref="InvalidOperationException">
+  /// The source generator did not intercept this app's <c>Build()</c> or <c>RunAsync()</c> call.
+  /// </exception>
+  public CapabilitiesResponse Capabilities =>
+    CapabilitiesProvider?.Invoke()
+    ?? throw new InvalidOperationException(
+      "No generated capabilities catalog is attached to this NuruApp. " +
+      "The source generator attaches it to apps whose Build() or RunAsync() call it intercepts.");
+
+  /// <summary>
   /// Tracer provider for distributed tracing. Set by generated telemetry code.
   /// </summary>
   public TracerProvider? TracerProvider { get; set; }

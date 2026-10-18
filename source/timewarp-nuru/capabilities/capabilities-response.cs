@@ -2,7 +2,7 @@ namespace TimeWarp.Nuru;
 
 /// <summary>
 /// Machine-readable metadata about CLI capabilities for AI agent discovery.
-/// Returned by the <c>--capabilities</c> flag.
+/// Returned by the <c>--capabilities</c> flag, and in process by <see cref="NuruApp.Capabilities"/>.
 /// </summary>
 public sealed class CapabilitiesResponse
 {
@@ -14,6 +14,38 @@ public sealed class CapabilitiesResponse
 
   // Omitted from JSON when null (WhenWritingNull), so a document without this property still loads.
   public InvocationCapability? Invocation { get; init; }
+
+  /// <summary>
+  /// Returns the endpoints whose group path starts with <paramref name="groupFilter"/>.
+  /// </summary>
+  /// <remarks>
+  /// The filter is dot-separated (<c>admin.config</c>) and each segment is compared ignoring case,
+  /// the same rule <c>--capabilities --group-filter</c> uses. The result carries
+  /// <see cref="Filter"/> set to the filter.
+  /// </remarks>
+  /// <param name="groupFilter">Dot-separated group prefix.</param>
+  /// <returns>A new response with the matching endpoints.</returns>
+  public CapabilitiesResponse FilterByGroup(string groupFilter)
+  {
+    ArgumentNullException.ThrowIfNull(groupFilter);
+
+    string[] groupParts = groupFilter.Split('.');
+    EndpointCapability[] endpoints =
+    [
+      .. Endpoints.Where(e => e.GroupPath.Count >= groupParts.Length &&
+        groupParts.Zip(e.GroupPath).All(p => string.Equals(p.First, p.Second, StringComparison.OrdinalIgnoreCase)))
+    ];
+
+    return new CapabilitiesResponse
+    {
+      Name = Name,
+      Version = Version,
+      Description = Description,
+      Filter = new CapabilitiesFilter { Group = groupFilter },
+      Endpoints = Array.AsReadOnly(endpoints),
+      Invocation = Invocation
+    };
+  }
 }
 
 /// <summary>
@@ -77,9 +109,55 @@ public sealed class EndpointCapability
   public required IReadOnlyList<ParameterCapability> Parameters { get; init; }
   public required IReadOnlyList<OptionCapability> Options { get; init; }
 
-  // Last property: routes without examples must serialize byte-identically to before this
-  // feature existed (DefaultIgnoreCondition.WhenWritingNull on the serializer context omits it).
+  // Routes without examples serialize with no examples member
+  // (DefaultIgnoreCondition.WhenWritingNull on the serializer context omits it).
   public IReadOnlyList<ExampleCapability>? Examples { get; init; }
+
+  // Last property, so it is the only addition to each endpoint in existing documents.
+  // Nullable so a document from a CLI that predates it still loads.
+  public ReturnTypeCapability? ReturnType { get; init; }
+}
+
+/// <summary>
+/// What an endpoint's handler returns, so a host that maps the endpoint to another protocol
+/// knows whether to expect no value, a scalar, or a JSON document.
+/// </summary>
+public sealed class ReturnTypeCapability
+{
+  /// <summary>
+  /// CLR type name of the result, without <c>global::</c> (for example <c>string</c>,
+  /// <c>MyApp.Report</c>, or <c>void</c>). For an async handler this is the awaited type.
+  /// </summary>
+  public required string Name { get; init; }
+
+  /// <summary>How the CLI writes this result.</summary>
+  public required ReturnTypeKind Kind { get; init; }
+}
+
+/// <summary>
+/// How the CLI writes an endpoint's result. Matches the generated output strategy.
+/// </summary>
+[JsonConverter(typeof(ReturnTypeKindConverter))]
+public enum ReturnTypeKind
+{
+  /// <summary>No value: <c>void</c>, <c>Task</c>, or <c>TimeWarp.Mediator.Unit</c>.</summary>
+  Unit,
+
+  /// <summary>
+  /// A scalar written as text: string, numeric, bool, char, Guid, date and time types, TimeSpan.
+  /// </summary>
+  Primitive,
+
+  /// <summary>Any other type. The CLI serializes it as JSON.</summary>
+  Json
+}
+
+/// <summary>
+/// Serializes <see cref="ReturnTypeKind"/> enum values using camelCase naming.
+/// </summary>
+public sealed class ReturnTypeKindConverter : JsonStringEnumConverter<ReturnTypeKind>
+{
+  public ReturnTypeKindConverter() : base(JsonNamingPolicy.CamelCase) { }
 }
 
 /// <summary>

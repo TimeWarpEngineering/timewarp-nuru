@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Capabilities**: `NuruApp.Capabilities` returns the generated `CapabilitiesResponse` in process, with no reflection and no subprocess, and `CapabilitiesResponse.FilterByGroup(group)` returns the `--group-filter` view. The generator intercepts each app's `Build()` to attach the catalog, so it is available before `RunAsync()`; an app built but never run is now generated too. `--capabilities` prints the same cached instance. Each endpoint gains a last `returnType` member (`name`, and `kind` of `unit`, `primitive`, or `json`, from the CLI output strategy). It is the only change to the printed document, and it is nullable so older documents still load (508-002).
 - **Neutral contracts**: `UseDirectInvoke()` calls a nested `Handler` directly. `[NuruCliBinding(Group)]` sets the group path when no `[NuruRouteGroup]` is present. NURU_H008 warns when an `[Operation]` endpoint has no visible mediator handler. NURU_H009 is an error when an endpoint type is abstract, static, or has no constructor Nuru can call; the type is skipped. A visible or registered `IResponseRenderer<T>` renders the response before the output strategy. `OneOf<TSuccess, SharedProblemDetails>` writes the problem to stderr and sets the exit code (508-001).
 
 ### Fixed

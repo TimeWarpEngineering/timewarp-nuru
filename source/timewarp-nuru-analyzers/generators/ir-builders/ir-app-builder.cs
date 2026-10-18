@@ -37,6 +37,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private readonly Dictionary<string, List<InterceptSiteModel>> InterceptSitesByMethod = [];
   private readonly List<CustomConverterDefinition> CustomConverters = [];
   private bool IsBuilt;
+  private BuildInterceptSite? BuildSite;
   private bool DiscoverEndpointsEnabled;
   private bool TelemetryEnabled;
   private TelemetryModel? TelemetryOptions;
@@ -362,9 +363,11 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   /// Mirrors: NuruAppBuilder.Build()
   /// Does not finalize - call FinalizeModel() after all RunAsync() sites are captured.
   /// </summary>
-  public TSelf Build()
+  /// <param name="buildSite">The Build() call to intercept, or null when it cannot be intercepted.</param>
+  public TSelf Build(BuildInterceptSite? buildSite = null)
   {
     IsBuilt = true;
+    BuildSite ??= buildSite;
     return (TSelf)this;
   }
 
@@ -412,7 +415,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       ExtensionMethods: [.. ExtensionMethods],
       HttpClientConfigurations: [.. HttpClientConfigurations],
       FilterGroupTypeNames: [.. FilterGroupTypeNames],
-      UseDirectInvoke: DirectInvokeEnabled);
+      UseDirectInvoke: DirectInvokeEnabled,
+      BuildSite: BuildSite);
   }
 
   /// <summary>

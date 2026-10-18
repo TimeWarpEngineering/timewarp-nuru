@@ -12,6 +12,8 @@ namespace TimeWarp.Nuru;
 [JsonSerializable(typeof(OptionCapability))]
 [JsonSerializable(typeof(ExampleCapability))]
 [JsonSerializable(typeof(InvocationCapability))]
+[JsonSerializable(typeof(ReturnTypeCapability))]
+[JsonSerializable(typeof(ReturnTypeKind))]
 [JsonSerializable(typeof(IReadOnlyList<EndpointCapability>))]
 [JsonSerializable(typeof(IReadOnlyList<ParameterCapability>))]
 [JsonSerializable(typeof(IReadOnlyList<OptionCapability>))]

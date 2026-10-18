@@ -527,6 +527,8 @@ For CLIs with multiple endpoint files, use a `Directory.Build.props` to include 
 
 `--capabilities` prints the agent catalog. `parameters[]` and `options[]` `name` values are the argument schema. The optional top-level `invocation` object names the `--json-args` transport (`-` for stdin, `@` for a file, `argvOverridesJson`).
 
+Each endpoint ends with `returnType` (`name`, and `kind` of `unit`, `primitive`, or `json`). In process, `app.Capabilities` returns the same `CapabilitiesResponse` right after `Build()` (no reflection, AOT-safe), and `app.Capabilities.FilterByGroup("admin")` matches `--group-filter admin`.
+
 The agent loop, the exact-name rule, argv-overrides-JSON, and the app-level fat-field pattern are in [Agent invocation](../../documentation/user/features/agent-invocation.md).
 
 ## General Rules

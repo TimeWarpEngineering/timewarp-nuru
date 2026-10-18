@@ -803,8 +803,9 @@ internal static class HandlerInvokerEmitter
 
   /// <summary>
   /// Determines the output strategy based on the result type.
+  /// <c>CapabilitiesEmitter.DescribeReturnType</c> uses it for the <c>returnType</c> kind.
   /// </summary>
-  private static OutputStrategy GetOutputStrategy(string? typeName)
+  internal static OutputStrategy GetOutputStrategy(string? typeName)
   {
     if (string.IsNullOrEmpty(typeName))
       return OutputStrategy.None;

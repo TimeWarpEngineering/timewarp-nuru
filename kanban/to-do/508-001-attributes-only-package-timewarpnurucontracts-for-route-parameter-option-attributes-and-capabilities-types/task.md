@@ -56,8 +56,11 @@ Acceptance:
 - 506 findings folded into requirements: 1479989 (2026-10-18)
 - Implement walk stopped before product code (2026-10-18). `TimeWarp.Contracts` 2.0.0-beta.20 is on nuget.org and contains only `lib/net11.0`. This repo's `Directory.Build.props` targets `net10.0`. Restoring a net10.0 project that references that package fails with NU1202. `TimeWarp.Mediator.Contracts` 14.0.0 (this repo) and 14.0.0-beta.5 (the contracts package dependency) both ship `lib/net10.0`, so the contracts library can be packed for net10.0 without a mediator bump. `CliOperationBinding` in that package has `Pattern` only; the optional group argument the derivation notes describe is not on the published type. No product files changed.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Blocked — 2026-10-18T05:19:31Z
+- Block cleared (2026-10-18): TimeWarp.Contracts 2.0.0-beta.21 published multi-targeted net10.0 + net11.0; relaunched headless.
 
 ## Blocked
+
+Resolved 2026-10-18: TimeWarp.Contracts 2.0.0-beta.21 ships `lib/net10.0` and `lib/net11.0`. Reference that version (or later). Original block follows.
 
 2026-10-18: TimeWarp.Contracts must ship a net10.0 asset (its source and TimeWarp.Mediator.Contracts 14.0.0-beta.5 already support net10.0), or timewarp-nuru task 481 must move this repo to net11.0. https://www.nuget.org/packages/TimeWarp.Contracts/2.0.0-beta.20
 

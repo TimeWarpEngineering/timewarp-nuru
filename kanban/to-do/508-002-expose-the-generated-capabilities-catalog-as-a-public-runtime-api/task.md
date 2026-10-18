@@ -45,6 +45,12 @@ Acceptance:
 
 - Created: 1479989 (2026-10-17)
 - Implemented (2026-10-19): implementer claude-opus-5-5 (headless `ganda task work`). Public surface is `NuruApp.Capabilities` plus `CapabilitiesResponse.FilterByGroup`; a `GetCapabilities(group)` method beside the property failed CA1721. Each app's `Build()` is intercepted to attach the catalog. Apps with an interceptable `Build()` and no `RunAsync()` are now emitted. `ganda runfile cache --clear`, then `tests/ci-tests/run-ci-tests.cs`: multi-mode 1938 total, 1932 passed, 6 skipped, 0 failed; standalone 30 files, 0 failed. `dotnet build timewarp-nuru.slnx`: 0 warnings, 0 errors. `ganda repo audit` passed with nothing to fix.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-18T17:24:59Z
+- Reviewer: grok session `01a1500b-9a86-7da0-b791-964e7fe71249` (2026-10-19). Effort 2, roster general. Round 1 wrote `review/round-1/general.md` and `review/round-1/merged.md`. M1 is open. No disposition yet.
+
+## Learnings
+
+- Misread: the restatement classifies `returnType` from the awaited CLR type via `GetOutputStrategy`. The task asks for the same classification the CLI uses when it serializes the result (unit, primitive, or JSON). For `OneOf<TSuccess, SharedProblemDetails>` the CLI unwraps the pair and classifies `TSuccess`; the awaited type is the `OneOf`. The implementation follows the restatement, so those endpoints publish the wrapper. See review round 1 M1.
 
 ## Results
 

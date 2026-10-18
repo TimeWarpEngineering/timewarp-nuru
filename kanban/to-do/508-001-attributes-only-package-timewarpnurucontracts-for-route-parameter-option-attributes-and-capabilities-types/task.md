@@ -20,12 +20,24 @@ This task also owns the three framework changes the neutral model needs from Nur
 
 A request that carries `TimeWarp.Contracts.OperationAttribute` and a TimeWarp.Mediator kind (`IQuery<T>`, `ICommand<T>`, or `IIdempotentCommand<T>`) is a complete Nuru endpoint, including a record class. The generator builds the route literal from the operation name and one option per public settable member, including members inherited from a base that is not a `[NuruRouteGroup]` marker. The option name is the property name, the description comes from `System.ComponentModel.DescriptionAttribute`, required comes from the `required` modifier and nullability, the default comes from a constant or field initializer, and allowed values come from enum constants. An `[Operation]` type with no mediator kind is not an endpoint. `[NuruRoute]`, `[Parameter]`, `[Option]`, and `[NuruRouteExample]` stay in `TimeWarp.Nuru` as CLI overrides. Existing nested-handler routes keep working when this compilation has no generated mediator: they call the nested handler directly. When the generated mediator exists, dispatch goes through it unless the app calls `UseDirectInvoke()`. An endpoint with no nested handler still goes through the mediator. This task does not split the CLI attributes into their own package.
 
+Fix-pass acceptance (review round 2, still open when this restatement was written):
+
+- Omitting an option whose initializer the generator cannot emit (`new()`, `TimeSpan.FromSeconds`, `Guid.NewGuid`) leaves that initializer in place on argv and on `--json-args`. `--capabilities` still omits that default.
+- `double.NaN`, infinities, a const enum field, and a flags or cast enum default emit compilable C#. `--capabilities` shows a plain number and the enum member name.
+- `init` members and a positional record are derived. A positional record is constructed through its primary constructor. A `required init` member is set in the object initializer.
+- A JSON member whose name is a C# keyword still generates a valid rejection flag.
+- A derived type that redeclares a base property does not also derive the base property.
+- Direct invoke with only an external handler still emits `__GetMediator`. A compilation with no generated mediator calls a nested handler directly.
+- The overhead script reports microseconds, a separate first call, and several alternating AOT cold starts.
+- The docs name when no generated mediator exists. Invoking an external handler in that build exits 1 with a message.
+- JSON type names omit `global::` inside type arguments. The mediator-kind check runs before route-pattern validation. NURU_H008 says invoking the route exits 1.
+
 Acceptance:
 
 - `TimeWarp.Nuru` and the generator/analyzers reference `TimeWarp.Contracts`. They recognize `[Operation]` and the CLI attributes by metadata name.
 - Derivation is documented and tested: route literal, option names, required and defaults, enums including non-nullable enums, repeated values for arrays of scalars, a non-scalar member (or array of non-scalars) bound as one JSON value reported as `json` plus the CLR type name, a non-nullable `bool` whose initializer is `true` kept when the option is omitted and shown in `--capabilities`, and a group path taken from a containing `[NuruRouteGroup]` when present, otherwise from an optional group on the CLI binding, otherwise ungrouped.
 - A nested `Handler` is optional. The handler is any registered `IQueryHandler<TQuery, T>` or `ICommandHandler<TCommand, T>`. The generator emits a diagnostic when it can see that none is registered; otherwise startup reports an error.
-- Endpoints dispatch through TimeWarp.Mediator so mediator behaviors run in every host. `INuruBehavior` stays CLI middleware around that dispatch. Startup and per-call cost against today's direct invoke is measured, and direct invoke stays available as an opt-out.
+- Endpoints dispatch through TimeWarp.Mediator when this compilation has a generated mediator, so mediator behaviors run in that host. A nested handler is called directly when no generated mediator exists or when `UseDirectInvoke()` is set. A visible handler that is not nested exits 1 in a build with no generated mediator. `INuruBehavior` stays CLI middleware around that dispatch. Startup and per-call cost against direct invoke is measured, and direct invoke stays available as an opt-out.
 - A registered `IResponseRenderer<TResponse>` supplies the text before the existing `OutputStrategy` JSON fallback. A `SharedProblemDetails` outcome is written to stderr with a non-zero exit code, and the first line is the problem type and title.
 - `--capabilities` entries for derived endpoints match attribute-declared entries.
 - The calculator sample has a contracts-first sibling, and `documentation/user/features/` has a page on neutral contracts.
@@ -42,8 +54,7 @@ Acceptance:
 ## Review
 
 - Round 1: 21 findings, all marked fixed in `review/round-1/merged.md` (8 bugs, 9 suggestions, 4 nits).
-- Round 2 (2026-10-18, `e316fd32`): 20 of the 21 round-1 findings are verified fixed. M20 is reopened. 11 new findings: M22–M32. 12 findings are open: bugs M22, M23, M24, M25; suggestions M26, M27, M28, M29; nits M20, M30, M31, M32. CI is green. A fix pass is needed. See `review/round-2/merged.md`.
-
+- Round 2 (2026-10-18, `e316fd32`): 20 of the 21 round-1 findings are verified fixed. M20 is reopened. 11 new findings: M22–M32. 12 findings were open: bugs M22, M23, M24, M25; suggestions M26, M27, M28, M29; nits M20, M30, M31, M32. CI was green. The fix pass is in Session. See `review/round-2/merged.md`.
 ## Notes
 
 - Parent: 508. Waits for the first published `TimeWarp.Contracts` (architecture task 384); until then develop against a project reference or a local feed.
@@ -72,7 +83,8 @@ Acceptance:
 - Fix pass verified (2026-10-18): implementer-grok, session 01a14f63-0ae5-7df2-a802-244af765040e. Focused tests passed. `ganda runfile cache --clear`, then `tests/ci-tests/run-ci-tests.cs`: multi-mode 1916 total, 1910 passed, 6 skipped, 0 failed; standalone 0 failed. Overhead re-run: warmup 50, iterations 2000, mediator-ticks 6275013, direct-ticks 3483383. `ganda repo audit` passed.
 - Review round 2 (2026-10-18): review oracle claude-opus-5-5 (headless `ganda task work`), effort 3, roster general + tests + plan_alignment (Claude subagents), reviewed the fix delta `d769f8b1..e316fd32`.
   - Full CI after `ganda runfile cache --clear`: multi-mode 1916 total, 1910 passed, 6 skipped (all of them already skipped on master), 0 failed. Standalone: 0 failed.
-  - Open: 12 findings, 4 of them bugs. A fix pass is needed. See `review/round-2/merged.md`.
+  - Open at review time: 12 findings, 4 of them bugs. See `review/round-2/merged.md`.
+- Fix pass for round 3 (2026-10-18): implementer-grok, session 01a14f7a-d5a3-7f90-a5af-bfe3a8b94efb. Omitting an unemittable initializer keeps it. `--json-args` records that the member was supplied in the route case, because the attempt-local flag is out of scope at construction. `--Quiet` and `--quiet` stay different JSON slots. Capabilities show plain numbers and enum member names. `init` members and positional records construct. NURU_H009 reports a type with no callable constructor. A build with no generated mediator calls a nested handler directly and exits 1 for a visible external handler. Review round 3 has not run.
 
 ## Blocked
 
@@ -94,47 +106,31 @@ Resolved 2026-10-18: TimeWarp.Contracts 2.0.0-beta.21 ships `lib/net10.0` and `l
 
 ## Results
 
-### Review status (round 2: open findings, no disposition yet)
+Round 2 left 12 findings open (bugs M22–M25, suggestions M26–M29, nits M20, M30–M32). This fix pass implements them. Review round 3 has not run, and `review/disposition.md` is not written.
 
-- Rounds: 2. Round 1 reviewed `f522c6e2`. Round 2 reviewed the fix delta `d769f8b1..e316fd32`. Both rounds ran at effort 3 with the general, tests, and plan_alignment reviewers.
-- Counts after round 2:
-  - bug: 4 open (M22–M25), 8 fixed
-  - suggestion: 4 open (M26–M29), 9 fixed
-  - nit: 4 open (M20 reopened, M30–M32), 3 fixed
-  - wontfix: 0
-- Disposition: none yet. 12 findings are open, so a fix pass is needed. `review/disposition.md` is not written.
-- Round 2 runs at `e316fd32`:
-  - Focused tests: derivation 24/24, dispatch 7/7, generator-55 3/3.
-  - Full CI: multi-mode 1910 passed, 6 skipped (they are skipped on master too), 0 failed. Standalone: 0 failed.
-  - Samples: 02-calculator built without a generated mediator uses direct invoke. 15-httpclient runs with no DI error.
-  - Benchmark `--aot` cold start: mediator 3.66 ms, direct 2.86 ms, one sample each. That gap is noise.
-- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/{general,tests,plan-alignment,merged}.md`.
+Omitting an option whose initializer the generator cannot copy (`new()`, a method call) leaves that initializer in place on argv and on `--json-args`. The JSON path records `__supplied_{id}` in the route case. The attempt block's `__av_` flag is out of scope when the command is built. `--capabilities` omits that default. `double.NaN`, infinities, a const enum field, and a flags or cast enum default emit compilable C#. Capabilities show a plain number (`1.5`, `2`) and an enum member name (`Fast`), or the numeric value when the bits match no member (`3`). `init` members and a positional record are derived. A positional record uses its primary constructor. A `required init` member is set in the object initializer. A type with no callable constructor is NURU_H009. A JSON member whose name is a C# keyword still generates a valid argv rejection flag. A derived type that redeclares a base property does not derive the base property again. `--Quiet` and `--quiet` bind as different JSON slots. JSON type names omit `global::` inside type arguments. The mediator-kind check runs before route-pattern validation. NURU_H008 says invoking the route exits 1.
 
-Nuru derives a complete endpoint from a `TimeWarp.Contracts` 2.0.0-beta.21 request that carries `[Operation]` and a TimeWarp.Mediator kind, including a record class. An `[Operation]` type with no mediator kind is skipped. CLI attributes stay in `TimeWarp.Nuru` as overrides. The group path is the containing `[NuruRouteGroup]` prefix, otherwise `[NuruCliBinding(Group)]`, otherwise empty. Inherited public settable members are options too.
+With a generated mediator, dispatch goes through TimeWarp.Mediator unless `UseDirectInvoke()` selects a nested handler. A nested handler is called directly when no generated mediator exists. A visible handler that is not nested writes an error and exits 1 in that build. `UseDirectInvoke()` with only an external handler still emits `__GetMediator`.
 
-With a generated mediator, dispatch goes through TimeWarp.Mediator unless `UseDirectInvoke()` selects a nested handler. A nested handler still uses the direct call when no generated mediator exists. An endpoint with no nested handler still uses the mediator, and a typed HttpClient registered for that handler is constructed there. `INuruBehavior` stays around both paths. A mediator pipeline behavior runs only on the mediator path.
-
-In-process overhead on 2026-10-18 (`benchmarks/operation-dispatch/operation-dispatch-overhead.cs`, `Unit` response): `warmup=50`, `iterations=2000`, `mediator-ticks=6275013`, `direct-ticks=3483383`. Direct is lower, so `UseDirectInvoke()` stays. AOT cold start was not run.
-
-JSON members bind only from `--json-args`, through the source-generated `NuruJsonMemberContext`, with property names as declared. A required JSON member that is missing after the route matches exits 1 with `Error: pass --{name} via --json-args.` A `true` bool initializer is a value option, not a flag. Non-nullable enums keep their initializer. Enum member defaults stay member names. `decimal` and `float` defaults keep their suffixes (`1.5m`, `2.0f`). An initializer the generator cannot emit becomes `default!` and is omitted from capabilities. `SharedProblemDetails` goes to stderr with a non-zero exit code, the first line is the problem type and title, and each route invocation clears `Environment.ExitCode` first. NURU_H008 is a Warning. `--capabilities` reports a JSON member as `json` plus the CLR name without `global::`.
+Overhead on 2026-10-18 (`benchmarks/operation-dispatch/operation-dispatch-overhead.cs`, `Unit` response, 50 warm-up calls, 2000 measured calls): `mediator-first-us=28636`, `direct-first-us=2665`, `mediator-per-call-us=3`, `direct-per-call-us=1`, `decision=keep-UseDirectInvoke`. `--aot` three alternating cold starts: mediator `4,3,3` ms, direct `3,3,3` ms.
 
 ### Files changed
 
-- Package reference: `Directory.Packages.props`, `source/timewarp-nuru/timewarp-nuru.csproj`, `source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj`. Package version is `3.1.0-beta.1` so the stable `3.0.0` package does not gain a prerelease dependency.
-- Derivation and dispatch: `source/timewarp-nuru-analyzers/generators/extractors/operation-endpoint-extractor.cs` and the generator emitters, models, and `NuruCliBinding`
-- AOT JSON member context: `source/timewarp-nuru-build/GenerateNuruJsonContextTask.cs`, `tests/Directory.Build.targets`
-- Tests: `tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs`, `operation-endpoint-dispatch.cs`, `tests/timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs`
-- Overhead: `benchmarks/operation-dispatch/operation-dispatch-overhead.cs` and `benchmarks/operation-dispatch/Directory.Build.props`
-- Sample and docs: `samples/endpoints/02-calculator-contracts/`, `documentation/user/features/neutral-contracts.md`, `changelog.md`
+- Construction and JSON binding: `source/timewarp-nuru-analyzers/generators/emitters/command-construction-emitter.cs`, `json-args-emitter.cs`, `behavior-emitter.cs`, `handler-invoker-emitter.cs`, `route-matcher-emitter.cs`, `capabilities-emitter.cs`
+- Derivation: `generators/extractors/endpoint-extractor.cs`, `operation-endpoint-extractor.cs`, `generators/models/handler-definition.cs`, `segment-definition.cs`
+- Diagnostics: `diagnostics/diagnostic-descriptors.handler.cs`, `AnalyzerReleases.Unshipped.md` (NURU_H009)
+- Tests: `tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs`, `tests/timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs`
+- Overhead, docs: `benchmarks/operation-dispatch/operation-dispatch-overhead.cs`, `documentation/user/features/neutral-contracts.md`, `changelog.md`
 
 ### Test outcomes
 
-- `operation-endpoint-derivation.cs`: 24 passed (standalone, after the fix pass)
-- `operation-endpoint-dispatch.cs`: 7 passed (standalone). The mediator path counts a pipeline behavior; `UseDirectInvoke()` does not; an external handler under `UseDirectInvoke()` still counts; a typed HttpClient is constructed. The first stderr line of the problem case is `https://example.test/t508 Bad input`.
-- `generator-55-missing-operation-handler.cs`: 3 passed. NURU_H008 is a Warning, and an `[Operation]` type that is not a mediator message is skipped.
-- Overhead: `warmup=50`, `iterations=2000`, `mediator-ticks=6275013`, `direct-ticks=3483383`, `decision=keep-UseDirectInvoke`. AOT was not run.
-- CI after `ganda runfile cache --clear`: multi-mode 1916 total, 1910 passed, 6 skipped, 0 failed. `OperationEndpointDerivation` was 24 passed. Standalone phase 0 failed.
-- Sample smoke on 2026-10-18 (implement pass): `calc add --X 2 --Y 3` printed `5` and exited 0. `calc round --Value 1.2` printed `1`. `calc round --Value 1.2 --Mode Up` printed `2`. `calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":1}]}'` printed `total:6|average:3|notes:1`. `--Notes` on argv printed `Error: --Notes is JSON. Pass it with --json-args.` and exited 1. `--capabilities --group-filter calc` listed the three routes with `groupPath` `calc`, `IncludeAverage` default `true` and `isFlag` false, and `Mode` allowed values. The notes type no longer includes `global::`.
+- `operation-endpoint-derivation.cs`: 28 passed. Omitted `new()` / `TimeSpan.FromSeconds` / `Guid.NewGuid` keep the initializer on argv and on `--json-args {}`. Non-finite, enum, flags, and cast defaults compile. `t508user --Id 7` prints `id:7`. `t508init --Name ada` prints `name:ada|extra:3`. `t508params --Params nope` exits 1. `t508hide --title ada` prints `name:ada`, and omission prints `name:child`.
+- `operation-endpoint-dispatch.cs`: 7 passed. The mediator path counts a pipeline behavior; `UseDirectInvoke()` does not; an external handler under `UseDirectInvoke()` still counts; a typed HttpClient is constructed.
+- `generator-55-missing-operation-handler.cs`: 8 passed. NURU_H008 says the route exits 1. An `[Operation]` that is not a mediator message skips pattern validation. No generated mediator calls a nested handler directly and exits 1 for a visible external handler. `UseDirectInvoke()` with only an external handler still contains `__GetMediator`. NURU_H009 is an error and the command is not constructed.
+- `routing-33-json-args.cs`: 19 passed.
+- CI after `ganda runfile cache --clear`: multi-mode 1920 total, 1914 passed, 6 skipped, 0 failed. Standalone phase 0 failed. The four new derivation tests account for the increase from the round-2 total of 1916.
+- Overhead: `warmup=50`, `iterations=2000`, `mediator-first-us=28636`, `direct-first-us=2665`, `mediator-per-call-us=3`, `direct-per-call-us=1`, `decision=keep-UseDirectInvoke`, `aot-mediator-cold-ms=4,3,3`, `aot-direct-cold-ms=3,3,3`, `aot=ran`.
+- Sample smoke on 2026-10-18: `calc add --X 2 --Y 3` printed `5`. `calc round --Value 1.2` printed `1`. `calc round --Value 1.2 --Mode Up` printed `2`. `calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":1}]}'` printed `total:6|average:3|notes:1`. Each exited 0.
 
 ### How to validate
 
@@ -142,19 +138,19 @@ JSON members bind only from `--json-args`, through the source-generated `NuruJso
 
 ```bash
 cd /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-508-001-attributes-only-package-timewarpnurucontracts-for
-dotnet run tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs
-dotnet run tests/timewarp-nuru-tests/auto/operation-endpoint-dispatch.cs
-dotnet run tests/timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs
-dotnet run benchmarks/operation-dispatch/operation-dispatch-overhead.cs
-dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc add --X 2 --Y 3
-dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc round --Value 1.2
-dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":1}]}'
+dotnet run --file tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs
+dotnet run --file tests/timewarp-nuru-tests/auto/operation-endpoint-dispatch.cs
+dotnet run --file tests/timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs
+dotnet run --file benchmarks/operation-dispatch/operation-dispatch-overhead.cs -- --aot
+dotnet run --file samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc add --X 2 --Y 3
+dotnet run --file samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc round --Value 1.2
+dotnet run --file samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":1}]}'
 ```
 
 **Expect**
 
-- Derivation: 24 passed. JSON members come from `--json-args` with the property name as declared. A `bool` initialized to `true` stays true when omitted. A non-nullable enum compiles and keeps its initializer. `decimal` and `float` defaults keep suffixes. `--group-filter` matches the `[NuruRouteGroup]` prefix, and `[NuruCliBinding(Group)]` supplies the prefix when no route group is present. Inherited members bind. The notes type does not contain `global::`.
-- Dispatch: 7 passed. The trace behavior runs around mediator dispatch. A mediator pipeline behavior counts on the mediator path and stays at 0 under `UseDirectInvoke()`. An external handler under `UseDirectInvoke()` still counts. A typed HttpClient is constructed. The renderer output wins over JSON. `--Fail` exits 17 and the first stderr line is `https://example.test/t508 Bad input`; the next call without `--Fail` exits 0.
-- generator-55: 3 passed. NURU_H008 is a Warning. The route still exists, so invoking it exits 1. An `[Operation]` type that is not a mediator message produces no endpoint and no NURU_H008.
-- Overhead: prints `warmup=50`, `iterations=2000`, `mediator-ticks`, `direct-ticks`, and `decision=keep-UseDirectInvoke`. The tick counts move with the machine. Direct should be the lower number on this query. Nothing is written for the handler result.
-- Sample: `5`, then `1`, then `total:6|average:3|notes:1`, each with exit 0. App arguments start after `--`. A token before that separator, such as `--nologo`, is not an application argument and the route will not match.
+- Derivation: 28 passed. `t508defaults` and `t508defaults --json-args {}` both print `price:1.5|ratio:2|const:true|items:set|delay:30|token:set`. `t508special` prints `quiet:nan|up:inf|down:-inf|accent:fast|access:rw|cast:3|option:nan`. Capabilities omit `defaultValue` for Items, Delay, and Token, show `1.5` and `2` without a suffix, and show `Fast` for the enum.
+- Dispatch: 7 passed. A mediator pipeline behavior counts on the mediator path and stays at 0 under `UseDirectInvoke()`. An external handler under `UseDirectInvoke()` still counts.
+- generator-55: 8 passed. NURU_H008 is a Warning whose message contains `exits 1`. The no-mediator nested handler contains `.Handler` and `Handle(` and does not contain `__GetMediator`. The external handler with no generated mediator contains the unavailable-mediator message and `return 1;`. NURU_H009 is an Error.
+- Overhead: prints `mediator-per-call-us`, `direct-per-call-us`, and `decision=keep-UseDirectInvoke`. Direct should be the lower per-call number. `--aot` also prints `aot-mediator-cold-ms` and `aot-direct-cold-ms` as three comma-separated integers and `aot=ran`. The microsecond and millisecond counts move with the machine.
+- Sample: `5`, then `1`, then `total:6|average:3|notes:1`, each with exit 0. App arguments start after `--`.

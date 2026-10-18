@@ -17,9 +17,15 @@
 // may be multi-word, e.g. "git remote") by index into GroupInfo.GroupPrefixes. The emitter should
 // NOT re-match literal segments after the alias prefix.
 //
-// DEFAULT LITERALS: A constant is formatted with the suffix its type needs (1.5m, 2.0f).
-// An enum member stays a member name. A field or property symbol is fully qualified.
-// Object creation, an invocation, or a method group becomes default!, which capabilities omit.
+// DEFAULT LITERALS: A finite constant is formatted with the suffix its type needs (1.5m, 2.0f).
+// NaN and the infinities use the named constants. An enum member stays a member name.
+// A const field whose type is an enum stays a symbol. A flags combination or a cast
+// becomes a cast to the enum type. A field or property symbol is fully qualified.
+// Object creation, an invocation, or a method group becomes default!.
+// Capabilities omit that sentinel and show a plain number or the enum member name.
+// The object initializer omits default! until the caller supplies a value, so the
+// declared initializer runs. A type with no parameterless constructor is new(args)
+// for the constructor whose parameters match property names.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -51,6 +57,16 @@ internal static partial class EndpointExtractor
     memberOptions: SymbolDisplayMemberOptions.IncludeContainingType);
 
   /// <summary>
+  /// Sentinel stored when the initializer cannot be copied into generated code.
+  /// </summary>
+  internal const string UnemittableDefaultLiteral = "default!";
+
+  /// <summary>
+  /// C# literal for an initializer, and the separate value <c>--capabilities</c> shows.
+  /// </summary>
+  private readonly record struct PropertyDefault(string? Code, string? Display);
+
+  /// <summary>
   /// Extracts a RouteDefinition from a class with [NuruRoute] attribute.
   /// </summary>
   /// <param name="classDeclaration">The class declaration with [NuruRoute].</param>
@@ -74,6 +90,13 @@ internal static partial class EndpointExtractor
     if (pattern is null)
       return EndpointExtractionResult.Empty;
 
+    // [Operation] without a mediator kind is not an endpoint. [NuruRoute] still is.
+    // Run this before pattern validation so a non-endpoint operation does not
+    // report a route-pattern diagnostic.
+    string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
+    if (!identity.HasNuruRoute && messageType == "Unspecified")
+      return EndpointExtractionResult.Empty;
+
     // VALIDATE: Pattern must be empty string OR a single literal only
     Diagnostic? patternDiagnostic = ValidateRoutePattern(pattern, attributeLocation);
     if (patternDiagnostic is not null)
@@ -85,12 +108,18 @@ internal static partial class EndpointExtractor
     GroupInfo groupInfo = ExtractGroupInfo(classDeclaration, semanticModel, cancellationToken);
     groupInfo = ApplyCliBindingGroup(groupInfo, classDeclaration, semanticModel, cancellationToken);
 
-    // Infer message type from interfaces
-    string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
-
-    // [Operation] without a mediator kind is not an endpoint. [NuruRoute] still is.
-    if (!identity.HasNuruRoute && messageType == "Unspecified")
+    INamedTypeSymbol? endpointSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (endpointSymbol is null)
       return EndpointExtractionResult.Empty;
+
+    if (!TrySelectConstructorArguments(
+      endpointSymbol,
+      attributeLocation,
+      out EquatableArray<string> constructorArguments,
+      out Diagnostic? constructorDiagnostic))
+    {
+      return EndpointExtractionResult.Failure(constructorDiagnostic!);
+    }
 
     // Extract parameters and options from properties
     ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(
@@ -109,7 +138,12 @@ internal static partial class EndpointExtractor
     ImmutableArray<SegmentDefinition> mergedSegments = MergeSegments(patternSegments, segments);
 
     // Get handler info (requires nested Handler class)
-    HandlerDefinition? handler = ExtractHandler(classDeclaration, semanticModel, cancellationToken, identity.HasOperation);
+    HandlerDefinition? handler = ExtractHandler(
+      classDeclaration,
+      semanticModel,
+      cancellationToken,
+      identity.HasOperation,
+      constructorArguments);
     Diagnostic? missingHandler = null;
     if (handler is null)
     {
@@ -126,7 +160,8 @@ internal static partial class EndpointExtractor
         messageType,
         handlerVisible: visible,
         semanticModel.Compilation,
-        cancellationToken);
+        cancellationToken,
+        constructorArguments);
 
       if (identity.HasOperation && !visible)
       {
@@ -629,7 +664,7 @@ internal static partial class EndpointExtractor
     isRepeated = IsRepeatedOptionType(property.Type);
 
     // Extract default value from property initializer
-    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+    PropertyDefault propertyDefault = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
 
     return new OptionDefinition(
       Position: position,
@@ -643,7 +678,9 @@ internal static partial class EndpointExtractor
       IsRepeated: isRepeated,
       ParameterIsOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
       ResolvedClrTypeName: typeName,
-      DefaultValueLiteral: defaultValueLiteral);
+      DefaultValueLiteral: propertyDefault.Code,
+      IsInitOnly: PropertyIsInitOnly(property),
+      CapabilityDefaultValue: propertyDefault.Display);
   }
 
   /// <summary>
@@ -806,9 +843,14 @@ internal static partial class EndpointExtractor
     if (classSymbol is null)
       return segments.ToImmutable();
 
+    // A derived member can redeclare a base property under a different option name.
+    // Skip the base property by the declared name, not by the option spelling.
+    HashSet<string> seenPropertyNames = new(StringComparer.Ordinal);
+
     // Iterate over all properties from the type symbol (handles partial classes correctly)
     foreach (IPropertySymbol propertySymbol in classSymbol.GetMembers().OfType<IPropertySymbol>())
     {
+      seenPropertyNames.Add(propertySymbol.Name);
       SegmentDefinition? segment = ExtractSegmentFromPropertySymbol(propertySymbol, position++, semanticModel.Compilation, cancellationToken);
       if (segment is null && deriveUnmarkedMembers)
         segment = TryDeriveSegment(propertySymbol, position - 1, semanticModel.Compilation, cancellationToken);
@@ -830,7 +872,7 @@ internal static partial class EndpointExtractor
 
         foreach (IPropertySymbol propertySymbol in baseType.GetMembers().OfType<IPropertySymbol>())
         {
-          if (segments.Any(segment => SegmentBindsProperty(segment, propertySymbol.Name)))
+          if (!seenPropertyNames.Add(propertySymbol.Name))
             continue;
 
           SegmentDefinition? inherited = TryDeriveSegment(
@@ -856,17 +898,6 @@ internal static partial class EndpointExtractor
     segments.AddRange(groupOptions);
 
     return segments.ToImmutable();
-  }
-
-  private static bool SegmentBindsProperty(SegmentDefinition segment, string propertyName)
-  {
-    if (segment is OptionDefinition option)
-      return string.Equals(option.LongForm, propertyName, StringComparison.Ordinal);
-
-    if (segment is ParameterDefinition parameter)
-      return string.Equals(parameter.Name, propertyName, StringComparison.Ordinal);
-
-    return false;
   }
 
   /// <summary>
@@ -1027,7 +1058,7 @@ internal static partial class EndpointExtractor
 
     // Extract default value from property initializer via DeclaringSyntaxReferences
     // This handles properties defined in partial class files correctly
-    string? defaultValueLiteral = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+    PropertyDefault propertyDefault = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
 
     return new OptionDefinition(
       Position: position,
@@ -1041,7 +1072,9 @@ internal static partial class EndpointExtractor
       IsRepeated: isRepeated,
       ParameterIsOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
       ResolvedClrTypeName: typeName,
-      DefaultValueLiteral: defaultValueLiteral);
+      DefaultValueLiteral: propertyDefault.Code,
+      IsInitOnly: PropertyIsInitOnly(property),
+      CapabilityDefaultValue: propertyDefault.Display);
   }
 
   /// <summary>
@@ -1054,40 +1087,56 @@ internal static partial class EndpointExtractor
   /// <param name="property">The property symbol.</param>
   /// <param name="compilation">Compilation used to obtain a SemanticModel for the initializer, if available.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>The default value literal (e.g., "1", "\"default\"", "global::MyApp.Environment.Production"), or null if no initializer.</returns>
-  private static string? ExtractPropertyDefaultValueFromSymbol(IPropertySymbol property, Compilation? compilation, CancellationToken cancellationToken)
+  /// <returns>The C# literal and the capabilities display, or nulls when the property has no initializer.</returns>
+  private static PropertyDefault ExtractPropertyDefaultValueFromSymbol(IPropertySymbol property, Compilation? compilation, CancellationToken cancellationToken)
   {
     // Get syntax references for this property (handles partial classes correctly)
     ImmutableArray<SyntaxReference> syntaxReferences = property.DeclaringSyntaxReferences;
     if (syntaxReferences.Length == 0)
-      return null;
+      return default;
 
-    // Get the first syntax reference and locate the PropertyDeclarationSyntax
+    // Primary-constructor parameters are not property declarations. They have no initializer to copy.
     Microsoft.CodeAnalysis.SyntaxNode? syntaxNode = syntaxReferences[0].GetSyntax(cancellationToken);
     if (syntaxNode is not PropertyDeclarationSyntax propertySyntax)
-      return null;
+      return default;
 
     // Check for property initializer (e.g., public int X { get; set; } = 1;)
     if (propertySyntax.Initializer?.Value is not { } initializerValue)
-      return null;
+      return default;
 
     if (compilation is not null)
     {
       SemanticModel semanticModel = compilation.GetSemanticModel(syntaxReferences[0].SyntaxTree);
       SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(initializerValue, cancellationToken);
       ISymbol? symbol = symbolInfo.Symbol;
+      ITypeSymbol valueType = UnwrapNullableType(property.Type);
 
       // Enum members have a numeric constant value. Keep the member so the generated
-      // assignment stays typed and --capabilities shows the name.
+      // assignment stays typed. Capabilities show the member name only.
       if (symbol is IFieldSymbol enumField && enumField.ContainingType.TypeKind == TypeKind.Enum)
-        return enumField.ToDisplayString(FullyQualifiedMemberFormat);
+      {
+        return new PropertyDefault(enumField.ToDisplayString(FullyQualifiedMemberFormat), enumField.Name);
+      }
 
       Optional<object?> constantValue = semanticModel.GetConstantValue(initializerValue, cancellationToken);
+      if (constantValue.HasValue && valueType.TypeKind == TypeKind.Enum && valueType is INamedTypeSymbol enumType)
+      {
+        string? memberName = MatchingEnumMemberName(enumType, constantValue.Value);
+        string display = memberName ?? IntegralDisplay(constantValue.Value);
+        if (symbol is IFieldSymbol or IPropertySymbol)
+          return new PropertyDefault(symbol.ToDisplayString(FullyQualifiedMemberFormat), display);
+
+        return new PropertyDefault(FormatEnumCast(enumType, constantValue.Value), display);
+      }
+
       if (constantValue.HasValue)
         return FormatConstantLiteral(constantValue.Value, property.Type);
 
       if (symbol is IFieldSymbol or IPropertySymbol)
-        return symbol.ToDisplayString(FullyQualifiedMemberFormat);
+      {
+        string code = symbol.ToDisplayString(FullyQualifiedMemberFormat);
+        return new PropertyDefault(code, code);
+      }
 
       // new(), new Foo(), and method calls are not a capabilities default.
       // Collection expressions stay as syntax so `[]` still compiles.
@@ -1095,7 +1144,8 @@ internal static partial class EndpointExtractor
           or ArrayCreationExpressionSyntax
           or ImplicitArrayCreationExpressionSyntax)
       {
-        return initializerValue.ToString();
+        string syntax = initializerValue.ToString();
+        return new PropertyDefault(syntax, syntax);
       }
 
       if (initializerValue is ObjectCreationExpressionSyntax
@@ -1103,46 +1153,240 @@ internal static partial class EndpointExtractor
           or InvocationExpressionSyntax
           || symbol is IMethodSymbol)
       {
-        return "default!";
+        return new PropertyDefault(UnemittableDefaultLiteral, null);
       }
     }
 
-    return initializerValue.ToString();
+    string text = initializerValue.ToString();
+    return new PropertyDefault(text, text);
   }
 
   /// <summary>
-  /// Emits a C# literal for a compile-time constant, including suffixes the property type needs.
+  /// Emits a C# literal for a compile-time constant, and a suffix-free display value.
   /// </summary>
-  private static string FormatConstantLiteral(object? value, ITypeSymbol propertyType)
+  private static PropertyDefault FormatConstantLiteral(object? value, ITypeSymbol propertyType)
   {
     switch (value)
     {
       case string text:
-        return SymbolDisplay.FormatLiteral(text, quote: true);
+      {
+        string quoted = SymbolDisplay.FormatLiteral(text, quote: true);
+        return new PropertyDefault(quoted, quoted);
+      }
       case char character:
-        return SymbolDisplay.FormatLiteral(character, quote: true);
+      {
+        string quoted = SymbolDisplay.FormatLiteral(character, quote: true);
+        return new PropertyDefault(quoted, quoted);
+      }
       case bool flag:
-        return flag ? "true" : "false";
+      {
+        string text = flag ? "true" : "false";
+        return new PropertyDefault(text, text);
+      }
       case null:
-        return propertyType.IsReferenceType && propertyType.NullableAnnotation != NullableAnnotation.Annotated
-          ? "default!"
-          : "null";
+      {
+        if (propertyType.IsReferenceType && propertyType.NullableAnnotation != NullableAnnotation.Annotated)
+          return new PropertyDefault(UnemittableDefaultLiteral, null);
+
+        return new PropertyDefault("null", "null");
+      }
       case float number:
-        return FormatRealLiteral(number.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture), "f");
+      {
+        if (float.IsNaN(number))
+          return new PropertyDefault("float.NaN", "NaN");
+
+        if (float.IsPositiveInfinity(number))
+          return new PropertyDefault("float.PositiveInfinity", "Infinity");
+
+        if (float.IsNegativeInfinity(number))
+          return new PropertyDefault("float.NegativeInfinity", "-Infinity");
+
+        string plain = number.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(FormatRealLiteral(plain, "f"), TrimRealDisplay(plain));
+      }
       case double number:
-        return number.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture);
+      {
+        if (double.IsNaN(number))
+          return new PropertyDefault("double.NaN", "NaN");
+
+        if (double.IsPositiveInfinity(number))
+          return new PropertyDefault("double.PositiveInfinity", "Infinity");
+
+        if (double.IsNegativeInfinity(number))
+          return new PropertyDefault("double.NegativeInfinity", "-Infinity");
+
+        string plain = number.ToString("R", global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain, TrimRealDisplay(plain));
+      }
       case decimal number:
-        return FormatRealLiteral(number.ToString(global::System.Globalization.CultureInfo.InvariantCulture), "m");
+      {
+        string plain = number.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(FormatRealLiteral(plain, "m"), TrimRealDisplay(plain));
+      }
       case uint number:
-        return number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "u";
+      {
+        string plain = number.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain + "u", plain);
+      }
       case long number:
-        return number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "L";
+      {
+        string plain = number.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain + "L", plain);
+      }
       case ulong number:
-        return number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "UL";
+      {
+        string plain = number.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain + "UL", plain);
+      }
       case IFormattable formattable:
-        return formattable.ToString(null, global::System.Globalization.CultureInfo.InvariantCulture);
+      {
+        string plain = formattable.ToString(null, global::System.Globalization.CultureInfo.InvariantCulture);
+        return new PropertyDefault(plain, plain);
+      }
       default:
-        return value.ToString() ?? "default!";
+      {
+        string plain = value.ToString() ?? UnemittableDefaultLiteral;
+        return new PropertyDefault(plain, plain == UnemittableDefaultLiteral ? null : plain);
+      }
+    }
+  }
+
+  private static string TrimRealDisplay(string text)
+  {
+    if (text.EndsWith(".0", StringComparison.Ordinal))
+      return text[..^2];
+
+    return text;
+  }
+
+  private static ITypeSymbol UnwrapNullableType(ITypeSymbol type)
+  {
+    if (type is INamedTypeSymbol named
+        && named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+        && named.TypeArguments.Length == 1)
+    {
+      return named.TypeArguments[0];
+    }
+
+    return type;
+  }
+
+  private static bool PropertyIsInitOnly(IPropertySymbol property) =>
+    property.SetMethod is { IsInitOnly: true };
+
+  private static string? MatchingEnumMemberName(INamedTypeSymbol enumType, object? value)
+  {
+    if (value is null)
+      return null;
+
+    foreach (IFieldSymbol field in enumType.GetMembers().OfType<IFieldSymbol>())
+    {
+      if (!field.HasConstantValue || field.ConstantValue is null)
+        continue;
+
+      if (EnumBitsEqual(field.ConstantValue, value))
+        return field.Name;
+    }
+
+    return null;
+  }
+
+  private static string FormatEnumCast(INamedTypeSymbol enumType, object? value)
+  {
+    string typeName = enumType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    return $"({typeName}){FormatIntegralLiteral(value)}";
+  }
+
+  private static string IntegralDisplay(object? value)
+  {
+    object? unwrapped = UnwrapEnumBox(value);
+    return unwrapped switch
+    {
+      byte number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      sbyte number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      short number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      ushort number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      int number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      uint number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      long number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      ulong number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      _ => "0"
+    };
+  }
+
+  private static string FormatIntegralLiteral(object? value)
+  {
+    object? unwrapped = UnwrapEnumBox(value);
+    return unwrapped switch
+    {
+      byte number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      sbyte number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      short number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      ushort number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      int number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
+      uint number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "u",
+      long number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "L",
+      ulong number => number.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + "UL",
+      _ => "0"
+    };
+  }
+
+  private static object? UnwrapEnumBox(object? value)
+  {
+    if (value is Enum enumValue)
+    {
+      return Convert.ChangeType(
+        enumValue,
+        Enum.GetUnderlyingType(enumValue.GetType()),
+        global::System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    return value;
+  }
+
+  private static bool EnumBitsEqual(object fieldValue, object defaultValue)
+  {
+    object? fieldBox = UnwrapEnumBox(fieldValue);
+    object? defaultBox = UnwrapEnumBox(defaultValue);
+    if (object.Equals(fieldBox, defaultBox))
+      return true;
+
+    return TryIntegralBits(fieldBox, out ulong fieldBits)
+      && TryIntegralBits(defaultBox, out ulong defaultBits)
+      && fieldBits == defaultBits;
+  }
+
+  private static bool TryIntegralBits(object? value, out ulong bits)
+  {
+    switch (value)
+    {
+      case byte number:
+        bits = number;
+        return true;
+      case sbyte number:
+        bits = unchecked((ulong)number);
+        return true;
+      case short number:
+        bits = unchecked((ulong)number);
+        return true;
+      case ushort number:
+        bits = number;
+        return true;
+      case int number:
+        bits = unchecked((ulong)number);
+        return true;
+      case uint number:
+        bits = number;
+        return true;
+      case long number:
+        bits = unchecked((ulong)number);
+        return true;
+      case ulong number:
+        bits = number;
+        return true;
+      default:
+        bits = 0;
+        return false;
     }
   }
 
@@ -1190,7 +1434,8 @@ internal static partial class EndpointExtractor
     TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
     CancellationToken cancellationToken,
-    bool hasOperation = false
+    bool hasOperation = false,
+    EquatableArray<string> constructorArguments = default
   )
   {
     INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
@@ -1230,7 +1475,8 @@ internal static partial class EndpointExtractor
       HandlerInterfaceName = shape.HandlerInterfaceName,
       ReturnsProblemPair = shape.ReturnsProblemPair,
       SuccessTypeName = shape.SuccessTypeName,
-      RendererTypeName = shape.RendererTypeName
+      RendererTypeName = shape.RendererTypeName,
+      ConstructorArguments = constructorArguments
     };
   }
 

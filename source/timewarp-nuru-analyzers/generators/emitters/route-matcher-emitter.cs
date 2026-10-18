@@ -1663,8 +1663,13 @@ internal static class RouteMatcherEmitter
     }
   }
 
-  private static string JsonArgvRejectedFlag(string varName, int routeIndex) =>
-    $"__jsonArgvRejected_{varName}_{routeIndex}";
+  private static string JsonArgvRejectedFlag(string varName, int routeIndex)
+  {
+    if (varName.StartsWith('@'))
+      varName = varName[1..];
+
+    return $"__jsonArgvRejected_{varName}_{routeIndex}";
+  }
 
   private static string ToCamelCase(string value) => CSharpIdentifierUtils.ToCamelCase(value);
 

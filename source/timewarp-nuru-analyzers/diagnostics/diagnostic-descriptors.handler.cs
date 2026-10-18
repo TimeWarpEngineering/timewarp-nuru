@@ -105,9 +105,21 @@ internal static partial class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor MissingHandler = new(
     id: "NURU_H008",
     title: "No handler visible for operation",
-    messageFormat: "No IQueryHandler, ICommandHandler, or IIdempotentCommandHandler for '{0}' is visible to this compilation. Register one, or the app fails at startup.",
+    messageFormat: "No IQueryHandler, ICommandHandler, or IIdempotentCommandHandler for '{0}' is visible to this compilation. Register one, or invoking this route exits 1.",
     category: HandlerCategory,
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
     description: "An [Operation] endpoint needs a registered TimeWarp.Mediator handler. The generator warns when it can see that none is present, and the project still builds. Invoking that route returns exit code 1 when the handler is unregistered. A project that treats warnings as errors must suppress NURU_H008 when the handler is registered in a way this compilation cannot see.");
+
+  /// <summary>
+  /// NURU_H009: The endpoint type has no constructor the generator can call.
+  /// </summary>
+  public static readonly DiagnosticDescriptor UnconstructableEndpoint = new(
+    id: "NURU_H009",
+    title: "Endpoint type has no callable constructor",
+    messageFormat: "'{0}' has no constructor Nuru can call. Add a public parameterless constructor, or a constructor whose parameters match property names.",
+    category: HandlerCategory,
+    defaultSeverity: DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Nuru builds the endpoint with new() when a parameterless constructor exists. Otherwise it calls a constructor whose parameters match public settable properties by name. A type with neither is skipped.");
 }

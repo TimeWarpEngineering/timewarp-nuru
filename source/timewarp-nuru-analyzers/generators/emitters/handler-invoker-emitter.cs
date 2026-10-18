@@ -42,7 +42,7 @@ internal static class HandlerInvokerEmitter
   /// <param name="loggerFactoryFieldName">Logger factory source (static field name or "app.LoggerFactory"), or null if no logging.</param>
   /// <param name="useRuntimeDI">When true, uses GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
   /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
-  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false)
+  public static void Emit(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, int indent = 6, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false, bool jsonArgsPath = false)
   {
     string indentStr = new(' ', indent);
     HandlerDefinition handler = route.Handler;
@@ -61,7 +61,7 @@ internal static class HandlerInvokerEmitter
         break;
 
       case HandlerKind.Command:
-        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator);
+        EmitCommandInvocation(sb, route, routeIndex, services, indentStr, commandAlreadyCreated, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, jsonArgsPath);
         break;
 
       case HandlerKind.Method:
@@ -292,7 +292,7 @@ internal static class HandlerInvokerEmitter
   /// Emits invocation for a command/query handler class.
   /// Creates the command object (unless already created), resolves handler dependencies, and invokes Handle().
   /// </summary>
-  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false)
+  private static void EmitCommandInvocation(StringBuilder sb, RouteDefinition route, int routeIndex, ImmutableArray<ServiceDefinition> services, string indent, bool commandAlreadyCreated = false, string? loggerFactoryFieldName = null, bool useRuntimeDI = false, string runtimeDISuffix = "", ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, bool useDirectInvoke = false, bool hasGeneratedMediator = false, bool jsonArgsPath = false)
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
@@ -303,35 +303,7 @@ internal static class HandlerInvokerEmitter
 
     // 1. Create the command object with property initializers (skip if already created by behavior emitter)
     if (!commandAlreadyCreated)
-    {
-      // Property names are PascalCase, local variables use route-unique names for catch-all to avoid collision
-      sb.AppendLine($"{indent}// Create command instance with bound properties");
-      sb.AppendLine($"{indent}{commandTypeName} __command = new()");
-      sb.AppendLine($"{indent}{{");
-
-      foreach (ParameterBinding param in handler.RouteParameters)
-      {
-        string propName = ToPascalCase(param.ParameterName);
-        // Variable name must match what route-matcher-emitter generates:
-        // - Catch-all: __varName_routeIndex to avoid collision with 'args' parameter
-        // - Flags: ToCamelCase of LongForm (handles kebab-case like "no-cache" → "noCache")
-        // - Options (value): property name lowercased (e.g., "configfile" for ConfigFile property)
-        // - Parameters: lowercase of parameter name
-        // Note: Non-unique names need keyword escaping to match route-matcher-emitter
-        string varName = param.Source switch
-        {
-          BindingSource.CatchAll => $"__{ToCamelCase(param.ParameterName)}_{routeIndex}",
-          BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(param.SourceName)),
-          BindingSource.Option => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant()),
-          _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
-        };
-        sb.AppendLine(
-          $"{indent}  {propName} = {varName},");
-      }
-
-      sb.AppendLine($"{indent}}};");
-      sb.AppendLine();
-    }
+      CommandConstructionEmitter.Emit(sb, route, routeIndex, indent, jsonArgsPath);
 
     if (directInvoke)
     {
@@ -368,6 +340,15 @@ internal static class HandlerInvokerEmitter
           $"{indent}await __handler.Handle(__command, cancellationToken);");
       }
 
+      return;
+    }
+
+    // A visible handler that is not nested has nowhere to send when this compilation
+    // has no generated mediator. Exit 1 instead of throwing from __GetMediator().
+    if (!useRuntimeDI && !hasGeneratedMediator)
+    {
+      sb.AppendLine($"{indent}app.Terminal.WriteErrorLine(\"The TimeWarp.Mediator generated mediator is not available in this compilation.\");");
+      sb.AppendLine($"{indent}return 1;");
       return;
     }
 

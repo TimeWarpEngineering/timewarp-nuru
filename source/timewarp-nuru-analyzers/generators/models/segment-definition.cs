@@ -127,7 +127,9 @@ public sealed record OptionDefinition(
   string? DefaultValueLiteral = null,
   bool IsJsonValue = false,
   bool? CapabilityRequired = null,
-  string? CapabilityType = null)
+  string? CapabilityType = null,
+  bool IsInitOnly = false,
+  string? CapabilityDefaultValue = null)
   : SegmentDefinition(Position)
 {
   /// <summary>

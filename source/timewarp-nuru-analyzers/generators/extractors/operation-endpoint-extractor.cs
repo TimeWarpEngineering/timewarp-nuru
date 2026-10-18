@@ -4,9 +4,13 @@
 
 #region Design
 // The route literal is the operation name. Each public settable member is an option,
-// including members inherited from a base that is not a [NuruRouteGroup].
+// including init members and members inherited from a base that is not a [NuruRouteGroup].
+// A derived declaration hides the base property of the same name.
 // [NuruRoute], [Parameter], and [Option] stay CLI overrides.
 // An [Operation] type with no mediator kind is not an endpoint.
+// A type with no parameterless constructor is built from the constructor whose
+// parameters match property names. A type with neither is NURU_H009 and is skipped.
+// JSON capability types omit global:: inside type arguments.
 // Group path: a containing [NuruRouteGroup] wins, otherwise [NuruCliBinding(Group)],
 // otherwise the endpoint is ungrouped. CliOperationBinding has Pattern only.
 // Handler and renderer lookups are cached per compilation and skip framework assemblies.
@@ -207,7 +211,8 @@ internal static partial class EndpointExtractor
     string messageType,
     bool handlerVisible,
     Compilation compilation,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken,
+    EquatableArray<string> constructorArguments = default)
   {
     string commandTypeName = classSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     ImmutableArray<ParameterBinding> bindings = BuildPropertyBindings(classSymbol, hasOperation: true, compilation, cancellationToken);
@@ -222,7 +227,8 @@ internal static partial class EndpointExtractor
       handlerInterfaceName: shape.HandlerInterfaceName,
       returnsProblemPair: shape.ReturnsProblemPair,
       successTypeName: shape.SuccessTypeName,
-      rendererTypeName: shape.RendererTypeName);
+      rendererTypeName: shape.RendererTypeName,
+      constructorArguments: constructorArguments);
   }
 
   private static void AddDerivedPropertyBindings(
@@ -276,7 +282,9 @@ internal static partial class EndpointExtractor
 
     string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     string? description = DescriptionFromAttribute(property);
-    string? defaultLiteral = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+    PropertyDefault propertyDefault = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+    string? defaultLiteral = propertyDefault.Code;
+    bool initOnly = PropertyIsInitOnly(property);
     bool nullable = property.NullableAnnotation == NullableAnnotation.Annotated;
     bool contractRequired = property.IsRequired || (!nullable && defaultLiteral is null);
     bool isBool = property.Type.SpecialType == SpecialType.System_Boolean;
@@ -300,17 +308,19 @@ internal static partial class EndpointExtractor
         DefaultValueLiteral: defaultLiteral,
         IsJsonValue: true,
         CapabilityRequired: contractRequired,
-        CapabilityType: "json " + StripGlobalPrefix(typeName));
+        CapabilityType: JsonCapabilityType(property.Type),
+        IsInitOnly: initOnly,
+        CapabilityDefaultValue: propertyDefault.Display);
     }
 
     if (isBool && defaultLiteral == "true")
     {
-      return BoolValueOption(property, position, description, "true", isOptional: true, parameterIsOptional: false);
+      return BoolValueOption(property, position, description, new PropertyDefault("true", "true"), isOptional: true, parameterIsOptional: false);
     }
 
     if (isBool && defaultLiteral is null && contractRequired)
     {
-      return BoolValueOption(property, position, description, null, isOptional: false, parameterIsOptional: false);
+      return BoolValueOption(property, position, description, default, isOptional: false, parameterIsOptional: false);
     }
 
     if (isNullableBool)
@@ -328,11 +338,16 @@ internal static partial class EndpointExtractor
         ParameterIsOptional: true,
         ResolvedClrTypeName: typeName,
         DefaultValueLiteral: defaultLiteral,
-        CapabilityRequired: false);
+        CapabilityRequired: false,
+        IsInitOnly: initOnly,
+        CapabilityDefaultValue: propertyDefault.Display);
     }
 
     if (isBool)
     {
+      string? flagDisplay = defaultLiteral == UnemittableDefaultLiteral
+        ? null
+        : propertyDefault.Display ?? "false";
       return new OptionDefinition(
         Position: position,
         LongForm: property.Name,
@@ -345,7 +360,9 @@ internal static partial class EndpointExtractor
         IsRepeated: false,
         ParameterIsOptional: false,
         ResolvedClrTypeName: typeName,
-        DefaultValueLiteral: defaultLiteral ?? "false");
+        DefaultValueLiteral: defaultLiteral ?? "false",
+        IsInitOnly: initOnly,
+        CapabilityDefaultValue: flagDisplay);
     }
 
     bool repeated = IsRepeatedOptionType(property.Type);
@@ -365,14 +382,16 @@ internal static partial class EndpointExtractor
       ParameterIsOptional: nullable,
       ResolvedClrTypeName: typeName,
       DefaultValueLiteral: defaultLiteral,
-      CapabilityRequired: contractRequired);
+      CapabilityRequired: contractRequired,
+      IsInitOnly: initOnly,
+      CapabilityDefaultValue: propertyDefault.Display);
   }
 
   private static OptionDefinition BoolValueOption(
     IPropertySymbol property,
     int position,
     string? description,
-    string? defaultLiteral,
+    PropertyDefault propertyDefault,
     bool isOptional,
     bool parameterIsOptional)
   {
@@ -389,8 +408,10 @@ internal static partial class EndpointExtractor
       IsRepeated: false,
       ParameterIsOptional: parameterIsOptional,
       ResolvedClrTypeName: typeName,
-      DefaultValueLiteral: defaultLiteral,
-      CapabilityRequired: !isOptional);
+      DefaultValueLiteral: propertyDefault.Code,
+      CapabilityRequired: !isOptional,
+      IsInitOnly: PropertyIsInitOnly(property),
+      CapabilityDefaultValue: propertyDefault.Display);
   }
 
   private static ParameterBinding? TryDeriveBinding(
@@ -663,13 +684,113 @@ internal static partial class EndpointExtractor
     if (property.DeclaredAccessibility != Accessibility.Public)
       return false;
 
-    return property.SetMethod is { DeclaredAccessibility: Accessibility.Public, IsInitOnly: false };
+    return property.SetMethod is { DeclaredAccessibility: Accessibility.Public };
   }
 
-  private static string StripGlobalPrefix(string typeName) =>
-    typeName.StartsWith("global::", StringComparison.Ordinal)
-      ? typeName["global::".Length..]
-      : typeName;
+  private static readonly SymbolDisplayFormat OmittedGlobalFormat =
+    SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
+
+  private static string JsonCapabilityType(ITypeSymbol type) =>
+    "json " + type.ToDisplayString(OmittedGlobalFormat);
+
+  private static bool TrySelectConstructorArguments(
+    INamedTypeSymbol type,
+    Location location,
+    out EquatableArray<string> arguments,
+    out Diagnostic? diagnostic)
+  {
+    arguments = default;
+    diagnostic = null;
+    if (type.IsStatic || type.IsAbstract || type.TypeKind is not (TypeKind.Class or TypeKind.Struct))
+    {
+      diagnostic = Unconstructable(type, location);
+      return false;
+    }
+
+    if (HasCallableParameterlessConstructor(type))
+      return true;
+
+    IMethodSymbol? best = null;
+    List<string>? bestNames = null;
+    foreach (IMethodSymbol constructor in type.InstanceConstructors)
+    {
+      if (constructor.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal))
+        continue;
+
+      if (IsCopyConstructor(type, constructor))
+        continue;
+
+      if (!ConstructorParametersMatchProperties(type, constructor, out List<string> names))
+        continue;
+
+      if (best is null || constructor.Parameters.Length > best.Parameters.Length)
+      {
+        best = constructor;
+        bestNames = names;
+      }
+    }
+
+    if (bestNames is null)
+    {
+      diagnostic = Unconstructable(type, location);
+      return false;
+    }
+
+    arguments = [.. bestNames];
+    return true;
+  }
+
+  private static Diagnostic Unconstructable(INamedTypeSymbol type, Location location) =>
+    Diagnostic.Create(DiagnosticDescriptors.UnconstructableEndpoint, location, type.Name);
+
+  private static bool HasCallableParameterlessConstructor(INamedTypeSymbol type) =>
+    type.InstanceConstructors.Any(constructor =>
+      constructor.Parameters.Length == 0
+      && constructor.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal);
+
+  private static bool IsCopyConstructor(INamedTypeSymbol type, IMethodSymbol constructor) =>
+    constructor.Parameters.Length == 1
+    && SymbolEqualityComparer.Default.Equals(constructor.Parameters[0].Type, type);
+
+  private static bool ConstructorParametersMatchProperties(
+    INamedTypeSymbol type,
+    IMethodSymbol constructor,
+    out List<string> propertyNames)
+  {
+    propertyNames = [];
+    if (constructor.Parameters.Length == 0)
+      return false;
+
+    foreach (IParameterSymbol parameter in constructor.Parameters)
+    {
+      IPropertySymbol? match = FindPropertyByName(type, parameter.Name);
+      if (match is null || !IsDerivableProperty(match))
+        return false;
+
+      propertyNames.Add(match.Name);
+    }
+
+    return true;
+  }
+
+  private static IPropertySymbol? FindPropertyByName(INamedTypeSymbol type, string name)
+  {
+    for (INamedTypeSymbol? current = type;
+         current is not null && current.SpecialType != SpecialType.System_Object;
+         current = current.BaseType)
+    {
+      foreach (IPropertySymbol property in current.GetMembers().OfType<IPropertySymbol>())
+      {
+        if (property.IsStatic)
+          continue;
+
+        if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+          return property;
+      }
+    }
+
+    return null;
+  }
 
   private static bool HasCliMemberAttribute(IPropertySymbol property)
   {

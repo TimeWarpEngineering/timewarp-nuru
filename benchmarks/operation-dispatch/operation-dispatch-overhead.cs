@@ -2,11 +2,10 @@
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package TimeWarp.Amuru
 
-// In-process ticks for mediator dispatch versus UseDirectInvoke, after a warm-up.
+// In-process microseconds for mediator dispatch versus UseDirectInvoke.
 // Each path is its own method: two Build() calls in one method are intercepted twice.
-// RunAsync sits on the field Build() assigns. The generator records those call sites
-// even when they are inside a loop. A local variable inside a loop is not recorded.
-// Pass --aot to publish two native binaries and time one cold start each.
+// RunAsync sits on the field Build() assigns. The first call is timed before warm-up.
+// Pass --aot to publish two native binaries and time three alternating cold starts.
 
 using System.Diagnostics;
 using System.Globalization;
@@ -17,14 +16,19 @@ using TimeWarp.Nuru;
 const int Warmup = 50;
 const int Iterations = 2000;
 
-long mediatorTicks = await OverheadBench.MeasureMediatorAsync(Warmup, Iterations);
-long directTicks = await OverheadBench.MeasureDirectAsync(Warmup, Iterations);
+OverheadBench.Sample mediator = await OverheadBench.MeasureMediatorAsync(Warmup, Iterations);
+OverheadBench.Sample direct = await OverheadBench.MeasureDirectAsync(Warmup, Iterations);
+long mediatorPerCall = OverheadBench.ToMicroseconds(mediator.LoopTicks) / Iterations;
+long directPerCall = OverheadBench.ToMicroseconds(direct.LoopTicks) / Iterations;
+string decision = directPerCall <= mediatorPerCall ? "keep-UseDirectInvoke" : "drop-UseDirectInvoke";
 
 Console.WriteLine($"warmup={Warmup.ToString(CultureInfo.InvariantCulture)}");
 Console.WriteLine($"iterations={Iterations.ToString(CultureInfo.InvariantCulture)}");
-Console.WriteLine($"mediator-ticks={mediatorTicks.ToString(CultureInfo.InvariantCulture)}");
-Console.WriteLine($"direct-ticks={directTicks.ToString(CultureInfo.InvariantCulture)}");
-Console.WriteLine("decision=keep-UseDirectInvoke");
+Console.WriteLine($"mediator-first-us={OverheadBench.ToMicroseconds(mediator.FirstTicks).ToString(CultureInfo.InvariantCulture)}");
+Console.WriteLine($"direct-first-us={OverheadBench.ToMicroseconds(direct.FirstTicks).ToString(CultureInfo.InvariantCulture)}");
+Console.WriteLine($"mediator-per-call-us={mediatorPerCall.ToString(CultureInfo.InvariantCulture)}");
+Console.WriteLine($"direct-per-call-us={directPerCall.ToString(CultureInfo.InvariantCulture)}");
+Console.WriteLine($"decision={decision}");
 
 if (args.Contains("--aot"))
 {
@@ -38,12 +42,25 @@ internal static class OverheadBench
   private static NuruApp MediatorApp = null!;
   private static NuruApp DirectApp = null!;
 
-  public static async Task<long> MeasureMediatorAsync(int warmup, int iterations)
+  internal readonly record struct Sample(long FirstTicks, long LoopTicks);
+
+  public static long ToMicroseconds(long ticks) =>
+    ticks * 1_000_000 / Stopwatch.Frequency;
+
+  public static async Task<Sample> MeasureMediatorAsync(int warmup, int iterations)
   {
     string[] route = ["overhead"];
     MediatorApp = NuruApp.CreateBuilder()
       .Map<OverheadQuery>()
       .Build();
+
+    Stopwatch first = Stopwatch.StartNew();
+    int firstCode = await MediatorApp.RunAsync(route);
+    first.Stop();
+    if (firstCode != 0)
+    {
+      throw new InvalidOperationException("Mediator first call failed.");
+    }
 
     for (int index = 0; index < warmup; index++)
     {
@@ -65,16 +82,24 @@ internal static class OverheadBench
     }
 
     watch.Stop();
-    return watch.ElapsedTicks;
+    return new Sample(first.ElapsedTicks, watch.ElapsedTicks);
   }
 
-  public static async Task<long> MeasureDirectAsync(int warmup, int iterations)
+  public static async Task<Sample> MeasureDirectAsync(int warmup, int iterations)
   {
     string[] route = ["overhead"];
     DirectApp = NuruApp.CreateBuilder()
       .UseDirectInvoke()
       .Map<OverheadQuery>()
       .Build();
+
+    Stopwatch first = Stopwatch.StartNew();
+    int firstCode = await DirectApp.RunAsync(route);
+    first.Stop();
+    if (firstCode != 0)
+    {
+      throw new InvalidOperationException("Direct first call failed.");
+    }
 
     for (int index = 0; index < warmup; index++)
     {
@@ -96,7 +121,7 @@ internal static class OverheadBench
     }
 
     watch.Stop();
-    return watch.ElapsedTicks;
+    return new Sample(first.ElapsedTicks, watch.ElapsedTicks);
   }
 
   public static async Task MeasureAotAsync()
@@ -120,10 +145,26 @@ internal static class OverheadBench
     await PublishAsync(mediatorFile, mediatorOut);
     await PublishAsync(directFile, directOut);
 
-    long mediatorCold = await ColdStartAsync(Path.Combine(mediatorOut, "mediator"));
-    long directCold = await ColdStartAsync(Path.Combine(directOut, "direct"));
-    Console.WriteLine($"aot-mediator-cold-ticks={mediatorCold.ToString(CultureInfo.InvariantCulture)}");
-    Console.WriteLine($"aot-direct-cold-ticks={directCold.ToString(CultureInfo.InvariantCulture)}");
+    List<long> mediatorCold = [];
+    List<long> directCold = [];
+    string mediatorExe = Path.Combine(mediatorOut, "mediator");
+    string directExe = Path.Combine(directOut, "direct");
+    for (int sample = 0; sample < 3; sample++)
+    {
+      if (sample % 2 == 0)
+      {
+        mediatorCold.Add(await ColdStartAsync(mediatorExe));
+        directCold.Add(await ColdStartAsync(directExe));
+      }
+      else
+      {
+        directCold.Add(await ColdStartAsync(directExe));
+        mediatorCold.Add(await ColdStartAsync(mediatorExe));
+      }
+    }
+
+    Console.WriteLine($"aot-mediator-cold-ms={string.Join(',', mediatorCold)}");
+    Console.WriteLine($"aot-direct-cold-ms={string.Join(',', directCold)}");
     Console.WriteLine("aot=ran");
   }
 
@@ -160,7 +201,7 @@ internal static class OverheadBench
       throw new InvalidOperationException(run.Stderr);
     }
 
-    return watch.ElapsedTicks;
+    return watch.ElapsedTicks * 1000 / Stopwatch.Frequency;
   }
 
   private static string FindRepositoryRoot()

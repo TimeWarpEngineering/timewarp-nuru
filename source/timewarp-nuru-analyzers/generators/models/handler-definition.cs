@@ -36,7 +36,8 @@ public sealed record HandlerDefinition(
   string? HandlerInterfaceName = null,
   bool ReturnsProblemPair = false,
   string? SuccessTypeName = null,
-  string? RendererTypeName = null)
+  string? RendererTypeName = null,
+  EquatableArray<string> ConstructorArguments = default)
 {
   /// <summary>
   /// Creates a handler definition for a delegate-based handler.
@@ -110,7 +111,8 @@ public sealed record HandlerDefinition(
     string? handlerInterfaceName,
     bool returnsProblemPair,
     string? successTypeName,
-    string? rendererTypeName)
+    string? rendererTypeName,
+    EquatableArray<string> constructorArguments = default)
   {
     return new HandlerDefinition(
       HandlerKind: HandlerKind.Command,
@@ -128,7 +130,8 @@ public sealed record HandlerDefinition(
       HandlerInterfaceName: handlerInterfaceName,
       ReturnsProblemPair: returnsProblemPair,
       SuccessTypeName: successTypeName,
-      RendererTypeName: rendererTypeName);
+      RendererTypeName: rendererTypeName,
+      ConstructorArguments: constructorArguments);
   }
 
   /// <summary>

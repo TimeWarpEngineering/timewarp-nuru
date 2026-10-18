@@ -1,6 +1,8 @@
 #!/usr/bin/env -S dotnet --
 #pragma warning disable CA1062 // Handlers trust the mediator request instance
 #pragma warning disable CA1819 // Repeated and JSON members are arrays on purpose
+#pragma warning disable CA1002 // Bag is List<T> so the capability type has a type argument
+#pragma warning disable CA2227 // Derived members need a public setter
 #pragma warning disable CA1805 // `= false` is the flag initializer this task derives
 
 #if !JARIBU_MULTI
@@ -50,6 +52,11 @@ public class OperationEndpointDerivationTests
       .Map<T508DefaultQuery>()
       .Map<T508RecordQuery>()
       .Map<T508InheritedQuery>()
+      .Map<T508UserQuery>()
+      .Map<T508InitQuery>()
+      .Map<T508ParamsQuery>()
+      .Map<T508HideQuery>()
+      .Map<T508SpecialQuery>()
       .Map<T508KeepDescriptionQuery>()
       .Map<T508HandlerlessQuery>()
       .Build();
@@ -305,6 +312,13 @@ public class OperationEndpointDerivationTests
     notes.GetProperty("type").GetString()!.ShouldContain("T508Note");
     notes.GetProperty("type").GetString()!.ShouldNotContain("global::");
 
+    JsonElement bag = FindOption(FindEndpoint(terminal.Output, "t508json"), "Bag");
+    string? bagType = bag.GetProperty("type").GetString();
+    bagType.ShouldNotBeNull();
+    bagType.ShouldContain("List<");
+    bagType.ShouldContain("T508Note");
+    bagType.ShouldNotContain("global::");
+
     JsonElement grouped = FindEndpoint(terminal.Output, "t508calc add");
     grouped.GetProperty("groupPath").EnumerateArray().Select(value => value.GetString()).ShouldBe(["t508calc"]);
 
@@ -369,20 +383,91 @@ public class OperationEndpointDerivationTests
 
     int exitCode = await App.RunAsync(["t508defaults"]);
     exitCode.ShouldBe(0);
-    terminal.OutputContains("price:1.5|ratio:2|const:true|items:null").ShouldBeTrue();
+    terminal.OutputContains("price:1.5|ratio:2|const:true|items:set|delay:30|token:set").ShouldBeTrue();
+
+    using TestTerminal jsonTerminal = new();
+    CreateApp(jsonTerminal);
+    int jsonCode = await App.RunAsync(["t508defaults", "--json-args", "{}"]);
+    jsonCode.ShouldBe(0);
+    jsonTerminal.OutputContains("price:1.5|ratio:2|const:true|items:set|delay:30|token:set").ShouldBeTrue();
 
     using TestTerminal describedTerminal = new();
     CreateApp(describedTerminal);
     int described = await App.RunAsync(["--capabilities"]);
     described.ShouldBe(0);
     JsonElement price = FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Price");
-    price.GetProperty("defaultValue").GetString().ShouldBe("1.5m");
+    price.GetProperty("defaultValue").GetString().ShouldBe("1.5");
     JsonElement ratio = FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Ratio");
-    ratio.GetProperty("defaultValue").GetString().ShouldBe("2.0f");
+    ratio.GetProperty("defaultValue").GetString().ShouldBe("2");
     JsonElement flag = FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "ConstFlag");
     flag.GetProperty("defaultValue").GetString().ShouldBe("true");
     flag.GetProperty("isFlag").GetBoolean().ShouldBeFalse();
     FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Items").TryGetProperty("defaultValue", out _).ShouldBeFalse();
+    FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Delay").TryGetProperty("defaultValue", out _).ShouldBeFalse();
+    FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Token").TryGetProperty("defaultValue", out _).ShouldBeFalse();
+  }
+
+  public static async Task Should_keep_non_finite_enum_const_and_flags_defaults()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int exitCode = await App.RunAsync(["t508special"]);
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("quiet:nan|up:inf|down:-inf|accent:fast|access:rw|cast:3|option:nan").ShouldBeTrue();
+
+    using TestTerminal describedTerminal = new();
+    CreateApp(describedTerminal);
+    int described = await App.RunAsync(["--capabilities"]);
+    described.ShouldBe(0);
+    JsonElement endpoint = FindEndpoint(describedTerminal.Output, "t508special");
+    FindOption(endpoint, "Quiet").GetProperty("defaultValue").GetString().ShouldBe("NaN");
+    FindOption(endpoint, "Up").GetProperty("defaultValue").GetString().ShouldBe("Infinity");
+    FindOption(endpoint, "Down").GetProperty("defaultValue").GetString().ShouldBe("-Infinity");
+    FindOption(endpoint, "Accent").GetProperty("defaultValue").GetString().ShouldBe("Fast");
+    FindOption(endpoint, "Access").GetProperty("defaultValue").GetString().ShouldBe("3");
+    FindOption(endpoint, "Casted").GetProperty("defaultValue").GetString().ShouldBe("3");
+    FindOption(endpoint, "quiet").GetProperty("defaultValue").GetString().ShouldBe("NaN");
+  }
+
+  public static async Task Should_construct_a_positional_record_and_a_required_init_member()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int recordExit = await App.RunAsync(["t508user", "--Id", "7"]);
+    recordExit.ShouldBe(0);
+    terminal.OutputContains("id:7").ShouldBeTrue();
+
+    int initExit = await App.RunAsync(["t508init", "--Name", "ada"]);
+    initExit.ShouldBe(0);
+    terminal.OutputContains("name:ada|extra:3").ShouldBeTrue();
+  }
+
+  public static async Task Should_reject_a_keyword_json_member_on_argv()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int exitCode = await App.RunAsync(["t508params", "--Params", "nope"]);
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("--Params is JSON. Pass it with --json-args.").ShouldBeTrue();
+  }
+
+  public static async Task Should_not_derive_a_hidden_base_property()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int named = await App.RunAsync(["t508hide", "--title", "ada"]);
+    named.ShouldBe(0);
+    terminal.OutputContains("name:ada").ShouldBeTrue();
+
+    using TestTerminal omitted = new();
+    CreateApp(omitted);
+    int exitCode = await App.RunAsync(["t508hide"]);
+    exitCode.ShouldBe(0);
+    omitted.OutputContains("name:child").ShouldBeTrue();
   }
 
   public static async Task Should_derive_a_record_class_and_an_inherited_property()
@@ -592,6 +677,8 @@ public sealed class T508JsonQuery : IQuery<string>
 {
   public T508Note[] Notes { get; set; } = [];
 
+  public List<T508Note> Bag { get; set; } = [];
+
   public sealed class Handler : IQueryHandler<T508JsonQuery, string>
   {
     public Task<string> Handle(T508JsonQuery query, CancellationToken cancellationToken)
@@ -794,8 +881,12 @@ public sealed class T508DefaultQuery : IQuery<string>
 
   public bool ConstFlag { get; set; } = T508Const.On;
 
-  // `= new()` is not a constant. The catalog omits it and an omitted call leaves the member null.
+  // `= new()` is not a constant. The catalog omits it. Omission keeps the initializer.
   public T508Fresh? Items { get; set; } = new();
+
+  public TimeSpan Delay { get; set; } = TimeSpan.FromSeconds(30);
+
+  public Guid Token { get; set; } = Guid.NewGuid();
 
   public sealed class Handler : IQueryHandler<T508DefaultQuery, string>
   {
@@ -803,11 +894,14 @@ public sealed class T508DefaultQuery : IQuery<string>
     {
       _ = cancellationToken;
       string items = query.Items is null ? "null" : "set";
+      string token = query.Token == Guid.Empty ? "empty" : "set";
       return Task.FromResult(
         $"price:{query.Price.ToString(CultureInfo.InvariantCulture)}"
         + $"|ratio:{query.Ratio.ToString(CultureInfo.InvariantCulture)}"
         + $"|const:{(query.ConstFlag ? "true" : "false")}"
-        + $"|items:{items}");
+        + $"|items:{items}"
+        + $"|delay:{query.Delay.TotalSeconds.ToString(CultureInfo.InvariantCulture)}"
+        + $"|token:{token}");
     }
   }
 }
@@ -888,5 +982,124 @@ public sealed class T508HandlerlessQuery : IQuery<string>
 }
 #pragma warning restore TWM001
 #pragma warning restore NURU_H008
+
+public static class T508Numbers
+{
+  public const double Up = double.PositiveInfinity;
+
+  public const double Down = double.NegativeInfinity;
+
+  public const T508Mode Accent = T508Mode.Fast;
+}
+
+[Flags]
+public enum T508Access
+{
+  None = 0,
+  Read = 1,
+  Write = 2
+}
+
+[Operation("t508special")]
+public sealed class T508SpecialQuery : IQuery<string>
+{
+  public double Quiet { get; set; } = double.NaN;
+
+  public double Up { get; set; } = T508Numbers.Up;
+
+  public double Down { get; set; } = T508Numbers.Down;
+
+  public T508Mode Accent { get; set; } = T508Numbers.Accent;
+
+  public T508Access Access { get; set; } = T508Access.Read | T508Access.Write;
+
+  public T508Access Casted { get; set; } = (T508Access)3;
+
+  [Option("quiet")]
+  public double QuietOption { get; set; } = double.NaN;
+
+  public sealed class Handler : IQueryHandler<T508SpecialQuery, string>
+  {
+    public Task<string> Handle(T508SpecialQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      string quiet = double.IsNaN(query.Quiet) ? "nan" : "no";
+      string up = double.IsPositiveInfinity(query.Up) ? "inf" : "no";
+      string down = double.IsNegativeInfinity(query.Down) ? "-inf" : "no";
+      string accent = query.Accent == T508Mode.Fast ? "fast" : "no";
+      string access = query.Access == (T508Access.Read | T508Access.Write) ? "rw" : "no";
+      string casted = ((int)query.Casted).ToString(CultureInfo.InvariantCulture);
+      string option = double.IsNaN(query.QuietOption) ? "nan" : "no";
+      return Task.FromResult($"quiet:{quiet}|up:{up}|down:{down}|accent:{accent}|access:{access}|cast:{casted}|option:{option}");
+    }
+  }
+}
+
+[Operation("t508user")]
+public sealed record T508UserQuery(int Id) : IQuery<string>
+{
+  public sealed class Handler : IQueryHandler<T508UserQuery, string>
+  {
+    public Task<string> Handle(T508UserQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult("id:" + query.Id.ToString(CultureInfo.InvariantCulture));
+    }
+  }
+}
+
+[Operation("t508init")]
+public sealed class T508InitQuery : IQuery<string>
+{
+  public required string Name { get; init; }
+
+  public int Extra { get; init; } = 3;
+
+  public sealed class Handler : IQueryHandler<T508InitQuery, string>
+  {
+    public Task<string> Handle(T508InitQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult($"name:{query.Name}|extra:{query.Extra.ToString(CultureInfo.InvariantCulture)}");
+    }
+  }
+}
+
+[Operation("t508params")]
+public sealed class T508ParamsQuery : IQuery<string>
+{
+  public T508Note[] Params { get; set; } = [];
+
+  public sealed class Handler : IQueryHandler<T508ParamsQuery, string>
+  {
+    public Task<string> Handle(T508ParamsQuery query, CancellationToken cancellationToken)
+    {
+      _ = query;
+      _ = cancellationToken;
+      return Task.FromResult("params");
+    }
+  }
+}
+
+public abstract class T508HideBase
+{
+  public string Name { get; set; } = "base";
+}
+
+[Operation("t508hide")]
+public sealed class T508HideQuery : T508HideBase, IQuery<string>
+{
+  [Option("title")]
+  public new string Name { get; set; } = "child";
+
+  public sealed class Handler : IQueryHandler<T508HideQuery, string>
+  {
+    public Task<string> Handle(T508HideQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult("name:" + query.Name);
+    }
+  }
+}
 
 } // namespace TimeWarp.Nuru.Tests.Auto

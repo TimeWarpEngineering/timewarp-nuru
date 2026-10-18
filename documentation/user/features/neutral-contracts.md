@@ -14,7 +14,7 @@ Each public settable property is an option, including one inherited from a base 
 
 | Member | CLI |
 | --- | --- |
-| `string?`, or a non-nullable member with an initializer | Optional option. Omission keeps the initializer. |
+| `string?`, or a non-nullable member with an initializer | Optional option. Omission keeps the initializer. An initializer the generator cannot copy (`new()`, a method call) stays on the property, and `--capabilities` omits it. Numeric defaults are plain numbers. An enum default is the member name. |
 | `required`, or a non-nullable member with no initializer | Required option. |
 | `System.ComponentModel.Description` | Option description. |
 | Enum | Allowed values are the enum names. A non-nullable enum with an initializer keeps that value when omitted. A non-nullable enum with no initializer is required. |
@@ -57,7 +57,9 @@ When the compilation can see no handler, the generator reports NURU_H008 as a wa
 
 When this compilation has a generated mediator, endpoints dispatch through TimeWarp.Mediator, so mediator behaviors run. `INuruBehavior` stays CLI middleware around that dispatch.
 
-A nested `Handler` is called directly when `UseDirectInvoke()` is set, and also when no generated mediator exists. That second case is the 3.0 call, so an existing nested-handler app keeps working. An endpoint with no nested handler still goes through the mediator, including when `UseDirectInvoke()` is set. `UseDirectInvoke()` is the opt-out when the mediator cost matters for an AOT CLI.
+No generated mediator exists when `TimeWarpMediatorAssembly` is not true, or when the mediator profile is `Aot` or `Link`. A nested `Handler` is then called directly, and FluentValidation behaviors do not run. A visible handler that is not nested writes an error and exits 1 instead of throwing.
+
+A nested `Handler` is also called directly when `UseDirectInvoke()` is set and a generated mediator does exist. An endpoint with no nested handler still goes through the mediator, including when `UseDirectInvoke()` is set. `UseDirectInvoke()` is the opt-out when the mediator cost matters for an AOT CLI.
 
 A response is rendered in this order:
 

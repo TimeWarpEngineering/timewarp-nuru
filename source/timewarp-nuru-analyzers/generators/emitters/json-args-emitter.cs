@@ -344,6 +344,12 @@ internal static class JsonArgsEmitter
       }
     }
 
+    foreach (Slot slot in slots)
+    {
+      if (slot.Option is not null && NeedsJsonSuppliedFlag(route, slot.Option))
+        sb.AppendLine($"            bool __supplied_{slot.Id} = false;");
+    }
+
     sb.AppendLine("            bool __ok;");
     sb.AppendLine("            int __lit;");
     sb.AppendLine("            bool __litOk;");
@@ -555,6 +561,11 @@ internal static class JsonArgsEmitter
       sb.AppendLine($"{ind}{{");
       foreach (Slot slot in slots)
       {
+        if (slot.Option is not null && NeedsJsonSuppliedFlag(route, slot.Option))
+        {
+          sb.AppendLine($"{ind}  __supplied_{slot.Id} = __av_{slot.Id} || __jsonMap.ContainsKey(\"{Escape(slot.Key)}\");");
+        }
+
         if (slot.VariableName is null)
           continue;
 
@@ -1275,7 +1286,9 @@ internal static class JsonArgsEmitter
           runtimeDISuffix: methodSuffix,
           httpClientConfigurations: app.HttpClientConfigurations,
           useDirectInvoke: app.UseDirectInvoke,
-          hasGeneratedMediator: hasGeneratedMediator));
+          hasGeneratedMediator: hasGeneratedMediator,
+          jsonArgsPath: true),
+        jsonArgsPath: true);
     }
     else
     {
@@ -1290,7 +1303,8 @@ internal static class JsonArgsEmitter
         runtimeDISuffix: methodSuffix,
         httpClientConfigurations: app.HttpClientConfigurations,
         useDirectInvoke: app.UseDirectInvoke,
-        hasGeneratedMediator: hasGeneratedMediator);
+        hasGeneratedMediator: hasGeneratedMediator,
+        jsonArgsPath: true);
     }
 
     _ = ind;
@@ -1561,11 +1575,11 @@ internal static class JsonArgsEmitter
       }
       else if (param.Source is BindingSource.Option or BindingSource.Flag)
       {
-        slot = slots.FirstOrDefault(s =>
-          s.IsOption &&
-          (string.Equals(s.Key, param.SourceName, StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(s.Option?.ShortForm, param.SourceName, StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(s.Option?.ParameterName, param.ParameterName, StringComparison.OrdinalIgnoreCase)));
+        // Exact name first. --Quiet and --quiet are different options, and an
+        // ignore-case scan would bind both properties to the first of those slots.
+        slot = slots.FirstOrDefault(s => s.IsOption && OptionSlotMatches(s, param, StringComparison.Ordinal))
+          ?? slots.FirstOrDefault(s =>
+            s.IsOption && s.VariableName is null && OptionSlotMatches(s, param, StringComparison.OrdinalIgnoreCase));
         option = slot?.Option;
       }
 
@@ -1616,6 +1630,58 @@ internal static class JsonArgsEmitter
         Parameter = slot.Parameter
       };
     }
+  }
+
+  private static bool OptionSlotMatches(Slot slot, ParameterBinding param, StringComparison comparison)
+  {
+    return string.Equals(slot.Key, param.SourceName, comparison)
+      || string.Equals(slot.Option?.ShortForm, param.SourceName, comparison)
+      || string.Equals(slot.Option?.ParameterName, param.ParameterName, comparison);
+  }
+
+  /// <summary>
+  /// True when command construction reads <c>__supplied_{id}</c> for this option.
+  /// Constructor arguments are always passed, so they do not need the flag.
+  /// </summary>
+  private static bool NeedsJsonSuppliedFlag(RouteDefinition route, OptionDefinition option)
+  {
+    if (option.DefaultValueLiteral != EndpointExtractor.UnemittableDefaultLiteral)
+      return false;
+
+    ParameterBinding? match = null;
+    foreach (ParameterBinding param in route.Handler.RouteParameters)
+    {
+      if (param.Source is not (BindingSource.Option or BindingSource.Flag))
+        continue;
+
+      bool exact = string.Equals(option.LongForm, param.SourceName, StringComparison.Ordinal)
+        || string.Equals(option.ShortForm, param.SourceName, StringComparison.Ordinal);
+      if (exact)
+      {
+        match = param;
+        break;
+      }
+
+      bool fuzzy = string.Equals(option.LongForm, param.SourceName, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(option.ShortForm, param.SourceName, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(option.ParameterName, param.ParameterName, StringComparison.OrdinalIgnoreCase);
+      if (fuzzy)
+        match ??= param;
+    }
+
+    if (match is null)
+      return false;
+
+    if (!route.Handler.ConstructorArguments.IsDefaultOrEmpty)
+    {
+      foreach (string propertyName in route.Handler.ConstructorArguments)
+      {
+        if (string.Equals(match.ParameterName, propertyName, StringComparison.Ordinal))
+          return false;
+      }
+    }
+
+    return true;
   }
 
   private static string CaptureName(
@@ -1842,6 +1908,26 @@ internal static class JsonArgsEmitter
       return name[(start + 1)..end];
 
     return name;
+  }
+
+  /// <summary>
+  /// Slot id for an option, using the same parameter-then-option allocation as <see cref="BuildSlots"/>.
+  /// </summary>
+  internal static string OptionSlotId(RouteDefinition route, OptionDefinition option)
+  {
+    HashSet<string> ids = new(StringComparer.Ordinal);
+    foreach (ParameterDefinition param in route.Parameters)
+      AllocId(param.Name, ids);
+
+    foreach (OptionDefinition candidate in route.Options)
+    {
+      string key = candidate.LongForm ?? candidate.ShortForm ?? "option";
+      string id = AllocId(key, ids);
+      if (ReferenceEquals(candidate, option))
+        return id;
+    }
+
+    return AllocId(option.LongForm ?? option.ShortForm ?? "option", ids);
   }
 
   private static string AllocId(string key, HashSet<string> ids)

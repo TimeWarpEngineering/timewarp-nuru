@@ -328,9 +328,14 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              Description = \"{description}\",");
     }
 
-    if (option.DefaultValueLiteral is not null && option.DefaultValueLiteral != "default!")
+    string? shownDefault = option.CapabilityDefaultValue;
+    if (string.IsNullOrEmpty(shownDefault))
+      shownDefault = option.DefaultValueLiteral;
+
+    if (!string.IsNullOrEmpty(shownDefault)
+        && shownDefault != EndpointExtractor.UnemittableDefaultLiteral)
     {
-      string defaultValue = EmitterStringUtils.EscapeForStringLiteral(option.DefaultValueLiteral);
+      string defaultValue = EmitterStringUtils.EscapeForStringLiteral(shownDefault);
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 

@@ -55,6 +55,8 @@ Acceptance criteria:
 
 - Created: 1479989 (2026-10-17)
 - Implemented: implementer-claude under `ganda task work` (2026-10-19). Package, generator `AddMcpRoute()` and `[Destructive]`, mixed-app catalog fix, tests, docs. Full CI and `ganda repo audit` green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-18T20:01:27Z
+- Reviewer: grok session `01a1509a-db8a-7711-a1d9-777aacf447b5` (2026-10-19). Round 1, effort 3, roster general. M1 open. Disposition not written.
 
 ## Results
 
@@ -146,3 +148,11 @@ Expect:
   - id 3 is `isError: true` with `Error: Missing required value 'y' for 'add'.`.
   - Nothing else appears on stdout.
 - CI runner: multi-mode 1964 total, 1958 passed, 6 skipped, 0 failed. Standalone 0 failed.
+
+### Review
+
+Round 1 (effort 3, general) is in `review/round-1/merged.md`. One open bug (M1): `NuruMcpContentFormat.Json` builds `structuredContent` from captured console text plus the rendered body, so a handler that logs and returns a value drops or corrupts the structured payload. Disposition is not written while M1 is open.
+
+## Learnings
+
+Compared `## Goal (implementer restatement)` with `## Requirements`. No misread. The original's "route literal (group path joined by a documented separator, or the route's declared name)" has no separate declared-name field on `EndpointCapability`. Aliases are alternate patterns, not one name. The restatement's rule — literal words, group words first, joined by `_` — is that clause made concrete, and the separator is documented. `[Destructive]` on an endpoint class matches the optional per-route attribute. Fluent `Map()` routes have no attribute target, and the docs say so.

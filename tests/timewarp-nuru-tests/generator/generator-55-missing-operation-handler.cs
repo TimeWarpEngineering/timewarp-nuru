@@ -386,7 +386,156 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
         .Concat(result.Results.SelectMany(generator => generator.Diagnostics))
         .First(item => item.Id == "NURU_H009");
       diagnostic.Severity.ShouldBe(DiagnosticSeverity.Error);
+      diagnostic.GetMessage(CultureInfo.InvariantCulture).ShouldContain("no accessible parameterless constructor");
       GeneratedText(result).ShouldNotContain("T508BadCtorQuery __command");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_compile_an_external_handler_with_a_behavior_when_no_generated_mediator_exists()
+    {
+      const string Source = """
+        using System;
+        using System.Threading;
+        using System.Threading.Tasks;
+        using TimeWarp.Contracts;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .AddBehavior(typeof(T508LambdaBehavior))
+          .Map<T508LambdaCommand>()
+          .Build();
+
+        app.RunAsync([]);
+
+        public sealed class T508LambdaBehavior : INuruBehavior
+        {
+          public async ValueTask HandleAsync(BehaviorContext context, Func<ValueTask> proceed) => await proceed();
+        }
+
+        [Operation("t508lambda")]
+        public sealed class T508LambdaCommand : ICommand<string>
+        {
+          public string Name { get; set; } = "ada";
+        }
+
+        public sealed class T508LambdaHandler : ICommandHandler<T508LambdaCommand, string>
+        {
+          public Task<string> Handle(T508LambdaCommand command, CancellationToken cancellationToken) =>
+            Task.FromResult(command.Name);
+        }
+        """;
+
+      Dictionary<string, string> config = new()
+      {
+        ["build_property.TimeWarpMediatorAssembly"] = "false"
+      };
+      UpdateCompilation(Source, config, out string generated, out IEnumerable<Diagnostic> diagnostics);
+      generated.ShouldContain("The TimeWarp.Mediator generated mediator is not available in this compilation.");
+      generated.ShouldNotContain("IMediator __mediator = __GetMediator()");
+      // CS9137 is this harness: it does not enable the interceptors feature.
+      List<Diagnostic> errors =
+      [
+        .. diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.Id != "CS9137")
+      ];
+      string.Join("\n", errors.Select(error => error.ToString())).ShouldBe(string.Empty);
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_report_nuru_h009_when_a_constructor_parameter_is_not_bound()
+    {
+      const string Source = """
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        [NuruRoute("t508hidden")]
+        public sealed record T508HiddenCtorQuery([property: Option("name")] string Name, int Hidden) : IQuery<string>;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map<T508HiddenCtorQuery>()
+          .Build();
+
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      result.Diagnostics
+        .Concat(result.Results.SelectMany(generator => generator.Diagnostics))
+        .Any(item => item.Id == "NURU_H009")
+        .ShouldBeTrue();
+      GeneratedText(result).ShouldNotContain("T508HiddenCtorQuery __command");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_accept_a_constructor_whose_parameters_are_all_optional()
+    {
+      const string Source = """
+        using System.Threading;
+        using System.Threading.Tasks;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        [NuruRoute("t508optctor")]
+        public sealed class T508OptionalCtorQuery : IQuery<string>
+        {
+          public T508OptionalCtorQuery(int seed = 1)
+          {
+            Seed = seed;
+          }
+
+          public int Seed { get; }
+
+          [Option("name")]
+          public string Name { get; set; } = "a";
+
+          public sealed class Handler : IQueryHandler<T508OptionalCtorQuery, string>
+          {
+            public Task<string> Handle(T508OptionalCtorQuery query, CancellationToken cancellationToken) =>
+              Task.FromResult(query.Name);
+          }
+        }
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map<T508OptionalCtorQuery>()
+          .Build();
+
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      result.Diagnostics
+        .Concat(result.Results.SelectMany(generator => generator.Diagnostics))
+        .Any(item => item.Id == "NURU_H009")
+        .ShouldBeFalse();
+      GeneratedText(result).ShouldContain("T508OptionalCtorQuery __command = new()");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_give_an_abstract_endpoint_its_own_nuru_h009_reason()
+    {
+      const string Source = """
+        using TimeWarp.Contracts;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        [Operation("t508abstract")]
+        public abstract class T508AbstractQuery : IQuery<string>
+        {
+          public string Name { get; set; } = "a";
+        }
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .DiscoverEndpoints()
+          .Build();
+
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      Diagnostic diagnostic = result.Diagnostics
+        .Concat(result.Results.SelectMany(generator => generator.Diagnostics))
+        .First(item => item.Id == "NURU_H009");
+      diagnostic.GetMessage(CultureInfo.InvariantCulture).ShouldContain("it is abstract");
       await Task.CompletedTask;
     }
   }

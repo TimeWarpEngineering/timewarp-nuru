@@ -1215,7 +1215,8 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Fails the matched route when its handler was not visible at build time and is still unregistered.
+  /// Fails the matched route when its handler was not visible at build time and is still unregistered,
+  /// or when a visible handler that is not nested has no generated mediator to send through.
   /// Built-ins and other routes run first; one missing handler does not exit the process.
   /// </summary>
   internal static void EmitMissingHandlerOnDispatch(
@@ -1226,6 +1227,19 @@ internal static class InterceptorEmitter
     string runtimeDISuffix,
     string indent)
   {
+    // A visible handler that is not nested has nowhere to send when this compilation
+    // has no generated mediator. Exit 1 here, before any INuruBehavior lambda opens.
+    if (route.Handler.HandlerKind == HandlerKind.Command
+        && route.Handler.HandlerVisible
+        && route.Handler.NestedHandlerTypeName is null
+        && !useRuntimeDI
+        && !hasGeneratedMediator)
+    {
+      sb.AppendLine($"{indent}app.Terminal.WriteErrorLine(\"The TimeWarp.Mediator generated mediator is not available in this compilation.\");");
+      sb.AppendLine($"{indent}return 1;");
+      return;
+    }
+
     if (route.Handler.HandlerVisible || string.IsNullOrEmpty(route.Handler.HandlerInterfaceName))
       return;
 

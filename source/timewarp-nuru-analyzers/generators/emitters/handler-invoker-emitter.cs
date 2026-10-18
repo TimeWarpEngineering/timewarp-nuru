@@ -343,12 +343,12 @@ internal static class HandlerInvokerEmitter
       return;
     }
 
-    // A visible handler that is not nested has nowhere to send when this compilation
-    // has no generated mediator. Exit 1 instead of throwing from __GetMediator().
+    // No generated mediator: InterceptorEmitter.EmitMissingHandlerOnDispatch already
+    // returned 1 before the behavior pipeline. Emit nothing here, so a behavior lambda
+    // never holds a `return 1;` and __GetMediator() is never referenced.
     if (!useRuntimeDI && !hasGeneratedMediator)
     {
-      sb.AppendLine($"{indent}app.Terminal.WriteErrorLine(\"The TimeWarp.Mediator generated mediator is not available in this compilation.\");");
-      sb.AppendLine($"{indent}return 1;");
+      sb.AppendLine($"{indent}// Unreachable: exited 1 before dispatch (no generated mediator).");
       return;
     }
 

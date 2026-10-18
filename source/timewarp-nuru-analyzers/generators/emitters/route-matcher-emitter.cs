@@ -1571,8 +1571,8 @@ internal static class RouteMatcherEmitter
 
     if (option.ParameterIsOptional)
     {
-      // Nullable enum: omission stays null. A default literal still parses only when argv supplied a value.
-      sb.AppendLine($"      {baseEnumType}? {varName} = null;");
+      // Nullable enum: omission keeps the initializer (null when there is none).
+      sb.AppendLine($"      {baseEnumType}? {varName} = {option.DefaultValueLiteral ?? "null"};");
       sb.AppendLine($"      if ({rawVarName} is not null)");
       sb.AppendLine("      {");
       sb.AppendLine($"        var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");

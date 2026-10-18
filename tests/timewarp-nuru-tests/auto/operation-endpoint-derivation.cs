@@ -59,6 +59,12 @@ public class OperationEndpointDerivationTests
       .Map<T508SpecialQuery>()
       .Map<T508KeepDescriptionQuery>()
       .Map<T508HandlerlessQuery>()
+      .Map<T508InitManyQuery>()
+      .Map<T508RequiredDefaultQuery>()
+      .Map<T508CaseQuery>()
+      .Map<T508NullableEnumQuery>()
+      .Map<T508PositionalDefaultQuery>()
+      .Map<T508PositionalInitQuery>()
       .Build();
   }
 
@@ -407,6 +413,158 @@ public class OperationEndpointDerivationTests
     FindOption(FindEndpoint(describedTerminal.Output, "t508defaults"), "Token").TryGetProperty("defaultValue", out _).ShouldBeFalse();
   }
 
+  public static async Task Should_use_a_supplied_value_over_an_initializer_the_generator_cannot_copy()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+    int argv = await App.RunAsync(["t508defaults", "--Delay", "00:00:05"]);
+    argv.ShouldBe(0);
+    terminal.OutputContains("delay:5|token:set").ShouldBeTrue();
+
+    using TestTerminal jsonTerminal = new();
+    CreateApp(jsonTerminal);
+    int json = await App.RunAsync(["t508defaults", "--json-args", """{"Delay":"00:00:05"}"""]);
+    json.ShouldBe(0);
+    jsonTerminal.OutputContains("delay:5|token:set").ShouldBeTrue();
+
+    using TestTerminal initTerminal = new();
+    CreateApp(initTerminal);
+    int init = await App.RunAsync(["t508init", "--Name", "ada", "--Extra", "5"]);
+    init.ShouldBe(0);
+    initTerminal.OutputContains("name:ada|extra:5").ShouldBeTrue();
+  }
+
+  public static async Task Should_keep_or_replace_many_init_only_initializers()
+  {
+    using TestTerminal omitted = new();
+    CreateApp(omitted);
+    (await App.RunAsync(["t508initmany"])).ShouldBe(0);
+    omitted.OutputContains("wait:4|seed:41|token:set|label:null|note:n").ShouldBeTrue();
+
+    using TestTerminal supplied = new();
+    CreateApp(supplied);
+    (await App.RunAsync(["t508initmany", "--Wait", "00:00:09", "--Seed", "5", "--Label", "x", "--Note", "m"])).ShouldBe(0);
+    supplied.OutputContains("wait:9|seed:5|token:set|label:x|note:m").ShouldBeTrue();
+
+    using TestTerminal jsonOmitted = new();
+    CreateApp(jsonOmitted);
+    (await App.RunAsync(["t508initmany", "--json-args", "{}"])).ShouldBe(0);
+    jsonOmitted.OutputContains("wait:4|seed:41|token:set|label:null|note:n").ShouldBeTrue();
+
+    using TestTerminal jsonSupplied = new();
+    CreateApp(jsonSupplied);
+    (await App.RunAsync(["t508initmany", "--json-args", """{"Wait":"00:00:09","Seed":5,"Label":"x"}"""])).ShouldBe(0);
+    jsonSupplied.OutputContains("wait:9|seed:5|token:set|label:x|note:n").ShouldBeTrue();
+
+    using TestTerminal described = new();
+    CreateApp(described);
+    (await App.RunAsync(["--capabilities"])).ShouldBe(0);
+    JsonElement endpoint = FindEndpoint(described.Output, "t508initmany");
+    FindOption(endpoint, "Label").TryGetProperty("defaultValue", out _).ShouldBeFalse();
+    FindOption(endpoint, "Seed").TryGetProperty("defaultValue", out _).ShouldBeFalse();
+  }
+
+  public static async Task Should_always_set_a_required_member_with_an_initializer_the_generator_cannot_copy()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+    int exitCode = await App.RunAsync(
+      ["t508reqdefault", "--json-args", """{"Wait":"00:00:02","Tag":"t","Body":{"Name":"ada"}}"""]);
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("wait:2|tag:t|body:ada").ShouldBeTrue();
+  }
+
+  public static async Task Should_bind_a_mixed_case_option_pair_with_a_non_copyable_initializer()
+  {
+    using TestTerminal flag = new();
+    CreateApp(flag);
+    (await App.RunAsync(["t508case", "--Mute"])).ShouldBe(0);
+    flag.OutputContains("level:seed|mute:True").ShouldBeTrue();
+
+    using TestTerminal level = new();
+    CreateApp(level);
+    (await App.RunAsync(["t508case", "--mute", "loud"])).ShouldBe(0);
+    level.OutputContains("level:loud|mute:False").ShouldBeTrue();
+
+    using TestTerminal json = new();
+    CreateApp(json);
+    (await App.RunAsync(["t508case", "--json-args", """{"Mute":true}"""])).ShouldBe(0);
+    json.OutputContains("level:seed|mute:True").ShouldBeTrue();
+
+    using TestTerminal jsonLevel = new();
+    CreateApp(jsonLevel);
+    (await App.RunAsync(["t508case", "--json-args", """{"mute":"loud"}"""])).ShouldBe(0);
+    jsonLevel.OutputContains("level:loud|mute:False").ShouldBeTrue();
+  }
+
+  public static async Task Should_keep_nullable_enum_and_non_const_field_initializers()
+  {
+    const string Expected = "unset:null|preset:Slow|combined:Read, Write|shared:Slow";
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+    (await App.RunAsync(["t508nullenum"])).ShouldBe(0);
+    terminal.OutputContains(Expected).ShouldBeTrue();
+
+    using TestTerminal json = new();
+    CreateApp(json);
+    (await App.RunAsync(["t508nullenum", "--json-args", "{}"])).ShouldBe(0);
+    json.OutputContains(Expected).ShouldBeTrue();
+
+    using TestTerminal supplied = new();
+    CreateApp(supplied);
+    (await App.RunAsync(["t508nullenum", "--Preset", "Fast"])).ShouldBe(0);
+    supplied.OutputContains("preset:Fast").ShouldBeTrue();
+
+    using TestTerminal described = new();
+    CreateApp(described);
+    (await App.RunAsync(["--capabilities"])).ShouldBe(0);
+    JsonElement endpoint = FindEndpoint(described.Output, "t508nullenum");
+    FindOption(endpoint, "Unset").GetProperty("defaultValue").GetString().ShouldBe("null");
+    FindOption(endpoint, "Preset").GetProperty("defaultValue").GetString().ShouldBe("Slow");
+    FindOption(endpoint, "Combined").GetProperty("defaultValue").GetString().ShouldBe("Read, Write");
+    FindOption(endpoint, "Shared").TryGetProperty("defaultValue", out _).ShouldBeFalse();
+  }
+
+  public static async Task Should_take_defaults_from_primary_constructor_parameters()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+    (await App.RunAsync(["t508posdefault", "--Name", "ada"])).ShouldBe(0);
+    terminal.OutputContains("name:ada|count:5|mode:Slow").ShouldBeTrue();
+
+    using TestTerminal json = new();
+    CreateApp(json);
+    (await App.RunAsync(["t508posdefault", "--json-args", """{"Name":"ada"}"""])).ShouldBe(0);
+    json.OutputContains("name:ada|count:5|mode:Slow").ShouldBeTrue();
+
+    using TestTerminal supplied = new();
+    CreateApp(supplied);
+    (await App.RunAsync(["t508posdefault", "--Name", "ada", "--Count", "2", "--Mode", "Fast"])).ShouldBe(0);
+    supplied.OutputContains("name:ada|count:2|mode:Fast").ShouldBeTrue();
+
+    using TestTerminal described = new();
+    CreateApp(described);
+    (await App.RunAsync(["--capabilities"])).ShouldBe(0);
+    JsonElement endpoint = FindEndpoint(described.Output, "t508posdefault");
+    JsonElement count = FindOption(endpoint, "Count");
+    count.GetProperty("required").GetBoolean().ShouldBeFalse();
+    count.GetProperty("defaultValue").GetString().ShouldBe("5");
+    FindOption(endpoint, "Mode").GetProperty("defaultValue").GetString().ShouldBe("Slow");
+    FindOption(endpoint, "Name").GetProperty("required").GetBoolean().ShouldBeTrue();
+  }
+
+  public static async Task Should_not_copy_a_record_property_initializer_that_reads_a_parameter()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+    (await App.RunAsync(["t508posinit", "--Name", " ada "])).ShouldBe(0);
+    terminal.OutputContains("name:ada|note:n").ShouldBeTrue();
+
+    using TestTerminal omitted = new();
+    CreateApp(omitted);
+    (await App.RunAsync(["t508posinit"])).ShouldBe(1);
+  }
+
   public static async Task Should_keep_non_finite_enum_const_and_flags_defaults()
   {
     using TestTerminal terminal = new();
@@ -414,7 +572,7 @@ public class OperationEndpointDerivationTests
 
     int exitCode = await App.RunAsync(["t508special"]);
     exitCode.ShouldBe(0);
-    terminal.OutputContains("quiet:nan|up:inf|down:-inf|accent:fast|access:rw|cast:3|option:nan").ShouldBeTrue();
+    terminal.OutputContains("quiet:nan|up:inf|down:-inf|accent:fast|access:rw|cast:3|option:nan|soft:nan|rise:inf").ShouldBeTrue();
 
     using TestTerminal describedTerminal = new();
     CreateApp(describedTerminal);
@@ -425,9 +583,11 @@ public class OperationEndpointDerivationTests
     FindOption(endpoint, "Up").GetProperty("defaultValue").GetString().ShouldBe("Infinity");
     FindOption(endpoint, "Down").GetProperty("defaultValue").GetString().ShouldBe("-Infinity");
     FindOption(endpoint, "Accent").GetProperty("defaultValue").GetString().ShouldBe("Fast");
-    FindOption(endpoint, "Access").GetProperty("defaultValue").GetString().ShouldBe("3");
-    FindOption(endpoint, "Casted").GetProperty("defaultValue").GetString().ShouldBe("3");
+    FindOption(endpoint, "Access").GetProperty("defaultValue").GetString().ShouldBe("Read, Write");
+    FindOption(endpoint, "Casted").GetProperty("defaultValue").GetString().ShouldBe("Read, Write");
     FindOption(endpoint, "quiet").GetProperty("defaultValue").GetString().ShouldBe("NaN");
+    FindOption(endpoint, "Soft").GetProperty("defaultValue").GetString().ShouldBe("NaN");
+    FindOption(endpoint, "Rise").GetProperty("defaultValue").GetString().ShouldBe("Infinity");
   }
 
   public static async Task Should_construct_a_positional_record_and_a_required_init_member()
@@ -1018,6 +1178,10 @@ public sealed class T508SpecialQuery : IQuery<string>
   [Option("quiet")]
   public double QuietOption { get; set; } = double.NaN;
 
+  public float Soft { get; set; } = float.NaN;
+
+  public float Rise { get; set; } = float.PositiveInfinity;
+
   public sealed class Handler : IQueryHandler<T508SpecialQuery, string>
   {
     public Task<string> Handle(T508SpecialQuery query, CancellationToken cancellationToken)
@@ -1030,7 +1194,10 @@ public sealed class T508SpecialQuery : IQuery<string>
       string access = query.Access == (T508Access.Read | T508Access.Write) ? "rw" : "no";
       string casted = ((int)query.Casted).ToString(CultureInfo.InvariantCulture);
       string option = double.IsNaN(query.QuietOption) ? "nan" : "no";
-      return Task.FromResult($"quiet:{quiet}|up:{up}|down:{down}|accent:{accent}|access:{access}|cast:{casted}|option:{option}");
+      string soft = float.IsNaN(query.Soft) ? "nan" : "no";
+      string rise = float.IsPositiveInfinity(query.Rise) ? "inf" : "no";
+      return Task.FromResult(
+        $"quiet:{quiet}|up:{up}|down:{down}|accent:{accent}|access:{access}|cast:{casted}|option:{option}|soft:{soft}|rise:{rise}");
     }
   }
 }
@@ -1098,6 +1265,140 @@ public sealed class T508HideQuery : T508HideBase, IQuery<string>
     {
       _ = cancellationToken;
       return Task.FromResult("name:" + query.Name);
+    }
+  }
+}
+
+public static class T508Seed
+{
+  public static int Next() => 41;
+
+  public static string Text() => "seed";
+}
+
+public static class T508Shared
+{
+  public static readonly T508Mode Color = T508Mode.Slow;
+}
+
+// Init-only members whose initializers the generator cannot copy, plus `= null!`.
+[Operation("t508initmany")]
+public sealed class T508InitManyQuery : IQuery<string>
+{
+  public TimeSpan Wait { get; init; } = TimeSpan.FromSeconds(4);
+
+  public int Seed { get; init; } = T508Seed.Next();
+
+  public Guid Token { get; init; } = Guid.NewGuid();
+
+  public string Label { get; init; } = null!;
+
+  public string Note { get; init; } = string.Concat("n", string.Empty);
+
+  public sealed class Handler : IQueryHandler<T508InitManyQuery, string>
+  {
+    public Task<string> Handle(T508InitManyQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      string token = query.Token == Guid.Empty ? "empty" : "set";
+      return Task.FromResult(
+        $"wait:{query.Wait.TotalSeconds.ToString(CultureInfo.InvariantCulture)}"
+        + $"|seed:{query.Seed.ToString(CultureInfo.InvariantCulture)}"
+        + $"|token:{token}"
+        + $"|label:{query.Label ?? "null"}"
+        + $"|note:{query.Note}");
+    }
+  }
+}
+
+[Operation("t508reqdefault")]
+public sealed class T508RequiredDefaultQuery : IQuery<string>
+{
+  public required TimeSpan Wait { get; set; } = TimeSpan.FromSeconds(1);
+
+  public required string Tag { get; init; } = null!;
+
+  public required T508Body Body { get; set; } = new();
+
+  public sealed class Handler : IQueryHandler<T508RequiredDefaultQuery, string>
+  {
+    public Task<string> Handle(T508RequiredDefaultQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult(
+        $"wait:{query.Wait.TotalSeconds.ToString(CultureInfo.InvariantCulture)}|tag:{query.Tag}|body:{query.Body.Name}");
+    }
+  }
+}
+
+[Operation("t508case")]
+public sealed class T508CaseQuery : IQuery<string>
+{
+  [Option("mute")]
+  public string Level { get; set; } = T508Seed.Text();
+
+  public bool Mute { get; set; } = false;
+
+  public sealed class Handler : IQueryHandler<T508CaseQuery, string>
+  {
+    public Task<string> Handle(T508CaseQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult($"level:{query.Level}|mute:{query.Mute}");
+    }
+  }
+}
+
+[Operation("t508nullenum")]
+public sealed class T508NullableEnumQuery : IQuery<string>
+{
+  public T508Mode? Unset { get; set; } = null;
+
+  public T508Mode? Preset { get; set; } = T508Mode.Slow;
+
+  public T508Access? Combined { get; set; } = (T508Access)3;
+
+  public T508Mode Shared { get; set; } = T508Shared.Color;
+
+  public sealed class Handler : IQueryHandler<T508NullableEnumQuery, string>
+  {
+    public Task<string> Handle(T508NullableEnumQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      string unset = query.Unset?.ToString() ?? "null";
+      string preset = query.Preset?.ToString() ?? "null";
+      string combined = query.Combined?.ToString() ?? "null";
+      return Task.FromResult($"unset:{unset}|preset:{preset}|combined:{combined}|shared:{query.Shared}");
+    }
+  }
+}
+
+[Operation("t508posdefault")]
+public sealed record T508PositionalDefaultQuery(string Name, int Count = 5, T508Mode Mode = T508Mode.Slow) : IQuery<string>
+{
+  public sealed class Handler : IQueryHandler<T508PositionalDefaultQuery, string>
+  {
+    public Task<string> Handle(T508PositionalDefaultQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult($"name:{query.Name}|count:{query.Count.ToString(CultureInfo.InvariantCulture)}|mode:{query.Mode}");
+    }
+  }
+}
+
+[Operation("t508posinit")]
+public sealed record T508PositionalInitQuery(string Name, string Note = "n") : IQuery<string>
+{
+  public string Name { get; init; } = Name.Trim();
+
+  public string Note { get; init; } = Note;
+
+  public sealed class Handler : IQueryHandler<T508PositionalInitQuery, string>
+  {
+    public Task<string> Handle(T508PositionalInitQuery query, CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult($"name:{query.Name}|note:{query.Note}");
     }
   }
 }

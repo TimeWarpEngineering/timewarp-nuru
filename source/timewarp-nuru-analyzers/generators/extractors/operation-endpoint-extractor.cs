@@ -310,7 +310,8 @@ internal static partial class EndpointExtractor
         CapabilityRequired: contractRequired,
         CapabilityType: JsonCapabilityType(property.Type),
         IsInitOnly: initOnly,
-        CapabilityDefaultValue: propertyDefault.Display);
+        CapabilityDefaultValue: propertyDefault.Display,
+        IsRequiredMember: property.IsRequired);
     }
 
     if (isBool && defaultLiteral == "true")
@@ -340,7 +341,8 @@ internal static partial class EndpointExtractor
         DefaultValueLiteral: defaultLiteral,
         CapabilityRequired: false,
         IsInitOnly: initOnly,
-        CapabilityDefaultValue: propertyDefault.Display);
+        CapabilityDefaultValue: propertyDefault.Display,
+        IsRequiredMember: property.IsRequired);
     }
 
     if (isBool)
@@ -362,7 +364,8 @@ internal static partial class EndpointExtractor
         ResolvedClrTypeName: typeName,
         DefaultValueLiteral: defaultLiteral ?? "false",
         IsInitOnly: initOnly,
-        CapabilityDefaultValue: flagDisplay);
+        CapabilityDefaultValue: flagDisplay,
+        IsRequiredMember: property.IsRequired);
     }
 
     bool repeated = IsRepeatedOptionType(property.Type);
@@ -384,7 +387,8 @@ internal static partial class EndpointExtractor
       DefaultValueLiteral: defaultLiteral,
       CapabilityRequired: contractRequired,
       IsInitOnly: initOnly,
-      CapabilityDefaultValue: propertyDefault.Display);
+      CapabilityDefaultValue: propertyDefault.Display,
+      IsRequiredMember: property.IsRequired);
   }
 
   private static OptionDefinition BoolValueOption(
@@ -411,7 +415,8 @@ internal static partial class EndpointExtractor
       DefaultValueLiteral: propertyDefault.Code,
       CapabilityRequired: !isOptional,
       IsInitOnly: PropertyIsInitOnly(property),
-      CapabilityDefaultValue: propertyDefault.Display);
+      CapabilityDefaultValue: propertyDefault.Display,
+      IsRequiredMember: property.IsRequired);
   }
 
   private static ParameterBinding? TryDeriveBinding(
@@ -696,14 +701,22 @@ internal static partial class EndpointExtractor
   private static bool TrySelectConstructorArguments(
     INamedTypeSymbol type,
     Location location,
+    bool deriveUnmarked,
     out EquatableArray<string> arguments,
     out Diagnostic? diagnostic)
   {
     arguments = default;
     diagnostic = null;
-    if (type.IsStatic || type.IsAbstract || type.TypeKind is not (TypeKind.Class or TypeKind.Struct))
+    string? kindReason = type switch
     {
-      diagnostic = Unconstructable(type, location);
+      { IsStatic: true } => "it is static. An endpoint must be a concrete class or struct.",
+      { IsAbstract: true } => "it is abstract. Put the attribute on a concrete type.",
+      { TypeKind: not (TypeKind.Class or TypeKind.Struct) } => "it is not a class or struct.",
+      _ => null
+    };
+    if (kindReason is not null)
+    {
+      diagnostic = Unconstructable(type, location, kindReason);
       return false;
     }
 
@@ -714,13 +727,13 @@ internal static partial class EndpointExtractor
     List<string>? bestNames = null;
     foreach (IMethodSymbol constructor in type.InstanceConstructors)
     {
-      if (constructor.DeclaredAccessibility is not (Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal))
+      if (!IsAccessibleConstructor(constructor))
         continue;
 
       if (IsCopyConstructor(type, constructor))
         continue;
 
-      if (!ConstructorParametersMatchProperties(type, constructor, out List<string> names))
+      if (!ConstructorParametersMatchProperties(type, constructor, deriveUnmarked, out List<string> names))
         continue;
 
       if (best is null || constructor.Parameters.Length > best.Parameters.Length)
@@ -732,7 +745,10 @@ internal static partial class EndpointExtractor
 
     if (bestNames is null)
     {
-      diagnostic = Unconstructable(type, location);
+      diagnostic = Unconstructable(
+        type,
+        location,
+        "it has no accessible parameterless constructor and no constructor whose parameters all match, ignoring case, public settable properties bound as route parameters or options.");
       return false;
     }
 
@@ -740,13 +756,17 @@ internal static partial class EndpointExtractor
     return true;
   }
 
-  private static Diagnostic Unconstructable(INamedTypeSymbol type, Location location) =>
-    Diagnostic.Create(DiagnosticDescriptors.UnconstructableEndpoint, location, type.Name);
+  private static Diagnostic Unconstructable(INamedTypeSymbol type, Location location, string reason) =>
+    Diagnostic.Create(DiagnosticDescriptors.UnconstructableEndpoint, location, type.Name, reason);
 
+  private static bool IsAccessibleConstructor(IMethodSymbol constructor) =>
+    constructor.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal;
+
+  // new() compiles when every parameter is optional or params, so that counts as parameterless.
   private static bool HasCallableParameterlessConstructor(INamedTypeSymbol type) =>
     type.InstanceConstructors.Any(constructor =>
-      constructor.Parameters.Length == 0
-      && constructor.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal);
+      IsAccessibleConstructor(constructor)
+      && constructor.Parameters.All(parameter => parameter.IsOptional || parameter.IsParams));
 
   private static bool IsCopyConstructor(INamedTypeSymbol type, IMethodSymbol constructor) =>
     constructor.Parameters.Length == 1
@@ -755,6 +775,7 @@ internal static partial class EndpointExtractor
   private static bool ConstructorParametersMatchProperties(
     INamedTypeSymbol type,
     IMethodSymbol constructor,
+    bool deriveUnmarked,
     out List<string> propertyNames)
   {
     propertyNames = [];
@@ -764,13 +785,33 @@ internal static partial class EndpointExtractor
     foreach (IParameterSymbol parameter in constructor.Parameters)
     {
       IPropertySymbol? match = FindPropertyByName(type, parameter.Name);
-      if (match is null || !IsDerivableProperty(match))
+      if (match is null || !IsConstructorBoundProperty(type, match, deriveUnmarked))
         return false;
 
       propertyNames.Add(match.Name);
     }
 
     return true;
+  }
+
+  /// <summary>
+  /// True when the property gets a route binding, so a constructor argument has a value.
+  /// A [NuruRoute] type binds only marked properties. An [Operation] type also derives
+  /// unmarked ones, except from a [NuruRouteGroup] base.
+  /// </summary>
+  private static bool IsConstructorBoundProperty(INamedTypeSymbol type, IPropertySymbol property, bool deriveUnmarked)
+  {
+    if (!IsDerivableProperty(property))
+      return false;
+
+    if (HasCliMemberAttribute(property))
+      return true;
+
+    if (!deriveUnmarked)
+      return false;
+
+    return SymbolEqualityComparer.Default.Equals(property.ContainingType, type)
+      || !HasNuruRouteGroup(property.ContainingType);
   }
 
   private static IPropertySymbol? FindPropertyByName(INamedTypeSymbol type, string name)

@@ -22,7 +22,12 @@
 // A const field whose type is an enum stays a symbol. A flags combination or a cast
 // becomes a cast to the enum type. A field or property symbol is fully qualified.
 // Object creation, an invocation, or a method group becomes default!.
-// Capabilities omit that sentinel and show a plain number or the enum member name.
+// = null! on a non-nullable reference is copied as null!.
+// A positional record property takes its primary-constructor parameter default.
+// An initializer that is only a parameter (= Name) takes that parameter default.
+// Any other initializer that reads a parameter has no default.
+// Capabilities omit default!, null!, and a non-const field or property. They show a
+// plain number, the enum member name, or the member names of a [Flags] combination.
 // The object initializer omits default! until the caller supplies a value, so the
 // declared initializer runs. A type with no parameterless constructor is new(args)
 // for the constructor whose parameters match property names.
@@ -60,6 +65,12 @@ internal static partial class EndpointExtractor
   /// Sentinel stored when the initializer cannot be copied into generated code.
   /// </summary>
   internal const string UnemittableDefaultLiteral = "default!";
+
+  /// <summary>
+  /// Literal for <c>= null!</c> on a non-nullable reference. It is copied as code, so it
+  /// needs no supplied test, and capabilities omit it.
+  /// </summary>
+  internal const string NullForgivingDefaultLiteral = "null!";
 
   /// <summary>
   /// C# literal for an initializer, and the separate value <c>--capabilities</c> shows.
@@ -115,6 +126,7 @@ internal static partial class EndpointExtractor
     if (!TrySelectConstructorArguments(
       endpointSymbol,
       attributeLocation,
+      identity.HasOperation,
       out EquatableArray<string> constructorArguments,
       out Diagnostic? constructorDiagnostic))
     {
@@ -680,7 +692,8 @@ internal static partial class EndpointExtractor
       ResolvedClrTypeName: typeName,
       DefaultValueLiteral: propertyDefault.Code,
       IsInitOnly: PropertyIsInitOnly(property),
-      CapabilityDefaultValue: propertyDefault.Display);
+      CapabilityDefaultValue: propertyDefault.Display,
+      IsRequiredMember: property.IsRequired);
   }
 
   /// <summary>
@@ -1074,7 +1087,8 @@ internal static partial class EndpointExtractor
       ResolvedClrTypeName: typeName,
       DefaultValueLiteral: propertyDefault.Code,
       IsInitOnly: PropertyIsInitOnly(property),
-      CapabilityDefaultValue: propertyDefault.Display);
+      CapabilityDefaultValue: propertyDefault.Display,
+      IsRequiredMember: property.IsRequired);
   }
 
   /// <summary>
@@ -1095,8 +1109,20 @@ internal static partial class EndpointExtractor
     if (syntaxReferences.Length == 0)
       return default;
 
-    // Primary-constructor parameters are not property declarations. They have no initializer to copy.
+    // A positional record property is declared by its primary-constructor parameter.
+    // The parameter default, when there is one, is the default.
     Microsoft.CodeAnalysis.SyntaxNode? syntaxNode = syntaxReferences[0].GetSyntax(cancellationToken);
+    if (syntaxNode is Microsoft.CodeAnalysis.CSharp.Syntax.ParameterSyntax parameterSyntax)
+    {
+      if (compilation is null)
+        return default;
+
+      SemanticModel parameterModel = compilation.GetSemanticModel(syntaxReferences[0].SyntaxTree);
+      return parameterModel.GetDeclaredSymbol(parameterSyntax, cancellationToken) is IParameterSymbol declared
+        ? ParameterDefault(declared, property.Type)
+        : default;
+    }
+
     if (syntaxNode is not PropertyDeclarationSyntax propertySyntax)
       return default;
 
@@ -1111,6 +1137,14 @@ internal static partial class EndpointExtractor
       ISymbol? symbol = symbolInfo.Symbol;
       ITypeSymbol valueType = UnwrapNullableType(property.Type);
 
+      // `= Name` copies a primary-constructor parameter. Its default is the parameter default.
+      // Any other initializer that reads a parameter cannot be copied and has no default.
+      if (symbol is IParameterSymbol initializerParameter)
+        return ParameterDefault(initializerParameter, property.Type);
+
+      if (ReferencesParameter(initializerValue, semanticModel, cancellationToken))
+        return default;
+
       // Enum members have a numeric constant value. Keep the member so the generated
       // assignment stays typed. Capabilities show the member name only.
       if (symbol is IFieldSymbol enumField && enumField.ContainingType.TypeKind == TypeKind.Enum)
@@ -1119,10 +1153,12 @@ internal static partial class EndpointExtractor
       }
 
       Optional<object?> constantValue = semanticModel.GetConstantValue(initializerValue, cancellationToken);
-      if (constantValue.HasValue && valueType.TypeKind == TypeKind.Enum && valueType is INamedTypeSymbol enumType)
+      if (constantValue.HasValue
+          && constantValue.Value is not null
+          && valueType.TypeKind == TypeKind.Enum
+          && valueType is INamedTypeSymbol enumType)
       {
-        string? memberName = MatchingEnumMemberName(enumType, constantValue.Value);
-        string display = memberName ?? IntegralDisplay(constantValue.Value);
+        string display = EnumDisplay(enumType, constantValue.Value);
         if (symbol is IFieldSymbol or IPropertySymbol)
           return new PropertyDefault(symbol.ToDisplayString(FullyQualifiedMemberFormat), display);
 
@@ -1132,11 +1168,10 @@ internal static partial class EndpointExtractor
       if (constantValue.HasValue)
         return FormatConstantLiteral(constantValue.Value, property.Type);
 
+      // A static readonly field or a property is copied as code. Its value is not known
+      // at build time, so capabilities omit it.
       if (symbol is IFieldSymbol or IPropertySymbol)
-      {
-        string code = symbol.ToDisplayString(FullyQualifiedMemberFormat);
-        return new PropertyDefault(code, code);
-      }
+        return new PropertyDefault(symbol.ToDisplayString(FullyQualifiedMemberFormat), null);
 
       // new(), new Foo(), and method calls are not a capabilities default.
       // Collection expressions stay as syntax so `[]` still compiles.
@@ -1186,7 +1221,11 @@ internal static partial class EndpointExtractor
       case null:
       {
         if (propertyType.IsReferenceType && propertyType.NullableAnnotation != NullableAnnotation.Annotated)
-          return new PropertyDefault(UnemittableDefaultLiteral, null);
+          return new PropertyDefault(NullForgivingDefaultLiteral, null);
+
+        // `= default` on a non-nullable struct, typically a parameter default.
+        if (propertyType.IsValueType && propertyType.OriginalDefinition.SpecialType != SpecialType.System_Nullable_T)
+          return new PropertyDefault("default", null);
 
         return new PropertyDefault("null", "null");
       }
@@ -1273,6 +1312,86 @@ internal static partial class EndpointExtractor
 
   private static bool PropertyIsInitOnly(IPropertySymbol property) =>
     property.SetMethod is { IsInitOnly: true };
+
+  /// <summary>
+  /// Default from a primary-constructor parameter: its explicit default, or none.
+  /// </summary>
+  private static PropertyDefault ParameterDefault(IParameterSymbol parameter, ITypeSymbol propertyType)
+  {
+    if (!parameter.HasExplicitDefaultValue)
+      return default;
+
+    object? value = parameter.ExplicitDefaultValue;
+    if (value is not null
+        && UnwrapNullableType(propertyType) is INamedTypeSymbol { TypeKind: TypeKind.Enum } enumType)
+    {
+      return new PropertyDefault(FormatEnumCast(enumType, value), EnumDisplay(enumType, value));
+    }
+
+    return FormatConstantLiteral(value, propertyType);
+  }
+
+  private static bool ReferencesParameter(ExpressionSyntax initializer, SemanticModel semanticModel, CancellationToken cancellationToken)
+  {
+    foreach (IdentifierNameSyntax identifier in initializer.DescendantNodesAndSelf().OfType<IdentifierNameSyntax>())
+    {
+      if (semanticModel.GetSymbolInfo(identifier, cancellationToken).Symbol is IParameterSymbol)
+        return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// The member name, the comma-joined member names of an exact <c>[Flags]</c> decomposition,
+  /// or the number.
+  /// </summary>
+  private static string EnumDisplay(INamedTypeSymbol enumType, object value)
+  {
+    if (MatchingEnumMemberName(enumType, value) is { } memberName)
+      return memberName;
+
+    if (FlagsMemberNames(enumType, value) is { } flagNames)
+      return flagNames;
+
+    return IntegralDisplay(value);
+  }
+
+  private static string? FlagsMemberNames(INamedTypeSymbol enumType, object value)
+  {
+    bool isFlags = enumType.GetAttributes().Any(attribute =>
+      attribute.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
+    if (!isFlags || !TryIntegralBits(UnwrapEnumBox(value), out ulong remaining) || remaining == 0)
+      return null;
+
+    // Same order as Enum.ToString: largest members first, listed smallest first.
+    List<(ulong Bits, string Name)> members = [];
+    foreach (IFieldSymbol field in enumType.GetMembers().OfType<IFieldSymbol>())
+    {
+      if (field.HasConstantValue
+          && TryIntegralBits(UnwrapEnumBox(field.ConstantValue), out ulong bits)
+          && bits != 0)
+      {
+        members.Add((bits, field.Name));
+      }
+    }
+
+    List<string> names = [];
+    foreach ((ulong bits, string name) in members.OrderByDescending(member => member.Bits))
+    {
+      if ((remaining & bits) == bits)
+      {
+        names.Add(name);
+        remaining &= ~bits;
+      }
+    }
+
+    if (remaining != 0)
+      return null;
+
+    names.Reverse();
+    return string.Join(", ", names);
+  }
 
   private static string? MatchingEnumMemberName(INamedTypeSymbol enumType, object? value)
   {

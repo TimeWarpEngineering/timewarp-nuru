@@ -2,10 +2,12 @@
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package TimeWarp.Amuru
 
-// In-process microseconds for mediator dispatch versus UseDirectInvoke.
+// In-process cost of mediator dispatch versus UseDirectInvoke.
 // Each path is its own method: two Build() calls in one method are intercepted twice.
-// RunAsync sits on the field Build() assigns. The first call is timed before warm-up.
-// Pass --aot to publish two native binaries and time three alternating cold starts.
+// RunAsync sits on the field Build() assigns. A delegate route runs first so shared
+// Nuru code is JIT-compiled before either first call; each first call then holds only
+// its own path's JIT. Per-call cost is nanoseconds after warm-up.
+// Startup is the --aot comparison: two native binaries, three alternating cold starts.
 
 using System.Diagnostics;
 using System.Globalization;
@@ -16,18 +18,19 @@ using TimeWarp.Nuru;
 const int Warmup = 50;
 const int Iterations = 2000;
 
+await OverheadBench.PrimeSharedAsync();
 OverheadBench.Sample mediator = await OverheadBench.MeasureMediatorAsync(Warmup, Iterations);
 OverheadBench.Sample direct = await OverheadBench.MeasureDirectAsync(Warmup, Iterations);
-long mediatorPerCall = OverheadBench.ToMicroseconds(mediator.LoopTicks) / Iterations;
-long directPerCall = OverheadBench.ToMicroseconds(direct.LoopTicks) / Iterations;
+long mediatorPerCall = OverheadBench.ToNanoseconds(mediator.LoopTicks) / Iterations;
+long directPerCall = OverheadBench.ToNanoseconds(direct.LoopTicks) / Iterations;
 string decision = directPerCall <= mediatorPerCall ? "keep-UseDirectInvoke" : "drop-UseDirectInvoke";
 
 Console.WriteLine($"warmup={Warmup.ToString(CultureInfo.InvariantCulture)}");
 Console.WriteLine($"iterations={Iterations.ToString(CultureInfo.InvariantCulture)}");
 Console.WriteLine($"mediator-first-us={OverheadBench.ToMicroseconds(mediator.FirstTicks).ToString(CultureInfo.InvariantCulture)}");
 Console.WriteLine($"direct-first-us={OverheadBench.ToMicroseconds(direct.FirstTicks).ToString(CultureInfo.InvariantCulture)}");
-Console.WriteLine($"mediator-per-call-us={mediatorPerCall.ToString(CultureInfo.InvariantCulture)}");
-Console.WriteLine($"direct-per-call-us={directPerCall.ToString(CultureInfo.InvariantCulture)}");
+Console.WriteLine($"mediator-per-call-ns={mediatorPerCall.ToString(CultureInfo.InvariantCulture)}");
+Console.WriteLine($"direct-per-call-ns={directPerCall.ToString(CultureInfo.InvariantCulture)}");
 Console.WriteLine($"decision={decision}");
 
 if (args.Contains("--aot"))
@@ -39,6 +42,7 @@ return 0;
 
 internal static class OverheadBench
 {
+  private static NuruApp PrimeApp = null!;
   private static NuruApp MediatorApp = null!;
   private static NuruApp DirectApp = null!;
 
@@ -46,6 +50,24 @@ internal static class OverheadBench
 
   public static long ToMicroseconds(long ticks) =>
     ticks * 1_000_000 / Stopwatch.Frequency;
+
+  public static long ToNanoseconds(long ticks) =>
+    (long)(ticks * (1_000_000_000.0 / Stopwatch.Frequency));
+
+  // Uses neither dispatch path, so it warms routing and the terminal for both.
+  public static async Task PrimeSharedAsync()
+  {
+    PrimeApp = NuruApp.CreateBuilder()
+      .Map("prime").WithHandler(() => { })
+      .AsCommand().Done()
+      .Build();
+
+    int code = await PrimeApp.RunAsync(["prime"]);
+    if (code != 0)
+    {
+      throw new InvalidOperationException("Prime call failed.");
+    }
+  }
 
   public static async Task<Sample> MeasureMediatorAsync(int warmup, int iterations)
   {

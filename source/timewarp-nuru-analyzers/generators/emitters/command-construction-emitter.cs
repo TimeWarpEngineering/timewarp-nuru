@@ -4,10 +4,14 @@
 
 #region Design
 // default! means the generator cannot copy the initializer. Capabilities omit it,
-// and the object initializer omits it until the caller supplies a value, so the
-// declared initializer runs. Init-only members stay inside the initializer.
-// Settable members are assigned after construction. A type with no parameterless
-// constructor is new(args) for constructor parameters that match bound properties.
+// and the object initializer leaves it out until the caller supplies a value, so the
+// declared initializer runs. A required member is always in the object initializer:
+// the route already rejects omission, and C# requires it there (CS9035).
+// A settable member is assigned after construction when supplied. An init-only member
+// reads a second instance built only for its defaults: P = supplied ? p : __commandDefaults.P.
+// One extra instance keeps the emitted code linear in the number of such members.
+// A type with no parameterless constructor is new(args) for constructor parameters
+// that match bound properties.
 // On --json-args the supplied test is __supplied_{id}. That flag is declared in
 // the route case and assigned inside the bind attempt, where __av_ and __jsonMap
 // are still in scope.
@@ -22,7 +26,9 @@ using System.Text;
 /// </summary>
 internal static class CommandConstructionEmitter
 {
-  private readonly record struct Member(string Property, string Variable, string Supplied, bool InitOnly);
+  private const string DefaultsVariable = "__commandDefaults";
+
+  private readonly record struct Member(string Property, string Value, bool Required);
 
   internal static void Emit(
     StringBuilder sb,
@@ -49,9 +55,10 @@ internal static class CommandConstructionEmitter
       }
     }
 
-    List<Member> always = [];
-    List<Member> conditional = [];
+    List<Member> initialized = [];
+    List<(string Property, string Variable, string Supplied)> assignedAfter = [];
     List<string> discards = [];
+    bool needsDefaults = false;
     foreach (ParameterBinding param in handler.RouteParameters)
     {
       if (constructorProperties.Contains(param.ParameterName))
@@ -59,64 +66,44 @@ internal static class CommandConstructionEmitter
 
       string property = ToPascalCase(param.ParameterName);
       string variable = LocalName(param, routeIndex);
-      OptionDefinition? option = MatchOption(route, param);
-      if (option?.DefaultValueLiteral == EndpointExtractor.UnemittableDefaultLiteral)
+      OptionDefinition? option = OptionBindingMatcher.Match(route, param);
+      bool required = option?.IsRequiredMember == true;
+      if (option?.DefaultValueLiteral != EndpointExtractor.UnemittableDefaultLiteral || required)
       {
-        string supplied = Supplied(route, option, routeIndex, jsonArgsPath);
-        if (supplied == "false")
-        {
-          discards.Add(variable);
-          continue;
-        }
-
-        conditional.Add(new Member(property, variable, supplied, option.IsInitOnly));
+        initialized.Add(new Member(property, variable, required));
         continue;
       }
 
-      always.Add(new Member(property, variable, "true", false));
-    }
-
-    List<Member> initConditional = [.. conditional.Where(member => member.InitOnly)];
-    List<Member> setConditional = [.. conditional.Where(member => !member.InitOnly)];
-    sb.AppendLine($"{indent}// Create command instance with bound properties");
-    if (initConditional.Count == 0)
-    {
-      EmitOne(sb, indent, commandTypeName, constructorLocals, always, declare: true);
-    }
-    else
-    {
-      sb.AppendLine($"{indent}{commandTypeName} __command;");
-      int combinations = 1 << initConditional.Count;
-      for (int mask = combinations - 1; mask >= 0; mask--)
+      string supplied = Supplied(route, option, routeIndex, jsonArgsPath);
+      if (supplied == "false")
       {
-        bool last = mask == 0;
-        string keyword = mask == combinations - 1 ? "if" : last ? "else" : "else if";
-        List<string> terms = [];
-        List<Member> included = [.. always];
-        for (int index = 0; index < initConditional.Count; index++)
-        {
-          bool on = (mask & (1 << index)) != 0;
-          Member member = initConditional[index];
-          if (!last)
-            terms.Add(on ? member.Supplied : Negate(member.Supplied));
-
-          if (on)
-            included.Add(member);
-        }
-
-        if (last)
-          sb.AppendLine($"{indent}{keyword}");
-        else
-          sb.AppendLine($"{indent}{keyword} ({string.Join(" && ", terms)})");
-
-        EmitOne(sb, indent, commandTypeName, constructorLocals, included, declare: false);
+        discards.Add(variable);
+        continue;
       }
+
+      if (option.IsInitOnly)
+      {
+        initialized.Add(new Member(property, $"{supplied} ? {variable} : {DefaultsVariable}.{property}", false));
+        needsDefaults = true;
+        continue;
+      }
+
+      assignedAfter.Add((property, variable, supplied));
     }
 
-    foreach (Member member in setConditional)
+    sb.AppendLine($"{indent}// Create command instance with bound properties");
+    if (needsDefaults)
     {
-      sb.AppendLine($"{indent}if ({member.Supplied})");
-      sb.AppendLine($"{indent}  __command.{member.Property} = {member.Variable};");
+      sb.AppendLine($"{indent}// Declared initializers for init-only members the caller did not supply");
+      EmitOne(sb, indent, commandTypeName, DefaultsVariable, constructorLocals, [.. initialized.Where(member => member.Required)]);
+    }
+
+    EmitOne(sb, indent, commandTypeName, "__command", constructorLocals, initialized);
+
+    foreach ((string property, string variable, string supplied) in assignedAfter)
+    {
+      sb.AppendLine($"{indent}if ({supplied})");
+      sb.AppendLine($"{indent}  __command.{property} = {variable};");
     }
 
     foreach (string discard in discards)
@@ -129,12 +116,12 @@ internal static class CommandConstructionEmitter
     StringBuilder sb,
     string indent,
     string commandTypeName,
+    string variable,
     List<string> constructorLocals,
-    List<Member> members,
-    bool declare)
+    List<Member> members)
   {
     string arguments = string.Join(", ", constructorLocals);
-    string target = declare ? $"{commandTypeName} __command = " : "__command = ";
+    string target = $"{commandTypeName} {variable} = ";
     if (members.Count == 0)
     {
       sb.AppendLine($"{indent}{target}new({arguments});");
@@ -144,7 +131,7 @@ internal static class CommandConstructionEmitter
     sb.AppendLine($"{indent}{target}new({arguments})");
     sb.AppendLine($"{indent}{{");
     foreach (Member member in members)
-      sb.AppendLine($"{indent}  {member.Property} = {member.Variable},");
+      sb.AppendLine($"{indent}  {member.Property} = {member.Value},");
 
     sb.AppendLine($"{indent}}};");
   }
@@ -170,23 +157,6 @@ internal static class CommandConstructionEmitter
     return $"__{rawName}_flagFound_{routeIndex}";
   }
 
-  private static OptionDefinition? MatchOption(RouteDefinition route, ParameterBinding param)
-  {
-    if (param.Source is not (BindingSource.Option or BindingSource.Flag))
-      return null;
-
-    foreach (OptionDefinition option in route.Options)
-    {
-      if (string.Equals(option.LongForm, param.SourceName, StringComparison.OrdinalIgnoreCase)
-          || string.Equals(option.ParameterName, param.ParameterName, StringComparison.OrdinalIgnoreCase))
-      {
-        return option;
-      }
-    }
-
-    return null;
-  }
-
   private static string LocalName(ParameterBinding param, int routeIndex) =>
     param.Source switch
     {
@@ -194,8 +164,6 @@ internal static class CommandConstructionEmitter
       BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(CSharpIdentifierUtils.ToCamelCase(param.SourceName)),
       _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
     };
-
-  private static string Negate(string expression) => $"!({expression})";
 
   private static string ToPascalCase(string value)
   {

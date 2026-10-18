@@ -1575,9 +1575,13 @@ internal static class JsonArgsEmitter
       }
       else if (param.Source is BindingSource.Option or BindingSource.Flag)
       {
-        // Exact name first. --Quiet and --quiet are different options, and an
-        // ignore-case scan would bind both properties to the first of those slots.
-        slot = slots.FirstOrDefault(s => s.IsOption && OptionSlotMatches(s, param, StringComparison.Ordinal))
+        // Exact name first. --Quiet and --quiet are different options. The same matcher
+        // drives command construction, so both agree on the slot and its __supplied_ flag.
+        OptionDefinition? matched = OptionBindingMatcher.Match(route, param);
+        slot = matched is not null
+          ? slots.FirstOrDefault(s => s.IsOption && ReferenceEquals(s.Option, matched))
+          : null;
+        slot ??= slots.FirstOrDefault(s => s.IsOption && OptionSlotMatches(s, param, StringComparison.Ordinal))
           ?? slots.FirstOrDefault(s =>
             s.IsOption && s.VariableName is null && OptionSlotMatches(s, param, StringComparison.OrdinalIgnoreCase));
         option = slot?.Option;
@@ -1645,30 +1649,12 @@ internal static class JsonArgsEmitter
   /// </summary>
   private static bool NeedsJsonSuppliedFlag(RouteDefinition route, OptionDefinition option)
   {
-    if (option.DefaultValueLiteral != EndpointExtractor.UnemittableDefaultLiteral)
+    // A required member is always in the object initializer, so it reads no flag.
+    if (option.DefaultValueLiteral != EndpointExtractor.UnemittableDefaultLiteral || option.IsRequiredMember)
       return false;
 
-    ParameterBinding? match = null;
-    foreach (ParameterBinding param in route.Handler.RouteParameters)
-    {
-      if (param.Source is not (BindingSource.Option or BindingSource.Flag))
-        continue;
-
-      bool exact = string.Equals(option.LongForm, param.SourceName, StringComparison.Ordinal)
-        || string.Equals(option.ShortForm, param.SourceName, StringComparison.Ordinal);
-      if (exact)
-      {
-        match = param;
-        break;
-      }
-
-      bool fuzzy = string.Equals(option.LongForm, param.SourceName, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(option.ShortForm, param.SourceName, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(option.ParameterName, param.ParameterName, StringComparison.OrdinalIgnoreCase);
-      if (fuzzy)
-        match ??= param;
-    }
-
+    ParameterBinding? match = route.Handler.RouteParameters.FirstOrDefault(param =>
+      ReferenceEquals(OptionBindingMatcher.Match(route, param), option));
     if (match is null)
       return false;
 

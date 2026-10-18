@@ -328,12 +328,9 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              Description = \"{description}\",");
     }
 
+    // Only the display value. The code literal can be default!, null!, or a field reference.
     string? shownDefault = option.CapabilityDefaultValue;
-    if (string.IsNullOrEmpty(shownDefault))
-      shownDefault = option.DefaultValueLiteral;
-
-    if (!string.IsNullOrEmpty(shownDefault)
-        && shownDefault != EndpointExtractor.UnemittableDefaultLiteral)
+    if (!string.IsNullOrEmpty(shownDefault))
     {
       string defaultValue = EmitterStringUtils.EscapeForStringLiteral(shownDefault);
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");

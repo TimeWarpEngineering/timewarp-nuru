@@ -117,9 +117,9 @@ internal static partial class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor UnconstructableEndpoint = new(
     id: "NURU_H009",
     title: "Endpoint type has no callable constructor",
-    messageFormat: "'{0}' has no constructor Nuru can call. Add a public parameterless constructor, or a constructor whose parameters match property names.",
+    messageFormat: "Nuru cannot construct '{0}': {1}",
     category: HandlerCategory,
     defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,
-    description: "Nuru builds the endpoint with new() when a parameterless constructor exists. Otherwise it calls a constructor whose parameters match public settable properties by name. A type with neither is skipped.");
+    description: "Nuru builds the endpoint with new() when an accessible constructor takes no arguments (every parameter optional counts). Otherwise it calls an accessible constructor whose parameters all match, ignoring case, public settable properties that are bound as route parameters or options. An abstract or static type cannot be an endpoint. A type that fails these rules is skipped.");
 }

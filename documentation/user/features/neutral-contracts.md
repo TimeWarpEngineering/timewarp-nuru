@@ -10,11 +10,13 @@ A contracts-first calculator lives next to the attribute calculator at `samples/
 
 The route literal is the operation name. A name with a space is invalid; put the extra words in a group. The description is `[Operation(Description = "...")]`.
 
-Each public settable property is an option, including one inherited from a base type. A base marked `[NuruRouteGroup]` is a group, not a source of options. The option name is the property identifier as declared, so `--capabilities` `name` and the `--json-args` key are that same identifier.
+Each public settable property is an option, including an `init` property and one inherited from a base type. A base marked `[NuruRouteGroup]` is a group, not a source of options. The option name is the property identifier as declared, so `--capabilities` `name` and the `--json-args` key are that same identifier.
+
+Nuru builds the request with `new()` when an accessible constructor takes no arguments, including one whose parameters are all optional. Otherwise it calls the accessible constructor whose parameters all match bound properties by name, ignoring case. A positional record uses its primary constructor this way, and a parameter default (`int Count = 5`) is that option's default. A property initializer that only copies a parameter (`= Name`) takes that parameter's default. Any other initializer that reads a parameter (`= Name.Trim()`) gives no default, so a non-nullable member is required. A `required` member is always set in the object initializer. When no constructor fits, or the type is abstract or static, the generator reports NURU_H009 as an error and skips the type.
 
 | Member | CLI |
 | --- | --- |
-| `string?`, or a non-nullable member with an initializer | Optional option. Omission keeps the initializer. An initializer the generator cannot copy (`new()`, a method call) stays on the property, and `--capabilities` omits it. Numeric defaults are plain numbers. An enum default is the member name. |
+| `string?`, or a non-nullable member with an initializer | Optional option. Omission keeps the initializer. An initializer the generator cannot copy (`new()`, a method call) stays on the property, and `--capabilities` omits it. `--capabilities` also omits `= null!` and a non-constant field or property such as a `static readonly` value. Numeric defaults are plain numbers. An enum default is the member name, and a `[Flags]` combination is the member names joined with `, `, or the number when the bits match no members. |
 | `required`, or a non-nullable member with no initializer | Required option. |
 | `System.ComponentModel.Description` | Option description. |
 | Enum | Allowed values are the enum names. A non-nullable enum with an initializer keeps that value when omitted. A non-nullable enum with no initializer is required. |
@@ -57,7 +59,7 @@ When the compilation can see no handler, the generator reports NURU_H008 as a wa
 
 When this compilation has a generated mediator, endpoints dispatch through TimeWarp.Mediator, so mediator behaviors run. `INuruBehavior` stays CLI middleware around that dispatch.
 
-No generated mediator exists when `TimeWarpMediatorAssembly` is not true, or when the mediator profile is `Aot` or `Link`. A nested `Handler` is then called directly, and FluentValidation behaviors do not run. A visible handler that is not nested writes an error and exits 1 instead of throwing.
+No generated mediator exists when `TimeWarpMediatorAssembly` is not true, or when the mediator profile is `Aot` or `Link`. A nested `Handler` is then called directly, and FluentValidation behaviors do not run. With source-generated DI, a visible handler that is not nested writes an error and exits 1 instead of throwing. With `UseMicrosoftDependencyInjection()`, Nuru resolves `IMediator` from the container instead, and that call throws unless the app registers a mediator.
 
 A nested `Handler` is also called directly when `UseDirectInvoke()` is set and a generated mediator does exist. An endpoint with no nested handler still goes through the mediator, including when `UseDirectInvoke()` is set. `UseDirectInvoke()` is the opt-out when the mediator cost matters for an AOT CLI.
 

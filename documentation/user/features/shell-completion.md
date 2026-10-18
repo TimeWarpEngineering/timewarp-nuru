@@ -683,6 +683,7 @@ NuruApp.CreateBuilder()
 
 ## Related Documentation
 
+- **[Same CLI, every shell](../../posts/blogs/2026-10-18-same-cli-every-shell.md)** - Walkthrough with video: install completion in bash, zsh, fish and PowerShell from one app, every command included
 - **[Getting Started](../getting-started.md#shell-completion-tab-completion)** - Quick setup guide
 - **[Shell Completion Example](../../../samples/shell-completion-example/)** - Complete working example
 - **[Task 026: Dynamic Completion](../../../kanban/backlog/026-dynamic-shell-completion-optional.md)** - Optional runtime-computed completions

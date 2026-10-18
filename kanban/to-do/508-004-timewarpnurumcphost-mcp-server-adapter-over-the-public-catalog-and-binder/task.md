@@ -49,7 +49,8 @@ Acceptance criteria:
 ## Review
 
 - Round 1: Blocked — open M1
-- Fix pass for round 2: M1 fixed (structured content no longer reads captured console output).
+- Fix pass: M1 fixed (structured content no longer reads captured console output).
+- Round 2: clean. Effort 1, roster general. M1 fixed. 0 open. See `review/disposition.md`.
 
 ## Notes
 
@@ -64,6 +65,7 @@ Acceptance criteria:
 - Reviewer: grok session `01a1509a-db8a-7711-a1d9-777aacf447b5` (2026-10-19). Round 1, effort 3, roster general. M1 open. Disposition not written.
 - Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-18T20:23:31Z
 - Fix oracle (implement-fix-2): implementer-claude (claude-opus-5-5), 2026-10-19. Fixed M1, added a regression test, updated the doc. Full CI and `ganda repo audit` green.
+- Reviewer round 2: grok session `01a150b9-e532-7a23-b097-e5b0dd320325` (2026-10-19). Effort 1, roster general. Re-checked the M1 delta. Disposition clean. 0 open.
 
 ## Results
 
@@ -160,7 +162,9 @@ Expect:
 
 ### Review
 
-Round 1 (effort 3, general) is in `review/round-1/merged.md`. One open bug (M1): `NuruMcpContentFormat.Json` builds `structuredContent` from captured console text plus the rendered body, so a handler that logs and returns a value drops or corrupts the structured payload. Fix pass: `CreateStructuredContent` now takes the `RenderAsync` terminal text, not `capturedOut + terminal.Output`, and `WriteScalar` writes a `string` result from the CLR value. The regression test is above. `mcp-hosting.md` now says console output stays in the text content.
+Round 1 (effort 3, general) is in `review/round-1/merged.md`. One bug (M1): `NuruMcpContentFormat.Json` built `structuredContent` from captured console text plus the rendered body, so a handler that logs and returns a value dropped or corrupted the structured payload. Fix pass: `CreateStructuredContent` now takes the `RenderAsync` terminal text, not `capturedOut + terminal.Output`, and `WriteScalar` writes a `string` result from the CLR value. The regression test is above. `mcp-hosting.md` now says console output stays in the text content.
+
+Round 2 (effort 1, general) is in `review/round-2/merged.md`. It re-checked that delta only. M1 is fixed. No new findings. Counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0. Disposition: **clean** (`review/disposition.md`). Final open count: 0. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Round 2 re-ran `dotnet run tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs`: Total 14, Passed 14.
 
 ## Learnings
 

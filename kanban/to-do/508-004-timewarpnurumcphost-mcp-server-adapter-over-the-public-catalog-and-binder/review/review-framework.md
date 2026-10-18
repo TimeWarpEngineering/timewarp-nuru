@@ -10,11 +10,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2214
-- Effort: 3
+- Lines changed: 76
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -23,3 +23,11 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2
+
+**Date:** 2026-10-19
+**Diff scope:** fix delta since round 1, commit `a27fb9dc` (parent `578a009f`). Product files: `source/timewarp-nuru-mcphost/nuru-mcp-tool-invoker.cs`, `tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs`, `documentation/user/features/mcp-hosting.md`. Re-verify M1; do not re-review the whole branch.
+**Plan / brief:** round-1 M1. Structured content must come from the `RenderAsync` text and the CLR result, not from captured console output.
+**Effort:** 1 (general only), as in Budget above.
+**Session IDs:** reviewer grok `01a150b9-e532-7a23-b097-e5b0dd320325` (2026-10-19).

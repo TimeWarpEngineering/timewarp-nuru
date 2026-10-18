@@ -55,6 +55,11 @@ Acceptance:
 
 - Round 1: 21 findings, all marked fixed in `review/round-1/merged.md` (8 bugs, 9 suggestions, 4 nits).
 - Round 2 (2026-10-18, `e316fd32`): 20 of the 21 round-1 findings are verified fixed. M20 is reopened. 11 new findings: M22–M32. 12 findings were open: bugs M22, M23, M24, M25; suggestions M26, M27, M28, M29; nits M20, M30, M31, M32. CI was green. The fix pass is in Session. See `review/round-2/merged.md`.
+- Round 3 (2026-10-18, `bb2d2b9f`): all 12 round-2 findings are verified fixed (M20, M22–M32). The fix delta adds 17 new findings, M33–M49, and all are open:
+  - Bugs: M33 (init-only conditional construction grows exponentially), M34 (CS9035 on `required` with an initializer the generator cannot copy), M35 (CS8031 when there is no mediator, the handler is external, and a behavior applies), M36 (case-insensitive `MatchOption`), M37 (nullable enum `= null` becomes `(E)0`), M38 (record property initialized from a constructor parameter), M39 (primary-constructor defaults ignored).
+  - Suggestions: M40–M43. Nits: M44–M49.
+
+  CI is green: 1920 total, 1914 passed, 6 skipped, 0 failed. A fix pass is needed. See `review/round-3/merged.md`.
 ## Notes
 
 - Parent: 508. Waits for the first published `TimeWarp.Contracts` (architecture task 384); until then develop against a project reference or a local feed.
@@ -85,6 +90,9 @@ Acceptance:
   - Full CI after `ganda runfile cache --clear`: multi-mode 1916 total, 1910 passed, 6 skipped (all of them already skipped on master), 0 failed. Standalone: 0 failed.
   - Open at review time: 12 findings, 4 of them bugs. See `review/round-2/merged.md`.
 - Fix pass for round 3 (2026-10-18): implementer-grok, session 01a14f7a-d5a3-7f90-a5af-bfe3a8b94efb. Omitting an unemittable initializer keeps it. `--json-args` records that the member was supplied in the route case, because the attempt-local flag is out of scope at construction. `--Quiet` and `--quiet` stay different JSON slots. Capabilities show plain numbers and enum member names. `init` members and positional records construct. NURU_H009 reports a type with no callable constructor. A build with no generated mediator calls a nested handler directly and exits 1 for a visible external handler. Review round 3 has not run.
+- Review round 3 (2026-10-18): review oracle claude-opus-5-5 (headless `ganda task work`), effort 3, roster general + tests + plan_alignment (Claude subagents), reviewed the fix delta `572ecdc1..bb2d2b9f`.
+  - Full CI after `ganda runfile cache --clear`: multi-mode 1920 total, 1914 passed, 6 skipped (all of them already skipped on master), 0 failed. Standalone: 0 failed.
+  - Open at review time: 17 findings, 7 of them bugs (M33–M39). The general reviewer reproduced every bug in a throwaway app. A fix pass is needed. See `review/round-3/merged.md`.
 
 ## Blocked
 
@@ -103,10 +111,30 @@ Resolved 2026-10-18: TimeWarp.Contracts 2.0.0-beta.21 ships `lib/net10.0` and `l
 - Restatement check (review round 2): no misread of substance. Falling back to direct invoke when there is no generated mediator is a documented compatibility carve-out. The acceptance bullet still says mediator behaviors "run in every host" (it dropped "identically"), but the Goal paragraph above it limits that to builds with a generated mediator. Make the bullet match the Goal paragraph.
 - A `default!` sentinel for an initializer the generator cannot emit must not reach the runtime assignment. It overwrites the contract's own initializer (M22). Omit it from capabilities only.
 - Run tests standalone *and* through `tests/ci-tests/run-ci-tests.cs`. `.DiscoverEndpoints()` fails in CI multi-mode because another file's `[NuruRoute("")]` matches inputs these tests reject (M1). The tests use `.Map<T>()`.
+- Restatement check (review round 3): no misread of substance. The round-2 "run in every host" wording is fixed. One acceptance bullet still says "startup reports an error". The behavior is now that invoking the route exits 1 (M49).
+- Choosing whether to assign a member based on whether it was supplied must still respect C# rules. A `required` member must be in every object initializer (M34). Code emitted inside the behavior lambda cannot `return` a value (M35). One branch per combination of init-only members grows exponentially (M33).
+- Every matcher that finds an option for a member must match exact names first. The JSON path fixed this in round 2, and the new construction emitter brought the case mix-up back (M36).
 
 ## Results
 
-Round 2 left 12 findings open (bugs M22–M25, suggestions M26–M29, nits M20, M30–M32). This fix pass implements them. Review round 3 has not run, and `review/disposition.md` is not written.
+Round 2 left 12 findings open (bugs M22–M25, suggestions M26–M29, nits M20, M30–M32). This fix pass implements them.
+
+**Review disposition (round 3, 2026-10-18): not disposed. A fix pass is needed.**
+- Rounds: 3, effort 3, roster general + tests + plan_alignment.
+- Round 3 verified all 12 round-2 findings as fixed. It raised 17 new findings, all open:
+  - 7 bugs: M33, M34, M35, M36, M37, M38, M39.
+  - 4 suggestions: M40, M41, M42, M43.
+  - 6 nits: M44 through M49.
+- Final counts from `review/round-3/merged.md`:
+
+  | Severity | open | fixed | wontfix |
+  |----------|------|-------|---------|
+  | bug | 7 | 4 | 0 |
+  | suggestion | 4 | 4 | 0 |
+  | nit | 6 | 4 | 0 |
+
+- Round-1 findings M1–M21 stay fixed.
+- Paths: `review/review-framework.md`, `review/round-3/merged.md`. `review/disposition.md` is not written.
 
 Omitting an option whose initializer the generator cannot copy (`new()`, a method call) leaves that initializer in place on argv and on `--json-args`. The JSON path records `__supplied_{id}` in the route case. The attempt block's `__av_` flag is out of scope when the command is built. `--capabilities` omits that default. `double.NaN`, infinities, a const enum field, and a flags or cast enum default emit compilable C#. Capabilities show a plain number (`1.5`, `2`) and an enum member name (`Fast`), or the numeric value when the bits match no member (`3`). `init` members and a positional record are derived. A positional record uses its primary constructor. A `required init` member is set in the object initializer. A type with no callable constructor is NURU_H009. A JSON member whose name is a C# keyword still generates a valid argv rejection flag. A derived type that redeclares a base property does not derive the base property again. `--Quiet` and `--quiet` bind as different JSON slots. JSON type names omit `global::` inside type arguments. The mediator-kind check runs before route-pattern validation. NURU_H008 says invoking the route exits 1.
 

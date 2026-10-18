@@ -60,6 +60,8 @@ Acceptance:
 - Block cleared (2026-10-18): TimeWarp.Contracts 2.0.0-beta.21 published multi-targeted net10.0 + net11.0; relaunched headless.
 - Implemented (2026-10-18): implementer-grok, session 01a14e4f-7534-72d0-b741-b68ae80e4fc4. Derived endpoints from TimeWarp.Contracts 2.0.0-beta.21. JSON members deserialize through the source-generated `NuruJsonMemberContext` (property names as declared). `tests/Directory.Build.targets` imports the Nuru build task so file-based tests get that context. A problem outcome sets `Environment.ExitCode` and each `ExecuteRouteAsync` starts by clearing it, so a later success is 0. Direct invoke stays behind `UseDirectInvoke()` and still requires a nested handler.
 - Pack fix (2026-10-18): `TimeWarp.Nuru` 3.0.0 is the published stable package. Packing it with a prerelease `TimeWarp.Contracts` dependency fails NU5104. `source/Directory.Build.props` version is now `3.1.0-beta.1`. `ganda repo audit --fix` set the executable bit on the four new shebang runfiles.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-18T10:37:03Z
+- Review round 1 (2026-10-18): review oracle claude-opus-5-5 (headless `ganda task work`), effort 3, roster general + tests + plan_alignment (Claude subagents), reviewed `f522c6e2`. The result is 21 open findings (8 bugs), and the full CI suite fails: 6 multi-mode failures. A fix pass is needed. See `review/round-1/merged.md`.
 
 ## Blocked
 
@@ -69,7 +71,25 @@ Resolved 2026-10-18: TimeWarp.Contracts 2.0.0-beta.21 ships `lib/net10.0` and `l
 
 - https://www.nuget.org/packages/TimeWarp.Contracts/2.0.0-beta.20
 
+## Learnings
+
+- Restatement check (review round 1): no misread of substance. The restatement keeps every requirement, folds in the 506 findings and the group decision, and adds `IIdempotentCommand<T>`. It leaves out the Notes requirement to document that argv cannot supply a JSON member, but the docs cover that anyway. The implementation does drift from two requirements the restatement states correctly:
+  - "otherwise startup reports an error": NURU_H008 is an Error, so the startup path needs suppression (M8).
+  - "existing apps keep working unchanged": mediator dispatch became the default for nested-handler `[NuruRoute]` endpoints (M2, M3).
+- Run tests standalone *and* through `tests/ci-tests/run-ci-tests.cs`. The new tests passed standalone (19/4/2) but failed in CI multi-mode, because `.DiscoverEndpoints()` pulled in another file's `[NuruRoute("")]` (M1).
+
 ## Results
+
+### Review status (round 1, not yet disposed)
+
+- Rounds: 1. Effort 3, roster general, tests and plan_alignment.
+- Counts: bug 8 open; suggestion 9 open; nit 4 open; 0 fixed; 0 wontfix.
+- Disposition: pending. A fix pass on this id is required, then round 2.
+- Gate results on `f522c6e2`:
+  - Build: 0 warnings.
+  - The three new test files pass standalone.
+  - `run-ci-tests.cs` exits 1: multi-mode 1897/1909 passed, 6 failed, all in `OperationEndpointDerivationTests`.
+- Paths: `review/review-framework.md`, `review/round-1/{general,tests,plan_alignment,merged}.md`.
 
 Nuru derives a complete endpoint from a `TimeWarp.Contracts` 2.0.0-beta.21 request that carries `[Operation]` and a TimeWarp.Mediator kind. CLI attributes stay in `TimeWarp.Nuru` as overrides. The group path is the containing `[NuruRouteGroup]` prefix, otherwise `[NuruCliBinding(Group)]`, otherwise empty. Dispatch goes through TimeWarp.Mediator. `UseDirectInvoke()` still calls a nested `Handler` and is the opt-out. One local timing run (not a budget) wrote `mediator-first-ms=5 mediator-30-ms=0 direct-first-ms=4 direct-30-ms=0`. Both paths returned `direct:ok`. The 30-call loops were under 1 ms.
 

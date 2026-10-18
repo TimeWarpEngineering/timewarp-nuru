@@ -40,6 +40,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1
 - Fix pass for round 2 (2026-10-19): M1 fixed. `DescribeReturnType` describes `SuccessTypeName` when `ReturnsProblemPair` is set.
+- Round 2 (2026-10-19): M1 fixed. No new findings. Disposition clean. See `review/round-2/merged.md` and `review/disposition.md`.
 
 ## Notes
 
@@ -54,10 +55,11 @@ Acceptance:
 - Reviewer: grok session `01a1500b-9a86-7da0-b791-964e7fe71249` (2026-10-19). Effort 2, roster general. Round 1 wrote `review/round-1/general.md` and `review/round-1/merged.md`. M1 is open. No disposition yet.
 - Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-18T17:34:30Z
 - Fix pass (implement-fix-2, 2026-10-19): implementer claude-opus-5-5 (headless). Fixed M1. `ganda runfile cache --clear`, then `tests/ci-tests/run-ci-tests.cs`: multi-mode 1939 total, 1933 passed, 6 skipped, 0 failed; standalone 30 files, 0 failed. `dotnet build timewarp-nuru.slnx`: 0 warnings, 0 errors. `ganda repo audit` passed with nothing to fix.
+- Reviewer round 2: grok session `01a15021-cc40-7bf0-a559-e4ba8bcc975b` (2026-10-19). Effort 1, roster general. Wrote `review/round-2/general.md`, `review/round-2/merged.md`, and `review/disposition.md`. Re-ran `dotnet run tests/timewarp-nuru-tests/capabilities/capabilities-08-runtime-catalog.cs`: 12 passed, 0 failed. Outcome clean.
 
 ## Learnings
 
-- Misread: the restatement classifies `returnType` from the awaited CLR type via `GetOutputStrategy`. The task asks for the same classification the CLI uses when it serializes the result (unit, primitive, or JSON). For `OneOf<TSuccess, SharedProblemDetails>` the CLI unwraps the pair and classifies `TSuccess`; the awaited type is the `OneOf`. The implementation follows the restatement, so those endpoints publish the wrapper. See review round 1 M1.
+- Misread (round 1, corrected before round 2): the first restatement classified `returnType` from the awaited CLR type via `GetOutputStrategy`. The task asks for the same classification the CLI uses when it serializes the result (unit, primitive, or JSON). For `OneOf<TSuccess, SharedProblemDetails>` the CLI unwraps the pair and classifies `TSuccess`; the awaited type is the `OneOf`. See review round 1 M1. The fix pass rewrote the restatement so the name and kind come from `TSuccess`, and changed `DescribeReturnType` to match. Round 2 compared that restatement with the task and found no remaining mismatch.
 
 ## Results
 
@@ -95,3 +97,5 @@ Expect:
 - `capabilities-08-runtime-catalog.cs`: Total 12, Passed 12. `Should_describe_problem_pair_endpoints_by_their_success_type` shows `rt-problem-text` as `string`/`primitive` and `rt-problem-report` as the `RtReport` record/`json`, not the `OneOf` wrapper.
 - Calculator `--capabilities`: every endpoint ends with `"returnType"`. `add` is `{"name": "double", "kind": "primitive"}`, `factorial` is `{"name": "TimeWarp.Mediator.Unit", "kind": "unit"}`, and `stats` is `{"name": "EndpointCalculator.Endpoints.StatsResponse", "kind": "json"}`. Apart from those members, the document is byte-identical to master.
 - CI runner: multi-mode 1939 total, 1933 passed, 6 skipped, 0 failed. Standalone: 0 failed.
+
+Implementation review: 2 rounds. Round 1 roster general, effort 2. Round 2 roster general, effort 1. Final counts: bug 1 fixed, suggestion 0, nit 0, open 0, wontfix 0. Disposition: `clean`. No escalation. Artifacts: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.

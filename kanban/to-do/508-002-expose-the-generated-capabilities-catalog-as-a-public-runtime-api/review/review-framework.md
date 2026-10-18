@@ -6,15 +6,19 @@
 **Plan / brief:** Public in-process `CapabilitiesResponse` (`NuruApp.Capabilities` and `FilterByGroup`), `--capabilities` prints that instance, and `EndpointCapability.returnType` describes the result. Docs in `agent-invocation.md` and `built-in-routes.md`.
 **Effort:** 2 (by-diff, 700 lines). Roster is general only.
 **Reviewer roster:** general
-**Session IDs:** grok `01a1500b-9a86-7da0-b791-964e7fe71249` (2026-10-19)
+**Session IDs:** grok `01a1500b-9a86-7da0-b791-964e7fe71249` (2026-10-19, round 1). grok `01a15021-cc40-7bf0-a559-e4ba8bcc975b` (2026-10-19, round 2).
+
+## Round 2 scope
+
+Fix delta `45fe5339` vs `b70770fd` (79 lines, effort 1, roster general). Re-check M1. Product paths: `capabilities-emitter.cs`, `capabilities-08-runtime-catalog.cs`, `documentation/user/features/agent-invocation.md`.
 
 ## Budget (by-diff)
 
-- Lines changed: 700
-- Effort: 2
+- Lines changed: 79
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 

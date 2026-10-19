@@ -42,8 +42,7 @@ Acceptance criteria:
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Fix pass (implement-fix-2): M1–M4 fixed; dispositions in `review/round-1/merged.md`
-- Round 2: clean. M1–M4 verified fixed. Disposition: `review/disposition.md`
-
+- Round 2: Done
 ## Notes
 
 - Parent: 508. Reference design: SimCubeLtd/roslynk-cli (System.CommandLine client plus local daemon). Roslynk already has `DaemonLauncher` and an idle-eviction service in its MCP host that do this by hand.

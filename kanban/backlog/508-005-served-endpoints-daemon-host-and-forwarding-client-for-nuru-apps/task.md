@@ -41,7 +41,8 @@ Acceptance criteria:
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
-- Fix pass (implement-fix-2): M1–M4 fixed; dispositions in `review/round-1/merged.md`. Round 2 is next.
+- Fix pass (implement-fix-2): M1–M4 fixed; dispositions in `review/round-1/merged.md`
+- Round 2: clean. M1–M4 verified fixed. Disposition: `review/disposition.md`
 
 ## Notes
 
@@ -56,6 +57,7 @@ Acceptance criteria:
 - Review: grok session 01a151e7-4070-7f01-a1c9-8e918b0fd135 (2026-10-19). Effort 3, roster general. Round 1 leaves M1–M4 open.
 - Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-19T02:17:46Z
 - Fix pass (implement-fix-2): implementer-claude (claude-opus-5-5), 2026-10-19. Fixed round-1 M1–M4: a server lock around the stale check and bind, build-id checks after stop, after start, and per call, relative socket paths resolved under the per-user socket directory, and an owner-only socket directory with a 0600 socket file. Full CI and `ganda repo audit` are green. The audit needed no fixes.
+- Review round 2: grok session `01a15200-ae4f-7582-bfd0-8fbf2b69b301` (2026-10-19). Effort 2, roster general. Re-checked commit `1e474f0d`. M1–M4 stay fixed. No new findings. Disposition clean.
 
 ## Results
 
@@ -191,7 +193,19 @@ Effort 3, roster general (one reviewer). Paths: `review/review-framework.md`, `r
 | suggestion | 0 | 0 | 0 |
 | nit | 0 | 0 | 0 |
 
-Findings: M1 live socket unlink during start, M2 build id not checked after start, M3 relative `socketPath` resolves in each process's current directory, M4 temp socket directory is trusted when it already exists. The fix pass (implement-fix-2) fixed all four. The dispositions are in `merged.md` (0 open, 4 fixed). Round 2 reviews the fixes.
+Findings: M1 live socket unlink during start, M2 build id not checked after start, M3 relative `socketPath` resolves in each process's current directory, M4 temp socket directory is trusted when it already exists. The fix pass (implement-fix-2) fixed all four. The dispositions are in `merged.md` (0 open, 4 fixed).
+
+### Review round 2
+
+Effort 2, roster general (one reviewer). Scope: commit `1e474f0d` since round-1 base `9c80497e`, not the whole branch. Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 4 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 0 | 0 |
+
+Disposition: **clean**. Final open count: 0. M1–M4 verified fixed (lock across stale check and bind, build id after stop and on each forwarded call, relative socket paths under the per-user directory, owner-only socket directory and mode 0600 socket). No new findings. No wontfix. This round ran `dotnet run tests/timewarp-nuru-daemon-tests/daemon-01-server.cs`: Total 15, Passed 15. The misread in `## Learnings` still stands; the fix follows the implementer restatement.
 
 ## Learnings
 

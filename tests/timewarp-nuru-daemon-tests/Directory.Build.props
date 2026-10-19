@@ -1,0 +1,5 @@
+<Project>
+  <!-- Daemon tests reference the package with #:project; usings live in each file so the CI
+       multi-mode assembly (tests/ci-tests) gets no extra global usings. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+</Project>

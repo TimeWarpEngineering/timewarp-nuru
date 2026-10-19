@@ -258,6 +258,42 @@ public class McpHostToolsTests
     ((TextContentBlock)result.Content[0]).Text.ShouldBe(error!.Message);
   }
 
+  public static async Task Should_send_tool_calls_to_the_route_forwarder()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = CreateApp(terminal);
+    EndpointCapability greet = app.Capabilities.Endpoints.Single(e => e.Pattern == "mh-greet {name}");
+    EndpointCapability run = app.Capabilities.Endpoints.Single(e => e.Pattern.StartsWith("mh-run", StringComparison.Ordinal));
+
+    // A served app's forwarder takes the call: the text is what the server rendered.
+    McpRecordingForwarder forwarder = new(new NuruForwardResult(0, "", "", "Hello from server\n"));
+    app.RouteForwarder = forwarder;
+    CallToolResult forwarded = await new NuruMcpToolInvoker(app).CallAsync(greet, Args("""{"name":"Ada"}"""));
+    forwarded.IsError.ShouldBe(false);
+    ((TextContentBlock)forwarded.Content[0]).Text.ShouldBe("Hello from server");
+    NuruForwardRequest request = forwarder.Requests.Single();
+    request.Route.ShouldBe(greet.Pattern);
+    request.Args.ShouldBeNull();
+    request.JsonArguments.ShouldBe("""{"name":"Ada"}""");
+
+    // Structured content parses the rendered number back by the catalog return type.
+    app.RouteForwarder = new McpRecordingForwarder(new NuruForwardResult(0, "", "", "42\n"));
+    CallToolResult number = await new NuruMcpToolInvoker(app, new NuruMcpHostOptions { ContentFormat = NuruMcpContentFormat.Json })
+      .CallAsync(run, Args("""{"count":42}"""));
+    number.StructuredContent!.Value.GetProperty("result").GetInt32().ShouldBe(42);
+
+    // A failed forwarded call (a bind error in the server) is a tool error with its message.
+    app.RouteForwarder = new McpRecordingForwarder(new NuruForwardResult(1, "", "Error: Unknown key 'nope' for 'mh-greet {name}'.\n"));
+    CallToolResult failed = await new NuruMcpToolInvoker(app).CallAsync(greet, Args("""{"nope":1}"""));
+    failed.IsError.ShouldBe(true);
+    ((TextContentBlock)failed.Content[0]).Text.ShouldBe("Error: Unknown key 'nope' for 'mh-greet {name}'.");
+
+    // A forwarder that declines (no server) leaves the call local.
+    app.RouteForwarder = new McpRecordingForwarder(null);
+    CallToolResult local = await new NuruMcpToolInvoker(app).CallAsync(greet, Args("""{"name":"Ada"}"""));
+    ((TextContentBlock)local.Content[0]).Text.ShouldBe("Hello, Ada!");
+  }
+
   public static async Task Should_capture_console_output_into_the_result()
   {
     using TestTerminal terminal = new();
@@ -378,6 +414,18 @@ public class McpHostToolsTests
 /// <summary>
 /// A minimal MCP client: newline-delimited JSON-RPC over in-memory pipes to <see cref="NuruMcpServer.RunAsync(NuruApp, Stream, Stream, NuruMcpHostOptions?, CancellationToken)"/>.
 /// </summary>
+/// <summary>Records forwarded requests and answers with a fixed result (null: run locally).</summary>
+internal sealed class McpRecordingForwarder(NuruForwardResult? result) : INuruRouteForwarder
+{
+  public List<NuruForwardRequest> Requests { get; } = [];
+
+  public Task<NuruForwardResult?> ForwardAsync(NuruApp app, NuruForwardRequest request, CancellationToken cancellationToken)
+  {
+    Requests.Add(request);
+    return Task.FromResult(result);
+  }
+}
+
 internal sealed class RawMcpSession : IAsyncDisposable
 {
   private readonly Pipe ToServer = new();

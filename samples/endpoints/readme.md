@@ -73,6 +73,7 @@ await app.RunAsync(args);
 | `02-calculator/` | 1 + messages/ | Full-featured calculator |
 | `03-syntax/` | 1 | Route pattern reference |
 | `04-async/` | 1 | Async/await patterns |
+| `16-daemon/` | 1 | Served app: routes forward to a warm local server (`TimeWarp.Nuru.Daemon`) |
 
 ### Pipeline & Middleware
 

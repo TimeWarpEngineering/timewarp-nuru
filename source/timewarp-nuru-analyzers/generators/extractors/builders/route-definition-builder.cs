@@ -27,6 +27,7 @@ internal sealed class RouteDefinitionBuilder
   private int Order;
   private ImmutableArray<InterfaceImplementationDefinition> Implements = [];
   private ImmutableArray<ExampleDefinition> Examples = [];
+  private bool LocalOnly;
 
   /// <summary>
   /// Sets the original pattern string.
@@ -156,6 +157,15 @@ internal sealed class RouteDefinitionBuilder
   }
 
   /// <summary>
+  /// Keeps the route in the CLI process (from .LocalOnly() fluent call).
+  /// </summary>
+  public RouteDefinitionBuilder AsLocalOnly()
+  {
+    LocalOnly = true;
+    return this;
+  }
+
+  /// <summary>
   /// Builds the immutable RouteDefinition.
   /// </summary>
   /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
@@ -189,7 +199,8 @@ internal sealed class RouteDefinitionBuilder
       ComputedSpecificity: Specificity,
       Order: Order,
       Implements: Implements,
-      Examples: Examples
+      Examples: Examples,
+      IsLocalOnly: LocalOnly
     );
   }
 

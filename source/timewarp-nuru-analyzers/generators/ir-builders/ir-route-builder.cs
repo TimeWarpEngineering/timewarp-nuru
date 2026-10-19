@@ -118,6 +118,16 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   }
 
   /// <summary>
+  /// Keeps this route in the CLI process: a served app never forwards it.
+  /// Mirrors: EndpointBuilder.LocalOnly()
+  /// </summary>
+  public IrRouteBuilder<TParent> LocalOnly()
+  {
+    Builder.AsLocalOnly();
+    return this;
+  }
+
+  /// <summary>
   /// Adds an interface implementation to this route's command.
   /// Mirrors: RouteBuilder.Implements&lt;T&gt;()
   /// </summary>
@@ -167,6 +177,7 @@ public sealed class IrRouteBuilder<TParent> : IIrRouteBuilder
   IIrRouteBuilder IIrRouteBuilder.AsQuery() => AsQuery();
   IIrRouteBuilder IIrRouteBuilder.AsCommand() => AsCommand();
   IIrRouteBuilder IIrRouteBuilder.AsIdempotentCommand() => AsIdempotentCommand();
+  IIrRouteBuilder IIrRouteBuilder.LocalOnly() => LocalOnly();
   IIrRouteBuilder IIrRouteBuilder.AddImplementation(InterfaceImplementationDefinition implementation) => AddImplementation(implementation);
   IIrRouteBuilder IIrRouteBuilder.WithExample(string command, string? description) => WithExample(command, description);
   object IIrRouteBuilder.Done() => Done()!;

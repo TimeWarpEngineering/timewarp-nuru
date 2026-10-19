@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Nuru.Daemon</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.Daemon</RootNamespace>
+    <PackageId>TimeWarp.Nuru.Daemon</PackageId>
+    <Description>Serve a TimeWarp.Nuru app's routes from a long-lived local server and have its CLI forward calls to it: a built-in serve route on a per-user Unix domain socket, probe-or-start with idle shutdown, and a forwarding client the generator attaches.</Description>
+    <PackageTags>daemon;server;cli;warm-start;nuru;timewarp</PackageTags>
+
+    <!-- AOT Compatibility: routing, binding and the catalog are generated code; this package uses no reflection. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Owns no mediator handlers; do not emit AddGeneratedMediator() into this library
+         (same reason as timewarp-nuru). -->
+    <TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

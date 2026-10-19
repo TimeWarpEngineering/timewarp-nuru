@@ -62,6 +62,10 @@ internal static class RouteMatcherEmitter
   /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
   /// <param name="httpClientConfigurations">Named HTTP clients registered on the app.</param>
   /// <param name="sharedPrefixHelpRoutes">Routes whose help is emitted by the shared-prefix check.</param>
+  /// <param name="forwardRoutes">
+  /// True when the app called AddServeRoute(): a matched route that is not local-only is offered to the
+  /// route forwarder before its behaviors and handler.
+  /// </param>
   public static void Emit(
     StringBuilder sb,
     RouteDefinition route,
@@ -75,7 +79,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default,
     HashSet<RouteDefinition>? sharedPrefixHelpRoutes = null,
     bool useDirectInvoke = false,
-    bool hasGeneratedMediator = false)
+    bool hasGeneratedMediator = false,
+    bool forwardRoutes = false)
   {
     // Use empty array if optional parameters not provided
     if (behaviors.IsDefault)
@@ -92,12 +97,13 @@ internal static class RouteMatcherEmitter
     RouteHelpEmitter.EmitPerRouteHelpCheck(sb, route, routeIndex, sharedPrefixHelpRoutes);
 
     // Use unified matching for all routes
-    EmitMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator);
+    bool forward = forwardRoutes && !route.IsLocalOnly;
+    EmitMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, forward);
 
     // Emit alias matches
     foreach (string alias in route.Aliases)
     {
-      EmitAliasMatch(sb, route, routeIndex, alias, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator);
+      EmitAliasMatch(sb, route, routeIndex, alias, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, forward);
     }
 
     sb.AppendLine();
@@ -122,7 +128,8 @@ internal static class RouteMatcherEmitter
     string runtimeDISuffix,
     ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
     bool useDirectInvoke,
-    bool hasGeneratedMediator)
+    bool hasGeneratedMediator,
+    bool forward)
   {
     // Calculate minimum required positional args (positional match segments + required non-catch-all params)
     // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
@@ -241,6 +248,8 @@ internal static class RouteMatcherEmitter
 
     // Emit type conversions for typed parameters
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
+    if (forward)
+      EmitForward(sb, route, routeIndex);
     InterceptorEmitter.EmitMissingHandlerOnDispatch(sb, route, useRuntimeDI, hasGeneratedMediator, runtimeDISuffix, "      ");
 
     // Emit handler invocation (wrapped with behaviors if any)
@@ -266,6 +275,18 @@ internal static class RouteMatcherEmitter
   }
 
   /// <summary>
+  /// Offers the matched call to the route forwarder (AddServeRoute()). Argv parsing and type conversion
+  /// have run, so their errors stay local; behaviors and the handler run on the server when it takes
+  /// the call. The handler check comes after, so a CLI whose handler lives only in the server forwards.
+  /// </summary>
+  private static void EmitForward(StringBuilder sb, RouteDefinition route, int routeIndex)
+  {
+    string pattern = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
+    sb.AppendLine($"      if (!fromRepl && await global::TimeWarp.Nuru.NuruForwarding.TryForwardAsync(app, \"{pattern}\", args, null, __forwardMode, cancellationToken).ConfigureAwait(false) is int __forwardedExit_{routeIndex})");
+    sb.AppendLine($"        return __forwardedExit_{routeIndex};");
+  }
+
+  /// <summary>
   /// Emits matching logic for an alias route using the same handler as the primary route.
   /// </summary>
   private static void EmitAliasMatch(
@@ -281,7 +302,8 @@ internal static class RouteMatcherEmitter
     string runtimeDISuffix,
     ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
     bool useDirectInvoke,
-    bool hasGeneratedMediator)
+    bool hasGeneratedMediator,
+    bool forward)
   {
     sb.AppendLine($"    // Alias: {EscapeXmlComment(alias)}");
 
@@ -358,6 +380,8 @@ internal static class RouteMatcherEmitter
 
     EmitJsonMemberAfterMatch(sb, route, routeIndex);
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
+    if (forward)
+      EmitForward(sb, route, routeIndex);
     InterceptorEmitter.EmitMissingHandlerOnDispatch(sb, route, useRuntimeDI, hasGeneratedMediator, runtimeDISuffix, "      ");
 
     if (behaviors.Length > 0)

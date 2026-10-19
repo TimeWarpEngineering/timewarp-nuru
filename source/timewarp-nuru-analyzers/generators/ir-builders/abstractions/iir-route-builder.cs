@@ -50,6 +50,12 @@ public interface IIrRouteBuilder
   IIrRouteBuilder AsIdempotentCommand();
 
   /// <summary>
+  /// Keeps this route in the CLI process: a served app never forwards it.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrRouteBuilder LocalOnly();
+
+  /// <summary>
   /// Adds an interface implementation to this route's command.
   /// </summary>
   /// <param name="implementation">The interface implementation definition.</param>

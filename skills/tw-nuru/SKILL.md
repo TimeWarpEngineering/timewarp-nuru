@@ -533,6 +533,8 @@ To run a route from JSON in process (an MCP host, a batch), call `app.TryBind(pa
 
 To serve the routes as MCP tools, reference `TimeWarp.Nuru.McpHost` and call `.AddMcpRoute()` (stdio `myapp mcp`), or `builder.Services.AddMcpServer().WithNuruTools(app)` in an existing MCP host such as ASP.NET Core with `WithHttpTransport()`. MCP and the CLI share names and arguments exactly: the tool for `config set {key} {value}` is `config_set`, its input schema is the route's `parameters[]` and `options[]`, and `tools/call` uses the `--json-args` binder (unknown keys are a tool error). Queries are read-only and idempotent, idempotent commands are idempotent, and `destructiveHint` comes only from `[Destructive]` on an endpoint class. See [MCP hosting](../../documentation/user/features/mcp-hosting.md).
 
+To keep warm state (a loaded workspace) across CLI calls, reference `TimeWarp.Nuru.Daemon` and call `.AddServeRoute()`. `myapp serve` runs a server on a per-user Unix domain socket, and matched routes then forward to it with the same output and exit code. `--daemon` starts the server and forwards. `--no-daemon` runs the call locally. `serve --status` and `serve --stop` manage the server. Mark routes that must stay in the CLI process with `[LocalOnly]` or `.LocalOnly()`. The `mcp` route forwards to the same server. Load expensive state lazily, because generated DI builds singletons on every call. See [Served apps](../../documentation/user/features/served-apps.md).
+
 The agent loop, the exact-name rule, argv-overrides-JSON, and the app-level fat-field pattern are in [Agent invocation](../../documentation/user/features/agent-invocation.md).
 
 ## General Rules

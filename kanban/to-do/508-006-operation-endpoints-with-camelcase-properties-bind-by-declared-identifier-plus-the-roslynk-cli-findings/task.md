@@ -65,6 +65,23 @@ initializer. Keep the lowercase local names if they are only locals.
    Roslynk compiles its operation files as linked sources. Discovering `[Operation]` types in referenced
    assemblies (metadata) would let the CLI reference a contracts assembly instead.
 
+## Goal (implementer restatement)
+
+Make an `[Operation]` (or `[NuruRoute]`) request whose properties are declared in camelCase
+(`solutionId`, `checkOnly`) compile and bind. The generator must write the property identifier exactly as
+declared (escaped with `@` for keywords) in every initializer and member assignment it emits for the
+request: the argv path, the `--json-args` path and the `TryBind` path. The SYSLIB1031 collision from
+`[JsonSerializable(typeof(OneOf<X.Response, SharedProblemDetails>))]` on same-named nested `Response`
+types must go away. Findings 2-6 are each either fixed here or filed as their own task (ids in Results).
+The release is a later, separate step: the release itself is a human-gated `dev release` after merge, so
+this walk notes that and leaves the version for the release.
+
+Acceptance:
+- A generator test with a camelCase `required` property, a camelCase defaulted property (settable and
+  init-only) and a keyword-named property builds and binds over argv, `--json-args` and `TryBind`.
+- Two operations whose responses are both nested `Response` types build without SYSLIB1031.
+- `ganda repo audit` is clean; the CI test suite passes.
+
 ## Checklist
 
 - [ ] Declared property identifier carried on the binding and emitted verbatim (argv, `--json-args`, `TryBind`)

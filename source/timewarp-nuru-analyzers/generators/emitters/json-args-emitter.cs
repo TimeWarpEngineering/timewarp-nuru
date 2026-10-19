@@ -1682,6 +1682,11 @@ internal static class JsonArgsEmitter
       sb.AppendLine("      if (routeArgs is [\"--check-updates\"]) return true;");
     }
 
+    if (app.McpRoute is not null)
+    {
+      sb.AppendLine($"      if (routeArgs is [\"{BuiltInFlags.McpRouteForm}\"]) return true;");
+    }
+
     if (app.HasCompletion)
     {
       sb.AppendLine("      if (routeArgs.Length >= 2 && routeArgs[0] == \"__complete\" && int.TryParse(routeArgs[1], out _)) return true;");

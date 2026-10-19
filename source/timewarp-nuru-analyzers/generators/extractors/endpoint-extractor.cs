@@ -45,6 +45,7 @@ internal static partial class EndpointExtractor
   private const string NuruRouteAttributeName = "NuruRoute";
   private const string NuruRouteAliasAttributeName = "NuruRouteAlias";
   private const string NuruRouteExampleAttributeName = "NuruRouteExample";
+  private const string DestructiveAttributeFullName = "TimeWarp.Nuru.DestructiveAttribute";
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
   private const string GroupOptionAttributeName = "GroupOption";
@@ -216,7 +217,8 @@ internal static partial class EndpointExtractor
       computedSpecificity: specificity,
       aliases: aliases,
       implements: filterInterfaces,
-      examples: examples);
+      examples: examples,
+      isDestructive: HasDestructiveAttribute(classDeclaration, semanticModel, cancellationToken));
 
     if (missingHandler is not null)
       return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);
@@ -357,6 +359,27 @@ internal static partial class EndpointExtractor
     }
 
     return [];
+  }
+
+  /// <summary>
+  /// True when the command class carries <c>TimeWarp.Nuru.DestructiveAttribute</c>.
+  /// </summary>
+  private static bool HasDestructiveAttribute(
+    TypeDeclarationSyntax classDeclaration,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken)
+  {
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol is null)
+      return false;
+
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() == DestructiveAttributeFullName)
+        return true;
+    }
+
+    return false;
   }
 
   /// <summary>

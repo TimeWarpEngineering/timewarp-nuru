@@ -116,6 +116,12 @@ public sealed class EndpointCapability
   // Last property, so it is the only addition to each endpoint in existing documents.
   // Nullable so a document from a CLI that predates it still loads.
   public ReturnTypeCapability? ReturnType { get; init; }
+
+  /// <summary>
+  /// True when the endpoint class carries <see cref="DestructiveAttribute"/>. Null otherwise, and then
+  /// omitted from JSON, so documents for routes without the attribute are unchanged.
+  /// </summary>
+  public bool? Destructive { get; init; }
 }
 
 /// <summary>

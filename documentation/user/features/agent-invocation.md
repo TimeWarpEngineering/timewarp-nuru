@@ -56,6 +56,12 @@ An endpoint that returns `OneOf<TSuccess, SharedProblemDetails>` is described by
 
 `returnType` is nullable for the same reason as `invocation`: a document from a CLI built before it existed still deserializes, with `ReturnType` null.
 
+An endpoint class marked `[Destructive]` also has `"destructive": true` after `returnType`. Nothing infers it. Other endpoints have no `destructive` member, so their documents are unchanged.
+
+## MCP
+
+`TimeWarp.Nuru.McpHost` serves the same routes as MCP tools: `AddMcpRoute()` adds a stdio `mcp` route, and `WithNuruTools(app)` adds the tools to an existing MCP host. A tool's name is the route's literal words joined by `_`. Its input schema is built from this catalog, and `tools/call` uses the binder described below. A tool therefore takes exactly the arguments `--json-args` takes for that route and returns the text the CLI prints. See [MCP hosting](mcp-hosting.md).
+
 ## In-process catalog
 
 A host that runs in the same process as the app reads the catalog without spawning the CLI. `NuruApp.Capabilities` returns the `CapabilitiesResponse` that `--capabilities` prints, and `CapabilitiesResponse.FilterByGroup(group)` returns the document `--capabilities --group-filter {group}` prints. The source generator builds the catalog at compile time, so neither call uses reflection, and both work under AOT.
@@ -143,5 +149,6 @@ The handler reads stdin when `Patch` is `-`, the path after `@`, or the literal.
 
 ## Related documentation
 
+- **[MCP hosting](mcp-hosting.md)** - the same routes as MCP tools, with the same names and arguments
 - **[Built-in Routes](built-in-routes.md)** - `--capabilities` and `--json-args` beside the other built-ins
 - **[Auto-Help](auto-help.md)** - root help lists `--json-args`; per-route help says values may come from it

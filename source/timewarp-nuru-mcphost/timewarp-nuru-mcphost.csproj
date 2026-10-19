@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TimeWarp.Nuru.McpHost</AssemblyName>
+    <RootNamespace>TimeWarp.Nuru.McpHost</RootNamespace>
+    <PackageId>TimeWarp.Nuru.McpHost</PackageId>
+    <Description>Serve a TimeWarp.Nuru app's routes as MCP tools: one tool per route, schemas from the capabilities catalog, calls through the generated JSON binder. Adds a built-in mcp route (stdio) and an IMcpServerBuilder extension for HTTP hosts.</Description>
+    <PackageTags>mcp;model-context-protocol;ai;agents;cli;nuru;timewarp</PackageTags>
+
+    <!-- AOT Compatibility: the catalog and binder are generated code; this package uses no reflection. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Owns no mediator handlers; do not emit AddGeneratedMediator() into this library
+         (same reason as timewarp-nuru). -->
+    <TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../timewarp-nuru/timewarp-nuru.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

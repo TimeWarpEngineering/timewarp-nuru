@@ -240,13 +240,20 @@ internal static class CapabilitiesEmitter
       sb.AppendLine("        ],");
     }
 
-    // ReturnType (always emitted, last)
+    // ReturnType (always emitted)
     (string returnTypeName, string returnTypeKind) = DescribeReturnType(route.Handler);
     sb.AppendLine("        ReturnType = new global::TimeWarp.Nuru.ReturnTypeCapability");
     sb.AppendLine("        {");
     sb.AppendLine($"          Name = \"{EmitterStringUtils.EscapeForStringLiteral(returnTypeName)}\",");
     sb.AppendLine($"          Kind = global::TimeWarp.Nuru.ReturnTypeKind.{returnTypeKind}");
-    sb.AppendLine("        }");
+    sb.AppendLine(route.IsDestructive ? "        }," : "        }");
+
+    // Destructive (only for [Destructive] endpoints; otherwise null and omitted from JSON)
+    if (route.IsDestructive)
+    {
+      sb.AppendLine("        Destructive = true");
+    }
+
     sb.AppendLine("      });");
   }
 

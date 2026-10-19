@@ -47,6 +47,12 @@ How an agent calls a route with a large payload:
 - Exact `name` keys and argv-overrides-JSON
 - App-level fat field when the app does not emit `invocation`
 
+### [MCP hosting](mcp-hosting.md)
+Every route as an MCP tool, from package `TimeWarp.Nuru.McpHost`:
+- `AddMcpRoute()` adds a stdio `mcp` route; `WithNuruTools(app)` adds the tools to an existing MCP host, including streamable HTTP
+- Tool names, schemas, and binding are the same as `--capabilities` and `--json-args`
+- Annotations from the endpoint kind, and `[Destructive]` for `destructiveHint`
+
 ### [Neutral contracts](neutral-contracts.md)
 Endpoints derived from `TimeWarp.Contracts` `[Operation]` requests:
 - Option names, required members, defaults, enums, repeated scalars, and JSON members
@@ -109,6 +115,7 @@ Built-in widgets for formatted terminal output:
 | 📖 Auto-Help | No manual documentation | [Auto-Help](auto-help.md) |
 | 🔧 Built-in Routes | Version, updates, REPL out-of-box | [Built-in Routes](built-in-routes.md) |
 | 🤖 Agent invocation | `--capabilities` then `--json-args` | [Agent invocation](agent-invocation.md) |
+| 🔌 MCP hosting | Routes as MCP tools, same names and arguments | [MCP hosting](mcp-hosting.md) |
 | ⚙️ Configuration | IOptions<T> and DI integration | [Configuration](configuration.md) |
 | ⌨️ REPL Key Bindings | Shortcuts and `key-bindings` | [REPL Key Bindings](repl-key-bindings.md) |
 | ⌨️ Shell Completion | Tab completion in all shells | [Shell Completion](shell-completion.md) |

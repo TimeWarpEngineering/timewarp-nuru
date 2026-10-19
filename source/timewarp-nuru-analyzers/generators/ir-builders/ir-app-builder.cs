@@ -30,6 +30,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private ReplModel? ReplOptions;
   private bool HasConfiguration;
   private bool HasCheckUpdatesRoute;
+  private McpRouteModel? McpRoute;
   private LoggingConfiguration? LoggingConfiguration;
   private readonly List<RouteDefinition> Routes = [];
   private readonly List<BehaviorDefinition> Behaviors = [];
@@ -163,6 +164,17 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   public TSelf AddCheckUpdatesRoute()
   {
     HasCheckUpdatesRoute = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables the built-in mcp route (stdio MCP server over the app's routes).
+  /// Mirrors: NuruMcpAppBuilderExtensions.AddMcpRoute() in TimeWarp.Nuru.McpHost
+  /// </summary>
+  /// <param name="mcpRoute">Options from the AddMcpRoute() arguments.</param>
+  public TSelf AddMcpRoute(McpRouteModel mcpRoute)
+  {
+    McpRoute = mcpRoute;
     return (TSelf)this;
   }
 
@@ -416,7 +428,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       HttpClientConfigurations: [.. HttpClientConfigurations],
       FilterGroupTypeNames: [.. FilterGroupTypeNames],
       UseDirectInvoke: DirectInvokeEnabled,
-      BuildSite: BuildSite);
+      BuildSite: BuildSite,
+      McpRoute: McpRoute);
   }
 
   /// <summary>
@@ -444,6 +457,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.SetLoggingConfiguration(LoggingConfiguration config) => SetLoggingConfiguration(config);
   IIrAppBuilder IIrAppBuilder.AddHttpClientConfiguration(HttpClientConfiguration config) => AddHttpClientConfiguration(config);
   IIrAppBuilder IIrAppBuilder.AddCheckUpdatesRoute() => AddCheckUpdatesRoute();
+  IIrAppBuilder IIrAppBuilder.AddMcpRoute(McpRouteModel mcpRoute) => AddMcpRoute(mcpRoute);
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
   IIrAppBuilder IIrAppBuilder.AddExtensionMethodCall(ExtensionMethodCall extensionMethod) => AddExtensionMethodCall(extensionMethod);

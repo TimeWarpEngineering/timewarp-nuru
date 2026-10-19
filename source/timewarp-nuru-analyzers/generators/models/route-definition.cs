@@ -24,6 +24,7 @@ using System.Text;
 /// <param name="Examples">
 /// Usage examples declared via <c>[NuruRouteExample]</c> or <c>.WithExample()</c>, in declaration order.
 /// </param>
+/// <param name="IsDestructive">True when the endpoint class carries <c>[Destructive]</c>.</param>
 public sealed record RouteDefinition(
   string OriginalPattern,
   EquatableArray<SegmentDefinition> Segments,
@@ -37,7 +38,8 @@ public sealed record RouteDefinition(
   int Order,
   EquatableArray<InterfaceImplementationDefinition> Implements = default,
   EquatableArray<string> GroupTypeHierarchy = default,
-  EquatableArray<ExampleDefinition> Examples = default)
+  EquatableArray<ExampleDefinition> Examples = default,
+  bool IsDestructive = false)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
@@ -55,7 +57,8 @@ public sealed record RouteDefinition(
     int order = 0,
     EquatableArray<InterfaceImplementationDefinition>? implements = null,
     EquatableArray<string>? groupTypeHierarchy = null,
-    EquatableArray<ExampleDefinition>? examples = null)
+    EquatableArray<ExampleDefinition>? examples = null,
+    bool isDestructive = false)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,
@@ -70,7 +73,8 @@ public sealed record RouteDefinition(
       Order: order,
       Implements: implements ?? [],
       GroupTypeHierarchy: groupTypeHierarchy ?? [],
-      Examples: examples ?? []);
+      Examples: examples ?? [],
+      IsDestructive: isDestructive);
   }
 
   /// <summary>

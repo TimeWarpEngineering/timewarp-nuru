@@ -234,7 +234,7 @@ public class DaemonForwardingTests
   {
     using TestTerminal terminal = new();
     NuruApp app = CreateApp(terminal);
-    string socket = Path.Combine(Path.GetTempPath(), $"nuru-df-{Guid.NewGuid():N}"[..20] + ".sock");
+    string socket = Path.Combine(Directory.CreateTempSubdirectory("nuru-df-").FullName, "df.sock");
     string? previous = Environment.GetEnvironmentVariable(NuruDaemonOptions.SocketPathEnvironmentVariable);
     Environment.SetEnvironmentVariable(NuruDaemonOptions.SocketPathEnvironmentVariable, socket);
     try

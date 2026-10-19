@@ -19,10 +19,11 @@ internal static class NuruDaemonLauncher
   private const string SetsidPath = "/usr/bin/setsid";
 
   /// <summary>
-  /// Starts <c>&lt;app&gt; serve</c> detached on <paramref name="socketPath"/> and waits for it to answer.
+  /// Starts <c>&lt;app&gt; serve</c> detached on <paramref name="socketPath"/> and waits for a server of
+  /// build <paramref name="buildId"/> to answer.
   /// </summary>
-  /// <returns>Null when a server answers; otherwise the error message.</returns>
-  public static async Task<string?> StartAsync(NuruApp app, NuruDaemonOptions options, string socketPath, CancellationToken cancellationToken)
+  /// <returns>Null when a server of this build answers; otherwise the error message.</returns>
+  public static async Task<string?> StartAsync(NuruApp app, NuruDaemonOptions options, string socketPath, string buildId, CancellationToken cancellationToken)
   {
     string name = app.Capabilities.Name;
     string? processPath = Environment.ProcessPath;
@@ -51,24 +52,35 @@ internal static class NuruDaemonLauncher
       return $"Error: could not start the {name} server ({fileName}).";
 
     long deadline = Environment.TickCount64 + (long)options.StartTimeout.TotalMilliseconds;
+    NuruDaemonStatus? other = null;
     while (Environment.TickCount64 < deadline)
     {
-      if (await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false) is not null)
+      NuruDaemonStatus? status = await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
+      if (status?.BuildId == buildId)
         return null;
+      other = status ?? other;
 
       if (process.HasExited)
       {
         // Another client may have started one at the same time; this one then exits with "already running".
-        if (await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false) is not null)
+        status = await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
+        if (status?.BuildId == buildId)
           return null;
+        if (status is not null)
+          return DifferentBuild(name, socketPath, status);
         return $"Error: the {name} server exited with code {process.ExitCode.ToString(CultureInfo.InvariantCulture)} before it answered on {socketPath}.";
       }
 
       await Task.Delay(50, cancellationToken).ConfigureAwait(false);
     }
 
-    return $"Error: the {name} server did not answer on {socketPath} within {options.StartTimeout.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s.";
+    return other is not null
+      ? DifferentBuild(name, socketPath, other)
+      : $"Error: the {name} server did not answer on {socketPath} within {options.StartTimeout.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s.";
   }
+
+  private static string DifferentBuild(string name, string socketPath, NuruDaemonStatus status) =>
+    $"Error: a {name} server from a different build (pid {status.ProcessId.ToString(CultureInfo.InvariantCulture)}) answers on {socketPath}; stop it with 'serve --stop'.";
 
 #pragma warning disable RS0030 // A detached daemon needs ProcessStartInfo; see Design.
   private static System.Diagnostics.Process? Start(string fileName, List<string> arguments, string socketPath)
@@ -83,7 +95,8 @@ internal static class NuruDaemonLauncher
     };
     foreach (string argument in arguments)
       startInfo.ArgumentList.Add(argument);
-    startInfo.Environment[NuruDaemonOptions.SocketPathEnvironmentVariable] = socketPath;
+    // The child listens exactly where this client probes, whatever its options or directory resolve to.
+    startInfo.Environment[NuruDaemonServer.LaunchSocketEnvironmentVariable] = socketPath;
     startInfo.Environment[NuruDaemonServer.DetachedEnvironmentVariable] = "1";
 
     System.Diagnostics.Process? process = System.Diagnostics.Process.Start(startInfo);

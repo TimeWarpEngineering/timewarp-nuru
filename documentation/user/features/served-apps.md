@@ -35,7 +35,7 @@ myapp serve --stop           # stop it
 
 | Argument | Default | Meaning |
 |----------|---------|---------|
-| `socketPath` | null | Unix domain socket path. Null uses `NURU_DAEMON_SOCKET`, then the per-user default |
+| `socketPath` | null | Unix domain socket path. Null uses `NURU_DAEMON_SOCKET`, then the per-user default. A relative path is a file under the per-user socket directory, not the current directory |
 | `idleTimeoutSeconds` | 600 | Seconds without a call before the server stops; 0 never stops |
 | `autoStart` | false | When true, a call with no server starts one and forwards, as `--daemon` does |
 
@@ -92,9 +92,10 @@ Each behavior runs once per call, in the process that runs the handler. A forwar
 ## Transport and discovery
 
 - **Transport**: a Unix domain socket (AF_UNIX). It works on Linux and macOS, and on Windows 10 version 1803 and later. No TCP port is opened. Each connection carries one request line and one response line of UTF-8 JSON, with protocol version 1.
-- **Location**: `$XDG_RUNTIME_DIR/nuru/<app>.sock` on Linux when that directory exists. Otherwise `<temp>/nuru-<user>/<app>.sock`, created with mode 0700. On Windows it is `%LOCALAPPDATA%\TimeWarp.Nuru\daemon\<app>.sock`. `<app>` is the catalog name, and a long name is replaced by a hash to fit the socket path limit. `socketPath` or `NURU_DAEMON_SOCKET` overrides the location, for example to keep test servers apart.
-- **One server per socket**: `serve` refuses to start when another server answers on the socket. A stale socket file with nothing listening on it is deleted.
-- **Build check**: the server reports its build: name, version, entry file and that file's write time. A client from a different build stops that server and does not use it, so a rebuilt CLI never runs old server code.
+- **Location**: `$XDG_RUNTIME_DIR/nuru/<app>.sock` on Linux when that directory exists. Otherwise `<temp>/nuru-<user>/<app>.sock`. On Windows it is `%LOCALAPPDATA%\TimeWarp.Nuru\daemon\<app>.sock`. `<app>` is the catalog name, and a long name is replaced by a hash to fit the socket path limit. `socketPath` or `NURU_DAEMON_SOCKET` overrides the location, for example to keep test servers apart. A relative override is resolved against the per-user socket directory, so every call and the server it starts use the same socket whatever their current directory. A server started by `--daemon` or `autoStart` listens on exactly the path its client resolved.
+- **Access**: on Unix the socket's directory must be owner-only. A missing directory is created with mode 0700. An existing directory that is a symlink, or that gives group or others any access, is refused by `serve` and by the client (a call runs locally; with `--daemon` it fails with the reason). The default directory is set back to 0700 when you own it. The socket file is set to mode 0600 after it is bound. So pick an owner-only directory for `socketPath`, not `/tmp` itself.
+- **One server per socket**: a server holds an exclusive lock on `<socket>.lock` from before it checks the socket until after it removes it. Only the lock holder deletes or binds the socket path, so a second `serve` never removes a running server's socket: it reports the running server, or fails when the lock holder does not answer within the start timeout. A socket file left by a server that crashed (the OS releases its lock) is deleted. The lock file stays.
+- **Build check**: the server reports its build: name, version, entry file and that file's write time, fixed when the server starts. A client from a different build stops that server and does not use it, so a rebuilt CLI never runs old server code. If that server still answers after the stop, the call runs locally, or fails with `--daemon` or `autoStart`. A started server is used only once it reports the client's build, and each forwarded call carries the build id, so the server refuses a call from another build.
 - **Start**: the client starts its own executable (or `dotnet <entry.dll>`) with `serve`, with the standard streams redirected. On Linux it runs under `setsid`, so a Ctrl+C in the caller's terminal does not reach the server. A started server writes nothing to the inherited streams.
 - **Lifetime**: the server stops after the idle timeout, which counts from the end of the last call and never expires while a call runs. It also stops on `serve --stop`, Ctrl+C, or SIGTERM, and then removes the socket file.
 - **Cancellation**: when a client goes away before the answer (Ctrl+C), the server cancels that call's `CancellationToken`.

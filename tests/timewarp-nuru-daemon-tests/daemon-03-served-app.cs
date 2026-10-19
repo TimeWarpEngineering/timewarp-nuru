@@ -27,7 +27,8 @@ public class DaemonServedAppTests
 
   public static async Task Should_forward_cli_and_mcp_calls_to_one_server()
   {
-    string socket = Path.Combine(Path.GetTempPath(), $"nuru-sa-{Guid.NewGuid():N}"[..20] + ".sock");
+    string socketDirectory = Directory.CreateTempSubdirectory("nuru-sa-sock-").FullName;
+    string socket = Path.Combine(socketDirectory, "sa.sock");
     string workDirectory = Directory.CreateTempSubdirectory("nuru-sa-").FullName;
 
     // Builds the sample once; later calls use --no-build.
@@ -97,6 +98,7 @@ public class DaemonServedAppTests
     {
       await RunAsync(socket, args: ["serve", "--stop"]);
       Directory.Delete(workDirectory, recursive: true);
+      Directory.Delete(socketDirectory, recursive: true);
     }
   }
 

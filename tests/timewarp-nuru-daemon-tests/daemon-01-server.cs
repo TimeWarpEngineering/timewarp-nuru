@@ -3,7 +3,8 @@
 
 // TimeWarp.Nuru.Daemon (task 508-005): the server over a real Unix domain socket, in this process.
 // Ping, argv runs, binder invokes, exit codes and stderr, cancellation on disconnect, stop, idle
-// shutdown, one server per socket, and the forwarder declining for the app it serves.
+// shutdown, one server per socket (lock), build checks, socket path resolution and directory safety, and
+// the forwarder declining for the app it serves.
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -11,6 +12,8 @@ return await RunAllTests();
 
 namespace TimeWarp.Nuru.Tests.Daemon.Server
 {
+using System.Net.Sockets;
+using System.Text;
 using System.Text.Json;
 using TimeWarp.Nuru.Daemon;
 
@@ -43,11 +46,43 @@ public class DaemonServerTests
     return app;
   }
 
+  // Same name, so the same build as CreateServedApp; writes through the given terminal.
+  private static NuruApp CreateTerminalApp(TestTerminal terminal)
+  {
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .WithName("dm-app")
+      .Map("dm-other").WithHandler(() => "other").AsQuery().Done()
+      .Build();
+    return app;
+  }
+
+  // Another name is another build id.
+  private static NuruApp CreateOtherBuildApp()
+  {
+    NuruApp app = NuruApp.CreateBuilder()
+      .WithName("dm-other-build")
+      .Map("dm-add {x:int} {y:int}").WithHandler((int x, int y) => x + y).AsQuery().Done()
+      .Build();
+    return app;
+  }
+
+  // CreateTempSubdirectory makes a 0700 directory, which the server requires for its socket.
   private static NuruDaemonOptions CreateOptions(TimeSpan? idleTimeout = null) => new()
   {
-    SocketPath = Path.Combine(Path.GetTempPath(), $"nuru-dm-{Guid.NewGuid():N}"[..20] + ".sock"),
+    SocketPath = Path.Combine(Directory.CreateTempSubdirectory("nuru-dm-").FullName, "dm.sock"),
     IdleTimeout = idleTimeout ?? TimeSpan.Zero
   };
+
+  private static async Task<string> SendRawAsync(string socketPath, string line)
+  {
+    using Socket socket = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+    await socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath));
+    await using NetworkStream stream = new(socket);
+    await stream.WriteAsync(Encoding.UTF8.GetBytes(line + "\n"));
+    using StreamReader reader = new(stream, Encoding.UTF8, leaveOpen: true);
+    return await reader.ReadLineAsync() ?? "";
+  }
 
   private static async Task<(Task<int> Server, CancellationTokenSource Stop)> StartAsync(NuruApp app, NuruDaemonOptions options)
   {
@@ -80,6 +115,8 @@ public class DaemonServerTests
       status.BuildId.ShouldBe(NuruDaemonPaths.GetBuildId(app));
       status.SocketPath.ShouldBe(Path.GetFullPath(options.SocketPath!));
       NuruDaemonServer.IsServing(app).ShouldBeTrue();
+      if (!OperatingSystem.IsWindows())
+        File.GetUnixFileMode(options.SocketPath!).ShouldBe(UnixFileMode.UserRead | UnixFileMode.UserWrite);
     }
     finally
     {
@@ -278,6 +315,132 @@ public class DaemonServerTests
     {
       await StopAsync(server, stop);
     }
+  }
+
+  public static async Task Should_not_touch_the_socket_while_another_server_holds_the_lock()
+  {
+    NuruApp app = CreateServedApp();
+    NuruDaemonOptions options = CreateOptions();
+    options.StartTimeout = TimeSpan.FromMilliseconds(300);
+    string socketPath = options.SocketPath!;
+    await File.WriteAllTextAsync(socketPath, "not a socket");
+
+    // A live server holds the lock but did not answer the ping: the socket must stay as it is.
+    using TestTerminal terminal = new();
+    NuruApp second = CreateTerminalApp(terminal);
+    using (new FileStream(socketPath + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+    {
+      (await NuruDaemonServer.RunAsync(second, options)).ShouldBe(1);
+      terminal.ErrorOutput.ShouldContain("holds");
+      (await File.ReadAllTextAsync(socketPath)).ShouldBe("not a socket");
+    }
+
+    // Lock released (the holder died): the stale file is replaced by this server's socket.
+    (Task<int> server, CancellationTokenSource stop) = await StartAsync(app, options);
+    try
+    {
+      (await new NuruDaemonClient(options).PingAsync(app)).ShouldNotBeNull();
+    }
+    finally
+    {
+      await StopAsync(server, stop);
+    }
+  }
+
+  public static async Task Should_refuse_a_call_that_names_another_build()
+  {
+    NuruApp app = CreateServedApp();
+    NuruDaemonOptions options = CreateOptions();
+    (Task<int> server, CancellationTokenSource stop) = await StartAsync(app, options);
+    try
+    {
+      string socketPath = options.SocketPath!;
+      string other = await SendRawAsync(socketPath, """{"v":1,"op":"run","args":["dm-add","1","2"],"cwd":"/","build":"another-build"}""");
+      other.ShouldContain("\"ok\":false");
+      other.ShouldContain("different build");
+
+      string build = JsonEncodedText.Encode(NuruDaemonPaths.GetBuildId(app)).ToString();
+      string same = await SendRawAsync(socketPath, $$"""{"v":1,"op":"run","args":["dm-add","1","2"],"cwd":"/","build":"{{build}}"}""");
+      same.ShouldContain("\"exitCode\":0");
+    }
+    finally
+    {
+      await StopAsync(server, stop);
+    }
+  }
+
+  public static async Task Should_stop_and_not_use_a_server_from_another_build()
+  {
+    NuruApp app = CreateServedApp();
+    NuruDaemonOptions options = CreateOptions();
+    (Task<int> server, CancellationTokenSource stop) = await StartAsync(app, options);
+    using (stop)
+    {
+      NuruApp otherBuild = CreateOtherBuildApp();
+      NuruForwardRequest request = NuruForwardRequest.ForArgs("dm-add {x:int} {y:int}", ["dm-add", "1", "2"], null, NuruForwardMode.Auto);
+      (await new NuruDaemonClient(options).ForwardAsync(otherBuild, request, CancellationToken.None)).ShouldBeNull();
+      (await server.WaitAsync(TimeSpan.FromSeconds(10))).ShouldBe(0);
+    }
+  }
+
+  public static async Task Should_resolve_a_relative_socket_path_under_the_socket_directory()
+  {
+    NuruApp app = CreateServedApp();
+    NuruDaemonOptions options = new() { SocketPath = "dm-relative.sock" };
+    string expected = Path.Combine(NuruDaemonPaths.GetDefaultSocketDirectory(), "dm-relative.sock");
+    options.ResolveSocketPath(app).ShouldBe(expected);
+
+    string previous = Environment.CurrentDirectory;
+    Environment.CurrentDirectory = Path.GetTempPath();
+    try
+    {
+      options.ResolveSocketPath(app).ShouldBe(expected);
+    }
+    finally
+    {
+      Environment.CurrentDirectory = previous;
+    }
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_require_an_owner_only_socket_directory()
+  {
+    if (OperatingSystem.IsWindows())
+      return; // The per-user profile directory is used there; nothing to check.
+
+    NuruApp app = CreateServedApp();
+    string root = Directory.CreateTempSubdirectory("nuru-dm-").FullName;
+
+    // A missing directory is created 0700.
+    NuruDaemonOptions fresh = new() { SocketPath = Path.Combine(root, "new", "dm.sock") };
+    NuruDaemonPaths.EnsureSocketDirectory(fresh.SocketPath);
+    File.GetUnixFileMode(Path.Combine(root, "new")).ShouldBe(UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+    // A directory others can use, or a symlink, is refused by the server and by the client.
+    string shared = Path.Combine(root, "shared");
+    Directory.CreateDirectory(shared);
+    File.SetUnixFileMode(shared, (UnixFileMode)0b111_111_111);
+    string link = Path.Combine(root, "link");
+    Directory.CreateSymbolicLink(link, Path.Combine(root, "new"));
+    foreach (string directory in new[] { shared, link })
+    {
+      NuruDaemonOptions options = new() { SocketPath = Path.Combine(directory, "dm.sock"), IdleTimeout = TimeSpan.Zero };
+      NuruDaemonPaths.CheckSocketDirectory(options.SocketPath).ShouldNotBeNull();
+
+      using TestTerminal terminal = new();
+      (await NuruDaemonServer.RunAsync(CreateTerminalApp(terminal), options)).ShouldBe(1);
+      terminal.ErrorOutput.ShouldContain("socket directory");
+      File.Exists(options.SocketPath).ShouldBeFalse();
+
+      NuruForwardRequest require = NuruForwardRequest.ForArgs("dm-add {x:int} {y:int}", ["dm-add", "1", "2"], null, NuruForwardMode.Require);
+      NuruForwardResult? refused = await new NuruDaemonClient(options).ForwardAsync(app, require, CancellationToken.None);
+      refused.ShouldNotBeNull();
+      refused.ExitCode.ShouldBe(1);
+      refused.ErrorOutput.ShouldContain("socket directory");
+    }
+
+    Directory.Delete(root, recursive: true);
   }
 
   public static async Task Should_default_to_a_per_user_socket_named_for_the_app()

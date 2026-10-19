@@ -6,7 +6,14 @@
 // Calls run one at a time in the process: generated route execution uses process-wide service state,
 // Environment.ExitCode and the current directory, and console capture swaps Console.Out/Error (same rule
 // as McpHost). ping and stop are answered outside that gate, so status works while a call runs. A call is
-// cancelled when its client disconnects. The idle timer counts from the last call to finish and never
+// cancelled when its client disconnects.
+//
+// One server per socket: a server holds an exclusive lock on <socket>.lock from before its stale-socket
+// check until after it deletes its socket. Only the lock holder deletes or binds the socket path, so a
+// second start (or a transient connect failure) can never unlink a live server's socket; a crashed
+// server's lock is released by the OS, and the next server deletes its socket file. The build id is
+// fixed when the server starts (a rebuild while it runs must not make it claim the new build), and a
+// run or invoke that names another build is refused. The idle timer counts from the last call to finish and never
 // fires while a call runs. The served app is marked so its own forwarder declines (no loop): generated
 // code in this process runs every route locally.
 #endregion
@@ -26,6 +33,12 @@ public static class NuruDaemonServer
   /// nothing to the inherited standard streams.
   /// </summary>
   public const string DetachedEnvironmentVariable = "NURU_DAEMON_DETACHED";
+
+  /// <summary>
+  /// The absolute socket path a client that starts the server resolved. It wins over the options, so the
+  /// server listens where the client probes.
+  /// </summary>
+  internal const string LaunchSocketEnvironmentVariable = "NURU_DAEMON_LAUNCH_SOCKET";
 
   private static readonly ConditionalWeakTable<NuruApp, object> ServingApps = [];
 
@@ -58,48 +71,95 @@ public static class NuruDaemonServer
   {
     ArgumentNullException.ThrowIfNull(app);
     NuruDaemonOptions daemonOptions = options?.Clone() ?? new NuruDaemonOptions();
-    string socketPath = daemonOptions.ResolveSocketPath(app);
+    string socketPath = TakeLaunchedSocketPath() ?? daemonOptions.ResolveSocketPath(app);
     bool detached = Environment.GetEnvironmentVariable(DetachedEnvironmentVariable) == "1";
+    if (detached)
+      Environment.SetEnvironmentVariable(DetachedEnvironmentVariable, null); // Not for the handlers' child processes.
     string name = app.Capabilities.Name;
 
-    if (await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false) is NuruDaemonStatus running)
+    try
     {
-      await app.Terminal.WriteErrorLineAsync($"Error: a {name} server is already running on {socketPath} (pid {running.ProcessId.ToString(CultureInfo.InvariantCulture)}).").ConfigureAwait(false);
+      NuruDaemonPaths.EnsureSocketDirectory(socketPath);
+    }
+    catch (Exception exception) when (exception is NuruDaemonException or IOException or UnauthorizedAccessException)
+    {
+      await app.Terminal.WriteErrorLineAsync(exception.Message.StartsWith("Error:", StringComparison.Ordinal) ? exception.Message : "Error: " + exception.Message).ConfigureAwait(false);
       return 1;
     }
 
-    NuruDaemonPaths.EnsureSocketDirectory(socketPath);
-    if (File.Exists(socketPath))
-      File.Delete(socketPath); // Left by a server that did not stop cleanly; nothing answers on it.
-
-    using Socket listener = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
-    listener.Bind(new UnixDomainSocketEndPoint(socketPath));
-    listener.Listen(16);
-
-    (TextWriter Out, TextWriter Error)? previous = detached ? ConsoleRedirect.Redirect(TextWriter.Null, TextWriter.Null) : null;
-    using CancellationTokenSource stopping = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-    using PosixSignalRegistration? interrupt = TryRegister(PosixSignal.SIGINT, stopping);
-    using PosixSignalRegistration? terminate = TryRegister(PosixSignal.SIGTERM, stopping);
-    ServingApps.AddOrUpdate(app, new object());
-    try
+    // The lock is held for the server's whole life, so the stale check, the delete, and the bind below
+    // are never interleaved with another server's start or shutdown (see Design).
+    (FileStream? serverLock, string? lockFailure) = await AcquireServerLockAsync(app, socketPath, daemonOptions.StartTimeout, cancellationToken).ConfigureAwait(false);
+    if (serverLock is null)
     {
-      if (!detached)
+      await app.Terminal.WriteErrorLineAsync(lockFailure).ConfigureAwait(false);
+      return 1;
+    }
+
+    using (serverLock)
+    {
+      // A server answers only while it holds the lock, unless it predates the lock.
+      if (await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false) is NuruDaemonStatus running)
       {
-        string idle = daemonOptions.IdleTimeout > TimeSpan.Zero
-          ? $"stops after {daemonOptions.IdleTimeout.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s idle"
-          : "no idle timeout";
-        await app.Terminal.WriteErrorLineAsync($"Serving {name} on {socketPath} ({idle}). Ctrl+C or '{string.Join(' ', daemonOptions.ServeArguments)} --stop' stops it.").ConfigureAwait(false);
+        await app.Terminal.WriteErrorLineAsync(AlreadyRunning(name, socketPath, running)).ConfigureAwait(false);
+        return 1;
       }
 
-      Session session = new(app, daemonOptions, socketPath, listener, stopping);
-      await session.RunAsync().ConfigureAwait(false);
-    }
-    finally
-    {
-      ServingApps.Remove(app);
-      TryDelete(socketPath);
-      if (previous is { } writers)
-        ConsoleRedirect.Restore(writers);
+      if (File.Exists(socketPath))
+        File.Delete(socketPath); // Left by a server that did not stop cleanly; it no longer holds the lock.
+
+      using Socket listener = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+      try
+      {
+        listener.Bind(new UnixDomainSocketEndPoint(socketPath));
+      }
+      catch (SocketException exception) when (exception.SocketErrorCode == SocketError.AddressAlreadyInUse)
+      {
+        NuruDaemonStatus? other = await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
+        await app.Terminal.WriteErrorLineAsync(other is not null
+          ? AlreadyRunning(name, socketPath, other)
+          : $"Error: another process took {socketPath} while this {name} server was starting.").ConfigureAwait(false);
+        return 1;
+      }
+
+      bool bound = false;
+      try
+      {
+        NuruDaemonPaths.RestrictSocketFile(socketPath);
+        listener.Listen(16);
+        bound = true;
+      }
+      finally
+      {
+        if (!bound)
+          TryDelete(socketPath);
+      }
+
+      (TextWriter Out, TextWriter Error)? previous = detached ? ConsoleRedirect.Redirect(TextWriter.Null, TextWriter.Null) : null;
+      using CancellationTokenSource stopping = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+      using PosixSignalRegistration? interrupt = TryRegister(PosixSignal.SIGINT, stopping);
+      using PosixSignalRegistration? terminate = TryRegister(PosixSignal.SIGTERM, stopping);
+      ServingApps.AddOrUpdate(app, new object());
+      try
+      {
+        if (!detached)
+        {
+          string idle = daemonOptions.IdleTimeout > TimeSpan.Zero
+            ? $"stops after {daemonOptions.IdleTimeout.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s idle"
+            : "no idle timeout";
+          await app.Terminal.WriteErrorLineAsync($"Serving {name} on {socketPath} ({idle}). Ctrl+C or '{string.Join(' ', daemonOptions.ServeArguments)} --stop' stops it.").ConfigureAwait(false);
+        }
+
+        Session session = new(app, daemonOptions, socketPath, NuruDaemonPaths.GetBuildId(app), listener, stopping);
+        await session.RunAsync().ConfigureAwait(false);
+      }
+      finally
+      {
+        ServingApps.Remove(app);
+        TryDelete(socketPath); // Still under the lock, so it is this server's socket.
+        if (previous is { } writers)
+          ConsoleRedirect.Restore(writers);
+      }
     }
 
     return 0;
@@ -118,6 +178,12 @@ public static class NuruDaemonServer
     NuruDaemonClient client = new(options);
     string socketPath = client.ResolveSocketPath(app);
     string name = app.Capabilities.Name;
+    if (NuruDaemonPaths.CheckSocketDirectory(socketPath) is { } unsafeDirectory)
+    {
+      await app.Terminal.WriteErrorLineAsync(unsafeDirectory).ConfigureAwait(false);
+      return 1;
+    }
+
     NuruDaemonStatus? status = await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
     if (status is null)
     {
@@ -147,6 +213,59 @@ public static class NuruDaemonServer
     await app.Terminal.WriteLineAsync(stopped ? $"{name} server stopped." : $"{name} server is not running.").ConfigureAwait(false);
     return 0;
   }
+
+  /// <summary>
+  /// Reads (and clears, so a handler's child processes do not inherit it) the absolute socket path a
+  /// starting client resolved for this server.
+  /// </summary>
+  private static string? TakeLaunchedSocketPath()
+  {
+    string? launched = Environment.GetEnvironmentVariable(LaunchSocketEnvironmentVariable);
+    if (launched is null)
+      return null;
+
+    Environment.SetEnvironmentVariable(LaunchSocketEnvironmentVariable, null);
+    return Path.IsPathFullyQualified(launched) ? launched : null;
+  }
+
+  /// <summary>
+  /// Takes the exclusive lock beside the socket. While another server holds it, gives up as soon as that
+  /// server answers, or after <paramref name="timeout"/> (it may be finishing a call before it exits).
+  /// </summary>
+  private static async Task<(FileStream? Lock, string? Failure)> AcquireServerLockAsync(
+    NuruApp app, string socketPath, TimeSpan timeout, CancellationToken cancellationToken)
+  {
+    string lockPath = socketPath + ".lock";
+    string name = app.Capabilities.Name;
+    long deadline = Environment.TickCount64 + (long)timeout.TotalMilliseconds;
+    while (true)
+    {
+      try
+      {
+        // FileShare.None is an exclusive advisory lock (flock) on Unix; the OS drops it when the process dies.
+        return (new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None), null);
+      }
+      catch (UnauthorizedAccessException exception)
+      {
+        return (null, $"Error: cannot open the {name} server lock {lockPath}: {exception.Message}");
+      }
+      catch (IOException)
+      {
+        // Another server holds it.
+      }
+
+      if (await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false) is NuruDaemonStatus running)
+        return (null, AlreadyRunning(name, socketPath, running));
+
+      if (Environment.TickCount64 >= deadline)
+        return (null, $"Error: another {name} server holds {lockPath} and does not answer on {socketPath}.");
+
+      await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+    }
+  }
+
+  private static string AlreadyRunning(string name, string socketPath, NuruDaemonStatus running) =>
+    $"Error: a {name} server is already running on {socketPath} (pid {running.ProcessId.ToString(CultureInfo.InvariantCulture)}).";
 
   private static PosixSignalRegistration? TryRegister(PosixSignal signal, CancellationTokenSource stopping)
   {
@@ -181,7 +300,7 @@ public static class NuruDaemonServer
   }
 
   /// <summary>One run of the accept loop and the idle timer.</summary>
-  private sealed class Session(NuruApp app, NuruDaemonOptions options, string socketPath, Socket listener, CancellationTokenSource stopping)
+  private sealed class Session(NuruApp app, NuruDaemonOptions options, string socketPath, string buildId, Socket listener, CancellationTokenSource stopping)
   {
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Task, byte> Handlers = new();
     private long LastActivity = Environment.TickCount64;
@@ -212,6 +331,7 @@ public static class NuruDaemonServer
       finally
       {
         await stopping.CancelAsync().ConfigureAwait(false);
+        listener.Close(); // New connections are refused at once, so a stop is visible while calls finish.
         await Task.WhenAll([idle, .. Handlers.Keys]).ConfigureAwait(false);
       }
     }
@@ -296,11 +416,15 @@ public static class NuruDaemonServer
         case NuruDaemonOperations.Ping:
           CapabilitiesResponse catalog = app.Capabilities;
           return NuruDaemonProtocol.EncodeStatus(new NuruDaemonStatus(
-            catalog.Name, catalog.Version, NuruDaemonPaths.GetBuildId(app), Environment.ProcessId, socketPath));
+            catalog.Name, catalog.Version, buildId, Environment.ProcessId, socketPath));
 
         case NuruDaemonOperations.Stop:
           await stopping.CancelAsync().ConfigureAwait(false);
           return NuruDaemonProtocol.EncodeOk();
+
+        case NuruDaemonOperations.Run or NuruDaemonOperations.Invoke when request.BuildId is not null && request.BuildId != buildId:
+          return NuruDaemonProtocol.EncodeError(
+            $"This {app.Capabilities.Name} server (pid {Environment.ProcessId.ToString(CultureInfo.InvariantCulture)}) is a different build of the app; stop it with 'serve --stop'.");
 
         case NuruDaemonOperations.Run when request.Args is not null:
         case NuruDaemonOperations.Invoke when request.Route is not null:

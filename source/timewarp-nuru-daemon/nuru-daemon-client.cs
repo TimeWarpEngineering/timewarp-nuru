@@ -4,7 +4,9 @@
 
 #region Design
 // Probe-or-start: a reachable server from the same build takes the call. A server from another build is
-// stopped (it would run old code). With no server, the call runs here unless --daemon or AutoStart asks
+// stopped (it would run old code); if it still answers after the stop, the call runs here in Auto mode
+// and fails with --daemon or AutoStart. A server this client starts is used only once a ping reports
+// this build, and the call itself carries the build id so the server refuses it otherwise. With no server, the call runs here unless --daemon or AutoStart asks
 // to start one. A connect failure before the request is sent falls back to local in Auto mode; once the
 // request is sent the call is never retried locally, because the handler may already have run.
 // --json-args values are inlined so the server never reads this process's stdin or resolves @path
@@ -23,6 +25,8 @@ namespace TimeWarp.Nuru.Daemon;
 public sealed class NuruDaemonClient : INuruRouteForwarder
 {
   private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
+
+  private static readonly TimeSpan PingTimeout = TimeSpan.FromSeconds(5);
 
   private readonly NuruDaemonOptions Options;
 
@@ -51,26 +55,39 @@ public sealed class NuruDaemonClient : INuruRouteForwarder
       return null;
 
     string socketPath = Options.ResolveSocketPath(app);
+    bool mayStart = request.Mode == NuruForwardMode.Require || Options.AutoStart;
+    if (NuruDaemonPaths.CheckSocketDirectory(socketPath) is { } unsafeDirectory)
+      return request.Mode == NuruForwardMode.Require ? new NuruForwardResult(1, "", unsafeDirectory + "\n") : null;
+
+    string buildId = NuruDaemonPaths.GetBuildId(app);
     NuruDaemonStatus? status = await PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
-    if (status is not null && status.BuildId != NuruDaemonPaths.GetBuildId(app))
+    if (status is not null && status.BuildId != buildId)
     {
+      // It would run old code. Stop it, and use the socket only if nothing from that build answers.
       await StopAsync(socketPath, cancellationToken).ConfigureAwait(false);
-      status = null;
+      status = await PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
+      if (status is not null && status.BuildId != buildId)
+      {
+        return mayStart
+          ? new NuruForwardResult(1, "", $"Error: a {app.Capabilities.Name} server from a different build (pid {status.ProcessId.ToString(CultureInfo.InvariantCulture)}) still answers on {socketPath} and did not stop.\n")
+          : null;
+      }
     }
 
     if (status is null)
     {
-      if (request.Mode != NuruForwardMode.Require && !Options.AutoStart)
+      if (!mayStart)
         return null;
 
-      string? failure = await NuruDaemonLauncher.StartAsync(app, Options, socketPath, cancellationToken).ConfigureAwait(false);
+      string? failure = await NuruDaemonLauncher.StartAsync(app, Options, socketPath, buildId, cancellationToken).ConfigureAwait(false);
       if (failure is not null)
         return request.Mode == NuruForwardMode.Require ? new NuruForwardResult(1, "", failure + "\n") : null;
     }
 
+    // The build id rides with the call too: the server refuses it if another build took the socket since.
     byte[] payload = request.Args is { } args
-      ? NuruDaemonProtocol.EncodeRunRequest(InlineJsonArguments(args, request.JsonArguments), Environment.CurrentDirectory)
-      : NuruDaemonProtocol.EncodeInvokeRequest(request.Route, request.JsonArguments ?? "{}", Environment.CurrentDirectory);
+      ? NuruDaemonProtocol.EncodeRunRequest(InlineJsonArguments(args, request.JsonArguments), Environment.CurrentDirectory, buildId)
+      : NuruDaemonProtocol.EncodeInvokeRequest(request.Route, request.JsonArguments ?? "{}", Environment.CurrentDirectory, buildId);
 
     Socket? socket = await TryConnectAsync(socketPath, cancellationToken).ConfigureAwait(false);
     if (socket is null)
@@ -174,10 +191,17 @@ public sealed class NuruDaemonClient : INuruRouteForwarder
     if (socket is null)
       return null;
 
+    // A server answers ping outside its call gate; one that does not answer soon is not usable.
+    using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+    timeout.CancelAfter(PingTimeout);
     try
     {
-      string line = await ExchangeAsync(socket, NuruDaemonProtocol.EncodeSimpleRequest(NuruDaemonOperations.Ping), cancellationToken).ConfigureAwait(false);
+      string line = await ExchangeAsync(socket, NuruDaemonProtocol.EncodeSimpleRequest(NuruDaemonOperations.Ping), timeout.Token).ConfigureAwait(false);
       return NuruDaemonProtocol.DecodeStatus(line);
+    }
+    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+    {
+      return null;
     }
     catch (Exception exception) when (exception is NuruDaemonException or IOException or SocketException or JsonException)
     {
@@ -224,7 +248,8 @@ public sealed class NuruDaemonClient : INuruRouteForwarder
 
   private static async Task<Socket?> TryConnectAsync(string socketPath, CancellationToken cancellationToken)
   {
-    if (!File.Exists(socketPath))
+    // A socket in a directory other users can write may be theirs, not this user's server.
+    if (!File.Exists(socketPath) || NuruDaemonPaths.CheckSocketDirectory(socketPath) is not null)
       return null;
 
     Socket socket = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);

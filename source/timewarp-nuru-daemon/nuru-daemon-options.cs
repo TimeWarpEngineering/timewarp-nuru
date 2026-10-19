@@ -23,7 +23,8 @@ public sealed class NuruDaemonOptions
 
   /// <summary>
   /// Unix domain socket path. Null uses <see cref="SocketPathEnvironmentVariable"/>, then the per-user
-  /// default from <see cref="NuruDaemonPaths.GetDefaultSocketPath"/>.
+  /// default from <see cref="NuruDaemonPaths.GetDefaultSocketPath"/>. A relative path is a path under
+  /// <see cref="NuruDaemonPaths.GetDefaultSocketDirectory"/>.
   /// </summary>
   public string? SocketPath { get; set; }
 
@@ -48,20 +49,27 @@ public sealed class NuruDaemonOptions
   /// The socket path for <paramref name="app"/>: <see cref="SocketPath"/>, then the environment
   /// override, then the per-user default for the app's name.
   /// </summary>
+  /// <remarks>
+  /// A relative path is resolved against <see cref="NuruDaemonPaths.GetDefaultSocketDirectory"/>, never
+  /// the current directory, so every call and the server it starts agree on one socket.
+  /// </remarks>
   /// <param name="app">The served app.</param>
   /// <returns>An absolute socket path.</returns>
   public string ResolveSocketPath(NuruApp app)
   {
     ArgumentNullException.ThrowIfNull(app);
     if (!string.IsNullOrEmpty(SocketPath))
-      return Path.GetFullPath(SocketPath);
+      return Resolve(SocketPath);
 
     string? fromEnvironment = Environment.GetEnvironmentVariable(SocketPathEnvironmentVariable);
     if (!string.IsNullOrEmpty(fromEnvironment))
-      return Path.GetFullPath(fromEnvironment);
+      return Resolve(fromEnvironment);
 
     return NuruDaemonPaths.GetDefaultSocketPath(app.Capabilities.Name);
   }
+
+  private static string Resolve(string path) =>
+    Path.IsPathFullyQualified(path) ? Path.GetFullPath(path) : Path.GetFullPath(path, NuruDaemonPaths.GetDefaultSocketDirectory());
 
   /// <summary>Copies the options so a host can keep its own instance.</summary>
   internal NuruDaemonOptions Clone() => new()

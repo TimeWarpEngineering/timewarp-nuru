@@ -5,7 +5,9 @@
 #region Design
 // Per-user, never a TCP port: $XDG_RUNTIME_DIR/nuru on Linux (tmpfs, mode 0700, owned by the user),
 // otherwise a 0700 directory under the temp path named for the user; %LOCALAPPDATA% on Windows (AF_UNIX
-// is supported on Windows 10 1803+). Socket paths are limited to about 104 bytes (macOS sun_path), so a
+// is supported on Windows 10 1803+). The temp name is predictable, so an existing socket directory is
+// trusted only when it is not a symlink and grants nothing to group or others (another user's 0700
+// directory cannot be entered at all), and the socket file is set to 0600 after bind. Socket paths are limited to about 104 bytes (macOS sun_path), so a
 // long name falls back to a hash. The build id lets a client refuse a server started from another build
 // of the same app: same name and version, same entry file, same write time.
 #endregion
@@ -19,6 +21,8 @@ public static class NuruDaemonPaths
 {
   // macOS sun_path is 104 bytes including the terminator; Linux allows 108.
   private const int MaxSocketPathLength = 100;
+
+  private const UnixFileMode OwnerOnly = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
 
   /// <summary>
   /// The per-user default socket path for an app named <paramref name="appName"/>.
@@ -57,20 +61,95 @@ public static class NuruDaemonPaths
   }
 
   /// <summary>
-  /// Creates the socket's directory if needed, readable and writable only by the current user on Unix.
+  /// Creates the socket's directory if needed, and on Unix makes sure only the current user can use it.
   /// </summary>
+  /// <remarks>
+  /// A missing directory is created with mode 0700. An existing directory must not be a symlink and must
+  /// give no access to group or others. The default directory (<see cref="GetDefaultSocketDirectory"/>)
+  /// is tightened to 0700 when the current user owns it; a directory someone else made fails, because only
+  /// its owner can change its mode.
+  /// </remarks>
   /// <param name="socketPath">The socket path.</param>
+  /// <exception cref="NuruDaemonException">The directory is not owner-only.</exception>
   public static void EnsureSocketDirectory(string socketPath)
   {
     ArgumentNullException.ThrowIfNull(socketPath);
     string? directory = Path.GetDirectoryName(socketPath);
-    if (string.IsNullOrEmpty(directory) || Directory.Exists(directory))
+    if (string.IsNullOrEmpty(directory))
       return;
 
     if (OperatingSystem.IsWindows())
+    {
       Directory.CreateDirectory(directory);
-    else
-      Directory.CreateDirectory(directory, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+      return;
+    }
+
+    if (!Directory.Exists(directory) && !File.Exists(directory))
+      Directory.CreateDirectory(directory, OwnerOnly);
+
+    if (CheckSocketDirectory(socketPath) is not { } problem)
+      return;
+
+    bool isDefault = string.Equals(
+      Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory)),
+      Path.TrimEndingDirectorySeparator(GetDefaultSocketDirectory()),
+      StringComparison.Ordinal);
+    if (!isDefault || new DirectoryInfo(directory).LinkTarget is not null)
+      throw new NuruDaemonException(problem);
+
+    try
+    {
+      File.SetUnixFileMode(directory, OwnerOnly);
+    }
+    catch (UnauthorizedAccessException exception)
+    {
+      throw new NuruDaemonException(problem, exception);
+    }
+
+    if (CheckSocketDirectory(socketPath) is { } stillOpen)
+      throw new NuruDaemonException(stillOpen);
+  }
+
+  /// <summary>
+  /// Checks that the socket's directory is safe to use: on Unix it is a real directory (not a symlink)
+  /// that gives no access to group or others.
+  /// </summary>
+  /// <remarks>
+  /// Mode alone proves ownership here: a directory with no group or other bits that this process can
+  /// enter belongs to the current user (or the process is root). Windows uses the per-user profile, so
+  /// nothing is checked there.
+  /// </remarks>
+  /// <param name="socketPath">The socket path.</param>
+  /// <returns>Null when the directory is safe or does not exist yet; otherwise what is wrong with it.</returns>
+  public static string? CheckSocketDirectory(string socketPath)
+  {
+    ArgumentNullException.ThrowIfNull(socketPath);
+    string? directory = Path.GetDirectoryName(socketPath);
+    if (OperatingSystem.IsWindows() || string.IsNullOrEmpty(directory))
+      return null;
+
+    DirectoryInfo info = new(directory);
+    if (info.LinkTarget is not null)
+      return $"Error: the socket directory {directory} is a symlink; use a real directory only you can access.";
+
+    if (!info.Exists)
+      return File.Exists(directory) ? $"Error: the socket directory {directory} is not a directory." : null;
+
+    UnixFileMode open = info.UnixFileMode & (UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute
+      | UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+    return open == UnixFileMode.None
+      ? null
+      : $"Error: the socket directory {directory} can be used by other users; it must be mode 0700 and owned by you.";
+  }
+
+  /// <summary>
+  /// Makes a bound socket file readable and writable by the current user only (Unix).
+  /// </summary>
+  /// <param name="socketPath">The socket path.</param>
+  internal static void RestrictSocketFile(string socketPath)
+  {
+    if (!OperatingSystem.IsWindows())
+      File.SetUnixFileMode(socketPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
   }
 
   /// <summary>

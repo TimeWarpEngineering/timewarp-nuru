@@ -9,8 +9,10 @@
 // client going away (Ctrl+C) and cancels the call.
 //
 // Requests: {"v":1,"op":"ping"} | {"v":1,"op":"stop"}
-//   | {"v":1,"op":"run","args":[...],"cwd":"..."}                      argv, matched by generated code
-//   | {"v":1,"op":"invoke","route":"...","arguments":{...},"cwd":"..."} JSON object for the public binder
+//   | {"v":1,"op":"run","args":[...],"cwd":"...","build":"..."}                      argv, matched by generated code
+//   | {"v":1,"op":"invoke","route":"...","arguments":{...},"cwd":"...","build":"..."} JSON object for the public binder
+// "build" is optional: when present the server refuses the call unless it is the server's own build id,
+// so a call never runs on a server from another build even if one took the socket after the ping.
 // Responses: {"ok":true,"exitCode":n,"stdout":"...","stderr":"...","rendered":"..."}
 //   | {"ok":true,"name":"...","version":"...","build":"...","pid":n,"socket":"..."} (ping)
 //   | {"ok":false,"error":"..."}
@@ -38,7 +40,7 @@ internal static class NuruDaemonOperations
 }
 
 /// <summary>A decoded request line.</summary>
-internal sealed record NuruDaemonRequest(string Operation, string? Route, string[]? Args, string? Arguments, string? WorkingDirectory);
+internal sealed record NuruDaemonRequest(string Operation, string? Route, string[]? Args, string? Arguments, string? WorkingDirectory, string? BuildId);
 
 /// <summary>Encodes and decodes protocol lines.</summary>
 internal static class NuruDaemonProtocol
@@ -51,7 +53,7 @@ internal static class NuruDaemonProtocol
     writer.WriteString("op", operation);
   });
 
-  public static byte[] EncodeRunRequest(IReadOnlyList<string> args, string workingDirectory) => Encode(writer =>
+  public static byte[] EncodeRunRequest(IReadOnlyList<string> args, string workingDirectory, string? buildId = null) => Encode(writer =>
   {
     writer.WriteNumber("v", Version);
     writer.WriteString("op", NuruDaemonOperations.Run);
@@ -60,9 +62,11 @@ internal static class NuruDaemonProtocol
       writer.WriteStringValue(arg);
     writer.WriteEndArray();
     writer.WriteString("cwd", workingDirectory);
+    if (buildId is not null)
+      writer.WriteString("build", buildId);
   });
 
-  public static byte[] EncodeInvokeRequest(string route, string argumentsJson, string workingDirectory) => Encode(writer =>
+  public static byte[] EncodeInvokeRequest(string route, string argumentsJson, string workingDirectory, string? buildId = null) => Encode(writer =>
   {
     writer.WriteNumber("v", Version);
     writer.WriteString("op", NuruDaemonOperations.Invoke);
@@ -71,6 +75,8 @@ internal static class NuruDaemonProtocol
     using (JsonDocument arguments = JsonDocument.Parse(argumentsJson))
       arguments.RootElement.WriteTo(writer);
     writer.WriteString("cwd", workingDirectory);
+    if (buildId is not null)
+      writer.WriteString("build", buildId);
   });
 
   public static byte[] EncodeResult(NuruForwardResult result) => Encode(writer =>
@@ -135,7 +141,7 @@ internal static class NuruDaemonProtocol
         ? argumentsElement.GetRawText()
         : null;
 
-      return new NuruDaemonRequest(operation, GetString(root, "route"), args, arguments, GetString(root, "cwd"));
+      return new NuruDaemonRequest(operation, GetString(root, "route"), args, arguments, GetString(root, "cwd"), GetString(root, "build"));
     }
     catch (JsonException exception)
     {

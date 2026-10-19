@@ -38,6 +38,11 @@ Acceptance criteria:
 - [x] Opt-out and behavior placement
 - [x] Tests and docs
 
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4
+- Fix pass (implement-fix-2): M1–M4 fixed; dispositions in `review/round-1/merged.md`. Round 2 is next.
+
 ## Notes
 
 - Parent: 508. Reference design: SimCubeLtd/roslynk-cli (System.CommandLine client plus local daemon). Roslynk already has `DaemonLauncher` and an idle-eviction service in its MCP host that do this by hand.
@@ -49,6 +54,8 @@ Acceptance criteria:
 - Implemented: implementer-claude (claude-opus-5-5) under `ganda task work`, 2026-10-19. Promoted from 506's GREEN verdict. Package, generator hooks, McpHost forwarding, sample, tests, docs. Full CI and `ganda repo audit` green. The task folder stays in `backlog/` on this branch because the host-owned walk logs live beside the kitchen; the host's `kanban done` moves it.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-19T02:04:31Z
 - Review: grok session 01a151e7-4070-7f01-a1c9-8e918b0fd135 (2026-10-19). Effort 3, roster general. Round 1 leaves M1–M4 open.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-19T02:17:46Z
+- Fix pass (implement-fix-2): implementer-claude (claude-opus-5-5), 2026-10-19. Fixed round-1 M1–M4: a server lock around the stale check and bind, build-id checks after stop, after start, and per call, relative socket paths resolved under the per-user socket directory, and an owner-only socket directory with a 0600 socket file. Full CI and `ganda repo audit` are green. The audit needed no fixes.
 
 ## Results
 
@@ -59,9 +66,10 @@ Promoted, not archived. Task 506 measured about 6 s cold (solution load plus fir
 ### Transport and discovery design note
 
 - **Transport**: a Unix domain socket (AF_UNIX) on Linux, macOS, and Windows 10 1803+. One transport, no TCP port. Loopback HTTP was not needed. Each connection carries one request line and one response line of UTF-8 JSON, protocol version 1. The requests are `ping`, `stop`, `run` (argv plus the caller's cwd), and `invoke` (route plus a JSON object for `TryBind`, used by the MCP host). It is written with `Utf8JsonWriter` / `JsonDocument`, so there is no reflection and the package is `IsAotCompatible`.
-- **Discovery**: the socket is `$XDG_RUNTIME_DIR/nuru/<app>.sock`, else `<temp>/nuru-<user>/<app>.sock` (directory created 0700), else `%LOCALAPPDATA%\TimeWarp.Nuru\daemon\<app>.sock` on Windows. `<app>` is the catalog name, hashed when the path would pass 100 bytes. Override order: `AddServeRoute(socketPath)`, then `NURU_DAEMON_SOCKET`, then the default.
-- **Identity**: `ping` returns name, version, pid, socket, and a build id (name, version, entry file, entry write time). A client from another build stops that server instead of using it.
-- **Start and lifetime**: probe-or-start. No server runs the call locally, unless `--daemon` or `autoStart` is set. In that case the client starts `<exe> serve` (or `dotnet <entry.dll> serve`) with stdio redirected, under `setsid` on Linux, and waits up to `StartTimeout` (30 s). The server stops after the idle timeout (default 600 s, counted from the end of the last call), on `serve --stop`, or on SIGINT or SIGTERM, and then deletes the socket. `serve` refuses to start when another server answers. A stale socket file is deleted.
+- **Discovery**: the socket is `$XDG_RUNTIME_DIR/nuru/<app>.sock`, else `<temp>/nuru-<user>/<app>.sock`, else `%LOCALAPPDATA%\TimeWarp.Nuru\daemon\<app>.sock` on Windows. `<app>` is the catalog name, hashed when the path would pass 100 bytes. Override order: `AddServeRoute(socketPath)`, then `NURU_DAEMON_SOCKET`, then the default. A relative override resolves under the per-user socket directory, never the current directory. A server started by the client listens on the client's absolute path (`NURU_DAEMON_LAUNCH_SOCKET`, cleared once read).
+- **Access** (Unix): the socket directory must be owner-only. A missing one is created 0700. A symlink, or a directory with any group or other bits, is refused by the server and by the client. The default directory is tightened to 0700 when the user owns it. With no group or other bits, the mode alone proves ownership: another user's 0700 directory cannot be entered. The socket file is chmod 0600 after bind.
+- **Identity**: `ping` returns name, version, pid, socket, and a build id (name, version, entry file, entry write time), fixed when the server starts. A client from another build stops that server and pings again. If the old build still answers, Auto runs locally and `--daemon`/`autoStart` return an error. A started server is used only once it reports the client's build. Each `run`/`invoke` carries `build`, and the server refuses a call from another build. Ping times out after 5 s.
+- **Start and lifetime**: probe-or-start. No server runs the call locally, unless `--daemon` or `autoStart` is set. In that case the client starts `<exe> serve` (or `dotnet <entry.dll> serve`) with stdio redirected, under `setsid` on Linux, and waits up to `StartTimeout` (30 s). The server stops after the idle timeout (default 600 s, counted from the end of the last call), on `serve --stop`, or on SIGINT or SIGTERM, and then deletes the socket. One server per socket: `serve` holds an exclusive lock on `<socket>.lock` (flock on Unix) from before the stale check until after it deletes its socket. Only the holder deletes or binds the path. When the lock is busy, it reports the running server if one answers, else fails after `StartTimeout` without touching the socket. A socket left by a crashed server (lock released by the OS) is deleted. The listener closes as soon as the server stops.
 - **Cancellation**: the server cancels a call's token when its client disconnects before the response.
 
 ### Package `TimeWarp.Nuru.Daemon` (`source/timewarp-nuru-daemon/`)
@@ -105,13 +113,13 @@ The CLI runs argv matching, type conversion, parse errors, built-ins, local-only
 
 ### Tests
 
-- `tests/timewarp-nuru-daemon-tests/daemon-01-server.cs` (10): in-process server on a real socket. Covers ping/build id, argv output, stderr and exit code, unknown command, cwd, binder invoke with a bind error equal to `TryBind`, cancel on disconnect (the gate is released), stop plus socket removal, idle shutdown, refusing a second server, the forwarder declining (no server, `Never`, served app), forwarding from another instance, inlined `--json-args`, and default socket paths.
+- `tests/timewarp-nuru-daemon-tests/daemon-01-server.cs` (15): in-process server on a real socket. Covers ping/build id, argv output, stderr and exit code, unknown command, cwd, binder invoke with a bind error equal to `TryBind`, cancel on disconnect (the gate is released), stop plus socket removal, idle shutdown, refusing a second server, the forwarder declining (no server, `Never`, served app), forwarding from another instance, inlined `--json-args`, and default socket paths. Round-1 fixes add: the socket untouched while another holder has the lock, a call naming another build refused, a server from another build stopped and not used, relative socket paths, an owner-only directory (created 0700, shared directory and symlink refused by the server and client), and a 0600 socket file. Tests now put each socket in a private `CreateTempSubdirectory` directory.
 - `daemon-02-forwarding.cs` (14): generated hooks with a recording forwarder. Covers the client attached, forward plus printing plus exit code, endpoint routes, decline means local, `--daemon` gives Require with the flag removed, `--no-daemon`, local-only (fluent and attribute) and built-ins never forwarded, parse errors local, `--json-args` resolved object, `RouteForwarder = null`, catalog `localOnly`, help rows, `serve --status/--stop` with no server, and `PeelFlags`.
 - `daemon-03-served-app.cs` (1, about 30 s): the sample as real processes. Covers `--daemon` start, same server pid on later calls, local-only and `--no-daemon` local, caller cwd, stderr and exit 3, `--json-args -` from stdin, an MCP client on `served-app mcp` getting the server pid (local-only stays local, bind error is `isError`), `serve --stop`, and `--status`.
 - `mcphost-01-tools.cs` gains `Should_send_tool_calls_to_the_route_forwarder` (15 total).
 - CI wiring: the `tests/ci-tests` glob and ProjectReference, `timewarp-nuru.slnx`, and `dev build` (`build-command.cs`).
-- Full CI after `ganda runfile cache --clear`: multi-mode 1991 total, 1985 passed, 6 skipped, 0 failed. Standalone 0 failed.
-- `ganda repo audit`: 30 passed, 0 failed, nothing to fix.
+- Full CI after `ganda runfile cache --clear` (fix pass): multi-mode 1996 total, 1990 passed, 6 skipped, 0 failed. Standalone 0 failed.
+- `ganda repo audit`: passes all checks, nothing to fix.
 
 ### Docs
 
@@ -123,6 +131,8 @@ The CLI runs argv matching, type conversion, parse errors, built-ins, local-only
 
 - **Source-generated DI builds singletons eagerly** in `EnsureServicesInitialized`, on every CLI call, including forwarded ones and `--version`. So a served app must load warm state lazily (the sample uses `Lazy<T>`, and the docs say so). Making singletons lazy in the generator would let the CLI skip that cost without app changes. It is worth its own task.
 - The server runs calls one at a time (process-wide service state). Concurrent calls queue.
+- Since the round-1 fixes, a `socketPath` directly in a shared directory such as `/tmp` is refused, because the directory must be owner-only. Use a private subdirectory. The docs say so.
+- Generator quirk seen while writing fix-pass tests: two `NuruApp.CreateBuilder()…Build()` chains written inline in test methods, one in a `foreach` and one used only with `ForwardAsync`, got no capabilities catalog ("No generated capabilities catalog is attached"). The same chains returned from helper methods work. Not investigated here. The tests use helpers.
 - A forwarded call uses the server's environment variables. Output has no color (the server has no TTY).
 - Windows AF_UNIX is supported by .NET but was not exercised here (Linux only). The `setsid` wrapper is Linux-only. On macOS, a Ctrl+C during the very first `--daemon` start can reach the new server.
 - The next release publishes a new package ID, `TimeWarp.Nuru.Daemon`. As with McpHost, confirm the NuGet trusted-publishing policy covers new IDs.
@@ -146,12 +156,19 @@ dotnet run $S -- local-pid
 dotnet run $S -- fail 3; echo "exit=$?"
 dotnet run $S -- serve --status
 dotnet run $S -- serve --stop
+# M3: relative socket path, calls from two directories share one server
+export NURU_DAEMON_SOCKET=smoke-rel.sock
+A=$PWD/$S
+(cd /tmp && dotnet run $A -- --daemon pid); (cd / && dotnet run $A -- pid)
+dotnet run $S -- serve --status
+dotnet run $S -- serve --stop
+unset NURU_DAEMON_SOCKET
 dotnet run tests/ci-tests/run-ci-tests.cs
 ```
 
 Expect:
 
-- `daemon-01-server.cs`: Total 10, Passed 10.
+- `daemon-01-server.cs`: Total 15, Passed 15.
 - `daemon-02-forwarding.cs`: Total 14, Passed 14.
 - `daemon-03-served-app.cs`: Total 1, Passed 1 (about 30 s).
 - `mcphost-01-tools.cs`: Total 15, Passed 15.
@@ -161,7 +178,8 @@ Expect:
   - `fail 3` prints `failing with 3` on stderr and `exit=3`.
   - `serve --status` prints `served-app server is running: pid <n>, ...`.
   - `serve --stop` prints `served-app server stopped.`.
-- CI runner: multi-mode 1991 total, 1985 passed, 6 skipped, 0 failed. Standalone 0 failed.
+- Relative socket: from `/tmp` and then `/`, `--daemon pid` and `pid` print the same pid. `serve --status` shows the socket under `$XDG_RUNTIME_DIR/nuru/` (or `<temp>/nuru-<user>/`).
+- CI runner: multi-mode 1996 total, 1990 passed, 6 skipped, 0 failed. Standalone 0 failed.
 
 ### Review round 1
 
@@ -169,11 +187,11 @@ Effort 3, roster general (one reviewer). Paths: `review/review-framework.md`, `r
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 4 | 0 | 0 |
+| bug | 0 | 4 | 0 |
 | suggestion | 0 | 0 | 0 |
 | nit | 0 | 0 | 0 |
 
-Open findings: M1 live socket unlink during start, M2 build id not checked after start, M3 relative `socketPath` resolves in each process's current directory, M4 temp socket directory is trusted when it already exists. Disposition is not written; the exit bar is 0 open findings.
+Findings: M1 live socket unlink during start, M2 build id not checked after start, M3 relative `socketPath` resolves in each process's current directory, M4 temp socket directory is trusted when it already exists. The fix pass (implement-fix-2) fixed all four. The dispositions are in `merged.md` (0 open, 4 fixed). Round 2 reviews the fixes.
 
 ## Learnings
 

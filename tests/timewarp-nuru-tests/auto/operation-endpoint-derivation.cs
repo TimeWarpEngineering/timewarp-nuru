@@ -65,6 +65,10 @@ public class OperationEndpointDerivationTests
       .Map<T508NullableEnumQuery>()
       .Map<T508PositionalDefaultQuery>()
       .Map<T508PositionalInitQuery>()
+      .Map<T514DottedGroupQuery>()
+      .Map<T514SpacedGroupQuery>()
+      .Map<T514ContractWinsQuery>()
+      .Map<T514BlankGroupQuery>()
       .Build();
   }
 
@@ -357,6 +361,76 @@ public class OperationEndpointDerivationTests
     terminal.OutputContains("t508calc add").ShouldBeTrue();
     terminal.OutputContains("t508quote").ShouldBeFalse();
     terminal.OutputContains("\"group\": \"t508calc\"").ShouldBeTrue();
+  }
+
+  // 508-014: [Operation(Group)] is the groupPath and never a route or command prefix.
+  public static async Task Should_route_an_operation_group_by_the_operation_name_only()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    (await App.RunAsync(["t514dotted"])).ShouldBe(0);
+    terminal.OutputContains("dotted").ShouldBeTrue();
+    (await App.RunAsync(["t514spaced"])).ShouldBe(0);
+    terminal.OutputContains("spaced").ShouldBeTrue();
+
+    (await App.RunAsync(["t514ops", "t514dotted"])).ShouldBe(1);
+    (await App.RunAsync(["t514ops", "symbols", "t514dotted"])).ShouldBe(1);
+  }
+
+  public static async Task Should_let_the_operation_group_win_over_route_group_and_cli_binding()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    (await App.RunAsync(["t514wins"])).ShouldBe(0);
+    terminal.OutputContains("contract").ShouldBeTrue();
+    (await App.RunAsync(["t514routegroup", "t514wins"])).ShouldBe(1);
+    (await App.RunAsync(["t514cligroup", "t514wins"])).ShouldBe(1);
+  }
+
+  public static async Task Should_keep_cli_binding_group_when_the_operation_group_is_blank()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    (await App.RunAsync(["t514blankcli", "t514blank"])).ShouldBe(0);
+    terminal.OutputContains("blank").ShouldBeTrue();
+  }
+
+  public static async Task Should_list_the_operation_group_as_group_path()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    (await App.RunAsync(["--capabilities"])).ShouldBe(0);
+
+    GroupPath(FindEndpoint(terminal.Output, "t514dotted")).ShouldBe(["t514ops", "symbols"]);
+    GroupPath(FindEndpoint(terminal.Output, "t514spaced")).ShouldBe(["t514ops", "symbols"]);
+    GroupPath(FindEndpoint(terminal.Output, "t514wins")).ShouldBe(["t514meta"]);
+    GroupPath(FindEndpoint(terminal.Output, "t514blankcli t514blank")).ShouldBe(["t514blankcli"]);
+  }
+
+  public static async Task Should_filter_operation_groups_by_dotted_or_spaced_segments()
+  {
+    foreach (string filter in new[] { "t514ops", "t514ops.symbols", "t514ops symbols", "T514OPS.Symbols" })
+    {
+      using TestTerminal terminal = new();
+      CreateApp(terminal);
+
+      (await App.RunAsync(["--capabilities", "--group-filter", filter])).ShouldBe(0);
+
+      using JsonDocument document = JsonDocument.Parse(terminal.Output);
+      string?[] patterns = [.. document.RootElement.GetProperty("endpoints").EnumerateArray()
+        .Select(endpoint => endpoint.GetProperty("pattern").GetString())];
+      patterns.ShouldBe(["t514dotted", "t514spaced"], ignoreOrder: true);
+    }
+
+    using TestTerminal other = new();
+    CreateApp(other);
+    (await App.RunAsync(["--capabilities", "--group-filter", "t514ops.other"])).ShouldBe(0);
+    using JsonDocument empty = JsonDocument.Parse(other.Output);
+    empty.RootElement.GetProperty("endpoints").GetArrayLength().ShouldBe(0);
   }
 
   public static async Task Should_bind_the_wider_scalar_set()
@@ -715,6 +789,9 @@ public class OperationEndpointDerivationTests
     throw new InvalidOperationException($"Endpoint '{pattern}' was not in --capabilities.");
   }
 
+  private static string?[] GroupPath(JsonElement endpoint) =>
+    [.. endpoint.GetProperty("groupPath").EnumerateArray().Select(value => value.GetString())];
+
   private static JsonElement FindOption(JsonElement endpoint, string name)
   {
     foreach (JsonElement option in endpoint.GetProperty("options").EnumerateArray())
@@ -902,6 +979,67 @@ public sealed class T508PrecedenceQuery : T508WinsGroup, IQuery<string>
       _ = query;
       _ = cancellationToken;
       return Task.FromResult("wins");
+    }
+  }
+}
+
+[Operation("t514dotted", Group = "t514ops.symbols")]
+public sealed class T514DottedGroupQuery : IQuery<string>
+{
+  public sealed class Handler : IQueryHandler<T514DottedGroupQuery, string>
+  {
+    public Task<string> Handle(T514DottedGroupQuery query, CancellationToken cancellationToken)
+    {
+      _ = query;
+      _ = cancellationToken;
+      return Task.FromResult("dotted");
+    }
+  }
+}
+
+[Operation("t514spaced", Group = " t514ops  symbols ")]
+public sealed class T514SpacedGroupQuery : IQuery<string>
+{
+  public sealed class Handler : IQueryHandler<T514SpacedGroupQuery, string>
+  {
+    public Task<string> Handle(T514SpacedGroupQuery query, CancellationToken cancellationToken)
+    {
+      _ = query;
+      _ = cancellationToken;
+      return Task.FromResult("spaced");
+    }
+  }
+}
+
+[NuruRouteGroup("t514routegroup")]
+public abstract class T514RouteGroup;
+
+[Operation("t514wins", Group = "t514meta")]
+[NuruCliBinding(Group = "t514cligroup")]
+public sealed class T514ContractWinsQuery : T514RouteGroup, IQuery<string>
+{
+  public sealed class Handler : IQueryHandler<T514ContractWinsQuery, string>
+  {
+    public Task<string> Handle(T514ContractWinsQuery query, CancellationToken cancellationToken)
+    {
+      _ = query;
+      _ = cancellationToken;
+      return Task.FromResult("contract");
+    }
+  }
+}
+
+[Operation("t514blank", Group = "  ")]
+[NuruCliBinding(Group = "t514blankcli")]
+public sealed class T514BlankGroupQuery : IQuery<string>
+{
+  public sealed class Handler : IQueryHandler<T514BlankGroupQuery, string>
+  {
+    public Task<string> Handle(T514BlankGroupQuery query, CancellationToken cancellationToken)
+    {
+      _ = query;
+      _ = cancellationToken;
+      return Task.FromResult("blank");
     }
   }
 }

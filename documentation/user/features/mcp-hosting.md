@@ -67,7 +67,7 @@ await web.RunAsync();
 
 | Tool field | Source |
 |------------|--------|
-| `name` | The route's literal words, group words first, joined by `_`: `config set {key} {value}` is `config_set`. Characters outside `A-Z a-z 0-9 _ - .` become `_`. A route with no literal words is `default`. If two routes get the same name, the later one in catalog order gets `_2`, then `_3`, and so on. |
+| `name` | The route's literal words, including any route-group prefix, joined by `_`: `config set {key} {value}` is `config_set`. An `[Operation(Group)]` path is metadata and adds no words. Characters outside `A-Z a-z 0-9 _ - .` become `_`. A route with no literal words is `default`. If two routes get the same name, the later one in catalog order gets `_2`, then `_3`, and so on. |
 | `description` | The route description |
 | `inputSchema` | JSON Schema from `parameters[]` and `options[]` (below) |
 | `annotations` | From the endpoint kind and `[Destructive]` (below) |
@@ -130,7 +130,7 @@ The server instructions are the app description (`WithDescription`), then the `i
 
 ## Filtering
 
-`groupFilter` (or `NuruMcpHostOptions.GroupFilter`) publishes only the routes in one group. It uses the rule `--capabilities --group-filter` uses: the filter is split on `.`, and each segment is compared with the route's `groupPath` ignoring case. With `groupFilter: "admin"` the server lists only the `admin ...` routes, and calls to other routes fail as unknown tools.
+`groupFilter` (or `NuruMcpHostOptions.GroupFilter`) publishes only the routes in one group. It uses the rule `--capabilities --group-filter` uses: the filter is split on `.` or space, and each segment is compared with the route's `groupPath` ignoring case. With `groupFilter: "admin"` the server lists only the `admin ...` routes, and calls to other routes fail as unknown tools.
 
 ## Related documentation
 

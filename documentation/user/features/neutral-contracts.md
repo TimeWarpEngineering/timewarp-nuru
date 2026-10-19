@@ -10,7 +10,7 @@ A contracts-first calculator lives next to the attribute calculator at `samples/
 
 The route literal is the operation name. A name with a space is invalid; put the extra words in a group. The description is `[Operation(Description = "...")]`.
 
-Each public settable property is an option, including an `init` property and one inherited from a base type. A base marked `[NuruRouteGroup]` is a group, not a source of options. The option name is the property identifier as declared, so `--capabilities` `name` and the `--json-args` key are that same identifier.
+Each public settable property is an option, including an `init` property and one inherited from a base type. A base marked `[NuruRouteGroup]` is a group, not a source of options. The option name is the property identifier as declared, so `--capabilities` `name` and the `--json-args` key are that same identifier. A camelCase property such as `solutionId` is the option `--solutionId`, and the generated code sets `solutionId`.
 
 Nuru builds the request with `new()` when an accessible constructor takes no arguments, including one whose parameters are all optional. Otherwise it calls the accessible constructor whose parameters all match bound properties by name, ignoring case. A positional record uses its primary constructor this way, and a parameter default (`int Count = 5`) is that option's default. A property initializer that only copies a parameter (`= Name`) takes that parameter's default. Any other initializer that reads a parameter (`= Name.Trim()`) gives no default, so a non-nullable member is required. A `required` member is always set in the object initializer. When no constructor fits, or the type is abstract or static, the generator reports NURU_H009 as an error and skips the type.
 
@@ -31,7 +31,7 @@ Argv cannot supply a JSON member. Passing `--Notes ...` is an error that tells y
 calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":1}]}'
 ```
 
-Names in that object are the property identifiers as declared. Nuru matches them case-sensitively and does not rewrite them to camelCase. The deserializer is source-generated, so a published AOT app does not use reflection.
+Names inside that JSON value are the property identifiers as declared, matched ignoring case, so `{"label":...}` and `{"Label":...}` both bind `Label`. The top-level `--json-args` keys still match exactly. Nuru does not rewrite names to camelCase. The deserializer is source-generated, so a published AOT app does not use reflection. For an enum inside a JSON value, use `[JsonConverter(typeof(JsonStringEnumConverter<TEnum>))]`. The non-generic `JsonStringEnumConverter` needs runtime code generation, and the generated context reports SYSLIB1034 for it.
 
 ## Bool defaults
 
@@ -69,7 +69,7 @@ A response is rendered in this order:
 2. Otherwise the one visible `IResponseRenderer<TResponse>` with a public parameterless constructor, when the compilation can see exactly one. The generator constructs it.
 3. The existing output strategy: raw text, invariant or ISO formatting, or JSON.
 
-`OneOf<TSuccess, SharedProblemDetails>` writes the problem to stderr and returns a non-zero exit code. The first line is the problem type and title. The detail is the next line when it is present. The exit code is `Status` when that value is from 1 to 255, and 1 otherwise. The success value uses the renderer or the output strategy above.
+`OneOf<TSuccess, SharedProblemDetails>` writes the problem to stderr and returns a non-zero exit code. The first line is the problem type and title. The detail is the next line when it is present. The exit code is `Status` when that value is from 1 to 255, and 1 otherwise. The success value uses the renderer or the output strategy above. Only the success type is registered for JSON, and none is registered when a renderer is found. When two types would get the same generated JSON name, such as two nested `Response` classes, each gets a name from its full type name.
 
 ## Capabilities
 

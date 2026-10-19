@@ -1132,16 +1132,5 @@ internal static class HandlerInvokerEmitter
     return string.Join(", ", parameters);
   }
 
-  /// <summary>
-  /// Converts a string to PascalCase.
-  /// </summary>
-  private static string ToPascalCase(string value)
-  {
-    if (string.IsNullOrEmpty(value))
-      return value;
-
-    return char.ToUpperInvariant(value[0]) + value[1..];
-  }
-
   private static string ToCamelCase(string value) => CSharpIdentifierUtils.ToCamelCase(value);
 }

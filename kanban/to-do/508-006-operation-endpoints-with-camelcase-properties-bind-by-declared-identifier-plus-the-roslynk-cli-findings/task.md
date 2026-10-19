@@ -102,6 +102,8 @@ Acceptance:
 - Boy-scout audit fix: the new runfile test lacked the executable bit (`runfile-executable`); set it.
 - MSBuild node reuse kept a stale `TimeWarp.Nuru.Build.dll` loaded between runs. After changing the task,
   run `dotnet build-server shutdown` before re-testing.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-19T04:04:45Z
+- Review oracle: reviewed by grok (model grok-4.7), session `01a15255-516b-7a92-8d0d-869c54c346d5`, effort 2, roster general, round 1, clean — 2026-10-19
 
 ## Results
 
@@ -162,6 +164,18 @@ Full suite: `dotnet run tests/ci-tests/run-ci-tests.cs` reports 0 failed.
 
 Roslynk repro (after `4.0.0-beta.2` ships): on Roslynk branch `task/003-nuru-cli-over-the-typed-operations-roslynk-command`,
 `dotnet build Source/App/Morris.Roslynk.Cli` has no CS0117, CS9035 or SYSLIB1031.
+
+### Review
+
+Round 1 (effort 2, roster general) is in `review/round-1/merged.md`. No findings. Counts: bug 0, suggestion 0, nit 0 (open/fixed/wontfix all 0). Disposition: **clean** (`review/disposition.md`). Final open count: 0. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+Re-ran `dotnet build-server shutdown`, `ganda runfile cache --clear`, and `dotnet run tests/timewarp-nuru-tests/auto/operation-camelcase-members.cs`: Total 6, Passed 6. Generated `NuruGenerated.g.cs` assigns `solutionId = solutionid` and `@class = @class`. `NuruUserTypesJsonContext.GetJsonTypeInfo` names both `Response` types, both `Item` types, and both `List<Item>` types from their full names. `NuruJsonMemberContext` sets `PropertyNameCaseInsensitive = true`.
+
+## Learnings
+
+Misread: `## Goal (implementer restatement)` says this walk leaves the version for a later human-gated `dev release`. The original checklist still says to release a 4.0.0 prerelease and note the version in Roslynk task 003. Task 510, already on this branch, assigns that bump and the cut to itself after 508-006 merges. The version commit on this branch sets `4.0.0-beta.2` and leaves the release item open. When this merges, 510 should treat the version as already `4.0.0-beta.2` and still do trusted publishing, `dev release`, and the Roslynk 003 note.
+
+The task body says the extractors store `ParameterName` lowercased and that the fix is a new `PropertyName` field. `ParameterBinding.ParameterName` is already `property.Name`. `OptionDefinition.ParameterName` is the lowercased route local. The restatement's outcome, emit the declared identifier, matches the emitter change and the acceptance tests.
 
 ## Notes
 

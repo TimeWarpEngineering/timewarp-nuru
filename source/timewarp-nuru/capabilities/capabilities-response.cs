@@ -19,17 +19,17 @@ public sealed class CapabilitiesResponse
   /// Returns the endpoints whose group path starts with <paramref name="groupFilter"/>.
   /// </summary>
   /// <remarks>
-  /// The filter is dot-separated (<c>admin.config</c>) and each segment is compared ignoring case,
-  /// the same rule <c>--capabilities --group-filter</c> uses. The result carries
-  /// <see cref="Filter"/> set to the filter.
+  /// Segments are separated by <c>.</c> or space (<c>admin.config</c> or <c>admin config</c>) and each
+  /// segment is compared ignoring case, the same rule <c>--capabilities --group-filter</c> uses.
+  /// A blank filter keeps every endpoint. The result carries <see cref="Filter"/> set to the filter.
   /// </remarks>
-  /// <param name="groupFilter">Dot-separated group prefix.</param>
+  /// <param name="groupFilter">Group prefix, dot- or space-separated.</param>
   /// <returns>A new response with the matching endpoints.</returns>
   public CapabilitiesResponse FilterByGroup(string groupFilter)
   {
     ArgumentNullException.ThrowIfNull(groupFilter);
 
-    string[] groupParts = groupFilter.Split('.');
+    string[] groupParts = groupFilter.Split(['.', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     EndpointCapability[] endpoints =
     [
       .. Endpoints.Where(e => e.GroupPath.Count >= groupParts.Length &&

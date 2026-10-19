@@ -43,11 +43,12 @@ A non-nullable `bool` with no initializer is required. Nuru does not invent `fal
 
 `--group-filter` matches the group path. Derived endpoints get that path in this order:
 
-1. A containing `[NuruRouteGroup]`, including nested groups. This is the same prefix attribute-declared routes use.
-2. Otherwise `[NuruCliBinding(Group = "segment")]`. `Group` is one prefix. Spaces separate literals, the same way one `[NuruRouteGroup]` prefix does. `TimeWarp.Contracts.CliOperationBinding` has `Pattern` only, so the group lives on this Nuru attribute.
-3. Otherwise the endpoint is ungrouped and `groupPath` is empty.
+1. `[Operation("get_symbol", Group = "symbols")]` with a non-blank `Group`. The group is metadata: it becomes `groupPath`, split on `.` or space (`"symbols.read"` and `"symbols read"` are both `["symbols", "read"]`). It is not a route prefix or a command prefix, so the command stays `get_symbol` and so does the MCP tool name. No `[NuruRouteGroup]` prefix or `[NuruCliBinding(Group)]` is added on top of it.
+2. Otherwise a containing `[NuruRouteGroup]`, including nested groups. This is the same prefix attribute-declared routes use, and it is part of the command.
+3. Otherwise `[NuruCliBinding(Group = "segment")]`. `Group` is one prefix. Spaces separate literals, the same way one `[NuruRouteGroup]` prefix does. `TimeWarp.Contracts.CliOperationBinding` has `Pattern` only, so this group lives on the Nuru attribute.
+4. Otherwise the endpoint is ungrouped and `groupPath` is empty.
 
-A `[NuruRouteGroup]` wins when both are present. `[NuruCliBinding]` does not add a group type, so `DiscoverEndpoints(typeof(SomeGroup))` still follows `[NuruRouteGroup]` only. Task 508-004 reads this same group path for MCP tool filtering.
+A blank `[Operation(Group)]` is ungrouped, so steps 2 to 4 apply. A `[NuruRouteGroup]` wins over `[NuruCliBinding]` when both are present. Only `[NuruRouteGroup]` adds a group type, so `DiscoverEndpoints(typeof(SomeGroup))` follows `[NuruRouteGroup]` only, including for an operation whose `Group` replaced the prefix. MCP tool filtering (`groupFilter`) reads this same group path.
 
 ## Handlers
 

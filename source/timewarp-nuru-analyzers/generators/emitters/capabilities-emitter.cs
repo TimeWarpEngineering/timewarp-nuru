@@ -148,9 +148,7 @@ internal static class CapabilitiesEmitter
   private static void EmitEndpointCapabilityAdd(StringBuilder sb, RouteDefinition route, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     string pattern = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
-    string[] groupPathParts = string.IsNullOrEmpty(route.GroupPrefix)
-      ? []
-      : route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    IReadOnlyList<string> groupPathParts = route.CatalogGroupPath;
     string kindValue = MapMessageTypeToKind(route.MessageType);
 
     sb.AppendLine("    __endpoints.Add(");
@@ -160,7 +158,7 @@ internal static class CapabilitiesEmitter
 
     // GroupPath
     sb.Append("        GroupPath = [");
-    for (int i = 0; i < groupPathParts.Length; i++)
+    for (int i = 0; i < groupPathParts.Count; i++)
     {
       if (i > 0)
         sb.Append(", ");

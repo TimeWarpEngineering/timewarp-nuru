@@ -117,9 +117,13 @@ internal static partial class EndpointExtractor
       return EndpointExtractionResult.Failure(patternDiagnostic);
     }
 
-    // Get the group info from base class hierarchy - always collect full hierarchy
+    // Get the group info from base class hierarchy - always collect full hierarchy.
+    // A non-blank [Operation(Group)] is metadata only and replaces any route-group prefix.
+    EquatableArray<string> operationGroupPath = SplitOperationGroup(identity.OperationGroup);
     GroupInfo groupInfo = ExtractGroupInfo(classDeclaration, semanticModel, cancellationToken);
-    groupInfo = ApplyCliBindingGroup(groupInfo, classDeclaration, semanticModel, cancellationToken);
+    groupInfo = operationGroupPath.IsDefaultOrEmpty
+      ? ApplyCliBindingGroup(groupInfo, classDeclaration, semanticModel, cancellationToken)
+      : WithoutRoutePrefix(groupInfo);
 
     INamedTypeSymbol? endpointSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
     if (endpointSymbol is null)
@@ -220,7 +224,8 @@ internal static partial class EndpointExtractor
       implements: filterInterfaces,
       examples: examples,
       isDestructive: HasAttribute(classDeclaration, semanticModel, DestructiveAttributeFullName, cancellationToken),
-      isLocalOnly: HasAttribute(classDeclaration, semanticModel, LocalOnlyAttributeFullName, cancellationToken));
+      isLocalOnly: HasAttribute(classDeclaration, semanticModel, LocalOnlyAttributeFullName, cancellationToken),
+      groupPath: operationGroupPath);
 
     if (missingHandler is not null)
       return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);

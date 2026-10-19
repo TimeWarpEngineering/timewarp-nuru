@@ -127,9 +127,8 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<Unit>
     {
       ArgumentNullException.ThrowIfNull(result);
 
-      string fullPattern = string.IsNullOrEmpty(result.GroupPath)
-        ? result.Pattern
-        : $"{result.GroupPath} {result.Pattern}".Trim();
+      // Pattern already holds any route-group prefix; groupPath is metadata, not a command prefix.
+      string fullPattern = result.Pattern;
 
       string cliInfo = showVersion
         ? $"{result.CliName}@{result.CliVersion ?? "unknown"}"

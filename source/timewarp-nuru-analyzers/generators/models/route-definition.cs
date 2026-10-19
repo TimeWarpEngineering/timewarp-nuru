@@ -28,6 +28,10 @@ using System.Text;
 /// <param name="IsLocalOnly">
 /// True when the route carries <c>[LocalOnly]</c> or <c>.LocalOnly()</c>: a served app never forwards it.
 /// </param>
+/// <param name="GroupPath">
+/// Metadata-only group segments from <c>[Operation(Group = ...)]</c>. Not part of the route pattern.
+/// Empty when the group comes from <see cref="GroupPrefix"/> or the route is ungrouped.
+/// </param>
 public sealed record RouteDefinition(
   string OriginalPattern,
   EquatableArray<SegmentDefinition> Segments,
@@ -43,7 +47,8 @@ public sealed record RouteDefinition(
   EquatableArray<string> GroupTypeHierarchy = default,
   EquatableArray<ExampleDefinition> Examples = default,
   bool IsDestructive = false,
-  bool IsLocalOnly = false)
+  bool IsLocalOnly = false,
+  EquatableArray<string> GroupPath = default)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
@@ -63,7 +68,8 @@ public sealed record RouteDefinition(
     EquatableArray<string>? groupTypeHierarchy = null,
     EquatableArray<ExampleDefinition>? examples = null,
     bool isDestructive = false,
-    bool isLocalOnly = false)
+    bool isLocalOnly = false,
+    EquatableArray<string>? groupPath = null)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,
@@ -80,7 +86,25 @@ public sealed record RouteDefinition(
       GroupTypeHierarchy: groupTypeHierarchy ?? [],
       Examples: examples ?? [],
       IsDestructive: isDestructive,
-      IsLocalOnly: isLocalOnly);
+      IsLocalOnly: isLocalOnly,
+      GroupPath: groupPath ?? []);
+  }
+
+  /// <summary>
+  /// Gets the catalog <c>groupPath</c>: <see cref="GroupPath"/> when set, otherwise the
+  /// <see cref="GroupPrefix"/> words.
+  /// </summary>
+  public IReadOnlyList<string> CatalogGroupPath
+  {
+    get
+    {
+      if (!GroupPath.IsDefaultOrEmpty)
+        return GroupPath;
+
+      return string.IsNullOrEmpty(GroupPrefix)
+        ? []
+        : GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    }
   }
 
   /// <summary>

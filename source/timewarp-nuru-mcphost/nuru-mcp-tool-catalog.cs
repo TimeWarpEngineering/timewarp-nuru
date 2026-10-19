@@ -70,7 +70,7 @@ public static class NuruMcpToolCatalog
   }
 
   /// <summary>
-  /// The tool name for a route: its literal words (group words first) joined by <paramref name="separator"/>.
+  /// The tool name for a route: the literal words of its pattern joined by <paramref name="separator"/>.
   /// </summary>
   /// <param name="endpoint">The catalog endpoint.</param>
   /// <param name="separator">Separator between words; default <c>_</c>.</param>
@@ -93,11 +93,8 @@ public static class NuruMcpToolCatalog
       words.Add(token);
     }
 
-    // A grouped endpoint pattern may omit the group words (endpoint DSL); the catalog lists them in groupPath.
-    if (endpoint.GroupPath.Count > 0 && !StartsWith(words, endpoint.GroupPath))
-    {
-      words.InsertRange(0, endpoint.GroupPath);
-    }
+    // The pattern already holds any route-group prefix. groupPath is metadata (an [Operation(Group)]
+    // path is not a command prefix), so it never adds words to the name.
 
     if (words.Count == 0)
       return NuruMcpHostOptions.DefaultRouteToolName;
@@ -356,20 +353,6 @@ public static class NuruMcpToolCatalog
     if (name.StartsWith("Numerics.", StringComparison.Ordinal))
       name = name["Numerics.".Length..];
     return name.ToLowerInvariant();
-  }
-
-  private static bool StartsWith(List<string> words, IReadOnlyList<string> prefix)
-  {
-    if (words.Count < prefix.Count)
-      return false;
-
-    for (int i = 0; i < prefix.Count; i++)
-    {
-      if (!string.Equals(words[i], prefix[i], StringComparison.Ordinal))
-        return false;
-    }
-
-    return true;
   }
 
   private static string Sanitize(string name)

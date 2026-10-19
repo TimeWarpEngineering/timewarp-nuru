@@ -76,11 +76,13 @@ public class SearchVersionFormatterTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_prefix_group_path_to_pattern()
+  // 508-014: the catalog pattern already holds any route-group prefix, and an [Operation(Group)]
+  // path is metadata, so the header never prepends groupPath.
+  public static async Task Should_not_prefix_group_path_to_pattern()
   {
     string line = SearchQuery.Handler.FormatResultHeader(CreateResult("2.0.0", groupPath: "index"), showVersion: true);
 
-    line.ShouldBe("  index deploy {env} [mycli@2.0.0]");
+    line.ShouldBe("  deploy {env} [mycli@2.0.0]");
 
     await Task.CompletedTask;
   }

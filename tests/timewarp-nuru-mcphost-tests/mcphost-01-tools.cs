@@ -14,6 +14,7 @@ using System.IO.Pipelines;
 using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using OneOf;
+using TimeWarp.Contracts;
 using TimeWarp.Foundation.Types;
 using TimeWarp.Nuru.McpHost;
 
@@ -54,6 +55,7 @@ public class McpHostToolsTests
       .Map<MhReportQuery>()
       .Map<MhProblemQuery>()
       .Map<MhLoggingReportQuery>()
+      .Map<MhSymbolQuery>()
       .Build();
     return app;
   }
@@ -174,6 +176,26 @@ public class McpHostToolsTests
     string[] names = [.. NuruMcpToolCatalog.CreateTools(app.Capabilities, new NuruMcpHostOptions { GroupFilter = "MH-ADMIN" }).Select(t => t.Tool.Name)];
 
     names.ShouldBe(["mh-admin_reset"]);
+    await Task.CompletedTask;
+  }
+
+  // 508-014: an [Operation(Group)] is the groupPath the filter reads. The tool keeps the operation name.
+  public static async Task Should_filter_by_operation_group_without_renaming_the_tool()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = CreateApp(terminal);
+
+    foreach (string filter in new[] { "mh-symbols", "mh-symbols.read", "MH-SYMBOLS READ" })
+    {
+      NuruMcpToolDefinition[] tools = [.. NuruMcpToolCatalog.CreateTools(app.Capabilities, new NuruMcpHostOptions { GroupFilter = filter })];
+
+      tools.Select(t => t.Tool.Name).ShouldBe(["mh-get-symbol"]);
+      tools[0].Endpoint.Pattern.ShouldBe("mh-get-symbol");
+      tools[0].Endpoint.GroupPath.ShouldBe(["mh-symbols", "read"]);
+    }
+
+    NuruMcpToolCatalog.CreateTools(app.Capabilities, new NuruMcpHostOptions { GroupFilter = "mh-symbols.write" }).ShouldBeEmpty();
+    NuruMcpToolCatalog.CreateTools(app.Capabilities).Select(t => t.Tool.Name).ShouldContain("mh-get-symbol");
     await Task.CompletedTask;
   }
 
@@ -500,6 +522,22 @@ public sealed class MhWipeCommand : ICommand<Unit>
 }
 
 public sealed record MhReport(string Name, int Count);
+
+[Operation("mh-get-symbol", Description = "Look up a symbol", Group = "mh-symbols.read")]
+public sealed class MhSymbolQuery : IQuery<string>
+{
+  public string Name { get; set; } = "";
+
+  public sealed class Handler : IQueryHandler<MhSymbolQuery, string>
+  {
+    public Task<string> Handle(MhSymbolQuery query, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+      _ = cancellationToken;
+      return Task.FromResult($"symbol:{query.Name}");
+    }
+  }
+}
 
 [NuruRoute("mh-report", Description = "Build a report")]
 public sealed class MhReportQuery : IQuery<MhReport>

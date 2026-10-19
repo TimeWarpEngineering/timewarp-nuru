@@ -47,6 +47,8 @@ Acceptance criteria:
 
 - Created: 1479989 (2026-10-17)
 - Implemented: implementer-claude (claude-opus-5-5) under `ganda task work`, 2026-10-19. Promoted from 506's GREEN verdict. Package, generator hooks, McpHost forwarding, sample, tests, docs. Full CI and `ganda repo audit` green. The task folder stays in `backlog/` on this branch because the host-owned walk logs live beside the kitchen; the host's `kanban done` moves it.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-19T02:04:31Z
+- Review: grok session 01a151e7-4070-7f01-a1c9-8e918b0fd135 (2026-10-19). Effort 3, roster general. Round 1 leaves M1–M4 open.
 
 ## Results
 
@@ -160,3 +162,22 @@ Expect:
   - `serve --status` prints `served-app server is running: pid <n>, ...`.
   - `serve --stop` prints `served-app server stopped.`.
 - CI runner: multi-mode 1991 total, 1985 passed, 6 skipped, 0 failed. Standalone 0 failed.
+
+### Review round 1
+
+Effort 3, roster general (one reviewer). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 4 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 0 | 0 |
+
+Open findings: M1 live socket unlink during start, M2 build id not checked after start, M3 relative `socketPath` resolves in each process's current directory, M4 temp socket directory is trusted when it already exists. Disposition is not written; the exit bar is 0 open findings.
+
+## Learnings
+
+Misread between the original requirements and `## Goal (implementer restatement)`. The implementation follows the restatement.
+
+- The original client contract says the CLI serialises the bound request (508-003 binder output) and renders the returned typed result the way an in-process call would. The restatement sends argv for a CLI call (the server matches and binds again) and a JSON object for MCP and `--json-args`, and the client prints stdout, stderr, and the exit code. For the default terminal that text matches an in-process call. The wire payload is not the bound request, and the CLI does not receive a typed result.
+- The original behavior line is "define which chain runs where (CLI-side telemetry versus server-side validation)." The restatement runs the whole Nuru behavior pipeline on the server, including telemetry behaviors, validation, retry, and authorization. The CLI keeps argv parsing, type conversion, built-ins, and the process-level telemetry setup inside `RunAsync`. A split is defined and documented. It is the opposite placement from the telemetry-on-the-CLI example in the task.

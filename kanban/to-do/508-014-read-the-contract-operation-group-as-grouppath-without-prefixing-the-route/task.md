@@ -56,6 +56,9 @@ Acceptance:
 - 2026-10-20 implement (claude, headless task work): TimeWarp.Contracts 2.0.0-beta.23 is on NuGet and
   its XML docs carry `OperationAttribute.Group`, so the block is cleared. Pinned it and implemented.
   CI suite 4142 tests: 4130 passed, 12 skipped, 0 failed. `ganda repo audit` passed with no fixes needed.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-19T18:25:31Z
+- Reviewer: grok session 01a15569-6033-7f90-bda6-6da34e87d296 (2026-10-20). Round 1, effort 2, roster general.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session 01a15569-6033-7f90-bda6-6da34e87d296, max-turns 120 — 2026-10-20
 
 ## Notes
 
@@ -111,3 +114,13 @@ Expect:
 - mcphost-01: 16/16 pass, including `Should_filter_by_operation_group_without_renaming_the_tool`
   (`GroupFilter` `mh-symbols`, `mh-symbols.read`, and `MH-SYMBOLS READ` each publish only `mh-get-symbol`).
 - search-02: 5/5 pass. CI: 0 failed.
+
+### Review
+
+Round 1 (effort 2, roster general) is in `review/round-1/merged.md`. No findings. The goal restatement matches the task; no misread. Counts: bug 0, suggestion 0, nit 0 (open/fixed/wontfix all 0). Disposition: **clean** (`review/disposition.md`). Final open count: 0. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+Re-ran `ganda runfile cache --clear`, then `dotnet run` of `operation-endpoint-derivation.cs` (40 passed), `mcphost-01-tools.cs` (16 passed), and `search-02-version-formatter.cs` (5 passed).
+
+## Review
+
+- Round 1: Done

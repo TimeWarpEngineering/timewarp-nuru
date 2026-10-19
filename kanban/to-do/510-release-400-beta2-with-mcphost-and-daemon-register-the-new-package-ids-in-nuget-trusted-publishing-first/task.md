@@ -20,10 +20,10 @@ Roslynk task 003 is blocked on a Nuru release that carries the 508-006 camelCase
 
 ## Checklist
 
-- [ ] Trusted-publishing policies exist for McpHost and Daemon (human, NuGet UI)
-- [ ] 508-006 merged to master
-- [ ] Version bump PR merged; master CI green
-- [ ] `dev release --dry-run` clean, `dev release` cut, release run green, six packages indexed
+- [x] Trusted-publishing policies exist for McpHost and Daemon (human, NuGet UI). Steven: the policy is per repository, not per package ID, so no new policy was needed; confirmed by the push succeeding for both new IDs
+- [x] 508-006 merged to master (PR #332, cc38a56f)
+- [x] Version bump rode PR #332 (508-006 set 4.0.0-beta.2); master CI run 39199737123 green
+- [x] `dev release --dry-run` clean, `dev release` cut tag v4.0.0-beta.2 at cc38a56f, release run 39202436725 green, six packages pushed
 - [ ] Roslynk 003 notified with the version
 
 ## Notes
@@ -35,3 +35,12 @@ Roslynk task 003 is blocked on a Nuru release that carries the 508-006 camelCase
 ## Session
 
 - Created: 3920594 (2026-10-19)
+
+## Results
+
+- Tag `v4.0.0-beta.2` at cc38a56f; GitHub prerelease https://github.com/TimeWarpEngineering/timewarp-nuru/releases/tag/v4.0.0-beta.2.
+- Release run 39202436725 (OIDC trusted publishing) pushed all six packages: TimeWarp.Nuru, .Analyzers, .DevCli, .Search, .McpHost (first publish), .Daemon (first publish), all 4.0.0-beta.2.
+- Trusted publishing needed no change: the NuGet.org policy is scoped to the repository and workflow, and the two new package IDs pushed under it.
+- Carries: 508-004 McpHost, 508-005 Daemon, 508-006 camelCase operation members and SYSLIB1031 fix (Roslynk 003's blocker).
+- Open: Roslynk task 003 still has to be pointed at 4.0.0-beta.2 (Roslynk repo, not this one).
+- Released: 2026-10-19, cockpit session (Claude). Cut with `dev release` from master at cc38a56f.

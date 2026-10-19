@@ -203,6 +203,13 @@ internal static class HelpEmitter
       sb.AppendLine($"      .AddRow(\"{BuiltInFlags.McpRouteForm}\", \"Serve the routes as MCP tools over stdio\")");
     }
 
+    if (model.ServeRoute is not null)
+    {
+      sb.AppendLine($"      .AddRow(\"{BuiltInFlags.ServeRouteForm}\", \"Serve the routes from a local server that later calls forward to\")");
+      sb.AppendLine($"      .AddRow(\"{BuiltInFlags.ServeRouteForm} --status | --stop\", \"Report or stop the running server\")");
+      sb.AppendLine("      .AddRow(\"--daemon | --no-daemon\", \"Forward this call to the server (starting it) or run it here\")");
+    }
+
     if (helpOptions.ShowCompletionRoutes && model.HasCompletion)
     {
       sb.AppendLine("      .AddRow(\"__complete\", \"Shell completion callback\")");

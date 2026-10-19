@@ -122,6 +122,12 @@ public sealed class EndpointCapability
   /// omitted from JSON, so documents for routes without the attribute are unchanged.
   /// </summary>
   public bool? Destructive { get; init; }
+
+  /// <summary>
+  /// True when the route always runs in the CLI process (<see cref="LocalOnlyAttribute"/> or
+  /// <c>.LocalOnly()</c>): a served app never forwards it. Null otherwise, and then omitted from JSON.
+  /// </summary>
+  public bool? LocalOnly { get; init; }
 }
 
 /// <summary>

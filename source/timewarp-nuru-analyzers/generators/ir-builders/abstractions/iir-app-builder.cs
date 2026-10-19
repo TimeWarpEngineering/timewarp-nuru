@@ -100,6 +100,13 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder AddMcpRoute(McpRouteModel mcpRoute);
 
   /// <summary>
+  /// Enables the built-in serve route and route forwarding (TimeWarp.Nuru.Daemon).
+  /// </summary>
+  /// <param name="serveRoute">Options from the AddServeRoute() arguments.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddServeRoute(ServeRouteModel serveRoute);
+
+  /// <summary>
   /// Adds a behavior (pipeline middleware).
   /// </summary>
   /// <param name="behavior">The behavior definition.</param>

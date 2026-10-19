@@ -177,6 +177,40 @@ public partial class NuruApp
     return executor(this, invocation, CancellationToken.None);
   }
 
+  /// <summary>
+  /// Runs CLI arguments through generated route matching. Set by generated interceptor code, like
+  /// <see cref="InvocationExecutor"/>. Use <see cref="ExecuteAsync"/> instead of calling it.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public Func<NuruApp, string[], CancellationToken, Task<int>>? RouteExecutor { get; set; }
+
+  /// <summary>
+  /// Forwards matched routes to another process (a served app). Set by generated code when the
+  /// builder calls <c>AddServeRoute()</c> (package TimeWarp.Nuru.Daemon); null runs every route here.
+  /// </summary>
+  public INuruRouteForwarder? RouteForwarder { get; set; }
+
+  /// <summary>
+  /// Runs CLI arguments as <see cref="RunAsync"/> does: the same route matching, built-ins, binding,
+  /// behaviors and handler, writing to <see cref="Terminal"/>.
+  /// </summary>
+  /// <param name="args">Command-line arguments to parse and route.</param>
+  /// <param name="cancellationToken">Token passed to the handler and behaviors.</param>
+  /// <returns>The exit code <see cref="RunAsync"/> returns for the same arguments.</returns>
+  /// <remarks>
+  /// <see cref="RunAsync"/> works only at call sites the source generator intercepts. This entry point
+  /// is for library code that runs an app it did not build, such as a daemon host. It skips the
+  /// process-level telemetry setup <see cref="RunAsync"/> does. Calls run one at a time, as
+  /// <see cref="InvokeAsync"/> calls do.
+  /// </remarks>
+  /// <exception cref="InvalidOperationException">No generated code is attached to this app.</exception>
+  public Task<int> ExecuteAsync(string[] args, CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(args);
+    Func<NuruApp, string[], CancellationToken, Task<int>> executor = RouteExecutor ?? throw MissingGeneratedCode();
+    return executor(this, args, cancellationToken);
+  }
+
   private static InvalidOperationException MissingGeneratedCode() =>
     new(
       "No generated binder is attached to this NuruApp. " +

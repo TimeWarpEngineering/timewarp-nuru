@@ -115,6 +115,11 @@ internal static class InterceptorEmitter
     {
       sb.AppendLine($"    app.JsonBinder = {JsonArgsEmitter.TryBindMethodName(methodSuffix)};");
       sb.AppendLine($"    app.InvocationExecutor = __InvokeJson{methodSuffix};");
+      sb.AppendLine($"    app.RouteExecutor = __RunArgs{methodSuffix};");
+      if (app.ServeRoute is not null)
+      {
+        sb.AppendLine($"    app.RouteForwarder = new global::TimeWarp.Nuru.Daemon.NuruDaemonClient(__DaemonOptions{methodSuffix}());");
+      }
     }
 
     sb.AppendLine("    return app;");
@@ -218,10 +223,27 @@ internal static class InterceptorEmitter
     sb.AppendLine("  {");
     // A previous command may have stored a problem status. This invocation starts clean.
     sb.AppendLine("    global::System.Environment.ExitCode = 0;");
-    // Fallback for an app whose Build() call was not intercepted.
+    // Fallback for an app whose Build() call was not intercepted. The forwarder is attached only
+    // then, so an app may set RouteForwarder = null after Build() to run every route here.
+    if (app.ServeRoute is not null)
+    {
+      sb.AppendLine("    if (app.CapabilitiesProvider is null)");
+      sb.AppendLine($"      app.RouteForwarder ??= new global::TimeWarp.Nuru.Daemon.NuruDaemonClient(__DaemonOptions{methodSuffix}());");
+    }
+
     sb.AppendLine($"    app.CapabilitiesProvider ??= GetCapabilities{methodSuffix};");
     sb.AppendLine($"    app.JsonBinder ??= {JsonArgsEmitter.TryBindMethodName(methodSuffix)};");
     sb.AppendLine($"    app.InvocationExecutor ??= __InvokeJson{methodSuffix};");
+    sb.AppendLine($"    app.RouteExecutor ??= __RunArgs{methodSuffix};");
+
+    // --daemon / --no-daemon choose between a running server and this process (AddServeRoute()).
+    // They are removed before routing, so they work with every route and never reach the server.
+    if (app.ServeRoute is not null)
+    {
+      sb.AppendLine("    global::TimeWarp.Nuru.NuruForwardMode __forwardMode = global::TimeWarp.Nuru.NuruForwardMode.Auto;");
+      sb.AppendLine("    if (__invocation is null && !fromRepl)");
+      sb.AppendLine("      args = global::TimeWarp.Nuru.NuruForwarding.PeelFlags(args, out __forwardMode);");
+    }
 
     // Set up completion support (only when completion or REPL is enabled)
     if (app.HasCompletion || app.HasRepl)
@@ -243,6 +265,34 @@ internal static class InterceptorEmitter
     JsonArgsEmitter.EmitBindMethods(sb, RoutesInIndexOrder(app, model), app, methodSuffix);
     sb.AppendLine($"  private static global::System.Threading.Tasks.Task<int> __InvokeJson{methodSuffix}(NuruApp app, global::TimeWarp.Nuru.NuruInvocation invocation, global::System.Threading.CancellationToken cancellationToken) =>");
     sb.AppendLine($"    ExecuteRouteAsync{methodSuffix}(app, [], cancellationToken, fromRepl: false, __invocation: invocation);");
+    sb.AppendLine();
+    // NuruApp.ExecuteAsync: argv routing for code the generator does not intercept (a daemon host).
+    sb.AppendLine($"  private static global::System.Threading.Tasks.Task<int> __RunArgs{methodSuffix}(NuruApp app, string[] args, global::System.Threading.CancellationToken cancellationToken) =>");
+    sb.AppendLine($"    ExecuteRouteAsync{methodSuffix}(app, args, cancellationToken);");
+    sb.AppendLine();
+
+    if (app.ServeRoute is ServeRouteModel serveRoute)
+    {
+      EmitDaemonOptionsMethod(sb, serveRoute, methodSuffix);
+    }
+  }
+
+  /// <summary>
+  /// Emits the factory for the TimeWarp.Nuru.Daemon options from the AddServeRoute() arguments.
+  /// The serve route and the forwarding client share it, so both use the same socket.
+  /// </summary>
+  private static void EmitDaemonOptionsMethod(StringBuilder sb, ServeRouteModel serveRoute, string methodSuffix)
+  {
+    string socketPath = serveRoute.SocketPath is null
+      ? "null"
+      : $"\"{EmitterStringUtils.EscapeForStringLiteral(serveRoute.SocketPath)}\"";
+
+    sb.AppendLine($"  private static global::TimeWarp.Nuru.Daemon.NuruDaemonOptions __DaemonOptions{methodSuffix}() => new()");
+    sb.AppendLine("  {");
+    sb.AppendLine($"    SocketPath = {socketPath},");
+    sb.AppendLine($"    IdleTimeout = global::System.TimeSpan.FromSeconds({serveRoute.IdleTimeoutSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture)}),");
+    sb.AppendLine($"    AutoStart = {(serveRoute.AutoStart ? "true" : "false")}");
+    sb.AppendLine("  };");
     sb.AppendLine();
   }
 
@@ -1233,7 +1283,7 @@ internal static class InterceptorEmitter
     JsonArgsEmitter.EmitInvocationDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);
 
     // JSON selection returns. Calls without --json-args leave __jsonDoc null and fall through.
-    JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);
+    JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null);
 
     sb.AppendLine("    if (!__jsonBuiltInOnly)");
     sb.AppendLine("    {");
@@ -1260,7 +1310,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke, model.HasGeneratedMediator);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null);
     }
 
     sb.AppendLine("    }");
@@ -1545,6 +1595,12 @@ internal static class InterceptorEmitter
       EmitMcpRoute(sb, mcpRoute);
     }
 
+    // serve route (opt-in via AddServeRoute() from TimeWarp.Nuru.Daemon)
+    if (app.ServeRoute is not null)
+    {
+      EmitServeRoute(sb, methodSuffix);
+    }
+
     // Shell completion routes (opt-in via EnableCompletion())
     if (app.HasCompletion)
     {
@@ -1576,6 +1632,23 @@ internal static class InterceptorEmitter
     sb.AppendLine("      };");
     sb.AppendLine("      return await global::TimeWarp.Nuru.McpHost.NuruMcpServer.RunStdioAsync(app, __mcpOptions, cancellationToken).ConfigureAwait(false);");
     sb.AppendLine("    }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits the built-in serve routes. They run the TimeWarp.Nuru.Daemon server over this app, or report
+  /// and stop a running one, with the options from the AddServeRoute() arguments.
+  /// </summary>
+  private static void EmitServeRoute(StringBuilder sb, string methodSuffix)
+  {
+    string form = BuiltInFlags.ServeRouteForm;
+    sb.AppendLine("    // Built-in: serve, serve --status, serve --stop (opt-in via AddServeRoute())");
+    sb.AppendLine($"    if (routeArgs is [\"{form}\"])");
+    sb.AppendLine($"      return await global::TimeWarp.Nuru.Daemon.NuruDaemonServer.RunAsync(app, __DaemonOptions{methodSuffix}(), cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine($"    if (routeArgs is [\"{form}\", \"--status\"])");
+    sb.AppendLine($"      return await global::TimeWarp.Nuru.Daemon.NuruDaemonServer.StatusAsync(app, __DaemonOptions{methodSuffix}(), cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine($"    if (routeArgs is [\"{form}\", \"--stop\"])");
+    sb.AppendLine($"      return await global::TimeWarp.Nuru.Daemon.NuruDaemonServer.StopAsync(app, __DaemonOptions{methodSuffix}(), cancellationToken).ConfigureAwait(false);");
     sb.AppendLine();
   }
 

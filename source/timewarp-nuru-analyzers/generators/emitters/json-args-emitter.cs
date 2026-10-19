@@ -164,7 +164,8 @@ internal static class JsonArgsEmitter
     AppModel app,
     string methodSuffix,
     string? loggerFactoryFieldName,
-    bool hasGeneratedMediator)
+    bool hasGeneratedMediator,
+    bool forwardRoutes = false)
   {
     sb.AppendLine("    if (__jsonDoc is not null)");
     sb.AppendLine("    {");
@@ -277,6 +278,28 @@ internal static class JsonArgsEmitter
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
     sb.AppendLine();
+    if (forwardRoutes)
+    {
+      // AddServeRoute(): offer the selected route to the forwarder with the resolved JSON object, so
+      // the server never reads this process's stdin or resolves @path from its own directory.
+      sb.AppendLine("        string?[] __forwardRoutes =");
+      sb.AppendLine("        [");
+      foreach (RouteDefinition route in routes)
+      {
+        sb.AppendLine(route.IsLocalOnly
+          ? "          null,"
+          : $"          \"{EmitterStringUtils.EscapeForStringLiteral(route.FullPattern)}\",");
+      }
+
+      sb.AppendLine("        ];");
+      sb.AppendLine("        if (!fromRepl && __forwardRoutes[__jsonWinner] is string __forwardRoute");
+      sb.AppendLine("          && await global::TimeWarp.Nuru.NuruForwarding.TryForwardAsync(app, __forwardRoute, args, __jsonDoc.RootElement.GetRawText(), __forwardMode, cancellationToken).ConfigureAwait(false) is int __jsonForwardedExit)");
+      sb.AppendLine("        {");
+      sb.AppendLine("          return __jsonForwardedExit;");
+      sb.AppendLine("        }");
+      sb.AppendLine();
+    }
+
     sb.AppendLine("        switch (__jsonWinner)");
     sb.AppendLine("        {");
     for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
@@ -1685,6 +1708,11 @@ internal static class JsonArgsEmitter
     if (app.McpRoute is not null)
     {
       sb.AppendLine($"      if (routeArgs is [\"{BuiltInFlags.McpRouteForm}\"]) return true;");
+    }
+
+    if (app.ServeRoute is not null)
+    {
+      sb.AppendLine($"      if (routeArgs is [\"{BuiltInFlags.ServeRouteForm}\"] or [\"{BuiltInFlags.ServeRouteForm}\", \"--status\" or \"--stop\"]) return true;");
     }
 
     if (app.HasCompletion)

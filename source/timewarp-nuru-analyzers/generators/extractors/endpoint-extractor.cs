@@ -46,6 +46,7 @@ internal static partial class EndpointExtractor
   private const string NuruRouteAliasAttributeName = "NuruRouteAlias";
   private const string NuruRouteExampleAttributeName = "NuruRouteExample";
   private const string DestructiveAttributeFullName = "TimeWarp.Nuru.DestructiveAttribute";
+  private const string LocalOnlyAttributeFullName = "TimeWarp.Nuru.LocalOnlyAttribute";
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
   private const string GroupOptionAttributeName = "GroupOption";
@@ -218,7 +219,8 @@ internal static partial class EndpointExtractor
       aliases: aliases,
       implements: filterInterfaces,
       examples: examples,
-      isDestructive: HasDestructiveAttribute(classDeclaration, semanticModel, cancellationToken));
+      isDestructive: HasAttribute(classDeclaration, semanticModel, DestructiveAttributeFullName, cancellationToken),
+      isLocalOnly: HasAttribute(classDeclaration, semanticModel, LocalOnlyAttributeFullName, cancellationToken));
 
     if (missingHandler is not null)
       return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);
@@ -362,11 +364,13 @@ internal static partial class EndpointExtractor
   }
 
   /// <summary>
-  /// True when the command class carries <c>TimeWarp.Nuru.DestructiveAttribute</c>.
+  /// True when the command class carries the attribute <paramref name="attributeFullName"/>
+  /// (<c>[Destructive]</c>, <c>[LocalOnly]</c>).
   /// </summary>
-  private static bool HasDestructiveAttribute(
+  private static bool HasAttribute(
     TypeDeclarationSyntax classDeclaration,
     SemanticModel semanticModel,
+    string attributeFullName,
     CancellationToken cancellationToken)
   {
     INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
@@ -375,7 +379,7 @@ internal static partial class EndpointExtractor
 
     foreach (AttributeData attribute in classSymbol.GetAttributes())
     {
-      if (attribute.AttributeClass?.ToDisplayString() == DestructiveAttributeFullName)
+      if (attribute.AttributeClass?.ToDisplayString() == attributeFullName)
         return true;
     }
 

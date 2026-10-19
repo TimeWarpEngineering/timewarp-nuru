@@ -96,6 +96,7 @@ public sealed class BuildCommand : ICommand<Unit>
         // explicit payload includes in timewarp-nuru.csproj.
         "source/timewarp-nuru/timewarp-nuru.csproj",
         "source/timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj",
+        "source/timewarp-nuru-daemon/timewarp-nuru-daemon.csproj",
         "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj",
         "source/timewarp-nuru-search/timewarp-nuru-search.csproj",
         "source/timewarp-nuru-devcli/timewarp-nuru-devcli.csproj"

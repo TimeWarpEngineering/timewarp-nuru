@@ -58,6 +58,8 @@ An endpoint that returns `OneOf<TSuccess, SharedProblemDetails>` is described by
 
 An endpoint class marked `[Destructive]` also has `"destructive": true` after `returnType`. Nothing infers it. Other endpoints have no `destructive` member, so their documents are unchanged.
 
+A route marked `[LocalOnly]` (endpoint class) or `.LocalOnly()` (fluent route) has `"localOnly": true` last. A served app never forwards it to its server (see [Served apps](served-apps.md)). Other routes have no `localOnly` member.
+
 ## MCP
 
 `TimeWarp.Nuru.McpHost` serves the same routes as MCP tools: `AddMcpRoute()` adds a stdio `mcp` route, and `WithNuruTools(app)` adds the tools to an existing MCP host. A tool's name is the route's literal words joined by `_`. Its input schema is built from this catalog, and `tools/call` uses the binder described below. A tool therefore takes exactly the arguments `--json-args` takes for that route and returns the text the CLI prints. See [MCP hosting](mcp-hosting.md).

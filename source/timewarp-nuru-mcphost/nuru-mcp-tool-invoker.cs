@@ -8,6 +8,9 @@
 // route execution uses process-wide service state and Environment.ExitCode (508-003), and console capture
 // swaps Console.Out/Error. RenderAsync supplies the CLI's text and exit code; a non-zero exit code
 // (problem details) is a tool error.
+// A served app (AddServeRoute(), TimeWarp.Nuru.Daemon) attaches NuruApp.RouteForwarder; a call to a route
+// that is not local-only goes to that forwarder first, so the MCP host and the CLI share one warm server.
+// The server binds the same JSON object with the same public binder and returns the same texts.
 #endregion
 
 namespace TimeWarp.Nuru.McpHost;
@@ -54,6 +57,15 @@ public sealed class NuruMcpToolInvoker
     ArgumentNullException.ThrowIfNull(endpoint);
 
     using JsonDocument argumentsDocument = ToJsonObject(arguments);
+
+    if (endpoint.LocalOnly != true && App.RouteForwarder is INuruRouteForwarder forwarder)
+    {
+      NuruForwardResult? forwarded = await forwarder
+        .ForwardAsync(App, NuruForwardRequest.ForInvoke(endpoint.Pattern, argumentsDocument.RootElement), cancellationToken)
+        .ConfigureAwait(false);
+      if (forwarded is not null)
+        return ForwardedResult(endpoint, forwarded);
+    }
 
     await CallGate.WaitAsync(cancellationToken).ConfigureAwait(false);
     try
@@ -133,6 +145,65 @@ public sealed class NuruMcpToolInvoker
       success.StructuredContent = CreateStructuredContent(endpoint, result, TrimTrailingNewLine(rendered));
 
     return success;
+  }
+
+  /// <summary>
+  /// A tool result from a call a served app's server ran: the same texts and exit code rules as a
+  /// local call. Structured content comes from the rendered text, since the CLR value stayed in the server.
+  /// </summary>
+  private CallToolResult ForwardedResult(EndpointCapability endpoint, NuruForwardResult forwarded)
+  {
+    string stdout = forwarded.Output + forwarded.RenderedOutput;
+    if (forwarded.ExitCode != 0)
+    {
+      string message = JoinNonEmpty(forwarded.ErrorOutput, stdout);
+      return ErrorResult(message.Length > 0 ? message : $"Error: '{endpoint.Pattern}' exited with code {forwarded.ExitCode.ToString(CultureInfo.InvariantCulture)}.");
+    }
+
+    CallToolResult success = new() { Content = [], IsError = false };
+
+    string text = TrimTrailingNewLine(stdout);
+    if (text.Length > 0)
+      success.Content.Add(new TextContentBlock { Text = text });
+
+    string diagnostics = TrimTrailingNewLine(forwarded.ErrorOutput);
+    if (diagnostics.Length > 0)
+      success.Content.Add(new TextContentBlock { Text = diagnostics });
+
+    if (Options.ContentFormat == NuruMcpContentFormat.Json)
+    {
+      string rendered = TrimTrailingNewLine(forwarded.RenderedOutput);
+      success.StructuredContent = CreateStructuredContent(endpoint, ParseRenderedScalar(endpoint, rendered), rendered);
+    }
+
+    return success;
+  }
+
+  /// <summary>
+  /// The scalar a forwarded call rendered, typed by the catalog's return type name: numbers and
+  /// booleans parse back to their value, everything else stays the rendered text.
+  /// </summary>
+  private static object? ParseRenderedScalar(EndpointCapability endpoint, string text)
+  {
+    if (text.Length == 0)
+      return null;
+
+    string typeName = (endpoint.ReturnType?.Name ?? "").TrimEnd('?');
+    if (typeName.StartsWith("System.", StringComparison.Ordinal))
+      typeName = typeName["System.".Length..];
+    return typeName switch
+    {
+      "bool" or "Boolean" when bool.TryParse(text, out bool value) => value,
+      "byte" or "sbyte" or "short" or "ushort" or "int" or "uint" or "long"
+        or "Byte" or "SByte" or "Int16" or "UInt16" or "Int32" or "UInt32" or "Int64"
+        when long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out long value) => value,
+      "ulong" or "UInt64" when ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong value) => value,
+      "float" or "double" or "Single" or "Double"
+        when double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value) => value,
+      "decimal" or "Decimal" when decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value) => value,
+      "string" or "String" => text,
+      _ => null
+    };
   }
 
   /// <summary>

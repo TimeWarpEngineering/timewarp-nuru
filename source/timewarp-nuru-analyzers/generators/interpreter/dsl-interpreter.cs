@@ -575,6 +575,8 @@ public sealed class DslInterpreter
 
       "AsIdempotentCommand" => DispatchAsIdempotentCommand(receiver),
 
+      "LocalOnly" => DispatchLocalOnly(receiver),
+
       "Done" => DispatchDone(invocation, receiver),
 
       "Build" => DispatchBuild(invocation, receiver),
@@ -592,6 +594,8 @@ public sealed class DslInterpreter
       "AddCheckUpdatesRoute" => DispatchAddCheckUpdatesRoute(receiver),
 
       "AddMcpRoute" => DispatchAddMcpRoute(invocation, receiver),
+
+      "AddServeRoute" => DispatchAddServeRoute(invocation, receiver),
 
       "ConfigureServices" => DispatchConfigureServices(invocation, receiver),
 
@@ -1122,18 +1126,40 @@ public sealed class DslInterpreter
         $"AddMcpRoute() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
     }
 
-    string? instructions = ExtractConstantArgument<string>(invocation, 0, "instructions");
-    string? groupFilter = ExtractConstantArgument<string>(invocation, 1, "groupFilter");
-    int contentFormat = ExtractConstantArgument<int?>(invocation, 2, "contentFormat") ?? 0;
+    string? instructions = ExtractConstantArgument<string>(invocation, 0, "instructions", "AddMcpRoute");
+    string? groupFilter = ExtractConstantArgument<string>(invocation, 1, "groupFilter", "AddMcpRoute");
+    int contentFormat = ExtractConstantArgument<int?>(invocation, 2, "contentFormat", "AddMcpRoute") ?? 0;
 
     return appBuilder.AddMcpRoute(new McpRouteModel(instructions, groupFilter, contentFormat));
   }
 
   /// <summary>
+  /// Dispatches AddServeRoute() (TimeWarp.Nuru.Daemon) to IIrAppBuilder.
+  /// Arguments are read as compile-time constants; the generated serve route and forwarding client use them.
+  /// </summary>
+  private object? DispatchAddServeRoute(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"AddServeRoute() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? socketPath = ExtractConstantArgument<string>(invocation, 0, "socketPath", "AddServeRoute");
+    int idleTimeoutSeconds = ExtractConstantArgument<int?>(invocation, 1, "idleTimeoutSeconds", "AddServeRoute") ?? DefaultServeIdleTimeoutSeconds;
+    bool autoStart = ExtractConstantArgument<bool?>(invocation, 2, "autoStart", "AddServeRoute") ?? false;
+
+    return appBuilder.AddServeRoute(new ServeRouteModel(socketPath, idleTimeoutSeconds, autoStart));
+  }
+
+  /// <summary>Default of AddServeRoute(idleTimeoutSeconds), mirrored from NuruDaemonOptions.</summary>
+  private const int DefaultServeIdleTimeoutSeconds = 600;
+
+  /// <summary>
   /// Reads a compile-time constant argument by name or position. Absent arguments and
   /// <c>null</c> return default; any other non-constant expression is an error.
   /// </summary>
-  private T? ExtractConstantArgument<T>(InvocationExpressionSyntax invocation, int index, string parameterName)
+  private T? ExtractConstantArgument<T>(InvocationExpressionSyntax invocation, int index, string parameterName, string methodName)
   {
     ArgumentSyntax? argument = ResolveArgumentAt(invocation, index, parameterName);
     if (argument is null)
@@ -1147,7 +1173,7 @@ public sealed class DslInterpreter
     if (!constant.HasValue)
     {
       throw new InvalidOperationException(
-        $"AddMcpRoute() argument '{parameterName}' must be a compile-time constant. Location: {argument.GetLocation().GetLineSpan()}");
+        $"{methodName}() argument '{parameterName}' must be a compile-time constant. Location: {argument.GetLocation().GetLineSpan()}");
     }
 
     return constant.Value switch
@@ -1156,7 +1182,7 @@ public sealed class DslInterpreter
       T value => value,
       int intValue when typeof(T) == typeof(int?) => (T)(object)intValue,
       _ => throw new InvalidOperationException(
-        $"AddMcpRoute() argument '{parameterName}' has an unexpected type. Location: {argument.GetLocation().GetLineSpan()}")
+        $"{methodName}() argument '{parameterName}' has an unexpected type. Location: {argument.GetLocation().GetLineSpan()}")
     };
   }
 
@@ -1745,6 +1771,19 @@ public sealed class DslInterpreter
     }
 
     return routeBuilder.AsIdempotentCommand();
+  }
+
+  /// <summary>
+  /// Dispatches LocalOnly() call to IIrRouteBuilder.
+  /// </summary>
+  private static object? DispatchLocalOnly(object? receiver)
+  {
+    if (receiver is not IIrRouteBuilder routeBuilder)
+    {
+      throw new InvalidOperationException("LocalOnly() must be called on a route builder.");
+    }
+
+    return routeBuilder.LocalOnly();
   }
 
   /// <summary>

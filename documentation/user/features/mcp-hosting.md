@@ -120,6 +120,7 @@ The attribute also adds `"destructive": true` to the endpoint in `--capabilities
 - If binding succeeds, the route runs through `InvokeAsync`: configuration, services, the command scope, behaviors, and the handler, the same as on the CLI. The result content is the text the CLI writes for that route. A handler exception, or a problem-details result (the CLI's non-zero exit code), returns `isError: true` with the error text.
 - A route that writes nothing, such as one returning `Unit` without printing, returns empty content.
 - Calls run one at a time, because route execution uses process-wide state, as the CLI does.
+- In a served app (`AddServeRoute()`, package `TimeWarp.Nuru.Daemon`), a call to a route that is not local-only goes to the app's running server, so the MCP host and the CLI share one warm server. The server binds the same arguments with `TryBind` and returns the same texts and errors. With `NuruMcpContentFormat.Json`, structured content then comes from the rendered text: numbers and booleans are parsed back using the catalog return type. See [Served apps](served-apps.md).
 
 With `contentFormat: NuruMcpContentFormat.Json`, a successful result also carries `structuredContent`. A `json` route that returns an object passes that object through. Any other value is wrapped as `{"result": value}`, with numbers and booleans kept as JSON numbers and booleans. A `unit` route has no structured content. Structured content comes from the route's value only: console output the handler writes stays in the text content. When a response renderer writes text that is not JSON, the result carries only the text.
 
@@ -135,3 +136,4 @@ The server instructions are the app description (`WithDescription`), then the `i
 
 - **[Agent invocation](agent-invocation.md)** - `--capabilities`, `--json-args`, and the in-process catalog and binder this package is built on
 - **[Built-in Routes](built-in-routes.md)** - `mcp` next to the other built-ins
+- **[Served apps](served-apps.md)** - forward tool calls to the app's warm local server

@@ -246,12 +246,18 @@ internal static class CapabilitiesEmitter
     sb.AppendLine("        {");
     sb.AppendLine($"          Name = \"{EmitterStringUtils.EscapeForStringLiteral(returnTypeName)}\",");
     sb.AppendLine($"          Kind = global::TimeWarp.Nuru.ReturnTypeKind.{returnTypeKind}");
-    sb.AppendLine(route.IsDestructive ? "        }," : "        }");
+    sb.AppendLine(route.IsDestructive || route.IsLocalOnly ? "        }," : "        }");
 
     // Destructive (only for [Destructive] endpoints; otherwise null and omitted from JSON)
     if (route.IsDestructive)
     {
-      sb.AppendLine("        Destructive = true");
+      sb.AppendLine(route.IsLocalOnly ? "        Destructive = true," : "        Destructive = true");
+    }
+
+    // LocalOnly (only for [LocalOnly] / .LocalOnly() routes; otherwise null and omitted from JSON)
+    if (route.IsLocalOnly)
+    {
+      sb.AppendLine("        LocalOnly = true");
     }
 
     sb.AppendLine("      });");

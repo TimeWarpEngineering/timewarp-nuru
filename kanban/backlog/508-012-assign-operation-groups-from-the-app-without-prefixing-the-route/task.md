@@ -2,6 +2,13 @@
 
 ## Description
 
+**Shelved (Steve, 2026-10-19).** The group is declared once on the contract instead:
+`[Operation(..., Group = "...")]` in TimeWarp.Contracts (timewarp-architecture task 388). TimeWarp controls
+its own contracts, and an app-side map keyed by operation name would be a second source of truth. Reopen only
+when a real consumer must group contracts it does not control; it would then layer an override on top of the
+contract group. The "group never prefixes the route" requirement moves to the Nuru follow-up that reads the
+catalog group as `groupPath`.
+
 Filed from 508-006 (Roslynk CLI finding 4).
 
 `groupPath` comes only from a base `[NuruRouteGroup]` or `[NuruCliBinding(Group = ...)]` on the request itself. The group prefix is also prepended to the route pattern (for example `symbols get_symbol`).
@@ -24,6 +31,7 @@ The extractor is `source/timewarp-nuru-analyzers/generators/extractors/operation
 ## Session
 
 - Created: 4094467 (2026-10-19)
+- 2026-10-19: shelved to backlog per Steve; superseded by timewarp-architecture 388 (contract-side group).
 
 ## Notes
 

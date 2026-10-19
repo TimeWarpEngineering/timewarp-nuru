@@ -104,6 +104,7 @@ Acceptance:
   run `dotnet build-server shutdown` before re-testing.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-19T04:04:45Z
 - Review oracle: reviewed by grok (model grok-4.7), session `01a15255-516b-7a92-8d0d-869c54c346d5`, effort 2, roster general, round 1, clean — 2026-10-19
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-19T04:17:33Z
 
 ## Results
 
@@ -176,6 +177,10 @@ Re-ran `dotnet build-server shutdown`, `ganda runfile cache --clear`, and `dotne
 Misread: `## Goal (implementer restatement)` says this walk leaves the version for a later human-gated `dev release`. The original checklist still says to release a 4.0.0 prerelease and note the version in Roslynk task 003. Task 510, already on this branch, assigns that bump and the cut to itself after 508-006 merges. The version commit on this branch sets `4.0.0-beta.2` and leaves the release item open. When this merges, 510 should treat the version as already `4.0.0-beta.2` and still do trusted publishing, `dev release`, and the Roslynk 003 note.
 
 The task body says the extractors store `ParameterName` lowercased and that the fix is a new `PropertyName` field. `ParameterBinding.ParameterName` is already `property.Name`. `OptionDefinition.ParameterName` is the lowercased route local. The restatement's outcome, emit the declared identifier, matches the emitter change and the acceptance tests.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

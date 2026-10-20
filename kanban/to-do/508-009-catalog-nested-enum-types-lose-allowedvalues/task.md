@@ -54,6 +54,12 @@ Acceptance:
   `capabilities-09-nested-enum.cs` (7 tests) fails 6/7 with the extractor fix reverted, passes 7/7
   with it. Full CI and `ganda repo audit` green. The commit-time audit flagged
   `runfile-executable` on the new test file; set its executable bit (git mode 100755).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T04:15:09Z
+- Review oracle: grok session `01a15785-3502-7ce1-a3e0-17c00c470564` (2026-10-20), effort 2, roster general, round 1, disposition clean
+
+## Learnings
+
+- The task says to key enum lookup by the semantic-model symbol. The restatement narrows that to a namespace and type walk that still keys emitters by the `FullyQualifiedFormat` display string, which is the equatable value the emit stage already stores. Catalog, `--capabilities`, `__complete`, MCP `enum`, nullable `?`, and generic-outer coverage match the original requirements. No functional misread.
 
 ## Results
 
@@ -115,3 +121,11 @@ tier `[Free, Pro, Enterprise]`), `Should_keep_allowed_values_for_nullable_nested
 `Total: 16 / Passed: 16` for McpHost, where `Should_build_input_schema_from_parameters_and_options`
 asserts `mh-tier.tier` has `type: ["string","null"]` and `enum: [Basic, Premium]`, and `size`
 has `enum: [Small, Large]`.
+
+### Review
+
+- Round 1, effort 2, roster general (grok session `01a15785-3502-7ce1-a3e0-17c00c470564`).
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count 0.
+- Disposition: **clean**. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Reviewer re-ran `dotnet run tests/timewarp-nuru-tests/capabilities/capabilities-09-nested-enum.cs` (7/7) and `dotnet run tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs` (16/16). Full CI was not re-run in this review.

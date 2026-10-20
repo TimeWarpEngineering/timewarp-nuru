@@ -13,6 +13,8 @@
 // Roslyn-hosted: the contracts library is a real emitted DLL, so the generator sees only
 // metadata symbols (no initializer syntax, no private members). Each case also checks that the
 // generated code compiles, which catches an inaccessible type or member in the emitted code.
+// One case references the library as a CompilationReference, the IDE project-reference shape,
+// where symbols carry syntax from another compilation.
 #endregion
 
 #if !JARIBU_MULTI
@@ -87,6 +89,18 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen59ReferencedOperationEndpoints
           Task.FromResult(query.Name);
       }
 
+      [Operation("ref-note")]
+      public sealed record RefNoteQuery(string Title) : IQuery<string>
+      {
+        public RefNoteQuery() : this("untitled") { }
+      }
+
+      public sealed class RefNoteHandler : IQueryHandler<RefNoteQuery, string>
+      {
+        public Task<string> Handle(RefNoteQuery query, CancellationToken cancellationToken) =>
+          Task.FromResult(query.Title);
+      }
+
       [Operation("ref-internal")]
       internal sealed class RefInternalQuery : IQuery<string>
       {
@@ -108,6 +122,9 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen59ReferencedOperationEndpoints
       """;
 
     private static readonly Lazy<MetadataReference> LibraryReference = new(() => EmitLibrary(Library, "RefContractsLib"));
+
+    private static readonly Lazy<MetadataReference> LibraryCompilationReference =
+      new(() => CompileLibrary(Library, "RefContractsLib").ToMetadataReference());
 
     public static async Task Should_extract_a_referenced_operation_mapped_with_map_of_t()
     {
@@ -208,6 +225,56 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen59ReferencedOperationEndpoints
       output.Diagnostics.Any(static d => d.Id == "NURU_H008").ShouldBeTrue();
       await Task.CompletedTask;
     }
+
+    /// <summary>
+    /// A record parameter with no default is required only when the generated code calls its
+    /// constructor. With a parameterless constructor the member is optional and the chained
+    /// constructor's value stands.
+    /// </summary>
+    public static async Task Should_require_a_record_parameter_only_on_the_called_constructor()
+    {
+      Output record = Generate(MapApp("RefRecordQuery"));
+
+      record.Errors.ShouldBeEmpty();
+      record.Generated.ShouldContain("ref-record --Name {name} [--Count {count}]");
+      record.Generated.ShouldContain("Missing required value 'Name'");
+
+      foreach (Output note in new[] { Generate(MapApp("RefNoteQuery")), Generate(MapApp("RefNoteQuery"), LibraryCompilationReference.Value) })
+      {
+        note.Errors.ShouldBeEmpty();
+        note.Generated.ShouldContain("ref-note [--Title {title}]");
+        note.Generated.ShouldContain("__commandDefaults.Title");
+        note.Generated.ShouldNotContain("Missing required value 'Title'");
+      }
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// An IDE project reference is a CompilationReference: attribute syntax exists but belongs to
+    /// another compilation. Diagnostics use the Map&lt;T&gt;() call, and the generator does not throw.
+    /// </summary>
+    public static async Task Should_report_at_the_map_call_for_a_compilation_reference()
+    {
+      Output output = Generate(MapApp("RefHiddenHandlerQuery"), LibraryCompilationReference.Value);
+
+      output.Errors.ShouldBeEmpty();
+      output.Generated.ShouldContain("\"ref-hidden\"");
+      Diagnostic h008 = output.Diagnostics.Single(static d => d.Id == "NURU_H008");
+      h008.Location.SourceTree?.FilePath.ShouldBe("app.cs");
+      await Task.CompletedTask;
+    }
+
+    private static string MapApp(string typeName) => $$"""
+      using TimeWarp.Nuru;
+      using RefContracts;
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .Map<{{typeName}}>()
+        .Build();
+
+      return await app.RunAsync(args);
+      """;
 
     public static async Task Should_discover_a_named_assembly_with_discover_endpoints()
     {
@@ -315,11 +382,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen59ReferencedOperationEndpoints
 
     private sealed record Output(string Generated, ImmutableArray<Diagnostic> Diagnostics, string[] Errors);
 
-    private static Output Generate(string app)
+    private static Output Generate(string app, MetadataReference? library = null)
     {
       SyntaxTree tree = CSharpSyntaxTree.ParseText(app, path: "app.cs");
       List<MetadataReference> references = BuildReferences();
-      references.Add(LibraryReference.Value);
+      references.Add(library ?? LibraryReference.Value);
 
       CSharpCompilation compilation = CSharpCompilation.Create(
         assemblyName: "Gen59App",
@@ -348,27 +415,34 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen59ReferencedOperationEndpoints
       return new Output(generated, generatorDiagnostics, errors);
     }
 
-    private static List<MetadataReference> BuildReferences()
+    // One shared set, so a CompilationReference library binds to the same framework assemblies
+    // as the app instead of being retargeted.
+    private static readonly Lazy<ImmutableArray<MetadataReference>> PlatformReferences = new(static () =>
     {
       string tpa = (string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!;
-      List<MetadataReference> references = [];
-      foreach (string path in tpa.Split(Path.PathSeparator))
-      {
-        if (path.Length > 0)
-          references.Add(MetadataReference.CreateFromFile(path));
-      }
+      return
+      [
+        .. tpa.Split(Path.PathSeparator)
+          .Where(static path => path.Length > 0)
+          .Select(static path => (MetadataReference)MetadataReference.CreateFromFile(path))
+      ];
+    });
 
-      return references;
-    }
+    private static List<MetadataReference> BuildReferences() => [.. PlatformReferences.Value];
 
-    private static PortableExecutableReference EmitLibrary(string source, string assemblyName)
+    private static CSharpCompilation CompileLibrary(string source, string assemblyName)
     {
       SyntaxTree tree = CSharpSyntaxTree.ParseText(source, path: assemblyName + ".cs");
-      CSharpCompilation compilation = CSharpCompilation.Create(
+      return CSharpCompilation.Create(
         assemblyName: assemblyName,
         syntaxTrees: [tree],
         references: BuildReferences(),
         options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
+    }
+
+    private static PortableExecutableReference EmitLibrary(string source, string assemblyName)
+    {
+      CSharpCompilation compilation = CompileLibrary(source, assemblyName);
 
       using MemoryStream stream = new();
       EmitResult emitResult = compilation.Emit(stream);

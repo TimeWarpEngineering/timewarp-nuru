@@ -67,6 +67,14 @@ Acceptance criteria:
   The sample still runs, and the audit is 30/30.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T17:49:10Z
 - 2026-10-21 reviewer grok session `01a15a6e-77a8-7502-85fc-a9aae6c58c66` (effort 3, roster general): round 1, open findings M1 and M2. See `review/round-1/merged.md`.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-20T18:04:41Z
+- 2026-10-21 implementer-claude fix pass (implement-fix-2, headless): fixed round 1 M1 and M2,
+  with tests. CI and `ganda repo audit` are green. Nothing needed an audit fix.
+
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Fix pass for round 1 (implement-fix-2, 2026-10-21): M1 and M2 fixed. Round 2 review is next.
 
 ## Notes
 
@@ -127,6 +135,32 @@ Today's workaround is linked sources in the CLI project.
 - `dotnet run tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode 2056 tests; standalone 34 files, 0 failed.
 - `dotnet build timewarp-nuru.slnx`: 0 warnings, 0 errors.
 
+### Round 1 fixes
+
+- **M1** (`operation-endpoint-extractor.cs` `AttributeLocation`): an attribute's syntax is used as
+  the diagnostic location only when `compilation.ContainsSyntaxTree` holds. Otherwise the location
+  is the opt-in site. Before the fix, a CompilationReference (IDE project reference) endpoint that
+  reported NURU_H008/H009 or a route-pattern diagnostic made the generator throw "Reported
+  diagnostic ... has a source location in file ... which is not part of the compilation".
+- **M2** (`endpoint-extractor.cs` `MetadataPropertyDefault`): a record constructor parameter counts
+  only on the constructor the generated code calls. `CallableParameterlessConstructor` returns the
+  constructor `new()` binds to: a zero-parameter constructor first, then an all-optional one.
+  When that constructor exists, only its explicit parameter defaults are copied. Every other member
+  is `default!` plus `[DefaultValue]`, so the chained constructor's value stands. Without it, a
+  parameter with no default is a required argument, and an explicit default is copied.
+  `HasCallableParameterlessConstructor` now delegates to the new helper.
+- Tests, in generator-59 (now 9 tests):
+  - `Should_require_a_record_parameter_only_on_the_called_constructor`: `RefRecordQuery(string Name, int Count = 7)`
+    keeps `--Name` required. `RefNoteQuery(string Title)` with `public RefNoteQuery() : this("untitled")`
+    gives an optional `[--Title {title}]` that falls back to `__commandDefaults.Title`. The second case runs with both a DLL reference and a CompilationReference.
+  - `Should_report_at_the_map_call_for_a_compilation_reference`: NURU_H008 is in `app.cs`, and the generator exception is null.
+    Mutation check: with the `ContainsSyntaxTree` guard removed, this test fails with the
+    reviewer's ArgumentException.
+  - The harness now shares one set of platform references. Before, each compilation created its own,
+    so the CompilationReference library was retargeted and its attributes lost their syntax, which hid M1.
+- `dotnet run tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode has 2056 tests (2050 passed,
+  6 skipped). Standalone has 0 failed. `ganda repo audit`: all checks pass.
+
 ### Limits
 
 - Metadata cannot show a non-`required` member's initializer. Such a member is optional, and
@@ -157,7 +191,7 @@ Expect:
 - `{"count":2,"total":5}`.
 - `--capabilities` lists `greet` and `sum`, which are declared only in `contracts/`. `Name` has
   `"required": true`, and `Greeting` has `"defaultValue": "Hello"`.
-- generator-59: 7/7 pass. generator-60: 3/3 pass.
+- generator-59: 9/9 pass. generator-60: 3/3 pass.
 - Remove `[assembly: NuruEndpointAssembly(...)]` from `referenced-contracts.cs`, and `greet`
   becomes `Unknown command`.
 

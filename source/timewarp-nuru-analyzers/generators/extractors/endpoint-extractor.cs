@@ -12,7 +12,8 @@
 // source generator. They are filtered per-app via FilterEndpointsForApp() during emission.
 // .DiscoverEndpoints() includes ALL endpoints; .Map<T>() includes only that type.
 // Extraction runs on the type symbol, so a referenced-assembly type (ReferencedEndpointLocator)
-// goes through the same code. A diagnostic with no attribute syntax uses the opt-in site.
+// goes through the same code. A diagnostic whose attribute syntax is not in this compilation
+// (metadata, or an IDE project reference) uses the opt-in site.
 //
 // ALIAS GENERATION: ExtractAndCombineAliases builds full alias strings that completely replace
 // groupPrefix + pattern. For group aliases, the alias replaces one GROUP's entire prefix (which
@@ -128,7 +129,7 @@ internal static partial class EndpointExtractor
     CancellationToken cancellationToken
   )
   {
-    RouteIdentity identity = ResolveRouteIdentity(classSymbol, fallbackLocation);
+    RouteIdentity identity = ResolveRouteIdentity(classSymbol, compilation, fallbackLocation);
     if (!identity.HasNuruRoute && !identity.HasOperation)
       return EndpointExtractionResult.Empty;
 
@@ -1143,7 +1144,7 @@ internal static partial class EndpointExtractor
     if (syntaxReferences.Length == 0
         || compilation?.ContainsSyntaxTree(syntaxReferences[0].SyntaxTree) == false)
     {
-      return MetadataPropertyDefault(property);
+      return MetadataPropertyDefault(property, compilation);
     }
 
     // A positional record property is declared by its primary-constructor parameter.
@@ -1235,20 +1236,33 @@ internal static partial class EndpointExtractor
 
   /// <summary>
   /// Default for a property with no initializer syntax, as in a referenced assembly.
-  /// A positional record parameter default is real code, so it is copied.
-  /// Otherwise the initializer cannot be seen: the object initializer leaves the member out
-  /// (default!) so the compiled initializer runs, and a [DefaultValue] only feeds capabilities.
+  /// A record constructor parameter counts only on the constructor the generated code calls.
+  /// An explicit parameter default is real code, so it is copied. A parameter with no default
+  /// on that constructor is a required argument. Otherwise the initializer cannot be seen: the
+  /// object initializer leaves the member out (default!) so the compiled initializer runs, and
+  /// a [DefaultValue] only feeds capabilities.
   /// </summary>
-  private static PropertyDefault MetadataPropertyDefault(IPropertySymbol property)
+  private static PropertyDefault MetadataPropertyDefault(IPropertySymbol property, Compilation? compilation)
   {
     if (property.ContainingType is { IsRecord: true } record)
     {
+      IMethodSymbol? parameterless = compilation is null ? null : CallableParameterlessConstructor(compilation, record);
       foreach (IMethodSymbol constructor in record.InstanceConstructors)
       {
+        if (parameterless is not null && !SymbolEqualityComparer.Default.Equals(constructor, parameterless))
+          continue;
+
+        if (compilation is not null && !IsAccessibleConstructor(compilation, constructor))
+          continue;
+
+        if (IsCopyConstructor(record, constructor))
+          continue;
+
         foreach (IParameterSymbol parameter in constructor.Parameters)
         {
           if (parameter.Name == property.Name
-              && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type))
+              && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type)
+              && (parameter.HasExplicitDefaultValue || parameterless is null))
           {
             return ParameterDefault(parameter, property.Type);
           }

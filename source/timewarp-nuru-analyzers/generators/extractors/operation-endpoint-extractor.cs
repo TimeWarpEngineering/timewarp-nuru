@@ -60,7 +60,7 @@ internal static partial class EndpointExtractor
   /// Reads [NuruRoute] and [Operation] by metadata name.
   /// A [NuruRoute] pattern and description override the operation when both are present.
   /// </summary>
-  private static RouteIdentity ResolveRouteIdentity(INamedTypeSymbol classSymbol, Location fallbackLocation)
+  private static RouteIdentity ResolveRouteIdentity(INamedTypeSymbol classSymbol, Compilation compilation, Location fallbackLocation)
   {
     string? routePattern = null;
     string? routeDescription = null;
@@ -80,7 +80,7 @@ internal static partial class EndpointExtractor
         if (attribute.ConstructorArguments.Length > 0)
           routePattern = attribute.ConstructorArguments[0].Value as string;
         routeDescription = NamedString(attribute, "Description");
-        routeLocation = AttributeLocation(attribute, fallbackLocation);
+        routeLocation = AttributeLocation(attribute, compilation, fallbackLocation);
       }
       else if (IsMetadataAttribute(attribute, OperationAttributeMetadataName))
       {
@@ -89,7 +89,7 @@ internal static partial class EndpointExtractor
           operationName = attribute.ConstructorArguments[0].Value as string;
         operationDescription = NamedString(attribute, "Description");
         operationGroup = NamedString(attribute, "Group");
-        operationLocation = AttributeLocation(attribute, fallbackLocation);
+        operationLocation = AttributeLocation(attribute, compilation, fallbackLocation);
       }
     }
 
@@ -821,9 +821,29 @@ internal static partial class EndpointExtractor
 
   // new() compiles when every parameter is optional or params, so that counts as parameterless.
   private static bool HasCallableParameterlessConstructor(Compilation compilation, INamedTypeSymbol type) =>
-    type.InstanceConstructors.Any(constructor =>
-      IsAccessibleConstructor(compilation, constructor)
-      && constructor.Parameters.All(parameter => parameter.IsOptional || parameter.IsParams));
+    CallableParameterlessConstructor(compilation, type) is not null;
+
+  /// <summary>
+  /// The constructor new() binds to: a zero-parameter constructor first, then one whose
+  /// parameters are all optional or params. Null when new() does not compile.
+  /// </summary>
+  private static IMethodSymbol? CallableParameterlessConstructor(Compilation compilation, INamedTypeSymbol type)
+  {
+    IMethodSymbol? optional = null;
+    foreach (IMethodSymbol constructor in type.InstanceConstructors)
+    {
+      if (!IsAccessibleConstructor(compilation, constructor))
+        continue;
+
+      if (constructor.Parameters.Length == 0)
+        return constructor;
+
+      if (constructor.Parameters.All(static parameter => parameter.IsOptional || parameter.IsParams))
+        optional ??= constructor;
+    }
+
+    return optional;
+  }
 
   private static bool IsCopyConstructor(INamedTypeSymbol type, IMethodSymbol constructor) =>
     constructor.Parameters.Length == 1
@@ -1012,10 +1032,15 @@ internal static partial class EndpointExtractor
     return null;
   }
 
-  private static Location AttributeLocation(AttributeData attribute, Location fallback)
+  /// <summary>
+  /// The attribute's location, or <paramref name="fallback"/> when its syntax is not in
+  /// <paramref name="compilation"/>. A metadata reference has no syntax, and an IDE project
+  /// reference has syntax from another compilation, which a reported diagnostic cannot use.
+  /// </summary>
+  private static Location AttributeLocation(AttributeData attribute, Compilation compilation, Location fallback)
   {
     SyntaxReference? reference = attribute.ApplicationSyntaxReference;
-    if (reference is null)
+    if (reference is null || !compilation.ContainsSyntaxTree(reference.SyntaxTree))
       return fallback;
 
     return reference.GetSyntax().GetLocation();

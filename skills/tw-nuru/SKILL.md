@@ -58,6 +58,7 @@ return await app.RunAsync(args);
 ```
 
 `DiscoverEndpoints()` auto-discovers all classes with `[NuruRoute]`.
+Endpoints in a referenced contracts assembly are discovered only after an opt-in: `[assembly: NuruEndpointAssembly(typeof(AnyTypeInIt))]`, or `Map<T>()` for one type. Do not link contract files into the CLI as sources. See `documentation/user/features/neutral-contracts.md`.
 `.AddRepl()` enables interactive REPL mode. `AutoStartWhenEmpty = true` starts REPL when no args provided.
 
 ### Commands, Queries, and Idempotent Commands

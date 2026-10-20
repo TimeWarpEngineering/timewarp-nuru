@@ -1404,7 +1404,7 @@ internal static class InterceptorEmitter
       return
       [
         .. allEndpoints
-          .Where(e => MatchesFilterGroupType(e, app.FilterGroupTypeNames))
+          .Where(e => !e.IsExplicitOnly && MatchesFilterGroupType(e, app.FilterGroupTypeNames))
           .Select(e => StripGroupPrefixAboveMatchedType(e, app.FilterGroupTypeNames))
       ];
     }
@@ -1426,8 +1426,9 @@ internal static class InterceptorEmitter
     }
 
     // Priority 3: DiscoverEndpoints() without filters - include all endpoints
+    // A referenced endpoint found only through Map<T>() belongs to the app that maps it.
     if (app.DiscoverEndpoints)
-      return allEndpoints;
+      return [.. allEndpoints.Where(static e => !e.IsExplicitOnly)];
 
     // Default: no endpoints (test isolation)
     return [];

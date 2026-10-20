@@ -33,6 +33,36 @@ calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":
 
 Names inside that JSON value are the property identifiers as declared, matched ignoring case, so `{"label":...}` and `{"Label":...}` both bind `Label`. The top-level `--json-args` keys still match exactly. Nuru does not rewrite names to camelCase. The deserializer is source-generated, so a published AOT app does not use reflection. For an enum inside a JSON value, use `[JsonConverter(typeof(JsonStringEnumConverter<TEnum>))]`. The non-generic `JsonStringEnumConverter` needs runtime code generation, and the generated context reports SYSLIB1034 for it.
 
+## Contracts in a referenced assembly
+
+The generator finds endpoint types in the compiling project's source. A CLI can also take its endpoints from a referenced contracts assembly, so it does not need the request files linked in as sources. Referencing an assembly adds no commands on its own. Opt in one of two ways:
+
+```csharp
+using Calculator.Contracts;
+using TimeWarp.Nuru;
+
+// Every public [Operation] and [NuruRoute] type in AddQuery's assembly joins discovery,
+// exactly like a type declared in this project.
+[assembly: NuruEndpointAssembly(typeof(AddQuery))]
+
+NuruApp app = NuruApp.CreateBuilder()
+  .DiscoverEndpoints()
+  .Build();
+```
+
+- `[assembly: NuruEndpointAssembly(typeof(AnyTypeInTheAssembly))]` adds every endpoint type in that assembly to the discovery pool. `DiscoverEndpoints()`, `DiscoverEndpoints(typeof(SomeGroup))`, and `Map<T>()` then see them. Repeat the attribute for several assemblies.
+- `Map<T>()` on an endpoint type from a referenced assembly adds that one endpoint, without the attribute. It belongs to the app that maps it: another app's `DiscoverEndpoints()` in the same project does not pick it up.
+
+A referenced type follows the same rules as a source type, with these differences:
+
+- **Visibility.** The type must be a public class or record class that this project can name. An internal type counts only through `[InternalsVisibleTo]`. A nested `Handler` that this project cannot see, such as an `internal` one, is ignored; the endpoint then needs a registered handler, and NURU_H008 applies.
+- **Defaults.** An assembly has no property initializer syntax, so Nuru cannot read `= "Hello"`. An omitted option leaves the member out of the object initializer, and the initializer compiled into the contract runs. `--capabilities` shows a default only when the member has `[System.ComponentModel.DefaultValue(...)]`. Keep that attribute in step with the initializer; the initializer is what runs. A `bool` with `[DefaultValue(true)]` is a value option, not a flag. A positional record's parameter default is in metadata and works as it does in source.
+- **Required members.** Mark a member the caller must supply `required`. A non-nullable member without `required` is optional, because metadata cannot show whether it has an initializer. Nullability is read from metadata as usual.
+- **Handlers.** With a generated mediator, the CLI dispatches through TimeWarp.Mediator, which registers handlers only from mediator graph members. Put `[assembly: TimeWarp.Mediator.MediatorAssembly]` in the contracts assembly, or dispatch throws `NoHandlerException`. A public nested `Handler` is also called directly under `UseDirectInvoke()` or when no generated mediator exists.
+- **JSON.** The `TimeWarp.Nuru.Build` task registers the response and JSON member types of referenced endpoints in the generated JSON context, using the same two opt-ins.
+
+The sample `samples/endpoints/17-referenced-contracts/` is a CLI whose endpoints all live in `contracts/`.
+
 ## Tool hints
 
 A contract says how a harness should treat its operation with attributes on the request class. The MCP host turns them into tool annotations, and `--capabilities` carries them for CLI agents:

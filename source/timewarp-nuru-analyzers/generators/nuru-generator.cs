@@ -4,7 +4,8 @@
 // Pipeline:
 //   1. Locate Build() call sites → each Build() is one unique app
 //   2. For each Build(), extract AppModel with all entry points (RunAsync, RunReplAsync)
-//   3. Locate [NuruRoute] classes → RouteDefinition
+//   3. Locate [NuruRoute] and [Operation] classes → RouteDefinition, plus opt-in
+//      referenced-assembly endpoints ([assembly: NuruEndpointAssembly], Map<T>())
 //   4. Collect route locations for error reporting
 //   5. Validate the combined model (fluent + endpoints)
 //   6. Report diagnostics and emit generated interceptor code
@@ -57,9 +58,32 @@ public sealed class NuruGenerator : IIncrementalGenerator
         transform: static (ctx, ct) => HasNuruRouteAttribute(ctx) ? null : ExtractEndpointWithLocation(ctx, ct))
       .Where(static result => result is not null);
 
+    // 2b. Endpoints in referenced assemblies, opt-in only (ReferencedEndpointLocator).
+    // [assembly: NuruEndpointAssembly(typeof(X))] adds every endpoint type in X's assembly.
+    IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> assemblyEndpoints = context.SyntaxProvider
+      .ForAttributeWithMetadataName(
+        ReferencedEndpointLocator.AssemblyAttributeMetadataName,
+        predicate: static (node, _) => node is CompilationUnitSyntax,
+        transform: static (ctx, ct) => ExtractAssemblyEndpoints(ctx, ct))
+      .SelectMany(static (endpoints, _) => endpoints)
+      .Where(static result => result is not null);
+
+    // Map<T>() on a referenced-assembly endpoint type adds that endpoint to the mapping app only.
+    IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> mappedReferencedEndpoints = context.SyntaxProvider
+      .CreateSyntaxProvider(
+        predicate: static (node, _) => ReferencedEndpointLocator.IsGenericMapCall(node),
+        transform: static (ctx, ct) => ExtractMappedReferencedEndpoint(ctx, ct))
+      .Where(static result => result is not null);
+
+    // Order matters: DistinctBy in CreateGeneratorModelWithValidation keeps the first route per
+    // type, so a type both discovered and mapped stays discoverable.
     IncrementalValuesProvider<EndpointWithLocationAndDiagnostics?> endpointsWithDiagnostics = routeEndpoints
       .Collect()
       .Combine(operationEndpoints.Collect())
+      .Select(static (pair, _) => pair.Left.AddRange(pair.Right))
+      .Combine(assemblyEndpoints.Collect())
+      .Select(static (pair, _) => pair.Left.AddRange(pair.Right))
+      .Combine(mappedReferencedEndpoints.Collect())
       .Select(static (pair, _) => pair.Left.AddRange(pair.Right))
       .SelectMany(static (endpoints, _) => endpoints);
 
@@ -394,6 +418,76 @@ public sealed class NuruGenerator : IIncrementalGenerator
   }
 
   /// <summary>
+  /// Extracts every endpoint type in the assemblies an <c>[assembly: NuruEndpointAssembly]</c> names.
+  /// </summary>
+  private static ImmutableArray<EndpointWithLocationAndDiagnostics?> ExtractAssemblyEndpoints
+  (
+    GeneratorAttributeSyntaxContext context,
+    CancellationToken cancellationToken
+  )
+  {
+    Compilation compilation = context.SemanticModel.Compilation;
+    ImmutableArray<EndpointWithLocationAndDiagnostics?>.Builder endpoints =
+      ImmutableArray.CreateBuilder<EndpointWithLocationAndDiagnostics?>();
+
+    foreach ((INamedTypeSymbol type, Location location) in
+             ReferencedEndpointLocator.FromAssemblyAttributes(compilation, context.Attributes, cancellationToken))
+    {
+      endpoints.Add(ExtractReferencedEndpoint(type, compilation, location, isExplicitOnly: false, cancellationToken));
+    }
+
+    return endpoints.ToImmutable();
+  }
+
+  /// <summary>
+  /// Extracts the referenced-assembly endpoint type of a <c>Map&lt;T&gt;()</c> call.
+  /// </summary>
+  private static EndpointWithLocationAndDiagnostics? ExtractMappedReferencedEndpoint
+  (
+    GeneratorSyntaxContext context,
+    CancellationToken cancellationToken
+  )
+  {
+    if (context.Node is not InvocationExpressionSyntax invocation)
+      return null;
+
+    INamedTypeSymbol? type = ReferencedEndpointLocator.MapTypeArgument(invocation, context.SemanticModel, cancellationToken);
+    if (type is null)
+      return null;
+
+    return ExtractReferencedEndpoint(
+      type,
+      context.SemanticModel.Compilation,
+      invocation.GetLocation(),
+      isExplicitOnly: true,
+      cancellationToken);
+  }
+
+  /// <summary>
+  /// Extracts a referenced-assembly endpoint type. Diagnostics point at the opt-in site.
+  /// </summary>
+  private static EndpointWithLocationAndDiagnostics? ExtractReferencedEndpoint
+  (
+    INamedTypeSymbol type,
+    Compilation compilation,
+    Location location,
+    bool isExplicitOnly,
+    CancellationToken cancellationToken
+  )
+  {
+    EndpointExtractionResult result = EndpointExtractor.Extract(type, compilation, location, cancellationToken);
+    if (result.Route is null)
+    {
+      return result.HasDiagnostics
+        ? new EndpointWithLocationAndDiagnostics(null, location, null, result.Diagnostics)
+        : null;
+    }
+
+    RouteDefinition route = result.Route with { IsExplicitOnly = isExplicitOnly };
+    return new EndpointWithLocationAndDiagnostics(route.EffectivePattern, location, route, result.Diagnostics);
+  }
+
+  /// <summary>
   /// Creates a GeneratorModel from all AppModels, validates the combined model,
   /// and returns both the model and any diagnostics.
   /// </summary>
@@ -523,7 +617,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       return
       [
         .. allEndpoints
-          .Where(e => MatchesFilterGroupType(e, app.FilterGroupTypeNames))
+          .Where(e => !e.IsExplicitOnly && MatchesFilterGroupType(e, app.FilterGroupTypeNames))
           .Select(e => StripGroupPrefixAboveMatchedType(e, app.FilterGroupTypeNames))
       ];
     }
@@ -545,8 +639,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
     }
 
     // Priority 3: DiscoverEndpoints() without filters - include all endpoints
+    // A referenced endpoint found only through Map<T>() belongs to the app that maps it.
     if (app.DiscoverEndpoints)
-      return allEndpoints;
+      return [.. allEndpoints.Where(static e => !e.IsExplicitOnly)];
 
     // Default: no endpoints (test isolation)
     return [];

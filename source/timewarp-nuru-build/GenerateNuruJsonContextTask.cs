@@ -152,6 +152,9 @@ public class GenerateNuruJsonContextTask : Task
       ExtractFromEndpoints(root, semanticModel, jsonTypes, jsonMemberTypes, cancellationToken);
     }
 
+    // 4c. Endpoints in referenced assemblies: [assembly: NuruEndpointAssembly] and Map<T>()
+    ExtractFromReferencedEndpoints(compilation, syntaxTrees, jsonTypes, jsonMemberTypes, cancellationToken);
+
     // 5. If no types need JSON serialization, skip generation
     if (jsonTypes.Count == 0 && jsonMemberTypes.Count == 0)
     {
@@ -273,23 +276,69 @@ public class GenerateNuruJsonContextTask : Task
       {
         EndpointExtractionResult result = EndpointExtractor.Extract(classDecl, semanticModel, cancellationToken);
         if (result.Route is not null)
-        {
-          RouteDefinition route = result.Route;
-          string? returnTypeName = GetEndpointJsonTypeName(route.Handler);
-          if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
-          {
-            jsonTypes.Add(returnTypeName);
-            Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from endpoint: {returnTypeName}");
-          }
-
-          AddJsonMemberTypes(route, jsonMemberTypes);
-        }
+          AddEndpointJsonTypes(result.Route, jsonTypes, jsonMemberTypes);
       }
       catch (Exception ex)
       {
         Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to extract endpoint from {classDecl.Identifier}: {ex.Message}");
       }
     }
+  }
+
+  /// <summary>
+  /// Extracts endpoint types that live in referenced assemblies, using the generator's opt-in rules:
+  /// every endpoint in an assembly that <c>[assembly: NuruEndpointAssembly]</c> names, and the type
+  /// argument of each <c>Map&lt;T&gt;()</c> that is a referenced endpoint type.
+  /// </summary>
+  private void ExtractFromReferencedEndpoints(
+    CSharpCompilation compilation,
+    List<SyntaxTree> syntaxTrees,
+    HashSet<string> jsonTypes,
+    HashSet<string> jsonMemberTypes,
+    CancellationToken cancellationToken)
+  {
+    HashSet<INamedTypeSymbol> types = new(SymbolEqualityComparer.Default);
+    foreach ((INamedTypeSymbol type, Location _) in ReferencedEndpointLocator.FromAssemblyAttributes(compilation, cancellationToken))
+      types.Add(type);
+
+    foreach (SyntaxTree tree in syntaxTrees)
+    {
+      SemanticModel semanticModel = compilation.GetSemanticModel(tree);
+      foreach (InvocationExpressionSyntax invocation in tree.GetRoot(cancellationToken).DescendantNodes().OfType<InvocationExpressionSyntax>())
+      {
+        if (ReferencedEndpointLocator.MapTypeArgument(invocation, semanticModel, cancellationToken) is INamedTypeSymbol type)
+          types.Add(type);
+      }
+    }
+
+    foreach (INamedTypeSymbol type in types)
+    {
+      try
+      {
+        EndpointExtractionResult result = EndpointExtractor.Extract(type, compilation, Location.None, cancellationToken);
+        if (result.Route is not null)
+          AddEndpointJsonTypes(result.Route, jsonTypes, jsonMemberTypes);
+      }
+      catch (Exception ex)
+      {
+        Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to extract referenced endpoint {type.Name}: {ex.Message}");
+      }
+    }
+  }
+
+  /// <summary>
+  /// Registers an endpoint's JSON response type and JSON member types.
+  /// </summary>
+  private void AddEndpointJsonTypes(RouteDefinition route, HashSet<string> jsonTypes, HashSet<string> jsonMemberTypes)
+  {
+    string? returnTypeName = GetEndpointJsonTypeName(route.Handler);
+    if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
+    {
+      jsonTypes.Add(returnTypeName);
+      Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from endpoint: {returnTypeName}");
+    }
+
+    AddJsonMemberTypes(route, jsonMemberTypes);
   }
 
   /// <summary>

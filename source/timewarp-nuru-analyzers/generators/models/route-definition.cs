@@ -39,6 +39,10 @@ using System.Text;
 /// </param>
 /// <param name="OpenWorld">The endpoint class's <c>[OpenWorld]</c> value, or null without it.</param>
 /// <param name="Title">The endpoint class's <c>[DisplayName]</c> text, or null without it.</param>
+/// <param name="IsExplicitOnly">
+/// True for a referenced-assembly endpoint found only through <c>Map&lt;T&gt;()</c>. Only an app
+/// that maps it gets it; <c>DiscoverEndpoints()</c> does not.
+/// </param>
 public sealed record RouteDefinition(
   string OriginalPattern,
   EquatableArray<SegmentDefinition> Segments,
@@ -58,7 +62,8 @@ public sealed record RouteDefinition(
   EquatableArray<string> GroupPath = default,
   bool IsExclusive = false,
   bool? OpenWorld = null,
-  string? Title = null)
+  string? Title = null,
+  bool IsExplicitOnly = false)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.

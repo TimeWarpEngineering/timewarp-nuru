@@ -26,6 +26,8 @@ builder.Services.AddMcpServer()
 app.MapMcp();
 ```
 
+Tool calls run concurrently, each with its own output, exit code and service scope; `notifications/cancelled` cancels only that call. Mark a handler that is not thread-safe `[Exclusive]`, or set `NuruMcpHostOptions.ExclusiveCalls`.
+
 See [MCP hosting](https://github.com/TimeWarpEngineering/timewarp-nuru/blob/master/documentation/user/features/mcp-hosting.md).
 
 Not to be confused with `TimeWarp.Nuru.Mcp`, the frozen dev-assist server, or `TimeWarp.Nuru.McpBridge` (task 507), which goes the other way and maps MCP tool methods to Nuru routes.

@@ -125,6 +125,9 @@
     <Compile
       Include="../timewarp-nuru-daemon-tests/**/*.cs"
       Exclude="../timewarp-nuru-daemon-tests/**/obj/**;../timewarp-nuru-daemon-tests/**/bin/**" />
+    <!-- Concurrency test helpers (task 508-016): the routing, daemon and McpHost runfiles compile them
+         through their own Directory.Build.props; the multi-mode assembly needs them once. -->
+    <Compile Include="../shared/call-probes.cs" />
     <!-- MCP server tests -->
     <!-- mcp-02: GetSyntaxTool's default (endpoint) path asserts MCP:endpoint-* regions
          that exist nowhere — only the fluent syntax file is embedded. Product bug tracked

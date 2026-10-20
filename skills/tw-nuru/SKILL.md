@@ -343,6 +343,8 @@ public sealed class Handler : ICommandHandler<DeployCommand, Unit>
 
 **Common mistake**: returning `int` thinking it sets the exit code. `.WithHandler(() => 42)` outputs `"42"` to the terminal but the exit code is still 0.
 
+**Served apps and MCP hosts** (`TimeWarp.Nuru.Daemon`, `TimeWarp.Nuru.McpHost`) run calls concurrently, so `Environment.ExitCode` and `Environment.CurrentDirectory` are not per call. Set `NuruCallContext.CurrentExitCode` (or return `OneOf<T, SharedProblemDetails>`) and resolve paths with `NuruCallContext.GetFullPath(path)`; both also work in a plain CLI run. Mark a handler that is not thread-safe `[Exclusive]` / `.Exclusive()`.
+
 ## REPL Mode
 
 Add interactive REPL to any Nuru app with `.AddRepl()`:

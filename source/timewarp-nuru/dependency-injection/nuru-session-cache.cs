@@ -3,12 +3,18 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Holds <c>AddSessionScoped</c> instances for the current REPL session or single CLI invocation.
 /// Registered as a singleton. <see cref="ResetAsync"/> disposes those instances without disposing
-/// process-wide singletons.
+/// process-wide singletons. Inside a <see cref="NuruCallContext"/> (a daemon or MCP host call) each call is
+/// its own session, so concurrent calls never share instances.
 /// </summary>
 public sealed class NuruSessionCache : IDisposable, IAsyncDisposable
 {
-  private readonly Dictionary<Type, object> Instances = [];
-  private readonly List<object> CreationOrder = [];
+  private readonly SessionState SharedState = new();
+
+  private SessionState State => NuruCallContext.Current?.GetState(this, static () => new SessionState()) ?? SharedState;
+
+  private Dictionary<Type, object> Instances => State.Instances;
+
+  private List<object> CreationOrder => State.CreationOrder;
 
   /// <summary>
   /// Creates the session cache bound to the root provider.
@@ -90,4 +96,10 @@ public sealed class NuruSessionCache : IDisposable, IAsyncDisposable
 
   /// <inheritdoc />
   public ValueTask DisposeAsync() => ResetAsync();
+
+  private sealed class SessionState
+  {
+    public readonly Dictionary<Type, object> Instances = [];
+    public readonly List<object> CreationOrder = [];
+  }
 }

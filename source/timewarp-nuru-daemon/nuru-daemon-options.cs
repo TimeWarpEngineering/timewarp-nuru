@@ -42,6 +42,13 @@ public sealed class NuruDaemonOptions
   /// <summary>How long the client waits for a server it started to answer.</summary>
   public TimeSpan StartTimeout { get; set; } = DefaultStartTimeout;
 
+  /// <summary>
+  /// When true, the server runs one call at a time, as if every route were marked
+  /// <see cref="ExclusiveAttribute"/>. When false (the default) calls run concurrently and only exclusive
+  /// routes wait for each other. <c>ping</c> and <c>stop</c> never wait.
+  /// </summary>
+  public bool ExclusiveCalls { get; set; }
+
   /// <summary>Arguments that start the server: the built-in <c>serve</c> route.</summary>
   public IReadOnlyList<string> ServeArguments { get; set; } = ["serve"];
 
@@ -78,6 +85,7 @@ public sealed class NuruDaemonOptions
     IdleTimeout = IdleTimeout,
     AutoStart = AutoStart,
     StartTimeout = StartTimeout,
+    ExclusiveCalls = ExclusiveCalls,
     ServeArguments = [.. ServeArguments]
   };
 }

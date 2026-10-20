@@ -4,10 +4,13 @@
 
 #region Design
 // Bind failures and handler failures are tool results with isError, not JSON-RPC errors, so an agent sees
-// the same message --json-args prints and can correct its arguments. Calls are serialized process-wide:
-// route execution uses process-wide service state and Environment.ExitCode (508-003), and console capture
-// swaps Console.Out/Error. RenderAsync supplies the CLI's text and exit code; a non-zero exit code
-// (problem details) is a tool error.
+// the same message --json-args prints and can correct its arguments. Calls run concurrently: each runs in
+// its own NuruCallContext (TimeWarp.Nuru core) with its own TestTerminal, exit code and service scope, and
+// with CaptureConsoleOutput its Console.Out/Error writes are routed to that terminal per call; nothing on
+// the call path swaps the console or touches Environment.ExitCode. Routes marked [Exclusive] (and every call
+// with NuruMcpHostOptions.ExclusiveCalls) take the app's exclusive gate. The MCP SDK cancels the handler's
+// token on notifications/cancelled, so only that call stops. RenderAsync supplies the CLI's text and exit
+// code; a non-zero exit code (problem details) is a tool error.
 // A served app (AddServeRoute(), TimeWarp.Nuru.Daemon) attaches NuruApp.RouteForwarder; a call to a route
 // that is not local-only goes to that forwarder first, so the MCP host and the CLI share one warm server.
 // The server binds the same JSON object with the same public binder and returns the same texts.
@@ -21,9 +24,6 @@ namespace TimeWarp.Nuru.McpHost;
 /// </summary>
 public sealed class NuruMcpToolInvoker
 {
-  // One call at a time in the process, across apps and hosts (see Design).
-  private static readonly SemaphoreSlim CallGate = new(1, 1);
-
   private readonly NuruApp App;
   private readonly NuruMcpHostOptions Options;
 
@@ -67,30 +67,32 @@ public sealed class NuruMcpToolInvoker
         return ForwardedResult(endpoint, forwarded);
     }
 
-    await CallGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-    try
+    if (!App.TryBind(endpoint.Pattern, argumentsDocument.RootElement, out NuruBoundRequest? request, out NuruBindError? error))
     {
-      if (!App.TryBind(endpoint.Pattern, argumentsDocument.RootElement, out NuruBoundRequest? request, out NuruBindError? error))
-      {
-        return ErrorResult(error?.Message ?? $"Error: could not bind arguments to '{endpoint.Pattern}'.");
-      }
-
-      return await InvokeAsync(endpoint, request!, cancellationToken).ConfigureAwait(false);
+      return ErrorResult(error?.Message ?? $"Error: could not bind arguments to '{endpoint.Pattern}'.");
     }
-    finally
+
+    using TestTerminal terminal = CreateCallTerminal();
+    NuruCallContext context = new(terminal) { CaptureConsole = Options.CaptureConsoleOutput };
+    NuruExclusiveLease exclusive = Options.ExclusiveCalls
+      ? await NuruExclusiveLease.EnterAsync(App, context, cancellationToken).ConfigureAwait(false)
+      : NuruExclusiveLease.None;
+    await using (exclusive.ConfigureAwait(false))
     {
-      CallGate.Release();
+      return await InvokeAsync(endpoint, request, context, terminal, cancellationToken).ConfigureAwait(false);
     }
   }
 
-  private async Task<CallToolResult> InvokeAsync(EndpointCapability endpoint, NuruBoundRequest request, CancellationToken cancellationToken)
-  {
-    using StringWriter capturedOut = new(CultureInfo.InvariantCulture);
-    using StringWriter capturedError = new(CultureInfo.InvariantCulture);
-    (TextWriter Out, TextWriter Error)? previous = Options.CaptureConsoleOutput
-      ? ConsoleRedirect.Redirect(capturedOut, capturedError)
-      : null;
+  /// <summary>A plain-text terminal for one call: no color, not interactive.</summary>
+  private static TestTerminal CreateCallTerminal() => new() { SupportsColor = false, IsInteractive = false };
 
+  private async Task<CallToolResult> InvokeAsync(
+    EndpointCapability endpoint,
+    NuruBoundRequest request,
+    NuruCallContext context,
+    TestTerminal terminal,
+    CancellationToken cancellationToken)
+  {
     string stdout;
     string stderr;
     string rendered;
@@ -99,14 +101,14 @@ public sealed class NuruMcpToolInvoker
 
     try
     {
-      result = await App.InvokeAsync(request, cancellationToken).ConfigureAwait(false);
+      result = await App.InvokeAsync(request, context, cancellationToken).ConfigureAwait(false);
 
-      using TestTerminal terminal = new();
-      exitCode = await App.RenderAsync(request, result, terminal).ConfigureAwait(false);
+      using TestTerminal renderTerminal = CreateCallTerminal();
+      exitCode = await App.RenderAsync(request, result, renderTerminal).ConfigureAwait(false);
 
-      rendered = terminal.Output;
-      stdout = capturedOut + rendered;
-      stderr = capturedError + terminal.ErrorOutput;
+      rendered = renderTerminal.Output;
+      stdout = terminal.Output + rendered;
+      stderr = terminal.ErrorOutput + renderTerminal.ErrorOutput;
     }
     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
     {
@@ -116,13 +118,8 @@ public sealed class NuruMcpToolInvoker
     catch (Exception exception)
 #pragma warning restore CA1031
     {
-      string partial = JoinNonEmpty(capturedOut.ToString(), capturedError.ToString());
+      string partial = JoinNonEmpty(terminal.Output, terminal.ErrorOutput);
       return ErrorResult(JoinNonEmpty(partial, $"Error: {exception.Message}"));
-    }
-    finally
-    {
-      if (previous is { } writers)
-        ConsoleRedirect.Restore(writers);
     }
 
     if (exitCode != 0)

@@ -33,7 +33,7 @@ public class DaemonServerTests
       .Map("dm-fail {code:int}").WithHandler((int code) =>
       {
         Console.Error.WriteLine("dm failing");
-        Environment.ExitCode = code;
+        NuruCallContext.CurrentExitCode = code; // A served call's own exit code (Environment.ExitCode is process-wide).
       }).AsCommand().Done()
 #pragma warning restore RS0030
       .Map("dm-wait").WithHandler(async (CancellationToken cancellationToken) =>
@@ -41,7 +41,7 @@ public class DaemonServerTests
         await Task.Delay(Timeout.Infinite, cancellationToken);
         return "never";
       }).AsCommand().Done()
-      .Map("dm-cwd").WithHandler(() => Environment.CurrentDirectory).AsQuery().Done()
+      .Map("dm-cwd").WithHandler(() => NuruCallContext.CurrentDirectory).AsQuery().Done()
       .Build();
     return app;
   }
@@ -199,7 +199,7 @@ public class DaemonServerTests
         await Should.ThrowAsync<OperationCanceledException>(() => client.RunAsync(app, ["dm-wait"], giveUp.Token));
       }
 
-      // The abandoned handler was cancelled and released the call gate, so the next call runs.
+      // The abandoned handler was cancelled, and the next call runs.
       using CancellationTokenSource limit = new(TimeSpan.FromSeconds(10));
       NuruForwardResult add = await client.RunAsync(app, ["dm-add", "1", "1"], limit.Token);
       add.Output.TrimEnd().ShouldBe("2");

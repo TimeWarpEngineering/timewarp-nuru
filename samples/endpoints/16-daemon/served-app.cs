@@ -10,6 +10,8 @@
 //   - AddServeRoute(): built-in serve / serve --status / serve --stop
 //   - --daemon (forward, starting the server) and --no-daemon (run here)
 //   - [LocalOnly] and .LocalOnly() routes that never forward
+//   - concurrent calls: each forwarded call has its own output, exit code and directory
+//     (NuruCallContext.CurrentDirectory); [Exclusive] / .Exclusive() serializes a route
 //   - AddMcpRoute(): `served-app mcp` forwards tools/call to the same server
 //
 // USAGE:
@@ -36,8 +38,8 @@ NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices(services => services.AddSingleton<WarmIndex>())
   .DiscoverEndpoints()
   .Map("cwd")
-    .WithHandler(() => Environment.CurrentDirectory)
-    .WithDescription("Print the directory the route runs in (forwarded calls run in the caller's)")
+    .WithHandler(() => NuruCallContext.CurrentDirectory)
+    .WithDescription("Print the caller's directory (a forwarded call carries it; the server's own directory does not change)")
     .AsQuery()
     .Done()
   .Map("local-echo {text}")
@@ -123,7 +125,8 @@ namespace ServedApp
       public Task<Unit> Handle(FailCommand command, CancellationToken cancellationToken)
       {
         terminal.WriteErrorLine($"failing with {command.Code}");
-        Environment.ExitCode = command.Code;
+        // The call's own exit code: Environment.ExitCode is process-wide, and a server runs calls concurrently.
+        NuruCallContext.CurrentExitCode = command.Code;
         return Task.FromResult(Unit.Value);
       }
     }

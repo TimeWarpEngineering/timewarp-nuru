@@ -40,7 +40,7 @@ return await app.RunAsync(args);
 
 The `mcp` route is a built-in. It is matched after your own routes, so a route you map as `mcp`, or a catch-all, takes precedence over it. Root help lists it under Options. It is not an endpoint, so it does not appear in `--capabilities` and is not published as a tool.
 
-Stdout carries the protocol while the server runs. Text a handler writes with `Console.WriteLine`, or through the default terminal, goes into that call's result rather than onto the protocol stream. Anything written to the console between calls goes to stderr.
+Stdout carries the protocol while the server runs. Text a handler writes through `ITerminal`, or with `Console.WriteLine`, goes into that call's result rather than onto the protocol stream, even while other calls run. Anything written to the console outside a call goes to stderr.
 
 ## HTTP and other hosts: `WithNuruTools`
 
@@ -119,7 +119,9 @@ The attribute also adds `"destructive": true` to the endpoint in `--capabilities
 - If binding fails (an unknown key, a missing value, a wrong type), the result has `isError: true` and its text is the message `--json-args` prints, for example `Error: Unknown key 'z' for 'add'.`. It is a tool result, not a JSON-RPC error, so the agent can correct the arguments and call again.
 - If binding succeeds, the route runs through `InvokeAsync`: configuration, services, the command scope, behaviors, and the handler, the same as on the CLI. The result content is the text the CLI writes for that route. A handler exception, or a problem-details result (the CLI's non-zero exit code), returns `isError: true` with the error text.
 - A route that writes nothing, such as one returning `Unit` without printing, returns empty content.
-- Calls run one at a time, because route execution uses process-wide state, as the CLI does.
+- Calls run concurrently. Each `tools/call` runs in its own `NuruCallContext`, with its own terminal, exit code and service scope, so a slow tool does not hold up the others and two calls never see each other's output. Text a handler writes through `ITerminal`, or to the console (with `CaptureConsoleOutput`, the default), goes into that call's result. A handler that is not thread-safe can be marked `[Exclusive]` (or `.Exclusive()`): exclusive calls run one at a time. `NuruMcpHostOptions.ExclusiveCalls = true` runs every in-process call one at a time. See [Served apps](served-apps.md#concurrent-calls) for what a handler gets per call.
+- `notifications/cancelled` cancels that request's `CancellationToken` only; other calls keep running. A forwarded call is cancelled in the server too: the host closes that call's connection.
+- A handler must not set `Environment.ExitCode` or read `Environment.CurrentDirectory` for its own call. Return problem details or set `NuruCallContext.CurrentExitCode`, and resolve paths with `NuruCallContext.GetFullPath`.
 - In a served app (`AddServeRoute()`, package `TimeWarp.Nuru.Daemon`), a call to a route that is not local-only goes to the app's running server, so the MCP host and the CLI share one warm server. The server binds the same arguments with `TryBind` and returns the same texts and errors. With `NuruMcpContentFormat.Json`, structured content then comes from the rendered text: numbers and booleans are parsed back using the catalog return type. See [Served apps](served-apps.md).
 
 With `contentFormat: NuruMcpContentFormat.Json`, a successful result also carries `structuredContent`. A `json` route that returns an object passes that object through. Any other value is wrapped as `{"result": value}`, with numbers and booleans kept as JSON numbers and booleans. A `unit` route has no structured content. Structured content comes from the route's value only: console output the handler writes stays in the text content. When a response renderer writes text that is not JSON, the result carries only the text.

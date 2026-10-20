@@ -38,6 +38,7 @@ myapp serve --stop           # stop it
 | `socketPath` | null | Unix domain socket path. Null uses `NURU_DAEMON_SOCKET`, then the per-user default. A relative path is a file under the per-user socket directory, not the current directory |
 | `idleTimeoutSeconds` | 600 | Seconds without a call before the server stops; 0 never stops |
 | `autoStart` | false | When true, a call with no server starts one and forwards, as `--daemon` does |
+| `exclusiveCalls` | false | When true, the server runs one call at a time (see [Concurrent calls](#concurrent-calls)) |
 
 ## How a call is forwarded
 
@@ -98,7 +99,44 @@ Each behavior runs once per call, in the process that runs the handler. A forwar
 - **Build check**: the server reports its build: name, version, entry file and that file's write time, fixed when the server starts. A client from a different build stops that server and does not use it, so a rebuilt CLI never runs old server code. If that server still answers after the stop, the call runs locally, or fails with `--daemon` or `autoStart`. A started server is used only once it reports the client's build, and each forwarded call carries the build id, so the server refuses a call from another build.
 - **Start**: the client starts its own executable (or `dotnet <entry.dll>`) with `serve`, with the standard streams redirected. On Linux it runs under `setsid`, so a Ctrl+C in the caller's terminal does not reach the server. A started server writes nothing to the inherited streams.
 - **Lifetime**: the server stops after the idle timeout, which counts from the end of the last call and never expires while a call runs. It also stops on `serve --stop`, Ctrl+C, or SIGTERM, and then removes the socket file.
-- **Cancellation**: when a client goes away before the answer (Ctrl+C), the server cancels that call's `CancellationToken`.
+- **Cancellation**: when a client goes away before the answer (Ctrl+C), the server cancels that call's `CancellationToken`. Other calls keep running.
+- **Backlog**: the socket listens with the system's maximum backlog, so many clients can connect at once.
+
+## Concurrent calls
+
+The server runs calls concurrently. Several CLI calls and MCP sessions can share one warm server, and a slow call (a first solution load, analyzers over a whole solution) does not hold up the others. In one run of `tests/scripts/benchmark-daemon-concurrency.cs`, eight forwarded calls to a route that waits 50 ms took 416 ms together when calls ran one at a time, and 52 ms concurrently. A no-op call takes about 0.35 ms in both cases.
+
+Each call runs in its own `NuruCallContext` (core). Nothing on the call path changes process state:
+
+| Per call | What it is | What a handler uses |
+|----------|------------|---------------------|
+| Output | A terminal of its own. `NuruApp.Terminal` and an injected `ITerminal` write to it, and so do `Console.Out` and `Console.Error` during the call. | `ITerminal` (or the console) as usual |
+| Exit code | The call's own value, returned to its client | Return problem details, or set `NuruCallContext.CurrentExitCode` |
+| Working directory | The client's directory. The server process's directory does not change. | `NuruCallContext.CurrentDirectory`, `NuruCallContext.GetFullPath(path)` |
+| Services | Its own scope: `Scoped`, `AddCommandScoped` and `AddSessionScoped` services are created for the call and disposed when it returns. Singletons are shared by all calls. | Constructor or parameter injection, as usual |
+| Cancellation | Its own token, cancelled when its client goes away | The handler's `CancellationToken` |
+
+`NuruCallContext.CurrentExitCode`, `CurrentDirectory` and `GetFullPath` work outside a server too: in a plain CLI run they read and write `Environment.ExitCode` and `Environment.CurrentDirectory`. `NuruCallContext.Current` is the running call's context, or null in a plain CLI run.
+
+### What a handler must not do in a served app
+
+- **Set `Environment.ExitCode`.** It is process-wide, so the server ignores it for the call (another call could be changing it). Set `NuruCallContext.CurrentExitCode`, or return `OneOf<T, SharedProblemDetails>`. Both work in the CLI too, and `RunAsync` still returns the exit code and leaves it in `Environment.ExitCode` for a plain CLI run.
+- **Read `Environment.CurrentDirectory` or pass relative paths to file APIs.** They resolve against the server's directory. Use `NuruCallContext.GetFullPath(path)`.
+- **Keep per-call state in a singleton without locking.** Singletons are shared by concurrent calls. Make them thread-safe, use a scoped service, or mark the route exclusive.
+
+### Exclusive routes
+
+A handler that is not thread-safe can ask to run alone. While one exclusive call runs, other exclusive calls on the same app wait; other calls still run concurrently.
+
+```csharp
+[Exclusive]
+[NuruRoute("reload", Description = "Reload the workspace")]
+public sealed class ReloadCommand : ICommand<Unit> { /* ... */ }
+
+builder.Map("compact").WithHandler(Compact).AsCommand().Exclusive().Done();
+```
+
+To run every call one at a time, pass `AddServeRoute(exclusiveCalls: true)`, or set `NuruDaemonOptions.ExclusiveCalls` on a custom host (`NuruDaemonServer.RunAsync(app, options)`). `ping` (`serve --status`) and `stop` never wait for calls.
 
 ## Working with the MCP host
 
@@ -109,23 +147,26 @@ A daemon can also host MCP itself with `WithNuruTools(app)`. Calls inside the se
 ## Things to know
 
 - **Keep expensive work out of singleton constructors.** Source-generated DI constructs singletons when services initialize, on every CLI call, forwarded or not. Load warm state on first use (for example with `Lazy<T>`), so a forwarded call does not pay for it in the CLI.
-- **One call at a time.** The server runs calls one after another, because route execution uses process-wide state: services, `Environment.ExitCode`, the current directory, and console capture. `serve --status` answers while a call runs.
-- **Environment.** A call runs in the caller's current directory, but with the server's environment variables, which are those of the client that started it.
-- **Output.** The server captures what a route writes through the default terminal and the console. An app built with `UseTerminal(custom)` writes to that terminal in the server instead. A started server has no TTY, so forwarded output has no color.
+- **Calls run concurrently.** See [Concurrent calls](#concurrent-calls) for what a handler gets per call and the exclusive opt-in.
+- **Environment.** A call carries the caller's current directory (`NuruCallContext.CurrentDirectory`), but runs with the server's environment variables, which are those of the client that started it.
+- **Output.** The server gives each call its own plain-text terminal and returns what the route wrote through any `ITerminal` or the console. A terminal set with `UseTerminal(custom)` is not used for forwarded calls. Forwarded output has no color.
 - **Turning it off.** `--no-daemon` runs one call locally. Setting `app.RouteForwarder = null` after `Build()` runs every route locally.
 
 ## API
 
 | Type | Purpose |
 |------|---------|
-| `AddServeRoute(socketPath, idleTimeoutSeconds, autoStart)` | Builder call: the `serve` routes and forwarding |
+| `AddServeRoute(socketPath, idleTimeoutSeconds, autoStart, exclusiveCalls)` | Builder call: the `serve` routes and forwarding |
 | `NuruDaemonServer.RunAsync / StatusAsync / StopAsync` | What the `serve` routes run; usable from a custom host |
 | `NuruDaemonClient` | The forwarder; also `PingAsync`, `StopAsync`, `RunAsync(args)`, `InvokeAsync(route, json)` |
-| `NuruDaemonOptions` | Socket path, idle timeout, auto-start, start timeout, serve arguments |
+| `NuruDaemonOptions` | Socket path, idle timeout, auto-start, start timeout, serve arguments, `ExclusiveCalls` |
 | `NuruDaemonPaths` | Default socket path and the build id |
 | `NuruApp.RouteForwarder`, `INuruRouteForwarder` (core) | The forwarding contract generated code calls |
 | `NuruApp.ExecuteAsync(args)` (core) | Run CLI arguments from code the generator does not intercept |
+| `NuruApp.ExecuteAsync(args, context)`, `InvokeAsync(request, context)` (core) | Run a call in its own `NuruCallContext`, concurrently with others |
+| `NuruCallContext` (core) | The running call's terminal, working directory and exit code; `CurrentDirectory`, `GetFullPath`, `CurrentExitCode` |
 | `[LocalOnly]`, `.LocalOnly()` (core) | Keep a route in the CLI process |
+| `[Exclusive]`, `.Exclusive()` (core) | Run a route's calls one at a time against other exclusive calls |
 
 ## See also
 

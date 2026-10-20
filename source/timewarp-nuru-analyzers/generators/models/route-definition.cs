@@ -28,6 +28,9 @@ using System.Text;
 /// <param name="IsLocalOnly">
 /// True when the route carries <c>[LocalOnly]</c> or <c>.LocalOnly()</c>: a served app never forwards it.
 /// </param>
+/// <param name="IsExclusive">
+/// True when the route carries <c>[Exclusive]</c> or <c>.Exclusive()</c>: its calls take the app's exclusive gate.
+/// </param>
 /// <param name="GroupPath">
 /// Metadata-only group segments from <c>[Operation(Group = ...)]</c>. Not part of the route pattern.
 /// Empty when the group comes from <see cref="GroupPrefix"/> or the route is ungrouped.
@@ -48,7 +51,8 @@ public sealed record RouteDefinition(
   EquatableArray<ExampleDefinition> Examples = default,
   bool IsDestructive = false,
   bool IsLocalOnly = false,
-  EquatableArray<string> GroupPath = default)
+  EquatableArray<string> GroupPath = default,
+  bool IsExclusive = false)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
@@ -69,7 +73,8 @@ public sealed record RouteDefinition(
     EquatableArray<ExampleDefinition>? examples = null,
     bool isDestructive = false,
     bool isLocalOnly = false,
-    EquatableArray<string>? groupPath = null)
+    EquatableArray<string>? groupPath = null,
+    bool isExclusive = false)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,
@@ -87,7 +92,8 @@ public sealed record RouteDefinition(
       Examples: examples ?? [],
       IsDestructive: isDestructive,
       IsLocalOnly: isLocalOnly,
-      GroupPath: groupPath ?? []);
+      GroupPath: groupPath ?? [],
+      IsExclusive: isExclusive);
   }
 
   /// <summary>

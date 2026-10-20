@@ -167,6 +167,17 @@ public class EndpointBuilder<TBuilder>
   }
 
   /// <summary>
+  /// Runs this route one call at a time against other exclusive calls on the app, for a handler that
+  /// is not thread-safe. The fluent form of <see cref="ExclusiveAttribute"/>.
+  /// </summary>
+  /// <returns>This builder for further configuration.</returns>
+  public EndpointBuilder<TBuilder> Exclusive()
+  {
+    // Source generator reads this at compile time
+    return this;
+  }
+
+  /// <summary>
   /// Declares that this route's command implements the specified interface.
   /// Used to enable filtered pipeline behaviors that only apply to commands implementing certain interfaces.
   /// </summary>

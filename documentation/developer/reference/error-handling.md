@@ -74,14 +74,16 @@ catch (Exception ex)
 
 Per the `NuruApp.RunAsync` documentation, handler return values are written to the terminal as output;
 they do **not** control the exit code. For example, `.WithHandler(() => 42)` prints `42` and the process
-still exits with `0`. The generated code ends each matched route with `return Environment.ExitCode;`, so
-to signal failure from a handler, set `Environment.ExitCode`:
+still exits with `0`. The generated code ends each matched route with `return NuruCallContext.CurrentExitCode;`
+(`Environment.ExitCode` outside a daemon or MCP host call, the call's own exit code inside one), so
+to signal failure from a handler, set `NuruCallContext.CurrentExitCode` (a plain CLI may also set
+`Environment.ExitCode`; a served call ignores it, since calls there run concurrently):
 
 ```csharp
 .Map("check")
   .WithHandler(() =>
   {
-    Environment.ExitCode = 1;
+    NuruCallContext.CurrentExitCode = 1;
   })
   .AsCommand()
   .Done()
@@ -91,7 +93,7 @@ Generated binding and no-match errors (below) return `1` directly.
 
 **Key principles:**
 - Handler output is written through the terminal (`app.Terminal`), not via a returned exit code.
-- A non-zero exit code from a handler requires setting `Environment.ExitCode`.
+- A non-zero exit code from a handler requires setting `NuruCallContext.CurrentExitCode` (or `Environment.ExitCode` in a plain CLI).
 - Exit codes: `0` = success, `1` = generated binding or no-match failure.
 
 ### 3. **Route Parsing Errors**

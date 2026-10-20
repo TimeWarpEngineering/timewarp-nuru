@@ -435,7 +435,7 @@ internal static class HandlerInvokerEmitter
       sb.AppendLine($"{indent}  if (!string.IsNullOrEmpty(__problem.Detail))");
       sb.AppendLine($"{indent}    {terminal}.WriteErrorLine(__problem.Detail);");
       sb.AppendLine($"{indent}  int __status = __problem.Status is >= 1 and <= 255 ? __problem.Status.Value : 1;");
-      sb.AppendLine($"{indent}  global::System.Environment.ExitCode = __status;");
+      sb.AppendLine($"{indent}  global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode = __status;");
       sb.AppendLine($"{indent}}}");
       sb.AppendLine($"{indent}else");
       sb.AppendLine($"{indent}{{");

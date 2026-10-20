@@ -28,6 +28,7 @@ internal sealed class RouteDefinitionBuilder
   private ImmutableArray<InterfaceImplementationDefinition> Implements = [];
   private ImmutableArray<ExampleDefinition> Examples = [];
   private bool LocalOnly;
+  private bool Exclusive;
 
   /// <summary>
   /// Sets the original pattern string.
@@ -166,6 +167,15 @@ internal sealed class RouteDefinitionBuilder
   }
 
   /// <summary>
+  /// Runs the route's calls under the app's exclusive gate (from .Exclusive() fluent call).
+  /// </summary>
+  public RouteDefinitionBuilder AsExclusive()
+  {
+    Exclusive = true;
+    return this;
+  }
+
+  /// <summary>
   /// Builds the immutable RouteDefinition.
   /// </summary>
   /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
@@ -200,7 +210,8 @@ internal sealed class RouteDefinitionBuilder
       Order: Order,
       Implements: Implements,
       Examples: Examples,
-      IsLocalOnly: LocalOnly
+      IsLocalOnly: LocalOnly,
+      IsExclusive: Exclusive
     );
   }
 

@@ -48,10 +48,19 @@ public sealed class NuruMcpHostOptions
 
   /// <summary>
   /// When true (the default), text a handler writes to <see cref="Console.Out"/> or
-  /// <see cref="Console.Error"/> during a call is captured into the tool result instead of the
-  /// process streams. Stdio hosting needs this: stdout carries the protocol.
+  /// <see cref="Console.Error"/> during a call is captured into that call's tool result instead of the
+  /// process streams. Stdio hosting needs this: stdout carries the protocol. Writes through
+  /// <see cref="ITerminal"/> always go to the call's result.
   /// </summary>
   public bool CaptureConsoleOutput { get; set; } = true;
+
+  /// <summary>
+  /// When true, tool calls run one at a time, as if every route were marked
+  /// <see cref="ExclusiveAttribute"/>. When false (the default) calls run concurrently and only exclusive
+  /// routes wait for each other. Applies to calls this process runs; a forwarded call follows the
+  /// server's own options.
+  /// </summary>
+  public bool ExclusiveCalls { get; set; }
 
   /// <summary>Copies the options so a host can keep its own instance.</summary>
   internal NuruMcpHostOptions Clone() => new()
@@ -60,6 +69,7 @@ public sealed class NuruMcpHostOptions
     GroupFilter = GroupFilter,
     ContentFormat = ContentFormat,
     ToolNameSeparator = ToolNameSeparator,
-    CaptureConsoleOutput = CaptureConsoleOutput
+    CaptureConsoleOutput = CaptureConsoleOutput,
+    ExclusiveCalls = ExclusiveCalls
   };
 }

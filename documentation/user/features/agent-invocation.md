@@ -112,7 +112,7 @@ int exitCode = await app.RenderAsync(request, result, text);        // the CLI's
 - `InvokeAsync(request, cancellationToken)` runs the same configuration, services, command scope, `INuruBehavior` chain, and handler (or mediator dispatch) as the CLI. It returns the handler's result boxed, without writing it: for `OneOf<T, SharedProblemDetails>` the `OneOf` itself, and null for `void` or `Unit`. Handler exceptions propagate. It throws `InvalidOperationException` when route execution stops before the handler (for example, no handler is registered), and `ArgumentException` for a request another app bound.
 - `RenderAsync(request, result, terminal)` writes the result as the CLI does for that route: a registered or declared `IResponseRenderer<T>`, problem details to stderr, otherwise the output strategy (`returnType.kind`). It returns the exit code the CLI would: the problem status, otherwise 0.
 - The binder and invoker are attached with the catalog, by the generated `Build()` interceptor, so an app that is built but never run supports them. The code is generated: no reflection, AOT-safe.
-- Calls run one at a time. Route execution uses process-wide service state and `Environment.ExitCode`, as `RunAsync` does.
+- Calls may run concurrently. Each `InvokeAsync` and `RenderAsync` call runs in its own `NuruCallContext`: its own exit code and service scope, never `Environment.ExitCode`. `InvokeAsync(request, context, cancellationToken)` also gives the call its own terminal and working directory (`new NuruCallContext(terminal, workingDirectory) { CaptureConsole = true }`), which is how the daemon and MCP hosts run each call. `[Exclusive]` / `.Exclusive()` routes run one at a time. See [Served apps](served-apps.md#concurrent-calls).
 
 ## `--json-args`
 

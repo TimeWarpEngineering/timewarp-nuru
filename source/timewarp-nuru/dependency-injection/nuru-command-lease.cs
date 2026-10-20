@@ -75,17 +75,31 @@ public sealed class NuruCommandLease : IAsyncDisposable
   /// <param name="fromRepl">True when the command is executing inside the REPL.</param>
   /// <param name="setScope">Receives the REPL command scope, or null for a single CLI invocation.</param>
   /// <param name="hostRepl">True when this invocation is starting the REPL (<c>--interactive</c>, <c>-i</c>, or <c>AutoStartWhenEmpty</c>), not running a command.</param>
+  /// <param name="isolatedCall">
+  /// True for a call in its own <see cref="NuruCallContext"/> (a daemon or MCP host call): the call gets its
+  /// own <see cref="IServiceScope"/>, command scope and session, all disposed when it returns, so concurrent
+  /// calls never share them.
+  /// </param>
   /// <returns>A lease that disposes the command when the caller exits.</returns>
   public static NuruCommandLease Enter
   (
     IServiceProvider root,
     bool fromRepl,
     Action<IServiceScope?> setScope,
-    bool hostRepl = false
+    bool hostRepl = false,
+    bool isolatedCall = false
   )
   {
     ArgumentNullException.ThrowIfNull(root);
     ArgumentNullException.ThrowIfNull(setScope);
+
+    if (isolatedCall && !fromRepl)
+    {
+      IServiceScope callScope = root.CreateScope();
+      setScope(callScope);
+      root.GetService<NuruCommandCache>()?.Begin();
+      return new NuruCommandLease(root, callScope, resetSession: true, setScope);
+    }
 
     // The REPL host call nests ExecuteRouteAsync for each command. Those commands own the
     // command cache. Beginning it here would make the first command's Begin throw.

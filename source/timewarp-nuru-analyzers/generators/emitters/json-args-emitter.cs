@@ -371,7 +371,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("            }");
     sb.AppendLine();
     EmitUnpackAndInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, "__bound", captureResultInto: null, indent: 12);
-    sb.AppendLine("            return global::System.Environment.ExitCode;");
+    sb.AppendLine("            return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     sb.AppendLine("          }");
   }
 
@@ -412,6 +412,7 @@ internal static class JsonArgsEmitter
       hasGeneratedMediator,
       methodSuffix,
       ind);
+    InterceptorEmitter.EmitExclusiveGate(sb, route, ind);
     EmitInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, indent, captureResultInto);
   }
 
@@ -450,13 +451,13 @@ internal static class JsonArgsEmitter
         app.UseMicrosoftDependencyInjection,
         methodSuffix,
         "            ");
-      sb.AppendLine("            return global::System.Environment.ExitCode;");
+      sb.AppendLine("            return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
       sb.AppendLine("          }");
       sb.AppendLine();
       sb.AppendLine("          {");
       EmitUnpackAndInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, "__bound", captureResultInto: "__invocation.Result", indent: 12);
       sb.AppendLine("            __invocation.Dispatched = true;");
-      sb.AppendLine("            return global::System.Environment.ExitCode;");
+      sb.AppendLine("            return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
       sb.AppendLine("          }");
       sb.AppendLine("        }");
     }
@@ -1648,7 +1649,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine();
     sb.AppendLine("          try");
     sb.AppendLine("          {");
-    sb.AppendLine("            __jsonText = global::System.IO.File.ReadAllText(__jsonPath, global::System.Text.Encoding.UTF8);");
+    sb.AppendLine("            __jsonText = global::System.IO.File.ReadAllText(global::TimeWarp.Nuru.NuruCallContext.GetFullPath(__jsonPath), global::System.Text.Encoding.UTF8);");
     sb.AppendLine("          }");
     sb.AppendLine("          catch (global::System.Exception)");
     sb.AppendLine("          {");

@@ -23,4 +23,6 @@ myapp serve --stop           # stop it
 
 The server listens on a per-user Unix domain socket, never a TCP port. The forwarded call runs the same generated matching, binding, behaviors and handler, and the CLI prints the same output and returns the same exit code. Use `[LocalOnly]` or `.LocalOnly()` for routes that must run in the CLI process.
 
+Calls run concurrently, each with its own output, exit code, working directory and service scope (`NuruCallContext`). In a handler, set `NuruCallContext.CurrentExitCode` (not `Environment.ExitCode`) and resolve paths with `NuruCallContext.GetFullPath`. Mark a handler that is not thread-safe `[Exclusive]` or `.Exclusive()`, or pass `AddServeRoute(exclusiveCalls: true)` to run every call one at a time.
+
 See [Served apps](https://github.com/TimeWarpEngineering/timewarp-nuru/blob/master/documentation/user/features/served-apps.md).

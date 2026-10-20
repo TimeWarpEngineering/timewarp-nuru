@@ -51,7 +51,8 @@ Acceptance criteria:
 
 - Created: 4087962 (2026-10-19)
 - 2026-10-20 implementer (claude, ganda task work): builder call + problem renderer, tests, docs.
-  `ganda repo audit` passed with no failures, so there was nothing to fix.
+  The pre-push attest audit failed `runfile-executable`: the new
+  `operation-renderer-output.cs` was committed as 100644. `ganda repo audit --fix` set the bit.
 
 ## Results
 

@@ -25,6 +25,24 @@ public enum MhEnv
   Prod
 }
 
+public static class MhOuter
+{
+  public enum MhTier
+  {
+    Basic,
+    Premium
+  }
+
+  public static class MhInner
+  {
+    public enum MhSize
+    {
+      Small,
+      Large
+    }
+  }
+}
+
 [TestTag("McpHost")]
 public class McpHostToolsTests
 {
@@ -43,6 +61,7 @@ public class McpHostToolsTests
       .Map("mh-tags --tag {t}*").WithHandler((string[] t) => string.Join("+", t)).AsCommand().Done()
       .Map("mh-exec {*args}").WithHandler((string[] args) => string.Join(" ", args)).AsCommand().Done()
       .Map("mh-pick --env {env}").WithHandler((MhEnv env) => $"env:{env}").AsQuery().Done()
+      .Map("mh-tier {tier:MhTier?} --size {size}").WithHandler((MhOuter.MhTier? tier, MhOuter.MhInner.MhSize size) => $"{tier}:{size}").AsQuery().Done()
       .Map("mh-note {text} --level {level:int?}").WithHandler((string text, int? level) => $"{text}:{level?.ToString(CultureInfo.InvariantCulture) ?? "none"}").AsCommand().Done()
 #pragma warning disable RS0030 // The handler writes to the console directly, like the calculator sample.
       .Map("mh-echo").WithHandler(() => Console.Out.WriteLine("from console")).AsCommand().Done()
@@ -122,6 +141,16 @@ public class McpHostToolsTests
     env.GetProperty("type").GetString().ShouldBe("string");
     string[] allowed = [.. env.GetProperty("enum").EnumerateArray().Select(v => v.GetString()!)];
     allowed.ShouldBe(["Dev", "Staging", "Prod"]);
+
+    // Task 508-009: enums nested in a class get the same enum list; a nullable one keeps "null".
+    JsonElement tierProperties = Schema(tools, "mh-tier").GetProperty("properties");
+    JsonElement tier = tierProperties.GetProperty("tier");
+    string[] tierTypes = [.. tier.GetProperty("type").EnumerateArray().Select(v => v.GetString()!)];
+    tierTypes.ShouldBe(["string", "null"]);
+    string[] tierValues = [.. tier.GetProperty("enum").EnumerateArray().Where(v => v.ValueKind == JsonValueKind.String).Select(v => v.GetString()!)];
+    tierValues.ShouldBe(["Basic", "Premium"]);
+    string[] sizes = [.. tierProperties.GetProperty("size").GetProperty("enum").EnumerateArray().Select(v => v.GetString()!)];
+    sizes.ShouldBe(["Small", "Large"]);
 
     JsonElement level = Schema(tools, "mh-note").GetProperty("properties").GetProperty("level");
     string[] levelTypes = [.. level.GetProperty("type").EnumerateArray().Select(v => v.GetString()!)];

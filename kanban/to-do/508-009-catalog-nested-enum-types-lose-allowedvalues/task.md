@@ -52,7 +52,8 @@ Acceptance:
   extractor (symbol walk) and the capabilities emitter (handler-type fallback); also fixed the
   nullable optional positional enum binder bug the nullable acceptance needed. New test file
   `capabilities-09-nested-enum.cs` (7 tests) fails 6/7 with the extractor fix reverted, passes 7/7
-  with it. Full CI and `ganda repo audit` green.
+  with it. Full CI and `ganda repo audit` green. The commit-time audit flagged
+  `runfile-executable` on the new test file; set its executable bit (git mode 100755).
 
 ## Results
 

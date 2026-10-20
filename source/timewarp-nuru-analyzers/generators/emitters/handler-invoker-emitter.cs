@@ -482,6 +482,76 @@ internal static class HandlerInvokerEmitter
 
   private const string ProblemDetailsTypeName = "global::TimeWarp.Foundation.Types.SharedProblemDetails";
 
+  private const string ProblemRendererServiceTypeName = $"global::TimeWarp.Contracts.IResponseRenderer<{ProblemDetailsTypeName}>";
+
+  /// <summary>
+  /// True when <paramref name="app"/> may have an <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c>: runtime DI
+  /// (decided when the call runs), a registered source-gen service, or the visible renderer
+  /// <paramref name="visibleRendererTypeName"/>. <see cref="EmitProblemRendererMethod"/> is emitted exactly then.
+  /// </summary>
+  internal static bool HasProblemRenderer(AppModel app, string? visibleRendererTypeName) =>
+    app.UseMicrosoftDependencyInjection
+    || visibleRendererTypeName is not null
+    || FindRegisteredService(ProblemRendererServiceTypeName, app.Services) is not null;
+
+  /// <summary>
+  /// Emits <c>__RenderProblem{suffix}</c>, the app's <c>NuruApp.ProblemRenderer</c>: renders a problem for a bind
+  /// failure or an escaped exception with the renderer a problem pair uses, in the same order (runtime DI, a
+  /// registered service, the visible renderer), and returns null when there is none (task 508-018). It runs
+  /// outside a command, so a registered renderer is read as a process-lifetime service.
+  /// </summary>
+  internal static void EmitProblemRendererMethod(StringBuilder sb, AppModel app, string methodSuffix, string? visibleRendererTypeName)
+  {
+    ImmutableArray<ServiceDefinition> services = app.Services;
+    sb.AppendLine($"  private static string? __RenderProblem{methodSuffix}(NuruApp app, {ProblemDetailsTypeName} __problem)");
+    sb.AppendLine("  {");
+    if (app.UseMicrosoftDependencyInjection)
+    {
+      sb.AppendLine($"    {ProblemRendererServiceTypeName}? __problemRenderer = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{ProblemRendererServiceTypeName}>(GetResolutionProvider{methodSuffix}(app));");
+      sb.AppendLine("    if (__problemRenderer is not null)");
+      sb.AppendLine("      return __problemRenderer.Render(__problem);");
+    }
+    else if (FindRegisteredService(ProblemRendererServiceTypeName, services) is ServiceDefinition registered)
+    {
+      string renderer = registered.Lifetime == ServiceLifetime.Transient
+        ? ServiceScopeExpressions.Construct(registered, services, ServiceResolveMode.ProcessInit)
+        : ServiceScopeExpressions.Read(registered, services, ServiceResolveMode.ProcessInit);
+      sb.AppendLine("    _ = app;");
+      sb.AppendLine($"    return {renderer}.Render(__problem);");
+      sb.AppendLine("  }");
+      sb.AppendLine();
+      return;
+    }
+    else
+    {
+      sb.AppendLine("    _ = app;");
+    }
+
+    sb.AppendLine(visibleRendererTypeName is not null
+      ? $"    return new {visibleRendererTypeName}().Render(__problem);"
+      : "    return null;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// The source-gen registration for <paramref name="serviceTypeName"/>, matched with or without
+  /// <c>global::</c>, as <see cref="ResolveServiceForCommand"/> matches it.
+  /// </summary>
+  private static ServiceDefinition? FindRegisteredService(string serviceTypeName, ImmutableArray<ServiceDefinition> services)
+  {
+    if (services.IsDefaultOrEmpty)
+      return null;
+
+    string normalized = WithoutGlobalPrefix(serviceTypeName);
+    return services.FirstOrDefault(service =>
+      !service.IsInternalType
+      && (service.ServiceTypeName == serviceTypeName || WithoutGlobalPrefix(service.ServiceTypeName) == normalized));
+  }
+
+  private static string WithoutGlobalPrefix(string typeName) =>
+    typeName.StartsWith("global::", StringComparison.Ordinal) ? typeName[8..] : typeName;
+
   /// <summary>
   /// The service context <see cref="EmitRendererOrFallback"/> resolves a renderer from.
   /// </summary>

@@ -20,6 +20,9 @@
 // run or invoke that names another build is refused. The idle timer counts from the last call to finish and never
 // fires while a call runs. The served app is marked so its own forwarder declines (no loop): generated
 // code in this process runs every route locally.
+// An invoke's bind failure and an escaped exception are rendered with the app's problem renderer when it has
+// one (NuruProblems, task 508-018), so a forwarded MCP call gets the text an in-process one would. A run (argv)
+// keeps its plain exception text unless the app called UseProblemRendererForErrors().
 #endregion
 
 namespace TimeWarp.Nuru.Daemon;
@@ -496,13 +499,16 @@ public static class NuruDaemonServer
       return await RunCallAsync(workingDirectory, async (context, terminal) =>
       {
         if (!app.TryBind(route, arguments.RootElement, out NuruBoundRequest? request, out NuruBindError? bindError))
-          return new NuruForwardResult(1, terminal.Output, terminal.ErrorOutput + bindError.Message + "\n");
+        {
+          string bindText = RenderProblemOr(NuruProblems.FromBindError(bindError), bindError.Message);
+          return new NuruForwardResult(1, terminal.Output, terminal.ErrorOutput + bindText + "\n");
+        }
 
         object? result = await app.InvokeAsync(request, context, cancellationToken).ConfigureAwait(false);
         using TestTerminal rendered = CreateCallTerminal();
         int exitCode = await app.RenderAsync(request, result, rendered, context).ConfigureAwait(false);
         return new NuruForwardResult(exitCode, terminal.Output, terminal.ErrorOutput + rendered.ErrorOutput, rendered.Output);
-      }, cancellationToken).ConfigureAwait(false);
+      }, cancellationToken, problemErrors: true).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -512,7 +518,8 @@ public static class NuruDaemonServer
     private async Task<NuruForwardResult> RunCallAsync(
       string? workingDirectory,
       Func<NuruCallContext, TestTerminal, Task<NuruForwardResult>> run,
-      CancellationToken cancellationToken)
+      CancellationToken cancellationToken,
+      bool problemErrors = false)
     {
       using TestTerminal terminal = CreateCallTerminal();
       string? directory = !string.IsNullOrEmpty(workingDirectory) && Directory.Exists(workingDirectory) ? workingDirectory : null;
@@ -535,11 +542,32 @@ public static class NuruDaemonServer
       catch (Exception exception)
 #pragma warning restore CA1031
       {
-        return new NuruForwardResult(1, terminal.Output, terminal.ErrorOutput + $"Error: {exception.Message}\n");
+        string message = $"Error: {exception.Message}";
+        if (problemErrors || app.ProblemRendererForErrors)
+          message = RenderProblemOr(NuruProblems.FromException(exception), message);
+        return new NuruForwardResult(1, terminal.Output, terminal.ErrorOutput + message + "\n");
       }
     }
 
     /// <summary>A plain-text terminal for one call: no color, not interactive.</summary>
     private static TestTerminal CreateCallTerminal() => new() { SupportsColor = false, IsInteractive = false };
+
+    /// <summary>
+    /// <paramref name="problem"/> rendered with the app's problem renderer, without a trailing newline, or
+    /// <paramref name="fallback"/> when the app has none or the renderer throws.
+    /// </summary>
+    private string RenderProblemOr(SharedProblemDetails problem, string fallback)
+    {
+      try
+      {
+        return app.TryRenderProblem(problem, out string? text) ? text.TrimEnd('\r', '\n') : fallback;
+      }
+#pragma warning disable CA1031 // A failing renderer must not hide the original error.
+      catch (Exception)
+#pragma warning restore CA1031
+      {
+        return fallback;
+      }
+    }
   }
 }

@@ -84,7 +84,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        || __jarg.StartsWith(\"/json-args=\", global::System.StringComparison.Ordinal)");
     sb.AppendLine("        || __jarg.StartsWith(\"/json-args:\", global::System.StringComparison.Ordinal))");
     sb.AppendLine("      {");
-    sb.AppendLine("        await app.Terminal.WriteErrorLineAsync(\"Error: --json-args must be a separate token. Use --json-args -, --json-args @path, or --json-args '{...}'.\").ConfigureAwait(false);");
+    sb.AppendLine("        await app.WriteBindErrorAsync(\"Error: --json-args must be a separate token. Use --json-args -, --json-args @path, or --json-args '{...}'.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("        return 1;");
     sb.AppendLine("      }");
     sb.AppendLine();
@@ -92,14 +92,14 @@ internal static class JsonArgsEmitter
     sb.AppendLine("      {");
     sb.AppendLine("        if (__jsonArgsSeen)");
     sb.AppendLine("        {");
-    sb.AppendLine("          await app.Terminal.WriteErrorLineAsync(\"Error: --json-args was specified more than once.\").ConfigureAwait(false);");
+    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args was specified more than once.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
     sb.AppendLine();
     sb.AppendLine("        __jsonArgsSeen = true;");
     sb.AppendLine("        if (__ji + 1 >= args.Length)");
     sb.AppendLine("        {");
-    sb.AppendLine("          await app.Terminal.WriteErrorLineAsync(\"Error: --json-args requires a value.\").ConfigureAwait(false);");
+    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args requires a value.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
     sb.AppendLine();
@@ -260,7 +260,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        {");
     sb.AppendLine("          __jsonTied.Sort(global::System.StringComparer.Ordinal);");
     sb.AppendLine("          string __tieList = string.Join(\", \", __jsonTied.Select(static __p => \"'\" + __p + \"'\"));");
-    sb.AppendLine("          await app.Terminal.WriteErrorLineAsync(\"Error: --json-args matches more than one route: \" + __tieList + \".\").ConfigureAwait(false);");
+    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args matches more than one route: \" + __tieList + \".\", null, null).ConfigureAwait(false);");
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
     sb.AppendLine();
@@ -268,7 +268,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        {");
     sb.AppendLine("          if (__jsonFailures.Count > 0)");
     sb.AppendLine("          {");
-    sb.AppendLine("            await app.Terminal.WriteErrorLineAsync(__jsonFailures[0].Message).ConfigureAwait(false);");
+    sb.AppendLine("            await app.WriteBindErrorAsync(__jsonFailures[0]).ConfigureAwait(false);");
     sb.AppendLine("          }");
     sb.AppendLine("          else");
     sb.AppendLine("          {");
@@ -366,7 +366,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("          {");
     sb.AppendLine($"            if (!{BindMethodName(methodSuffix, routeIndex)}(routeArgs, __jsonMap, __jsonWinnerAttempt, out {bound}? __bound, out global::TimeWarp.Nuru.NuruBindError? __bindFail) || __bound is null)");
     sb.AppendLine("            {");
-    sb.AppendLine("              await app.Terminal.WriteErrorLineAsync(__bindFail?.Message ?? \"Unknown command. Use --help for usage.\").ConfigureAwait(false);");
+    sb.AppendLine("              await (__bindFail is not null ? app.WriteBindErrorAsync(__bindFail) : app.Terminal.WriteErrorLineAsync(\"Unknown command. Use --help for usage.\")).ConfigureAwait(false);");
     sb.AppendLine("              return 1;");
     sb.AppendLine("            }");
     sb.AppendLine();
@@ -1614,7 +1614,7 @@ internal static class JsonArgsEmitter
   {
     sb.AppendLine("        if (fromRepl && __jsonArgsValue == \"-\")");
     sb.AppendLine("        {");
-    sb.AppendLine("          await app.Terminal.WriteErrorLineAsync(\"Error: --json-args - is not available in the REPL. Use @path or a single-line '{\\\"…\\\"}'.\").ConfigureAwait(false);");
+    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args - is not available in the REPL. Use @path or a single-line '{\\\"…\\\"}'.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
     sb.AppendLine();
@@ -1623,7 +1623,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        {");
     sb.AppendLine("          if (!global::System.Console.IsInputRedirected)");
     sb.AppendLine("          {");
-    sb.AppendLine("            await app.Terminal.WriteErrorLineAsync(\"Error: --json-args - requires redirected stdin.\").ConfigureAwait(false);");
+    sb.AppendLine("            await app.WriteBindErrorAsync(\"Error: --json-args - requires redirected stdin.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("            return 1;");
     sb.AppendLine("          }");
     sb.AppendLine();
@@ -1631,7 +1631,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("          __jsonText = await __jsonReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);");
     sb.AppendLine("          if (string.IsNullOrWhiteSpace(__jsonText))");
     sb.AppendLine("          {");
-    sb.AppendLine("            await app.Terminal.WriteErrorLineAsync(\"Error: --json-args - got empty stdin.\").ConfigureAwait(false);");
+    sb.AppendLine("            await app.WriteBindErrorAsync(\"Error: --json-args - got empty stdin.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("            return 1;");
     sb.AppendLine("          }");
     sb.AppendLine("        }");
@@ -1640,7 +1640,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("          string __jsonPath = __jsonArgsValue.Substring(1);");
     sb.AppendLine("          if (__jsonPath.Contains(\"://\", global::System.StringComparison.Ordinal))");
     sb.AppendLine("          {");
-    sb.AppendLine("            await app.Terminal.WriteErrorLineAsync(\"Error: --json-args @path does not accept URIs.\").ConfigureAwait(false);");
+    sb.AppendLine("            await app.WriteBindErrorAsync(\"Error: --json-args @path does not accept URIs.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("            return 1;");
     sb.AppendLine("          }");
     sb.AppendLine();
@@ -1656,7 +1656,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("          }");
     sb.AppendLine("          catch (global::System.Exception)");
     sb.AppendLine("          {");
-    sb.AppendLine("            await app.Terminal.WriteErrorLineAsync(\"Error: --json-args could not read '\" + __jsonPath + \"'.\").ConfigureAwait(false);");
+    sb.AppendLine("            await app.WriteBindErrorAsync(\"Error: --json-args could not read '\" + __jsonPath + \"'.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("            return 1;");
     sb.AppendLine("          }");
     sb.AppendLine("        }");
@@ -1666,7 +1666,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        }");
     sb.AppendLine("        else");
     sb.AppendLine("        {");
-    sb.AppendLine("          await app.Terminal.WriteErrorLineAsync(\"Error: --json-args value must be -, @path, or a JSON object.\").ConfigureAwait(false);");
+    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args value must be -, @path, or a JSON object.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
     sb.AppendLine();
@@ -1676,7 +1676,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        }");
     sb.AppendLine("        catch (global::System.Text.Json.JsonException)");
     sb.AppendLine("        {");
-    sb.AppendLine("          await app.Terminal.WriteErrorLineAsync(\"Error: --json-args value is not valid JSON.\").ConfigureAwait(false);");
+    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args value is not valid JSON.\", null, null).ConfigureAwait(false);");
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
     sb.AppendLine();
@@ -1684,7 +1684,7 @@ internal static class JsonArgsEmitter
     sb.AppendLine("        {");
     sb.AppendLine("          __jsonDoc.Dispose();");
     sb.AppendLine("          __jsonDoc = null;");
-    sb.AppendLine("          await app.Terminal.WriteErrorLineAsync(\"Error: --json-args value must be a JSON object.\").ConfigureAwait(false);");
+    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args value must be a JSON object.\", global::TimeWarp.Nuru.NuruBindErrorKind.NotAnObject, null).ConfigureAwait(false);");
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
   }

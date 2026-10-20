@@ -12,5 +12,6 @@ global using System.Threading.Tasks;
 global using Microsoft.Extensions.DependencyInjection;
 global using ModelContextProtocol.Protocol;
 global using ModelContextProtocol.Server;
+global using TimeWarp.Foundation.Types;
 global using TimeWarp.Nuru;
 global using TimeWarp.Terminal;

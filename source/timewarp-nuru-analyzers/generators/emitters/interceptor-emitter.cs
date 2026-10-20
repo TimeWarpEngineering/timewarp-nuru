@@ -116,6 +116,7 @@ internal static class InterceptorEmitter
       sb.AppendLine($"    app.JsonBinder = {JsonArgsEmitter.TryBindMethodName(methodSuffix)};");
       sb.AppendLine($"    app.InvocationExecutor = __InvokeJson{methodSuffix};");
       sb.AppendLine($"    app.RouteExecutor = __RunArgs{methodSuffix};");
+      EmitProblemRendererAttach(sb, app, model, methodSuffix, fallback: false);
       if (app.ServeRoute is not null)
       {
         sb.AppendLine($"    app.RouteForwarder = new global::TimeWarp.Nuru.Daemon.NuruDaemonClient(__DaemonOptions{methodSuffix}());");
@@ -233,6 +234,8 @@ internal static class InterceptorEmitter
       sb.AppendLine($"      app.RouteForwarder ??= new global::TimeWarp.Nuru.Daemon.NuruDaemonClient(__DaemonOptions{methodSuffix}());");
     }
 
+    // Before CapabilitiesProvider: a null provider means Build() was not intercepted.
+    EmitProblemRendererAttach(sb, app, model, methodSuffix, fallback: true);
     sb.AppendLine($"    app.CapabilitiesProvider ??= GetCapabilities{methodSuffix};");
     sb.AppendLine($"    app.JsonBinder ??= {JsonArgsEmitter.TryBindMethodName(methodSuffix)};");
     sb.AppendLine($"    app.InvocationExecutor ??= __InvokeJson{methodSuffix};");
@@ -273,10 +276,43 @@ internal static class InterceptorEmitter
     sb.AppendLine($"    ExecuteRouteAsync{methodSuffix}(app, args, cancellationToken);");
     sb.AppendLine();
 
+    if (HandlerInvokerEmitter.HasProblemRenderer(app, model.ProblemRendererTypeName))
+      HandlerInvokerEmitter.EmitProblemRendererMethod(sb, app, methodSuffix, model.ProblemRendererTypeName);
+
     if (app.ServeRoute is ServeRouteModel serveRoute)
     {
       EmitDaemonOptionsMethod(sb, serveRoute, methodSuffix);
     }
+  }
+
+  /// <summary>
+  /// Attaches the app's problem renderer, when it can have one, and its error-output flags (task 508-018). The
+  /// Build() interceptor sets them; ExecuteRouteAsync sets them only for an app whose Build() was not intercepted.
+  /// </summary>
+  private static void EmitProblemRendererAttach(StringBuilder sb, AppModel app, GeneratorModel model, string methodSuffix, bool fallback)
+  {
+    List<string> assignments = [];
+    if (HandlerInvokerEmitter.HasProblemRenderer(app, model.ProblemRendererTypeName))
+      assignments.Add($"app.ProblemRenderer = __RenderProblem{methodSuffix};");
+    if (app.ProblemRendererForErrors)
+      assignments.Add("app.ProblemRendererForErrors = true;");
+    if (app.VerbatimRendererOutput)
+      assignments.Add("app.VerbatimRendererOutput = true;");
+    if (assignments.Count == 0)
+      return;
+
+    if (!fallback)
+    {
+      foreach (string assignment in assignments)
+        sb.AppendLine($"    {assignment}");
+      return;
+    }
+
+    sb.AppendLine("    if (app.CapabilitiesProvider is null)");
+    sb.AppendLine("    {");
+    foreach (string assignment in assignments)
+      sb.AppendLine($"      {assignment}");
+    sb.AppendLine("    }");
   }
 
   /// <summary>

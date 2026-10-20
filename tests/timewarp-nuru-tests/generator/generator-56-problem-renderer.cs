@@ -4,7 +4,8 @@
 #:package Microsoft.CodeAnalysis.CSharp
 
 // A visible IResponseRenderer<SharedProblemDetails> replaces the default problem lines, and
-// UseVerbatimRendererOutput() writes renderer text with no added newline (task 508-011).
+// UseVerbatimRendererOutput() writes renderer text with no added newline (task 508-011). The same renderer
+// is attached as NuruApp.ProblemRenderer for bind failures and escaped exceptions (task 508-018).
 // Roslyn-hosted: a visible problem renderer in the CI multi-mode compilation would change every
 // problem pair there, so this case runs in its own compilation.
 
@@ -30,6 +31,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen56ProblemRenderer
     private const string Usings = """
       using System.Threading;
       using System.Threading.Tasks;
+      using Microsoft.Extensions.DependencyInjection;
       using OneOf;
       using TimeWarp.Contracts;
       using TimeWarp.Foundation.Types;
@@ -54,6 +56,16 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen56ProblemRenderer
       public sealed class T511VisibleProblemRenderer : IResponseRenderer<SharedProblemDetails>
       {
         public string Render(SharedProblemDetails response) => "error=" + response.Title;
+      }
+      """;
+
+    // Registered with ConfigureServices. An internal constructor keeps it from being the visible renderer.
+    private const string RegisteredRenderer = """
+      public sealed class T511RegisteredProblemRenderer : IResponseRenderer<SharedProblemDetails>
+      {
+        internal T511RegisteredProblemRenderer() { }
+
+        public string Render(SharedProblemDetails response) => "registered=" + response.Title;
       }
       """;
 
@@ -122,6 +134,98 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen56ProblemRenderer
 
       generated.ShouldContain("app.Terminal.WriteErrorLine($\"{__problem.Type} {__problem.Title}\");");
       generated.ShouldNotContain(".Render(__problem)");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_attach_the_visible_problem_renderer_for_bind_failures()
+    {
+      string generated = Generate(
+        """
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map<T511GenQuery>()
+          .Build();
+
+        app.RunAsync([]);
+        """,
+        Endpoint + "\n" + VisibleRenderer);
+
+      generated.ShouldContain("app.ProblemRenderer = __RenderProblem;");
+      generated.ShouldContain("return new global::T511VisibleProblemRenderer().Render(__problem);");
+      generated.ShouldNotContain("app.ProblemRendererForErrors = true;");
+      generated.ShouldContain("app.WriteBindErrorAsync(");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_set_the_cli_opt_in_with_use_problem_renderer_for_errors()
+    {
+      string generated = Generate(
+        """
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseProblemRendererForErrors()
+          .UseVerbatimRendererOutput()
+          .Map<T511GenQuery>()
+          .Build();
+
+        app.RunAsync([]);
+        """,
+        Endpoint + "\n" + VisibleRenderer);
+
+      generated.ShouldContain("app.ProblemRendererForErrors = true;");
+      generated.ShouldContain("app.VerbatimRendererOutput = true;");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_prefer_a_registered_problem_renderer()
+    {
+      string generated = Generate(
+        """
+        NuruApp app = NuruApp.CreateBuilder()
+          .ConfigureServices(services => services.AddSingleton<IResponseRenderer<SharedProblemDetails>, T511RegisteredProblemRenderer>())
+          .Map<T511GenQuery>()
+          .Build();
+
+        app.RunAsync([]);
+        """,
+        Endpoint + "\n" + RegisteredRenderer);
+
+      generated.ShouldContain("app.ProblemRenderer = __RenderProblem;");
+      generated.ShouldContain(".Render(__problem);");
+      generated.ShouldNotContain("return new global::T511RegisteredProblemRenderer().Render(__problem);");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_resolve_the_problem_renderer_from_runtime_di()
+    {
+      string generated = Generate(
+        """
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseMicrosoftDependencyInjection()
+          .Map<T511GenQuery>()
+          .Build();
+
+        app.RunAsync([]);
+        """,
+        Endpoint);
+
+      generated.ShouldContain("app.ProblemRenderer = __RenderProblem;");
+      generated.ShouldContain("GetService<global::TimeWarp.Contracts.IResponseRenderer<global::TimeWarp.Foundation.Types.SharedProblemDetails>>(GetResolutionProvider(app))");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_not_attach_a_problem_renderer_when_there_is_none()
+    {
+      string generated = Generate(
+        """
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map<T511GenQuery>()
+          .Build();
+
+        app.RunAsync([]);
+        """,
+        Endpoint);
+
+      generated.ShouldNotContain("__RenderProblem");
+      generated.ShouldNotContain("app.ProblemRendererForErrors");
       await Task.CompletedTask;
     }
 

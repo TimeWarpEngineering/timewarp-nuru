@@ -674,7 +674,14 @@ internal static partial class EndpointExtractor
     return false;
   }
 
-  private static string? FindRenderer(Compilation? compilation, string successTypeName, INamedTypeSymbol requestType)
+  /// <summary>
+  /// The one visible <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c> in <paramref name="compilation"/>, by the
+  /// same rule a problem pair uses, or null. Bind failures and escaped exceptions render through it (508-018).
+  /// </summary>
+  internal static string? FindProblemRenderer(Compilation compilation) =>
+    FindRenderer(compilation, ProblemDetailsMetadataTypeName, requestType: null);
+
+  private static string? FindRenderer(Compilation? compilation, string successTypeName, INamedTypeSymbol? requestType)
   {
     _ = requestType;
     if (compilation is null)

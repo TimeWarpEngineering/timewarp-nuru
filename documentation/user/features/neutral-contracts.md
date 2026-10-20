@@ -140,6 +140,17 @@ NuruApp app = NuruApp.CreateBuilder()
 
 It applies to every renderer in the app: success renderers on stdout, and a problem renderer on stderr. It covers argv, `--json-args`, and `RenderAsync`. Output with no renderer (raw text, ISO 8601, JSON, and the default problem lines) still ends with a newline. Only the success type is registered for JSON, and none is registered when a renderer is found. When two types would get the same generated JSON name, such as two nested `Response` classes, each gets a name from its full type name.
 
+The problem renderer also renders failures that happen outside a handler's result. `NuruProblems` maps them to `SharedProblemDetails`. A bind failure is `Type` `Invalid` with `Status` 400. `Detail` is the bind message without its `Error: ` prefix, and the extension members `kind` (the `NuruBindErrorKind`) and `key` (the argument name) are set when they apply. An escaped handler exception is `Type` `Faulted` with `Status` 500 and the exception message as `Detail`. An MCP host and a served app's server always render these with the problem renderer when the app has one (see [MCP hosting](mcp-hosting.md#errors-through-the-problem-renderer)). The CLI does so only when the app opts in:
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .UseProblemRendererForErrors()
+  .DiscoverEndpoints()
+  .Build();
+```
+
+With the opt-in and a problem renderer, a `--json-args` error (a bind failure, or a value that is not a JSON object) and an argv value that does not convert, such as `abc` for an `int` parameter, are rendered as an `Invalid` problem on stderr. The exit code does not change. Without the opt-in, or with no problem renderer, the CLI writes its plain `Error: ...` text as before. Argv conversion errors stay on stdout in that case. `NuruApp.TryRenderProblem` renders a problem with the app's renderer from your own code.
+
 ## Capabilities
 
 `--capabilities` uses one `OptionCapability` shape for derived and attribute-declared options. A derived endpoint has the same fields: `name`, `type`, `required`, `isFlag`, `isRepeated`, and, when they apply, `description`, `defaultValue`, and `allowedValues`. A JSON member's `type` is `json` plus the CLR type name, and its `schema` is the JSON Schema of that type. `groupPath` is the group decision above. The tool hints above add `destructive`, `openWorld` and `title` to the endpoint.

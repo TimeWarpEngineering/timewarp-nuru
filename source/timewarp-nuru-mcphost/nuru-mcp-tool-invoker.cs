@@ -16,6 +16,9 @@
 // A served app (AddServeRoute(), TimeWarp.Nuru.Daemon) attaches NuruApp.RouteForwarder; a call to a route
 // that is not local-only goes to that forwarder first, so the MCP host and the CLI share one warm server.
 // The server binds the same JSON object with the same public binder and returns the same texts.
+// When the app has an IResponseRenderer<SharedProblemDetails>, a bind failure (NuruProblems.FromBindError, Type
+// Invalid) and an escaped exception (NuruProblems.FromException, Type Faulted) are rendered with it, so a model
+// sees one error format; the server does the same for a forwarded call (task 508-018).
 #endregion
 
 namespace TimeWarp.Nuru.McpHost;
@@ -71,7 +74,9 @@ public sealed class NuruMcpToolInvoker
 
     if (!App.TryBind(endpoint.Pattern, argumentsDocument.RootElement, out NuruBoundRequest? request, out NuruBindError? error))
     {
-      return ErrorResult(error?.Message ?? $"Error: could not bind arguments to '{endpoint.Pattern}'.");
+      return ErrorResult(error is null
+        ? $"Error: could not bind arguments to '{endpoint.Pattern}'."
+        : RenderProblemOr(NuruProblems.FromBindError(error), error.Message));
     }
 
     using TestTerminal terminal = CreateCallTerminal();
@@ -121,7 +126,7 @@ public sealed class NuruMcpToolInvoker
 #pragma warning restore CA1031
     {
       string partial = JoinNonEmpty(terminal.Output, terminal.ErrorOutput);
-      return ErrorResult(JoinNonEmpty(partial, $"Error: {exception.Message}"));
+      return ErrorResult(JoinNonEmpty(partial, RenderProblemOr(NuruProblems.FromException(exception), $"Error: {exception.Message}")));
     }
 
     if (exitCode != 0)
@@ -297,6 +302,24 @@ public sealed class NuruMcpToolInvoker
     }
 
     return JsonDocument.Parse(buffer.WrittenMemory);
+  }
+
+  /// <summary>
+  /// <paramref name="problem"/> rendered with the app's problem renderer, or <paramref name="fallback"/> when the
+  /// app has none or the renderer throws: the plain text the host wrote before task 508-018.
+  /// </summary>
+  private string RenderProblemOr(SharedProblemDetails problem, string fallback)
+  {
+    try
+    {
+      return App.TryRenderProblem(problem, out string? text) ? text : fallback;
+    }
+#pragma warning disable CA1031 // A failing renderer must not turn a tool error into a protocol error.
+    catch (Exception)
+#pragma warning restore CA1031
+    {
+      return fallback;
+    }
   }
 
   private static CallToolResult ErrorResult(string message) => new()

@@ -593,7 +593,8 @@ public sealed class NuruGenerator : IIncrementalGenerator
       Version: assemblyMetadata.Version,
       CommitHash: assemblyMetadata.CommitHash,
       CommitDate: assemblyMetadata.CommitDate,
-      HasGeneratedMediator: hasGeneratedMediator);
+      HasGeneratedMediator: hasGeneratedMediator,
+      ProblemRendererTypeName: EndpointExtractor.FindProblemRenderer(compilation));
 
     return new GeneratorModelWithDiagnostics(model, [.. allDiagnostics]);
   }

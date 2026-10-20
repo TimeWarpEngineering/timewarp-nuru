@@ -140,7 +140,7 @@ To run every call one at a time, pass `AddServeRoute(exclusiveCalls: true)`, or 
 
 ## Working with the MCP host
 
-`TimeWarp.Nuru.McpHost` uses the same forwarder. In an app with both `AddServeRoute()` and `AddMcpRoute()`, `myapp mcp` sends each `tools/call` to the running server, so the MCP host and the CLI share one warm server. The server binds the JSON arguments with `TryBind`, runs `InvokeAsync` and `RenderAsync`, and returns the same texts. A bind error is still a tool result with `isError` and the `--json-args` message. Local-only routes run in the `mcp` process. See [MCP hosting](mcp-hosting.md).
+`TimeWarp.Nuru.McpHost` uses the same forwarder. In an app with both `AddServeRoute()` and `AddMcpRoute()`, `myapp mcp` sends each `tools/call` to the running server, so the MCP host and the CLI share one warm server. The server binds the JSON arguments with `TryBind`, runs `InvokeAsync` and `RenderAsync`, and returns the same texts. A bind error is still a tool result with `isError` and the `--json-args` message, or, when the app has an `IResponseRenderer<SharedProblemDetails>`, that renderer's text for an `Invalid` problem; an escaped handler exception is rendered as a `Faulted` problem the same way (see [MCP hosting](mcp-hosting.md#errors-through-the-problem-renderer)). Local-only routes run in the `mcp` process. See [MCP hosting](mcp-hosting.md).
 
 A daemon can also host MCP itself with `WithNuruTools(app)`. Calls inside the served process always run there.
 

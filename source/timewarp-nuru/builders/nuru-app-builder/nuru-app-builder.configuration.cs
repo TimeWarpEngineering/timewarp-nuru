@@ -253,4 +253,16 @@ public partial class NuruAppBuilder
   /// Output with no renderer (raw text, ISO 8601, JSON) still ends with a newline.
   /// </remarks>
   public virtual NuruAppBuilder UseVerbatimRendererOutput() => this;
+
+  /// <summary>
+  /// Sends CLI binding errors through the app's <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c>.
+  /// </summary>
+  /// <remarks>
+  /// With this call and a problem renderer, a <c>--json-args</c> bind failure or an argv value that does not
+  /// convert is rendered as <see cref="NuruProblems.Invalid"/> (Type <c>Invalid</c>, Status 400) on stderr, in
+  /// the same format as a handler's problem details. Without it, or with no problem renderer, the CLI writes
+  /// its plain <c>Error: ...</c> text. The exit code is unchanged. An MCP host or a daemon server renders bind
+  /// failures and escaped exceptions through the problem renderer without this call.
+  /// </remarks>
+  public virtual NuruAppBuilder UseProblemRendererForErrors() => this;
 }

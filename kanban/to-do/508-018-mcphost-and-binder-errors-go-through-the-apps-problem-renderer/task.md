@@ -81,6 +81,9 @@ Acceptance criteria:
     `ganda repo audit --fix` added it to `.github/workflows/workflow.yml`; the audit now passes.
 - 2026-10-21 review round 2 (grok, session `01a15af5-910a-7262-b4f1-5b30952fb72c`): effort 1, roster general. M1 and M2 fixed. M3 (nit) open. Disposition is not written. See `review/round-2/merged.md`.
 - Review oracle round 2: review by reviewer-grok (grok, model grok-4.7), session `01a15af5-910a-7262-b4f1-5b30952fb72c`, max-turns 80 — 2026-10-21
+- 2026-10-21 fix pass for round 2 (claude, headless `ganda task work`, implement-fix-3): M3 fixed. The opt-in
+  sentence in `neutral-contracts.md` now reads "...not a JSON object), an argv value that does not convert, ...,
+  and a JSON member...". Docs only; no build or test change.
 
 ## Results
 
@@ -191,13 +194,14 @@ Expect:
 
 - Rounds: 2. Roster: general. Round 1 effort 3. Round 2 effort 1.
 - Round 2 counts: bug 0 open / 1 fixed; suggestion 0 open / 1 fixed; nit 1 open / 0 fixed.
-- Disposition: not written. M3 is open (`review/round-2/merged.md`).
+- Disposition: not written. M3 fixed in the round 3 fix pass (`documentation/user/features/neutral-contracts.md:152`).
 - Paths: `review/review-framework.md`, `review/round-2/merged.md`.
 
 ## Review
 
 - Round 1: open M1 (bug), M2 (suggestion). See `review/round-1/merged.md`.
-- Round 2: M1 and M2 fixed. M3 (nit) open. Disposition is not written. See `review/round-2/merged.md`.
+- Round 2: M1 and M2 fixed. M3 (nit) open. See `review/round-2/merged.md`.
+- Fix pass 3: M3 fixed. `neutral-contracts.md` line 152 lists the three opted-in cases with a comma after the `--json-args` clause and "and" before the last case.
 
 ## Notes
 

@@ -61,7 +61,10 @@ Acceptance criteria:
   The cause was a stale `/tmp/Directory.Build.props` and a dangling `/tmp/Directory.Packages.props`
   symlink left by the 508-007 session (they pointed at its garbage-collected worktree). Any MSBuild
   fixture under /tmp imported them. I removed both, and the test passed. No repo change was needed.
-- `ganda repo audit`: 30/30 pass. Nothing to fix.
+- `ganda repo audit`: the commit hook flagged the new files. Three runfiles lacked the executable
+  bit, and the sample's `#:project contracts/...` counted as a hardcoded path. `ganda repo audit --fix`
+  set the bits and rewrote the directive to `$(SamplesDirectory)endpoints/17-referenced-contracts/...`.
+  The sample still runs, and the audit is 30/30.
 
 ## Notes
 

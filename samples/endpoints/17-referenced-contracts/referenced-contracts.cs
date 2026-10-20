@@ -7,7 +7,7 @@
 //   dotnet run samples/endpoints/17-referenced-contracts/referenced-contracts.cs -- greet --Name Ada
 //   dotnet run samples/endpoints/17-referenced-contracts/referenced-contracts.cs -- sum --Values 2 --Values 3
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
-#:project contracts/referenced-contracts-library.csproj
+#:project $(SamplesDirectory)endpoints/17-referenced-contracts/contracts/referenced-contracts-library.csproj
 
 using ReferencedContracts;
 using TimeWarp.Nuru;

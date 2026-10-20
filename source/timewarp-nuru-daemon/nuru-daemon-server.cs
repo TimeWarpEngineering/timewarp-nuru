@@ -3,10 +3,14 @@
 #endregion
 
 #region Design
-// Calls run one at a time in the process: generated route execution uses process-wide service state,
-// Environment.ExitCode and the current directory, and console capture swaps Console.Out/Error (same rule
-// as McpHost). ping and stop are answered outside that gate, so status works while a call runs. A call is
-// cancelled when its client disconnects.
+// Calls run concurrently. Each one runs in its own NuruCallContext (TimeWarp.Nuru core): a TestTerminal that
+// collects what the route writes (through the terminal or, routed per call, Console.Out/Error), the
+// client's working directory, and its own exit code and service scope. Nothing on the call path touches
+// process state: no Console.SetOut, no Directory.SetCurrentDirectory, no Environment.ExitCode. Routes
+// marked [Exclusive] (and every call when NuruDaemonOptions.ExclusiveCalls is set) take the app's exclusive
+// gate, so they run one at a time against each other. ping and stop never wait for calls. A call is
+// cancelled, alone, when its client disconnects. An invoke renders in the call's context
+// (NuruApp.RenderAsync with the call), so the exit code its handler set and its directory carry into render.
 //
 // One server per socket: a server holds an exclusive lock on <socket>.lock from before its stale-socket
 // check until after it deletes its socket. Only the lock holder deletes or binds the socket path, so a
@@ -41,9 +45,6 @@ public static class NuruDaemonServer
   internal const string LaunchSocketEnvironmentVariable = "NURU_DAEMON_LAUNCH_SOCKET";
 
   private static readonly ConditionalWeakTable<NuruApp, object> ServingApps = [];
-
-  // One forwarded call at a time in the process, across apps (see Design).
-  private static readonly SemaphoreSlim CallGate = new(1, 1);
 
   private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
@@ -126,7 +127,7 @@ public static class NuruDaemonServer
       try
       {
         NuruDaemonPaths.RestrictSocketFile(socketPath);
-        listener.Listen(16);
+        listener.Listen(); // The system maximum backlog: many clients may connect at once (calls run concurrently).
         bound = true;
       }
       finally
@@ -483,67 +484,62 @@ public static class NuruDaemonServer
     }
 
     private Task<NuruForwardResult> RunArgsAsync(string[] args, string? workingDirectory, CancellationToken cancellationToken) =>
-      RunGatedAsync(workingDirectory, async (output, error) =>
+      RunCallAsync(workingDirectory, async (context, terminal) =>
       {
-        int exitCode = await app.ExecuteAsync(args, cancellationToken).ConfigureAwait(false);
-        return new NuruForwardResult(exitCode, output.ToString(), error.ToString());
+        int exitCode = await app.ExecuteAsync(args, context, cancellationToken).ConfigureAwait(false);
+        return new NuruForwardResult(exitCode, terminal.Output, terminal.ErrorOutput);
       }, cancellationToken);
 
     private async Task<NuruForwardResult> InvokeAsync(string route, string? argumentsJson, string? workingDirectory, CancellationToken cancellationToken)
     {
       using JsonDocument arguments = JsonDocument.Parse(argumentsJson ?? "{}");
-      return await RunGatedAsync(workingDirectory, async (output, error) =>
+      return await RunCallAsync(workingDirectory, async (context, terminal) =>
       {
         if (!app.TryBind(route, arguments.RootElement, out NuruBoundRequest? request, out NuruBindError? bindError))
-          return new NuruForwardResult(1, output.ToString(), bindError.Message + "\n");
+          return new NuruForwardResult(1, terminal.Output, terminal.ErrorOutput + bindError.Message + "\n");
 
-        object? result = await app.InvokeAsync(request, cancellationToken).ConfigureAwait(false);
-        using TestTerminal terminal = new();
-        int exitCode = await app.RenderAsync(request, result, terminal).ConfigureAwait(false);
-        return new NuruForwardResult(exitCode, output.ToString(), error + terminal.ErrorOutput, terminal.Output);
+        object? result = await app.InvokeAsync(request, context, cancellationToken).ConfigureAwait(false);
+        using TestTerminal rendered = CreateCallTerminal();
+        int exitCode = await app.RenderAsync(request, result, rendered, context).ConfigureAwait(false);
+        return new NuruForwardResult(exitCode, terminal.Output, terminal.ErrorOutput + rendered.ErrorOutput, rendered.Output);
       }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Runs one call under the process gate, in the client's directory, with the console captured.
+    /// Runs one call in its own <see cref="NuruCallContext"/>: its own terminal (console writes included),
+    /// the client's directory, and the exclusive gate when the options ask for it (see Design).
     /// </summary>
-    private static async Task<NuruForwardResult> RunGatedAsync(
+    private async Task<NuruForwardResult> RunCallAsync(
       string? workingDirectory,
-      Func<StringWriter, StringWriter, Task<NuruForwardResult>> run,
+      Func<NuruCallContext, TestTerminal, Task<NuruForwardResult>> run,
       CancellationToken cancellationToken)
     {
-      await CallGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-      string? previousDirectory = null;
-      using StringWriter output = new(CultureInfo.InvariantCulture);
-      using StringWriter error = new(CultureInfo.InvariantCulture);
-      (TextWriter Out, TextWriter Error) previous = ConsoleRedirect.Redirect(output, error);
+      using TestTerminal terminal = CreateCallTerminal();
+      string? directory = !string.IsNullOrEmpty(workingDirectory) && Directory.Exists(workingDirectory) ? workingDirectory : null;
+      NuruCallContext context = new(terminal, directory) { CaptureConsole = true };
       try
       {
-        if (!string.IsNullOrEmpty(workingDirectory) && Directory.Exists(workingDirectory))
+        NuruExclusiveLease exclusive = options.ExclusiveCalls
+          ? await NuruExclusiveLease.EnterAsync(app, context, cancellationToken).ConfigureAwait(false)
+          : NuruExclusiveLease.None;
+        await using (exclusive.ConfigureAwait(false))
         {
-          previousDirectory = Environment.CurrentDirectory;
-          Environment.CurrentDirectory = workingDirectory;
+          return await run(context, terminal).ConfigureAwait(false);
         }
-
-        return await run(output, error).ConfigureAwait(false);
       }
       catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
       {
-        return new NuruForwardResult(130, output.ToString(), error + "Error: the call was cancelled.\n");
+        return new NuruForwardResult(130, terminal.Output, terminal.ErrorOutput + "Error: the call was cancelled.\n");
       }
 #pragma warning disable CA1031 // A handler failure is returned to the client as stderr and exit code 1.
       catch (Exception exception)
 #pragma warning restore CA1031
       {
-        return new NuruForwardResult(1, output.ToString(), error + $"Error: {exception.Message}\n");
-      }
-      finally
-      {
-        ConsoleRedirect.Restore(previous);
-        if (previousDirectory is not null)
-          Environment.CurrentDirectory = previousDirectory;
-        CallGate.Release();
+        return new NuruForwardResult(1, terminal.Output, terminal.ErrorOutput + $"Error: {exception.Message}\n");
       }
     }
+
+    /// <summary>A plain-text terminal for one call: no color, not interactive.</summary>
+    private static TestTerminal CreateCallTerminal() => new() { SupportsColor = false, IsInteractive = false };
   }
 }

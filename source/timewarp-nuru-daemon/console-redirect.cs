@@ -4,9 +4,9 @@ namespace TimeWarp.Nuru.Daemon;
 /// The only place this package touches <see cref="Console"/>: redirecting the process writers.
 /// </summary>
 /// <remarks>
-/// <see cref="Console"/> is banned in favor of <see cref="ITerminal"/> (BannedSymbols.txt). A daemon host
-/// is the exception: what a forwarded call writes (through the default terminal or the console) is
-/// captured and sent back to the client, and a detached server must not write to inherited streams.
+/// <see cref="Console"/> is banned in favor of <see cref="ITerminal"/> (BannedSymbols.txt). A detached server
+/// is the exception: it must not write to inherited streams, so it points them at nothing for its whole life.
+/// Calls never swap the console; each call's console writes go to its own terminal (NuruCallContext).
 /// </remarks>
 #pragma warning disable RS0030 // Console redirection is this type's purpose; see remarks.
 internal static class ConsoleRedirect

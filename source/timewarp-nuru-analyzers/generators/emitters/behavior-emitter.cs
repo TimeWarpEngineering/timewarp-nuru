@@ -335,8 +335,10 @@ internal static class BehaviorEmitter
       return "default!";
 
     // Well-known services
+    // Behaviors are static Lazy singletons, built on first use after EnsureServicesInitialized:
+    // the routing terminal follows each call's terminal.
     if (serviceTypeName is "global::TimeWarp.Terminal.ITerminal" or "TimeWarp.Terminal.ITerminal")
-      return "app.Terminal";
+      return "__fw_ITerminal!";
 
     if (serviceTypeName.Contains("IConfiguration", StringComparison.Ordinal))
       return "configuration";

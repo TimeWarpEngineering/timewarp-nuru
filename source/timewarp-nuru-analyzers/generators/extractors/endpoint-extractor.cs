@@ -47,6 +47,7 @@ internal static partial class EndpointExtractor
   private const string NuruRouteExampleAttributeName = "NuruRouteExample";
   private const string DestructiveAttributeFullName = "TimeWarp.Nuru.DestructiveAttribute";
   private const string LocalOnlyAttributeFullName = "TimeWarp.Nuru.LocalOnlyAttribute";
+  private const string ExclusiveAttributeFullName = "TimeWarp.Nuru.ExclusiveAttribute";
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
   private const string GroupOptionAttributeName = "GroupOption";
@@ -225,7 +226,8 @@ internal static partial class EndpointExtractor
       examples: examples,
       isDestructive: HasAttribute(classDeclaration, semanticModel, DestructiveAttributeFullName, cancellationToken),
       isLocalOnly: HasAttribute(classDeclaration, semanticModel, LocalOnlyAttributeFullName, cancellationToken),
-      groupPath: operationGroupPath);
+      groupPath: operationGroupPath,
+      isExclusive: HasAttribute(classDeclaration, semanticModel, ExclusiveAttributeFullName, cancellationToken));
 
     if (missingHandler is not null)
       return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);

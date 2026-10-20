@@ -343,6 +343,8 @@ public sealed class Handler : ICommandHandler<DeployCommand, Unit>
 
 **Common mistake**: returning `int` thinking it sets the exit code. `.WithHandler(() => 42)` outputs `"42"` to the terminal but the exit code is still 0.
 
+**Served apps and MCP hosts** (`TimeWarp.Nuru.Daemon`, `TimeWarp.Nuru.McpHost`) run calls concurrently, so `Environment.ExitCode` and `Environment.CurrentDirectory` are not per call. Set `NuruCallContext.CurrentExitCode` (or return `OneOf<T, SharedProblemDetails>`) and resolve paths with `NuruCallContext.GetFullPath(path)`; both also work in a plain CLI run. Mark a handler that is not thread-safe `[Exclusive]` / `.Exclusive()`.
+
 ## REPL Mode
 
 Add interactive REPL to any Nuru app with `.AddRepl()`:
@@ -529,7 +531,7 @@ For CLIs with multiple endpoint files, use a `Directory.Build.props` to include 
 
 Each endpoint ends with `returnType` (`name`, and `kind` of `unit`, `primitive`, or `json`). In process, `app.Capabilities` returns the same `CapabilitiesResponse` right after `Build()` (no reflection, AOT-safe), and `app.Capabilities.FilterByGroup("admin")` matches `--group-filter admin`.
 
-To run a route from JSON in process (an MCP host, a batch), call `app.TryBind(pattern, jsonElement, out var request, out var error)`, then `await app.InvokeAsync(request)` for the typed result, and `await app.RenderAsync(request, result, terminal)` for the CLI text. Binding is the `--json-args` binder; `error.Message` is what `--json-args` prints.
+To run a route from JSON in process (an MCP host, a batch), call `app.TryBind(pattern, jsonElement, out var request, out var error)`, then `await app.InvokeAsync(request)` for the typed result, and `await app.RenderAsync(request, result, terminal)` for the CLI text. With a `NuruCallContext`, pass it to both (`InvokeAsync(request, context)`, `RenderAsync(request, result, terminal, context)`) so the handler's `CurrentExitCode` and the call's directory carry into render. Binding is the `--json-args` binder; `error.Message` is what `--json-args` prints.
 
 To serve the routes as MCP tools, reference `TimeWarp.Nuru.McpHost` and call `.AddMcpRoute()` (stdio `myapp mcp`), or `builder.Services.AddMcpServer().WithNuruTools(app)` in an existing MCP host such as ASP.NET Core with `WithHttpTransport()`. MCP and the CLI share names and arguments exactly: the tool for `config set {key} {value}` is `config_set`, its input schema is the route's `parameters[]` and `options[]`, and `tools/call` uses the `--json-args` binder (unknown keys are a tool error). Queries are read-only and idempotent, idempotent commands are idempotent, and `destructiveHint` comes only from `[Destructive]` on an endpoint class. See [MCP hosting](../../documentation/user/features/mcp-hosting.md).
 

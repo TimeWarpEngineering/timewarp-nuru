@@ -25,6 +25,10 @@ public static class NuruDaemonAppBuilderExtensions
   /// When true, a call with no running server starts one and forwards to it. When false, calls run
   /// in-process unless <c>--daemon</c> is passed.
   /// </param>
+  /// <param name="exclusiveCalls">
+  /// When true, the server runs one call at a time, as if every route were marked
+  /// <see cref="ExclusiveAttribute"/>. When false (the default) calls run concurrently.
+  /// </param>
   /// <returns>The builder for chaining.</returns>
   /// <remarks>
   /// The arguments must be compile-time constants: the generator copies them into the route. Routes the
@@ -35,13 +39,15 @@ public static class NuruDaemonAppBuilderExtensions
     this TBuilder builder,
     string? socketPath = null,
     int idleTimeoutSeconds = 600,
-    bool autoStart = false)
+    bool autoStart = false,
+    bool exclusiveCalls = false)
     where TBuilder : NuruAppBuilder
   {
     // Interpreted by the source generator; the arguments are read at compile time.
     _ = socketPath;
     _ = idleTimeoutSeconds;
     _ = autoStart;
+    _ = exclusiveCalls;
     return builder;
   }
 }

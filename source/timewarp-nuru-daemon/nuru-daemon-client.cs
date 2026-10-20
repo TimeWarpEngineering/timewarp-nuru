@@ -191,7 +191,7 @@ public sealed class NuruDaemonClient : INuruRouteForwarder
     if (socket is null)
       return null;
 
-    // A server answers ping outside its call gate; one that does not answer soon is not usable.
+    // A server answers ping without waiting for calls; one that does not answer soon is not usable.
     using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
     timeout.CancelAfter(PingTimeout);
     try
@@ -225,7 +225,7 @@ public sealed class NuruDaemonClient : INuruRouteForwarder
       // It stopped while answering, or it is not a server we understand; wait below either way.
     }
 
-    // The server finishes its current call, then closes the socket.
+    // The server cancels and finishes its running calls, then closes the socket.
     long deadline = Environment.TickCount64 + 10_000;
     while (Environment.TickCount64 < deadline)
     {

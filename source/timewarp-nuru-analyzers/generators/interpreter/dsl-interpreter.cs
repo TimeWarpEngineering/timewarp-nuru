@@ -577,6 +577,8 @@ public sealed class DslInterpreter
 
       "LocalOnly" => DispatchLocalOnly(receiver),
 
+      "Exclusive" => DispatchExclusive(receiver),
+
       "Done" => DispatchDone(invocation, receiver),
 
       "Build" => DispatchBuild(invocation, receiver),
@@ -1148,8 +1150,9 @@ public sealed class DslInterpreter
     string? socketPath = ExtractConstantArgument<string>(invocation, 0, "socketPath", "AddServeRoute");
     int idleTimeoutSeconds = ExtractConstantArgument<int?>(invocation, 1, "idleTimeoutSeconds", "AddServeRoute") ?? DefaultServeIdleTimeoutSeconds;
     bool autoStart = ExtractConstantArgument<bool?>(invocation, 2, "autoStart", "AddServeRoute") ?? false;
+    bool exclusiveCalls = ExtractConstantArgument<bool?>(invocation, 3, "exclusiveCalls", "AddServeRoute") ?? false;
 
-    return appBuilder.AddServeRoute(new ServeRouteModel(socketPath, idleTimeoutSeconds, autoStart));
+    return appBuilder.AddServeRoute(new ServeRouteModel(socketPath, idleTimeoutSeconds, autoStart, exclusiveCalls));
   }
 
   /// <summary>Default of AddServeRoute(idleTimeoutSeconds), mirrored from NuruDaemonOptions.</summary>
@@ -1784,6 +1787,19 @@ public sealed class DslInterpreter
     }
 
     return routeBuilder.LocalOnly();
+  }
+
+  /// <summary>
+  /// Dispatches Exclusive() call to IIrRouteBuilder.
+  /// </summary>
+  private static object? DispatchExclusive(object? receiver)
+  {
+    if (receiver is not IIrRouteBuilder routeBuilder)
+    {
+      throw new InvalidOperationException("Exclusive() must be called on a route builder.");
+    }
+
+    return routeBuilder.Exclusive();
   }
 
   /// <summary>

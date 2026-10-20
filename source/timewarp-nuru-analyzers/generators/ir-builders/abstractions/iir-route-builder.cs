@@ -56,6 +56,12 @@ public interface IIrRouteBuilder
   IIrRouteBuilder LocalOnly();
 
   /// <summary>
+  /// Runs this route's calls one at a time against other exclusive calls.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrRouteBuilder Exclusive();
+
+  /// <summary>
   /// Adds an interface implementation to this route's command.
   /// </summary>
   /// <param name="implementation">The interface implementation definition.</param>

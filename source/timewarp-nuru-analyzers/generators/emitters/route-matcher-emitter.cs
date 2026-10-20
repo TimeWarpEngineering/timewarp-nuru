@@ -251,6 +251,7 @@ internal static class RouteMatcherEmitter
     if (forward)
       EmitForward(sb, route, routeIndex);
     InterceptorEmitter.EmitMissingHandlerOnDispatch(sb, route, useRuntimeDI, hasGeneratedMediator, runtimeDISuffix, "      ");
+    InterceptorEmitter.EmitExclusiveGate(sb, route, "      ", openBlock: true);
 
     // Emit handler invocation (wrapped with behaviors if any)
     if (behaviors.Length > 0)
@@ -262,14 +263,15 @@ internal static class RouteMatcherEmitter
         sb, route, routeIndex, behaviors, services, indent: 6,
         () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator));
 
-      sb.AppendLine("      return global::System.Environment.ExitCode;");
+      sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
     else
     {
       HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator);
-      sb.AppendLine("      return global::System.Environment.ExitCode;");
+      sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
 
+    InterceptorEmitter.EmitExclusiveGateEnd(sb, route, "      ");
     sb.AppendLine("    }");
     sb.AppendLine($"    route_skip_{routeIndex}:;");
   }
@@ -383,6 +385,7 @@ internal static class RouteMatcherEmitter
     if (forward)
       EmitForward(sb, route, routeIndex);
     InterceptorEmitter.EmitMissingHandlerOnDispatch(sb, route, useRuntimeDI, hasGeneratedMediator, runtimeDISuffix, "      ");
+    InterceptorEmitter.EmitExclusiveGate(sb, route, "      ", openBlock: true);
 
     if (behaviors.Length > 0)
     {
@@ -392,14 +395,15 @@ internal static class RouteMatcherEmitter
         sb, route, routeIndex, behaviors, services, indent: 6,
         () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator));
 
-      sb.AppendLine("      return global::System.Environment.ExitCode;");
+      sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
     else
     {
       HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator);
-      sb.AppendLine("      return global::System.Environment.ExitCode;");
+      sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
 
+    InterceptorEmitter.EmitExclusiveGateEnd(sb, route, "      ");
     sb.AppendLine("    }");
     sb.AppendLine($"    {aliasSkipLabel}:;");
   }

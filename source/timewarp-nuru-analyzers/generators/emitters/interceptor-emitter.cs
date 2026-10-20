@@ -221,8 +221,10 @@ internal static class InterceptorEmitter
     sb.AppendLine("    global::TimeWarp.Nuru.NuruInvocation? __invocation = null");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
-    // A previous command may have stored a problem status. This invocation starts clean.
-    sb.AppendLine("    global::System.Environment.ExitCode = 0;");
+    // A previous command may have stored a problem status. This invocation starts clean. A render
+    // continues its call: it keeps the exit code the handler set, and problem details overwrite it.
+    sb.AppendLine("    if (__invocation?.RenderTerminal is null)");
+    sb.AppendLine("      global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode = 0;");
     // Fallback for an app whose Build() call was not intercepted. The forwarder is attached only
     // then, so an app may set RouteForwarder = null after Build() to run every route here.
     if (app.ServeRoute is not null)
@@ -291,7 +293,8 @@ internal static class InterceptorEmitter
     sb.AppendLine("  {");
     sb.AppendLine($"    SocketPath = {socketPath},");
     sb.AppendLine($"    IdleTimeout = global::System.TimeSpan.FromSeconds({serveRoute.IdleTimeoutSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture)}),");
-    sb.AppendLine($"    AutoStart = {(serveRoute.AutoStart ? "true" : "false")}");
+    sb.AppendLine($"    AutoStart = {(serveRoute.AutoStart ? "true" : "false")},");
+    sb.AppendLine($"    ExclusiveCalls = {(serveRoute.ExclusiveCalls ? "true" : "false")}");
     sb.AppendLine("  };");
     sb.AppendLine();
   }
@@ -508,30 +511,41 @@ internal static class InterceptorEmitter
         $"  private static {service.ImplementationTypeName}? {fieldName};");
     }
 
-    foreach (ServiceDefinition service in sessionServices)
-    {
-      sb.AppendLine(
-        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.SessionField(service.ImplementationTypeName)};");
-    }
+    // Session and command state lives on a __NuruCall: the process one outside a call context (a CLI run,
+    // the REPL), or the call's own one for a daemon or MCP host call (NuruCallContext), so concurrent calls
+    // never share or dispose each other's scope. The static properties keep the field names generated code uses.
+    // REPL (and isolated-call) Scoped uses a per-command field. Non-REPL Scoped keeps the process field above.
+    List<(string TypeName, string Name)> callFields =
+    [
+      .. sessionServices.Select(static service => (service.ImplementationTypeName, ServiceScopeExpressions.SessionField(service.ImplementationTypeName))),
+      .. commandServices.Select(static service => (service.ImplementationTypeName, ServiceScopeExpressions.CommandField(service.ImplementationTypeName))),
+      .. sortedProcessServices
+        .Where(static service => service.Lifetime == ServiceLifetime.Scoped)
+        .Select(static service => (service.ImplementationTypeName, ServiceScopeExpressions.CommandField(service.ImplementationTypeName)))
+    ];
 
-    foreach (ServiceDefinition service in commandServices)
-    {
-      sb.AppendLine(
-        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)};");
-    }
+    sb.AppendLine("  private sealed partial class __NuruCall");
+    sb.AppendLine("  {");
+    sb.AppendLine("    public bool ReplCommandActive;");
+    sb.AppendLine("    public bool SessionServicesReady;");
+    sb.AppendLine("    public readonly global::System.Collections.Generic.List<object> CommandDisposables = new();");
+    sb.AppendLine("    public readonly global::System.Collections.Generic.List<object> SessionDisposables = new();");
+    foreach ((string typeName, string name) in callFields)
+      sb.AppendLine($"    public {typeName}? {name};");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+    sb.AppendLine("  private static readonly __NuruCall __nuruProcessCall = new();");
+    sb.AppendLine("  private static readonly global::System.Threading.AsyncLocal<__NuruCall?> __nuruCall = new();");
+    sb.AppendLine("  private static readonly global::System.Threading.Lock __nuruInitLock = new();");
+    sb.AppendLine("  private static __NuruCall __CurrentCall => __nuruCall.Value ?? __nuruProcessCall;");
+    foreach ((string typeName, string name) in callFields)
+      sb.AppendLine($"  private static {typeName}? {name} {{ get => __CurrentCall.{name}; set => __CurrentCall.{name} = value; }}");
 
-    // REPL Scoped uses a per-command field. Non-REPL Scoped keeps the process field above.
-    foreach (ServiceDefinition service in sortedProcessServices.Where(static service => service.Lifetime == ServiceLifetime.Scoped))
-    {
-      sb.AppendLine(
-        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)};");
-    }
-
-    sb.AppendLine("  private static bool __replCommandActive;");
-    sb.AppendLine("  private static bool __sessionServicesReady;");
+    sb.AppendLine("  private static bool __replCommandActive { get => __CurrentCall.ReplCommandActive; set => __CurrentCall.ReplCommandActive = value; }");
+    sb.AppendLine("  private static bool __sessionServicesReady { get => __CurrentCall.SessionServicesReady; set => __CurrentCall.SessionServicesReady = value; }");
     sb.AppendLine("  private static bool __nonReplScopedReady;");
-    sb.AppendLine("  private static readonly global::System.Collections.Generic.List<object> __commandDisposables = new();");
-    sb.AppendLine("  private static readonly global::System.Collections.Generic.List<object> __sessionDisposables = new();");
+    sb.AppendLine("  private static global::System.Collections.Generic.List<object> __commandDisposables => __CurrentCall.CommandDisposables;");
+    sb.AppendLine("  private static global::System.Collections.Generic.List<object> __sessionDisposables => __CurrentCall.SessionDisposables;");
 
     sb.AppendLine();
 
@@ -568,6 +582,8 @@ internal static class InterceptorEmitter
       return;
     }
 
+    sb.AppendLine("    if (__mediatorServiceProvider is null)");
+    sb.AppendLine("    lock (__nuruInitLock)");
     sb.AppendLine("    if (__mediatorServiceProvider is null)");
     sb.AppendLine("    {");
     sb.AppendLine("      var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
@@ -659,6 +675,13 @@ internal static class InterceptorEmitter
   {
     sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration, bool fromRepl)");
     sb.AppendLine("  {");
+    // Concurrent first calls (a daemon or MCP host) must not build singletons twice.
+    sb.AppendLine("    lock (__nuruInitLock)");
+    sb.AppendLine("      EnsureServicesInitializedLocked(app, configuration, fromRepl);");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+    sb.AppendLine("  private static void EnsureServicesInitializedLocked(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration, bool fromRepl)");
+    sb.AppendLine("  {");
     // Already initialized for this app. Non-REPL Scoped is created on the first single-run
     // command when the first call was a REPL command (which skips process-scoped fields).
     sb.AppendLine("    if (__fw_NuruApp == app)");
@@ -672,7 +695,7 @@ internal static class InterceptorEmitter
     // Initialize framework services
     sb.AppendLine("    // Framework services");
     sb.AppendLine("    __fw_NuruApp = app;");
-    sb.AppendLine("    __fw_ITerminal = app.Terminal;");
+    sb.AppendLine("    __fw_ITerminal = new global::TimeWarp.Nuru.NuruCallTerminal(app);");
     if (requiresMediator)
     {
       sb.AppendLine("    __mediatorConfiguration = configuration;");
@@ -944,16 +967,27 @@ internal static class InterceptorEmitter
       }
 
       sb.AppendLine($"  private static global::System.IServiceProvider? __serviceProvider{suffix};");
-      sb.AppendLine($"  private static global::Microsoft.Extensions.DependencyInjection.IServiceScope? __commandScope{suffix};");
+      // The command scope belongs to the call (see __NuruCall): concurrent served calls each have one.
+      sb.AppendLine("  private sealed partial class __NuruCall");
+      sb.AppendLine("  {");
+      sb.AppendLine($"    public global::Microsoft.Extensions.DependencyInjection.IServiceScope? CommandScope{suffix};");
+      sb.AppendLine("  }");
+      sb.AppendLine();
+      sb.AppendLine($"  private static global::Microsoft.Extensions.DependencyInjection.IServiceScope? __commandScope{suffix} {{ get => __CurrentCall.CommandScope{suffix}; set => __CurrentCall.CommandScope{suffix} = value; }}");
       sb.AppendLine();
       sb.AppendLine($"  private static global::System.IServiceProvider GetServiceProvider{suffix}(NuruApp app)");
       sb.AppendLine("  {");
       sb.AppendLine($"    if (__serviceProvider{suffix} is not null) return __serviceProvider{suffix};");
+      sb.AppendLine("    lock (__nuruInitLock)");
+      sb.AppendLine($"      return __serviceProvider{suffix} ?? BuildServiceProvider{suffix}(app);");
+      sb.AppendLine("  }");
       sb.AppendLine();
+      sb.AppendLine($"  private static global::System.IServiceProvider BuildServiceProvider{suffix}(NuruApp app)");
+      sb.AppendLine("  {");
       sb.AppendLine("    var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
       sb.AppendLine();
       sb.AppendLine("    // Register Nuru built-ins so they're available for user services");
-      sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, app.Terminal);");
+      sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, new global::TimeWarp.Nuru.NuruCallTerminal(app));");
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
       sb.AppendLine();
 
@@ -1237,7 +1271,12 @@ internal static class InterceptorEmitter
 
     // Peel --json-args before the command scope so the REPL host check sees routeArgs
     // (config args stripped), including AutoStartWhenEmpty on an empty route.
-    sb.AppendLine("    __replCommandActive = fromRepl;");
+    // A call in a NuruCallContext (daemon, MCP host) is isolated: its own __NuruCall, scoped like a REPL
+    // command (Scoped per call), and its session and command instances disposed when it returns.
+    sb.AppendLine("    bool __isolatedCall = !fromRepl && global::TimeWarp.Nuru.NuruCallContext.Current is not null;");
+    sb.AppendLine("    if (__isolatedCall)");
+    sb.AppendLine("      __nuruCall.Value = new __NuruCall();");
+    sb.AppendLine("    __replCommandActive = fromRepl || __isolatedCall;");
     JsonArgsEmitter.EmitPrepare(sb, app);
 
     // The REPL host must not open a command scope. Nested commands open their own.
@@ -1248,13 +1287,13 @@ internal static class InterceptorEmitter
     string scopeSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
     if (app.UseMicrosoftDependencyInjection)
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl);");
-      sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: __enteringRepl);");
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl || __isolatedCall);");
+      sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: __enteringRepl, isolatedCall: __isolatedCall);");
     }
     else
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl);");
-      sb.AppendLine("    if (fromRepl)");
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl || __isolatedCall);");
+      sb.AppendLine("    if (fromRepl || __isolatedCall)");
       sb.AppendLine("      BeginReplCommandServices();");
       sb.AppendLine("    else if (!__enteringRepl)");
       sb.AppendLine("      BeginSingleRunServices();");
@@ -1322,6 +1361,33 @@ internal static class InterceptorEmitter
 
     // No match fallback
     EmitNoMatch(sb);
+  }
+
+  /// <summary>
+  /// For an <c>[Exclusive]</c> / <c>.Exclusive()</c> route, takes the app's exclusive gate before the
+  /// behaviors and handler; the lease releases it when the dispatch block exits. Without a call context
+  /// (a plain CLI run) the lease is a no-op, since nothing runs concurrently there.
+  /// </summary>
+  /// <remarks>
+  /// With <paramref name="openBlock"/>, the lease opens a block that <see cref="EmitExclusiveGateEnd"/>
+  /// closes: argv matching jumps past the dispatch with <c>goto</c>, which C# forbids across a using
+  /// declaration in the same block (CS8648).
+  /// </remarks>
+  internal static void EmitExclusiveGate(StringBuilder sb, RouteDefinition route, string indent, bool openBlock = false)
+  {
+    if (!route.IsExclusive)
+      return;
+
+    if (openBlock)
+      sb.AppendLine($"{indent}{{");
+    sb.AppendLine($"{indent}await using global::TimeWarp.Nuru.NuruExclusiveLease __exclusive = await global::TimeWarp.Nuru.NuruExclusiveLease.EnterAsync(app, cancellationToken).ConfigureAwait(false);");
+  }
+
+  /// <summary>Closes the block <see cref="EmitExclusiveGate"/> opened with <c>openBlock</c>.</summary>
+  internal static void EmitExclusiveGateEnd(StringBuilder sb, RouteDefinition route, string indent)
+  {
+    if (route.IsExclusive)
+      sb.AppendLine($"{indent}}}");
   }
 
   /// <summary>

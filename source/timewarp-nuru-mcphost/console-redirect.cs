@@ -5,8 +5,9 @@ namespace TimeWarp.Nuru.McpHost;
 /// </summary>
 /// <remarks>
 /// <see cref="Console"/> is banned in favor of <see cref="ITerminal"/> (BannedSymbols.txt). An MCP stdio
-/// host is the exception: stdout carries the protocol, and handlers that write to the console directly
-/// (not through <see cref="ITerminal"/>) must not reach it.
+/// host is the exception: stdout carries the protocol, so for the server's whole life stray console writes go
+/// to stderr. Calls never swap the console; each call's console writes go to its own result
+/// (NuruCallContext.CaptureConsole).
 /// </remarks>
 #pragma warning disable RS0030 // Console redirection is this type's purpose; see remarks.
 internal static class ConsoleRedirect

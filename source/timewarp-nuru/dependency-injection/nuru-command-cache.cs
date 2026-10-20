@@ -3,11 +3,18 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Holds <c>AddCommandScoped</c> instances for the command currently executing.
 /// A single CLI invocation and each REPL command each call <see cref="Begin"/> and <see cref="EndAsync"/>.
+/// Inside a <see cref="NuruCallContext"/> (a daemon or MCP host call) each call has its own command scope,
+/// so concurrent calls never share instances.
 /// </summary>
 public sealed class NuruCommandCache : IDisposable, IAsyncDisposable
 {
-  private Dictionary<Type, object>? Instances;
-  private List<object>? CreationOrder;
+  private readonly CommandState SharedState = new();
+
+  private CommandState State => NuruCallContext.Current?.GetState(this, static () => new CommandState()) ?? SharedState;
+
+  private Dictionary<Type, object>? Instances { get => State.Instances; set => State.Instances = value; }
+
+  private List<object>? CreationOrder { get => State.CreationOrder; set => State.CreationOrder = value; }
 
   /// <summary>
   /// Starts a command scope. Resolutions until <see cref="EndAsync"/> share one instance per service type.
@@ -93,4 +100,10 @@ public sealed class NuruCommandCache : IDisposable, IAsyncDisposable
 
   /// <inheritdoc />
   public ValueTask DisposeAsync() => EndAsync(disposeInstances: true);
+
+  private sealed class CommandState
+  {
+    public Dictionary<Type, object>? Instances;
+    public List<object>? CreationOrder;
+  }
 }

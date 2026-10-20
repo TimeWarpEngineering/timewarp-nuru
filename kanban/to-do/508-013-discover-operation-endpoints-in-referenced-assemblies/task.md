@@ -70,11 +70,15 @@ Acceptance criteria:
 - Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-20T18:04:41Z
 - 2026-10-21 implementer-claude fix pass (implement-fix-2, headless): fixed round 1 M1 and M2,
   with tests. CI and `ganda repo audit` are green. Nothing needed an audit fix.
+- 2026-10-21 reviewer grok session `01a15a8a-52e5-72d3-9dce-e2f0e1ae5d10` (effort 2, roster general):
+  round 2 confirmed M1 and M2 fixed and found nothing new. Disposition is clean.
+  See `review/round-2/merged.md` and `review/disposition.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
-- Fix pass for round 1 (implement-fix-2, 2026-10-21): M1 and M2 fixed. Round 2 review is next.
+- Fix pass for round 1 (implement-fix-2, 2026-10-21): M1 and M2 fixed.
+- Round 2: clean. M1 and M2 stay fixed. No new findings.
 
 ## Notes
 
@@ -197,4 +201,8 @@ Expect:
 
 ### Review
 
-Round 1 (2026-10-21), effort 3, roster general. `generator-59` 7/7 and `generator-60` 3/3 passed in the review session. Two open bugs: M1 (diagnostic location from another compilation) and M2 (record parameter with no explicit default forces the member required). Disposition is not written; it waits on a fix pass. The implementer restatement matches the original task. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 (2026-10-21), effort 3, roster general. `generator-59` 7/7 and `generator-60` 3/3 passed in that review session. Two bugs: M1 (diagnostic location from another compilation) and M2 (record parameter with no explicit default forces the member required). The implementer restatement matches the original task.
+
+Round 2 (2026-10-21), effort 2, roster general, session `01a15a8a-52e5-72d3-9dce-e2f0e1ae5d10`. Re-reviewed `11cc4e85` only. M1 and M2 are fixed. No new findings. generator-59 passed 9/9 in this review session. Disposition: clean. Final counts: bug 0 open / 2 fixed / 0 wontfix; suggestion 0; nit 0.
+
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.

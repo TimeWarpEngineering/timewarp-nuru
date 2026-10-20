@@ -84,6 +84,8 @@ Acceptance criteria:
 - 2026-10-21 fix pass for round 2 (claude, headless `ganda task work`, implement-fix-3): M3 fixed. The opt-in
   sentence in `neutral-contracts.md` now reads "...not a JSON object), an argv value that does not convert, ...,
   and a JSON member...". Docs only; no build or test change.
+- 2026-10-21 review round 3 (grok, session `01a15afc-48f9-7ad2-b5eb-d05f6ccf7746`): effort 1, roster general. M1, M2, and M3 fixed. No new findings. Disposition: clean. See `review/round-3/merged.md` and `review/disposition.md`.
+- Review oracle round 3: review by reviewer-grok (grok, model grok-4.7), session `01a15afc-48f9-7ad2-b5eb-d05f6ccf7746`, max-turns 80 — 2026-10-21
 
 ## Results
 
@@ -192,22 +194,24 @@ Expect:
 
 ### Review
 
-- Rounds: 2. Roster: general. Round 1 effort 3. Round 2 effort 1.
-- Round 2 counts: bug 0 open / 1 fixed; suggestion 0 open / 1 fixed; nit 1 open / 0 fixed.
-- Disposition: not written. M3 fixed in the round 3 fix pass (`documentation/user/features/neutral-contracts.md:152`).
-- Paths: `review/review-framework.md`, `review/round-2/merged.md`.
+- Rounds: 3. Roster: general. Round 1 effort 3. Rounds 2 and 3 effort 1.
+- Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0 open / 1 fixed / 0 wontfix.
+- Disposition: clean. No exceptions.
+- Paths: `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: open M1 (bug), M2 (suggestion). See `review/round-1/merged.md`.
 - Round 2: M1 and M2 fixed. M3 (nit) open. See `review/round-2/merged.md`.
 - Fix pass 3: M3 fixed. `neutral-contracts.md` line 152 lists the three opted-in cases with a comma after the `--json-args` clause and "and" before the last case.
+- Round 3: M3 fixed. No new findings. Disposition clean. See `review/round-3/merged.md` and `review/disposition.md`.
 
 ## Notes
 
 - Related: 508-003 (binder), 508-004 (McpHost), 508-011 (problem renderer), Roslynk 005.
 - Review round 1: `review/review-framework.md`, `review/round-1/merged.md`.
-- Review round 2: `review/round-2/merged.md`. Disposition is not written while M3 is open.
+- Review round 2: `review/round-2/merged.md`.
+- Review round 3: `review/round-3/merged.md`, `review/disposition.md`. Outcome clean.
 
 ## Learnings
 

@@ -10,9 +10,7 @@
 
 ## Budget (by-diff)
 
-Round 1 budget was 1091 lines, effort 3, turn cap 200. This section is the round 2 budget.
-
-- Lines changed: 125
+- Lines changed: 10
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -23,6 +21,13 @@ Round 1 budget was 1091 lines, effort 3, turn cap 200. This section is the round
 **Date:** 2026-10-21
 **Diff scope:** `63545b11..c9dbc5c3` (fix pass for M1 and M2). Product paths only. Kitchen edits are out of the product scope.
 **Session:** grok `01a15af5-910a-7262-b4f1-5b30952fb72c`
+
+## Round 3
+
+**Date:** 2026-10-21
+**Diff scope:** `46138c91..b71d5d68` (fix pass for M3). Product path is `documentation/user/features/neutral-contracts.md` only. Kitchen edits are out of the product scope.
+**Effort:** 1 (by-diff, 10 lines). Roster axis is general only.
+**Session:** grok `01a15afc-48f9-7ad2-b5eb-d05f6ccf7746`
 
 ## Ground rules
 

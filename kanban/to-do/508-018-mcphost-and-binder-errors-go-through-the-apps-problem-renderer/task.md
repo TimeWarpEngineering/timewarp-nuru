@@ -204,8 +204,7 @@ Expect:
 - Round 1: open M1 (bug), M2 (suggestion). See `review/round-1/merged.md`.
 - Round 2: M1 and M2 fixed. M3 (nit) open. See `review/round-2/merged.md`.
 - Fix pass 3: M3 fixed. `neutral-contracts.md` line 152 lists the three opted-in cases with a comma after the `--json-args` clause and "and" before the last case.
-- Round 3: M3 fixed. No new findings. Disposition clean. See `review/round-3/merged.md` and `review/disposition.md`.
-
+- Round 3: Done
 ## Notes
 
 - Related: 508-003 (binder), 508-004 (McpHost), 508-011 (problem renderer), Roslynk 005.

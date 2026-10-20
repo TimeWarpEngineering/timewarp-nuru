@@ -85,11 +85,17 @@ runs many calls at once, and give each call its own state instead of process sta
 - **Cancellation:** a client disconnect, MCP `notifications/cancelled`, or the forwarding CLI's cancel cancels only that
   call's token.
 - `ping`/`stop` answer while calls run; the idle timer never fires while any call runs.
+- **Invoke then render is one call (review round 1, M1):** the exit code a host returns for a bound call is the
+  call's one value. Render continues the invoke call's context: it starts from the exit code the handler left in
+  `NuruCallContext.CurrentExitCode` and resolves paths against the call's working directory; problem details written
+  during render still overwrite the code. McpHost (in-process and forwarded) and daemon `invoke` return that code.
 
 Acceptance: concurrency, isolation (output, exit code, working directory), exclusive, cancellation and soak tests pass
 through the daemon (forwarded CLI) and McpHost (in-process and forwarded); the existing suites stay green; timings for
 single vs 8 parallel forwarded calls before and after are in Results; daemon and McpHost docs and Design regions
-describe the concurrency model, `NuruCallContext`, and the exclusive opt-in.
+describe the concurrency model, `NuruCallContext`, and the exclusive opt-in. Two concurrent McpHost calls
+(in-process and forwarded) whose handlers set distinct `NuruCallContext.CurrentExitCode` values each get their own code
+back, and a renderer that resolves a relative path during render sees the call's directory.
 
 ## Checklist
 
@@ -114,6 +120,11 @@ describe the concurrency model, `NuruCallContext`, and the exclusive opt-in.
   against a `git archive master` export (before) and this branch (after).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T07:02:44Z
 - Reviewer: grok session 01a1581e-a3a7-76b2-ba52-ec583804afec (2026-10-20). Round 1, effort 3, roster general.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-20T07:17:46Z
+- 2026-10-20 implement-fix-2 (claude, headless): fixed review M1. Render continues the invoke call's context
+  (`RenderAsync(..., context)`), generated code no longer resets the exit code on a render, and both hosts render with
+  the call. New tests in routing-35, daemon-04, mcphost-03. Full CI suite 0 failed (multi-mode 2028 passed),
+  daemon-01..03 and mcphost-01..02 pass, `dev verify-samples` 66/66, `ganda repo audit` passes.
 
 ## Results
 
@@ -122,7 +133,10 @@ describe the concurrency model, `NuruCallContext`, and the exclusive opt-in.
   `ExitCode`, `CaptureConsole`, flowing by `AsyncLocal`. Static helpers `CurrentExitCode`, `CurrentDirectory`,
   `GetFullPath(path)` fall back to `Environment.ExitCode` / `Environment.CurrentDirectory` in a plain CLI run.
 - `NuruApp.ExecuteAsync(args, context)` and `NuruApp.InvokeAsync(request, context)` run a call in a context;
-  `RenderAsync` runs in its own context, so its exit code is never `Environment.ExitCode`. `NuruApp.Terminal` follows
+  `RenderAsync(request, result, terminal, context)` renders that call's result as the rest of the call: it starts from
+  the exit code the handler set and the call's directory (problem details overwrite the code) and writes the result to
+  `context.ExitCode`. Standalone `RenderAsync(request, result, terminal)` runs in its own context at exit code 0, never
+  `Environment.ExitCode`. `NuruApp.Terminal` follows
   the current call. Plain `RunAsync` is unchanged and still leaves the exit code in `Environment.ExitCode`.
 - `NuruCallTerminal`: the DI-injected `ITerminal` (generated DI, runtime MS DI, behaviors) forwards to the running
   call's terminal, so singletons built once still write to the right call.
@@ -146,15 +160,16 @@ describe the concurrency model, `NuruCallContext`, and the exclusive opt-in.
   request's token; forwarded calls are cancelled in the server by closing that call's connection.
 
 **Tests** (all pass; also in the CI multi-mode assembly)
-- `tests/timewarp-nuru-tests/routing/routing-35-call-context.cs` (6): concurrent calls with own output/exit code/
-  directory, plain-run exit code, exclusive serialization, single-call cancellation, per-call service scope
-  (generated DI and runtime MS DI).
-- `tests/timewarp-nuru-daemon-tests/daemon-04-concurrency.cs` (5): concurrent forwarded calls with isolated output,
-  exit code and cwd; exclusive routes + `ExclusiveCalls`; cancel one client only; no idle stop while a call runs;
+- `tests/timewarp-nuru-tests/routing/routing-35-call-context.cs` (7): concurrent calls with own output/exit code/
+  directory, invoke-then-render keeps the handler's exit code and directory, plain-run exit code, exclusive
+  serialization, single-call cancellation, per-call service scope (generated DI and runtime MS DI).
+- `tests/timewarp-nuru-daemon-tests/daemon-04-concurrency.cs` (6): concurrent forwarded calls with isolated output,
+  exit code and cwd; concurrent `invoke` calls whose handlers set distinct exit codes, rendered in their own cwd; exclusive routes + `ExclusiveCalls`; cancel one client only; no idle stop while a call runs;
   soak of mixed argv/binder, success/problem calls returning each caller its own result.
-- `tests/timewarp-nuru-mcphost-tests/mcphost-03-concurrency.cs` (4): concurrent tool calls over one session, cancel
-  one call only, `ExclusiveCalls` in-process, forwarded calls concurrent and cancelled alone.
-- Shared helpers: `tests/shared/call-probes.cs`. `daemon-01-server.cs` updated to the per-call API.
+- `tests/timewarp-nuru-mcphost-tests/mcphost-03-concurrency.cs` (6): concurrent tool calls over one session, handler
+  `CurrentExitCode` returned per call (in-process and forwarded; non-zero is `isError`), cancel one call only, `ExclusiveCalls` in-process, forwarded calls concurrent and cancelled alone.
+- Shared helpers: `tests/shared/call-probes.cs` (incl. `CcPathResult` / `CcPathRenderer`, a renderer that resolves a
+  relative path while rendering). `daemon-01-server.cs` updated to the per-call API.
 - Existing: daemon-01..03 (15/14/1), mcphost-01..02 (16/2) pass; full `run-ci-tests.cs` passes (0 failed);
   `dev verify-samples` 66/66; `ganda repo audit` passes.
 
@@ -187,20 +202,26 @@ dotnet run -c Release tests/scripts/benchmark-daemon-concurrency.cs
 ```
 
 **Expect**
-- The three test runfiles report `Total: 6 / 5 / 4`, all passed.
+- The three test runfiles report `Total: 7 / 6 / 6`, all passed.
 - The benchmark prints `bench-wait 50 ... 8 parallel: ... batch mean` near 52 ms (≈ one call), not ≈ 416 ms
   (eight calls back to back as on master).
 - `dotnet run tests/ci-tests/run-ci-tests.cs` finishes with 0 failed and lists `CallContext`, `DaemonConcurrency`,
   `McpHostConcurrency`.
 
-**Review (round 1, not disposed)**
-- Effort 3, roster general. Counts: 1 open bug (M1), 0 fixed, 0 wontfix. Disposition is not written. Live ledger: `review/round-1/merged.md`.
+**Review (round 1)**
+- Effort 3, roster general. Counts: 0 open, 1 fixed (M1: invoke-then-render dropped the handler's exit code and
+  directory), 0 wontfix. Ledger with disposition notes: `review/round-1/merged.md`.
 
 ## Learnings
 
 ### Misread
 
-The restatement says `RenderAsync` runs in its own `NuruCallContext`, so its exit code belongs to that render and is never `Environment.ExitCode`. The task says the call's exit code is one per-call value returned by render/invoke, and that McpHost (in-process and forwarded) returns that exit code along with the call's output. Following the restatement, render starts a fresh context at exit code 0, which drops the handler's `NuruCallContext.CurrentExitCode` on the invoke-then-render path. See open finding M1 in `review/round-1/merged.md`.
+The restatement says `RenderAsync` runs in its own `NuruCallContext`, so its exit code belongs to that render and is never `Environment.ExitCode`. The task says the call's exit code is one per-call value returned by render/invoke, and that McpHost (in-process and forwarded) returns that exit code along with the call's output. Following the restatement, render starts a fresh context at exit code 0, which drops the handler's `NuruCallContext.CurrentExitCode` on the invoke-then-render path. See finding M1 in `review/round-1/merged.md` (fixed in the round-2 fix pass).
+
+## Review
+
+- Round 1: Blocked — open M1
+- Round 2 fix pass (2026-10-20): M1 fixed; see `review/round-1/merged.md` disposition notes.
 
 ## Notes
 

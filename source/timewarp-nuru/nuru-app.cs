@@ -177,6 +177,7 @@ public partial class NuruApp
     Func<NuruApp, NuruInvocation, CancellationToken, Task<int>> executor = InvocationExecutor ?? throw MissingGeneratedCode();
     NuruInvocation invocation = new(request);
     int exitCode = await context.RunAsync(() => executor(this, invocation, cancellationToken)).ConfigureAwait(false);
+    context.ExitCode = exitCode;
     if (!invocation.Dispatched)
     {
       throw new InvalidOperationException(
@@ -196,16 +197,52 @@ public partial class NuruApp
   /// <param name="terminal">Terminal to write to, for example a <c>TestTerminal</c> to capture the text.</param>
   /// <returns>The exit code the CLI returns for this result: problem details give their status, otherwise 0.</returns>
   /// <remarks>
-  /// Rendering runs in its own <see cref="NuruCallContext"/> on <paramref name="terminal"/>, so the exit
-  /// code is this result's alone, never <see cref="Environment.ExitCode"/>.
+  /// Rendering runs in its own <see cref="NuruCallContext"/> on <paramref name="terminal"/>, starting at
+  /// exit code 0, so the exit code is this result's alone, never <see cref="Environment.ExitCode"/>. To
+  /// render the result of <see cref="InvokeAsync(NuruBoundRequest, NuruCallContext, CancellationToken)"/>
+  /// as part of that call, use <see cref="RenderAsync(NuruBoundRequest, object?, ITerminal, NuruCallContext)"/>.
   /// </remarks>
   public Task<int> RenderAsync(NuruBoundRequest request, object? result, ITerminal terminal)
   {
-    ArgumentNullException.ThrowIfNull(request);
     ArgumentNullException.ThrowIfNull(terminal);
-    Func<NuruApp, NuruInvocation, CancellationToken, Task<int>> executor = InvocationExecutor ?? throw MissingGeneratedCode();
-    NuruInvocation invocation = new(request) { RenderTerminal = terminal, Result = result };
     NuruCallContext context = new(terminal, NuruCallContext.CurrentDirectory) { CaptureConsole = NuruCallContext.Current?.CaptureConsole ?? false };
+    return RenderInContextAsync(request, result, context);
+  }
+
+  /// <summary>
+  /// Writes a result from <see cref="InvokeAsync(NuruBoundRequest, NuruCallContext, CancellationToken)"/> as
+  /// the rest of that call: as <see cref="RenderAsync(NuruBoundRequest, object?, ITerminal)"/> does, but
+  /// starting from the exit code the handler left in <paramref name="call"/> and resolving relative paths
+  /// against the call's working directory.
+  /// </summary>
+  /// <param name="request">The request the result came from.</param>
+  /// <param name="result">The value <see cref="InvokeAsync(NuruBoundRequest, NuruCallContext, CancellationToken)"/> returned.</param>
+  /// <param name="terminal">Terminal to write to, for example a <c>TestTerminal</c> to capture the text.</param>
+  /// <param name="call">The context the request was invoked in. Its <see cref="NuruCallContext.ExitCode"/> is set to the result.</param>
+  /// <returns>
+  /// The call's exit code: problem details give their status, otherwise the code the handler set with
+  /// <see cref="NuruCallContext.CurrentExitCode"/> (0 when it set none).
+  /// </returns>
+  public async Task<int> RenderAsync(NuruBoundRequest request, object? result, ITerminal terminal, NuruCallContext call)
+  {
+    ArgumentNullException.ThrowIfNull(terminal);
+    ArgumentNullException.ThrowIfNull(call);
+    NuruCallContext context = new(terminal, call.WorkingDirectory)
+    {
+      CaptureConsole = call.CaptureConsole,
+      HoldsExclusive = call.HoldsExclusive,
+      ExitCode = call.ExitCode
+    };
+    int exitCode = await RenderInContextAsync(request, result, context).ConfigureAwait(false);
+    call.ExitCode = exitCode;
+    return exitCode;
+  }
+
+  private Task<int> RenderInContextAsync(NuruBoundRequest request, object? result, NuruCallContext context)
+  {
+    ArgumentNullException.ThrowIfNull(request);
+    Func<NuruApp, NuruInvocation, CancellationToken, Task<int>> executor = InvocationExecutor ?? throw MissingGeneratedCode();
+    NuruInvocation invocation = new(request) { RenderTerminal = context.Terminal, Result = result };
     return context.RunAsync(() => executor(this, invocation, CancellationToken.None));
   }
 

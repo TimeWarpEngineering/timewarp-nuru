@@ -9,7 +9,8 @@
 // process state: no Console.SetOut, no Directory.SetCurrentDirectory, no Environment.ExitCode. Routes
 // marked [Exclusive] (and every call when NuruDaemonOptions.ExclusiveCalls is set) take the app's exclusive
 // gate, so they run one at a time against each other. ping and stop never wait for calls. A call is
-// cancelled, alone, when its client disconnects.
+// cancelled, alone, when its client disconnects. An invoke renders in the call's context
+// (NuruApp.RenderAsync with the call), so the exit code its handler set and its directory carry into render.
 //
 // One server per socket: a server holds an exclusive lock on <socket>.lock from before its stale-socket
 // check until after it deletes its socket. Only the lock holder deletes or binds the socket path, so a
@@ -499,7 +500,7 @@ public static class NuruDaemonServer
 
         object? result = await app.InvokeAsync(request, context, cancellationToken).ConfigureAwait(false);
         using TestTerminal rendered = CreateCallTerminal();
-        int exitCode = await app.RenderAsync(request, result, rendered).ConfigureAwait(false);
+        int exitCode = await app.RenderAsync(request, result, rendered, context).ConfigureAwait(false);
         return new NuruForwardResult(exitCode, terminal.Output, terminal.ErrorOutput + rendered.ErrorOutput, rendered.Output);
       }, cancellationToken).ConfigureAwait(false);
     }

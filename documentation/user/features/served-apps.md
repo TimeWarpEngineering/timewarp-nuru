@@ -111,7 +111,7 @@ Each call runs in its own `NuruCallContext` (core). Nothing on the call path cha
 | Per call | What it is | What a handler uses |
 |----------|------------|---------------------|
 | Output | A terminal of its own. `NuruApp.Terminal` and an injected `ITerminal` write to it, and so do `Console.Out` and `Console.Error` during the call. | `ITerminal` (or the console) as usual |
-| Exit code | The call's own value, returned to its client | Return problem details, or set `NuruCallContext.CurrentExitCode` |
+| Exit code | The call's own value, returned to its client. A bound (`invoke`) call renders its result in the same call, so the code the handler set is kept unless the result is problem details. | Return problem details, or set `NuruCallContext.CurrentExitCode` |
 | Working directory | The client's directory. The server process's directory does not change. | `NuruCallContext.CurrentDirectory`, `NuruCallContext.GetFullPath(path)` |
 | Services | Its own scope: `Scoped`, `AddCommandScoped` and `AddSessionScoped` services are created for the call and disposed when it returns. Singletons are shared by all calls. | Constructor or parameter injection, as usual |
 | Cancellation | Its own token, cancelled when its client goes away | The handler's `CancellationToken` |

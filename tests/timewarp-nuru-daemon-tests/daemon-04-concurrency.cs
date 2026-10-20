@@ -55,6 +55,7 @@ public class DaemonConcurrencyTests
       .Map("dcc-excl {n:int}").WithHandler((int n) => CcTracker.Current.RunAsync(n)).AsQuery().Exclusive().Done()
       .Map("dcc-free {n:int}").WithHandler((int n) => CcTracker.Current.RunAsync(n)).AsQuery().Done()
       .Map<DccSoakQuery>()
+      .Map<DccCodeQuery>()
       .Build();
     return app;
   }
@@ -109,6 +110,64 @@ public class DaemonConcurrencyTests
     using JsonDocument response = JsonDocument.Parse(await reader.ReadLineAsync() ?? "{}");
     JsonElement root = response.RootElement;
     return (root.GetProperty("exitCode").GetInt32(), root.GetProperty("stdout").GetString()!, root.GetProperty("stderr").GetString()!);
+  }
+
+  // An invoke request with its own "cwd", as a forwarding MCP host in another directory sends it.
+  private static async Task<(int ExitCode, string Rendered, string Stderr)> InvokeInAsync(string socketPath, string workingDirectory, string route, string argumentsJson)
+  {
+    using Socket socket = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+    await socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath));
+    await using NetworkStream stream = new(socket);
+    using JsonDocument arguments = JsonDocument.Parse(argumentsJson);
+    using MemoryStream request = new();
+    using (Utf8JsonWriter writer = new(request))
+    {
+      writer.WriteStartObject();
+      writer.WriteNumber("v", 1);
+      writer.WriteString("op", "invoke");
+      writer.WriteString("route", route);
+      writer.WritePropertyName("arguments");
+      arguments.RootElement.WriteTo(writer);
+      writer.WriteString("cwd", workingDirectory);
+      writer.WriteEndObject();
+    }
+
+    request.WriteByte((byte)'\n');
+    await stream.WriteAsync(request.ToArray());
+    using StreamReader reader = new(stream, Encoding.UTF8, leaveOpen: true);
+    using JsonDocument response = JsonDocument.Parse(await reader.ReadLineAsync() ?? "{}");
+    JsonElement root = response.RootElement;
+    return (root.GetProperty("exitCode").GetInt32(), root.GetProperty("rendered").GetString()!, root.GetProperty("stderr").GetString()!);
+  }
+
+  public static async Task Should_return_the_exit_code_and_directory_of_each_invoked_call_through_render()
+  {
+    NuruApp app = CreateApp();
+    NuruDaemonOptions options = CreateOptions();
+    CcRendezvous.Current = new CcRendezvous(expected: 2);
+    string dirA = Directory.CreateTempSubdirectory("dcc-ia-").FullName;
+    string dirB = Directory.CreateTempSubdirectory("dcc-ib-").FullName;
+    (Task<int> server, CancellationTokenSource stop) = await StartAsync(app, options);
+    try
+    {
+      Task<(int ExitCode, string Rendered, string Stderr)> a = InvokeInAsync(options.SocketPath!, dirA, "dcc-code", """{"name":"a","code":5}""");
+      Task<(int ExitCode, string Rendered, string Stderr)> b = InvokeInAsync(options.SocketPath!, dirB, "dcc-code", """{"name":"b","code":6}""");
+      await CcRendezvous.Current.AllEntered.WaitAsync(Limit);
+      CcRendezvous.Current.ReleaseAll();
+
+      // The handler's NuruCallContext.CurrentExitCode is the call's exit code after render, and the
+      // renderer resolves a relative path against the caller's directory.
+      (int ExitCode, string Rendered, string Stderr) resultA = await a.WaitAsync(Limit);
+      (int ExitCode, string Rendered, string Stderr) resultB = await b.WaitAsync(Limit);
+      resultA.ExitCode.ShouldBe(5, resultA.Stderr);
+      resultB.ExitCode.ShouldBe(6, resultB.Stderr);
+      resultA.Rendered.ShouldBe($"a->{Path.Combine(dirA, "a")}\n");
+      resultB.Rendered.ShouldBe($"b->{Path.Combine(dirB, "b")}\n");
+    }
+    finally
+    {
+      await StopAsync(server, stop);
+    }
   }
 
   public static async Task Should_run_forwarded_calls_concurrently_each_with_its_own_output_exit_code_and_directory()
@@ -323,4 +382,25 @@ public sealed class DccSoakQuery : IQuery<OneOf<string, SharedProblemDetails>>
     }
   }
 }
+[NuruRoute("dcc-code", Description = "Set the exit code, return a path result")]
+public sealed class DccCodeQuery : IQuery<CcPathResult>
+{
+  [Option("name", Description = "The name")]
+  public string Name { get; set; } = "";
+
+  [Option("code", Description = "The exit code")]
+  public int Code { get; set; }
+
+  public sealed class Handler : IQueryHandler<DccCodeQuery, CcPathResult>
+  {
+    public async Task<CcPathResult> Handle(DccCodeQuery query, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+      await CcRendezvous.Current.EnterAsync(query.Name, cancellationToken);
+      NuruCallContext.CurrentExitCode = query.Code;
+      return new CcPathResult(query.Name);
+    }
+  }
+}
+
 }

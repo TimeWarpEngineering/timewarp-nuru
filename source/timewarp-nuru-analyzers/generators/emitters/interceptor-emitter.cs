@@ -221,8 +221,10 @@ internal static class InterceptorEmitter
     sb.AppendLine("    global::TimeWarp.Nuru.NuruInvocation? __invocation = null");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
-    // A previous command may have stored a problem status. This invocation starts clean.
-    sb.AppendLine("    global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode = 0;");
+    // A previous command may have stored a problem status. This invocation starts clean. A render
+    // continues its call: it keeps the exit code the handler set, and problem details overwrite it.
+    sb.AppendLine("    if (__invocation?.RenderTerminal is null)");
+    sb.AppendLine("      global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode = 0;");
     // Fallback for an app whose Build() call was not intercepted. The forwarder is attached only
     // then, so an app may set RouteForwarder = null after Build() to run every route here.
     if (app.ServeRoute is not null)

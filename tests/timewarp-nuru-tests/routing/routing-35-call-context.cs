@@ -7,6 +7,7 @@
 // cancels only it; a plain RunAsync still sets Environment.ExitCode.
 
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 #pragma warning disable CA1063 // Probes only record Dispose calls.
 #pragma warning disable CA1816
@@ -107,6 +108,36 @@ public class CallContextTests
     Environment.CurrentDirectory.ShouldBe(processDirectory);
     NuruCallContext.Current.ShouldBeNull();
     NuruCallContext.CurrentDirectory.ShouldBe(processDirectory);
+  }
+
+  public static async Task Should_carry_the_invoked_calls_exit_code_and_directory_into_render()
+  {
+    NuruApp app = NuruApp.CreateBuilder()
+      .Map<RccCodeQuery>()
+      .Build();
+    string directory = Directory.CreateTempSubdirectory("rcc-render-").FullName;
+    Environment.ExitCode = 0;
+    using JsonDocument arguments = JsonDocument.Parse("""{"name":"f.txt","code":9}""");
+    app.TryBind("rcc-code", arguments.RootElement, out NuruBoundRequest? request, out _).ShouldBeTrue();
+
+    (NuruCallContext context, TestTerminal terminal) = NewCall(directory);
+    using (terminal)
+    {
+      object? result = await app.InvokeAsync(request!, context);
+      context.ExitCode.ShouldBe(9);
+
+      // Rendering as part of the call keeps the handler's exit code and the call's directory.
+      using TestTerminal rendered = new();
+      (await app.RenderAsync(request!, result, rendered, context)).ShouldBe(9);
+      context.ExitCode.ShouldBe(9);
+      rendered.Output.ShouldBe($"f.txt->{Path.Combine(directory, "f.txt")}\n");
+
+      // A standalone render is the result's alone: it starts at 0.
+      using TestTerminal standalone = new();
+      (await app.RenderAsync(request!, result, standalone)).ShouldBe(0);
+    }
+
+    Environment.ExitCode.ShouldBe(0);
   }
 
   public static async Task Should_set_the_process_exit_code_for_a_plain_run()
@@ -272,6 +303,27 @@ public sealed class RccExclusiveCommand : ICommand<Unit>
       ArgumentNullException.ThrowIfNull(command);
       await CcTracker.Current.RunAsync(command.N);
       return Unit.Value;
+    }
+  }
+}
+
+[NuruRoute("rcc-code", Description = "Set the exit code, return a path result")]
+public sealed class RccCodeQuery : IQuery<CcPathResult>
+{
+  [Option("name", Description = "The name")]
+  public string Name { get; set; } = "";
+
+  [Option("code", Description = "The exit code")]
+  public int Code { get; set; }
+
+  public sealed class Handler : IQueryHandler<RccCodeQuery, CcPathResult>
+  {
+    public async Task<CcPathResult> Handle(RccCodeQuery query, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+      await Task.Yield();
+      NuruCallContext.CurrentExitCode = query.Code;
+      return new CcPathResult(query.Name);
     }
   }
 }

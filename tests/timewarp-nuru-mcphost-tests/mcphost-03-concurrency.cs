@@ -52,6 +52,7 @@ public class McpHostConcurrencyTests
         }
       }).AsCommand().Done()
       .Map("mcc-free {n:int}").WithHandler((int n) => CcTracker.Current.RunAsync(n)).AsQuery().Done()
+      .Map<MccCodeQuery>()
       .Build();
     return app;
   }
@@ -86,6 +87,67 @@ public class McpHostConcurrencyTests
     resultB.IsError.ShouldBe(false);
     Text(resultA).ShouldBe("start a\nconsole a\ndone a");
     Text(resultB).ShouldBe("start b\nconsole b\ndone b");
+  }
+
+  public static async Task Should_return_each_tool_call_the_exit_code_its_handler_set()
+  {
+    NuruApp app = CreateApp();
+    CcRendezvous.Current = new CcRendezvous(expected: 2);
+    await using MccRawSession session = await MccRawSession.StartAsync(app);
+
+    Task<JsonElement> a = session.CallAsync(30, "mcc-code", """{"name":"a","code":0}""");
+    Task<JsonElement> b = session.CallAsync(31, "mcc-code", """{"name":"b","code":7}""");
+    await CcRendezvous.Current.AllEntered.WaitAsync(Limit);
+    CcRendezvous.Current.ReleaseAll();
+
+    // The handler's NuruCallContext.CurrentExitCode survives render: 7 is a tool error, 0 is not.
+    // The renderer resolves the relative path against the call's directory.
+    JsonElement resultA = await a.WaitAsync(Limit);
+    JsonElement resultB = await b.WaitAsync(Limit);
+    resultA.GetProperty("isError").GetBoolean().ShouldBeFalse();
+    resultB.GetProperty("isError").GetBoolean().ShouldBeTrue();
+    MccRawSession.Text(resultA).ShouldBe($"a->{Path.GetFullPath("a")}");
+    MccRawSession.Text(resultB).ShouldBe($"b->{Path.GetFullPath("b")}");
+  }
+
+  public static async Task Should_return_each_forwarded_tool_call_the_exit_code_its_handler_set()
+  {
+    NuruApp served = CreateApp();
+    NuruDaemonOptions options = new()
+    {
+      SocketPath = Path.Combine(Directory.CreateTempSubdirectory("nuru-mcc-").FullName, "mcc.sock"),
+      IdleTimeout = TimeSpan.Zero
+    };
+    using CancellationTokenSource stop = new();
+    Task<int> server = Task.Run(() => NuruDaemonServer.RunAsync(served, options, stop.Token));
+    NuruDaemonClient daemon = new(options);
+    for (int i = 0; i < 100 && await daemon.PingAsync(served) is null; i++)
+      await Task.Delay(50);
+
+    try
+    {
+      NuruApp host = CreateApp();
+      host.RouteForwarder = daemon;
+      CcRendezvous.Current = new CcRendezvous(expected: 2);
+      await using MccRawSession session = await MccRawSession.StartAsync(host);
+
+      Task<JsonElement> a = session.CallAsync(40, "mcc-code", """{"name":"a","code":7}""");
+      Task<JsonElement> b = session.CallAsync(41, "mcc-code", """{"name":"b","code":0}""");
+      await CcRendezvous.Current.AllEntered.WaitAsync(Limit);
+      CcRendezvous.Current.ReleaseAll();
+
+      JsonElement resultA = await a.WaitAsync(Limit);
+      JsonElement resultB = await b.WaitAsync(Limit);
+      resultA.GetProperty("isError").GetBoolean().ShouldBeTrue();
+      resultB.GetProperty("isError").GetBoolean().ShouldBeFalse();
+      MccRawSession.Text(resultA).ShouldBe($"a->{Path.GetFullPath("a")}");
+      MccRawSession.Text(resultB).ShouldBe($"b->{Path.GetFullPath("b")}");
+    }
+    finally
+    {
+      await stop.CancelAsync();
+      (await server.WaitAsync(TimeSpan.FromSeconds(10))).ShouldBe(0);
+    }
   }
 
   public static async Task Should_cancel_only_the_call_the_client_cancelled()
@@ -177,6 +239,27 @@ public class McpHostConcurrencyTests
   {
     using JsonDocument document = JsonDocument.Parse(json);
     return document.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone());
+  }
+}
+
+[NuruRoute("mcc-code", Description = "Set the exit code, return a path result")]
+public sealed class MccCodeQuery : IQuery<CcPathResult>
+{
+  [Option("name", Description = "The name")]
+  public string Name { get; set; } = "";
+
+  [Option("code", Description = "The exit code")]
+  public int Code { get; set; }
+
+  public sealed class Handler : IQueryHandler<MccCodeQuery, CcPathResult>
+  {
+    public async Task<CcPathResult> Handle(MccCodeQuery query, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+      await CcRendezvous.Current.EnterAsync(query.Name, cancellationToken);
+      NuruCallContext.CurrentExitCode = query.Code;
+      return new CcPathResult(query.Name);
+    }
   }
 }
 

@@ -10,7 +10,9 @@
 // the call path swaps the console or touches Environment.ExitCode. Routes marked [Exclusive] (and every call
 // with NuruMcpHostOptions.ExclusiveCalls) take the app's exclusive gate. The MCP SDK cancels the handler's
 // token on notifications/cancelled, so only that call stops. RenderAsync supplies the CLI's text and exit
-// code; a non-zero exit code (problem details) is a tool error.
+// code; it continues the invoke's context, so the exit code a handler set (NuruCallContext.CurrentExitCode)
+// survives and a renderer resolves paths against the call's directory. A non-zero exit code (problem details
+// or the handler's) is a tool error.
 // A served app (AddServeRoute(), TimeWarp.Nuru.Daemon) attaches NuruApp.RouteForwarder; a call to a route
 // that is not local-only goes to that forwarder first, so the MCP host and the CLI share one warm server.
 // The server binds the same JSON object with the same public binder and returns the same texts.
@@ -104,7 +106,7 @@ public sealed class NuruMcpToolInvoker
       result = await App.InvokeAsync(request, context, cancellationToken).ConfigureAwait(false);
 
       using TestTerminal renderTerminal = CreateCallTerminal();
-      exitCode = await App.RenderAsync(request, result, renderTerminal).ConfigureAwait(false);
+      exitCode = await App.RenderAsync(request, result, renderTerminal, context).ConfigureAwait(false);
 
       rendered = renderTerminal.Output;
       stdout = terminal.Output + rendered;

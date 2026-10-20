@@ -104,3 +104,16 @@ public sealed class CcTracker
     return value;
   }
 }
+
+/// <summary>A result whose renderer resolves <see cref="Name"/> as a path while rendering.</summary>
+public sealed record CcPathResult(string Name);
+
+/// <summary>Renders a <see cref="CcPathResult"/> with the path it resolves against the call's directory.</summary>
+public sealed class CcPathRenderer : TimeWarp.Contracts.IResponseRenderer<CcPathResult>
+{
+  public string Render(CcPathResult response)
+  {
+    ArgumentNullException.ThrowIfNull(response);
+    return $"{response.Name}->{TimeWarp.Nuru.NuruCallContext.GetFullPath(response.Name)}";
+  }
+}

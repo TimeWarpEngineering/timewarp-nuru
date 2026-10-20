@@ -101,3 +101,9 @@ Expect:
 
 - Created: 3910525 (2026-10-19)
 - 2026-10-20 implementer (claude, ganda task work): read the emitters, then emitted `__Resolve` accessors for every cached lifetime and removed eager init. Added the daemon-05 tests, checked that they fail on the old emitter, and updated the sample, docs and changelog. Ran the AOT publish, full CI and audit (all green).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T14:56:38Z
+- Review oracle: grok session `01a159d0-7e82-7272-80f0-af06c514b1c3` (2026-10-20), effort 2, roster general, round 1. M1 is open. No disposition yet. See `review/round-1/merged.md`.
+
+## Learnings
+
+Misread between `## Requirements` and `## Goal (implementer restatement)`, and the implementation follows the restatement. The task constructs a singleton on first resolution and keeps other resolution order and lifetime semantics unchanged. The restatement defers every cached lifetime to first read. That is what stops a forwarded call from building a singleton through an unused session or command service. Late-scoped services are the mismatch: `DependsOnInvocationScope` builds them after process singletons, and the restatement's accessors build them when a singleton constructor first reads them. `EndSingleRunServicesAsync` then disposes that graph. See review round 1 M1. The restatement's acceptance list names `--version` and `--capabilities` and leaves out `--help`; the original built-in list includes `--help`, and `daemon-05` plus the changelog cover it.

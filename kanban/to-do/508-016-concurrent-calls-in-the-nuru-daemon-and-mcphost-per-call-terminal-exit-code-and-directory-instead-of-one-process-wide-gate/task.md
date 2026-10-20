@@ -112,6 +112,8 @@ describe the concurrency model, `NuruCallContext`, and the exclusive opt-in.
   stopped before committing; the resumed run verified it and committed. Build green; new tests, existing
   daemon/McpHost suites, full CI suite and 66/66 samples pass; `ganda repo audit` passes. Timings taken
   against a `git archive master` export (before) and this branch (after).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T07:02:44Z
+- Reviewer: grok session 01a1581e-a3a7-76b2-ba52-ec583804afec (2026-10-20). Round 1, effort 3, roster general.
 
 ## Results
 
@@ -190,6 +192,15 @@ dotnet run -c Release tests/scripts/benchmark-daemon-concurrency.cs
   (eight calls back to back as on master).
 - `dotnet run tests/ci-tests/run-ci-tests.cs` finishes with 0 failed and lists `CallContext`, `DaemonConcurrency`,
   `McpHostConcurrency`.
+
+**Review (round 1, not disposed)**
+- Effort 3, roster general. Counts: 1 open bug (M1), 0 fixed, 0 wontfix. Disposition is not written. Live ledger: `review/round-1/merged.md`.
+
+## Learnings
+
+### Misread
+
+The restatement says `RenderAsync` runs in its own `NuruCallContext`, so its exit code belongs to that render and is never `Environment.ExitCode`. The task says the call's exit code is one per-call value returned by render/invoke, and that McpHost (in-process and forwarded) returns that exit code along with the call's output. Following the restatement, render starts a fresh context at exit code 0, which drops the handler's `NuruCallContext.CurrentExitCode` on the invoke-then-render path. See open finding M1 in `review/round-1/merged.md`.
 
 ## Notes
 

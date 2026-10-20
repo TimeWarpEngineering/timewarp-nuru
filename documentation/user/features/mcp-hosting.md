@@ -70,7 +70,8 @@ await web.RunAsync();
 | `name` | The route's literal words, including any route-group prefix, joined by `_`: `config set {key} {value}` is `config_set`. An `[Operation(Group)]` path is metadata and adds no words. Characters outside `A-Z a-z 0-9 _ - .` become `_`. A route with no literal words is `default`. If two routes get the same name, the later one in catalog order gets `_2`, then `_3`, and so on. |
 | `description` | The route description |
 | `inputSchema` | JSON Schema from `parameters[]` and `options[]` (below) |
-| `annotations` | From the endpoint kind and `[Destructive]` (below) |
+| `title` | `[DisplayName]` on the endpoint class, or a host override (below) |
+| `annotations` | From the endpoint kind, `[Destructive]`, `[OpenWorld]` and `[DisplayName]`, with host overrides (below) |
 
 Set `NuruMcpHostOptions.ToolNameSeparator` to use a different separator. `NuruMcpToolCatalog.GetToolName(endpoint)` returns the name for a catalog endpoint, so a client can map tools back to CLI routes.
 
@@ -83,17 +84,68 @@ The schema is an object. Its property names are the catalog `name` strings, whic
 | `int`, `long`, `short`, `byte` and the unsigned types | `"type": "integer"` |
 | `double`, `float`, `decimal` | `"type": "number"` |
 | `bool`, or any flag option | `"type": "boolean"` |
+| `json` plus a CLR type name (a member that binds as one JSON value) | The member's catalog `schema` (below) |
 | Anything else, including enums, `Guid`, dates, and custom converters | `"type": "string"`. `Guid` gets `format: uuid`, `DateTime` and `DateTimeOffset` get `date-time`, `DateOnly` gets `date`, `TimeOnly` gets `time`, and `Uri` gets `uri`. |
 | A type ending in `?` | The type plus `"null"` |
 | A catch-all parameter, a repeated option, or a type ending in `[]` | `"type": "array"`, with `items` holding the element schema |
 | `allowedValues` | `enum` |
-| `defaultValue` | `default`, converted to the JSON type. Quotes and numeric suffixes from the C# initializer are removed. |
+| `defaultValue` | `default`, converted to the JSON type, and `Default: X.` at the end of `description` (see [Defaults](#defaults)). Quotes and numeric suffixes from the C# initializer are removed. A flag's default is `false`. |
 | `description` | `description` |
 | `required: true` | Listed in `required`, except for flags, which bind `false` when the key is absent |
 
 `NuruMcpToolCatalog.CreateInputSchema(endpoint)` returns this schema for any catalog endpoint.
 
+### Object and array members
+
+A member that is not a scalar or a repeated scalar, such as an array of objects or a nested object, binds as one JSON value: `tools/call` passes the object or array itself, and the binder deserializes it into the member's type. Its property schema is the catalog `schema`, exported from the source-generated JSON metadata that same binder deserializes with, so it is derived from the member's type rather than written by hand:
+
+- `type` is `object` or `array`, with `properties` and `items` nested as deep as the type goes.
+- `required` lists C# `required` members and constructor parameters.
+- A nullable reference member inside the type has `"null"` in its `type`. The member itself has `"null"` only when it is nullable (`TotalFormat? Format`); otherwise the binder rejects `null`.
+- An enum with `[JsonConverter(typeof(JsonStringEnumConverter<TEnum>))]` is an `enum` of its names. Without the converter the deserializer takes numbers, and the schema says `integer`.
+- A nested property's `[Description]` becomes its `description`.
+- An initializer that is itself JSON, such as `= []`, is the `default`.
+
+```json
+"Notes": {
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": { "Label": { "type": "string" }, "Amount": { "type": "number" } },
+    "required": ["Label"]
+  },
+  "default": [],
+  "description": "Labeled amounts added to the total. Default: []."
+}
+```
+
+Property names inside the value are the declared C# names. The binder matches them ignoring case. A JSON value sent as a string (`"Notes": "[{...}]"`) is a bind error, because the binder takes only an object or an array. A catalog built before task 508-015 has no `schema`. Such a member is published as `"type": ["object", "array"]`.
+
+The contracts calculator sample (`samples/endpoints/02-calculator-contracts`) has an object-array member (`Notes`) and a nested object member (`Format`). `calculator-contracts mcp` publishes both schemas, and the call below binds and runs:
+
+```json
+{"name": "calc_total", "arguments": {"Values": [1, 2], "Notes": [{"Label": "tax", "Amount": 1.5}], "Format": {"Decimals": 1, "Prefix": "$"}}}
+```
+
+### Defaults
+
+A member with a default carries it twice: in the JSON Schema `default` keyword, and as a last sentence of its `description`, `Default: X.`, where X is the default as JSON (`Default: 3.`, `Default: "main".`). The description is the only place every harness shows the model:
+
+| Harness | `default` reaches the model | Evidence (checked 2026-10-20) |
+|---------|-----------------------------|-------------------------------|
+| Claude Code 2.1.304 | Yes | The MCP `inputSchema` is sent as the tool's `input_schema` unchanged |
+| OpenAI Codex CLI (`openai/codex` `main` at `b2aa07db`) | No | `codex-rs/tools/src/mcp_tool.rs` parses the schema into `JsonSchema` (`codex-rs/tools/src/json_schema/types.rs`), which keeps `type`, `description`, `enum`, `items`, `properties`, `required`, `additionalProperties` and the combinators, and drops `default` and `format` |
+| Grok Build 1.0.64 | Yes | `search_tool` returns each MCP tool's `input_schema` as written |
+
+Repeating the default in the description adds a few words to `tools/list` and needs no per-app option. `NuruMcpToolCatalog.DescribeDefault(description, defaultJson)` builds the text.
+
+### Nullable members
+
+A member whose catalog type ends in `?` (`int?`, a nullable enum) has `"null"` in its `type`, because the binder accepts an explicit `null` for it and binds `null`. Omitting the key also leaves the member at its default, and that is the usual way to skip a member. A non-nullable member has no `"null"`, and the binder rejects one. A derived `string?` option is published as `string` because the catalog type carries no `?`. The binder still accepts `null` for it.
+
 ### Annotations
+
+Harnesses use these hints to decide which calls need a permission prompt and which they may approve automatically.
 
 | Endpoint kind | `readOnlyHint` | `idempotentHint` |
 |---------------|----------------|------------------|
@@ -102,15 +154,40 @@ The schema is an object. Its property names are the catalog `name` strings, whic
 | `command` | `false` | `false` |
 | `unspecified` | not set | not set |
 
-`destructiveHint` is never inferred. Mark an endpoint class with `[Destructive]` to set it to `true`:
+The other hints are never inferred. The endpoint class (an `[Operation]` contract or a `[NuruRoute]` class) declares them:
+
+| Attribute on the endpoint class | Annotation | Catalog member |
+|---------------------------------|------------|----------------|
+| `[Destructive]` / `[Destructive(false)]` | `destructiveHint: true` / `false` | `destructive` |
+| `[OpenWorld]` / `[OpenWorld(false)]` | `openWorldHint: true` / `false` | `openWorld` |
+| `[System.ComponentModel.DisplayName("...")]` | `title`, and the tool's `title` | `title` |
 
 ```csharp
+[Operation("find_references", Description = "Find every reference to a symbol")]
+[DisplayName("Find references")]
+[OpenWorld(false)]
+public sealed class FindReferencesQuery : IQuery<string> { ... }
+
 [NuruRoute("cache clear", Description = "Delete every cached entry")]
 [Destructive]
 public sealed class ClearCacheCommand : ICommand<Unit> { ... }
 ```
 
-The attribute also adds `"destructive": true` to the endpoint in `--capabilities`, so a CLI agent sees the same hint. Routes without the attribute have no `destructive` member, and their MCP tools leave `destructiveHint` unset. The MCP specification tells clients to treat an unset `destructiveHint` on a tool that is not read-only as possibly destructive. The attribute is supported on endpoint classes. Fluent `Map()` routes cannot carry it.
+`--capabilities` carries the same members, so a CLI agent sees the same hints. A route without an attribute has no catalog member, and its tool leaves the hint unset. The MCP specification tells clients to treat an unset `destructiveHint` on a tool that is not read-only as possibly destructive, and an unset `openWorldHint` as open-world. `[Destructive(false)]` says a command only adds data. `[OpenWorld(false)]` says a route works only on local state. The attributes are supported on endpoint classes. Fluent `Map()` routes cannot carry them. See [Neutral contracts](neutral-contracts.md#tool-hints) for how a contract carries them.
+
+An app that serves contracts it does not own sets hints per tool with `NuruMcpHostOptions.ToolAnnotations`, keyed by tool name. Every hint an entry sets replaces the derived one, and the others stay derived:
+
+```csharp
+builder.Services.AddMcpServer()
+  .WithStdioServerTransport()
+  .WithNuruTools(app, options =>
+  {
+    options.ToolAnnotations["find_references"] = new ToolAnnotations { Title = "Find references", OpenWorldHint = false };
+    options.ToolAnnotations["cache_clear"] = new ToolAnnotations { DestructiveHint = true };
+  });
+```
+
+`NuruMcpToolCatalog.CreateAnnotations(endpoint)` returns the derived annotations, and `NuruMcpToolCatalog.MergeAnnotations(derived, overrides)` applies an override.
 
 ## Calls
 

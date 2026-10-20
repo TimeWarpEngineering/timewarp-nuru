@@ -48,6 +48,8 @@ internal static partial class EndpointExtractor
   private const string DestructiveAttributeFullName = "TimeWarp.Nuru.DestructiveAttribute";
   private const string LocalOnlyAttributeFullName = "TimeWarp.Nuru.LocalOnlyAttribute";
   private const string ExclusiveAttributeFullName = "TimeWarp.Nuru.ExclusiveAttribute";
+  private const string OpenWorldAttributeFullName = "TimeWarp.Nuru.OpenWorldAttribute";
+  private const string DisplayNameAttributeFullName = "System.ComponentModel.DisplayNameAttribute";
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
   private const string GroupOptionAttributeName = "GroupOption";
@@ -224,10 +226,12 @@ internal static partial class EndpointExtractor
       aliases: aliases,
       implements: filterInterfaces,
       examples: examples,
-      isDestructive: HasAttribute(classDeclaration, semanticModel, DestructiveAttributeFullName, cancellationToken),
+      destructive: BoolAttributeValue(classDeclaration, semanticModel, DestructiveAttributeFullName, cancellationToken),
       isLocalOnly: HasAttribute(classDeclaration, semanticModel, LocalOnlyAttributeFullName, cancellationToken),
       groupPath: operationGroupPath,
-      isExclusive: HasAttribute(classDeclaration, semanticModel, ExclusiveAttributeFullName, cancellationToken));
+      isExclusive: HasAttribute(classDeclaration, semanticModel, ExclusiveAttributeFullName, cancellationToken),
+      openWorld: BoolAttributeValue(classDeclaration, semanticModel, OpenWorldAttributeFullName, cancellationToken),
+      title: StringAttributeValue(classDeclaration, semanticModel, DisplayNameAttributeFullName, cancellationToken));
 
     if (missingHandler is not null)
       return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);
@@ -391,6 +395,60 @@ internal static partial class EndpointExtractor
     }
 
     return false;
+  }
+
+  /// <summary>
+  /// The bool constructor argument of a hint attribute on the command class (<c>[Destructive]</c>,
+  /// <c>[OpenWorld]</c>): true when it is omitted, null when the attribute is absent.
+  /// </summary>
+  private static bool? BoolAttributeValue(
+    TypeDeclarationSyntax classDeclaration,
+    SemanticModel semanticModel,
+    string attributeFullName,
+    CancellationToken cancellationToken)
+  {
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol is null)
+      return null;
+
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() != attributeFullName)
+        continue;
+
+      // [Destructive] with no argument is true.
+      return attribute.ConstructorArguments.Length == 0 || attribute.ConstructorArguments[0].Value is not false;
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// The string constructor argument of an attribute on the command class (<c>[DisplayName]</c>),
+  /// or null when the attribute is absent or its text is blank.
+  /// </summary>
+  private static string? StringAttributeValue(
+    TypeDeclarationSyntax classDeclaration,
+    SemanticModel semanticModel,
+    string attributeFullName,
+    CancellationToken cancellationToken)
+  {
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol is null)
+      return null;
+
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() != attributeFullName)
+        continue;
+
+      return attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is string text
+        && !string.IsNullOrWhiteSpace(text)
+        ? text
+        : null;
+    }
+
+    return null;
   }
 
   /// <summary>

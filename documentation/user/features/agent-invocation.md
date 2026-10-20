@@ -35,7 +35,26 @@ myapp apply_patch --json-args @./apply-patch.json
 
 `invocation` is nullable. A document that omits it still deserializes, and `Invocation` is null. A reader that does not declare the property ignores the JSON field. `TimeWarp.Nuru.Search` indexes `endpoints` and leaves `invocation` in the stored capabilities document. It does not copy the object onto search results.
 
-`parameters[]` and `options[]` remain the schema. `--capabilities` does not emit a JSON Schema.
+`parameters[]` and `options[]` remain the schema. The one exception is a member that binds as one JSON value (`type` `json` plus the CLR type name): it also carries `schema`, the JSON Schema of that type exported from the source-generated metadata the `--json-args` binder deserializes with. Its property names, required members (`required` and constructor parameters), nullability and string-enum values are therefore what binds. A nested property's `[Description]` becomes its `description`. The root type includes `"null"` only when the member is nullable.
+
+```json
+{
+  "name": "Notes",
+  "type": "json CalculatorContracts.Endpoints.LabeledAmount[]",
+  "required": false,
+  "isFlag": false,
+  "isRepeated": false,
+  "defaultValue": "[]",
+  "schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": { "Label": { "type": "string" }, "Amount": { "type": "number" } },
+      "required": ["Label"]
+    }
+  }
+}
+```
 
 Each endpoint ends with `returnType`: the CLR type name of the result (the awaited type for an async handler, without `global::`) and how the CLI writes it.
 
@@ -56,9 +75,14 @@ An endpoint that returns `OneOf<TSuccess, SharedProblemDetails>` is described by
 
 `returnType` is nullable for the same reason as `invocation`: a document from a CLI built before it existed still deserializes, with `ReturnType` null.
 
-An endpoint class marked `[Destructive]` also has `"destructive": true` after `returnType`. Nothing infers it. Other endpoints have no `destructive` member, so their documents are unchanged.
+These members follow `returnType` only when the route declares them. Nothing infers them, so other endpoints' documents are unchanged.
 
-A route marked `[LocalOnly]` (endpoint class) or `.LocalOnly()` (fluent route) has `"localOnly": true` last. A served app never forwards it to its server (see [Served apps](served-apps.md)). Other routes have no `localOnly` member.
+| Member | Declared with | Meaning |
+|--------|---------------|---------|
+| `destructive` | `[Destructive]` (`true`) or `[Destructive(false)]` on the endpoint class | The route may delete or overwrite data, or (`false`) it only adds |
+| `localOnly` | `[LocalOnly]` (endpoint class) or `.LocalOnly()` (fluent route) | A served app never forwards it to its server (see [Served apps](served-apps.md)) |
+| `openWorld` | `[OpenWorld]` (`true`) or `[OpenWorld(false)]` on the endpoint class | The route reaches outside the app (the web, a remote service), or (`false`) it works only on local state |
+| `title` | `[System.ComponentModel.DisplayName("...")]` on the endpoint class | A human-readable display name |
 
 ## MCP
 

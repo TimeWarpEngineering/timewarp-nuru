@@ -21,7 +21,7 @@ Nuru builds the request with `new()` when an accessible constructor takes no arg
 | `System.ComponentModel.Description` | Option description. |
 | Enum | Allowed values are the enum names. A non-nullable enum with an initializer keeps that value when omitted. A non-nullable enum with no initializer is required. |
 | Array or list of a scalar (`string[]`, `int[]`, and the same for other scalars) | Repeated option. Pass the option once per value. |
-| Anything else, including an array of objects | One JSON value. `--capabilities` reports the type as `json` plus the CLR type name, without a `global::` prefix. A required JSON member cannot be passed on argv; the call fails and tells you to use `--json-args`. |
+| Anything else, including an array of objects | One JSON value. `--capabilities` reports the type as `json` plus the CLR type name, without a `global::` prefix, and a `schema`: the JSON Schema of that type, as the binder deserializes it. An MCP tool publishes that schema. A required JSON member cannot be passed on argv; the call fails and tells you to use `--json-args`. |
 
 Scalars are primitives, `string`, `decimal`, the date and time types, `Guid`, `Uri`, `Version`, `BigInteger`, enums, and nullable forms of those.
 
@@ -32,6 +32,31 @@ calc total --Values 2 --Values 4 --json-args '{"Notes":[{"Label":"tax","Amount":
 ```
 
 Names inside that JSON value are the property identifiers as declared, matched ignoring case, so `{"label":...}` and `{"Label":...}` both bind `Label`. The top-level `--json-args` keys still match exactly. Nuru does not rewrite names to camelCase. The deserializer is source-generated, so a published AOT app does not use reflection. For an enum inside a JSON value, use `[JsonConverter(typeof(JsonStringEnumConverter<TEnum>))]`. The non-generic `JsonStringEnumConverter` needs runtime code generation, and the generated context reports SYSLIB1034 for it.
+
+## Tool hints
+
+A contract says how a harness should treat its operation with attributes on the request class. The MCP host turns them into tool annotations, and `--capabilities` carries them for CLI agents:
+
+| Attribute | Catalog | MCP |
+| --- | --- | --- |
+| The mediator kind (`IQuery`, `IIdempotentCommand`, `ICommand`) | `kind` | `readOnlyHint`, `idempotentHint` |
+| `[Destructive]`, or `[Destructive(false)]` for a command that only adds | `destructive` | `destructiveHint` |
+| `[OpenWorld]`, or `[OpenWorld(false)]` for an operation that works only on local state | `openWorld` | `openWorldHint` |
+| `[System.ComponentModel.DisplayName("...")]` | `title` | `title` |
+
+```csharp
+using System.ComponentModel;
+using TimeWarp.Contracts;
+using TimeWarp.Nuru;
+
+[Operation("rename_symbol", Description = "Rename a symbol across the solution")]
+[DisplayName("Rename symbol")]
+[Destructive(false)]
+[OpenWorld(false)]
+public sealed class RenameSymbolCommand : ICommand<string> { ... }
+```
+
+`DisplayName` is the BCL attribute, like the `Description` on members. `Destructive` and `OpenWorld` are in `TimeWarp.Nuru`, because `TimeWarp.Contracts` 2.0.0-beta.23 has no place for them: `McpOperationBinding` carries `ToolName` only. When TimeWarp.Contracts gains these hints, Nuru will read them too. An app that serves contracts it does not own overrides any hint per tool with `NuruMcpHostOptions.ToolAnnotations` (see [MCP hosting](mcp-hosting.md#annotations)).
 
 ## Bool defaults
 
@@ -87,6 +112,6 @@ It applies to every renderer in the app: success renderers on stdout, and a prob
 
 ## Capabilities
 
-`--capabilities` uses one `OptionCapability` shape for derived and attribute-declared options. A derived endpoint has the same fields: `name`, `type`, `required`, `isFlag`, `isRepeated`, and, when they apply, `description`, `defaultValue`, and `allowedValues`. A JSON member's `type` is `json` plus the CLR type name. `groupPath` is the group decision above.
+`--capabilities` uses one `OptionCapability` shape for derived and attribute-declared options. A derived endpoint has the same fields: `name`, `type`, `required`, `isFlag`, `isRepeated`, and, when they apply, `description`, `defaultValue`, and `allowedValues`. A JSON member's `type` is `json` plus the CLR type name, and its `schema` is the JSON Schema of that type. `groupPath` is the group decision above. The tool hints above add `destructive`, `openWorld` and `title` to the endpoint.
 
 `[NuruRoute]` still overrides the operation name and description. `[Parameter]` and `[Option]` still override a single member, including a lowercase long form or a positional parameter.

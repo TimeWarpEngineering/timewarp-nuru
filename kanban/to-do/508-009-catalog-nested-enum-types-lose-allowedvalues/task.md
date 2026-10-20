@@ -40,6 +40,10 @@ Acceptance:
 - [x] McpHost test: nested enum appears as `enum` in the tool input schema
 - [x] Full CI after `ganda runfile cache --clear`
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Filed from 508-004 task Results (2026-10-19): "Enum allowedValues are missing from the catalog when the enum is a nested type. Worth its own task."
@@ -56,6 +60,7 @@ Acceptance:
   `runfile-executable` on the new test file; set its executable bit (git mode 100755).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T04:15:09Z
 - Review oracle: grok session `01a15785-3502-7ce1-a3e0-17c00c470564` (2026-10-20), effort 2, roster general, round 1, disposition clean
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-20T04:27:19Z
 
 ## Learnings
 

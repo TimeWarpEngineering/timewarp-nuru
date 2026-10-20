@@ -14,14 +14,82 @@ The source-generated DI (`service-resolver-emitter.cs`, `service-scope-expressio
 - AOT: no reflection or `Activator`; the emitted code stays trim-safe and `dotnet publish -p:PublishAot=true` on the served-app sample stays warning-free.
 - Remove the `Lazy<T>` workaround from `samples/endpoints/16-daemon/served-app.cs` and soften the served-apps doc line to a note about what the generator guarantees.
 
+## Goal (implementer restatement)
+
+Source-generated DI must stop building user services up front. Today `EnsureServicesInitialized` builds every singleton (and process-scoped service) before routing, and `BeginSingleRunServices` / `BeginReplCommandServices` / `EnsureSessionServices` build every command- and session-scoped service, so `--version`, `--help`, `--capabilities`, a parse error and a forwarded daemon call all pay for warm state they never use.
+
+Acceptance:
+
+- Each cached service (singleton, process `Scoped`, session, command) is built by a generated `__Resolve…()` accessor the first time something reads it. Lifetimes stay the same: one singleton per app (reset when a new app instance initializes), one session or command instance per scope, the same disposal tracking.
+- Singleton and process-scoped accessors take `__nuruInitLock` (double-checked), so concurrent daemon calls still build one instance.
+- `--version`, `--capabilities`, a parse error and a forwarded call construct no user singleton (counter test in the daemon test project). A locally handled route whose handler and behavior both inject the singleton constructs it once, and both see the same instance.
+- Plain `new` expressions only: no reflection, no `Activator`, trim/AOT-safe.
+- The served-app sample drops `Lazy<T>`; `served-apps.md` says what the generator guarantees and gives re-measured timings.
+- Full CI is green after `ganda runfile cache --clear`; `ganda repo audit` is clean.
+
 ## Checklist
 
-- [ ] Read the current emission in `service-resolver-emitter.cs` / `service-scope-expressions.cs` and record where eager construction happens
-- [ ] Emit lazy construction for singletons, trim-safe
-- [ ] Test: a singleton whose constructor records a counter is not constructed on `--version`, `--capabilities`, a parse error, or a forwarded call (daemon test project)
-- [ ] Test: a locally handled route constructs it exactly once across handler and behavior
-- [ ] Sample and docs updated; sample timing in `served-apps.md` re-measured
-- [ ] Full CI after `ganda runfile cache --clear`
+- [x] Read the current emission in `service-resolver-emitter.cs` / `service-scope-expressions.cs` and record where eager construction happens
+- [x] Emit lazy construction for singletons, trim-safe
+- [x] Test: a singleton whose constructor records a counter is not constructed on `--version`, `--capabilities`, a parse error, or a forwarded call (daemon test project)
+- [x] Test: a locally handled route constructs it exactly once across handler and behavior
+- [x] Sample and docs updated; sample timing in `served-apps.md` re-measured
+- [x] Full CI after `ganda runfile cache --clear`
+
+## Results
+
+Source-generated DI no longer builds user services when services initialize. Each cached service field now has a generated `__Resolve<field>()` accessor that builds the instance the first time something reads it. Handlers, behaviors, constructor arguments and the generated mediator's factories all read through these accessors.
+
+Where eager construction happened before this change (all in `interceptor-emitter.cs`):
+
+- `EnsureServicesInitializedLocked` built every singleton, and every non-REPL `Scoped` service, on the first call for an app.
+- `EnsureNonReplScoped` built non-REPL `Scoped` services after a REPL first call.
+- `EnsureSessionServices`, `BeginReplCommandServices` and `BeginSingleRunServices` built every session-, command- and late-`Scoped` service at the start of each call, before routing.
+
+Each of those reached singletons through constructor arguments. `service-scope-expressions.cs` `Read` returned the bare field.
+
+What changed:
+
+- `service-scope-expressions.cs`: `Read` returns `__Resolve…()` calls (`ResolverName`). The `Scoped` REPL ternary picks between two accessors.
+- `interceptor-emitter.cs`:
+  - Singleton and process-`Scoped` accessors do a double-checked `__nuruInitLock` (`??=` inside the lock), so concurrent served calls build one instance. A `Scoped` service that injects a session or command service is still built once per single run: it is tracked with the command and cleared in `EndSingleRunServicesAsync`.
+  - Session and command accessors are `field ??= Construct(...)` on the per-call `__NuruCall`, with the same `__TrackSession` / `__TrackCommand` disposal. Dependencies are tracked first, so they are still disposed after their dependents.
+  - `EnsureServicesInitialized(app, configuration)` sets only the framework fields. A new app instance resets the process fields to null, which keeps one instance per app.
+  - Removed `EnsureNonReplScoped`, `EnsureSessionServices`, `BeginReplCommandServices`, `BeginSingleRunServices`, `__nonReplScopedReady` and `SessionServicesReady`.
+- The emitted code is plain `new` plus `??=`, with no reflection or `Activator`. `dotnet publish samples/endpoints/16-daemon/served-app.cs -c Release -r linux-x64 -p:PublishAot=true` printed no warnings. In the native binary, `--version` took 0.02 s and `--no-daemon count hello` took 1.02 s.
+- Sample: `WarmIndex` now sleeps for one second in its constructor, and the `Lazy<T>` is gone. `served-apps.md` replaces the "keep expensive work out of singleton constructors" advice with what the generator guarantees, and has re-measured timings: `count hello` took 1.16 s in-process, 0.19 s forwarded, and `--version` took 0.05 s (JIT build, 2026-10-20). The changelog has an entry under Changed.
+- Tests:
+  - New `tests/timewarp-nuru-daemon-tests/daemon-05-lazy-singletons.cs` has 5 tests. 4 of them fail on the old emitter. The parse-error case already passed there and stays as a guard.
+  - `generator-35` now asserts the resolver call.
+- Full CI after `ganda runfile cache --clear`: multi-mode 2049 passed, 6 skipped. Standalone: 31 files, 0 failed. Exit 0.
+- `ganda repo audit` passes with nothing to fix.
+
+Observed, not changed here: a method-group handler (`.WithHandler(Cls.Method)`) on an app with an `AddBehavior` does not compile in the JSON-bound (`TryBind` / `--json-args`) dispatch, because `Command = __command` is undefined there (CS0103). This task did not touch behavior-context emission. The test uses a lambda instead. It is worth its own task.
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-daemon-tests/daemon-05-lazy-singletons.cs
+dotnet build samples/endpoints/16-daemon/served-app.cs
+SD=$(mktemp -d); chmod 700 $SD; export NURU_DAEMON_SOCKET=$SD/sa.sock
+DLL=$(ls -d ~/.local/share/dotnet/runfile/served-app-*/bin/debug/served-app.dll | head -1)
+time dotnet $DLL --version
+time dotnet $DLL --no-daemon count hello
+dotnet $DLL --daemon count hello
+time dotnet $DLL count hello
+dotnet $DLL serve --stop
+```
+
+Expect:
+
+- The test file passes 5 of 5.
+- `--version` returns in well under 0.2 s: the 1 s `WarmIndex` load never runs.
+- `--no-daemon count hello` prints `5` in about 1.1 s: it loads in-process.
+- With the server running, `count hello` prints `5` in about 0.2 s: the CLI does not construct `WarmIndex`.
+- The full suite `dotnet run tests/ci-tests/run-ci-tests.cs` exits 0.
 
 ## Notes
 
@@ -32,3 +100,4 @@ The source-generated DI (`service-resolver-emitter.cs`, `service-scope-expressio
 ## Session
 
 - Created: 3910525 (2026-10-19)
+- 2026-10-20 implementer (claude, ganda task work): read the emitters, then emitted `__Resolve` accessors for every cached lifetime and removed eager init. Added the daemon-05 tests, checked that they fail on the old emitter, and updated the sample, docs and changelog. Ran the AOT publish, full CI and audit (all green).

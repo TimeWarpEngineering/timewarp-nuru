@@ -1,5 +1,6 @@
 // Expressions that read or construct a source-generated service for its lifetime.
-// Process init reads __svc_ fields. Command resolution reads the REPL ternary for Scoped.
+// A read calls the field's __Resolve accessor, which builds the instance on first use (task 508-007).
+// Command resolution reads the REPL ternary for Scoped.
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -9,7 +10,7 @@ namespace TimeWarp.Nuru.Generators;
 internal enum ServiceResolveMode
 {
   /// <summary>
-  /// Singleton and non-REPL scoped initialization. Scoped dependencies read the process field.
+  /// Singleton and non-REPL scoped construction. Scoped dependencies read the process field.
   /// Transients are constructed and not tracked for disposal.
   /// </summary>
   ProcessInit,
@@ -37,17 +38,23 @@ internal static class ServiceScopeExpressions
   internal static string CommandField(string implementationTypeName) =>
     "__cmd_" + Sanitize(implementationTypeName);
 
+  /// <summary>
+  /// The accessor that returns a cached service field, constructing it on first read.
+  /// </summary>
+  internal static string ResolverName(string fieldName) => "__Resolve" + fieldName;
+
   internal static string Read(ServiceDefinition service, ServiceResolveMode mode)
   {
     string implementationTypeName = service.ImplementationTypeName;
+    string processRead = ResolveCall(InterceptorEmitter.GetServiceFieldName(implementationTypeName));
     return service.Lifetime switch
     {
-      ServiceLifetime.Singleton => InterceptorEmitter.GetServiceFieldName(implementationTypeName),
-      ServiceLifetime.SessionScoped => SessionField(implementationTypeName),
-      ServiceLifetime.CommandScoped => CommandField(implementationTypeName),
+      ServiceLifetime.Singleton => processRead,
+      ServiceLifetime.SessionScoped => ResolveCall(SessionField(implementationTypeName)),
+      ServiceLifetime.CommandScoped => ResolveCall(CommandField(implementationTypeName)),
       ServiceLifetime.Scoped => mode == ServiceResolveMode.Command
-        ? $"(__replCommandActive ? {CommandField(implementationTypeName)} : {InterceptorEmitter.GetServiceFieldName(implementationTypeName)})"
-        : InterceptorEmitter.GetServiceFieldName(implementationTypeName),
+        ? $"(__replCommandActive ? {ResolveCall(CommandField(implementationTypeName))} : {processRead})"
+        : processRead,
       _ => throw new InvalidOperationException($"Service lifetime {service.Lifetime} is constructed, not read.")
     };
   }
@@ -74,6 +81,8 @@ internal static class ServiceScopeExpressions
     ServiceResolveMode.Session => "__TrackSession",
     _ => ""
   };
+
+  private static string ResolveCall(string fieldName) => ResolverName(fieldName) + "()";
 
   private static string Sanitize(string implementationTypeName)
   {

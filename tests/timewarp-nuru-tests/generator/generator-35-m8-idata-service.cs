@@ -103,7 +103,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen35IDataService
 
       // Service injection: svc is bound from the statically-resolved DataImpl instance,
       // typed as the service interface, not converted from a positional route argument.
-      generatedSource.ShouldContain("global::IData svc = __svc_DataImpl;");
+      generatedSource.ShouldContain("global::IData svc = __Resolve__svc_DataImpl();");
 
       // Route parameter: name is still bound positionally from routeArgs.
       generatedSource.ShouldContain("string name = __positionalArgs_0[1];");

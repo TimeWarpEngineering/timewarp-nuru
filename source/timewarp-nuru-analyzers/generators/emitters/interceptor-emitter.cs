@@ -448,8 +448,8 @@ internal static class InterceptorEmitter
 
   /// <summary>
   /// Emits static nullable fields for Singleton and Scoped services.
-  /// These are initialized lazily in EnsureServicesInitialized.
-  /// Services are sorted topologically to ensure dependencies are emitted first.
+  /// Each field is built on first read by its <c>__Resolve</c> accessor, so a call that never
+  /// reaches a service (a built-in, a parse error, a forwarded route) never constructs it.
   /// </summary>
   private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, bool hasGeneratedMediator, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
   {
@@ -486,8 +486,7 @@ internal static class InterceptorEmitter
     ImmutableArray<ServiceDefinition> sortedProcessServices =
       DependencyGraphBuilder.TopologicalSort([.. processServices]);
 
-    sb.AppendLine("  // Static service fields (initialized in EnsureServicesInitialized)");
-    sb.AppendLine("  // Services are sorted topologically to ensure dependencies are emitted first");
+    sb.AppendLine("  // Static service fields, built on first read by their __Resolve accessors");
 
     // Emit framework service fields (always needed)
     sb.AppendLine("  private static global::TimeWarp.Terminal.ITerminal? __fw_ITerminal;");
@@ -527,7 +526,6 @@ internal static class InterceptorEmitter
     sb.AppendLine("  private sealed partial class __NuruCall");
     sb.AppendLine("  {");
     sb.AppendLine("    public bool ReplCommandActive;");
-    sb.AppendLine("    public bool SessionServicesReady;");
     sb.AppendLine("    public readonly global::System.Collections.Generic.List<object> CommandDisposables = new();");
     sb.AppendLine("    public readonly global::System.Collections.Generic.List<object> SessionDisposables = new();");
     foreach ((string typeName, string name) in callFields)
@@ -542,15 +540,13 @@ internal static class InterceptorEmitter
       sb.AppendLine($"  private static {typeName}? {name} {{ get => __CurrentCall.{name}; set => __CurrentCall.{name} = value; }}");
 
     sb.AppendLine("  private static bool __replCommandActive { get => __CurrentCall.ReplCommandActive; set => __CurrentCall.ReplCommandActive = value; }");
-    sb.AppendLine("  private static bool __sessionServicesReady { get => __CurrentCall.SessionServicesReady; set => __CurrentCall.SessionServicesReady = value; }");
-    sb.AppendLine("  private static bool __nonReplScopedReady;");
     sb.AppendLine("  private static global::System.Collections.Generic.List<object> __commandDisposables => __CurrentCall.CommandDisposables;");
     sb.AppendLine("  private static global::System.Collections.Generic.List<object> __sessionDisposables => __CurrentCall.SessionDisposables;");
 
     sb.AppendLine();
 
     // Emit EnsureServicesInitialized method
-    EmitEnsureServicesInitialized(sb, sortedProcessServices, allServices, frameworkServiceTypes, requiresMediator);
+    EmitEnsureServicesInitialized(sb, sortedProcessServices, frameworkServiceTypes, requiresMediator);
     EmitSourceGenScopeMethods(sb, allServices, sortedProcessServices);
 
     if (requiresMediator)
@@ -666,30 +662,25 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Emits the EnsureServicesInitialized method that initializes all service fields.
+  /// Emits the EnsureServicesInitialized method that sets the framework service fields.
   /// This is called after configuration is built in ExecuteRouteAsync.
   /// Uses app instance check instead of boolean flag to support multiple app instances
-  /// in the same process (e.g., CI multi-mode tests).
+  /// in the same process (e.g., CI multi-mode tests). User services are not built here:
+  /// a new app clears the process fields and each <c>__Resolve</c> accessor builds on first read.
   /// </summary>
-  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, ImmutableArray<ServiceDefinition> allServices, HashSet<string> frameworkServiceTypes, bool requiresMediator)
+  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, HashSet<string> frameworkServiceTypes, bool requiresMediator)
   {
-    sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration, bool fromRepl)");
+    sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
     sb.AppendLine("  {");
-    // Concurrent first calls (a daemon or MCP host) must not build singletons twice.
+    // Concurrent first calls (a daemon or MCP host) must not set up an app twice.
     sb.AppendLine("    lock (__nuruInitLock)");
-    sb.AppendLine("      EnsureServicesInitializedLocked(app, configuration, fromRepl);");
+    sb.AppendLine("      EnsureServicesInitializedLocked(app, configuration);");
     sb.AppendLine("  }");
     sb.AppendLine();
-    sb.AppendLine("  private static void EnsureServicesInitializedLocked(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration, bool fromRepl)");
+    sb.AppendLine("  private static void EnsureServicesInitializedLocked(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
     sb.AppendLine("  {");
-    // Already initialized for this app. Non-REPL Scoped is created on the first single-run
-    // command when the first call was a REPL command (which skips process-scoped fields).
     sb.AppendLine("    if (__fw_NuruApp == app)");
-    sb.AppendLine("    {");
-    sb.AppendLine("      if (!fromRepl)");
-    sb.AppendLine("        EnsureNonReplScoped();");
     sb.AppendLine("      return;");
-    sb.AppendLine("    }");
     sb.AppendLine();
 
     // Initialize framework services
@@ -715,33 +706,11 @@ internal static class InterceptorEmitter
 
     sb.AppendLine();
 
-    // Initialize user services in topological order.
-    // Scoped process fields are skipped in the REPL so each command can construct __cmd_ instead.
-    sb.AppendLine("    // User services");
+    // One instance per app: drop the previous app's singletons and process-scoped services.
+    sb.AppendLine("    // User services: built on first read; a new app drops the previous app's instances");
     foreach (ServiceDefinition service in sortedServices)
-    {
-      string fieldName = GetServiceFieldName(service.ImplementationTypeName);
-      string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
-      if (service.Lifetime == ServiceLifetime.Scoped)
-      {
-        // Session and command fields are assigned in BeginSingleRunServices.
-        // A scoped service that injects them is built there, not here.
-        if (DependencyGraphBuilder.DependsOnInvocationScope(service, allServices))
-          continue;
+      sb.AppendLine($"    {GetServiceFieldName(service.ImplementationTypeName)} = null;");
 
-        sb.AppendLine("    if (!fromRepl && !__nonReplScopedReady)");
-        sb.AppendLine("    {");
-        sb.AppendLine($"      {fieldName} = {constructed};");
-        sb.AppendLine("    }");
-      }
-      else
-      {
-        sb.AppendLine($"    {fieldName} = {constructed};");
-      }
-    }
-
-    sb.AppendLine("    if (!fromRepl)");
-    sb.AppendLine("      __nonReplScopedReady = true;");
     sb.AppendLine("  }");
     sb.AppendLine();
   }
@@ -801,71 +770,37 @@ internal static class InterceptorEmitter
     sb.AppendLine("  }");
     sb.AppendLine();
 
-    sb.AppendLine("  private static void EnsureSessionServices()");
-    sb.AppendLine("  {");
-    sb.AppendLine("    if (__sessionServicesReady) return;");
-    sb.AppendLine("    __sessionServicesReady = true;");
-    EmitConstructions(sb, sessionServices, allServices, ServiceResolveMode.Session, ServiceScopeExpressions.SessionField, "    ");
-    sb.AppendLine("  }");
-    sb.AppendLine();
-
-    sb.AppendLine("  private static void EnsureNonReplScoped()");
-    sb.AppendLine("  {");
-    sb.AppendLine("    if (__nonReplScopedReady) return;");
-    sb.AppendLine("    __nonReplScopedReady = true;");
-    foreach (ServiceDefinition service in sortedProcessServices.Where(service =>
-      service.Lifetime == ServiceLifetime.Scoped &&
-      !DependencyGraphBuilder.DependsOnInvocationScope(service, allServices)))
-    {
-      string fieldName = GetServiceFieldName(service.ImplementationTypeName);
-      string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
-      sb.AppendLine($"    {fieldName} = {constructed};");
-    }
-
-    sb.AppendLine("  }");
-    sb.AppendLine();
-
-    sb.AppendLine("  private static void BeginReplCommandServices()");
-    sb.AppendLine("  {");
-    sb.AppendLine("    EnsureSessionServices();");
-    EmitConstructions(sb, replCommandServices, allServices, ServiceResolveMode.Command, ServiceScopeExpressions.CommandField, "    ");
-    sb.AppendLine("  }");
-    sb.AppendLine();
-
+    // Process instances (singletons, non-REPL Scoped) take the init lock so concurrent served calls
+    // build one. A Scoped service that injects a session or command service is rebuilt each single
+    // run: its instance is tracked with the command and cleared when the run ends.
     ServiceDefinition[] lateScoped =
     [
       .. sortedProcessServices.Where(service =>
         service.Lifetime == ServiceLifetime.Scoped &&
         DependencyGraphBuilder.DependsOnInvocationScope(service, allServices))
     ];
-    ImmutableArray<ServiceDefinition> singleRunInvocation = DependencyGraphBuilder.TopologicalSort
-    (
-      [.. commandServices, .. lateScoped]
-    );
 
-    sb.AppendLine("  private static void BeginSingleRunServices()");
-    sb.AppendLine("  {");
-    sb.AppendLine("    EnsureSessionServices();");
-    foreach (ServiceDefinition service in singleRunInvocation)
+    foreach (ServiceDefinition service in sortedProcessServices)
     {
-      if (service.Lifetime == ServiceLifetime.CommandScoped)
-      {
-        string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.Command);
-        sb.AppendLine($"    {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)} = {constructed};");
-        continue;
-      }
-
-      // Recreate each single-run. The captured session and command instances
-      // are disposed at the end of the invocation.
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
-      string lateConstructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
-      sb.AppendLine($"    {fieldName} = {lateConstructed};");
-      sb.AppendLine($"    if ((object){fieldName} is global::System.IDisposable or global::System.IAsyncDisposable)");
-      sb.AppendLine($"      __commandDisposables.Add({fieldName});");
+      string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
+      if (lateScoped.Contains(service))
+        constructed = $"__TrackCommand({constructed})";
+
+      sb.AppendLine($"  private static {service.ImplementationTypeName} {ServiceScopeExpressions.ResolverName(fieldName)}()");
+      sb.AppendLine("  {");
+      sb.AppendLine($"    {service.ImplementationTypeName}? instance = {fieldName};");
+      sb.AppendLine("    if (instance is not null)");
+      sb.AppendLine("      return instance;");
+      sb.AppendLine("    lock (__nuruInitLock)");
+      sb.AppendLine($"      return {fieldName} ??= {constructed};");
+      sb.AppendLine("  }");
+      sb.AppendLine();
     }
 
-    sb.AppendLine("  }");
-    sb.AppendLine();
+    // Session and command fields belong to the call (__NuruCall), so they need no lock.
+    EmitScopeResolvers(sb, sessionServices, allServices, ServiceResolveMode.Session, ServiceScopeExpressions.SessionField);
+    EmitScopeResolvers(sb, replCommandServices, allServices, ServiceResolveMode.Command, ServiceScopeExpressions.CommandField);
 
     sb.AppendLine("  private static async global::System.Threading.Tasks.ValueTask EndReplCommandServicesAsync()");
     sb.AppendLine("  {");
@@ -881,7 +816,7 @@ internal static class InterceptorEmitter
     sb.AppendLine("    await __DisposeTrackedAsync(__sessionDisposables).ConfigureAwait(false);");
     EmitNullAssignments(sb, commandServices, ServiceScopeExpressions.CommandField, "    ");
     EmitNullAssignments(sb, sessionServices, ServiceScopeExpressions.SessionField, "    ");
-    sb.AppendLine("    __sessionServicesReady = false;");
+    EmitNullAssignments(sb, [.. lateScoped], GetServiceFieldName, "    ");
     sb.AppendLine("    __replCommandActive = false;");
     sb.AppendLine("  }");
     sb.AppendLine();
@@ -890,26 +825,28 @@ internal static class InterceptorEmitter
     sb.AppendLine("  {");
     sb.AppendLine("    await __DisposeTrackedAsync(__sessionDisposables).ConfigureAwait(false);");
     EmitNullAssignments(sb, sessionServices, ServiceScopeExpressions.SessionField, "    ");
-    sb.AppendLine("    __sessionServicesReady = false;");
     sb.AppendLine("  }");
     sb.AppendLine();
   }
 
-  private static void EmitConstructions
+  private static void EmitScopeResolvers
   (
     StringBuilder sb,
     ImmutableArray<ServiceDefinition> services,
     ImmutableArray<ServiceDefinition> allServices,
     ServiceResolveMode mode,
-    Func<string, string> fieldName,
-    string indent
+    Func<string, string> fieldName
   )
   {
     foreach (ServiceDefinition service in services)
     {
+      string field = fieldName(service.ImplementationTypeName);
       string constructed = ServiceScopeExpressions.Construct(service, allServices, mode);
-      sb.AppendLine($"{indent}{fieldName(service.ImplementationTypeName)} = {constructed};");
+      sb.AppendLine($"  private static {service.ImplementationTypeName} {ServiceScopeExpressions.ResolverName(field)}() => {field} ??= {constructed};");
     }
+
+    if (services.Length > 0)
+      sb.AppendLine();
   }
 
   private static void EmitNullAssignments
@@ -1287,16 +1224,13 @@ internal static class InterceptorEmitter
     string scopeSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
     if (app.UseMicrosoftDependencyInjection)
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl || __isolatedCall);");
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
       sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: __enteringRepl, isolatedCall: __isolatedCall);");
     }
     else
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl || __isolatedCall);");
-      sb.AppendLine("    if (fromRepl || __isolatedCall)");
-      sb.AppendLine("      BeginReplCommandServices();");
-      sb.AppendLine("    else if (!__enteringRepl)");
-      sb.AppendLine("      BeginSingleRunServices();");
+      // Services are built when a handler or behavior first reads them, not here.
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
       sb.AppendLine("    await using global::TimeWarp.Nuru.NuruAsyncLease __nuruLease = __enteringRepl");
       sb.AppendLine("      ? global::TimeWarp.Nuru.NuruAsyncLease.Idle()");
       sb.AppendLine("      : global::TimeWarp.Nuru.NuruAsyncLease.For(fromRepl, EndReplCommandServicesAsync, EndSingleRunServicesAsync);");

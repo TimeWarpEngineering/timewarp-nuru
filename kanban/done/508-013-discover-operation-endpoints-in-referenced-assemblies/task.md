@@ -205,3 +205,4 @@ Round 1 (2026-10-21), effort 3, roster general. `generator-59` 7/7 and `generato
 Round 2 (2026-10-21), effort 2, roster general, session `01a15a8a-52e5-72d3-9dce-e2f0e1ae5d10`. Re-reviewed `11cc4e85` only. M1 and M2 are fixed. No new findings. generator-59 passed 9/9 in this review session. Disposition: clean. Final counts: bug 0 open / 2 fixed / 0 wontfix; suggestion 0; nit 0.
 
 Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- 2026-10-21 CI fix (PR #341): `dev verify-samples` failed on sample 17 (CS0006, missing contracts library ref dll) because samples build with `--no-dependencies`. `BuildSharedProjectsAsync` now also builds the mcphost and daemon source projects and every `*.csproj` under `samples/` first (the former were also missing on a clean tree).

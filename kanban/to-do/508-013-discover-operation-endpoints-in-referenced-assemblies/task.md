@@ -65,6 +65,8 @@ Acceptance criteria:
   bit, and the sample's `#:project contracts/...` counted as a hardcoded path. `ganda repo audit --fix`
   set the bits and rewrote the directive to `$(SamplesDirectory)endpoints/17-referenced-contracts/...`.
   The sample still runs, and the audit is 30/30.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T17:49:10Z
+- 2026-10-21 reviewer grok session `01a15a6e-77a8-7502-85fc-a9aae6c58c66` (effort 3, roster general): round 1, open findings M1 and M2. See `review/round-1/merged.md`.
 
 ## Notes
 
@@ -158,3 +160,7 @@ Expect:
 - generator-59: 7/7 pass. generator-60: 3/3 pass.
 - Remove `[assembly: NuruEndpointAssembly(...)]` from `referenced-contracts.cs`, and `greet`
   becomes `Unknown command`.
+
+### Review
+
+Round 1 (2026-10-21), effort 3, roster general. `generator-59` 7/7 and `generator-60` 3/3 passed in the review session. Two open bugs: M1 (diagnostic location from another compilation) and M2 (record parameter with no explicit default forces the member required). Disposition is not written; it waits on a fix pass. The implementer restatement matches the original task. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

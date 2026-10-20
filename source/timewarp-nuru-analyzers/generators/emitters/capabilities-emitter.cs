@@ -244,18 +244,31 @@ internal static class CapabilitiesEmitter
     sb.AppendLine("        {");
     sb.AppendLine($"          Name = \"{EmitterStringUtils.EscapeForStringLiteral(returnTypeName)}\",");
     sb.AppendLine($"          Kind = global::TimeWarp.Nuru.ReturnTypeKind.{returnTypeKind}");
-    sb.AppendLine(route.IsDestructive || route.IsLocalOnly ? "        }," : "        }");
+    sb.AppendLine("        },");
 
-    // Destructive (only for [Destructive] endpoints; otherwise null and omitted from JSON)
-    if (route.IsDestructive)
+    // Hints below are set only when the endpoint declares them; otherwise null and omitted from JSON.
+    // [Destructive] / [Destructive(false)]
+    if (route.Destructive is bool destructive)
     {
-      sb.AppendLine(route.IsLocalOnly ? "        Destructive = true," : "        Destructive = true");
+      sb.AppendLine($"        Destructive = {(destructive ? "true" : "false")},");
     }
 
-    // LocalOnly (only for [LocalOnly] / .LocalOnly() routes; otherwise null and omitted from JSON)
+    // [LocalOnly] / .LocalOnly()
     if (route.IsLocalOnly)
     {
-      sb.AppendLine("        LocalOnly = true");
+      sb.AppendLine("        LocalOnly = true,");
+    }
+
+    // [OpenWorld] / [OpenWorld(false)]
+    if (route.OpenWorld is bool openWorld)
+    {
+      sb.AppendLine($"        OpenWorld = {(openWorld ? "true" : "false")},");
+    }
+
+    // [DisplayName("...")]
+    if (route.Title is not null)
+    {
+      sb.AppendLine($"        Title = \"{EmitterStringUtils.EscapeForStringLiteral(route.Title)}\",");
     }
 
     sb.AppendLine("      });");
@@ -372,6 +385,14 @@ internal static class CapabilitiesEmitter
       }
 
       sb.AppendLine("],");
+    }
+
+    // A JSON member publishes the schema of the type its binder deserializes into, from the same
+    // generated NuruJsonMemberContext the --json-args binder uses.
+    if (option.IsJsonValue && option.ResolvedClrTypeName is string jsonType)
+    {
+      string nullable = option.ParameterIsOptional ? "true" : "false";
+      sb.AppendLine($"              Schema = global::TimeWarp.Nuru.NuruJsonMemberSchema.Create(global::TimeWarp.Nuru.Generated.NuruJsonMemberContext.Default, typeof({jsonType.TrimEnd('?')}), {nullable}),");
     }
 
     string comma = isLast ? "" : ",";

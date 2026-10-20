@@ -4,22 +4,38 @@ using System.ComponentModel;
 using System.Globalization;
 using TimeWarp.Contracts;
 using TimeWarp.Mediator;
+using TimeWarp.Nuru;
 
 /// <summary>
 /// One labeled amount. Passed as JSON because it is not a scalar.
 /// </summary>
 public sealed class LabeledAmount
 {
-  public string Label { get; set; } = "";
+  public required string Label { get; set; }
 
   public double Amount { get; set; }
 }
 
 /// <summary>
+/// How to print the total. Passed as one JSON object.
+/// </summary>
+public sealed class TotalFormat
+{
+  [Description("Digits after the decimal point")]
+  public int Decimals { get; set; } = 2;
+
+  [Description("Text written before the total")]
+  public string? Prefix { get; set; }
+}
+
+/// <summary>
 /// Total the values. IncludeAverage keeps its true initializer when omitted.
-/// Notes is one JSON value; argv cannot supply it.
+/// Notes (an object array) and Format (an object) are JSON values; argv cannot supply them.
+/// The `mcp` route publishes their real JSON schemas, and the class attributes become tool annotations.
 /// </summary>
 [Operation("total", Description = "Total a list of numbers")]
+[DisplayName("Total numbers")]
+[OpenWorld(false)]
 public sealed class TotalQuery : CalcGroup, IQuery<string>
 {
   public double[] Values { get; set; } = [];
@@ -27,7 +43,11 @@ public sealed class TotalQuery : CalcGroup, IQuery<string>
   [Description("Include the average in the output")]
   public bool IncludeAverage { get; set; } = true;
 
+  [Description("Labeled amounts added to the total")]
   public LabeledAmount[] Notes { get; set; } = [];
+
+  [Description("How to print the total")]
+  public TotalFormat? Format { get; set; }
 
   public sealed class Handler : IQueryHandler<TotalQuery, string>
   {
@@ -35,13 +55,14 @@ public sealed class TotalQuery : CalcGroup, IQuery<string>
     {
       _ = cancellationToken;
       double[] values = query.Values ?? [];
-      double total = values.Sum();
+      LabeledAmount[] notes = query.Notes ?? [];
+      double total = values.Sum() + notes.Sum(n => n.Amount);
+      string format = query.Format is null ? "R" : "F" + query.Format.Decimals.ToString(CultureInfo.InvariantCulture);
       string average = query.IncludeAverage && values.Length > 0
-        ? (total / values.Length).ToString(CultureInfo.InvariantCulture)
+        ? (values.Sum() / values.Length).ToString(CultureInfo.InvariantCulture)
         : "omitted";
-      int notes = query.Notes?.Length ?? 0;
       return Task.FromResult(
-        $"total:{total.ToString(CultureInfo.InvariantCulture)}|average:{average}|notes:{notes.ToString(CultureInfo.InvariantCulture)}");
+        $"total:{query.Format?.Prefix}{total.ToString(format, CultureInfo.InvariantCulture)}|average:{average}|notes:{notes.Length.ToString(CultureInfo.InvariantCulture)}");
     }
   }
 }

@@ -62,14 +62,35 @@ public sealed class NuruMcpHostOptions
   /// </summary>
   public bool ExclusiveCalls { get; set; }
 
+  /// <summary>
+  /// Annotation overrides keyed by tool name, for an app that serves contracts it does not own.
+  /// Every hint an entry sets (non-null) replaces the one derived from the catalog (endpoint kind,
+  /// <see cref="DestructiveAttribute"/>, <see cref="OpenWorldAttribute"/>, <c>[DisplayName]</c>); the
+  /// others keep the derived value. An entry's <see cref="ModelContextProtocol.Protocol.ToolAnnotations.Title"/> is also the tool title.
+  /// </summary>
+  /// <example>
+  /// <code>
+  /// options.ToolAnnotations["find_references"] = new ToolAnnotations { OpenWorldHint = false, Title = "Find references" };
+  /// </code>
+  /// </example>
+  public IDictionary<string, ToolAnnotations> ToolAnnotations { get; } = new Dictionary<string, ToolAnnotations>(StringComparer.Ordinal);
+
   /// <summary>Copies the options so a host can keep its own instance.</summary>
-  internal NuruMcpHostOptions Clone() => new()
+  internal NuruMcpHostOptions Clone()
   {
-    Instructions = Instructions,
-    GroupFilter = GroupFilter,
-    ContentFormat = ContentFormat,
-    ToolNameSeparator = ToolNameSeparator,
-    CaptureConsoleOutput = CaptureConsoleOutput,
-    ExclusiveCalls = ExclusiveCalls
-  };
+    NuruMcpHostOptions copy = new()
+    {
+      Instructions = Instructions,
+      GroupFilter = GroupFilter,
+      ContentFormat = ContentFormat,
+      ToolNameSeparator = ToolNameSeparator,
+      CaptureConsoleOutput = CaptureConsoleOutput,
+      ExclusiveCalls = ExclusiveCalls
+    };
+
+    foreach (KeyValuePair<string, ToolAnnotations> entry in ToolAnnotations)
+      copy.ToolAnnotations[entry.Key] = entry.Value;
+
+    return copy;
+  }
 }

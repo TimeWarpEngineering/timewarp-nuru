@@ -158,7 +158,7 @@ public class McpHostToolsTests
 
     JsonElement wipe = Schema(tools, "mh-wipe").GetProperty("properties").GetProperty("retries");
     wipe.GetProperty("type").GetString().ShouldBe("integer");
-    wipe.GetProperty("description").GetString().ShouldBe("Retry count");
+    wipe.GetProperty("description").GetString().ShouldBe("Retry count. Default: 3.");
     await Task.CompletedTask;
   }
 

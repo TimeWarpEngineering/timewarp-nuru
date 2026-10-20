@@ -118,8 +118,8 @@ public sealed class EndpointCapability
   public ReturnTypeCapability? ReturnType { get; init; }
 
   /// <summary>
-  /// True when the endpoint class carries <see cref="DestructiveAttribute"/>. Null otherwise, and then
-  /// omitted from JSON, so documents for routes without the attribute are unchanged.
+  /// The endpoint class's <see cref="DestructiveAttribute"/>: true for <c>[Destructive]</c>, false for
+  /// <c>[Destructive(false)]</c>. Null without the attribute, and then omitted from JSON.
   /// </summary>
   public bool? Destructive { get; init; }
 
@@ -128,6 +128,19 @@ public sealed class EndpointCapability
   /// <c>.LocalOnly()</c>): a served app never forwards it. Null otherwise, and then omitted from JSON.
   /// </summary>
   public bool? LocalOnly { get; init; }
+
+  /// <summary>
+  /// The endpoint class's <see cref="OpenWorldAttribute"/>: true when the route reaches outside the app
+  /// (the web, a remote service), false when it works only on local state. Null without the attribute,
+  /// and then omitted from JSON.
+  /// </summary>
+  public bool? OpenWorld { get; init; }
+
+  /// <summary>
+  /// Human-readable display name from <see cref="DisplayNameAttribute"/> on the endpoint class.
+  /// Null without the attribute, and then omitted from JSON.
+  /// </summary>
+  public string? Title { get; init; }
 }
 
 /// <summary>
@@ -220,6 +233,13 @@ public sealed class OptionCapability
   public string? Description { get; init; }
   public string? DefaultValue { get; init; }
   public IReadOnlyList<string>? AllowedValues { get; init; }
+
+  /// <summary>
+  /// JSON Schema of a member that binds as one JSON value (<see cref="Type"/> <c>json ...</c>), exported
+  /// from the type the <c>--json-args</c> binder deserializes into. Null for other members, and then
+  /// omitted from JSON.
+  /// </summary>
+  public JsonElement? Schema { get; init; }
 }
 
 /// <summary>

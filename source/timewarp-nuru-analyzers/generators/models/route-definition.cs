@@ -24,7 +24,9 @@ using System.Text;
 /// <param name="Examples">
 /// Usage examples declared via <c>[NuruRouteExample]</c> or <c>.WithExample()</c>, in declaration order.
 /// </param>
-/// <param name="IsDestructive">True when the endpoint class carries <c>[Destructive]</c>.</param>
+/// <param name="Destructive">
+/// The endpoint class's <c>[Destructive]</c> value: true, false for <c>[Destructive(false)]</c>, null without it.
+/// </param>
 /// <param name="IsLocalOnly">
 /// True when the route carries <c>[LocalOnly]</c> or <c>.LocalOnly()</c>: a served app never forwards it.
 /// </param>
@@ -35,6 +37,8 @@ using System.Text;
 /// Metadata-only group segments from <c>[Operation(Group = ...)]</c>. Not part of the route pattern.
 /// Empty when the group comes from <see cref="GroupPrefix"/> or the route is ungrouped.
 /// </param>
+/// <param name="OpenWorld">The endpoint class's <c>[OpenWorld]</c> value, or null without it.</param>
+/// <param name="Title">The endpoint class's <c>[DisplayName]</c> text, or null without it.</param>
 public sealed record RouteDefinition(
   string OriginalPattern,
   EquatableArray<SegmentDefinition> Segments,
@@ -49,10 +53,12 @@ public sealed record RouteDefinition(
   EquatableArray<InterfaceImplementationDefinition> Implements = default,
   EquatableArray<string> GroupTypeHierarchy = default,
   EquatableArray<ExampleDefinition> Examples = default,
-  bool IsDestructive = false,
+  bool? Destructive = null,
   bool IsLocalOnly = false,
   EquatableArray<string> GroupPath = default,
-  bool IsExclusive = false)
+  bool IsExclusive = false,
+  bool? OpenWorld = null,
+  string? Title = null)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
@@ -71,10 +77,12 @@ public sealed record RouteDefinition(
     EquatableArray<InterfaceImplementationDefinition>? implements = null,
     EquatableArray<string>? groupTypeHierarchy = null,
     EquatableArray<ExampleDefinition>? examples = null,
-    bool isDestructive = false,
+    bool? destructive = null,
     bool isLocalOnly = false,
     EquatableArray<string>? groupPath = null,
-    bool isExclusive = false)
+    bool isExclusive = false,
+    bool? openWorld = null,
+    string? title = null)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,
@@ -90,10 +98,12 @@ public sealed record RouteDefinition(
       Implements: implements ?? [],
       GroupTypeHierarchy: groupTypeHierarchy ?? [],
       Examples: examples ?? [],
-      IsDestructive: isDestructive,
+      Destructive: destructive,
       IsLocalOnly: isLocalOnly,
       GroupPath: groupPath ?? [],
-      IsExclusive: isExclusive);
+      IsExclusive: isExclusive,
+      OpenWorld: openWorld,
+      Title: title);
   }
 
   /// <summary>

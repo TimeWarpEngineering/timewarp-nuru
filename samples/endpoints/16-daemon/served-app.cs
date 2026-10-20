@@ -58,26 +58,20 @@ namespace ServedApp
 {
   /// <summary>State that is slow to load, like a Roslyn workspace.</summary>
   /// <remarks>
-  /// Source-generated DI constructs singletons when services initialize, on every CLI call, forwarded
-  /// or not. So the expensive work waits for first use: a forwarded call never pays it on the client.
+  /// The load runs in the constructor. Source-generated DI builds a singleton the first time a handler
+  /// or behavior reads it, so a forwarded call, --help or --version never pays for it in the CLI.
   /// </remarks>
   public sealed class WarmIndex
   {
-    private readonly Lazy<DateTimeOffset> Loaded = new(Load);
-
-    public DateTimeOffset LoadedAt => Loaded.Value;
-
-    public int Count(string word)
-    {
-      _ = Loaded.Value;
-      return word.Length;
-    }
-
-    private static DateTimeOffset Load()
+    public WarmIndex()
     {
       Thread.Sleep(1000); // Simulated load.
-      return DateTimeOffset.UtcNow;
+      LoadedAt = DateTimeOffset.UtcNow;
     }
+
+    public DateTimeOffset LoadedAt { get; }
+
+    public int Count(string word) => word.Length;
   }
 
   [NuruRoute("count", Description = "Count a word's letters with the warm index")]

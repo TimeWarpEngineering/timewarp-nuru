@@ -110,7 +110,7 @@ internal static class ServiceResolverEmitter
       else
       {
         sb.AppendLine(
-          $"{indent}{typeName} {varName} = {ServiceScopeExpressions.Read(service, ServiceResolveMode.Command)};");
+          $"{indent}{typeName} {varName} = {ServiceScopeExpressions.Read(service, services, ServiceResolveMode.Command)};");
       }
 
       return;
@@ -363,7 +363,7 @@ internal static class ServiceResolverEmitter
       if (depService.Lifetime == ServiceLifetime.Transient)
         return ServiceScopeExpressions.Construct(depService, services, mode);
 
-      return ServiceScopeExpressions.Read(depService, mode);
+      return ServiceScopeExpressions.Read(depService, services, mode);
     }
 
     // Optional parameter with default value - use the default
@@ -398,7 +398,7 @@ internal static class ServiceResolverEmitter
       if (depService.Lifetime == ServiceLifetime.Transient)
         return ServiceScopeExpressions.Construct(depService, services, mode);
 
-      return ServiceScopeExpressions.Read(depService, mode);
+      return ServiceScopeExpressions.Read(depService, services, mode);
     }
 
     // Unresolvable - NURU051 validator will report the error

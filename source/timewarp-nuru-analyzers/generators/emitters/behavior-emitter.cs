@@ -382,7 +382,7 @@ internal static class BehaviorEmitter
       if (service.Lifetime == ServiceLifetime.Transient)
         return ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command);
 
-      return ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
+      return ServiceScopeExpressions.Read(service, services, ServiceResolveMode.Command);
     }
 
     // Fallback: emit error

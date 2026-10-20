@@ -29,7 +29,7 @@ myapp serve --status         # is a server running? exit 0 yes, 1 no
 myapp serve --stop           # stop it
 ```
 
-`samples/endpoints/16-daemon/served-app.cs` is a complete example. In one run of that sample on a Linux workstation, a call that loads its state took 1.07 s in-process and 0.08 s forwarded to a warm server.
+`samples/endpoints/16-daemon/served-app.cs` is a complete example. Its `WarmIndex` singleton sleeps for one second in its constructor. In one run of that sample on a Linux workstation (2026-10-20), `count hello` took 1.16 s in-process and 0.19 s forwarded to a warm server, and `--version` took 0.05 s.
 
 `AddServeRoute` is interpreted by the source generator, as `AddMcpRoute()` is. Its arguments must be compile-time constants:
 
@@ -146,7 +146,7 @@ A daemon can also host MCP itself with `WithNuruTools(app)`. Calls inside the se
 
 ## Things to know
 
-- **Keep expensive work out of singleton constructors.** Source-generated DI constructs singletons when services initialize, on every CLI call, forwarded or not. Load warm state on first use (for example with `Lazy<T>`), so a forwarded call does not pay for it in the CLI.
+- **Singletons are built on first use.** Source-generated DI constructs a service the first time a handler or behavior reads it. A forwarded call, a built-in such as `--help` or `--version`, and a parse error construct none of your services in the CLI, so warm state can load in a singleton constructor.
 - **Calls run concurrently.** See [Concurrent calls](#concurrent-calls) for what a handler gets per call and the exclusive opt-in.
 - **Environment.** A call carries the caller's current directory (`NuruCallContext.CurrentDirectory`), but runs with the server's environment variables, which are those of the client that started it.
 - **Output.** The server gives each call its own plain-text terminal and returns what the route wrote through any `ITerminal` or the console. A terminal set with `UseTerminal(custom)` is not used for forwarded calls. Forwarded output has no color.

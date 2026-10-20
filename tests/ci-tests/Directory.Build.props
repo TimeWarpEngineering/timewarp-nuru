@@ -113,6 +113,10 @@
          (task 508-011 problem renderer); a visible IResponseRenderer<SharedProblemDetails>
          would also change every problem pair in the multi-mode compilation. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-56-problem-renderer.cs" />
+    <!-- generator-58: same Roslyn-hosted generator test pattern as generator-28
+         (task 508-007 NURU056 for a singleton over a per-run Scoped service); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-58-nuru056-per-run-scoped.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

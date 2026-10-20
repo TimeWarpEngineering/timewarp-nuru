@@ -657,7 +657,7 @@ internal static class HandlerInvokerEmitter
       if (service.Lifetime == ServiceLifetime.Transient)
         return ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command);
 
-      return ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
+      return ServiceScopeExpressions.Read(service, services, ServiceResolveMode.Command);
     }
 
     // HttpClient typed service resolution: create implementation with static HttpClient field
@@ -715,7 +715,7 @@ internal static class HandlerInvokerEmitter
       if (service.Lifetime == ServiceLifetime.Transient)
         return ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command);
 
-      return ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
+      return ServiceScopeExpressions.Read(service, services, ServiceResolveMode.Command);
     }
 
     // Fallback: try direct instantiation

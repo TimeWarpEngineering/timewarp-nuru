@@ -81,6 +81,14 @@ M1: a singleton that injected a Scoped service over a command service kept the f
 - `documentation/user/features/configuration.md` and the changelog entry describe the per-command late `Scoped` lifetime and the NURU056 case.
 - Full CI after `ganda runfile cache --clear` exits 0. Standalone: 32 files, 0 failed.
 
+### Review disposition
+
+- Rounds: 2. Roster: general. Effort: 2.
+- Round 2 re-reviewed `b3c94eeb..53d490aa`. M1 stays fixed. No new findings.
+- Counts: bug 0 open, 1 fixed, 0 wontfix. Suggestion 0. Nit 0.
+- Disposition: clean (`review/disposition.md`).
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
@@ -113,6 +121,7 @@ Expect:
 
 - Round 1: Blocked — open M1
 - Round 1 fix pass (implement-fix-2): M1 fixed. See `### Review round 1 fix (M1)` under Results.
+- Round 2: clean. M1 re-verified fixed. No new findings. See `review/disposition.md`.
 
 ## Notes
 
@@ -128,7 +137,8 @@ Expect:
 - Review oracle: grok session `01a159d0-7e82-7272-80f0-af06c514b1c3` (2026-10-20), effort 2, roster general, round 1. M1 is open. No disposition yet. See `review/round-1/merged.md`.
 - Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-20T15:13:43Z
 - 2026-10-20 implement-fix-2 (claude, ganda task work): fixed M1. Late Scoped services moved to the call's command slot. Process constructors build their own copy of a per-run service. NURU056 now covers Singleton → late Scoped. Added generator-57 and generator-58, updated docs and changelog. Full CI is green.
+- Review round 2: grok session `01a159eb-7dd2-79d2-b578-8e4331034990` (2026-10-20), effort 2, roster general. M1 fixed, no new findings, disposition clean.
 
 ## Learnings
 
-Misread between `## Requirements` and `## Goal (implementer restatement)`, and the implementation follows the restatement. The task constructs a singleton on first resolution and keeps other resolution order and lifetime semantics unchanged. The restatement defers every cached lifetime to first read. That is what stops a forwarded call from building a singleton through an unused session or command service. Late-scoped services are the mismatch: `DependsOnInvocationScope` builds them after process singletons, and the restatement's accessors build them when a singleton constructor first reads them. `EndSingleRunServicesAsync` then disposes that graph. See review round 1 M1. The restatement's acceptance list names `--version` and `--capabilities` and leaves out `--help`; the original built-in list includes `--help`, and `daemon-05` plus the changelog cover it.
+Misread between `## Requirements` and `## Goal (implementer restatement)`. The task constructs a singleton on first resolution and keeps other lifetime semantics unchanged. The restatement defers every cached lifetime to first read, which is what stops a forwarded call from building a singleton through an unused session or command service. The code follows that model. Round 1 M1 was the captive case it created: a singleton constructor read a per-run Scoped service the call then disposed. Round 2 confirmed the fix stays on that model. The per-run Scoped service lives in the call's command slot, and a process constructor builds an untracked copy, instead of restoring eager init. The restatement's acceptance list names `--version` and `--capabilities` and leaves out `--help`. The original built-in list includes `--help`, and `daemon-05` plus the changelog cover it.

@@ -6,15 +6,20 @@
 **Plan / brief:** Source-generated DI constructs singletons on first resolution so a forwarded call, a built-in, and a parse error do not build user singletons. Lifetimes otherwise stay as they are.
 **Effort:** 2 (general only)
 **Reviewer roster:** general
-**Session IDs:** grok `01a159d0-7e82-7272-80f0-af06c514b1c3` (2026-10-20)
+**Session IDs:** grok `01a159d0-7e82-7272-80f0-af06c514b1c3` (round 1, 2026-10-20); grok `01a159eb-7dd2-79d2-b578-8e4331034990` (round 2, 2026-10-20)
 
 ## Budget (by-diff)
 
-- Lines changed: 503
+- Lines changed: 386
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
 - Turn cap: 120 (--max-turns; cursor uncapped)
+
+## Round 2
+
+**Diff scope:** `b3c94eeb..53d490aa` only (M1 fix), not the whole branch. Product paths: emitters, `dependency-graph-builder.cs`, `configuration.md`, `changelog.md`, `generator-57`, `generator-58`, CI standalone list.
+**Prior finding:** M1, re-verified fixed. No new findings.
 
 ## Ground rules
 

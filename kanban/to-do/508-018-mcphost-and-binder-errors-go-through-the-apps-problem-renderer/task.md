@@ -62,6 +62,8 @@ Acceptance criteria:
   `UseProblemRendererForErrors()`. Note: `/tmp/nuget.config` is a dangling symlink to the removed 508-007 worktree,
   and it breaks `dotnet run` of runfiles under `/tmp`. I left it in place (not this task's). The smoke ran under the
   gitignored `artifacts/`.
+- Audit (boy-scout): the pre-push audit flagged `runfile-executable` on the two new test runfiles
+  (mcphost-05, routing-36). `ganda repo audit --fix` set their executable bit.
 
 ## Results
 

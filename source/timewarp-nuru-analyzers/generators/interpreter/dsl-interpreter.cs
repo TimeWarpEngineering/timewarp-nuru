@@ -611,6 +611,8 @@ public sealed class DslInterpreter
 
       "UseDirectInvoke" => DispatchUseDirectInvoke(receiver),
 
+      "UseVerbatimRendererOutput" => DispatchUseVerbatimRendererOutput(receiver),
+
       "EnableCompletion" => DispatchEnableCompletion(receiver),
 
       "AddTypeConverter" => DispatchAddTypeConverter(invocation, receiver),
@@ -1567,6 +1569,18 @@ public sealed class DslInterpreter
       throw new InvalidOperationException("UseDirectInvoke() must be called on an app builder.");
 
     return appBuilder.UseDirectInvoke();
+  }
+
+  /// <summary>
+  /// Dispatches UseVerbatimRendererOutput() to IIrAppBuilder.
+  /// Renderer text is written with Write, so no newline is added.
+  /// </summary>
+  private static object? DispatchUseVerbatimRendererOutput(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+      throw new InvalidOperationException("UseVerbatimRendererOutput() must be called on an app builder.");
+
+    return appBuilder.UseVerbatimRendererOutput();
   }
 
   /// <summary>

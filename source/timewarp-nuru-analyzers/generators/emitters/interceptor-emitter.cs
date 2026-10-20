@@ -1349,7 +1349,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null, verbatimRendererOutput: app.VerbatimRendererOutput);
     }
 
     sb.AppendLine("    }");

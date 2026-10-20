@@ -160,6 +160,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseDirectInvoke();
 
   /// <summary>
+  /// Writes renderer text with <c>Write</c> instead of <c>WriteLine</c>.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseVerbatimRendererOutput();
+
+  /// <summary>
   /// Sets the raw ConfigureServices lambda body for runtime invocation.
   /// Used when UseMicrosoftDependencyInjection is enabled to invoke the user's
   /// delegate at runtime instead of replaying extracted registrations.

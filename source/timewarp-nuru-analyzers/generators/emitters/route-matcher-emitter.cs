@@ -66,6 +66,7 @@ internal static class RouteMatcherEmitter
   /// True when the app called AddServeRoute(): a matched route that is not local-only is offered to the
   /// route forwarder before its behaviors and handler.
   /// </param>
+  /// <param name="verbatimRendererOutput">When true (<c>UseVerbatimRendererOutput()</c>), renderer text is written with no added newline.</param>
   public static void Emit(
     StringBuilder sb,
     RouteDefinition route,
@@ -80,7 +81,8 @@ internal static class RouteMatcherEmitter
     HashSet<RouteDefinition>? sharedPrefixHelpRoutes = null,
     bool useDirectInvoke = false,
     bool hasGeneratedMediator = false,
-    bool forwardRoutes = false)
+    bool forwardRoutes = false,
+    bool verbatimRendererOutput = false)
   {
     // Use empty array if optional parameters not provided
     if (behaviors.IsDefault)
@@ -98,12 +100,12 @@ internal static class RouteMatcherEmitter
 
     // Use unified matching for all routes
     bool forward = forwardRoutes && !route.IsLocalOnly;
-    EmitMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, forward);
+    EmitMatch(sb, route, routeIndex, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, forward, verbatimRendererOutput);
 
     // Emit alias matches
     foreach (string alias in route.Aliases)
     {
-      EmitAliasMatch(sb, route, routeIndex, alias, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, forward);
+      EmitAliasMatch(sb, route, routeIndex, alias, services, behaviors, customConverters, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, httpClientConfigurations, useDirectInvoke, hasGeneratedMediator, forward, verbatimRendererOutput);
     }
 
     sb.AppendLine();
@@ -129,7 +131,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
     bool useDirectInvoke,
     bool hasGeneratedMediator,
-    bool forward)
+    bool forward,
+    bool verbatimRendererOutput)
   {
     // Calculate minimum required positional args (positional match segments + required non-catch-all params)
     // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
@@ -261,13 +264,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator, verbatimRendererOutput: verbatimRendererOutput));
 
       sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator, verbatimRendererOutput: verbatimRendererOutput);
       sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
 
@@ -305,7 +308,8 @@ internal static class RouteMatcherEmitter
     ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
     bool useDirectInvoke,
     bool hasGeneratedMediator,
-    bool forward)
+    bool forward,
+    bool verbatimRendererOutput)
   {
     sb.AppendLine($"    // Alias: {EscapeXmlComment(alias)}");
 
@@ -393,13 +397,13 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator, verbatimRendererOutput: verbatimRendererOutput));
 
       sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
     else
     {
-      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator);
+      HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 6, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator, verbatimRendererOutput: verbatimRendererOutput);
       sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
 

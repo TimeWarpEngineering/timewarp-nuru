@@ -450,7 +450,8 @@ internal static class JsonArgsEmitter
         loggerFactoryFieldName,
         app.UseMicrosoftDependencyInjection,
         methodSuffix,
-        "            ");
+        "            ",
+        app.VerbatimRendererOutput);
       sb.AppendLine("            return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
       sb.AppendLine("          }");
       sb.AppendLine();
@@ -1583,7 +1584,8 @@ internal static class JsonArgsEmitter
           useDirectInvoke: app.UseDirectInvoke,
           hasGeneratedMediator: hasGeneratedMediator,
           jsonArgsPath: true,
-          captureResultInto: captureResultInto),
+          captureResultInto: captureResultInto,
+          verbatimRendererOutput: app.VerbatimRendererOutput),
         jsonArgsPath: true);
     }
     else
@@ -1601,7 +1603,8 @@ internal static class JsonArgsEmitter
         useDirectInvoke: app.UseDirectInvoke,
         hasGeneratedMediator: hasGeneratedMediator,
         jsonArgsPath: true,
-        captureResultInto: captureResultInto);
+        captureResultInto: captureResultInto,
+        verbatimRendererOutput: app.VerbatimRendererOutput);
     }
 
     _ = ind;

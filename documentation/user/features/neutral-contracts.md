@@ -70,7 +70,20 @@ A response is rendered in this order:
 2. Otherwise the one visible `IResponseRenderer<TResponse>` with a public parameterless constructor, when the compilation can see exactly one. The generator constructs it.
 3. The existing output strategy: raw text, invariant or ISO formatting, or JSON.
 
-`OneOf<TSuccess, SharedProblemDetails>` writes the problem to stderr and returns a non-zero exit code. The first line is the problem type and title. The detail is the next line when it is present. The exit code is `Status` when that value is from 1 to 255, and 1 otherwise. The success value uses the renderer or the output strategy above. Only the success type is registered for JSON, and none is registered when a renderer is found. When two types would get the same generated JSON name, such as two nested `Response` classes, each gets a name from its full type name.
+`OneOf<TSuccess, SharedProblemDetails>` writes the problem to stderr and returns a non-zero exit code. The first line is the problem type and title. The detail is the next line when it is present. The exit code is `Status` when that value is from 1 to 255, and 1 otherwise. The success value uses the renderer or the output strategy above.
+
+An `IResponseRenderer<SharedProblemDetails>` replaces those default problem lines. Nuru finds it the same way as a success renderer: registered first, then the one visible renderer with a public parameterless constructor. Its text goes to stderr, and the exit code is still `Status` as above. A visible problem renderer applies to every problem pair in the compilation. To scope one to a single app, give it a constructor parameter and register it in that app's `ConfigureServices`.
+
+By default the CLI adds a newline after renderer text. `UseVerbatimRendererOutput()` writes the text exactly as the renderer returns it, so a CLI and an MCP host that share a renderer write the same bytes:
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .UseVerbatimRendererOutput()
+  .DiscoverEndpoints()
+  .Build();
+```
+
+It applies to every renderer in the app: success renderers on stdout, and a problem renderer on stderr. It covers argv, `--json-args`, and `RenderAsync`. Output with no renderer (raw text, ISO 8601, JSON, and the default problem lines) still ends with a newline. Only the success type is registered for JSON, and none is registered when a renderer is found. When two types would get the same generated JSON name, such as two nested `Response` classes, each gets a name from its full type name.
 
 ## Capabilities
 

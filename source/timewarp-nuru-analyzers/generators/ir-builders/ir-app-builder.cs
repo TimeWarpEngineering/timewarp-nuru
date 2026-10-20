@@ -46,6 +46,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool CompletionEnabled;
   private bool MicrosoftDependencyInjectionEnabled;
   private bool DirectInvokeEnabled;
+  private bool VerbatimRendererOutputEnabled;
   private string? ConfigureServicesBody;
   private readonly List<string> ExplicitEndpointTypes = [];
   private readonly List<ExtensionMethodCall> ExtensionMethods = [];
@@ -286,6 +287,15 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Writes renderer text with Write, so no newline is added after it.
+  /// </summary>
+  public TSelf UseVerbatimRendererOutput()
+  {
+    VerbatimRendererOutputEnabled = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Sets the raw ConfigureServices lambda body for runtime invocation.
   /// Used when UseMicrosoftDependencyInjection is enabled.
   /// </summary>
@@ -440,6 +450,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       HttpClientConfigurations: [.. HttpClientConfigurations],
       FilterGroupTypeNames: [.. FilterGroupTypeNames],
       UseDirectInvoke: DirectInvokeEnabled,
+      VerbatimRendererOutput: VerbatimRendererOutputEnabled,
       BuildSite: BuildSite,
       McpRoute: McpRoute,
       ServeRoute: ServeRoute);
@@ -480,6 +491,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.UseTelemetry(TelemetryModel telemetryOptions) => UseTelemetry(telemetryOptions);
   IIrAppBuilder IIrAppBuilder.UseMicrosoftDependencyInjection() => UseMicrosoftDependencyInjection();
   IIrAppBuilder IIrAppBuilder.UseDirectInvoke() => UseDirectInvoke();
+  IIrAppBuilder IIrAppBuilder.UseVerbatimRendererOutput() => UseVerbatimRendererOutput();
   IIrAppBuilder IIrAppBuilder.SetConfigureServicesBody(string lambdaBody) => SetConfigureServicesBody(lambdaBody);
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);

@@ -1629,7 +1629,8 @@ internal static partial class EndpointExtractor
       ReturnsProblemPair = shape.ReturnsProblemPair,
       SuccessTypeName = shape.SuccessTypeName,
       RendererTypeName = shape.RendererTypeName,
-      ConstructorArguments = constructorArguments
+      ConstructorArguments = constructorArguments,
+      ProblemRendererTypeName = shape.ProblemRendererTypeName
     };
   }
 

@@ -1034,6 +1034,10 @@ internal static class RouteMatcherEmitter
     string converterVarName = $"__enumConverter_{param.CamelCaseName}_{routeIndex}";
     string tempVarName = $"__temp_{param.CamelCaseName}_{routeIndex}";
 
+    // A nullable handler parameter (`Env? env`) arrives as "Env?"; the converter needs the bare enum.
+    if (enumTypeName.EndsWith('?'))
+      enumTypeName = enumTypeName[..^1];
+
     if (param.IsOptional)
     {
       // Optional param: check for null before conversion

@@ -290,9 +290,11 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 
-    // Use resolved CLR type name first; fall back to handler's parameter type when pattern has no type annotation
-    string? typeNameForEnum = param.ResolvedClrTypeName ?? handlerTypeName;
-    string[]? allowedValues = ExtractEnumValues(typeNameForEnum, enumValues);
+    // Use resolved CLR type name first; fall back to the handler's parameter type when the pattern
+    // has no type annotation, or when its annotation is a bare name (`{x:Inner}` resolves to
+    // `global::Inner`) that only the handler parameter type qualifies.
+    string[]? allowedValues = ExtractEnumValues(param.ResolvedClrTypeName, enumValues)
+      ?? ExtractEnumValues(handlerTypeName, enumValues);
     if (allowedValues is not null)
     {
       sb.Append("              AllowedValues = [");
@@ -353,9 +355,11 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 
-    // Use resolved CLR type name first; fall back to handler's parameter type when pattern has no type annotation
-    string? typeNameForEnum = option.ResolvedClrTypeName ?? handlerTypeName;
-    string[]? allowedValues = ExtractEnumValues(typeNameForEnum, enumValues);
+    // Use resolved CLR type name first; fall back to the handler's parameter type when the pattern
+    // has no type annotation, or when its annotation is a bare name (`{x:Inner}` resolves to
+    // `global::Inner`) that only the handler parameter type qualifies.
+    string[]? allowedValues = ExtractEnumValues(option.ResolvedClrTypeName, enumValues)
+      ?? ExtractEnumValues(handlerTypeName, enumValues);
     if (allowedValues is not null)
     {
       sb.Append("              AllowedValues = [");

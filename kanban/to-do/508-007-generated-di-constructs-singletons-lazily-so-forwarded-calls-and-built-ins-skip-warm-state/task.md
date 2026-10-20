@@ -62,7 +62,7 @@ What changed:
   - New `tests/timewarp-nuru-daemon-tests/daemon-05-lazy-singletons.cs` has 5 tests. 4 of them fail on the old emitter. The parse-error case already passed there and stays as a guard.
   - `generator-35` now asserts the resolver call.
 - Full CI after `ganda runfile cache --clear`: multi-mode 2049 passed, 6 skipped. Standalone: 31 files, 0 failed. Exit 0.
-- `ganda repo audit` passes with nothing to fix.
+- `ganda repo audit`: after the first commit, `runfile-executable` flagged the new test runfile as missing its executable bit. `ganda repo audit --fix` set it, and the audit passes.
 
 Observed, not changed here: a method-group handler (`.WithHandler(Cls.Method)`) on an app with an `AddBehavior` does not compile in the JSON-bound (`TryBind` / `--json-args`) dispatch, because `Command = __command` is undefined there (CS0103). This task did not touch behavior-context emission. The test uses a lambda instead. It is worth its own task.
 

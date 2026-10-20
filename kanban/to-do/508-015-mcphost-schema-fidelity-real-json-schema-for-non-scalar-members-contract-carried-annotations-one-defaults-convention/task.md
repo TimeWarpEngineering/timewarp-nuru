@@ -89,7 +89,8 @@ Acceptance:
   `ganda kanban reserve/claim --repo timewarp-architecture` run from this worktree reserved and claimed id 512
   in timewarp-nuru instead. 512 was released with `--abandon`, and its untracked worktree and local branch
   were removed (nothing was pushed). 391 was then reserved, claimed and published from the
-  timewarp-architecture checkout. `ganda repo audit` passed with nothing to fix.
+  timewarp-architecture checkout. The commit-time audit flagged `runfile-executable` on the new
+  `mcphost-04-schema-fidelity.cs`; `ganda repo audit --fix` set its executable bit.
 
 ## Results
 
@@ -153,7 +154,7 @@ Acceptance:
   (multi-mode and standalone), including McpHostSchemaFidelity 6/6.
 - McpHost runfiles one by one: `mcphost-01` 16/16, `mcphost-02` 2/2, `mcphost-03` 6/6, `mcphost-04` 6/6.
 - `./bin/dev verify-samples`: 66/66.
-- `ganda repo audit`: passes all checks.
+- `ganda repo audit`: passes all checks (after `--fix` set the executable bit on `mcphost-04`).
 
 ### How to validate
 

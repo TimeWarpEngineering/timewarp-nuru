@@ -10,11 +10,19 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1091
-- Effort: 3
+Round 1 budget was 1091 lines, effort 3, turn cap 200. This section is the round 2 budget.
+
+- Lines changed: 125
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
+
+## Round 2
+
+**Date:** 2026-10-21
+**Diff scope:** `63545b11..c9dbc5c3` (fix pass for M1 and M2). Product paths only. Kitchen edits are out of the product scope.
+**Session:** grok `01a15af5-910a-7262-b4f1-5b30952fb72c`
 
 ## Ground rules
 

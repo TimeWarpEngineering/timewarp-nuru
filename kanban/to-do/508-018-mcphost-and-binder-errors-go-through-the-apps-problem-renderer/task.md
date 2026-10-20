@@ -79,6 +79,8 @@ Acceptance criteria:
     `neutral-contracts.md` names the JSON-member errors and the `MissingValue` kind.
   - Audit (boy-scout): `workflow-file` failed (`pull_request.branches` lacked `'feature/**'`).
     `ganda repo audit --fix` added it to `.github/workflows/workflow.yml`; the audit now passes.
+- 2026-10-21 review round 2 (grok, session `01a15af5-910a-7262-b4f1-5b30952fb72c`): effort 1, roster general. M1 and M2 fixed. M3 (nit) open. Disposition is not written. See `review/round-2/merged.md`.
+- Review oracle round 2: review by reviewer-grok (grok, model grok-4.7), session `01a15af5-910a-7262-b4f1-5b30952fb72c`, max-turns 80 — 2026-10-21
 
 ## Results
 
@@ -185,15 +187,24 @@ Expect:
 - Without `.UseProblemRendererForErrors()`, the CLI prints today's `Error: ...` text (argv errors on stdout,
   JSON-member errors on stderr; `operation-endpoint-derivation.cs` still checks that text).
 
+### Review
+
+- Rounds: 2. Roster: general. Round 1 effort 3. Round 2 effort 1.
+- Round 2 counts: bug 0 open / 1 fixed; suggestion 0 open / 1 fixed; nit 1 open / 0 fixed.
+- Disposition: not written. M3 is open (`review/round-2/merged.md`).
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`.
+
 ## Review
 
-- Round 1: Blocked — open M1, M2
+- Round 1: open M1 (bug), M2 (suggestion). See `review/round-1/merged.md`.
+- Round 2: M1 and M2 fixed. M3 (nit) open. Disposition is not written. See `review/round-2/merged.md`.
 
 ## Notes
 
 - Related: 508-003 (binder), 508-004 (McpHost), 508-011 (problem renderer), Roslynk 005.
-- Review round 1: `review/review-framework.md`, `review/round-1/merged.md`. Disposition is not written while M1 and M2 are open.
+- Review round 1: `review/review-framework.md`, `review/round-1/merged.md`.
+- Review round 2: `review/round-2/merged.md`. Disposition is not written while M3 is open.
 
 ## Learnings
 
-- Misread: the original requirement says CLI `--json-args` and argv binding errors go through the problem renderer when the app opts in. The implementer restatement narrowed "argv binding errors" to "argv conversion errors". `EmitJsonMemberAfterMatch` still prints the JSON-member argv binding errors as plain `Error:` text after `UseProblemRendererForErrors()`. That gap is M1.
+- Misread (round 1): the original requirement says CLI `--json-args` and argv binding errors go through the problem renderer when the app opts in. The first implementer restatement narrowed "argv binding errors" to "argv conversion errors", so `EmitJsonMemberAfterMatch` kept plain `Error:` text. The fix pass widened criterion 5 to name the JSON-member argv errors and `MissingValue`. Round 2 checked that restatement against the original task: they match. The code gap is M1, fixed in round 2.

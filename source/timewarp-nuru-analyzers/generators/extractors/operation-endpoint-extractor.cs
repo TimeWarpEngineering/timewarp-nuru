@@ -19,6 +19,7 @@
 // Pattern only.
 // Handler and renderer lookups are cached per compilation and skip framework assemblies.
 // A registered IResponseRenderer<T> wins; otherwise one visible parameterless renderer.
+// A problem pair looks up IResponseRenderer<SharedProblemDetails> the same way.
 // An absent [NuruRoute] description keeps the [Operation] description. Empty clears it.
 #endregion
 
@@ -34,6 +35,7 @@ internal static partial class EndpointExtractor
   private const string OptionAttributeMetadataName = "TimeWarp.Nuru.OptionAttribute";
   private const string GroupOptionAttributeMetadataName = "TimeWarp.Nuru.GroupOptionAttribute";
   private const string DescriptionAttributeMetadataName = "System.ComponentModel.DescriptionAttribute";
+  private const string ProblemDetailsMetadataTypeName = "global::TimeWarp.Foundation.Types.SharedProblemDetails";
 
   private readonly record struct RouteIdentity(
     string? Pattern,
@@ -47,7 +49,8 @@ internal static partial class EndpointExtractor
     bool ReturnsProblemPair,
     string? SuccessTypeName,
     string? RendererTypeName,
-    string? HandlerInterfaceName);
+    string? HandlerInterfaceName,
+    string? ProblemRendererTypeName);
 
   private static bool IsMetadataAttribute(AttributeData attribute, string metadataName) =>
     attribute.AttributeClass?.ToDisplayString() == metadataName;
@@ -252,7 +255,8 @@ internal static partial class EndpointExtractor
       returnsProblemPair: shape.ReturnsProblemPair,
       successTypeName: shape.SuccessTypeName,
       rendererTypeName: shape.RendererTypeName,
-      constructorArguments: constructorArguments);
+      constructorArguments: constructorArguments,
+      problemRendererTypeName: shape.ProblemRendererTypeName);
   }
 
   private static void AddDerivedPropertyBindings(
@@ -494,7 +498,8 @@ internal static partial class EndpointExtractor
     };
 
     string? renderer = FindRenderer(compilation, successTypeName, requestType);
-    return new ResponseShape(problem, successTypeName, renderer, handlerInterface);
+    string? problemRenderer = problem ? FindRenderer(compilation, ProblemDetailsMetadataTypeName, requestType) : null;
+    return new ResponseShape(problem, successTypeName, renderer, handlerInterface, problemRenderer);
   }
 
   private static ITypeSymbol? MediatorResponseType(INamedTypeSymbol requestType)

@@ -242,4 +242,15 @@ public partial class NuruAppBuilder
   /// and the endpoint has a nested handler. Endpoints with no nested handler still go through the mediator.
   /// </remarks>
   public virtual NuruAppBuilder UseDirectInvoke() => this;
+
+  /// <summary>
+  /// Writes <c>IResponseRenderer&lt;T&gt;</c> text exactly as the renderer returns it, with no added newline.
+  /// </summary>
+  /// <remarks>
+  /// By default the CLI adds a newline after renderer text. With this call the text is written with
+  /// <c>Write</c>, so a CLI and an MCP host that use the same renderer write the same bytes. This applies to
+  /// success renderers on stdout and to an <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c> on stderr.
+  /// Output with no renderer (raw text, ISO 8601, JSON) still ends with a newline.
+  /// </remarks>
+  public virtual NuruAppBuilder UseVerbatimRendererOutput() => this;
 }

@@ -109,6 +109,10 @@
          (task 508-001 NURU_H008 missing operation handler); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs" />
+    <!-- generator-56: same Roslyn-hosted generator test pattern as generator-28
+         (task 508-011 problem renderer); a visible IResponseRenderer<SharedProblemDetails>
+         would also change every problem pair in the multi-mode compilation. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-56-problem-renderer.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

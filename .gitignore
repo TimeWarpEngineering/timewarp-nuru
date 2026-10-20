@@ -470,3 +470,6 @@ task-work.progress.log
 # Review-round markers beside kitchens (local; not product)
 **/review/round-*/base.sha
 **/review/round-*/closed
+
+# Mission heartbeat in the claim worktree (local; not product)
+mission.heartbeat

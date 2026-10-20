@@ -121,6 +121,7 @@ back, and a renderer that resolves a relative path during render sees the call's
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T07:02:44Z
 - Reviewer: grok session 01a1581e-a3a7-76b2-ba52-ec583804afec (2026-10-20). Round 1, effort 3, roster general.
 - Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-20T07:17:46Z
+- Reviewer: grok session 01a1583d-7723-7650-800d-aa18ddd1df46 (2026-10-20). Round 2, effort 2, roster general. Re-reviewed the M1 fix delta. `routing-35` 7/7, `daemon-04` 6/6, `mcphost-03` 6/6 passed.
 - 2026-10-20 implement-fix-2 (claude, headless): fixed review M1. Render continues the invoke call's context
   (`RenderAsync(..., context)`), generated code no longer resets the exit code on a render, and both hosts render with
   the call. New tests in routing-35, daemon-04, mcphost-03. Full CI suite 0 failed (multi-mode 2028 passed),
@@ -208,20 +209,25 @@ dotnet run -c Release tests/scripts/benchmark-daemon-concurrency.cs
 - `dotnet run tests/ci-tests/run-ci-tests.cs` finishes with 0 failed and lists `CallContext`, `DaemonConcurrency`,
   `McpHostConcurrency`.
 
-**Review (round 1)**
-- Effort 3, roster general. Counts: 0 open, 1 fixed (M1: invoke-then-render dropped the handler's exit code and
-  directory), 0 wontfix. Ledger with disposition notes: `review/round-1/merged.md`.
+**Review**
+- Rounds: 2. Roster: general. Round 1 effort 3 (2475 lines). Round 2 effort 2 (359-line fix delta).
+- Final counts: 0 open, 1 fixed, 0 wontfix. The one bug is M1 (invoke-then-render dropped the handler's exit
+  code and directory).
+- Disposition: clean. No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+  Round 1 ledger (frozen): `review/round-1/merged.md`.
 
 ## Learnings
 
 ### Misread
 
-The restatement says `RenderAsync` runs in its own `NuruCallContext`, so its exit code belongs to that render and is never `Environment.ExitCode`. The task says the call's exit code is one per-call value returned by render/invoke, and that McpHost (in-process and forwarded) returns that exit code along with the call's output. Following the restatement, render starts a fresh context at exit code 0, which drops the handler's `NuruCallContext.CurrentExitCode` on the invoke-then-render path. See finding M1 in `review/round-1/merged.md` (fixed in the round-2 fix pass).
+The first restatement said `RenderAsync` runs in its own `NuruCallContext`, so its exit code belongs to that render and is never `Environment.ExitCode`. The task says the call's exit code is one per-call value returned by render/invoke, and that McpHost (in-process and forwarded) returns that exit code along with the call's output. Following that restatement, render started a fresh context at exit code 0, which dropped the handler's `NuruCallContext.CurrentExitCode` on the invoke-then-render path. See finding M1 in `review/round-1/merged.md` (fixed in the round-2 fix pass). The restatement now says render continues the invoke call. Round 2 checked that wording against the task and found no further mismatch.
 
 ## Review
 
 - Round 1: Blocked — open M1
 - Round 2 fix pass (2026-10-20): M1 fixed; see `review/round-1/merged.md` disposition notes.
+- Round 2 (2026-10-20): clean. M1 re-verified fixed. No new findings. `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Notes
 

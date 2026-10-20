@@ -10,11 +10,22 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2475
-- Effort: 3
+Round 2 re-review budget (the M1 fix). Round 1 was 2475 lines, effort 3, turn cap 200.
+
+- Lines changed: 359
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
+
+## Round 2
+
+**Date:** 2026-10-20
+**Diff scope:** `74d7b4cc..f2b2bccc` (15 files, +325/−34). The M1 fix only, not the whole branch.
+**Plan / brief:** Render continues the invoke call so the handler's exit code and the call's directory survive. Re-verify M1 and scan the fix delta.
+**Effort:** 2 (by-diff, 359 lines; roster axis general only)
+**Reviewer roster:** general
+**Session IDs:** grok `01a1583d-7723-7650-800d-aa18ddd1df46` (2026-10-20)
 
 ## Ground rules
 

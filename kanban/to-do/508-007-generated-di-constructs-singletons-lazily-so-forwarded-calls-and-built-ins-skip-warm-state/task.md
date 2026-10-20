@@ -121,8 +121,7 @@ Expect:
 
 - Round 1: Blocked — open M1
 - Round 1 fix pass (implement-fix-2): M1 fixed. See `### Review round 1 fix (M1)` under Results.
-- Round 2: clean. M1 re-verified fixed. No new findings. See `review/disposition.md`.
-
+- Round 2: Done
 ## Notes
 
 - Filed from 508-005's implementer notes (2026-10-19): "Making singletons lazy in the generator would fix this for all apps; it deserves its own task."

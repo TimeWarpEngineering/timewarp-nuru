@@ -78,8 +78,7 @@ Acceptance criteria:
 
 - Round 1: Blocked — open M1, M2
 - Fix pass for round 1 (implement-fix-2, 2026-10-21): M1 and M2 fixed.
-- Round 2: clean. M1 and M2 stay fixed. No new findings.
-
+- Round 2: Done
 ## Notes
 
 Today's workaround is linked sources in the CLI project.

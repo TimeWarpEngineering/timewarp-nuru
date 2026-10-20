@@ -1,6 +1,8 @@
 // Expressions that read or construct a source-generated service for its lifetime.
 // A read calls the field's __Resolve accessor, which builds the instance on first use (task 508-007).
-// Command resolution reads the REPL ternary for Scoped.
+// Command resolution reads the REPL ternary for Scoped. A Scoped service that injects a session or
+// command service always reads the run's command slot, and a process-lifetime constructor builds
+// its own copy of a per-run service instead of keeping the run's (508-007 review M1).
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -11,7 +13,8 @@ internal enum ServiceResolveMode
 {
   /// <summary>
   /// Singleton and non-REPL scoped construction. Scoped dependencies read the process field.
-  /// Transients are constructed and not tracked for disposal.
+  /// Per-run dependencies (session, command, and Scoped that injects them) and transients are
+  /// constructed and not tracked for disposal.
   /// </summary>
   ProcessInit,
 
@@ -43,8 +46,26 @@ internal static class ServiceScopeExpressions
   /// </summary>
   internal static string ResolverName(string fieldName) => "__Resolve" + fieldName;
 
-  internal static string Read(ServiceDefinition service, ServiceResolveMode mode)
+  /// <summary>
+  /// True when the service holds one instance per run: session and command services, and a Scoped
+  /// service that injects one of them (directly or through another Scoped service).
+  /// </summary>
+  internal static bool IsPerRun(ServiceDefinition service, ImmutableArray<ServiceDefinition> services) =>
+    service.Lifetime is ServiceLifetime.SessionScoped or ServiceLifetime.CommandScoped ||
+    service.Lifetime == ServiceLifetime.Scoped && DependencyGraphBuilder.DependsOnInvocationScope(service, services);
+
+  internal static string Read
+  (
+    ServiceDefinition service,
+    ImmutableArray<ServiceDefinition> services,
+    ServiceResolveMode mode
+  )
   {
+    // A process-lifetime constructor (a singleton, NURU056) must not keep the run's instance:
+    // the run disposes it and the next call would see a dead object. Give it its own instance.
+    if (mode == ServiceResolveMode.ProcessInit && IsPerRun(service, services))
+      return Construct(service, services, mode);
+
     string implementationTypeName = service.ImplementationTypeName;
     string processRead = ResolveCall(InterceptorEmitter.GetServiceFieldName(implementationTypeName));
     return service.Lifetime switch
@@ -52,6 +73,8 @@ internal static class ServiceScopeExpressions
       ServiceLifetime.Singleton => processRead,
       ServiceLifetime.SessionScoped => ResolveCall(SessionField(implementationTypeName)),
       ServiceLifetime.CommandScoped => ResolveCall(CommandField(implementationTypeName)),
+      // A Scoped service that injects a session or command service lives in the run's command slot.
+      ServiceLifetime.Scoped when IsPerRun(service, services) => ResolveCall(CommandField(implementationTypeName)),
       ServiceLifetime.Scoped => mode == ServiceResolveMode.Command
         ? $"(__replCommandActive ? {ResolveCall(CommandField(implementationTypeName))} : {processRead})"
         : processRead,

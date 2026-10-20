@@ -66,6 +66,21 @@ What changed:
 
 Observed, not changed here: a method-group handler (`.WithHandler(Cls.Method)`) on an app with an `AddBehavior` does not compile in the JSON-bound (`TryBind` / `--json-args`) dispatch, because `Command = __command` is undefined there (CS0103). This task did not touch behavior-context emission. The test uses a lambda instead. It is worth its own task.
 
+### Review round 1 fix (M1)
+
+M1: a singleton that injected a Scoped service over a command service kept the first run's instance, and the run disposed it. The fix:
+
+- `service-scope-expressions.cs`: new `IsPerRun` covers session and command services, and a `Scoped` service that `DependsOnInvocationScope`. `Read` now takes the service list.
+  - In `ProcessInit` mode (a singleton or a non-late `Scoped` constructor), a per-run dependency is constructed inline and untracked. The singleton gets its own copy and never reads the run's slot.
+  - A late `Scoped` service always reads its `__cmd_` slot on the call, in single runs and in the REPL.
+- `interceptor-emitter.cs`: late `Scoped` services no longer get a static process field or a locked process resolver. They are built by the command-slot resolver, tracked with the command, and nulled in `EndSingleRunServicesAsync` (`__cmd_` field). Concurrent served calls each get their own instance, where before they shared one static field.
+- `dependency-graph-builder.cs`: `DetectLifetimeMismatches` reports NURU056 for Singleton → `Scoped` when that `Scoped` service reaches a session or command service (`IsCaptiveScopedDependency`).
+- Tests:
+  - New `generator-57-singleton-over-per-run-scoped.cs` (CI multi-mode) makes two calls. Each handler gets a new, live token and a holder that carries it. The first token is disposed after its run. The singleton is shared, holds its own holder, and never sees a disposed token. On the previous emitter it fails at `first.Root.Holder.ShouldNotBeSameAs(first.Holder)`.
+  - New `generator-58-nuru056-per-run-scoped.cs` (Roslyn-hosted, standalone in CI) checks NURU056 for the command and session cases, and checks that a plain `Scoped` service gives no warning. Removing the pragma from generator-57 fails its build with that NURU056.
+- `documentation/user/features/configuration.md` and the changelog entry describe the per-command late `Scoped` lifetime and the NURU056 case.
+- Full CI after `ganda runfile cache --clear` exits 0. Standalone: 32 files, 0 failed.
+
 ### How to validate
 
 Smoke:
@@ -81,15 +96,23 @@ time dotnet $DLL --no-daemon count hello
 dotnet $DLL --daemon count hello
 time dotnet $DLL count hello
 dotnet $DLL serve --stop
+dotnet run tests/timewarp-nuru-tests/generator/generator-57-singleton-over-per-run-scoped.cs
+dotnet run tests/timewarp-nuru-tests/generator/generator-58-nuru056-per-run-scoped.cs
 ```
 
 Expect:
 
 - The test file passes 5 of 5.
+- generator-57 passes 1 of 1, and generator-58 passes 3 of 3.
 - `--version` returns in well under 0.2 s: the 1 s `WarmIndex` load never runs.
 - `--no-daemon count hello` prints `5` in about 1.1 s: it loads in-process.
 - With the server running, `count hello` prints `5` in about 0.2 s: the CLI does not construct `WarmIndex`.
 - The full suite `dotnet run tests/ci-tests/run-ci-tests.cs` exits 0.
+
+## Review
+
+- Round 1: Blocked — open M1
+- Round 1 fix pass (implement-fix-2): M1 fixed. See `### Review round 1 fix (M1)` under Results.
 
 ## Notes
 
@@ -103,6 +126,8 @@ Expect:
 - 2026-10-20 implementer (claude, ganda task work): read the emitters, then emitted `__Resolve` accessors for every cached lifetime and removed eager init. Added the daemon-05 tests, checked that they fail on the old emitter, and updated the sample, docs and changelog. Ran the AOT publish, full CI and audit (all green).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T14:56:38Z
 - Review oracle: grok session `01a159d0-7e82-7272-80f0-af06c514b1c3` (2026-10-20), effort 2, roster general, round 1. M1 is open. No disposition yet. See `review/round-1/merged.md`.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-20T15:13:43Z
+- 2026-10-20 implement-fix-2 (claude, ganda task work): fixed M1. Late Scoped services moved to the call's command slot. Process constructors build their own copy of a per-run service. NURU056 now covers Singleton → late Scoped. Added generator-57 and generator-58, updated docs and changelog. Full CI is green.
 
 ## Learnings
 

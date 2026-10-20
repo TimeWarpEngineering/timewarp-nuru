@@ -240,7 +240,8 @@ internal static class DependencyGraphBuilder
         if (serviceByImpl.TryGetValue(normalizedDep, out ServiceDefinition? depService) ||
             TryFindServiceByServiceType(services, normalizedDep, out depService))
         {
-          if (IsCaptiveDependency(service.Lifetime, depService!.Lifetime))
+          if (IsCaptiveDependency(service.Lifetime, depService!.Lifetime) ||
+              IsCaptiveScopedDependency(service, depService, services))
           {
             mismatches.Add((
               service.ShortImplementationTypeName,
@@ -257,7 +258,8 @@ internal static class DependencyGraphBuilder
 
   /// <summary>
   /// True when <paramref name="dependency"/> will not live as long as <paramref name="dependent"/>.
-  /// Scoped stays compatible with Singleton: a single CLI run still treats Scoped as one instance.
+  /// Scoped stays compatible with Singleton: a single CLI run still treats Scoped as one instance,
+  /// unless the Scoped service injects a session or command service (see <see cref="IsCaptiveScopedDependency"/>).
   /// </summary>
   private static bool IsCaptiveDependency(ServiceLifetime dependent, ServiceLifetime dependency)
   {
@@ -283,9 +285,24 @@ internal static class DependencyGraphBuilder
   }
 
   /// <summary>
+  /// True when a singleton injects a Scoped service that injects a session-scoped or
+  /// command-scoped service. That Scoped instance lives for one run, like the service it injects,
+  /// so the singleton would outlive it the same way it would outlive a direct session or command service.
+  /// </summary>
+  private static bool IsCaptiveScopedDependency(
+    ServiceDefinition dependent,
+    ServiceDefinition dependency,
+    ImmutableArray<ServiceDefinition> services)
+  {
+    return dependent.Lifetime == ServiceLifetime.Singleton &&
+      dependency.Lifetime == ServiceLifetime.Scoped &&
+      DependsOnInvocationScope(dependency, services);
+  }
+
+  /// <summary>
   /// True when a scoped service injects a session-scoped or command-scoped service,
-  /// directly or through another scoped service. Those instances are built after
-  /// process singletons, so this service has to be built with them.
+  /// directly or through another scoped service. Such a service is built once per run in the
+  /// run's command slot, not in a process field.
   /// </summary>
   internal static bool DependsOnInvocationScope(
     ServiceDefinition service,

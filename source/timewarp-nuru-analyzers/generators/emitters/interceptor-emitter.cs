@@ -486,6 +486,13 @@ internal static class InterceptorEmitter
     ImmutableArray<ServiceDefinition> sortedProcessServices =
       DependencyGraphBuilder.TopologicalSort([.. processServices]);
 
+    // A Scoped service that injects a session or command service has no process field:
+    // it lives in the run's command slot (508-007 review M1).
+    ImmutableArray<ServiceDefinition> cachedProcessServices =
+    [
+      .. sortedProcessServices.Where(service => !ServiceScopeExpressions.IsPerRun(service, allServices))
+    ];
+
     sb.AppendLine("  // Static service fields, built on first read by their __Resolve accessors");
 
     // Emit framework service fields (always needed)
@@ -503,7 +510,7 @@ internal static class InterceptorEmitter
     }
 
     // Emit user service fields
-    foreach (ServiceDefinition service in sortedProcessServices)
+    foreach (ServiceDefinition service in cachedProcessServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
       sb.AppendLine(
@@ -513,7 +520,8 @@ internal static class InterceptorEmitter
     // Session and command state lives on a __NuruCall: the process one outside a call context (a CLI run,
     // the REPL), or the call's own one for a daemon or MCP host call (NuruCallContext), so concurrent calls
     // never share or dispose each other's scope. The static properties keep the field names generated code uses.
-    // REPL (and isolated-call) Scoped uses a per-command field. Non-REPL Scoped keeps the process field above.
+    // REPL (and isolated-call) Scoped uses a per-command field. Non-REPL Scoped keeps the process field above,
+    // except a Scoped service that injects a session or command service, which always uses the command field.
     List<(string TypeName, string Name)> callFields =
     [
       .. sessionServices.Select(static service => (service.ImplementationTypeName, ServiceScopeExpressions.SessionField(service.ImplementationTypeName))),
@@ -546,8 +554,8 @@ internal static class InterceptorEmitter
     sb.AppendLine();
 
     // Emit EnsureServicesInitialized method
-    EmitEnsureServicesInitialized(sb, sortedProcessServices, frameworkServiceTypes, requiresMediator);
-    EmitSourceGenScopeMethods(sb, allServices, sortedProcessServices);
+    EmitEnsureServicesInitialized(sb, cachedProcessServices, frameworkServiceTypes, requiresMediator);
+    EmitSourceGenScopeMethods(sb, allServices, cachedProcessServices);
 
     if (requiresMediator)
       EmitSourceGenMediator(sb, allServices, hasGeneratedMediator, loggerFactoryFieldName, httpClientConfigurations);
@@ -601,7 +609,7 @@ internal static class InterceptorEmitter
     {
       string factory = service.Lifetime == ServiceLifetime.Transient
         ? ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.Command)
-        : ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
+        : ServiceScopeExpressions.Read(service, allServices, ServiceResolveMode.Command);
       sb.AppendLine($"      {Sce}.AddTransient<{service.ServiceTypeName}>(services, static _ => {factory});");
     }
 
@@ -722,7 +730,7 @@ internal static class InterceptorEmitter
   (
     StringBuilder sb,
     ImmutableArray<ServiceDefinition> allServices,
-    ImmutableArray<ServiceDefinition> sortedProcessServices
+    ImmutableArray<ServiceDefinition> cachedProcessServices
   )
   {
     ImmutableArray<ServiceDefinition> sessionServices = DependencyGraphBuilder.TopologicalSort
@@ -770,22 +778,20 @@ internal static class InterceptorEmitter
     sb.AppendLine("  }");
     sb.AppendLine();
 
-    // Process instances (singletons, non-REPL Scoped) take the init lock so concurrent served calls
-    // build one. A Scoped service that injects a session or command service is rebuilt each single
-    // run: its instance is tracked with the command and cleared when the run ends.
-    ServiceDefinition[] lateScoped =
+    // A Scoped service that injects a session or command service is built per run in its command
+    // slot on the call, tracked with the command, and cleared when the run ends.
+    ImmutableArray<ServiceDefinition> lateScoped =
     [
-      .. sortedProcessServices.Where(service =>
+      .. replCommandServices.Where(service =>
         service.Lifetime == ServiceLifetime.Scoped &&
-        DependencyGraphBuilder.DependsOnInvocationScope(service, allServices))
+        ServiceScopeExpressions.IsPerRun(service, allServices))
     ];
 
-    foreach (ServiceDefinition service in sortedProcessServices)
+    // Process instances (singletons, non-REPL Scoped) take the init lock so concurrent served calls build one.
+    foreach (ServiceDefinition service in cachedProcessServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
       string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
-      if (lateScoped.Contains(service))
-        constructed = $"__TrackCommand({constructed})";
 
       sb.AppendLine($"  private static {service.ImplementationTypeName} {ServiceScopeExpressions.ResolverName(fieldName)}()");
       sb.AppendLine("  {");
@@ -816,7 +822,7 @@ internal static class InterceptorEmitter
     sb.AppendLine("    await __DisposeTrackedAsync(__sessionDisposables).ConfigureAwait(false);");
     EmitNullAssignments(sb, commandServices, ServiceScopeExpressions.CommandField, "    ");
     EmitNullAssignments(sb, sessionServices, ServiceScopeExpressions.SessionField, "    ");
-    EmitNullAssignments(sb, [.. lateScoped], GetServiceFieldName, "    ");
+    EmitNullAssignments(sb, lateScoped, ServiceScopeExpressions.CommandField, "    ");
     sb.AppendLine("    __replCommandActive = false;");
     sb.AppendLine("  }");
     sb.AppendLine();

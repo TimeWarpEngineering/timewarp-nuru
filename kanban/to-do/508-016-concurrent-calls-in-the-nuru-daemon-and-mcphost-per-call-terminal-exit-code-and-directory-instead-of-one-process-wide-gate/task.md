@@ -228,7 +228,7 @@ The first restatement said `RenderAsync` runs in its own `NuruCallContext`, so i
 - Round 1: Blocked — open M1
 - Round 2 fix pass (2026-10-20): M1 fixed; see `review/round-1/merged.md` disposition notes.
 - Round 2 (2026-10-20): clean. M1 re-verified fixed. No new findings. `review/round-2/merged.md`, `review/disposition.md`.
-
+- Round 2: Done
 ## Notes
 
 - Related: 508-004 (McpHost), 508-005 (daemon), 508-007 (lazy singletons), 508-010 (wire contract), 508-011,

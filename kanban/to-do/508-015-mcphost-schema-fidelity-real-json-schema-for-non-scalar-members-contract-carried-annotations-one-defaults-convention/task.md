@@ -93,6 +93,7 @@ Acceptance:
   `mcphost-04-schema-fidelity.cs`; `ganda repo audit --fix` set its executable bit.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T12:27:56Z
 - Review: grok session `01a15948-5cd1-7ed2-82e2-28012ac95836` (2026-10-20), effort 3, roster general. Round 1 disposition clean.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 200 — 2026-10-20T12:42:55Z
 
 ## Results
 
@@ -184,6 +185,10 @@ Expect:
 - Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0.
 - Disposition: **clean**. No wontfix and no escalation. The implementer restatement matches the rewritten task.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

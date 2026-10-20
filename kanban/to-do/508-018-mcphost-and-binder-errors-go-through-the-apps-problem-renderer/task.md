@@ -64,6 +64,8 @@ Acceptance criteria:
   gitignored `artifacts/`.
 - Audit (boy-scout): the pre-push audit flagged `runfile-executable` on the two new test runfiles
   (mcphost-05, routing-36). `ganda repo audit --fix` set their executable bit.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T19:58:11Z
+- 2026-10-21 review round 1 (grok, session `01a15ae4-96a0-7680-862d-bcce4c9319e0`): effort 3, roster general. Open findings M1 (bug) and M2 (suggestion). Disposition is waiting on a fix pass. See `review/round-1/merged.md`.
 
 ## Results
 
@@ -166,3 +168,8 @@ Expect:
 ## Notes
 
 - Related: 508-003 (binder), 508-004 (McpHost), 508-011 (problem renderer), Roslynk 005.
+- Review round 1: `review/review-framework.md`, `review/round-1/merged.md`. Disposition is not written while M1 and M2 are open.
+
+## Learnings
+
+- Misread: the original requirement says CLI `--json-args` and argv binding errors go through the problem renderer when the app opts in. The implementer restatement narrowed "argv binding errors" to "argv conversion errors". `EmitJsonMemberAfterMatch` still prints the JSON-member argv binding errors as plain `Error:` text after `UseProblemRendererForErrors()`. That gap is M1.

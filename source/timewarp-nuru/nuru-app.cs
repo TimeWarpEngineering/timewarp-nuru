@@ -292,9 +292,20 @@ public partial class NuruApp
   /// <param name="message">The CLI's message.</param>
   /// <param name="key">The parameter or option name.</param>
   [EditorBrowsable(EditorBrowsableState.Never)]
-  public void WriteArgumentError(string message, string? key)
+  public void WriteArgumentError(string message, string? key) =>
+    WriteArgumentError(message, NuruBindErrorKind.InvalidValue, key);
+
+  /// <summary>
+  /// Writes an argv error of a given kind, as <see cref="WriteArgumentError(string, string?)"/>. Called by
+  /// generated code, for example with <see cref="NuruBindErrorKind.MissingValue"/> for an option with no value.
+  /// </summary>
+  /// <param name="message">The CLI's message.</param>
+  /// <param name="kind">Why the argument was rejected.</param>
+  /// <param name="key">The parameter or option name.</param>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public void WriteArgumentError(string message, NuruBindErrorKind kind, string? key)
   {
-    if (!TryWriteProblemError(message, NuruBindErrorKind.InvalidValue, key))
+    if (!TryWriteProblemError(message, kind, key))
       Terminal.WriteLine(message);
   }
 

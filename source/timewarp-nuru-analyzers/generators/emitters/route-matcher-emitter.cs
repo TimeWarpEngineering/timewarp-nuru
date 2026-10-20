@@ -1441,7 +1441,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"      global::System.IO.FileInfo? {varName} = null;");
           sb.AppendLine($"      if ({rawVarName} is null)");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.WriteArgumentError($\"Error: Missing value for option '{optionDisplay}'. Expected: FileInfo\", \"{optionDisplay}\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Missing value for option '{optionDisplay}'. Expected: FileInfo\", global::TimeWarp.Nuru.NuruBindErrorKind.MissingValue, \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
           sb.AppendLine("      try");
@@ -1482,7 +1482,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"      global::System.IO.DirectoryInfo? {varName} = null;");
           sb.AppendLine($"      if ({rawVarName} is null)");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.WriteArgumentError($\"Error: Missing value for option '{optionDisplay}'. Expected: DirectoryInfo\", \"{optionDisplay}\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Missing value for option '{optionDisplay}'. Expected: DirectoryInfo\", global::TimeWarp.Nuru.NuruBindErrorKind.MissingValue, \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
           sb.AppendLine("      try");
@@ -1687,13 +1687,13 @@ internal static class RouteMatcherEmitter
       string rejectedFlag = JsonArgvRejectedFlag(escapedVarName, routeIndex);
       sb.AppendLine($"      if ({rejectedFlag})");
       sb.AppendLine("      {");
-      sb.AppendLine($"        app.Terminal.WriteErrorLine(\"Error: --{longForm} is JSON. Pass it with --json-args.\");");
+      sb.AppendLine($"        await app.WriteBindErrorAsync(\"Error: --{longForm} is JSON. Pass it with --json-args.\", global::TimeWarp.Nuru.NuruBindErrorKind.InvalidValue, \"{longForm}\").ConfigureAwait(false);");
       sb.AppendLine("        return 1;");
       sb.AppendLine("      }");
       // This path has no --json-args, so a required JSON member is always missing.
       if (option.CapabilityRequired == true)
       {
-        sb.AppendLine($"      app.Terminal.WriteErrorLine(\"Error: pass --{longForm} via --json-args.\");");
+        sb.AppendLine($"      await app.WriteBindErrorAsync(\"Error: pass --{longForm} via --json-args.\", global::TimeWarp.Nuru.NuruBindErrorKind.MissingValue, \"{longForm}\").ConfigureAwait(false);");
         sb.AppendLine("      return 1;");
       }
     }

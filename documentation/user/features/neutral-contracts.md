@@ -149,7 +149,7 @@ NuruApp app = NuruApp.CreateBuilder()
   .Build();
 ```
 
-With the opt-in and a problem renderer, a `--json-args` error (a bind failure, or a value that is not a JSON object) and an argv value that does not convert, such as `abc` for an `int` parameter, are rendered as an `Invalid` problem on stderr. The exit code does not change. Without the opt-in, or with no problem renderer, the CLI writes its plain `Error: ...` text as before. Argv conversion errors stay on stdout in that case. `NuruApp.TryRenderProblem` renders a problem with the app's renderer from your own code.
+With the opt-in and a problem renderer, a `--json-args` error (a bind failure, or a value that is not a JSON object) an argv value that does not convert, such as `abc` for an `int` parameter, and a JSON member passed on argv or left out are rendered as an `Invalid` problem on stderr. A missing value has `kind` `MissingValue`. The exit code does not change. Without the opt-in, or with no problem renderer, the CLI writes its plain `Error: ...` text as before. Argv conversion errors stay on stdout in that case. `NuruApp.TryRenderProblem` renders a problem with the app's renderer from your own code.
 
 ## Capabilities
 

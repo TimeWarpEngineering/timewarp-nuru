@@ -11,6 +11,7 @@ return await RunAllTests();
 
 namespace TimeWarp.Nuru.Tests.Routing.ProblemErrors
 {
+using TimeWarp.Contracts;
 using TimeWarp.Foundation.Types;
 
 [TestTag("Routing")]
@@ -37,6 +38,7 @@ public class ProblemErrorsTests
       .UseProblemRendererForErrors()
       .Map("pe-delay {ms:int}").WithHandler((int ms) => $"ms:{ms}").AsCommand().Done()
       .Map("pe-greet {name}").WithHandler((string name) => $"hi {name}").AsQuery().Done()
+      .Map<PeJsonRequiredQuery>()
       .Build();
     return app;
   }
@@ -111,6 +113,40 @@ public class ProblemErrorsTests
     terminal.ErrorOutput.ShouldContain("errorMessage=--json-args value must be -, @path, or a JSON object.");
   }
 
+  public static async Task Should_render_argv_errors_for_a_json_member_when_opted_in()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = CreateApp(terminal, optIn: true);
+
+    int argv = await app.ExecuteAsync(["pe-jsonreq", "--Body", "nope"]);
+    argv.ShouldBe(1);
+    terminal.ErrorOutput.ShouldContain("error=Invalid");
+    terminal.ErrorOutput.ShouldContain("errorMessage=--Body is JSON. Pass it with --json-args.");
+    terminal.ErrorOutput.ShouldContain("kind=InvalidValue");
+    terminal.ErrorOutput.ShouldNotContain("Error: --Body");
+
+    terminal.Clear();
+    int missing = await app.ExecuteAsync(["pe-jsonreq"]);
+    missing.ShouldBe(1);
+    terminal.ErrorOutput.ShouldContain("error=Invalid");
+    terminal.ErrorOutput.ShouldContain("errorMessage=pass --Body via --json-args.");
+    terminal.ErrorOutput.ShouldContain("kind=MissingValue");
+    terminal.ErrorOutput.ShouldNotContain("Error: pass");
+  }
+
+  public static async Task Should_render_an_argument_error_with_its_kind()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = CreateApp(terminal, optIn: true);
+
+    app.WriteArgumentError("Error: Missing value for option '--file'. Expected: FileInfo", NuruBindErrorKind.MissingValue, "--file");
+
+    terminal.ErrorOutput.ShouldContain("errorMessage=Missing value for option '--file'. Expected: FileInfo");
+    terminal.ErrorOutput.ShouldContain("kind=MissingValue");
+    terminal.Output.ShouldNotContain("Error:");
+    await Task.CompletedTask;
+  }
+
   public static async Task Should_keep_plain_errors_without_the_opt_in()
   {
     using TestTerminal terminal = new();
@@ -141,6 +177,27 @@ public class ProblemErrorsTests
     int exitCode = await app.ExecuteAsync(["pe-delay", "abc"]);
     exitCode.ShouldBe(1);
     terminal.Output.ShouldContain("Error: Invalid value 'abc' for parameter 'ms'");
+  }
+}
+
+public sealed class PeBody
+{
+  public string Name { get; set; } = "";
+}
+
+[Operation("pe-jsonreq")]
+public sealed class PeJsonRequiredQuery : IQuery<string>
+{
+  public required PeBody Body { get; set; }
+
+  public sealed class Handler : IQueryHandler<PeJsonRequiredQuery, string>
+  {
+    public Task<string> Handle(PeJsonRequiredQuery query, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+      _ = cancellationToken;
+      return Task.FromResult("body:" + query.Body.Name);
+    }
   }
 }
 }

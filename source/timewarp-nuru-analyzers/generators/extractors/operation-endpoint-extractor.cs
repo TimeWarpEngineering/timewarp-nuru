@@ -21,6 +21,7 @@
 // A registered IResponseRenderer<T> wins; otherwise one visible parameterless renderer.
 // A problem pair looks up IResponseRenderer<SharedProblemDetails> the same way.
 // An absent [NuruRoute] description keeps the [Operation] description. Empty clears it.
+// A referenced-assembly constructor or nested Handler counts only when this compilation can access it.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -59,15 +60,8 @@ internal static partial class EndpointExtractor
   /// Reads [NuruRoute] and [Operation] by metadata name.
   /// A [NuruRoute] pattern and description override the operation when both are present.
   /// </summary>
-  private static RouteIdentity ResolveRouteIdentity(
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken)
+  private static RouteIdentity ResolveRouteIdentity(INamedTypeSymbol classSymbol, Compilation compilation, Location fallbackLocation)
   {
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol is null)
-      return new RouteIdentity(null, null, Location.None, false, false);
-
     string? routePattern = null;
     string? routeDescription = null;
     Location routeLocation = Location.None;
@@ -86,7 +80,7 @@ internal static partial class EndpointExtractor
         if (attribute.ConstructorArguments.Length > 0)
           routePattern = attribute.ConstructorArguments[0].Value as string;
         routeDescription = NamedString(attribute, "Description");
-        routeLocation = AttributeLocation(attribute, classDeclaration);
+        routeLocation = AttributeLocation(attribute, compilation, fallbackLocation);
       }
       else if (IsMetadataAttribute(attribute, OperationAttributeMetadataName))
       {
@@ -95,7 +89,7 @@ internal static partial class EndpointExtractor
           operationName = attribute.ConstructorArguments[0].Value as string;
         operationDescription = NamedString(attribute, "Description");
         operationGroup = NamedString(attribute, "Group");
-        operationLocation = AttributeLocation(attribute, classDeclaration);
+        operationLocation = AttributeLocation(attribute, compilation, fallbackLocation);
       }
     }
 
@@ -132,17 +126,9 @@ internal static partial class EndpointExtractor
   /// <summary>
   /// Applies [NuruCliBinding.Group] when no [NuruRouteGroup] prefix is present.
   /// </summary>
-  private static GroupInfo ApplyCliBindingGroup(
-    GroupInfo groupInfo,
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken)
+  private static GroupInfo ApplyCliBindingGroup(GroupInfo groupInfo, INamedTypeSymbol classSymbol)
   {
     if (!string.IsNullOrEmpty(groupInfo.FullPrefix))
-      return groupInfo;
-
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol is null)
       return groupInfo;
 
     foreach (AttributeData attribute in classSymbol.GetAttributes())
@@ -347,6 +333,13 @@ internal static partial class EndpointExtractor
       return BoolValueOption(property, position, description, new PropertyDefault("true", "true"), isOptional: true, parameterIsOptional: false);
     }
 
+    // A referenced-assembly bool documented [DefaultValue(true)] cannot be a flag either.
+    // Its compiled initializer still runs when the caller omits it.
+    if (isBool && defaultLiteral == UnemittableDefaultLiteral && propertyDefault.Display == "true")
+    {
+      return BoolValueOption(property, position, description, propertyDefault, isOptional: true, parameterIsOptional: false);
+    }
+
     if (isBool && defaultLiteral is null && contractRequired)
     {
       return BoolValueOption(property, position, description, default, isOptional: false, parameterIsOptional: false);
@@ -376,7 +369,7 @@ internal static partial class EndpointExtractor
     if (isBool)
     {
       string? flagDisplay = defaultLiteral == UnemittableDefaultLiteral
-        ? null
+        ? propertyDefault.Display
         : propertyDefault.Display ?? "false";
       return new OptionDefinition(
         Position: position,
@@ -604,7 +597,7 @@ internal static partial class EndpointExtractor
 
   private static bool HasVisibleHandler(Compilation compilation, INamedTypeSymbol requestType)
   {
-    INamedTypeSymbol? nestedHandler = requestType.GetTypeMembers("Handler").FirstOrDefault();
+    INamedTypeSymbol? nestedHandler = FindNestedHandler(compilation, requestType);
     if (nestedHandler is not null && ImplementsRequestHandler(nestedHandler, requestType))
       return true;
 
@@ -616,6 +609,39 @@ internal static partial class EndpointExtractor
 
     return false;
   }
+
+  /// <summary>
+  /// The nested <c>Handler</c> type, when generated code in <paramref name="compilation"/> can name it.
+  /// A non-public Handler nested in a referenced-assembly type is not visible.
+  /// </summary>
+  private static INamedTypeSymbol? FindNestedHandler(Compilation compilation, INamedTypeSymbol requestType)
+  {
+    INamedTypeSymbol? nestedHandler = requestType.GetTypeMembers("Handler").FirstOrDefault();
+    if (nestedHandler is null)
+      return null;
+
+    return IsAccessibleFrom(compilation, nestedHandler) ? nestedHandler : null;
+  }
+
+  /// <summary>
+  /// True when generated code in <paramref name="compilation"/> can use <paramref name="symbol"/>.
+  /// A same-assembly symbol keeps the existing internal rule. A referenced-assembly symbol must be
+  /// accessible, which honors [InternalsVisibleTo].
+  /// </summary>
+  internal static bool IsAccessibleFrom(Compilation? compilation, ISymbol symbol)
+  {
+    if (compilation is null || IsDeclaredIn(compilation, symbol))
+      return true;
+
+    return compilation.IsSymbolAccessibleWithin(symbol, compilation.Assembly);
+  }
+
+  /// <summary>
+  /// True when <paramref name="symbol"/> is declared in <paramref name="compilation"/> itself,
+  /// not in a referenced assembly.
+  /// </summary>
+  internal static bool IsDeclaredIn(Compilation compilation, ISymbol symbol) =>
+    SymbolEqualityComparer.Default.Equals(symbol.ContainingAssembly, compilation.Assembly);
 
   private static bool IsAccessibleHandler(INamedTypeSymbol type, bool publicOnly)
   {
@@ -729,6 +755,7 @@ internal static partial class EndpointExtractor
 
   private static bool TrySelectConstructorArguments(
     INamedTypeSymbol type,
+    Compilation compilation,
     Location location,
     bool deriveUnmarked,
     out EquatableArray<string> arguments,
@@ -749,14 +776,14 @@ internal static partial class EndpointExtractor
       return false;
     }
 
-    if (HasCallableParameterlessConstructor(type))
+    if (HasCallableParameterlessConstructor(compilation, type))
       return true;
 
     IMethodSymbol? best = null;
     List<string>? bestNames = null;
     foreach (IMethodSymbol constructor in type.InstanceConstructors)
     {
-      if (!IsAccessibleConstructor(constructor))
+      if (!IsAccessibleConstructor(compilation, constructor))
         continue;
 
       if (IsCopyConstructor(type, constructor))
@@ -788,14 +815,35 @@ internal static partial class EndpointExtractor
   private static Diagnostic Unconstructable(INamedTypeSymbol type, Location location, string reason) =>
     Diagnostic.Create(DiagnosticDescriptors.UnconstructableEndpoint, location, type.Name, reason);
 
-  private static bool IsAccessibleConstructor(IMethodSymbol constructor) =>
-    constructor.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal;
+  private static bool IsAccessibleConstructor(Compilation compilation, IMethodSymbol constructor) =>
+    constructor.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal
+    && IsAccessibleFrom(compilation, constructor);
 
   // new() compiles when every parameter is optional or params, so that counts as parameterless.
-  private static bool HasCallableParameterlessConstructor(INamedTypeSymbol type) =>
-    type.InstanceConstructors.Any(constructor =>
-      IsAccessibleConstructor(constructor)
-      && constructor.Parameters.All(parameter => parameter.IsOptional || parameter.IsParams));
+  private static bool HasCallableParameterlessConstructor(Compilation compilation, INamedTypeSymbol type) =>
+    CallableParameterlessConstructor(compilation, type) is not null;
+
+  /// <summary>
+  /// The constructor new() binds to: a zero-parameter constructor first, then one whose
+  /// parameters are all optional or params. Null when new() does not compile.
+  /// </summary>
+  private static IMethodSymbol? CallableParameterlessConstructor(Compilation compilation, INamedTypeSymbol type)
+  {
+    IMethodSymbol? optional = null;
+    foreach (IMethodSymbol constructor in type.InstanceConstructors)
+    {
+      if (!IsAccessibleConstructor(compilation, constructor))
+        continue;
+
+      if (constructor.Parameters.Length == 0)
+        return constructor;
+
+      if (constructor.Parameters.All(static parameter => parameter.IsOptional || parameter.IsParams))
+        optional ??= constructor;
+    }
+
+    return optional;
+  }
 
   private static bool IsCopyConstructor(INamedTypeSymbol type, IMethodSymbol constructor) =>
     constructor.Parameters.Length == 1
@@ -984,11 +1032,16 @@ internal static partial class EndpointExtractor
     return null;
   }
 
-  private static Location AttributeLocation(AttributeData attribute, TypeDeclarationSyntax fallback)
+  /// <summary>
+  /// The attribute's location, or <paramref name="fallback"/> when its syntax is not in
+  /// <paramref name="compilation"/>. A metadata reference has no syntax, and an IDE project
+  /// reference has syntax from another compilation, which a reported diagnostic cannot use.
+  /// </summary>
+  private static Location AttributeLocation(AttributeData attribute, Compilation compilation, Location fallback)
   {
     SyntaxReference? reference = attribute.ApplicationSyntaxReference;
-    if (reference is null)
-      return fallback.Identifier.GetLocation();
+    if (reference is null || !compilation.ContainsSyntaxTree(reference.SyntaxTree))
+      return fallback;
 
     return reference.GetSyntax().GetLocation();
   }

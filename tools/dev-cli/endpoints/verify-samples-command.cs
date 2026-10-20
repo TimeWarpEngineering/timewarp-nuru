@@ -8,6 +8,8 @@
 // Sample project references (TimeWarp.Nuru and the analyzer) pack on build.
 // Parallel builds race on artifacts/packages/*.nupkg, so those projects are
 // built once first and each sample build passes --no-dependencies.
+// Sample-local projects (any *.csproj under samples/) are built there too,
+// so a sample's #:project reference already exists when it builds.
 // DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER keeps the sample processes off one
 // shared MSBuild server. Output is captured and written under a lock.
 #endregion
@@ -155,13 +157,45 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       [
         "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
         "source/timewarp-nuru-build/timewarp-nuru-build.csproj",
-        "source/timewarp-nuru/timewarp-nuru.csproj"
+        "source/timewarp-nuru/timewarp-nuru.csproj",
+        "source/timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj",
+        "source/timewarp-nuru-daemon/timewarp-nuru-daemon.csproj"
       ];
 
       Terminal.WriteLine("Building shared projects once before the parallel sample builds...");
       foreach (string project in sharedProjects)
       {
         string fullPath = Path.Combine(repoRoot, project);
+        CommandOutput output = await DotNet.Build()
+          .WithProject(fullPath)
+          .WithConfiguration("Release")
+          .WithVerbosity("quiet")
+          .WithNoValidation()
+          .CaptureAsync(cancellationToken);
+
+        if (output.ExitCode != 0)
+        {
+          string detail = FormatBuildFailure(output);
+          Terminal.WriteLine($"{project} ... FAILED");
+          Terminal.WriteLine(detail);
+          throw new InvalidOperationException($"Failed to build {project}");
+        }
+
+        Terminal.WriteLine($"{project} ... OK");
+      }
+
+      // Sample-local libraries referenced via #:project must exist before the
+      // parallel --no-dependencies sample builds.
+      string samplesRoot = Path.Combine(repoRoot, "samples");
+      string objSegment = $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}";
+      string binSegment = $"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}";
+      IEnumerable<string> sampleProjects = Directory.EnumerateFiles(samplesRoot, "*.csproj", SearchOption.AllDirectories)
+        .Where(path => !path.Contains(objSegment, StringComparison.Ordinal) && !path.Contains(binSegment, StringComparison.Ordinal))
+        .Order(StringComparer.Ordinal);
+
+      foreach (string fullPath in sampleProjects)
+      {
+        string project = Path.GetRelativePath(repoRoot, fullPath);
         CommandOutput output = await DotNet.Build()
           .WithProject(fullPath)
           .WithConfiguration("Release")

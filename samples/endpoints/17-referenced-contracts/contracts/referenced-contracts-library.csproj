@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- A contracts assembly: requests and handlers only. It knows nothing about Nuru. -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ReferencedContracts</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+  </ItemGroup>
+
+</Project>

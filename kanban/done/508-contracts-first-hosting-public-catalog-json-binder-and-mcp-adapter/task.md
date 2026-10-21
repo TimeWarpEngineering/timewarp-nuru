@@ -67,3 +67,4 @@ One item at a time across the three repos:
 - Revised to the shared neutral-contract model: 1479989 (2026-10-17)
 - Serial implementation order recorded: 1479989 (2026-10-17)
 - 2026-10-21: every to-do child merged; shipped through 4.0.0-beta.5 (508-008 lands in the next beta). 507 archived as no-go. Done is blocked on backlog children 508-010 and 508-012.
+- 2026-10-21: 508-010 moved out to top-level 516 (decision still open); 508-012 closed as superseded by 508-014 (shelved 2026-10-19; done, not implemented); 508 done (Steven).

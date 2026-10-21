@@ -36,3 +36,7 @@ The extractor is `source/timewarp-nuru-analyzers/generators/extractors/operation
 ## Notes
 
 Keep McpHost (508-004) in step: it reads the same group path.
+
+## Results
+
+- 2026-10-21: closed as superseded, not implemented. The group is declared on the contract with `[Operation(Group = ...)]` (508-014). Moved to done rather than archived because ganda counts an archived child as not done (Steven: close 508).

@@ -157,7 +157,7 @@ internal static class RouteHelpEmitter
   /// Gets the literal prefix for a route (group prefix literals + pattern literals).
   /// These are the literals that must match before --help for per-route help.
   /// </summary>
-  private static List<string> GetLiteralPrefix(RouteDefinition route)
+  internal static List<string> GetLiteralPrefix(RouteDefinition route)
   {
     List<string> literals = [];
 

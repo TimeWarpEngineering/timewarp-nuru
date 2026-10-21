@@ -1,0 +1,17 @@
+# Round 1 — general
+**Date:** 2026-10-21
+**Scope reviewed:** branch `task/515-unknown-options-are-silently-accepted` vs `master`. Matcher emitter, unknown-option helper, no-match fallback, routing tests, changelog, and `documentation/user/features/routing.md`. Checked against the original checklist and `## Goal (implementer restatement)`.
+
+## Summary
+
+The change makes the generated matcher hold an option-shaped token out of the positional list and refuse to run a route that still has one. For optional flags and optional value options, a command whose literals match exits 1 with `Unknown option '--name'` and a Levenshtein suggestion when a declared form is close. Negative numbers, a lone `-`, tokens after `--`, catch-all positionals, extra non-option tokens, repeated boolean flags, per-route `--help`, and REPL dispatch match the task. The restatement matches the original checklist. One acceptance path is still wrong: a required value option or an unbound discriminator flag skips the route before that scan, so a near miss is `Unknown command` and the declared form is never suggested.
+
+`--key=value` and `--key:value` are still removed by `IsConfigArg` before routing. That peel is pre-existing, the reported incident was the space-separated `--repo` form, and the task names the matcher positional bug. It is documented in Results and in the routing doc. Not filed.
+
+## Issues
+
+### Issue 1 — Severity: bug
+- File: source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs:712
+- Description: Option parsing emits `goto route_skip` before the unknown-option scan. `EmitMatch` calls `EmitOptionParsingWithIndexTracking` (line 177) and only then builds positionals and calls `EmitUnknownOptionPrefixCheck` (lines 180–184). A required value option that is absent or has no value (`if (!flagFound) goto` at line 712, `if (raw is null) goto` at line 715), an optional option that is present without a value (line 722), or an unbound discriminator flag that is absent (line 619) jumps to the skip label first. The route does not run, but `__unknownOption` stays null, so the no-match fallback writes `Unknown command` and never unions that route's forms. The goal says that when the route's literals match apart from the token, the app writes `Unknown option '<name>'` and `Did you mean '<form>'?` when a declared form is close. Generated code for `kanban create {title} --folder {folder}` with `kanban create Title --foldr x` hits `if (!__folder_flagFound_0) goto route_skip_0` before the scan. `commit --amend` with `commit --ammend` does the same on `if (!amend) goto route_skip_0`. Both typos are distance 1 (`foldr`/`folder`, `ammend`/`amend`) and would pass `Suggest` (distance <= max(2, len/3) and less than the typed name). Routing-37 only covers optional `--folder?` and a bound `--verbose`. Aliases call the same option-parsing helper, so they miss the same way. When the required flag is present, a further unknown token is named; the hole is the missing or typo'd required form.
+- Suggestion: Record the unknown option when the literal prefix matches before those skips, and still skip the route so the handler does not run. Add tests for a required value option (`--folder {folder}` without `?`) and an unbound discriminator (`commit --amend` with no bool parameter): a close typo exits 1, names the token, and suggests the declared form; the handler does not run. Keep the case where the required form is present and another token is unknown.
+- Status: open

@@ -115,7 +115,7 @@ public class ColonFilteringTests
       .Build();
 
     // Act
-    int exitCode = await app.RunAsync(["docker", "run", "nginx", "--port", "8080:80"]);
+    int exitCode = await app.RunAsync(["docker", "run", "nginx", "--", "--port", "8080:80"]);
 
     // Assert
     exitCode.ShouldBe(0);

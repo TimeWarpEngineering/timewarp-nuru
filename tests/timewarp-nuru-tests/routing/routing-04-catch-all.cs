@@ -61,7 +61,8 @@ public class CatchAllTests
       .Build();
 
     // Act
-    int exitCode = await app.RunAsync(["docker", "run", "nginx", "--port", "8080"]);
+    // Option-shaped args reach the catch-all only after -- (task 515)
+    int exitCode = await app.RunAsync(["docker", "run", "nginx", "--", "--port", "8080"]);
 
     // Assert
     exitCode.ShouldBe(0);
@@ -80,7 +81,8 @@ public class CatchAllTests
       .Build();
 
     // Act
-    int exitCode = await app.RunAsync(["execute", "test.sh", "--verbose", "--output", "log.txt"]);
+    // Option-shaped args reach the catch-all only after -- (task 515)
+    int exitCode = await app.RunAsync(["execute", "test.sh", "--", "--verbose", "--output", "log.txt"]);
 
     // Assert
     exitCode.ShouldBe(0);
@@ -100,7 +102,8 @@ public class CatchAllTests
       .Build();
 
     // Act
-    int exitCode = await app.RunAsync(["npm", "install", "--save-dev", "typescript"]);
+    // Option-shaped args reach the catch-all only after -- (task 515)
+    int exitCode = await app.RunAsync(["npm", "install", "--", "--save-dev", "typescript"]);
 
     // Assert
     exitCode.ShouldBe(0);

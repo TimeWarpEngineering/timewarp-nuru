@@ -399,7 +399,7 @@ In the Fluent DSL, the full route pattern including parameters, options, and sub
 | Parameter | `"greet {name}"` | Required parameter |
 | Typed | `"delay {ms:int}"` | Type-constrained parameter |
 | Optional | `"deploy {env} {tag?}"` | Nullable parameter (handler param must be nullable) |
-| Catch-all | `"exec {*args}"` | Captures all remaining args (must be last) |
+| Catch-all | `"exec {*args}"` | Captures all remaining args (must be last); option-shaped args only after `--` |
 | Option | `"build --config {mode}"` | Named option with value |
 | Flag | `"build --verbose"` | Boolean flag |
 | Short option | `"build -m {mode}"` | Short alias |

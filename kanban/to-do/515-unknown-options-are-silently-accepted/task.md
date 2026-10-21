@@ -44,6 +44,8 @@ Acceptance:
 - Created: 3127778 (2026-10-21)
 - 2026-10-21 implementer (claude, headless task work): matcher fix, runtime helper, tests, docs.
   `ganda repo audit` passed with no fixes needed.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-21T14:27:16Z
+- Review oracle: grok session 01a15edb-f7b0-7011-9e3b-44f7fe830d66 (2026-10-21), effort 2, roster general. Round 1 written. M1 open. Disposition not written.
 
 ## Results
 
@@ -96,6 +98,10 @@ ends with `Standalone finished in ... (0 failed)`. In routing-37,
 `Should_reject_unknown_option_on_route_with_options` shows `kanban create Title --repo x` exiting 1
 with `Unknown option '--repo'`, and `Should_suggest_closest_declared_option` shows
 `Unknown option '--verbos'. Did you mean '--verbose'?`.
+
+### Review
+
+Round 1, effort 2, roster general. The implementer restatement matches the original checklist (no misread). Counts: 1 open bug, 0 fixed, 0 wontfix. Disposition is not written while M1 is open. M1: a required value option or an unbound discriminator flag skips the route before the unknown-option scan, so a close typo is `Unknown command` and is not suggested. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ## Notes
 

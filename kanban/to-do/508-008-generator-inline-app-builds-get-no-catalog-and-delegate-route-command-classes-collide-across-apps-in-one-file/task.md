@@ -41,6 +41,10 @@ Acceptance:
 - [x] Remove the helper-method workaround in the daemon tests and the endpoint workaround in the 508-003 behavior test, or note why they stay
 - [x] Full CI after `ganda runfile cache --clear`
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - A filed from 508-005 task Results (2026-10-19); B filed from 508-003 task Results (2026-10-18). Both marked "worth its own task" by the implementers.
@@ -52,6 +56,7 @@ Acceptance:
 - 2026-10-21 implementer-claude (ganda task work): both repros failed with CS9153 (one RunAsync intercepted twice); fixed A in the DSL interpreter and B in the emitters; full CI green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-21T03:05:49Z
 - Review oracle: grok session 01a15c6c-1504-78a0-b012-51f7497ddb32 (2026-10-21). Round 1, effort 2, roster general. Disposition clean.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-21T03:15:25Z
 
 ## Results
 

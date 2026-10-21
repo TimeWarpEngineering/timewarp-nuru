@@ -51,6 +51,7 @@ Acceptance:
   guards, conversions after the guard skip, alias skip label), added 6 routing-37 tests. Gates green.
   `ganda repo audit` passed with no fixes needed.
 - Review oracle round 2: grok session `01a15ef8-d701-70e3-9057-5498bbd97c16` (2026-10-21), effort 2, roster general. M1 fixed. M2 open. Disposition not written.
+- Review oracle round 3: grok session `01a15f10-3ffd-7881-8126-addf1b8abb1d` (2026-10-21), effort 2, roster general. M2 fixed. M3 open. Disposition not written.
 - 2026-10-21 implementer (claude, headless task work, implement-fix-3): fixed M2 (shape check for
   routes with no leading literal, before the guard skip), added 4 routing-37 tests. Gates green.
   `ganda repo audit` passed with no fixes needed.
@@ -143,18 +144,21 @@ For M2, `Should_suggest_discriminator_flag_on_route_without_literal` expects
 
 ### Review
 
-Round 1 and round 2, effort 2, roster general. The implementer restatement matches the original checklist (no misread). Round 2 counts: 1 open bug, 1 fixed bug, 0 wontfix. Disposition is not written while M2 is open.
+Rounds 1–3, effort 2, roster general. The implementer restatement matches the original checklist (no misread). Round 3 counts: 1 open bug, 2 fixed bugs, 0 wontfix. Disposition is not written while M3 is open.
 
-M1 is fixed in `72cf0f08`. A close typo of a required option or unbound flag on a route with a leading literal is suggested (`commit --ammend`, `kanban create Title --foldr x`). The alias guard no longer loops. `routing-37` passed 22 of 22.
+M1 is fixed in `72cf0f08` and still passes in `routing-37` (26 of 26) on `0ef92207`.
 
-M2 is open. The guard skip still runs before `EmitUnknownOptionMatchCheck`, so a route with no leading literal never records that typo. `--check-update` on `--check-updates`, and `readme --outpt out` on `{file} --output {output}`, exit 1 with `Unknown command` and no suggestion. The handler does not run.
+M2 is fixed in `0ef92207`. `--check-update` on `--check-updates`, and `readme --outpt out` on `{file} --output {output}`, suggest the declared form and do not run the handler.
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
+M3 is open. The shape check drops the argv token after the unknown option even when that option is a flag. `--check-update extra` suggests `--check-updates`, and `readme --forc extra` on `{file} --output {output} --force` suggests `--force`. The corrected argv still has the extra word, so the route would not match. The handler does not run. `readme --outpt out` still suggests `--output`.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1
 - Round 2: Blocked — open M2
+- Round 3: Blocked — open M3
 
 ## Notes
 

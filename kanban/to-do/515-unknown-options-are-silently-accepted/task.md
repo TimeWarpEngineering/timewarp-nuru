@@ -55,6 +55,9 @@ Acceptance:
 - 2026-10-21 implementer (claude, headless task work, implement-fix-3): fixed M2 (shape check for
   routes with no leading literal, before the guard skip), added 4 routing-37 tests. Gates green.
   `ganda repo audit` passed with no fixes needed.
+- 2026-10-22 implementer (claude, headless task work, implement-fix-4): fixed M3 (only a typo of a
+  value-taking option drops the next token), added 4 routing-37 tests. Gates green.
+  `ganda repo audit` passed with no fixes needed.
 
 ## Results
 
@@ -114,9 +117,19 @@ optional twin (`{file} --output? {output?}`) already suggested; a probe on the o
 `Unknown command`, and it suggests now. New tests in routing-37: the two probed cases, the optional
 twin, and a missing value on a route with no literal (still `Unknown command`, no conversion error).
 
-Gates (rerun after the M2 fix pass): `./bin/dev build` OK; `dotnet run tests/ci-tests/run-ci-tests.cs`
-exit 0 (multi-mode plus standalone, 0 failed); `./bin/dev verify-samples` 68/68; `ganda repo audit`
-passes with no fixes needed.
+**Fix pass for review round 3 (M3)**: The shape check dropped the token after every unknown option,
+flags included, so `--check-update extra` on `Map("--check-updates")` suggested `--check-updates`
+when the corrected argv would still not match. Now the token is dropped only when the unknown option
+has no inline `=value` and its closest declared form (the same `Suggest` the error line uses) is a
+value-taking option. The runtime helper is `NuruUnknownOption.TakesValue(token, declaredForms, valueForms)`;
+the emitter adds `__valueOptionForms_N` (non-flag forms) next to `__positionalNoValues_N` and sets
+`__unknownAt_N` only when `TakesValue` is true. New tests in routing-37: `--check-update extra` on
+`--check-updates`, `readme --check-update extra` on `{file} --check-updates`, and `readme --forc extra`
+on `{file} --output {output} --force` all exit 1 with `Unknown command` and no suggestion;
+`readme --outpt out` on that same route still suggests `--output`.
+
+Gates (rerun after the M3 fix pass): `./bin/dev build` OK; `dotnet run tests/ci-tests/run-ci-tests.cs`
+exit 0 (multi-mode plus standalone, 0 failed); `ganda repo audit` passes with no fixes needed.
 
 ### How to validate
 
@@ -129,7 +142,7 @@ dotnet run tests/timewarp-nuru-tests/routing/routing-13-negative-numbers.cs
 dotnet run tests/ci-tests/run-ci-tests.cs
 ```
 
-Expect: routing-37 has 26 of 26 passed and routing-13 has 11 of 11 passed. The CI runner exits 0 and
+Expect: routing-37 has 30 of 30 passed and routing-13 has 11 of 11 passed. The CI runner exits 0 and
 ends with `Standalone finished in ... (0 failed)`. In routing-37,
 `Should_reject_unknown_option_on_route_with_options` shows `kanban create Title --repo x` exiting 1
 with `Unknown option '--repo'`, and `Should_suggest_closest_declared_option` shows
@@ -140,6 +153,9 @@ expects `Unknown option '--foldr'. Did you mean '--folder'?` and
 For M2, `Should_suggest_discriminator_flag_on_route_without_literal` expects
 `Unknown option '--check-update'. Did you mean '--check-updates'?` and
 `Should_suggest_required_value_option_on_route_without_literal` expects
+`Unknown option '--outpt'. Did you mean '--output'?`.
+For M3, the three `Should_keep_unknown_command_for_flag_typo_*` tests expect `Unknown command` with no
+`Did you mean`, and `Should_suggest_value_option_typo_beside_flag` expects
 `Unknown option '--outpt'. Did you mean '--output'?`.
 
 ### Review
@@ -163,3 +179,7 @@ Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-
 ## Notes
 
 Filed from timewarp-ganda task 439. Do not add `--repo` to ganda `kanban create` here. Ganda's message for that case points at `kanban reserve --repo` then `kanban claim <id> --repo`.
+
+## Blocked
+
+2026-10-21: 3 rounds, M3 still open (raise --review-rounds or mark findings fixed or wontfix in review/round-3/merged.md)

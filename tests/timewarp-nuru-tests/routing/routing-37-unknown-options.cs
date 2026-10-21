@@ -454,6 +454,92 @@ public class UnknownOptionTests
     terminal.OutputContains("readme:").ShouldBeFalse();
   }
 
+  // Review M3: a flag typo takes no value, so a stray word after it is an extra positional and the
+  // route does not fit
+  public static async Task Should_keep_unknown_command_for_flag_typo_with_extra_word()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("--check-updates").WithHandler(() => "check-updates")
+      .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["--check-update", "extra"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown command").ShouldBeTrue();
+    terminal.ErrorContains("Did you mean").ShouldBeFalse();
+    terminal.OutputContains("check-updates").ShouldBeFalse();
+  }
+
+  public static async Task Should_keep_unknown_command_for_flag_typo_with_extra_word_after_parameter()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("{file} --check-updates")
+        .WithHandler((string file) => $"readme:{file}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["readme", "--check-update", "extra"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown command").ShouldBeTrue();
+    terminal.ErrorContains("Did you mean").ShouldBeFalse();
+    terminal.OutputContains("readme:").ShouldBeFalse();
+  }
+
+  // The route has a value option too, but the typo is closest to the flag
+  public static async Task Should_keep_unknown_command_for_flag_typo_beside_value_option()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("{file} --output {output} --force")
+        .WithHandler((string file, string output, bool force) => $"readme:{file}|{output}|{force}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["readme", "--forc", "extra"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown command").ShouldBeTrue();
+    terminal.ErrorContains("Did you mean").ShouldBeFalse();
+    terminal.OutputContains("readme:").ShouldBeFalse();
+  }
+
+  // The value-option typo on the same route still owns its value and suggests
+  public static async Task Should_suggest_value_option_typo_beside_flag()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("{file} --output {output} --force")
+        .WithHandler((string file, string output, bool force) => $"readme:{file}|{output}|{force}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["readme", "--outpt", "out"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--outpt'. Did you mean '--output'?").ShouldBeTrue();
+    terminal.OutputContains("readme:").ShouldBeFalse();
+  }
+
   // An alias block used to jump to the primary route's skip label, which is before the alias,
   // so a failed option guard on an alias looped. The alias now skips to its own label.
   public static async Task Should_reject_unknown_option_on_alias_with_failed_option_guard()

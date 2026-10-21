@@ -31,7 +31,8 @@
 // unknown-option check, so a close typo of the missing form is recorded and suggested (515 M1).
 // A route with no leading literal checks its shape (length and literals) at the same point, before
 // the guard skip (515 M2). The shape check also tries the positional args without the token right
-// after each unknown option, since that token is likely the option's value ("{file} --outpt out").
+// after an unknown option, since that token is likely the option's value ("{file} --outpt out").
+// Only a typo of a value-taking option drops it (515 M3); a flag typo leaves the next token positional.
 // Option type conversions run after that skip, because a missing value must skip, not error.
 // Guards take the skip label of the block they are in; an alias block jumping to route_skip_N
 // would jump backward to before itself.
@@ -475,11 +476,30 @@ internal static class RouteMatcherEmitter
   }
 
   /// <summary>
+  /// Emits a HashSet of the option forms that take a value, so <see cref="EmitUnknownOptionShapeCheck"/>
+  /// drops the token after an unknown option only when that option is a typo of one of them.
+  /// </summary>
+  private static void EmitValueOptionFormsSet(StringBuilder sb, RouteDefinition route, int routeIndex)
+  {
+    List<string> forms = [];
+    foreach (OptionDefinition option in route.Options.Where(option => !option.IsFlag))
+    {
+      if (option.LongForm is not null)
+        forms.Add($"\"--{option.LongForm}\"");
+      if (option.ShortForm is not null)
+        forms.Add($"\"-{option.ShortForm}\"");
+    }
+
+    sb.AppendLine($"      global::System.Collections.Generic.HashSet<string> __valueOptionForms_{routeIndex} = [{string.Join(", ", forms)}];");
+  }
+
+  /// <summary>
   /// Emits code to build the positional args array from routeArgs,
   /// excluding consumed indices (options and their values).
   /// The -- separator is included only if the route explicitly expects it.
   /// With <paramref name="trackUnknownValues"/>, also builds <c>__positionalNoValues_N</c>: the positional
-  /// args without the token right after each unknown option, for <see cref="EmitUnknownOptionShapeCheck"/>.
+  /// args without the token right after each unknown option that is a typo of a value-taking option, for
+  /// <see cref="EmitUnknownOptionShapeCheck"/>.
   /// </summary>
   private static void EmitPositionalArrayConstruction(StringBuilder sb, RouteDefinition route, int routeIndex, bool trackUnknownValues)
   {
@@ -489,6 +509,7 @@ internal static class RouteMatcherEmitter
     {
       sb.AppendLine($"      global::System.Collections.Generic.List<string> __positionalNoValues_{routeIndex} = [];");
       sb.AppendLine($"      int __unknownAt_{routeIndex} = -2;");
+      EmitValueOptionFormsSet(sb, route, routeIndex);
     }
 
     sb.AppendLine("      for (int __i = 0; __i < routeArgs.Length; __i++)");
@@ -507,8 +528,9 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"        if (__i < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i]) && global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike(routeArgs[__i]))");
     sb.AppendLine("        {");
     sb.AppendLine($"          __unknownOption_{routeIndex} ??= routeArgs[__i];");
+    // Only a typo of a value-taking option owns the next token; a flag typo leaves it positional
     if (trackUnknownValues)
-      sb.AppendLine($"          __unknownAt_{routeIndex} = __i;");
+      sb.AppendLine($"          __unknownAt_{routeIndex} = global::TimeWarp.Nuru.NuruUnknownOption.TakesValue(routeArgs[__i], __optionForms_{routeIndex}, __valueOptionForms_{routeIndex}) ? __i : -2;");
     sb.AppendLine("          continue;");
     sb.AppendLine("        }");
     sb.AppendLine($"        __positionalList_{routeIndex}.Add(routeArgs[__i]);");
@@ -552,7 +574,7 @@ internal static class RouteMatcherEmitter
   /// Emits the unknown-option stop for a route with no leading literal. The option is recorded when
   /// the positional args fit the route: at least <paramref name="minPositionalArgs"/>, at most that many
   /// when <paramref name="exact"/>, and every literal in place. The args are tried as built and without
-  /// the token right after each unknown option, which is likely that option's value.
+  /// the token right after each unknown option that is a typo of a value-taking option, which is likely its value.
   /// </summary>
   private static void EmitUnknownOptionShapeCheck(
     StringBuilder sb,

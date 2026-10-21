@@ -59,6 +59,28 @@ public static class NuruUnknownOption
   }
 
   /// <summary>
+  /// Returns true when the next argv token is likely the value of <paramref name="token"/>: the token
+  /// has no inline <c>=value</c> and its closest declared form is one of <paramref name="valueForms"/>.
+  /// A typo of a flag, or of nothing declared, takes no value.
+  /// </summary>
+  /// <param name="token">The unknown token as typed.</param>
+  /// <param name="declaredForms">All option forms of the route.</param>
+  /// <param name="valueForms">The forms of the route's value-taking options.</param>
+  /// <returns>True when the following token should count as the option's value.</returns>
+  public static bool TakesValue(string token, IEnumerable<string> declaredForms, ICollection<string> valueForms)
+  {
+    ArgumentNullException.ThrowIfNull(token);
+    ArgumentNullException.ThrowIfNull(declaredForms);
+    ArgumentNullException.ThrowIfNull(valueForms);
+
+    if (valueForms.Count == 0 || token.Contains('=', StringComparison.Ordinal))
+      return false;
+
+    string? suggestion = Suggest(token, declaredForms);
+    return suggestion is not null && valueForms.Contains(suggestion);
+  }
+
+  /// <summary>
   /// Returns the declared form closest to <paramref name="name"/>, or null when none is close.
   /// </summary>
   /// <param name="name">The unknown option name, without any <c>=value</c>.</param>

@@ -26,12 +26,12 @@
 - Source: general
 - Disposition notes: Fixed in `0ef92207`. Verified by `routing-37` and the generated matcher for those two routes.
 
-### M3 — Severity: bug — Status: open
+### M3 — Severity: bug — Status: fixed
 - File: source/timewarp-nuru-analyzers/generators/emitters/route-matcher-emitter.cs:577
 - Description: The shape check also accepts the positional list with the next argv token removed. That drop runs for every unknown option, including a flag. A stray word then counts as the option's value, so a route that would not match suggests its flag. Probed: `--check-update extra` on `Map("--check-updates")`, and `readme --check-update extra` on `Map("{file} --check-updates")`, both exit 1 with `Did you mean '--check-updates'?`. `readme --forc extra` on `Map("{file} --output {output} --force")` suggests `--force`. The handler does not run. `readme --outpt out extra` and `readme extra --outpt` stay `Unknown command`. `readme --outpt out` still suggests `--output`.
 - Suggestion: Drop the following token only when a declared value-taking option is close to the typed name. The three flag cases above should exit 1 with `Unknown command` and no suggestion. `readme --outpt out` must still suggest `--output`.
 - Source: general
-- Disposition notes:
+- Disposition notes: Fixed in implement-fix-4. The following token is dropped only when `NuruUnknownOption.TakesValue` finds the closest declared form is a value-taking option (and the token has no `=value`). New routing-37 tests cover the three flag cases (`Unknown command`, no suggestion) and `readme --outpt out` on `{file} --output {output} --force` (still suggests `--output`). routing-37 30 of 30; CI runner exit 0.
 
 ## Duplicates / conflicts
 

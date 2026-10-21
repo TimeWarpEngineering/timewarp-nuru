@@ -6,11 +6,15 @@
 **Plan / brief:** Generated argv matching must fail closed on an option-shaped token the route does not declare, name it, and suggest a close declared form. Negative numbers, a lone `-`, and tokens after `--` stay positionals. Catch-all routes reject unknown options before `--`. Routes with no options keep `Unknown command` for an extra non-option token. REPL uses the same matcher. `Should_ignore_undefined_options` becomes a failure test.
 **Effort:** 2 (general only)
 **Reviewer roster:** general
-**Session IDs:** review oracle grok `01a15edb-f7b0-7011-9e3b-44f7fe830d66` (2026-10-21). Implementer session was not reported.
+**Session IDs:** review oracle grok `01a15edb-f7b0-7011-9e3b-44f7fe830d66` (2026-10-21). Round 2 grok `01a15ef8-d701-70e3-9057-5498bbd97c16` (2026-10-21). Implementer session was not reported.
+
+## Round 2 scope
+
+Delta `7b872eb..72cf0f08` only (244 lines). Re-check M1 and any new defect on that fix. Prior round files stay frozen.
 
 ## Budget (by-diff)
 
-- Lines changed: 715
+- Lines changed: 244
 - Effort: 2
 - TCB hits: none
 - Roster axes: general

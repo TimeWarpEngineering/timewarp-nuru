@@ -50,6 +50,7 @@ Acceptance:
 - 2026-10-21 implementer (claude, headless task work, implement-fix-2): fixed M1 (deferred option
   guards, conversions after the guard skip, alias skip label), added 6 routing-37 tests. Gates green.
   `ganda repo audit` passed with no fixes needed.
+- Review oracle round 2: grok session `01a15ef8-d701-70e3-9057-5498bbd97c16` (2026-10-21), effort 2, roster general. M1 fixed. M2 open. Disposition not written.
 
 ## Results
 
@@ -121,11 +122,18 @@ expects `Unknown option '--foldr'. Did you mean '--folder'?` and
 
 ### Review
 
-Round 1, effort 2, roster general. The implementer restatement matches the original checklist (no misread). Counts: 1 open bug, 0 fixed, 0 wontfix. Disposition is not written while M1 is open. M1: a required value option or an unbound discriminator flag skips the route before the unknown-option scan, so a close typo is `Unknown command` and is not suggested. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 and round 2, effort 2, roster general. The implementer restatement matches the original checklist (no misread). Round 2 counts: 1 open bug, 1 fixed bug, 0 wontfix. Disposition is not written while M2 is open.
+
+M1 is fixed in `72cf0f08`. A close typo of a required option or unbound flag on a route with a leading literal is suggested (`commit --ammend`, `kanban create Title --foldr x`). The alias guard no longer loops. `routing-37` passed 22 of 22.
+
+M2 is open. The guard skip still runs before `EmitUnknownOptionMatchCheck`, so a route with no leading literal never records that typo. `--check-update` on `--check-updates`, and `readme --outpt out` on `{file} --output {output}`, exit 1 with `Unknown command` and no suggestion. The handler does not run.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1
+- Round 2: Blocked — open M2 (M1 fixed)
 
 ## Notes
 

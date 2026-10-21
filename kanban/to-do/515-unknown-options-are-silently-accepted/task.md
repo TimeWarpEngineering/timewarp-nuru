@@ -58,6 +58,7 @@ Acceptance:
 - 2026-10-22 implementer (claude, headless task work, implement-fix-4): fixed M3 (only a typo of a
   value-taking option drops the next token), added 4 routing-37 tests. Gates green.
   `ganda repo audit` passed with no fixes needed.
+- Review oracle round 4: grok session `01a15f72-4a2a-72c1-84a7-5eaf084c138d` (2026-10-22), effort 1, roster general. M1–M3 fixed. No new findings. Disposition: clean.
 
 ## Results
 
@@ -160,26 +161,23 @@ For M3, the three `Should_keep_unknown_command_for_flag_typo_*` tests expect `Un
 
 ### Review
 
-Rounds 1–3, effort 2, roster general. The implementer restatement matches the original checklist (no misread). Round 3 counts: 1 open bug, 2 fixed bugs, 0 wontfix. Disposition is not written while M3 is open.
+Rounds 1–3 were effort 2. Round 4 was effort 1. Roster general throughout. The implementer restatement matches the original task (no misread). Round 4 counts: 0 open, 3 fixed bugs, 0 wontfix. Disposition: **clean**.
 
-M1 is fixed in `72cf0f08` and still passes in `routing-37` (26 of 26) on `0ef92207`.
+M1 is fixed in `72cf0f08`. A close typo of a required option or unbound flag on a route with a leading literal is still suggested. `routing-37` on `fb21baaf` passed 30 of 30, including those cases.
 
 M2 is fixed in `0ef92207`. `--check-update` on `--check-updates`, and `readme --outpt out` on `{file} --output {output}`, suggest the declared form and do not run the handler.
 
-M3 is open. The shape check drops the argv token after the unknown option even when that option is a flag. `--check-update extra` suggests `--check-updates`, and `readme --forc extra` on `{file} --output {output} --force` suggests `--force`. The corrected argv still has the extra word, so the route would not match. The handler does not run. `readme --outpt out` still suggests `--output`.
+M3 is fixed in `fb21baaf`. The next token is dropped only when `NuruUnknownOption.TakesValue` finds the closest declared form is a value-taking option. `--check-update extra`, `readme --check-update extra`, and `readme --forc extra` exit 1 with `Unknown command` and no suggestion. `readme --outpt out` on `{file} --output {output} --force` still suggests `--output`. This round re-ran `routing-37` (30 of 30). The full CI runner was not re-run here.
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`.
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/round-4/general.md`, `review/round-4/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1
 - Round 2: Blocked — open M2
 - Round 3: Blocked — open M3
+- Round 4: clean — 0 open (M1, M2, M3 fixed)
 
 ## Notes
 
 Filed from timewarp-ganda task 439. Do not add `--repo` to ganda `kanban create` here. Ganda's message for that case points at `kanban reserve --repo` then `kanban claim <id> --repo`.
-
-## Blocked
-
-2026-10-21: 3 rounds, M3 still open (raise --review-rounds or mark findings fixed or wontfix in review/round-3/merged.md)

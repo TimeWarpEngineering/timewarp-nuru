@@ -176,8 +176,7 @@ Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-
 - Round 1: Blocked — open M1
 - Round 2: Blocked — open M2
 - Round 3: Blocked — open M3
-- Round 4: clean — 0 open (M1, M2, M3 fixed)
-
+- Round 4: Done
 ## Notes
 
 Filed from timewarp-ganda task 439. Do not add `--repo` to ganda `kanban create` here. Ganda's message for that case points at `kanban reserve --repo` then `kanban claim <id> --repo`.

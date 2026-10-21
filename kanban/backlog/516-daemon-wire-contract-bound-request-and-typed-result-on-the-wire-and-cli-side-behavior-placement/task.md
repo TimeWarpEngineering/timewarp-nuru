@@ -36,8 +36,9 @@ Backlog until Roslynk (the driving consumer) says whether it needs a typed resul
 ## Notes
 
 - Filed from the 508-005 review (grok, round 1, 2026-10-19). The implementation follows the restatement; this is a contract decision, not a defect.
-- Related: 508 (parent), 508-003 (binder, `RenderAsync`), 508-004 (McpHost shares the server), 508-005 (daemon), Roslynk daemon.
+- Related: 508 (former parent; moved out as 508-010 so 508 could close), 508-003 (binder, `RenderAsync`), 508-004 (McpHost shares the server), 508-005 (daemon), Roslynk daemon.
 
 ## Session
 
-- Created: 3918158 (2026-10-19)
+- Created as 508-010: 3918158 (2026-10-19)
+- 2026-10-21: moved out from under 508 to top-level 516 (Steven) so 508 can close; decision still open.

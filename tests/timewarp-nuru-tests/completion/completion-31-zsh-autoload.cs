@@ -71,6 +71,10 @@ public class ZshAutoloadTests
     script=$dir/_app
     hits=$dir/hits
     export HITS="$hits"
+    # A user's zshrc has run compinit before sourcing a completion script. -u skips the
+    # insecure-directory prompt, which aborts compinit when there is no terminal (CI).
+    autoload -Uz compinit
+    compinit -u -C -d "$dir/zcompdump"
     run_registered() {
       local label=$1
       : > "$hits"

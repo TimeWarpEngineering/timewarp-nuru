@@ -21,14 +21,17 @@
 // UNKNOWN OPTIONS (task 515): An option-shaped token before "--" that no declared option consumed
 // (NuruUnknownOption.IsOptionLike: not "-", not a number) is held out of the positional list.
 // The route never runs with one. When the route's leading literals match (or, for a route with no
-// leading literal, when the whole route matches), the token and the route's option forms are
-// recorded in __unknownOption / __unknownOptionForms and matching moves on. A later route or
+// leading literal, when the positional args fit the route's shape), the token and the route's option
+// forms are recorded in __unknownOption / __unknownOptionForms and matching moves on. A later route or
 // built-in can still match; if none does, the no-match fallback names the option and exits 1.
 // The REPL calls the same ExecuteRouteAsync, so a REPL line fails the same way.
 //
 // OPTION GUARDS: A missing required option, a missing required value, or an absent unbound
 // discriminator flag sets __optionMissing_N instead of skipping at once. The skip runs after the
 // unknown-option check, so a close typo of the missing form is recorded and suggested (515 M1).
+// A route with no leading literal checks its shape (length and literals) at the same point, before
+// the guard skip (515 M2). The shape check also tries the positional args without the token right
+// after each unknown option, since that token is likely the option's value ("{file} --outpt out").
 // Option type conversions run after that skip, because a missing value must skip, not error.
 // Guards take the skip label of the block they are in; an alias block jumping to route_skip_N
 // would jump backward to before itself.
@@ -184,12 +187,16 @@ internal static class RouteMatcherEmitter
     string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
 
     // Build positional args array (excluding consumed indices; -- is included only if route expects it)
-    EmitPositionalArrayConstruction(sb, route, routeIndex);
-
-    // An unknown option stops this route; record it when the command's leading literals match.
-    // This runs before the option-guard skip so a typo of a required option is still suggested.
     List<string> literalPrefix = RouteHelpEmitter.GetLiteralPrefix(route);
-    EmitUnknownOptionPrefixCheck(sb, routeIndex, literalPrefix, $"route_skip_{routeIndex}");
+    EmitPositionalArrayConstruction(sb, route, routeIndex, trackUnknownValues: literalPrefix.Count == 0);
+
+    // An unknown option stops this route; record it when the command's leading literals match, or
+    // for a route with no leading literal, when the positional args fit the route.
+    // This runs before the option-guard skip so a typo of a required option is still suggested.
+    if (literalPrefix.Count > 0)
+      EmitUnknownOptionPrefixCheck(sb, routeIndex, literalPrefix, $"route_skip_{routeIndex}");
+    else
+      EmitUnknownOptionShapeCheck(sb, routeIndex, minPositionalArgs, exact: !route.HasOptionalPositionalParams && !route.HasCatchAll, GetPositionalLiteralChecks(route, route.GroupPrefix?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? [], includeSegmentLiterals: true), $"route_skip_{routeIndex}");
     EmitOptionGuardSkip(sb, route, routeIndex, $"route_skip_{routeIndex}");
     sb.Append(optionConversions);
 
@@ -266,10 +273,6 @@ internal static class RouteMatcherEmitter
           // OptionDefinition: skip (handled by EmitOptionParsingWithIndexTracking)
       }
     }
-
-    // A route with no leading literal records an unknown option only once the whole route matched
-    if (literalPrefix.Count == 0)
-      EmitUnknownOptionMatchCheck(sb, routeIndex, $"route_skip_{routeIndex}");
 
     // The route literal matched. JSON argv rejection and a missing required JSON member
     // stop this call here. Doing it earlier would reject every later command.
@@ -360,8 +363,11 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
 
     string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
-    EmitPositionalArrayConstruction(sb, route, routeIndex);
-    EmitUnknownOptionPrefixCheck(sb, routeIndex, [.. aliasParts], aliasSkipLabel);
+    EmitPositionalArrayConstruction(sb, route, routeIndex, trackUnknownValues: aliasParts.Length == 0);
+    if (aliasParts.Length > 0)
+      EmitUnknownOptionPrefixCheck(sb, routeIndex, [.. aliasParts], aliasSkipLabel);
+    else
+      EmitUnknownOptionShapeCheck(sb, routeIndex, minPositionalArgs, exact: false, GetPositionalLiteralChecks(route, aliasParts, includeSegmentLiterals: false), aliasSkipLabel);
     EmitOptionGuardSkip(sb, route, routeIndex, aliasSkipLabel);
     sb.Append(optionConversions);
 
@@ -413,9 +419,6 @@ internal static class RouteMatcherEmitter
           break;
       }
     }
-
-    if (aliasParts.Length == 0)
-      EmitUnknownOptionMatchCheck(sb, routeIndex, aliasSkipLabel);
 
     EmitJsonMemberAfterMatch(sb, route, routeIndex);
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
@@ -475,11 +478,19 @@ internal static class RouteMatcherEmitter
   /// Emits code to build the positional args array from routeArgs,
   /// excluding consumed indices (options and their values).
   /// The -- separator is included only if the route explicitly expects it.
+  /// With <paramref name="trackUnknownValues"/>, also builds <c>__positionalNoValues_N</c>: the positional
+  /// args without the token right after each unknown option, for <see cref="EmitUnknownOptionShapeCheck"/>.
   /// </summary>
-  private static void EmitPositionalArrayConstruction(StringBuilder sb, RouteDefinition route, int routeIndex)
+  private static void EmitPositionalArrayConstruction(StringBuilder sb, RouteDefinition route, int routeIndex, bool trackUnknownValues)
   {
     sb.AppendLine($"      string? __unknownOption_{routeIndex} = null;");
     sb.AppendLine($"      global::System.Collections.Generic.List<string> __positionalList_{routeIndex} = [];");
+    if (trackUnknownValues)
+    {
+      sb.AppendLine($"      global::System.Collections.Generic.List<string> __positionalNoValues_{routeIndex} = [];");
+      sb.AppendLine($"      int __unknownAt_{routeIndex} = -2;");
+    }
+
     sb.AppendLine("      for (int __i = 0; __i < routeArgs.Length; __i++)");
     sb.AppendLine("      {");
 
@@ -496,9 +507,17 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"        if (__i < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i]) && global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike(routeArgs[__i]))");
     sb.AppendLine("        {");
     sb.AppendLine($"          __unknownOption_{routeIndex} ??= routeArgs[__i];");
+    if (trackUnknownValues)
+      sb.AppendLine($"          __unknownAt_{routeIndex} = __i;");
     sb.AppendLine("          continue;");
     sb.AppendLine("        }");
     sb.AppendLine($"        __positionalList_{routeIndex}.Add(routeArgs[__i]);");
+    if (trackUnknownValues)
+    {
+      // A token after "--" is never an option value
+      sb.AppendLine($"        if (__i != __unknownAt_{routeIndex} + 1 || __i >= __endOfOptions_{routeIndex}) __positionalNoValues_{routeIndex}.Add(routeArgs[__i]);");
+    }
+
     sb.AppendLine("      }");
     sb.AppendLine($"      string[] __positionalArgs_{routeIndex} = [.. __positionalList_{routeIndex}];");
   }
@@ -530,15 +549,70 @@ internal static class RouteMatcherEmitter
   }
 
   /// <summary>
-  /// Emits the unknown-option stop for a route with no leading literal, after the whole route matched.
+  /// Emits the unknown-option stop for a route with no leading literal. The option is recorded when
+  /// the positional args fit the route: at least <paramref name="minPositionalArgs"/>, at most that many
+  /// when <paramref name="exact"/>, and every literal in place. The args are tried as built and without
+  /// the token right after each unknown option, which is likely that option's value.
   /// </summary>
-  private static void EmitUnknownOptionMatchCheck(StringBuilder sb, int routeIndex, string skipLabel)
+  private static void EmitUnknownOptionShapeCheck(
+    StringBuilder sb,
+    int routeIndex,
+    int minPositionalArgs,
+    bool exact,
+    List<(int Index, string Value)> literalChecks,
+    string skipLabel)
   {
+    string Fits(string list)
+    {
+      StringBuilder condition = new($"{list}.Count >= {minPositionalArgs}");
+      if (exact)
+        condition.Append($" && {list}.Count == {minPositionalArgs}");
+      foreach ((int index, string value) in literalChecks)
+        condition.Append($" && {list}.Count > {index} && {list}[{index}] == \"{EmitterStringUtils.EscapeForStringLiteral(value)}\"");
+      return condition.ToString();
+    }
+
     sb.AppendLine($"      if (__unknownOption_{routeIndex} is not null)");
     sb.AppendLine("      {");
-    EmitUnknownOptionRecord(sb, routeIndex, indent: 8);
+    sb.AppendLine($"        if (({Fits($"__positionalList_{routeIndex}")}) || ({Fits($"__positionalNoValues_{routeIndex}")}))");
+    sb.AppendLine("        {");
+    EmitUnknownOptionRecord(sb, routeIndex, indent: 10);
+    sb.AppendLine("        }");
     sb.AppendLine($"        goto {skipLabel};");
     sb.AppendLine("      }");
+  }
+
+  /// <summary>
+  /// The positional literals a route checks, at the index the matcher checks them: the
+  /// <paramref name="prefixWords"/>, then segment literals (when <paramref name="includeSegmentLiterals"/>)
+  /// and the "--" separator. Stops at a catch-all, which takes the rest.
+  /// </summary>
+  private static List<(int Index, string Value)> GetPositionalLiteralChecks(RouteDefinition route, string[] prefixWords, bool includeSegmentLiterals)
+  {
+    List<(int Index, string Value)> checks = [];
+    int positionalIndex = 0;
+    foreach (string word in prefixWords)
+      checks.Add((positionalIndex++, word));
+
+    foreach (SegmentDefinition segment in route.Segments)
+    {
+      switch (segment)
+      {
+        case LiteralDefinition literal when includeSegmentLiterals:
+          checks.Add((positionalIndex++, literal.Value));
+          break;
+        case ParameterDefinition param when param.IsCatchAll:
+          return checks;
+        case ParameterDefinition:
+          positionalIndex++;
+          break;
+        case EndOfOptionsSeparatorDefinition:
+          checks.Add((positionalIndex++, "--"));
+          break;
+      }
+    }
+
+    return checks;
   }
 
   private static void EmitUnknownOptionRecord(StringBuilder sb, int routeIndex, int indent)

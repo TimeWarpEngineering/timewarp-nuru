@@ -371,6 +371,89 @@ public class UnknownOptionTests
     terminal.OutputContains("created:Title|f").ShouldBeTrue();
   }
 
+  // Review M2: a route with no leading literal records the unknown option once the rest of the
+  // route matches, before a missing required flag skips it
+  public static async Task Should_suggest_discriminator_flag_on_route_without_literal()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("--check-updates").WithHandler(() => "check-updates")
+      .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["--check-update"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--check-update'. Did you mean '--check-updates'?").ShouldBeTrue();
+    terminal.OutputContains("check-updates").ShouldBeFalse();
+  }
+
+  // Review M2: the token after the typo is its value, so it does not count as an extra positional
+  public static async Task Should_suggest_required_value_option_on_route_without_literal()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("{file} --output {output}")
+        .WithHandler((string file, string output) => $"readme:{file}|{output}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["readme", "--outpt", "out"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--outpt'. Did you mean '--output'?").ShouldBeTrue();
+    terminal.OutputContains("readme:").ShouldBeFalse();
+  }
+
+  public static async Task Should_suggest_optional_value_option_on_route_without_literal()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("{file} --output? {output?}")
+        .WithHandler((string file, string? output) => $"readme:{file}|{output}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["readme", "--outpt", "out"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--outpt'. Did you mean '--output'?").ShouldBeTrue();
+    terminal.OutputContains("readme:").ShouldBeFalse();
+  }
+
+  // A missing value still skips the route; with no unknown option it stays Unknown command
+  public static async Task Should_keep_unknown_command_for_missing_value_on_route_without_literal()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("{file} --count {count:int}")
+        .WithHandler((string file, int count) => $"readme:{file}|{count}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["readme", "--count"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown command").ShouldBeTrue();
+    terminal.OutputContains("readme:").ShouldBeFalse();
+  }
+
   // An alias block used to jump to the primary route's skip label, which is before the alias,
   // so a failed option guard on an alias looped. The alias now skips to its own label.
   public static async Task Should_reject_unknown_option_on_alias_with_failed_option_guard()

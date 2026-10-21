@@ -51,6 +51,9 @@ Acceptance:
   guards, conversions after the guard skip, alias skip label), added 6 routing-37 tests. Gates green.
   `ganda repo audit` passed with no fixes needed.
 - Review oracle round 2: grok session `01a15ef8-d701-70e3-9057-5498bbd97c16` (2026-10-21), effort 2, roster general. M1 fixed. M2 open. Disposition not written.
+- 2026-10-21 implementer (claude, headless task work, implement-fix-3): fixed M2 (shape check for
+  routes with no leading literal, before the guard skip), added 4 routing-37 tests. Gates green.
+  `ganda repo audit` passed with no fixes needed.
 
 ## Results
 
@@ -96,7 +99,21 @@ required value option, a close typo of a discriminator flag, an unknown option n
 option that is present, a required option that is present (still runs), an alias with a failed guard
 plus an unknown option, and an alias with a value (still runs).
 
-Gates (rerun after the M1 fix pass): `./bin/dev build` OK; `dotnet run tests/ci-tests/run-ci-tests.cs`
+**Fix pass for review round 2 (M2)**: A route with no leading literal recorded an unknown option
+only after the whole route matched, which came after the option-guard skip, so `--check-update` on
+`Map("--check-updates")` gave `Unknown command`. That route now records the option at the same point
+as the prefix check, before the guard skip, when its positional args fit the route's shape (count,
+exact count when the route has no optional or catch-all parameter, and literals in place). The check
+also tries the positional args without the token right after each unknown option, since that token is
+likely its value: in `readme --outpt out` for `{file} --output {output}`, `out` would otherwise be an
+extra positional. `EmitUnknownOptionMatchCheck` is gone; `EmitUnknownOptionShapeCheck` replaces it
+in `EmitMatch` and in `EmitAliasMatch` (empty alias). An extra positional with no unknown option is
+still `Unknown command`, and a missing value still skips the route. The round-2 review said the
+optional twin (`{file} --output? {output?}`) already suggested; a probe on the old emitter gave
+`Unknown command`, and it suggests now. New tests in routing-37: the two probed cases, the optional
+twin, and a missing value on a route with no literal (still `Unknown command`, no conversion error).
+
+Gates (rerun after the M2 fix pass): `./bin/dev build` OK; `dotnet run tests/ci-tests/run-ci-tests.cs`
 exit 0 (multi-mode plus standalone, 0 failed); `./bin/dev verify-samples` 68/68; `ganda repo audit`
 passes with no fixes needed.
 
@@ -111,7 +128,7 @@ dotnet run tests/timewarp-nuru-tests/routing/routing-13-negative-numbers.cs
 dotnet run tests/ci-tests/run-ci-tests.cs
 ```
 
-Expect: routing-37 has 22 of 22 passed and routing-13 has 11 of 11 passed. The CI runner exits 0 and
+Expect: routing-37 has 26 of 26 passed and routing-13 has 11 of 11 passed. The CI runner exits 0 and
 ends with `Standalone finished in ... (0 failed)`. In routing-37,
 `Should_reject_unknown_option_on_route_with_options` shows `kanban create Title --repo x` exiting 1
 with `Unknown option '--repo'`, and `Should_suggest_closest_declared_option` shows
@@ -119,6 +136,10 @@ with `Unknown option '--repo'`, and `Should_suggest_closest_declared_option` sho
 expects `Unknown option '--foldr'. Did you mean '--folder'?` and
 `Should_suggest_discriminator_flag_for_close_typo` expects `Unknown option '--ammend'. Did you mean '--amend'?`.
 `Should_reject_unknown_option_on_alias_with_failed_option_guard` finishes in well under a second (it hung on the old emitter).
+For M2, `Should_suggest_discriminator_flag_on_route_without_literal` expects
+`Unknown option '--check-update'. Did you mean '--check-updates'?` and
+`Should_suggest_required_value_option_on_route_without_literal` expects
+`Unknown option '--outpt'. Did you mean '--output'?`.
 
 ### Review
 
@@ -133,7 +154,7 @@ Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-
 ## Review
 
 - Round 1: Blocked — open M1
-- Round 2: Blocked — open M2 (M1 fixed)
+- Round 2: Blocked — open M2
 
 ## Notes
 

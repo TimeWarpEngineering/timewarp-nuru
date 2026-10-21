@@ -613,6 +613,8 @@ public sealed class DslInterpreter
 
       "UseVerbatimRendererOutput" => DispatchUseVerbatimRendererOutput(receiver),
 
+      "UseProblemRendererForErrors" => DispatchUseProblemRendererForErrors(receiver),
+
       "EnableCompletion" => DispatchEnableCompletion(receiver),
 
       "AddTypeConverter" => DispatchAddTypeConverter(invocation, receiver),
@@ -1581,6 +1583,18 @@ public sealed class DslInterpreter
       throw new InvalidOperationException("UseVerbatimRendererOutput() must be called on an app builder.");
 
     return appBuilder.UseVerbatimRendererOutput();
+  }
+
+  /// <summary>
+  /// Dispatches UseProblemRendererForErrors() to IIrAppBuilder.
+  /// CLI binding errors go through the app's problem renderer.
+  /// </summary>
+  private static object? DispatchUseProblemRendererForErrors(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+      throw new InvalidOperationException("UseProblemRendererForErrors() must be called on an app builder.");
+
+    return appBuilder.UseProblemRendererForErrors();
   }
 
   /// <summary>

@@ -37,6 +37,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="FilterGroupTypeNames">Group type names to filter endpoints by for subset CLI editions</param>
 /// <param name="UseDirectInvoke">When true, nested handlers are invoked directly instead of through TimeWarp.Mediator.</param>
 /// <param name="VerbatimRendererOutput">When true, UseVerbatimRendererOutput() was called: renderer text is written with Write, with no added newline.</param>
+/// <param name="ProblemRendererForErrors">When true, UseProblemRendererForErrors() was called: CLI binding errors go through the app's problem renderer.</param>
 /// <param name="BuildSite">The Build() call that creates this app, intercepted to attach the capabilities catalog</param>
 /// <param name="McpRoute">Options for the built-in mcp route when AddMcpRoute() was called (TimeWarp.Nuru.McpHost), otherwise null</param>
 /// <param name="ServeRoute">Options for the built-in serve route and route forwarding when AddServeRoute() was called (TimeWarp.Nuru.Daemon), otherwise null</param>
@@ -74,6 +75,7 @@ public sealed record AppModel(
   EquatableArray<string> FilterGroupTypeNames = default,
   bool UseDirectInvoke = false,
   bool VerbatimRendererOutput = false,
+  bool ProblemRendererForErrors = false,
   BuildInterceptSite? BuildSite = null,
   McpRouteModel? McpRoute = null,
   ServeRouteModel? ServeRoute = null)

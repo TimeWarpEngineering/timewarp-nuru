@@ -779,7 +779,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"{indentStr}  {clrType} {tempVarName};");
           sb.AppendLine($"{indentStr}  if (!{tryParseWithTemp})");
           sb.AppendLine($"{indentStr}  {{");
-          sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: {baseType}\");");
+          sb.AppendLine($"{indentStr}    app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: {baseType}\", \"{param.Name}\");");
           sb.AppendLine($"{indentStr}    return 1;");
           sb.AppendLine($"{indentStr}  }}");
           sb.AppendLine($"{indentStr}  {escapedVarName} = {tempVarName};");
@@ -791,7 +791,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"{indentStr}{clrType} {escapedVarName};");
           sb.AppendLine($"{indentStr}if (!{tryParseCondition})");
           sb.AppendLine($"{indentStr}{{");
-          sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: {baseType}\");");
+          sb.AppendLine($"{indentStr}  app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: {baseType}\", \"{param.Name}\");");
           sb.AppendLine($"{indentStr}  return 1;");
           sb.AppendLine($"{indentStr}}}");
         }
@@ -812,7 +812,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}{{");
             sb.AppendLine($"{indentStr}  if (!global::System.Uri.TryCreate({uniqueVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {tempVarName}))");
             sb.AppendLine($"{indentStr}  {{");
-            sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: Uri\");");
+            sb.AppendLine($"{indentStr}    app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: Uri\", \"{param.Name}\");");
             sb.AppendLine($"{indentStr}    return 1;");
             sb.AppendLine($"{indentStr}  }}");
             sb.AppendLine($"{indentStr}  {escapedVarName} = {tempVarName};");
@@ -822,7 +822,7 @@ internal static class RouteMatcherEmitter
           {
             sb.AppendLine($"{indentStr}if (!global::System.Uri.TryCreate({uniqueVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {escapedVarName}) || {escapedVarName} is null)");
             sb.AppendLine($"{indentStr}{{");
-            sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: Uri\");");
+            sb.AppendLine($"{indentStr}  app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: Uri\", \"{param.Name}\");");
             sb.AppendLine($"{indentStr}  return 1;");
             sb.AppendLine($"{indentStr}}}");
           }
@@ -844,7 +844,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}  }}");
             sb.AppendLine($"{indentStr}  catch (global::System.Exception)");
             sb.AppendLine($"{indentStr}  {{");
-            sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: FileInfo\");");
+            sb.AppendLine($"{indentStr}    app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: FileInfo\", \"{param.Name}\");");
             sb.AppendLine($"{indentStr}    return 1;");
             sb.AppendLine($"{indentStr}  }}");
             sb.AppendLine($"{indentStr}}}");
@@ -858,7 +858,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}}}");
             sb.AppendLine($"{indentStr}catch (global::System.Exception)");
             sb.AppendLine($"{indentStr}{{");
-            sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: FileInfo\");");
+            sb.AppendLine($"{indentStr}  app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: FileInfo\", \"{param.Name}\");");
             sb.AppendLine($"{indentStr}  return 1;");
             sb.AppendLine($"{indentStr}}}");
           }
@@ -880,7 +880,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}  }}");
             sb.AppendLine($"{indentStr}  catch (global::System.Exception)");
             sb.AppendLine($"{indentStr}  {{");
-            sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: DirectoryInfo\");");
+            sb.AppendLine($"{indentStr}    app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: DirectoryInfo\", \"{param.Name}\");");
             sb.AppendLine($"{indentStr}    return 1;");
             sb.AppendLine($"{indentStr}  }}");
             sb.AppendLine($"{indentStr}}}");
@@ -894,7 +894,7 @@ internal static class RouteMatcherEmitter
             sb.AppendLine($"{indentStr}}}");
             sb.AppendLine($"{indentStr}catch (global::System.Exception)");
             sb.AppendLine($"{indentStr}{{");
-            sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: DirectoryInfo\");");
+            sb.AppendLine($"{indentStr}  app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. Expected: DirectoryInfo\", \"{param.Name}\");");
             sb.AppendLine($"{indentStr}  return 1;");
             sb.AppendLine($"{indentStr}}}");
           }
@@ -957,7 +957,7 @@ internal static class RouteMatcherEmitter
     string indentStr)
   {
     string errorStatement =
-      $"app.Terminal.WriteLine($\"Error: Invalid value in '{param.Name}'. Expected: {baseType}[]\");";
+      $"app.WriteArgumentError($\"Error: Invalid value in '{param.Name}'. Expected: {baseType}[]\", \"{param.Name}\");";
     bool converted = EmitBuiltInArrayConversion(
       sb,
       indentStr,
@@ -1007,7 +1007,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"{indentStr}  var {converterVarName} = new {converter.ConverterTypeName}();");
       sb.AppendLine($"{indentStr}  if (!{converterVarName}.TryConvert({uniqueVarName}, out object? {tempVarName}))");
       sb.AppendLine($"{indentStr}  {{");
-      sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid {GetSimpleTypeName(targetType)} value for parameter '{param.Name}': '{{{uniqueVarName}}}'\");");
+      sb.AppendLine($"{indentStr}    app.WriteArgumentError($\"Error: Invalid {GetSimpleTypeName(targetType)} value for parameter '{param.Name}': '{{{uniqueVarName}}}'\", \"{param.Name}\");");
       sb.AppendLine($"{indentStr}    return 1;");
       sb.AppendLine($"{indentStr}  }}");
       sb.AppendLine($"{indentStr}  {escapedVarName} = ({targetType}){tempVarName}!;");
@@ -1019,7 +1019,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"{indentStr}var {converterVarName} = new {converter.ConverterTypeName}();");
       sb.AppendLine($"{indentStr}if (!{converterVarName}.TryConvert({uniqueVarName}, out object? {tempVarName}))");
       sb.AppendLine($"{indentStr}{{");
-      sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid {GetSimpleTypeName(targetType)} value for parameter '{param.Name}': '{{{uniqueVarName}}}'\");");
+      sb.AppendLine($"{indentStr}  app.WriteArgumentError($\"Error: Invalid {GetSimpleTypeName(targetType)} value for parameter '{param.Name}': '{{{uniqueVarName}}}'\", \"{param.Name}\");");
       sb.AppendLine($"{indentStr}  return 1;");
       sb.AppendLine($"{indentStr}}}");
       sb.AppendLine($"{indentStr}{targetType} {escapedVarName} = ({targetType}){tempVarName}!;");
@@ -1055,7 +1055,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"{indentStr}  var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{enumTypeName}>();");
       sb.AppendLine($"{indentStr}  if (!{converterVarName}.TryConvert({uniqueVarName}, out object? {tempVarName}))");
       sb.AppendLine($"{indentStr}  {{");
-      sb.AppendLine($"{indentStr}    app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine($"{indentStr}    app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. {{{converterVarName}.GetValidValuesMessage()}}\", \"{param.Name}\");");
       sb.AppendLine($"{indentStr}    return 1;");
       sb.AppendLine($"{indentStr}  }}");
       sb.AppendLine($"{indentStr}  {escapedVarName} = ({enumTypeName}){tempVarName}!;");
@@ -1067,7 +1067,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"{indentStr}var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{enumTypeName}>();");
       sb.AppendLine($"{indentStr}if (!{converterVarName}.TryConvert({uniqueVarName}, out object? {tempVarName}))");
       sb.AppendLine($"{indentStr}{{");
-      sb.AppendLine($"{indentStr}  app.Terminal.WriteLine($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine($"{indentStr}  app.WriteArgumentError($\"Error: Invalid value '{{{uniqueVarName}}}' for parameter '{param.Name}'. {{{converterVarName}.GetValidValuesMessage()}}\", \"{param.Name}\");");
       sb.AppendLine($"{indentStr}  return 1;");
       sb.AppendLine($"{indentStr}}}");
       sb.AppendLine($"{indentStr}{enumTypeName} {escapedVarName} = ({enumTypeName}){tempVarName}!;");
@@ -1135,7 +1135,7 @@ internal static class RouteMatcherEmitter
     if (!string.IsNullOrEmpty(baseType))
     {
       string errorStatement =
-        $"app.Terminal.WriteLine($\"Error: Invalid value in option '{optionDisplay}'. Expected: {baseType}\");";
+        $"app.WriteArgumentError($\"Error: Invalid value in option '{optionDisplay}'. Expected: {baseType}\", \"{optionDisplay}\");";
       bool converted = EmitBuiltInArrayConversion(
         sb,
         "      ",
@@ -1199,7 +1199,7 @@ internal static class RouteMatcherEmitter
     sb.AppendLine("      {");
     sb.AppendLine($"        if (!{converterVarName}.TryConvert({listVarName}[{indexVarName}], out object? {tempVarName}))");
     sb.AppendLine("        {");
-    sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{listVarName}[{indexVarName}]}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+    sb.AppendLine($"          app.WriteArgumentError($\"Error: Invalid value '{{{listVarName}[{indexVarName}]}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\", \"{optionDisplay}\");");
     sb.AppendLine("          return 1;");
     sb.AppendLine("        }");
     sb.AppendLine($"        {varName}[{indexVarName}] = ({baseEnumType}){tempVarName}!;");
@@ -1349,7 +1349,7 @@ internal static class RouteMatcherEmitter
         sb.AppendLine("        }");
         sb.AppendLine("        else");
         sb.AppendLine("        {");
-        sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\");");
+        sb.AppendLine($"          app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\", \"{optionDisplay}\");");
         sb.AppendLine("          return 1;");
         sb.AppendLine("        }");
         sb.AppendLine("      }");
@@ -1366,7 +1366,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"      {clrType} {varName} = {defaultValue};");
           sb.AppendLine($"      if ({rawVarName} is not null && !{tryParseCondition})");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\", \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
         }
@@ -1376,7 +1376,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"      {clrType} {varName} = default;");
           sb.AppendLine($"      if ({rawVarName} is not null && !{tryParseCondition})");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: {baseType}\", \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
         }
@@ -1398,7 +1398,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("      {");
           sb.AppendLine($"        if (!global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out global::System.Uri? {tempVarName}))");
           sb.AppendLine("        {");
-          sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: Uri\");");
+          sb.AppendLine($"          app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: Uri\", \"{optionDisplay}\");");
           sb.AppendLine("          return 1;");
           sb.AppendLine("        }");
           sb.AppendLine($"        {varName} = {tempVarName};");
@@ -1409,7 +1409,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"      global::System.Uri? {varName} = null;");
           sb.AppendLine($"      if ({rawVarName} is not null && !global::System.Uri.TryCreate({rawVarName}, global::System.UriKind.RelativeOrAbsolute, out {varName}))");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: Uri\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: Uri\", \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
         }
@@ -1431,7 +1431,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("        }");
           sb.AppendLine("        catch (global::System.Exception)");
           sb.AppendLine("        {");
-          sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: FileInfo\");");
+          sb.AppendLine($"          app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: FileInfo\", \"{optionDisplay}\");");
           sb.AppendLine("          return 1;");
           sb.AppendLine("        }");
           sb.AppendLine("      }");
@@ -1441,7 +1441,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"      global::System.IO.FileInfo? {varName} = null;");
           sb.AppendLine($"      if ({rawVarName} is null)");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Missing value for option '{optionDisplay}'. Expected: FileInfo\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Missing value for option '{optionDisplay}'. Expected: FileInfo\", global::TimeWarp.Nuru.NuruBindErrorKind.MissingValue, \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
           sb.AppendLine("      try");
@@ -1450,7 +1450,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("      }");
           sb.AppendLine("      catch (global::System.Exception)");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: FileInfo\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: FileInfo\", \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
         }
@@ -1472,7 +1472,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("        }");
           sb.AppendLine("        catch (global::System.Exception)");
           sb.AppendLine("        {");
-          sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: DirectoryInfo\");");
+          sb.AppendLine($"          app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: DirectoryInfo\", \"{optionDisplay}\");");
           sb.AppendLine("          return 1;");
           sb.AppendLine("        }");
           sb.AppendLine("      }");
@@ -1482,7 +1482,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine($"      global::System.IO.DirectoryInfo? {varName} = null;");
           sb.AppendLine($"      if ({rawVarName} is null)");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Missing value for option '{optionDisplay}'. Expected: DirectoryInfo\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Missing value for option '{optionDisplay}'. Expected: DirectoryInfo\", global::TimeWarp.Nuru.NuruBindErrorKind.MissingValue, \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
           sb.AppendLine("      try");
@@ -1491,7 +1491,7 @@ internal static class RouteMatcherEmitter
           sb.AppendLine("      }");
           sb.AppendLine("      catch (global::System.Exception)");
           sb.AppendLine("      {");
-          sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: DirectoryInfo\");");
+          sb.AppendLine($"        app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. Expected: DirectoryInfo\", \"{optionDisplay}\");");
           sb.AppendLine("        return 1;");
           sb.AppendLine("      }");
         }
@@ -1565,7 +1565,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"        var {converterVarName} = new {converter.ConverterTypeName}();");
       sb.AppendLine($"        if (!{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
       sb.AppendLine("        {");
-      sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid {targetType} value for option '{option.LongForm ?? option.ShortForm}': '{{{rawVarName}}}'\");");
+      sb.AppendLine($"          app.WriteArgumentError($\"Error: Invalid {targetType} value for option '{option.LongForm ?? option.ShortForm}': '{{{rawVarName}}}'\", \"{option.LongForm ?? option.ShortForm}\");");
       sb.AppendLine("          return 1;");
       sb.AppendLine("        }");
       sb.AppendLine($"        {varName} = ({targetType}){tempVarName}!;");
@@ -1578,7 +1578,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"      object? {tempVarName} = null;");
       sb.AppendLine($"      if ({rawVarName} is not null && !{converterVarName}.TryConvert({rawVarName}, out {tempVarName}))");
       sb.AppendLine("      {");
-      sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid {targetType} value for option '{option.LongForm ?? option.ShortForm}': '{{{rawVarName}}}'\");");
+      sb.AppendLine($"        app.WriteArgumentError($\"Error: Invalid {targetType} value for option '{option.LongForm ?? option.ShortForm}': '{{{rawVarName}}}'\", \"{option.LongForm ?? option.ShortForm}\");");
       sb.AppendLine("        return 1;");
       sb.AppendLine("      }");
       sb.AppendLine($"      {targetType} {varName} = {tempVarName} is not null ? ({targetType}){tempVarName} : default;");
@@ -1614,7 +1614,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"        var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
       sb.AppendLine($"        if (!{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
       sb.AppendLine("        {");
-      sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine($"          app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\", \"{optionDisplay}\");");
       sb.AppendLine("          return 1;");
       sb.AppendLine("        }");
       sb.AppendLine($"        {varName} = ({baseEnumType}){tempVarName}!;");
@@ -1629,7 +1629,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"        var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
       sb.AppendLine($"        if (!{converterVarName}.TryConvert({rawVarName}, out object? {tempVarName}))");
       sb.AppendLine("        {");
-      sb.AppendLine($"          app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine($"          app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\", \"{optionDisplay}\");");
       sb.AppendLine("          return 1;");
       sb.AppendLine("        }");
       sb.AppendLine($"        {varName} = ({baseEnumType}){tempVarName}!;");
@@ -1642,7 +1642,7 @@ internal static class RouteMatcherEmitter
       sb.AppendLine($"      object? {tempVarName} = null;");
       sb.AppendLine($"      if ({rawVarName} is not null && !{converterVarName}.TryConvert({rawVarName}, out {tempVarName}))");
       sb.AppendLine("      {");
-      sb.AppendLine($"        app.Terminal.WriteLine($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\");");
+      sb.AppendLine($"        app.WriteArgumentError($\"Error: Invalid value '{{{rawVarName}}}' for option '{optionDisplay}'. {{{converterVarName}.GetValidValuesMessage()}}\", \"{optionDisplay}\");");
       sb.AppendLine("        return 1;");
       sb.AppendLine("      }");
       sb.AppendLine($"      {baseEnumType} {varName} = {tempVarName} is not null ? ({baseEnumType}){tempVarName} : default;");
@@ -1687,13 +1687,13 @@ internal static class RouteMatcherEmitter
       string rejectedFlag = JsonArgvRejectedFlag(escapedVarName, routeIndex);
       sb.AppendLine($"      if ({rejectedFlag})");
       sb.AppendLine("      {");
-      sb.AppendLine($"        app.Terminal.WriteErrorLine(\"Error: --{longForm} is JSON. Pass it with --json-args.\");");
+      sb.AppendLine($"        await app.WriteBindErrorAsync(\"Error: --{longForm} is JSON. Pass it with --json-args.\", global::TimeWarp.Nuru.NuruBindErrorKind.InvalidValue, \"{longForm}\").ConfigureAwait(false);");
       sb.AppendLine("        return 1;");
       sb.AppendLine("      }");
       // This path has no --json-args, so a required JSON member is always missing.
       if (option.CapabilityRequired == true)
       {
-        sb.AppendLine($"      app.Terminal.WriteErrorLine(\"Error: pass --{longForm} via --json-args.\");");
+        sb.AppendLine($"      await app.WriteBindErrorAsync(\"Error: pass --{longForm} via --json-args.\", global::TimeWarp.Nuru.NuruBindErrorKind.MissingValue, \"{longForm}\").ConfigureAwait(false);");
         sb.AppendLine("      return 1;");
       }
     }

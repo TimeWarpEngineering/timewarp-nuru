@@ -196,10 +196,24 @@ builder.Services.AddMcpServer()
 - If binding fails (an unknown key, a missing value, a wrong type), the result has `isError: true` and its text is the message `--json-args` prints, for example `Error: Unknown key 'z' for 'add'.`. It is a tool result, not a JSON-RPC error, so the agent can correct the arguments and call again.
 - If binding succeeds, the route runs through `InvokeAsync`: configuration, services, the command scope, behaviors, and the handler, the same as on the CLI. The result content is the text the CLI writes for that route. A handler exception, a problem-details result, or a non-zero `NuruCallContext.CurrentExitCode` set by the handler (the CLI's non-zero exit code) returns `isError: true` with the error text. Rendering continues the call, so a response renderer that resolves a path with `NuruCallContext.GetFullPath` sees the call's directory.
 - A route that writes nothing, such as one returning `Unit` without printing, returns empty content.
+- If the app has an `IResponseRenderer<SharedProblemDetails>`, a bind failure and a handler exception that escapes are rendered with it instead, so an agent sees the same format as for the app's problem-details results. See [Errors through the problem renderer](#errors-through-the-problem-renderer).
 - Calls run concurrently. Each `tools/call` runs in its own `NuruCallContext`, with its own terminal, exit code and service scope, so a slow tool does not hold up the others and two calls never see each other's output. Text a handler writes through `ITerminal`, or to the console (with `CaptureConsoleOutput`, the default), goes into that call's result. A handler that is not thread-safe can be marked `[Exclusive]` (or `.Exclusive()`): exclusive calls run one at a time. `NuruMcpHostOptions.ExclusiveCalls = true` runs every in-process call one at a time. See [Served apps](served-apps.md#concurrent-calls) for what a handler gets per call.
 - `notifications/cancelled` cancels that request's `CancellationToken` only; other calls keep running. A forwarded call is cancelled in the server too: the host closes that call's connection.
 - A handler must not set `Environment.ExitCode` or read `Environment.CurrentDirectory` for its own call. Return problem details or set `NuruCallContext.CurrentExitCode`, and resolve paths with `NuruCallContext.GetFullPath`.
 - In a served app (`AddServeRoute()`, package `TimeWarp.Nuru.Daemon`), a call to a route that is not local-only goes to the app's running server, so the MCP host and the CLI share one warm server. The server binds the same arguments with `TryBind` and returns the same texts and errors. With `NuruMcpContentFormat.Json`, structured content then comes from the rendered text: numbers and booleans are parsed back using the catalog return type. See [Served apps](served-apps.md).
+
+### Errors through the problem renderer
+
+An app with an `IResponseRenderer<SharedProblemDetails>` (see [Response rendering](neutral-contracts.md#dispatch-and-rendering)) renders its handlers' problem details with it. The MCP host uses the same renderer for the two failures that happen outside a handler's result. Each becomes a `SharedProblemDetails` from `NuruProblems`:
+
+| Failure | `Type` | `Status` | `Detail` | Extension members |
+|---------|--------|----------|----------|-------------------|
+| Bind failure (`NuruProblems.FromBindError`) | `Invalid` | 400 | The bind message without its `Error: ` prefix | `kind` (the `NuruBindErrorKind`), `key` (the argument name, when there is one) |
+| Handler exception (`NuruProblems.FromException`) | `Faulted` | 500 | The exception message | none |
+
+The result is still `isError: true`, and its text is the renderer's output. For example, a renderer that writes `error={Type}` and `errorMessage={Detail}` returns `error=Invalid` and `errorMessage=Unknown key 'z' for 'add'.` for an unknown key. A forwarded call gets the same text: the served app's server renders its bind failures and escaped exceptions the same way. An app with no problem renderer keeps the plain `Error: ...` text. If the renderer throws, the host returns the plain text.
+
+`NuruApp.TryRenderProblem(problem, out text)` renders any problem with the app's problem renderer. It returns false when there is none. The CLI uses the renderer for its own binding errors only after `UseProblemRendererForErrors()` (see [Neutral contracts](neutral-contracts.md#dispatch-and-rendering)).
 
 With `contentFormat: NuruMcpContentFormat.Json`, a successful result also carries `structuredContent`. A `json` route that returns an object passes that object through. Any other value is wrapped as `{"result": value}`, with numbers and booleans kept as JSON numbers and booleans. A `unit` route has no structured content. Structured content comes from the route's value only: console output the handler writes stays in the text content. When a response renderer writes text that is not JSON, the result carries only the text.
 

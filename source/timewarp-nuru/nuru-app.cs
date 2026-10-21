@@ -2,6 +2,7 @@ namespace TimeWarp.Nuru;
 
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using TimeWarp.Foundation.Types;
 
 public partial class NuruApp
 {
@@ -244,6 +245,109 @@ public partial class NuruApp
     Func<NuruApp, NuruInvocation, CancellationToken, Task<int>> executor = InvocationExecutor ?? throw MissingGeneratedCode();
     NuruInvocation invocation = new(request) { RenderTerminal = context.Terminal, Result = result };
     return context.RunAsync(() => executor(this, invocation, CancellationToken.None));
+  }
+
+  /// <summary>
+  /// Renders problem details with the app's <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c>, or returns null
+  /// when the app has none. Set by generated interceptor code when one can exist. Use
+  /// <see cref="TryRenderProblem"/> instead of calling it.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public Func<NuruApp, SharedProblemDetails, string?>? ProblemRenderer { get; set; }
+
+  /// <summary>
+  /// True when the builder called <c>UseProblemRendererForErrors()</c>: CLI binding errors go through
+  /// <see cref="TryRenderProblem"/>. Set by generated interceptor code.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public bool ProblemRendererForErrors { get; set; }
+
+  /// <summary>
+  /// True when the builder called <c>UseVerbatimRendererOutput()</c>: rendered problems are written with no
+  /// added newline. Set by generated interceptor code.
+  /// </summary>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public bool VerbatimRendererOutput { get; set; }
+
+  /// <summary>
+  /// Renders <paramref name="problem"/> with the app's <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c>: the
+  /// renderer its problem-returning handlers use (runtime DI, a registered service, or the one visible renderer).
+  /// </summary>
+  /// <param name="problem">The problem, for example from <see cref="NuruProblems.FromBindError"/>.</param>
+  /// <param name="text">The rendered text.</param>
+  /// <returns>False when the app has no problem renderer.</returns>
+  /// <remarks>Renderer exceptions propagate.</remarks>
+  public bool TryRenderProblem(SharedProblemDetails problem, [NotNullWhen(true)] out string? text)
+  {
+    ArgumentNullException.ThrowIfNull(problem);
+    text = ProblemRenderer?.Invoke(this, problem);
+    return text is not null;
+  }
+
+  /// <summary>
+  /// Writes an argv value error. Called by generated code. With <c>UseProblemRendererForErrors()</c> and a
+  /// problem renderer, the error is rendered as <see cref="NuruProblems.Invalid"/> to stderr; otherwise
+  /// <paramref name="message"/> is written to stdout as it always was.
+  /// </summary>
+  /// <param name="message">The CLI's message.</param>
+  /// <param name="key">The parameter or option name.</param>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public void WriteArgumentError(string message, string? key) =>
+    WriteArgumentError(message, NuruBindErrorKind.InvalidValue, key);
+
+  /// <summary>
+  /// Writes an argv error of a given kind, as <see cref="WriteArgumentError(string, string?)"/>. Called by
+  /// generated code, for example with <see cref="NuruBindErrorKind.MissingValue"/> for an option with no value.
+  /// </summary>
+  /// <param name="message">The CLI's message.</param>
+  /// <param name="kind">Why the argument was rejected.</param>
+  /// <param name="key">The parameter or option name.</param>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public void WriteArgumentError(string message, NuruBindErrorKind kind, string? key)
+  {
+    if (!TryWriteProblemError(message, kind, key))
+      Terminal.WriteLine(message);
+  }
+
+  /// <summary>
+  /// Writes a <c>--json-args</c> error. Called by generated code. With <c>UseProblemRendererForErrors()</c> and a
+  /// problem renderer, the error is rendered as <see cref="NuruProblems.Invalid"/>; otherwise
+  /// <paramref name="message"/> is written as it always was. Both go to stderr.
+  /// </summary>
+  /// <param name="message">The CLI's message.</param>
+  /// <param name="kind">Why binding failed, or null when no <see cref="NuruBindErrorKind"/> applies.</param>
+  /// <param name="key">The key the error is about, or null.</param>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public Task WriteBindErrorAsync(string message, NuruBindErrorKind? kind, string? key)
+  {
+    if (TryWriteProblemError(message, kind, key))
+      return Task.CompletedTask;
+
+    return Terminal.WriteErrorLineAsync(message);
+  }
+
+  /// <summary>
+  /// Writes a <c>--json-args</c> bind failure. Called by generated code, as
+  /// <see cref="WriteBindErrorAsync(string, NuruBindErrorKind?, string?)"/>.
+  /// </summary>
+  /// <param name="error">The bind failure.</param>
+  [EditorBrowsable(EditorBrowsableState.Never)]
+  public Task WriteBindErrorAsync(NuruBindError error)
+  {
+    ArgumentNullException.ThrowIfNull(error);
+    return WriteBindErrorAsync(error.Message, error.Kind, error.Key);
+  }
+
+  private bool TryWriteProblemError(string message, NuruBindErrorKind? kind, string? key)
+  {
+    if (!ProblemRendererForErrors || !TryRenderProblem(NuruProblems.Invalid(message, kind, key), out string? text))
+      return false;
+
+    if (VerbatimRendererOutput)
+      Terminal.Error.Write(text);
+    else
+      Terminal.WriteErrorLine(text);
+    return true;
   }
 
   /// <summary>

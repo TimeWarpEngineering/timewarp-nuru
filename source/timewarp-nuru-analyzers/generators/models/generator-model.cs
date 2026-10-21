@@ -13,6 +13,10 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="HasGeneratedMediator">
 /// True when the TimeWarp.Mediator generator emits <c>AddGeneratedMediator()</c> into this compilation.
 /// </param>
+/// <param name="ProblemRendererTypeName">
+/// The one visible <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c> in this compilation, or null. The app's
+/// problem renderer for bind failures and escaped exceptions when no registered service provides one.
+/// </param>
 public sealed record GeneratorModel(
   EquatableArray<AppModel> Apps,
   EquatableArray<string> UserUsings,
@@ -20,7 +24,8 @@ public sealed record GeneratorModel(
   string? Version,
   string? CommitHash,
   string? CommitDate,
-  bool HasGeneratedMediator = false)
+  bool HasGeneratedMediator = false,
+  string? ProblemRendererTypeName = null)
 {
   /// <summary>
   /// Gets whether any app has help enabled.

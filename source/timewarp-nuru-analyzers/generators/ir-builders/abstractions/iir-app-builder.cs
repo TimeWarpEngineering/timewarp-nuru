@@ -166,6 +166,12 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder UseVerbatimRendererOutput();
 
   /// <summary>
+  /// Sends CLI binding errors through the app's problem renderer.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseProblemRendererForErrors();
+
+  /// <summary>
   /// Sets the raw ConfigureServices lambda body for runtime invocation.
   /// Used when UseMicrosoftDependencyInjection is enabled to invoke the user's
   /// delegate at runtime instead of replaying extracted registrations.

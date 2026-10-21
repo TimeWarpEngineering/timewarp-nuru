@@ -264,7 +264,8 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator, verbatimRendererOutput: verbatimRendererOutput));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator, verbatimRendererOutput: verbatimRendererOutput),
+        methodSuffix: runtimeDISuffix);
 
       sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }
@@ -397,7 +398,8 @@ internal static class RouteMatcherEmitter
 
       BehaviorEmitter.EmitPipelineWrapper(
         sb, route, routeIndex, behaviors, services, indent: 6,
-        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator, verbatimRendererOutput: verbatimRendererOutput));
+        () => HandlerInvokerEmitter.Emit(sb, route, routeIndex, services, indent: 8, commandAlreadyCreated: commandCreatedByBehavior, loggerFactoryFieldName: loggerFactoryFieldName, useRuntimeDI: useRuntimeDI, runtimeDISuffix: runtimeDISuffix, httpClientConfigurations: httpClientConfigurations, useDirectInvoke: useDirectInvoke, hasGeneratedMediator: hasGeneratedMediator, verbatimRendererOutput: verbatimRendererOutput),
+        methodSuffix: runtimeDISuffix);
 
       sb.AppendLine("      return global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode;");
     }

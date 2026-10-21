@@ -56,6 +56,8 @@ internal static class BehaviorEmitter
   /// <param name="services">Registered services.</param>
   /// <param name="indent">Base indentation level.</param>
   /// <param name="emitHandler">Action that emits the handler invocation code.</param>
+  /// <param name="methodSuffix">The app's method suffix, part of the generated command class name.</param>
+  /// <param name="jsonArgsPath">True when the route is bound from --json-args or TryBind.</param>
   public static void EmitPipelineWrapper(
     StringBuilder sb,
     RouteDefinition route,
@@ -64,6 +66,7 @@ internal static class BehaviorEmitter
     ImmutableArray<ServiceDefinition> services,
     int indent,
     Action emitHandler,
+    string methodSuffix,
     bool jsonArgsPath = false)
   {
     if (behaviors.Length == 0)
@@ -84,7 +87,7 @@ internal static class BehaviorEmitter
       // because HandlerInvokerEmitter.Emit() expects it to exist for Command handlers
       if (route.Handler.HandlerKind == HandlerKind.Command)
       {
-        EmitCommandCreation(sb, route, routeIndex, ind, jsonArgsPath);
+        EmitCommandCreation(sb, route, routeIndex, methodSuffix, ind, jsonArgsPath);
       }
 
       emitHandler();
@@ -92,10 +95,10 @@ internal static class BehaviorEmitter
     }
 
     // Create command instance (for both delegate and endpoint routes)
-    EmitCommandCreation(sb, route, routeIndex, ind, jsonArgsPath);
+    EmitCommandCreation(sb, route, routeIndex, methodSuffix, ind, jsonArgsPath);
 
     // Create the BehaviorContext
-    EmitContextCreation(sb, route, routeIndex, ind);
+    EmitContextCreation(sb, route, routeIndex, methodSuffix, ind);
 
     // Build the nested lambda chain
     // Outermost behavior wraps the next, which wraps the next, ..., which wraps the handler
@@ -146,13 +149,14 @@ internal static class BehaviorEmitter
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
+    string methodSuffix,
     string indent,
     bool jsonArgsPath)
   {
     if (route.Handler.HandlerKind == HandlerKind.Delegate)
     {
       // Delegate routes: create generated command class
-      string className = CommandClassEmitter.GetCommandClassName(routeIndex);
+      string className = CommandClassEmitter.GetCommandClassName(routeIndex, methodSuffix);
 
       sb.AppendLine($"{indent}// Create command instance for behaviors");
       sb.AppendLine($"{indent}var __command = new {className}");
@@ -200,11 +204,12 @@ internal static class BehaviorEmitter
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
+    string methodSuffix,
     string indent)
   {
     string commandName = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
     string commandTypeName = route.Handler.HandlerKind == HandlerKind.Delegate
-      ? CommandClassEmitter.GetCommandClassName(routeIndex)
+      ? CommandClassEmitter.GetCommandClassName(routeIndex, methodSuffix)
       : (route.Handler.FullTypeName ?? $"Route_{routeIndex}");
 
     sb.AppendLine($"{indent}// Create behavior context");

@@ -474,12 +474,16 @@ internal static class InterceptorEmitter
 
   /// <summary>
   /// Emits generated command classes for delegate routes.
-  /// These provide command instances for behaviors.
+  /// These provide command instances for behaviors. Each app gets its own classes, indexed like
+  /// its route matcher (<see cref="RoutesInIndexOrder"/>), so two apps never share a class name.
   /// </summary>
   private static void EmitCommandClasses(StringBuilder sb, GeneratorModel model)
   {
-    // Emit command classes for all routes across all apps
-    CommandClassEmitter.EmitCommandClasses(sb, model.AllRoutes);
+    for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
+    {
+      string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+      CommandClassEmitter.EmitCommandClasses(sb, RoutesInIndexOrder(model.Apps[appIndex], model), methodSuffix);
+    }
   }
 
   /// <summary>

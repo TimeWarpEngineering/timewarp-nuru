@@ -294,8 +294,12 @@ public class DaemonServerTests
       NuruForwardRequest require = NuruForwardRequest.ForArgs("dm-add {x:int} {y:int}", ["dm-add", "1", "2"], null, NuruForwardMode.Require);
       (await client.ForwardAsync(app, require, CancellationToken.None)).ShouldBeNull();
 
-      // Another instance of the same build forwards to it.
-      NuruApp other = CreateServedApp();
+      // Another instance of the same build forwards to it. It is built inline, a second app in
+      // this method used only with ForwardAsync, which once got no catalog (task 508-008).
+      NuruApp other = NuruApp.CreateBuilder()
+        .WithName("dm-app")
+        .Map("dm-add {x:int} {y:int}").WithHandler((int x, int y) => x + y).AsQuery().Done()
+        .Build();
       NuruForwardResult? forwarded = await client.ForwardAsync(other, request, CancellationToken.None);
       forwarded.ShouldNotBeNull();
       forwarded.Output.TrimEnd().ShouldBe("3");
@@ -533,8 +537,14 @@ public class DaemonServerTests
       NuruDaemonOptions options = new() { SocketPath = Path.Combine(directory, "dm.sock"), IdleTimeout = TimeSpan.Zero };
       NuruDaemonPaths.CheckSocketDirectory(options.SocketPath).ShouldNotBeNull();
 
+      // Built inside the loop body, which once got no catalog (task 508-008).
       using TestTerminal terminal = new();
-      (await NuruDaemonServer.RunAsync(CreateTerminalApp(terminal), options)).ShouldBe(1);
+      NuruApp refusedApp = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .WithName("dm-app")
+        .Map("dm-other").WithHandler(() => "other").AsQuery().Done()
+        .Build();
+      (await NuruDaemonServer.RunAsync(refusedApp, options)).ShouldBe(1);
       terminal.ErrorOutput.ShouldContain("socket directory");
       File.Exists(options.SocketPath).ShouldBeFalse();
 

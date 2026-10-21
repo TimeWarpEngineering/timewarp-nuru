@@ -1586,6 +1586,7 @@ internal static class JsonArgsEmitter
           jsonArgsPath: true,
           captureResultInto: captureResultInto,
           verbatimRendererOutput: app.VerbatimRendererOutput),
+        methodSuffix: methodSuffix,
         jsonArgsPath: true);
     }
     else

@@ -14,7 +14,9 @@
 // "build" is optional: when present the server refuses the call unless it is the server's own build id,
 // so a call never runs on a server from another build even if one took the socket after the ping.
 // Responses: {"ok":true,"exitCode":n,"stdout":"...","stderr":"...","rendered":"..."}
-//   | {"ok":true,"name":"...","version":"...","build":"...","pid":n,"socket":"..."} (ping)
+//   | {"ok":true,"name":"...","version":"...","build":"...","pid":n,"socket":"...","entry":"...","written":"..."} (ping)
+// "entry" and "written" (the entry file and its UTC write time) let a person tell builds apart; a client
+// reads them as empty from a server that predates them.
 //   | {"ok":false,"error":"..."}
 #endregion
 
@@ -28,7 +30,21 @@ namespace TimeWarp.Nuru.Daemon;
 /// <param name="BuildId">The server's <see cref="NuruDaemonPaths.GetBuildId"/>.</param>
 /// <param name="ProcessId">The server's process id.</param>
 /// <param name="SocketPath">The socket the server listens on.</param>
-public sealed record NuruDaemonStatus(string Name, string Version, string BuildId, int ProcessId, string SocketPath);
+/// <param name="EntryPath">The file that started the server's build; empty when unknown.</param>
+/// <param name="WriteTime">That file's write time when the server started, ISO 8601 UTC; empty when unknown.</param>
+public sealed record NuruDaemonStatus(
+  string Name,
+  string Version,
+  string BuildId,
+  int ProcessId,
+  string SocketPath,
+  string EntryPath = "",
+  string WriteTime = "")
+{
+  /// <summary>One line naming the server's build: version, entry file and write time.</summary>
+  /// <returns>The description.</returns>
+  public string DescribeBuild() => NuruDaemonPaths.DescribeBuild(Version, EntryPath, WriteTime, BuildId);
+}
 
 /// <summary>Protocol operations.</summary>
 internal static class NuruDaemonOperations
@@ -96,6 +112,8 @@ internal static class NuruDaemonProtocol
     writer.WriteString("build", status.BuildId);
     writer.WriteNumber("pid", status.ProcessId);
     writer.WriteString("socket", status.SocketPath);
+    writer.WriteString("entry", status.EntryPath);
+    writer.WriteString("written", status.WriteTime);
   });
 
   public static byte[] EncodeOk() => Encode(writer => writer.WriteBoolean("ok", true));
@@ -174,7 +192,9 @@ internal static class NuruDaemonProtocol
       GetString(root, "version") ?? "",
       GetString(root, "build") ?? "",
       root.TryGetProperty("pid", out JsonElement pid) && pid.TryGetInt32(out int processId) ? processId : 0,
-      GetString(root, "socket") ?? "");
+      GetString(root, "socket") ?? "",
+      GetString(root, "entry") ?? "",
+      GetString(root, "written") ?? "");
   }
 
   /// <summary>Decodes a response that carries only ok or an error.</summary>

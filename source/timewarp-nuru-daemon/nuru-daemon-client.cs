@@ -4,13 +4,16 @@
 
 #region Design
 // Probe-or-start: a reachable server from the same build takes the call. A server from another build is
-// stopped (it would run old code); if it still answers after the stop, the call runs here in Auto mode
-// and fails with --daemon or AutoStart. A server this client starts is used only once a ping reports
-// this build, and the call itself carries the build id so the server refuses it otherwise. With no server, the call runs here unless --daemon or AutoStart asks
-// to start one. A connect failure before the request is sent falls back to local in Auto mode; once the
-// request is sent the call is never retried locally, because the handler may already have run.
-// --json-args values are inlined so the server never reads this process's stdin or resolves @path
-// itself, and the client's directory travels with the call.
+// never stopped and never used (task 508-017): it may be serving another client's call right now, and
+// stopping it would cancel that call and throw away its warm state. The default socket is per build, so
+// this happens only when builds share a fixed socket (socketPath or NURU_DAEMON_SOCKET); the call then
+// runs here in Auto mode and fails with --daemon or AutoStart, naming both builds and 'serve --stop'.
+// A server this client starts is used only once a ping reports this build, and the call itself carries
+// the build id so the server refuses it otherwise. With no server, the call runs here unless --daemon or
+// AutoStart asks to start one. A connect failure before the request is sent falls back to local in Auto
+// mode; once the request is sent the call is never retried locally, because the handler may already
+// have run. --json-args values are inlined so the server never reads this process's stdin or resolves
+// @path itself, and the client's directory travels with the call.
 #endregion
 
 namespace TimeWarp.Nuru.Daemon;
@@ -59,19 +62,13 @@ public sealed class NuruDaemonClient : INuruRouteForwarder
     if (NuruDaemonPaths.CheckSocketDirectory(socketPath) is { } unsafeDirectory)
       return request.Mode == NuruForwardMode.Require ? new NuruForwardResult(1, "", unsafeDirectory + "\n") : null;
 
-    string buildId = NuruDaemonPaths.GetBuildId(app);
+    NuruDaemonBuild build = NuruDaemonPaths.GetBuild(app);
+    string buildId = build.Id;
     NuruDaemonStatus? status = await PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
     if (status is not null && status.BuildId != buildId)
     {
-      // It would run old code. Stop it, and use the socket only if nothing from that build answers.
-      await StopAsync(socketPath, cancellationToken).ConfigureAwait(false);
-      status = await PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
-      if (status is not null && status.BuildId != buildId)
-      {
-        return mayStart
-          ? new NuruForwardResult(1, "", $"Error: a {app.Capabilities.Name} server from a different build (pid {status.ProcessId.ToString(CultureInfo.InvariantCulture)}) still answers on {socketPath} and did not stop.\n")
-          : null;
-      }
+      // Another build shares this socket. Leave it running: it may be in the middle of someone's call.
+      return mayStart ? new NuruForwardResult(1, "", OtherBuildMessage(app.Capabilities.Name, socketPath, status, build) + "\n") : null;
     }
 
     if (status is null)
@@ -79,7 +76,7 @@ public sealed class NuruDaemonClient : INuruRouteForwarder
       if (!mayStart)
         return null;
 
-      string? failure = await NuruDaemonLauncher.StartAsync(app, Options, socketPath, buildId, cancellationToken).ConfigureAwait(false);
+      string? failure = await NuruDaemonLauncher.StartAsync(app, Options, socketPath, build, cancellationToken).ConfigureAwait(false);
       if (failure is not null)
         return request.Mode == NuruForwardMode.Require ? new NuruForwardResult(1, "", failure + "\n") : null;
     }
@@ -184,6 +181,14 @@ public sealed class NuruDaemonClient : INuruRouteForwarder
 
     return result;
   }
+
+  /// <summary>
+  /// The one-line error for a server of another build on the socket this client uses: both builds, and
+  /// how to stop the other one.
+  /// </summary>
+  internal static string OtherBuildMessage(string name, string socketPath, NuruDaemonStatus status, NuruDaemonBuild build) =>
+    $"Error: the {name} server on {socketPath} (pid {status.ProcessId.ToString(CultureInfo.InvariantCulture)}) is another build ({status.DescribeBuild()}); "
+    + $"this is {build.Describe()}. It was left running; stop it with 'serve --stop', or give each build its own socket.";
 
   internal static async Task<NuruDaemonStatus?> PingAsync(string socketPath, CancellationToken cancellationToken)
   {

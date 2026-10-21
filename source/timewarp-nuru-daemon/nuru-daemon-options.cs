@@ -23,9 +23,13 @@ public sealed class NuruDaemonOptions
 
   /// <summary>
   /// Unix domain socket path. Null uses <see cref="SocketPathEnvironmentVariable"/>, then the per-user
-  /// default from <see cref="NuruDaemonPaths.GetDefaultSocketPath"/>. A relative path is a path under
-  /// <see cref="NuruDaemonPaths.GetDefaultSocketDirectory"/>.
+  /// default for this build from <see cref="NuruDaemonPaths.GetDefaultSocketPath(string?, string?)"/>. A
+  /// relative path is a path under <see cref="NuruDaemonPaths.GetDefaultSocketDirectory"/>.
   /// </summary>
+  /// <remarks>
+  /// The default is one socket per build, so two builds of the app each run their own server. A fixed
+  /// path is shared by every build: a client then neither uses nor stops a server from another build.
+  /// </remarks>
   public string? SocketPath { get; set; }
 
   /// <summary>
@@ -54,7 +58,7 @@ public sealed class NuruDaemonOptions
 
   /// <summary>
   /// The socket path for <paramref name="app"/>: <see cref="SocketPath"/>, then the environment
-  /// override, then the per-user default for the app's name.
+  /// override, then the per-user default for the app's name and this build.
   /// </summary>
   /// <remarks>
   /// A relative path is resolved against <see cref="NuruDaemonPaths.GetDefaultSocketDirectory"/>, never
@@ -72,8 +76,12 @@ public sealed class NuruDaemonOptions
     if (!string.IsNullOrEmpty(fromEnvironment))
       return Resolve(fromEnvironment);
 
-    return NuruDaemonPaths.GetDefaultSocketPath(app.Capabilities.Name);
+    return NuruDaemonPaths.GetDefaultSocketPath(app.Capabilities.Name, NuruDaemonPaths.GetBuildId(app));
   }
+
+  /// <summary>True when neither <see cref="SocketPath"/> nor the environment override is set.</summary>
+  internal bool UsesDefaultSocket =>
+    string.IsNullOrEmpty(SocketPath) && string.IsNullOrEmpty(Environment.GetEnvironmentVariable(SocketPathEnvironmentVariable));
 
   private static string Resolve(string path) =>
     Path.IsPathFullyQualified(path) ? Path.GetFullPath(path) : Path.GetFullPath(path, NuruDaemonPaths.GetDefaultSocketDirectory());

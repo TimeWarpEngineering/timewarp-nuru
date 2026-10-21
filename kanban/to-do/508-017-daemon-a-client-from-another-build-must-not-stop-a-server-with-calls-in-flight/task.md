@@ -143,8 +143,7 @@ Expect:
 ## Review
 
 - Round 1: Blocked — open M1
-- Round 2: clean (M1 fixed, no new findings)
-
+- Round 2: Done
 ## Notes
 
 - Related: 508-005 (daemon), 508-016 (concurrent calls), Roslynk 005.

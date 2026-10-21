@@ -20,12 +20,13 @@ internal static class NuruDaemonLauncher
 
   /// <summary>
   /// Starts <c>&lt;app&gt; serve</c> detached on <paramref name="socketPath"/> and waits for a server of
-  /// build <paramref name="buildId"/> to answer.
+  /// <paramref name="build"/> to answer.
   /// </summary>
   /// <returns>Null when a server of this build answers; otherwise the error message.</returns>
-  public static async Task<string?> StartAsync(NuruApp app, NuruDaemonOptions options, string socketPath, string buildId, CancellationToken cancellationToken)
+  public static async Task<string?> StartAsync(NuruApp app, NuruDaemonOptions options, string socketPath, NuruDaemonBuild build, CancellationToken cancellationToken)
   {
     string name = app.Capabilities.Name;
+    string buildId = build.Id;
     string? processPath = Environment.ProcessPath;
     if (processPath is null)
       return $"Error: cannot find this program's executable to start the {name} server.";
@@ -67,7 +68,7 @@ internal static class NuruDaemonLauncher
         if (status?.BuildId == buildId)
           return null;
         if (status is not null)
-          return DifferentBuild(name, socketPath, status);
+          return NuruDaemonClient.OtherBuildMessage(name, socketPath, status, build);
         return $"Error: the {name} server exited with code {process.ExitCode.ToString(CultureInfo.InvariantCulture)} before it answered on {socketPath}.";
       }
 
@@ -75,12 +76,9 @@ internal static class NuruDaemonLauncher
     }
 
     return other is not null
-      ? DifferentBuild(name, socketPath, other)
+      ? NuruDaemonClient.OtherBuildMessage(name, socketPath, other, build)
       : $"Error: the {name} server did not answer on {socketPath} within {options.StartTimeout.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s.";
   }
-
-  private static string DifferentBuild(string name, string socketPath, NuruDaemonStatus status) =>
-    $"Error: a {name} server from a different build (pid {status.ProcessId.ToString(CultureInfo.InvariantCulture)}) answers on {socketPath}; stop it with 'serve --stop'.";
 
 #pragma warning disable RS0030 // A detached daemon needs ProcessStartInfo; see Design.
   private static System.Diagnostics.Process? Start(string fileName, List<string> arguments, string socketPath)

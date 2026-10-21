@@ -25,8 +25,8 @@ myapp --daemon count hello   # starts the server in the background, forwards the
 myapp count hello            # server running: forwarded (warm)
 myapp --no-daemon count x    # always runs in this process
 myapp serve                  # run the server in the foreground (Ctrl+C stops it)
-myapp serve --status         # is a server running? exit 0 yes, 1 no
-myapp serve --stop           # stop it
+myapp serve --status         # is this build's server running, and which build? exit 0 yes, 1 no
+myapp serve --stop           # stop this build's server
 ```
 
 `samples/endpoints/16-daemon/served-app.cs` is a complete example. Its `WarmIndex` singleton sleeps for one second in its constructor. In one run of that sample on a Linux workstation (2026-10-20), `count hello` took 1.16 s in-process and 0.19 s forwarded to a warm server, and `--version` took 0.05 s.
@@ -93,10 +93,10 @@ Each behavior runs once per call, in the process that runs the handler. A forwar
 ## Transport and discovery
 
 - **Transport**: a Unix domain socket (AF_UNIX). It works on Linux and macOS, and on Windows 10 version 1803 and later. No TCP port is opened. Each connection carries one request line and one response line of UTF-8 JSON, with protocol version 1.
-- **Location**: `$XDG_RUNTIME_DIR/nuru/<app>.sock` on Linux when that directory exists. Otherwise `<temp>/nuru-<user>/<app>.sock`. On Windows it is `%LOCALAPPDATA%\TimeWarp.Nuru\daemon\<app>.sock`. `<app>` is the catalog name, and a long name is replaced by a hash to fit the socket path limit. `socketPath` or `NURU_DAEMON_SOCKET` overrides the location, for example to keep test servers apart. A relative override is resolved against the per-user socket directory, so every call and the server it starts use the same socket whatever their current directory. A server started by `--daemon` or `autoStart` listens on exactly the path its client resolved.
+- **Location**: `$XDG_RUNTIME_DIR/nuru/<app>-<build>.sock` on Linux when that directory exists. Otherwise `<temp>/nuru-<user>/<app>-<build>.sock`. On Windows it is `%LOCALAPPDATA%\TimeWarp.Nuru\daemon\<app>-<build>.sock`. `<app>` is the catalog name, and a long name is replaced by a hash to fit the socket path limit. `<build>` is 8 hex digits hashed from the build id, so each build of the app has its own socket (see [Two builds of one app](#two-builds-of-one-app)). `socketPath` or `NURU_DAEMON_SOCKET` overrides the location, for example to keep test servers apart. A relative override is resolved against the per-user socket directory, so every call and the server it starts use the same socket whatever their current directory. A server started by `--daemon` or `autoStart` listens on exactly the path its client resolved.
 - **Access**: on Unix the socket's directory must be owner-only. A missing directory is created with mode 0700. An existing directory that is a symlink, or that gives group or others any access, is refused by `serve` and by the client (a call runs locally; with `--daemon` it fails with the reason). The default directory is set back to 0700 when you own it. The socket file is set to mode 0600 after it is bound. So pick an owner-only directory for `socketPath`, not `/tmp` itself.
 - **One server per socket**: a server holds an exclusive lock on `<socket>.lock` from before it checks the socket until after it removes it. Only the lock holder deletes or binds the socket path, so a second `serve` never removes a running server's socket: it reports the running server, or fails when the lock holder does not answer within the start timeout. A socket file left by a server that crashed (the OS releases its lock) is deleted. The lock file stays.
-- **Build check**: the server reports its build: name, version, entry file and that file's write time, fixed when the server starts. A client from a different build stops that server and does not use it, so a rebuilt CLI never runs old server code. If that server still answers after the stop, the call runs locally, or fails with `--daemon` or `autoStart`. A started server is used only once it reports the client's build, and each forwarded call carries the build id, so the server refuses a call from another build.
+- **Build check**: the server reports its build: name, version, entry file and that file's write time, fixed when the server starts. `serve --status` prints the entry file and write time. A client never stops a server from another build, and never sends it a call. A started server is used only once it reports the client's build, and each forwarded call carries the build id, so the server refuses a call from another build.
 - **Start**: the client starts its own executable (or `dotnet <entry.dll>`) with `serve`, with the standard streams redirected. On Linux it runs under `setsid`, so a Ctrl+C in the caller's terminal does not reach the server. A started server writes nothing to the inherited streams.
 - **Lifetime**: the server stops after the idle timeout, which counts from the end of the last call and never expires while a call runs. It also stops on `serve --stop`, Ctrl+C, or SIGTERM, and then removes the socket file.
 - **Cancellation**: when a client goes away before the answer (Ctrl+C), the server cancels that call's `CancellationToken`. Other calls keep running.
@@ -138,6 +138,33 @@ builder.Map("compact").WithHandler(Compact).AsCommand().Exclusive().Done();
 
 To run every call one at a time, pass `AddServeRoute(exclusiveCalls: true)`, or set `NuruDaemonOptions.ExclusiveCalls` on a custom host (`NuruDaemonServer.RunAsync(app, options)`). `ping` (`serve --status`) and `stop` never wait for calls.
 
+## Two builds of one app
+
+Two builds of the same app often run side by side: an MCP config that runs `dnx MyApp -- mcp` (from the package cache) next to a globally installed `myapp`, or a local build beside the installed tool. Each one is a different build, because the build id includes the entry file and its write time.
+
+Each build gets its own server. The default socket name carries a hash of the build id, so each build starts, warms and uses its own server, and calls never cross between them. A client never stops another build's server. Stopping that server would cancel the calls it is running and throw away its warm state.
+
+When you rebuild, the new build uses a new socket. The old build's server stops after its idle timeout once nobody calls it, or you can stop it earlier.
+
+`serve --status` shows the build that serves this socket. With the default socket, it also lists the servers of other builds of the app in the socket directory:
+
+```text
+myapp server is running: pid 4120, version 1.2.0 at /home/me/.dotnet/tools/myapp, written 2026-10-21T09:12:44Z, socket /run/user/1000/nuru/myapp-3f9a01c2.sock.
+Also serving myapp: pid 3988, version 1.2.0 at /home/me/.nuget/packages/myapp/1.2.0/tools/net10.0/any/myapp.dll, written 2026-10-20T17:03:10Z, socket /run/user/1000/nuru/myapp-a71e5b09.sock. Stop it with 'serve --stop' from that build, or with NURU_DAEMON_SOCKET=/run/user/1000/nuru/myapp-a71e5b09.sock set.
+```
+
+To stop another build's server, run `serve --stop` from that build. Or point any build at its socket: `NURU_DAEMON_SOCKET=<socket> myapp serve --stop`. `serve --stop` cancels the calls that server is running, so stop it only when you mean to.
+
+A fixed socket (`socketPath` or `NURU_DAEMON_SOCKET`) is shared by every build. A client from another build then leaves the running server alone. In Auto mode its call runs in its own process. With `--daemon` or `autoStart` the call fails with one line that names both builds and how to stop the server:
+
+```text
+Error: the myapp server on /tmp/me/myapp.sock (pid 3988) is another build (version 1.2.0 at /home/me/.nuget/.../myapp.dll, written 2026-10-20T17:03:10Z); this is version 1.2.0 at /home/me/.dotnet/tools/myapp, written 2026-10-21T09:12:44Z. It was left running; stop it with 'serve --stop', or give each build its own socket.
+```
+
+Why this model (task 508-017): the point of a server is its warm state, and calls run concurrently. If one build replaced another's server, it would cancel calls that were still running. Draining before a replace would still throw the warm state away, and two builds called in turn would keep replacing each other. Refusing on the default socket would make one of the builds always run cold. A socket per build keeps every build warm, the idle timeout cleans up builds nobody calls, and a stop happens only when you ask for it.
+
+Each socket also leaves a small `<socket>.lock` file. It is not deleted, because deleting it could let two servers take the same socket. `$XDG_RUNTIME_DIR` is cleared when you log out.
+
 ## Working with the MCP host
 
 `TimeWarp.Nuru.McpHost` uses the same forwarder. In an app with both `AddServeRoute()` and `AddMcpRoute()`, `myapp mcp` sends each `tools/call` to the running server, so the MCP host and the CLI share one warm server. The server binds the JSON arguments with `TryBind`, runs `InvokeAsync` and `RenderAsync`, and returns the same texts. A bind error is still a tool result with `isError` and the `--json-args` message, or, when the app has an `IResponseRenderer<SharedProblemDetails>`, that renderer's text for an `Invalid` problem; an escaped handler exception is rendered as a `Faulted` problem the same way (see [MCP hosting](mcp-hosting.md#errors-through-the-problem-renderer)). Local-only routes run in the `mcp` process. See [MCP hosting](mcp-hosting.md).
@@ -158,9 +185,9 @@ A daemon can also host MCP itself with `WithNuruTools(app)`. Calls inside the se
 |------|---------|
 | `AddServeRoute(socketPath, idleTimeoutSeconds, autoStart, exclusiveCalls)` | Builder call: the `serve` routes and forwarding |
 | `NuruDaemonServer.RunAsync / StatusAsync / StopAsync` | What the `serve` routes run; usable from a custom host |
-| `NuruDaemonClient` | The forwarder; also `PingAsync`, `StopAsync`, `RunAsync(args)`, `InvokeAsync(route, json)` |
+| `NuruDaemonClient` | The forwarder; also `PingAsync` (a `NuruDaemonStatus` with the build's entry file and write time, `DescribeBuild()`), `StopAsync`, `RunAsync(args)`, `InvokeAsync(route, json)` |
 | `NuruDaemonOptions` | Socket path, idle timeout, auto-start, start timeout, serve arguments, `ExclusiveCalls` |
-| `NuruDaemonPaths` | Default socket path and the build id |
+| `NuruDaemonPaths` | Default socket path (per build) and the build id |
 | `NuruApp.RouteForwarder`, `INuruRouteForwarder` (core) | The forwarding contract generated code calls |
 | `NuruApp.ExecuteAsync(args)` (core) | Run CLI arguments from code the generator does not intercept |
 | `NuruApp.ExecuteAsync(args, context)`, `InvokeAsync(request, context)` (core) | Run a call in its own `NuruCallContext`, concurrently with others |

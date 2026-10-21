@@ -17,7 +17,9 @@
 // second start (or a transient connect failure) can never unlink a live server's socket; a crashed
 // server's lock is released by the OS, and the next server deletes its socket file. The build id is
 // fixed when the server starts (a rebuild while it runs must not make it claim the new build), and a
-// run or invoke that names another build is refused. The idle timer counts from the last call to finish and never
+// run or invoke that names another build is refused. Ping reports the build's entry file and write time,
+// and serve --status lists every build's server of the app in the default socket directory (the
+// default socket is per build, task 508-017), so a user sees which build serves. The idle timer counts from the last call to finish and never
 // fires while a call runs. The served app is marked so its own forwarder declines (no loop): generated
 // code in this process runs every route locally.
 // An invoke's bind failure and an escaped exception are rendered with the app's problem renderer when it has
@@ -154,7 +156,7 @@ public static class NuruDaemonServer
           await app.Terminal.WriteErrorLineAsync($"Serving {name} on {socketPath} ({idle}). Ctrl+C or '{string.Join(' ', daemonOptions.ServeArguments)} --stop' stops it.").ConfigureAwait(false);
         }
 
-        Session session = new(app, daemonOptions, socketPath, NuruDaemonPaths.GetBuildId(app), listener, stopping);
+        Session session = new(app, daemonOptions, socketPath, NuruDaemonPaths.GetBuild(app), listener, stopping);
         await session.RunAsync().ConfigureAwait(false);
       }
       finally
@@ -170,17 +172,22 @@ public static class NuruDaemonServer
   }
 
   /// <summary>
-  /// Prints whether a server for <paramref name="app"/> is running (<c>serve --status</c>).
+  /// Prints whether a server for <paramref name="app"/> is running, and which build it is
+  /// (<c>serve --status</c>).
   /// </summary>
+  /// <remarks>
+  /// With the default socket it also lists the servers of other builds of the app in the socket
+  /// directory, and how to stop each.
+  /// </remarks>
   /// <param name="app">The app.</param>
   /// <param name="options">Daemon options; null uses the defaults.</param>
   /// <param name="cancellationToken">Cancels the probe.</param>
-  /// <returns>0 when a server answers; 1 when none does.</returns>
+  /// <returns>0 when a server answers on this build's socket; 1 when none does.</returns>
   public static async Task<int> StatusAsync(NuruApp app, NuruDaemonOptions? options = null, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(app);
-    NuruDaemonClient client = new(options);
-    string socketPath = client.ResolveSocketPath(app);
+    NuruDaemonOptions daemonOptions = options ?? new NuruDaemonOptions();
+    string socketPath = daemonOptions.ResolveSocketPath(app);
     string name = app.Capabilities.Name;
     if (NuruDaemonPaths.CheckSocketDirectory(socketPath) is { } unsafeDirectory)
     {
@@ -188,17 +195,36 @@ public static class NuruDaemonServer
       return 1;
     }
 
+    NuruDaemonBuild build = NuruDaemonPaths.GetBuild(app);
     NuruDaemonStatus? status = await NuruDaemonClient.PingAsync(socketPath, cancellationToken).ConfigureAwait(false);
     if (status is null)
     {
       await app.Terminal.WriteLineAsync($"{name} server is not running ({socketPath}).").ConfigureAwait(false);
-      return 1;
+    }
+    else
+    {
+      string other = status.BuildId == build.Id ? "" : $"; that is another build, this is {build.Describe()}";
+      await app.Terminal.WriteLineAsync(
+        $"{name} server is running: pid {status.ProcessId.ToString(CultureInfo.InvariantCulture)}, {status.DescribeBuild()}, socket {status.SocketPath}{other}.").ConfigureAwait(false);
     }
 
-    string build = status.BuildId == NuruDaemonPaths.GetBuildId(app) ? "" : ", from a different build of the app";
-    await app.Terminal.WriteLineAsync(
-      $"{name} server is running: pid {status.ProcessId.ToString(CultureInfo.InvariantCulture)}, version {status.Version}, socket {status.SocketPath}{build}.").ConfigureAwait(false);
-    return 0;
+    if (daemonOptions.UsesDefaultSocket)
+    {
+      foreach (string path in NuruDaemonPaths.FindDefaultSocketPaths(name))
+      {
+        if (string.Equals(path, socketPath, StringComparison.Ordinal))
+          continue;
+
+        if (await NuruDaemonClient.PingAsync(path, cancellationToken).ConfigureAwait(false) is not { } another || another.Name != name)
+          continue;
+
+        await app.Terminal.WriteLineAsync(
+          $"Also serving {name}: pid {another.ProcessId.ToString(CultureInfo.InvariantCulture)}, {another.DescribeBuild()}, socket {path}. "
+          + $"Stop it with 'serve --stop' from that build, or with {NuruDaemonOptions.SocketPathEnvironmentVariable}={path} set.").ConfigureAwait(false);
+      }
+    }
+
+    return status is null ? 1 : 0;
   }
 
   /// <summary>
@@ -304,7 +330,7 @@ public static class NuruDaemonServer
   }
 
   /// <summary>One run of the accept loop and the idle timer.</summary>
-  private sealed class Session(NuruApp app, NuruDaemonOptions options, string socketPath, string buildId, Socket listener, CancellationTokenSource stopping)
+  private sealed class Session(NuruApp app, NuruDaemonOptions options, string socketPath, NuruDaemonBuild build, Socket listener, CancellationTokenSource stopping)
   {
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Task, byte> Handlers = new();
     private long LastActivity = Environment.TickCount64;
@@ -420,15 +446,15 @@ public static class NuruDaemonServer
         case NuruDaemonOperations.Ping:
           CapabilitiesResponse catalog = app.Capabilities;
           return NuruDaemonProtocol.EncodeStatus(new NuruDaemonStatus(
-            catalog.Name, catalog.Version, buildId, Environment.ProcessId, socketPath));
+            catalog.Name, catalog.Version, build.Id, Environment.ProcessId, socketPath, build.EntryPath, build.WriteTime));
 
         case NuruDaemonOperations.Stop:
           await stopping.CancelAsync().ConfigureAwait(false);
           return NuruDaemonProtocol.EncodeOk();
 
-        case NuruDaemonOperations.Run or NuruDaemonOperations.Invoke when request.BuildId is not null && request.BuildId != buildId:
+        case NuruDaemonOperations.Run or NuruDaemonOperations.Invoke when request.BuildId is not null && request.BuildId != build.Id:
           return NuruDaemonProtocol.EncodeError(
-            $"This {app.Capabilities.Name} server (pid {Environment.ProcessId.ToString(CultureInfo.InvariantCulture)}) is a different build of the app; stop it with 'serve --stop'.");
+            $"This {app.Capabilities.Name} server (pid {Environment.ProcessId.ToString(CultureInfo.InvariantCulture)}) is a different build of the app ({build.Describe()}); stop it with 'serve --stop'.");
 
         case NuruDaemonOperations.Run when request.Args is not null:
         case NuruDaemonOperations.Invoke when request.Route is not null:

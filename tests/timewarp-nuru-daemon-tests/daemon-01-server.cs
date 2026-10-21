@@ -4,7 +4,8 @@
 // TimeWarp.Nuru.Daemon (task 508-005): the server over a real Unix domain socket, in this process.
 // Ping, argv runs, binder invokes, exit codes and stderr, cancellation on disconnect, stop, idle
 // shutdown, one server per socket (lock), build checks, socket path resolution and directory safety, and
-// the forwarder declining for the app it serves.
+// the forwarder declining for the app it serves. Task 508-017: a client from another build never stops a
+// server (a call in flight finishes), the default socket is per build, and status names the build.
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -42,6 +43,11 @@ public class DaemonServerTests
         return "never";
       }).AsCommand().Done()
       .Map("dm-cwd").WithHandler(() => NuruCallContext.CurrentDirectory).AsQuery().Done()
+      .Map("dm-hold").WithHandler(async (CancellationToken cancellationToken) =>
+      {
+        await CcRendezvous.Current.EnterAsync("hold", cancellationToken);
+        return "held";
+      }).AsCommand().Done()
       .Build();
     return app;
   }
@@ -114,6 +120,11 @@ public class DaemonServerTests
       status.ProcessId.ShouldBe(Environment.ProcessId);
       status.BuildId.ShouldBe(NuruDaemonPaths.GetBuildId(app));
       status.SocketPath.ShouldBe(Path.GetFullPath(options.SocketPath!));
+      // The build a person can read: entry file and its write time (task 508-017).
+      status.EntryPath.ShouldNotBeNullOrEmpty();
+      status.BuildId.ShouldContain(status.EntryPath);
+      status.WriteTime.ShouldEndWith("Z");
+      status.DescribeBuild().ShouldContain(status.EntryPath);
       NuruDaemonServer.IsServing(app).ShouldBeTrue();
       if (!OperatingSystem.IsWindows())
         File.GetUnixFileMode(options.SocketPath!).ShouldBe(UnixFileMode.UserRead | UnixFileMode.UserWrite);
@@ -369,17 +380,111 @@ public class DaemonServerTests
     }
   }
 
-  public static async Task Should_stop_and_not_use_a_server_from_another_build()
+  public static async Task Should_leave_a_server_from_another_build_running()
   {
     NuruApp app = CreateServedApp();
     NuruDaemonOptions options = CreateOptions();
     (Task<int> server, CancellationTokenSource stop) = await StartAsync(app, options);
-    using (stop)
+    try
     {
       NuruApp otherBuild = CreateOtherBuildApp();
       NuruForwardRequest request = NuruForwardRequest.ForArgs("dm-add {x:int} {y:int}", ["dm-add", "1", "2"], null, NuruForwardMode.Auto);
       (await new NuruDaemonClient(options).ForwardAsync(otherBuild, request, CancellationToken.None)).ShouldBeNull();
-      (await server.WaitAsync(TimeSpan.FromSeconds(10))).ShouldBe(0);
+      (await new NuruDaemonClient(options).PingAsync(app)).ShouldNotBeNull();
+      server.IsCompleted.ShouldBeFalse();
+    }
+    finally
+    {
+      await StopAsync(server, stop);
+    }
+  }
+
+  public static async Task Should_not_cancel_a_call_in_flight_when_another_build_calls()
+  {
+    CcRendezvous.Current = new(1);
+    NuruApp app = CreateServedApp();
+    NuruDaemonOptions options = CreateOptions();
+    (Task<int> server, CancellationTokenSource stop) = await StartAsync(app, options);
+    try
+    {
+      NuruDaemonClient client = new(options);
+      Task<NuruForwardResult> held = client.RunAsync(app, ["dm-hold"]);
+      await CcRendezvous.Current.AllEntered.WaitAsync(TimeSpan.FromSeconds(10));
+
+      // Another build on the same socket: Auto runs locally, --daemon fails with both builds named.
+      NuruApp otherBuild = CreateOtherBuildApp();
+      NuruDaemonClient otherClient = new(options);
+      NuruForwardRequest auto = NuruForwardRequest.ForArgs("dm-add {x:int} {y:int}", ["dm-add", "1", "2"], null, NuruForwardMode.Auto);
+      (await otherClient.ForwardAsync(otherBuild, auto, CancellationToken.None)).ShouldBeNull();
+      NuruForwardRequest require = NuruForwardRequest.ForArgs("dm-add {x:int} {y:int}", ["dm-add", "1", "2"], null, NuruForwardMode.Require);
+      NuruForwardResult? refused = await otherClient.ForwardAsync(otherBuild, require, CancellationToken.None);
+      refused.ShouldNotBeNull();
+      refused.ExitCode.ShouldBe(1);
+      refused.ErrorOutput.ShouldContain("is another build (version");
+      refused.ErrorOutput.ShouldContain("; this is version");
+      refused.ErrorOutput.ShouldContain("serve --stop");
+      refused.ErrorOutput.TrimEnd('\n').ShouldNotContain("\n");
+
+      held.IsCompleted.ShouldBeFalse();
+      server.IsCompleted.ShouldBeFalse();
+      CcRendezvous.Current.ReleaseAll();
+      NuruForwardResult result = await held.WaitAsync(TimeSpan.FromSeconds(10));
+      result.ExitCode.ShouldBe(0);
+      result.Output.ShouldContain("held");
+      (await client.PingAsync(app)).ShouldNotBeNull();
+    }
+    finally
+    {
+      CcRendezvous.Current.ReleaseAll();
+      await StopAsync(server, stop);
+    }
+  }
+
+  public static async Task Should_list_servers_of_other_builds_in_status()
+  {
+    NuruApp app = CreateServedApp();
+    if (Environment.GetEnvironmentVariable(NuruDaemonOptions.SocketPathEnvironmentVariable) is not null)
+      return; // The listing is for the default socket only.
+
+    // A server on another build's default socket name (the same app stands in for that build).
+    NuruDaemonOptions options = new()
+    {
+      SocketPath = NuruDaemonPaths.GetDefaultSocketPath("dm-app", "dm-another-build"),
+      IdleTimeout = TimeSpan.Zero
+    };
+    (Task<int> server, CancellationTokenSource stop) = await StartAsync(app, options);
+    try
+    {
+      using TestTerminal terminal = new();
+      (await NuruDaemonServer.StatusAsync(CreateTerminalApp(terminal), new NuruDaemonOptions())).ShouldBe(1);
+      terminal.Output.ShouldContain("dm-app server is not running");
+      terminal.Output.ShouldContain($"Also serving dm-app: pid {Environment.ProcessId}, version");
+      terminal.Output.ShouldContain($"socket {options.SocketPath}.");
+      terminal.Output.ShouldContain($"{NuruDaemonOptions.SocketPathEnvironmentVariable}={options.SocketPath}");
+    }
+    finally
+    {
+      await StopAsync(server, stop);
+    }
+  }
+
+  public static async Task Should_name_the_build_in_status()
+  {
+    NuruApp app = CreateServedApp();
+    NuruDaemonOptions options = CreateOptions();
+    (Task<int> server, CancellationTokenSource stop) = await StartAsync(app, options);
+    try
+    {
+      using TestTerminal terminal = new();
+      (await NuruDaemonServer.StatusAsync(CreateTerminalApp(terminal), options)).ShouldBe(0);
+      NuruDaemonStatus? status = await new NuruDaemonClient(options).PingAsync(app);
+      status.ShouldNotBeNull();
+      terminal.Output.ShouldContain($"dm-app server is running: pid {Environment.ProcessId}, {status.DescribeBuild()}, socket {status.SocketPath}.");
+      terminal.Output.ShouldNotContain("Also serving"); // A fixed socket lists nothing else.
+    }
+    finally
+    {
+      await StopAsync(server, stop);
     }
   }
 
@@ -453,6 +558,26 @@ public class DaemonServerTests
     string longPath = NuruDaemonPaths.GetDefaultSocketPath(new string('x', 200));
     longPath.Length.ShouldBeLessThanOrEqualTo(100);
     longPath.ShouldEndWith(".sock");
+    await Task.CompletedTask;
+  }
+
+  public static async Task Should_default_to_one_socket_per_build()
+  {
+    string a = NuruDaemonPaths.GetDefaultSocketPath("my app/name", "build-a");
+    Path.GetFileName(a).ShouldMatch("^my_app_name-[0-9a-f]{8}\\.sock$");
+    NuruDaemonPaths.GetDefaultSocketPath("my app/name", "build-a").ShouldBe(a);
+    NuruDaemonPaths.GetDefaultSocketPath("my app/name", "build-b").ShouldNotBe(a);
+
+    string longPath = NuruDaemonPaths.GetDefaultSocketPath(new string('x', 200), "build-a");
+    longPath.Length.ShouldBeLessThanOrEqualTo(100);
+    Path.GetFileName(longPath).ShouldMatch("^[0-9a-f]{16}-[0-9a-f]{8}\\.sock$");
+
+    if (Environment.GetEnvironmentVariable(NuruDaemonOptions.SocketPathEnvironmentVariable) is null)
+    {
+      NuruApp app = CreateServedApp();
+      new NuruDaemonOptions().ResolveSocketPath(app).ShouldBe(NuruDaemonPaths.GetDefaultSocketPath("dm-app", NuruDaemonPaths.GetBuildId(app)));
+    }
+
     await Task.CompletedTask;
   }
 }

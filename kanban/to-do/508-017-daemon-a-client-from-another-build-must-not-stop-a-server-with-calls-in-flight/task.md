@@ -71,6 +71,7 @@ Acceptance:
 - Review round 1: grok session `01a15c0d-bddb-7211-8558-a8e2fcaf8e2e` (2026-10-21), effort 2, roster general. `daemon-01-server.cs` Total 19, Passed 19. Open finding M1 (changelog). Disposition not written.
 - Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-21T01:33:09Z
 - 2026-10-21 implementer-claude implement-fix-2: fixed M1 (changelog Unreleased: Fixed bullet for 508-017, 508-005 bullet path and other-build sentence). Changelog only, no code change.
+- Review round 2: grok session `01a15c18-1e51-7843-89d5-9f096b923848` (2026-10-21), effort 1, roster general. Re-checked M1 on the changelog delta against the daemon client, socket hash, and status listing. No new findings. Disposition: clean.
 
 ## Learnings
 
@@ -78,7 +79,7 @@ Compared `## Goal (implementer restatement)` with `## Requirements`. No misread.
 
 ## Results
 
-Review round 1 (effort 2, roster general): suggestion 1, fixed in the implement-fix-2 pass (M1: `changelog.md` Unreleased now has a Fixed **Served apps** bullet for 508-017, and the 508-005 Added bullet gives the per-build socket path and no longer says another build's server is stopped). Bugs 0. Round 2 not yet run. Paths: `review/review-framework.md`, `review/round-1/merged.md`.
+Review rounds: 2. Roster: general (round 1 effort 2, round 2 effort 1). M1 (suggestion) is fixed: `changelog.md` Unreleased has a Fixed **Served apps** bullet for 508-017, and the 508-005 Added bullet names `<app>-<8 hex>.sock` and no longer says another build's server is stopped. Round 2 found nothing new. Final counts: bug 0, suggestion 1 fixed, nit 0. Open 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 **Model: socket per build, and refuse (never replace) on a shared socket.** Recorded in the served-apps doc
 ("Two builds of one app", with the why) and the `#region Design` of `nuru-daemon-client.cs` and
@@ -142,6 +143,7 @@ Expect:
 ## Review
 
 - Round 1: Blocked — open M1
+- Round 2: clean (M1 fixed, no new findings)
 
 ## Notes
 

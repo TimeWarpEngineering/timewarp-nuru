@@ -50,6 +50,8 @@ Acceptance:
 
 - Created: 3913282 (2026-10-19)
 - 2026-10-21 implementer-claude (ganda task work): both repros failed with CS9153 (one RunAsync intercepted twice); fixed A in the DSL interpreter and B in the emitters; full CI green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-21T03:05:49Z
+- Review oracle: grok session 01a15c6c-1504-78a0-b012-51f7497ddb32 (2026-10-21). Round 1, effort 2, roster general. Disposition clean.
 
 ## Results
 
@@ -106,3 +108,15 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 ```
 
 Expect: generator-61 prints 5 passed and generator-62 prints 1 passed. CI prints 0 failed for both multi-mode and standalone. The generated `artifacts/generated/generator-62-delegate-behavior-command-classes.cs/.../NuruGenerated.g.cs` declares `__Route_0_0_Command`, `__Route_1_0_Command` and `__Route_1_1_Command`, and each app's behavior code constructs its own class.
+
+### Review
+
+Round 1, effort 2, roster general. Disposition: **clean**. Final counts: 0 open, 0 fixed, 0 wontfix (bug, suggestion, and nit).
+
+The implementer restatement matches the original task. No misread.
+
+- Framework: `review/review-framework.md`
+- Round: `review/round-1/general.md`, `review/round-1/merged.md`
+- Disposition: `review/disposition.md`
+
+Reviewer re-ran generator-61 (5 passed) and generator-62 (1 passed) and checked the generated interceptors and command class names. Full CI was not re-run in the review.

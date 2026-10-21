@@ -290,6 +290,124 @@ public class UnknownOptionTests
     terminal.OutputContains("deploy:prod|True").ShouldBeTrue();
   }
 
+  // Review M1: a missing required value option skips the route, but only after the unknown
+  // option is recorded, so the typo still gets a suggestion
+  public static async Task Should_suggest_required_value_option_for_close_typo()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("kanban create {title} --folder {folder}")
+        .WithHandler((string title, string folder) => $"created:{title}|{folder}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["kanban", "create", "Title", "--foldr", "x"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--foldr'. Did you mean '--folder'?").ShouldBeTrue();
+    terminal.OutputContains("created:").ShouldBeFalse();
+  }
+
+  // Review M1: an unbound discriminator flag (no bool parameter) must be present to match
+  public static async Task Should_suggest_discriminator_flag_for_close_typo()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("commit --amend").WithHandler(() => "commit:amend")
+      .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["commit", "--ammend"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--ammend'. Did you mean '--amend'?").ShouldBeTrue();
+    terminal.OutputContains("commit:").ShouldBeFalse();
+  }
+
+  public static async Task Should_reject_unknown_option_beside_present_required_option()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("kanban create {title} --folder {folder}")
+        .WithHandler((string title, string folder) => $"created:{title}|{folder}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["kanban", "create", "Title", "--folder", "f", "--repo", "x"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--repo'").ShouldBeTrue();
+    terminal.OutputContains("created:").ShouldBeFalse();
+  }
+
+  public static async Task Should_still_run_route_with_required_option_present()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("kanban create {title} --folder {folder}")
+        .WithHandler((string title, string folder) => $"created:{title}|{folder}")
+        .AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["kanban", "create", "Title", "--folder", "f"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("created:Title|f").ShouldBeTrue();
+  }
+
+  // An alias block used to jump to the primary route's skip label, which is before the alias,
+  // so a failed option guard on an alias looped. The alias now skips to its own label.
+  public static async Task Should_reject_unknown_option_on_alias_with_failed_option_guard()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map<T515MakeCommand>()
+      .Build();
+
+    // Act - --folder has no value, so its guard fails; --bogus is unknown
+    int exitCode = await app.RunAsync(["t515-mk", "--bogus", "--folder"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--bogus'").ShouldBeTrue();
+    terminal.OutputContains("t515-make:").ShouldBeFalse();
+  }
+
+  public static async Task Should_run_alias_with_option_value()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map<T515MakeCommand>()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["t515-mk", "--folder", "f"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("t515-make:f").ShouldBeTrue();
+  }
+
   public static async Task Should_reject_unknown_option_in_repl()
   {
     // Arrange
@@ -310,6 +428,24 @@ public class UnknownOptionTests
     // Assert
     terminal.ErrorContains("Unknown option '--verbos'. Did you mean '--verbose'?").ShouldBeTrue();
     terminal.OutputContains("build:").ShouldBeFalse();
+  }
+}
+
+[NuruRoute("t515-make", Description = "Alias option-guard fixture (515)")]
+[NuruRouteAlias("t515-mk")]
+public sealed class T515MakeCommand : ICommand<Unit>
+{
+  [Option("folder", Description = "Target folder")]
+  public string Folder { get; set; } = null!;
+
+  public sealed class Handler(ITerminal terminal) : ICommandHandler<T515MakeCommand, Unit>
+  {
+    public async Task<Unit> Handle(T515MakeCommand command, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(command);
+      await terminal.WriteLineAsync($"t515-make:{command.Folder}").ConfigureAwait(false);
+      return default;
+    }
   }
 }
 

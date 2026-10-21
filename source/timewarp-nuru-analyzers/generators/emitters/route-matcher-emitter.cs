@@ -26,6 +26,13 @@
 // built-in can still match; if none does, the no-match fallback names the option and exits 1.
 // The REPL calls the same ExecuteRouteAsync, so a REPL line fails the same way.
 //
+// OPTION GUARDS: A missing required option, a missing required value, or an absent unbound
+// discriminator flag sets __optionMissing_N instead of skipping at once. The skip runs after the
+// unknown-option check, so a close typo of the missing form is recorded and suggested (515 M1).
+// Option type conversions run after that skip, because a missing value must skip, not error.
+// Guards take the skip label of the block they are in; an alias block jumping to route_skip_N
+// would jump backward to before itself.
+//
 // FILE/DIRECTORY INFO: FileInfo and DirectoryInfo constructors throw
 // ArgumentException, PathTooLongException, NotSupportedException,
 // UnauthorizedAccessException, and SecurityException. Catch Exception so any of
@@ -174,14 +181,17 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
 
     // First pass: Extract all options (with index tracking)
-    EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
+    string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
 
     // Build positional args array (excluding consumed indices; -- is included only if route expects it)
     EmitPositionalArrayConstruction(sb, route, routeIndex);
 
-    // An unknown option stops this route; record it when the command's leading literals match
+    // An unknown option stops this route; record it when the command's leading literals match.
+    // This runs before the option-guard skip so a typo of a required option is still suggested.
     List<string> literalPrefix = RouteHelpEmitter.GetLiteralPrefix(route);
     EmitUnknownOptionPrefixCheck(sb, routeIndex, literalPrefix, $"route_skip_{routeIndex}");
+    EmitOptionGuardSkip(sb, route, routeIndex, $"route_skip_{routeIndex}");
+    sb.Append(optionConversions);
 
     // Check minimum positional args (required parameters must be present)
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto route_skip_{routeIndex};");
@@ -349,9 +359,11 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"      if (__endOfOptions_{routeIndex} < 0) __endOfOptions_{routeIndex} = routeArgs.Length;");
     sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
 
-    EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
+    string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
     EmitPositionalArrayConstruction(sb, route, routeIndex);
     EmitUnknownOptionPrefixCheck(sb, routeIndex, [.. aliasParts], aliasSkipLabel);
+    EmitOptionGuardSkip(sb, route, routeIndex, aliasSkipLabel);
+    sb.Append(optionConversions);
 
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto {aliasSkipLabel};");
 
@@ -553,13 +565,19 @@ internal static class RouteMatcherEmitter
   /// Emits option parsing with index tracking for the two-pass approach.
   /// Extracts options and their values, marking consumed indices.
   /// Supports both space-separated (--opt value) and equals syntax (--opt=value).
+  /// A failed match guard sets <c>__optionMissing_N</c>; <see cref="EmitOptionGuardSkip"/> acts on it.
   /// </summary>
-  private static void EmitOptionParsingWithIndexTracking(
+  /// <returns>The option type conversions, emitted by the caller after the guard skip.</returns>
+  private static string EmitOptionParsingWithIndexTracking(
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
     ImmutableArray<CustomConverterDefinition> customConverters)
   {
+    if (HasOptionGuard(route))
+      sb.AppendLine($"      bool __optionMissing_{routeIndex} = false;");
+
+    StringBuilder conversions = new();
     foreach (OptionDefinition option in route.Options)
     {
       if (option.IsFlag)
@@ -568,13 +586,34 @@ internal static class RouteMatcherEmitter
       }
       else if (option.IsRepeated)
       {
-        EmitRepeatedValueOptionParsingWithIndexTracking(sb, option, routeIndex, customConverters, route);
+        EmitRepeatedValueOptionParsingWithIndexTracking(sb, conversions, option, routeIndex, customConverters, route);
       }
       else
       {
-        EmitValueOptionParsingWithIndexTracking(sb, option, routeIndex, customConverters, route);
+        EmitValueOptionParsingWithIndexTracking(sb, conversions, option, routeIndex, customConverters, route);
       }
     }
+
+    return conversions.ToString();
+  }
+
+  /// <summary>
+  /// True when a route option has a match guard: an unbound discriminator flag, a required value
+  /// option, or an option whose value is required when the option is given.
+  /// </summary>
+  private static bool HasOptionGuard(RouteDefinition route) =>
+    route.Options.Any(option => option.IsFlag
+      ? !option.IsOptional && !option.IsFlagBound(route)
+      : !option.IsRepeated && !option.IsJsonValue && (!option.IsOptional || !option.ParameterIsOptional));
+
+  /// <summary>
+  /// Skips the route when an option guard failed. Emitted after the unknown-option check so a typo
+  /// of the missing form is recorded first.
+  /// </summary>
+  private static void EmitOptionGuardSkip(StringBuilder sb, RouteDefinition route, int routeIndex, string skipLabel)
+  {
+    if (HasOptionGuard(route))
+      sb.AppendLine($"      if (__optionMissing_{routeIndex}) goto {skipLabel};");
   }
 
   /// <summary>
@@ -616,7 +655,7 @@ internal static class RouteMatcherEmitter
     // and explicitly-optional flags (--flag?) stay optional at match time.
     if (!option.IsOptional && !option.IsFlagBound(route))
     {
-      sb.AppendLine($"      if (!{escapedVarName}) goto route_skip_{routeIndex};");
+      sb.AppendLine($"      if (!{escapedVarName}) __optionMissing_{routeIndex} = true;");
     }
   }
 
@@ -626,6 +665,7 @@ internal static class RouteMatcherEmitter
   /// </summary>
   private static void EmitValueOptionParsingWithIndexTracking(
     StringBuilder sb,
+    StringBuilder conversions,
     OptionDefinition option,
     int routeIndex,
     ImmutableArray<CustomConverterDefinition> customConverters,
@@ -709,24 +749,24 @@ internal static class RouteMatcherEmitter
     // Handle required vs optional flag/value
     if (!option.IsOptional)
     {
-      sb.AppendLine($"      if (!{flagFoundVar}) goto route_skip_{routeIndex};");
+      sb.AppendLine($"      if (!{flagFoundVar}) __optionMissing_{routeIndex} = true;");
       if (!option.ParameterIsOptional)
       {
-        sb.AppendLine($"      if ({rawVarName} is null) goto route_skip_{routeIndex};");
+        sb.AppendLine($"      if ({rawVarName} is null) __optionMissing_{routeIndex} = true;");
       }
     }
     else
     {
       if (!option.ParameterIsOptional)
       {
-        sb.AppendLine($"      if ({flagFoundVar} && {rawVarName} is null) goto route_skip_{routeIndex};");
+        sb.AppendLine($"      if ({flagFoundVar} && {rawVarName} is null) __optionMissing_{routeIndex} = true;");
       }
     }
 
     // Emit type conversion if needed
     if (needsConversion)
     {
-      EmitOptionTypeConversion(sb, option, escapedVarName, rawVarName, routeIndex, customConverters, route);
+      EmitOptionTypeConversion(conversions, option, escapedVarName, rawVarName, routeIndex, customConverters, route);
     }
   }
 
@@ -736,6 +776,7 @@ internal static class RouteMatcherEmitter
   /// </summary>
   private static void EmitRepeatedValueOptionParsingWithIndexTracking(
     StringBuilder sb,
+    StringBuilder conversions,
     OptionDefinition option,
     int routeIndex,
     ImmutableArray<CustomConverterDefinition> customConverters,
@@ -795,7 +836,7 @@ internal static class RouteMatcherEmitter
     sb.AppendLine("      }");
 
     // Emit type conversion and array creation
-    EmitRepeatedOptionTypeConversion(sb, option, escapedVarName, listVarName, routeIndex, customConverters, route);
+    EmitRepeatedOptionTypeConversion(conversions, option, escapedVarName, listVarName, routeIndex, customConverters, route);
   }
 
   /// <summary>

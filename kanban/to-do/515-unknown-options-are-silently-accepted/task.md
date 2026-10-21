@@ -46,6 +46,10 @@ Acceptance:
   `ganda repo audit` passed with no fixes needed.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-21T14:27:16Z
 - Review oracle: grok session 01a15edb-f7b0-7011-9e3b-44f7fe830d66 (2026-10-21), effort 2, roster general. Round 1 written. M1 open. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, model grok-4.7), session not reported, max-turns 120 — 2026-10-21T14:42:58Z
+- 2026-10-21 implementer (claude, headless task work, implement-fix-2): fixed M1 (deferred option
+  guards, conversions after the guard skip, alias skip label), added 6 routing-37 tests. Gates green.
+  `ganda repo audit` passed with no fixes needed.
 
 ## Results
 
@@ -75,12 +79,25 @@ routing-10 unknown option (now exit 1), routing-13 `echo -sometext` (now unknown
 **Not changed**: `--key=value` / `--key:value` are still stripped before routing as configuration
 overrides (`IsConfigArg`), so `kanban create T --repo=x` still runs silently. That is a separate
 fail-open path. It needs its own decision (only strip when the app uses configuration, or only keys
-the configuration knows), so this task does not change it. A required option that is missing
-(`--folder {f?}` without `?` on the option) skips the route before unknown-option detection, so
-that route adds no suggestion.
+the configuration knows), so this task does not change it.
 
-Gates: `./bin/dev build` OK; `dotnet run tests/ci-tests/run-ci-tests.cs` exit 0 (multi-mode plus
-standalone, 0 failed); `./bin/dev verify-samples` 68/68; `ganda repo audit` passes.
+**Fix pass for review round 1 (M1)**: Option guards no longer skip the route during option parsing.
+A missing required option, a missing required value, or an absent unbound discriminator flag sets
+`__optionMissing_N`. The route skips on that flag after the unknown-option check, so
+`kanban create T --foldr x` (route `--folder {folder}`) gives `Did you mean '--folder'?` and
+`commit --ammend` gives `Did you mean '--amend'?`. Option type conversions now run after that skip,
+since a missing value has to skip the route and must not hit a conversion error (for example the
+FileInfo "Missing value" error). The guard skip uses the label of the block it is in. Before this
+pass, an alias block jumped to `route_skip_N`, which comes before the alias, so a failed guard on an
+alias looped forever. The new alias test timed out at 240 s on the old emitter and passes now. The
+changelog has a separate Fixed entry for the alias loop. New tests in routing-37: a close typo of a
+required value option, a close typo of a discriminator flag, an unknown option next to a required
+option that is present, a required option that is present (still runs), an alias with a failed guard
+plus an unknown option, and an alias with a value (still runs).
+
+Gates (rerun after the M1 fix pass): `./bin/dev build` OK; `dotnet run tests/ci-tests/run-ci-tests.cs`
+exit 0 (multi-mode plus standalone, 0 failed); `./bin/dev verify-samples` 68/68; `ganda repo audit`
+passes with no fixes needed.
 
 ### How to validate
 
@@ -93,15 +110,22 @@ dotnet run tests/timewarp-nuru-tests/routing/routing-13-negative-numbers.cs
 dotnet run tests/ci-tests/run-ci-tests.cs
 ```
 
-Expect: routing-37 has 16 of 16 passed and routing-13 has 11 of 11 passed. The CI runner exits 0 and
+Expect: routing-37 has 22 of 22 passed and routing-13 has 11 of 11 passed. The CI runner exits 0 and
 ends with `Standalone finished in ... (0 failed)`. In routing-37,
 `Should_reject_unknown_option_on_route_with_options` shows `kanban create Title --repo x` exiting 1
 with `Unknown option '--repo'`, and `Should_suggest_closest_declared_option` shows
-`Unknown option '--verbos'. Did you mean '--verbose'?`.
+`Unknown option '--verbos'. Did you mean '--verbose'?`. For M1, `Should_suggest_required_value_option_for_close_typo`
+expects `Unknown option '--foldr'. Did you mean '--folder'?` and
+`Should_suggest_discriminator_flag_for_close_typo` expects `Unknown option '--ammend'. Did you mean '--amend'?`.
+`Should_reject_unknown_option_on_alias_with_failed_option_guard` finishes in well under a second (it hung on the old emitter).
 
 ### Review
 
 Round 1, effort 2, roster general. The implementer restatement matches the original checklist (no misread). Counts: 1 open bug, 0 fixed, 0 wontfix. Disposition is not written while M1 is open. M1: a required value option or an unbound discriminator flag skips the route before the unknown-option scan, so a close typo is `Unknown command` and is not suggested. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Review
+
+- Round 1: Blocked — open M1
 
 ## Notes
 

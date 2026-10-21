@@ -23,6 +23,7 @@ Driving consumer: Roslynk (Peter Morris's Roslyn MCP server): one contract class
 - 508-003 Public JSON binder and invoke (the neutral binder, exposed)
 - 508-004 MCP binding `TimeWarp.Nuru.McpHost` over catalog and binder (depends on 002 and 003)
 - 508-005 Served endpoints: daemon host and forwarding client (backlog until 506 reports cold-vs-warm timing)
+- Follow-ups filed during the work, all merged: 508-006, 508-007, 508-008, 508-009, 508-011, 508-013, 508-014, 508-015, 508-016, 508-017, 508-018
 
 ## Depends on
 
@@ -47,12 +48,12 @@ One item at a time across the three repos:
 
 ## Checklist
 
-- [ ] 508-001 merged
-- [ ] 508-002 merged
-- [ ] 508-003 merged
-- [ ] 508-004 merged
-- [ ] 508-005 decided (to-do or archive) from task 506 results
-- [ ] 507 gate records the decision relative to this direction
+- [x] 508-001 merged
+- [x] 508-002 merged
+- [x] 508-003 merged
+- [x] 508-004 merged
+- [x] 508-005 decided (to-do or archive) from task 506 results: built and merged
+- [x] 507 gate records the decision relative to this direction: no-go, 507 archived 2026-10-21
 
 ## Notes
 
@@ -65,3 +66,4 @@ One item at a time across the three repos:
 - Created: 1479989 (2026-10-17)
 - Revised to the shared neutral-contract model: 1479989 (2026-10-17)
 - Serial implementation order recorded: 1479989 (2026-10-17)
+- 2026-10-21: every to-do child merged; shipped through 4.0.0-beta.5 (508-008 lands in the next beta). 507 archived as no-go. Done is blocked on backlog children 508-010 and 508-012.

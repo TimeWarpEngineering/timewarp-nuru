@@ -21,6 +21,8 @@ Decide go or no-go from task 506's results before any implementation:
 - Runtime registration: Nuru 3.0 routes are compile-time (`RunAsync` throws unless intercepted, `source/timewarp-nuru/nuru-app.cs`). Decide between a runtime path (would need new non-generated dispatch, reflection, not AOT) and a build-time generator over `[McpServerTool]` methods (AOT-friendly). The intel eval prefers reflection first and a generator only for a real AOT consumer; confirm that is feasible.
 - Record the decision and its evidence in this task.
 
+**Decision (2026-10-21): no-go, archived (Steven).** The contracts-first direction (508) covers the need from the other side: one `[Operation]` contract serves CLI and MCP through `TimeWarp.Nuru.McpHost` (508-004, schema fidelity in 508-015), and Roslynk now hosts its MCP surface on McpHost with a Nuru CLI over the same contracts. Bridging hand-written `[McpServerTool]` methods into Nuru routes would add a second, reflection-based registration path for no current consumer.
+
 ## Requirements (if go)
 
 - Separate opt-in package; nothing added to Nuru core.
@@ -35,7 +37,7 @@ Decide go or no-go from task 506's results before any implementation:
 
 ## Checklist
 
-- [ ] Go/no-go decision recorded with evidence from task 506
+- [x] Go/no-go decision recorded: no-go, archived 2026-10-21 (see gate section)
 - [ ] (go) Package scaffold `TimeWarp.Nuru.McpBridge`
 - [ ] (go) Tool-to-route mapping and `--capabilities` filtering
 - [ ] (go) Tests and docs
@@ -43,3 +45,4 @@ Decide go or no-go from task 506's results before any implementation:
 ## Session
 
 - Created: 4066933 (2026-10-15)
+- Archived as no-go on the 508 close-out: 2026-10-21

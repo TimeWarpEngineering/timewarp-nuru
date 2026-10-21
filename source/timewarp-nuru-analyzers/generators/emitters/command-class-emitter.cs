@@ -16,12 +16,13 @@ using System.Text;
 internal static class CommandClassEmitter
 {
   /// <summary>
-  /// Emits all generated command classes for delegate routes.
+  /// Emits the generated command classes for one app's delegate routes.
   /// Should be called after the class declaration but before any methods.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
-  /// <param name="routes">All routes in the application.</param>
-  public static void EmitCommandClasses(StringBuilder sb, IEnumerable<RouteDefinition> routes)
+  /// <param name="routes">The app's routes in route-index order.</param>
+  /// <param name="methodSuffix">The app's method suffix: empty for a single app, else <c>_{appIndex}</c>.</param>
+  public static void EmitCommandClasses(StringBuilder sb, IEnumerable<RouteDefinition> routes, string methodSuffix)
   {
     int routeIndex = 0;
     bool hasAny = false;
@@ -40,7 +41,7 @@ internal static class CommandClassEmitter
           hasAny = true;
         }
 
-        EmitCommandClass(sb, route, routeIndex);
+        EmitCommandClass(sb, route, routeIndex, methodSuffix);
       }
 
       routeIndex++;
@@ -55,9 +56,9 @@ internal static class CommandClassEmitter
   /// <summary>
   /// Emits a single command class for a delegate route.
   /// </summary>
-  private static void EmitCommandClass(StringBuilder sb, RouteDefinition route, int routeIndex)
+  private static void EmitCommandClass(StringBuilder sb, RouteDefinition route, int routeIndex, string methodSuffix)
   {
-    string className = GetCommandClassName(routeIndex);
+    string className = GetCommandClassName(routeIndex, methodSuffix);
     string interfaces = BuildInterfaceList(route);
 
     // Class declaration with optional interface implementations
@@ -83,11 +84,12 @@ internal static class CommandClassEmitter
   }
 
   /// <summary>
-  /// Gets the generated command class name for a route.
+  /// Gets the generated command class name for a route. Route indices are per app, so the name
+  /// carries the app's method suffix: two apps in one compilation each have a route 0 (task 508-008).
   /// </summary>
-  internal static string GetCommandClassName(int routeIndex)
+  internal static string GetCommandClassName(int routeIndex, string methodSuffix)
   {
-    return $"__Route_{routeIndex}_Command";
+    return $"__Route{methodSuffix}_{routeIndex}_Command";
   }
 
   /// <summary>

@@ -258,11 +258,11 @@ public class JsonBindInvokeTests
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
       .AddBehavior(typeof(JbiTraceBehavior))
-      .Map<JbiTracedQuery>()
+      .Map("jbi-traced --name {name}").WithHandler((string name) => $"traced:{name}").AsQuery().Done()
       .Build();
 
     using JsonDocument doc = JsonDocument.Parse("""{"name":"ada"}""");
-    app.TryBind("jbi-traced", doc.RootElement, out NuruBoundRequest? request, out NuruBindError? error).ShouldBeTrue(error?.Message);
+    app.TryBind("jbi-traced --name {name}", doc.RootElement, out NuruBoundRequest? request, out NuruBindError? error).ShouldBeTrue(error?.Message);
     object? result = await app.InvokeAsync(request);
 
     result.ShouldBe("traced:ada");
@@ -386,27 +386,10 @@ public sealed class JbiTraceBehavior : INuruBehavior
   {
     ArgumentNullException.ThrowIfNull(context);
     ArgumentNullException.ThrowIfNull(proceed);
-    if (context.CommandName == "jbi-traced")
+    if (context.CommandName == "jbi-traced --name {name}")
       JbiTrace.Hits++;
 
     await proceed();
-  }
-}
-
-[NuruRoute("jbi-traced")]
-public sealed class JbiTracedQuery : IQuery<string>
-{
-  [Option("name", Description = "Name to trace")]
-  public string Name { get; set; } = "";
-
-  public sealed class Handler : IQueryHandler<JbiTracedQuery, string>
-  {
-    public Task<string> Handle(JbiTracedQuery query, CancellationToken cancellationToken)
-    {
-      ArgumentNullException.ThrowIfNull(query);
-      _ = cancellationToken;
-      return Task.FromResult($"traced:{query.Name}");
-    }
   }
 }
 

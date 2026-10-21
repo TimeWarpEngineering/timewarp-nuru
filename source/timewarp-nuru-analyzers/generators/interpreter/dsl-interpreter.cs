@@ -37,6 +37,7 @@ public sealed class DslInterpreter
   // Per-interpretation state
   private Dictionary<ISymbol, object?> VariableState = null!;
   private List<IrAppBuilder> BuiltApps = null!;
+  private Dictionary<InvocationExpressionSyntax, IrAppBuilder> BuildCalls = null!;
   private List<Diagnostic> CollectedDiagnostics = null!;
 
   /// <summary>
@@ -62,6 +63,7 @@ public sealed class DslInterpreter
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    BuildCalls = [];
     CollectedDiagnostics = [];
 
     try
@@ -75,38 +77,6 @@ public sealed class DslInterpreter
 
     // Finalize all built apps
     return BuiltApps.ConvertAll(app => app.FinalizeModel());
-  }
-
-  /// <summary>
-  /// Interprets a block of statements to produce an ExtractionResult with diagnostics.
-  /// </summary>
-  /// <param name="block">The block containing DSL statements.</param>
-  /// <returns>Extraction result containing models and any diagnostics.</returns>
-  public ExtractionResult InterpretWithDiagnostics(BlockSyntax block)
-  {
-    ArgumentNullException.ThrowIfNull(block);
-
-    // Fresh state per interpretation
-    VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
-    BuiltApps = [];
-    CollectedDiagnostics = [];
-
-    try
-    {
-      ProcessBlock(block);
-    }
-    catch (Exception ex) when (ex is not OperationCanceledException)
-    {
-      // Convert exception to diagnostic (fallback for not-yet-converted throws)
-      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, block.GetLocation()));
-    }
-
-    // Finalize all built apps
-    List<AppModel> models = BuiltApps.ConvertAll(app => app.FinalizeModel());
-
-    // Return first model (or null) with collected diagnostics
-    AppModel? model = models.Count > 0 ? models[0] : null;
-    return new ExtractionResult(model, [.. CollectedDiagnostics]);
   }
 
   /// <summary>
@@ -122,6 +92,7 @@ public sealed class DslInterpreter
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    BuildCalls = [];
     CollectedDiagnostics = [];
 
     try
@@ -147,45 +118,74 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Interprets top-level statements to produce an ExtractionResult with diagnostics.
+  /// Interprets the code around one Build() call and returns the app that call builds (task 508-008).
   /// </summary>
-  /// <param name="compilationUnit">The compilation unit containing top-level statements.</param>
-  /// <returns>Extraction result containing models and any diagnostics.</returns>
-  public ExtractionResult InterpretTopLevelStatementsWithDiagnostics(CompilationUnitSyntax compilationUnit)
+  /// <remarks>
+  /// <para>
+  /// <paramref name="scope"/> is the method body (a <see cref="BlockSyntax"/>), the file's top-level
+  /// statements (a <see cref="CompilationUnitSyntax"/>), or null for an expression-bodied member or
+  /// an initializer. The whole scope is walked so that variables, fragmented builder calls and
+  /// RunAsync() sites are seen, and then the app built by <paramref name="buildInvocation"/> is
+  /// returned. A scope can build several apps, so the first app is not necessarily this one.
+  /// </para>
+  /// <para>
+  /// When the walk does not reach the Build() call (an expression lambda, a method argument, a
+  /// member with no block), the call itself is evaluated with the state the walk produced.
+  /// </para>
+  /// </remarks>
+  /// <param name="scope">The block, compilation unit, or null.</param>
+  /// <param name="buildInvocation">The Build() call whose app is returned.</param>
+  /// <returns>Extraction result containing the app built by <paramref name="buildInvocation"/> and any diagnostics.</returns>
+  public ExtractionResult InterpretBuildCall(RoslynSyntaxNode? scope, InvocationExpressionSyntax buildInvocation)
   {
-    ArgumentNullException.ThrowIfNull(compilationUnit);
+    ArgumentNullException.ThrowIfNull(buildInvocation);
 
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    BuildCalls = [];
     CollectedDiagnostics = [];
 
     try
     {
-      // Process each GlobalStatementSyntax member
-      foreach (MemberDeclarationSyntax member in compilationUnit.Members)
+      switch (scope)
       {
-        CancellationToken.ThrowIfCancellationRequested();
+        case BlockSyntax block:
+          ProcessBlock(block);
+          break;
 
-        if (member is GlobalStatementSyntax globalStatement)
-        {
-          ProcessStatement(globalStatement.Statement);
-        }
+        case CompilationUnitSyntax compilationUnit:
+          foreach (MemberDeclarationSyntax member in compilationUnit.Members)
+          {
+            CancellationToken.ThrowIfCancellationRequested();
+
+            if (member is GlobalStatementSyntax globalStatement)
+            {
+              ProcessStatement(globalStatement.Statement);
+            }
+          }
+
+          break;
       }
+
+      if (FindBuiltApp(buildInvocation) is null)
+        EvaluateExpression(buildInvocation);
     }
     catch (Exception ex) when (ex is not OperationCanceledException)
     {
       // Convert exception to diagnostic (fallback for not-yet-converted throws)
-      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, compilationUnit.GetLocation()));
+      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, (scope ?? buildInvocation).GetLocation()));
     }
 
-    // Finalize all built apps
-    List<AppModel> models = BuiltApps.ConvertAll(app => app.FinalizeModel());
-
-    // Return first model (or null) with collected diagnostics
-    AppModel? model = models.Count > 0 ? models[0] : null;
+    AppModel? model = FindBuiltApp(buildInvocation)?.FinalizeModel();
     return new ExtractionResult(model, [.. CollectedDiagnostics]);
   }
+
+  /// <summary>
+  /// The app built by <paramref name="buildInvocation"/> during this interpretation, if any.
+  /// </summary>
+  private IrAppBuilder? FindBuiltApp(InvocationExpressionSyntax buildInvocation) =>
+    BuildCalls.TryGetValue(buildInvocation, out IrAppBuilder? app) ? app : null;
 
   /// <summary>
   /// Extracts an AppModel by tracing back from an entry point call (RunAsync or RunReplAsync) to find the app builder.
@@ -201,6 +201,7 @@ public sealed class DslInterpreter
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    BuildCalls = [];
     CollectedDiagnostics = [];
 
     try
@@ -307,7 +308,70 @@ public sealed class DslInterpreter
 
         break;
 
-      // Ignore other statement types (if, etc.)
+      // Nested bodies (task 508-008). Both branches of an if are walked: the generator sees every
+      // app the code can build. Local functions are their own scope and are not walked here.
+      case BlockSyntax nestedBlock:
+        ProcessBlock(nestedBlock);
+        break;
+
+      case IfStatementSyntax ifStmt:
+        ProcessStatement(ifStmt.Statement);
+        if (ifStmt.Else is not null)
+          ProcessStatement(ifStmt.Else.Statement);
+        break;
+
+      case CommonForEachStatementSyntax forEachStmt:
+        ProcessStatement(forEachStmt.Statement);
+        break;
+
+      case ForStatementSyntax forStmt:
+        ProcessStatement(forStmt.Statement);
+        break;
+
+      case WhileStatementSyntax whileStmt:
+        ProcessStatement(whileStmt.Statement);
+        break;
+
+      case DoStatementSyntax doStmt:
+        ProcessStatement(doStmt.Statement);
+        break;
+
+      case UsingStatementSyntax usingStmt:
+        if (usingStmt.Declaration is not null)
+          ProcessVariableDeclaration(usingStmt.Declaration);
+        ProcessStatement(usingStmt.Statement);
+        break;
+
+      case LockStatementSyntax lockStmt:
+        ProcessStatement(lockStmt.Statement);
+        break;
+
+      case FixedStatementSyntax fixedStmt:
+        ProcessStatement(fixedStmt.Statement);
+        break;
+
+      case CheckedStatementSyntax checkedStmt:
+        ProcessBlock(checkedStmt.Block);
+        break;
+
+      case UnsafeStatementSyntax unsafeStmt:
+        ProcessBlock(unsafeStmt.Block);
+        break;
+
+      case LabeledStatementSyntax labeledStmt:
+        ProcessStatement(labeledStmt.Statement);
+        break;
+
+      case SwitchStatementSyntax switchStmt:
+        foreach (SwitchSectionSyntax section in switchStmt.Sections)
+        {
+          foreach (StatementSyntax sectionStatement in section.Statements)
+            ProcessStatement(sectionStatement);
+        }
+
+        break;
+
+      // Ignore other statement types (local functions, etc.)
       default:
         break;
     }
@@ -329,9 +393,15 @@ public sealed class DslInterpreter
   /// <summary>
   /// Processes a local variable declaration (e.g., "var app = NuruApp.CreateBuilder(...)...").
   /// </summary>
-  private void ProcessLocalDeclaration(LocalDeclarationStatementSyntax localDecl)
+  private void ProcessLocalDeclaration(LocalDeclarationStatementSyntax localDecl) =>
+    ProcessVariableDeclaration(localDecl.Declaration);
+
+  /// <summary>
+  /// Processes the variables of a local declaration or a using statement's declaration.
+  /// </summary>
+  private void ProcessVariableDeclaration(VariableDeclarationSyntax declaration)
   {
-    foreach (VariableDeclaratorSyntax declarator in localDecl.Declaration.Variables)
+    foreach (VariableDeclaratorSyntax declarator in declaration.Variables)
     {
       if (declarator.Initializer?.Value is null)
         continue;
@@ -1886,8 +1956,9 @@ public sealed class DslInterpreter
     // Mark as built, recording the Build() call so the emitter can attach the capabilities catalog
     appBuilder.Build(ExtractBuildInterceptSite(invocation));
 
-    // Track this built app for finalization
+    // Track this built app for finalization, and which Build() call built it
     BuiltApps.Add(appBuilder);
+    BuildCalls[invocation] = appBuilder;
 
     // Return a marker for RunAsync detection
     return new BuiltAppMarker(appBuilder);

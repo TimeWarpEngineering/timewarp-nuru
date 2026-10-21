@@ -122,7 +122,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Endpoints
         .Build();
 
       // Act - exec with catch-all args
-      int exitCode = await app.RunAsync(["exec", "ls", "-la", "/tmp"]);
+      int exitCode = await app.RunAsync(["exec", "ls", "--", "-la", "/tmp"]);
 
       // Assert
       exitCode.ShouldBe(0);

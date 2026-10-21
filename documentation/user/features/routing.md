@@ -13,7 +13,7 @@ TimeWarp.Nuru supports intuitive route patterns:
 | Typed Parameter | `delay {ms:int}`        | `./cli delay 1000`                              |
 | Optional        | `deploy {env} {tag?}`   | `./cli deploy prod` or `./cli deploy prod v1.2` |
 | Options         | `build --config {mode}` | `./cli build --config Release`                  |
-| Catch-all       | `docker {*args}`        | `./cli docker run -it ubuntu`                   |
+| Catch-all       | `docker {*args}`        | `./cli docker -- run -it ubuntu`                |
 
 ## Type Safety
 
@@ -330,6 +330,23 @@ builder.Map("git add {*files}")
 - Must be the last positional parameter
 - Cannot be combined with optional parameters (analyzer error NURU_S004)
 - Handler parameter must be `string[]`
+- Option-shaped args (`-la`, `--port`) reach the catch-all only after `--`: `./cli docker run -- nginx --port 8080`
+
+## Unknown Options
+
+An option-shaped token that the route does not declare fails the call. It is never bound as a value
+and never ignored:
+
+```bash
+./cli build --verbos
+# Unknown option '--verbos'. Did you mean '--verbose'?   (exit code 1)
+```
+
+- Negative numbers (`-5`, `-1.5e10`) and a lone `-` are values, not options.
+- Everything after `--` is a value, even `--port` or `-la`.
+- `--key=value` and `--key:value` are configuration overrides and are removed before routing.
+- An extra token that is not option-shaped still reports `Unknown command`.
+- A REPL line follows the same rules.
 
 ## Complex Scenarios
 

@@ -108,8 +108,8 @@ public class NegativeNumberTests
     terminal.OutputContains("amount:-42.99").ShouldBeTrue();
   }
 
-  // TEST 6: Dash-prefixed literal (not a number, not an option)
-  public static async Task Should_accept_dash_prefixed_literal_when_no_option_defined()
+  // TEST 6: Dash-prefixed text is an unknown option; after -- it binds as a value (task 515)
+  public static async Task Should_reject_dash_prefixed_text_as_unknown_option()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -121,6 +121,26 @@ public class NegativeNumberTests
 
     // Act
     int exitCode = await app.RunAsync(["echo", "-sometext"]);
+
+    // Assert
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '-sometext'").ShouldBeTrue();
+    terminal.OutputContains("text:").ShouldBeFalse();
+  }
+
+  // TEST 6b: Dash-prefixed text after the end-of-options separator binds as a value
+  public static async Task Should_accept_dash_prefixed_text_after_separator()
+  {
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("echo {text}").WithHandler((string text) => $"text:{text}")
+      .AsQuery().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["echo", "--", "-sometext"]);
 
     // Assert
     exitCode.ShouldBe(0);
@@ -146,10 +166,8 @@ public class NegativeNumberTests
     terminal.OutputContains("verbose:True").ShouldBeTrue();
   }
 
-  // TEST 7b: Undefined options are ignored (generator behavior)
-  // NOTE: The V2 generator ignores unknown options rather than failing.
-  // This is different from the V1 runtime behavior.
-  public static async Task Should_ignore_undefined_options()
+  // TEST 7b: Undefined options fail the call and name the option (task 515)
+  public static async Task Should_reject_undefined_options()
   {
     // Arrange
     using TestTerminal terminal = new();
@@ -159,12 +177,13 @@ public class NegativeNumberTests
       .AsCommand().Done()
       .Build();
 
-    // Act - with undefined option (generator ignores it)
+    // Act - with undefined option
     int exitCode = await app.RunAsync(["test", "--other"]);
 
-    // Assert - generator ignores unknown options, verbose defaults to false
-    exitCode.ShouldBe(0);
-    terminal.OutputContains("verbose:False").ShouldBeTrue();
+    // Assert - the handler does not run
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown option '--other'").ShouldBeTrue();
+    terminal.OutputContains("verbose:").ShouldBeFalse();
   }
 
   // TEST 8: Scientific notation negative

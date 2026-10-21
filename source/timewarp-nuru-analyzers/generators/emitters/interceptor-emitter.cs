@@ -1304,6 +1304,9 @@ internal static class InterceptorEmitter
     // JSON selection returns. Calls without --json-args leave __jsonDoc null and fall through.
     JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null);
 
+    // Route matchers record an option-shaped token no route declares; the no-match fallback names it.
+    sb.AppendLine("    string? __unknownOption = null;");
+    sb.AppendLine("    global::System.Collections.Generic.HashSet<string> __unknownOptionForms = [];");
     sb.AppendLine("    if (!__jsonBuiltInOnly)");
     sb.AppendLine("    {");
 
@@ -1801,7 +1804,13 @@ internal static class InterceptorEmitter
   /// </summary>
   private static void EmitNoMatch(StringBuilder sb)
   {
-    sb.AppendLine("    // No route matched");
+    sb.AppendLine("    // No route matched. A command that matched apart from an undeclared option names that option.");
+    sb.AppendLine("    if (__unknownOption is not null)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      await app.Terminal.WriteErrorLineAsync(global::TimeWarp.Nuru.NuruUnknownOption.FormatMessage(__unknownOption, __unknownOptionForms)).ConfigureAwait(false);");
+    sb.AppendLine("      return 1;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
     sb.AppendLine("    await app.Terminal.WriteErrorLineAsync(\"Unknown command. Use --help for usage.\").ConfigureAwait(false);");
     sb.AppendLine("    return 1;");
   }

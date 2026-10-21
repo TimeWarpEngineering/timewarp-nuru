@@ -84,24 +84,20 @@ public class ErrorCasesTests
     await Task.CompletedTask;
   }
 
-  public static async Task Should_fail_with_unknown_option_as_extra_positional()
+  public static async Task Should_fail_with_unknown_option()
   {
-    // Arrange - Unknown options become extra positional args
-    // Route 'build --verbose' expects 1 positional (build), but unknown option becomes extra
+    // Arrange - an option the route does not declare fails the call (task 515)
 #pragma warning disable RCS1163 // Unused parameter
     NuruApp app = NuruApp.CreateBuilder()
       .Map("build --verbose").WithHandler((bool verbose) => 0).AsCommand().Done()
       .Build();
 #pragma warning restore RCS1163 // Unused parameter
 
-    // Act - --unknown is not a defined option, so it goes into positionals
-    // positionals = ["build", "--unknown"] but route only expects ["build"]
+    // Act - --unknown is not a defined option
     int exitCode = await app.RunAsync(["build", "--verbose", "--unknown"]);
 
-    // Assert - Fails because positional count doesn't match
-    // Note: This is now failing because "--unknown" ends up in positionals
-    // and causes a mismatch. We could also consider this valid behavior.
-    exitCode.ShouldBe(0); // Actually matches because we only check minimum positional count
+    // Assert - the handler does not run
+    exitCode.ShouldBe(1);
 
     await Task.CompletedTask;
   }

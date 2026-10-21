@@ -14,9 +14,17 @@
 // EmitAliasMatch must NOT re-emit literal segments from route.Segments — they are already
 // encoded in the alias parts. Only parameters, catch-all, and end-of-options segments are emitted.
 //
-// EXACT LENGTH: Routes without options, optional params, or catch-all enforce exact positional
-// arg count. Routes WITH options cannot enforce exact length because unknown options become
-// extra positionals.
+// EXACT LENGTH: Routes without optional params or catch-all enforce exact positional arg count.
+// Unknown options never reach the positional list (see UNKNOWN OPTIONS), so a route with options
+// enforces it too.
+//
+// UNKNOWN OPTIONS (task 515): An option-shaped token before "--" that no declared option consumed
+// (NuruUnknownOption.IsOptionLike: not "-", not a number) is held out of the positional list.
+// The route never runs with one. When the route's leading literals match (or, for a route with no
+// leading literal, when the whole route matches), the token and the route's option forms are
+// recorded in __unknownOption / __unknownOptionForms and matching moves on. A later route or
+// built-in can still match; if none does, the no-match fallback names the option and exits 1.
+// The REPL calls the same ExecuteRouteAsync, so a REPL line fails the same way.
 //
 // FILE/DIRECTORY INFO: FileInfo and DirectoryInfo constructors throw
 // ArgumentException, PathTooLongException, NotSupportedException,
@@ -171,13 +179,17 @@ internal static class RouteMatcherEmitter
     // Build positional args array (excluding consumed indices; -- is included only if route expects it)
     EmitPositionalArrayConstruction(sb, route, routeIndex);
 
+    // An unknown option stops this route; record it when the command's leading literals match
+    List<string> literalPrefix = RouteHelpEmitter.GetLiteralPrefix(route);
+    EmitUnknownOptionPrefixCheck(sb, routeIndex, literalPrefix, $"route_skip_{routeIndex}");
+
     // Check minimum positional args (required parameters must be present)
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto route_skip_{routeIndex};");
 
-    // For routes with ONLY literals and required params (no options, no optional params, no catch-all),
+    // For routes with ONLY literals, required params, and options (no optional params, no catch-all),
     // enforce exact length matching. This prevents empty pattern routes from matching arbitrary input (Issue #179).
-    // Routes with options are exempt because unknown options become extra positionals.
-    bool hasOnlyLiteralsAndRequiredParams = !route.HasOptions && !route.HasOptionalPositionalParams && !route.HasCatchAll;
+    // Unknown options are held out of the positional list, so routes with options enforce it too.
+    bool hasOnlyLiteralsAndRequiredParams = !route.HasOptionalPositionalParams && !route.HasCatchAll;
     if (hasOnlyLiteralsAndRequiredParams)
     {
       // Enforce exact length (no extra args allowed)
@@ -244,6 +256,10 @@ internal static class RouteMatcherEmitter
           // OptionDefinition: skip (handled by EmitOptionParsingWithIndexTracking)
       }
     }
+
+    // A route with no leading literal records an unknown option only once the whole route matched
+    if (literalPrefix.Count == 0)
+      EmitUnknownOptionMatchCheck(sb, routeIndex, $"route_skip_{routeIndex}");
 
     // The route literal matched. JSON argv rejection and a missing required JSON member
     // stop this call here. Doing it earlier would reject every later command.
@@ -335,6 +351,7 @@ internal static class RouteMatcherEmitter
 
     EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
     EmitPositionalArrayConstruction(sb, route, routeIndex);
+    EmitUnknownOptionPrefixCheck(sb, routeIndex, [.. aliasParts], aliasSkipLabel);
 
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto {aliasSkipLabel};");
 
@@ -384,6 +401,9 @@ internal static class RouteMatcherEmitter
           break;
       }
     }
+
+    if (aliasParts.Length == 0)
+      EmitUnknownOptionMatchCheck(sb, routeIndex, aliasSkipLabel);
 
     EmitJsonMemberAfterMatch(sb, route, routeIndex);
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
@@ -446,6 +466,7 @@ internal static class RouteMatcherEmitter
   /// </summary>
   private static void EmitPositionalArrayConstruction(StringBuilder sb, RouteDefinition route, int routeIndex)
   {
+    sb.AppendLine($"      string? __unknownOption_{routeIndex} = null;");
     sb.AppendLine($"      global::System.Collections.Generic.List<string> __positionalList_{routeIndex} = [];");
     sb.AppendLine("      for (int __i = 0; __i < routeArgs.Length; __i++)");
     sb.AppendLine("      {");
@@ -458,9 +479,61 @@ internal static class RouteMatcherEmitter
     }
 
     sb.AppendLine($"        if (__consumed_{routeIndex}.Contains(__i)) continue;");
+
+    // Option-shaped tokens before -- that no declared option consumed are unknown options, not positionals
+    sb.AppendLine($"        if (__i < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i]) && global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike(routeArgs[__i]))");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          __unknownOption_{routeIndex} ??= routeArgs[__i];");
+    sb.AppendLine("          continue;");
+    sb.AppendLine("        }");
     sb.AppendLine($"        __positionalList_{routeIndex}.Add(routeArgs[__i]);");
     sb.AppendLine("      }");
     sb.AppendLine($"      string[] __positionalArgs_{routeIndex} = [.. __positionalList_{routeIndex}];");
+  }
+
+  /// <summary>
+  /// Emits the unknown-option stop for a route with leading literals. The route never runs with an
+  /// unknown option; when the positional args start with <paramref name="literalPrefix"/>, the option
+  /// and the route's option forms are recorded for the no-match error. No-op for an empty prefix.
+  /// </summary>
+  private static void EmitUnknownOptionPrefixCheck(StringBuilder sb, int routeIndex, List<string> literalPrefix, string skipLabel)
+  {
+    if (literalPrefix.Count == 0)
+      return;
+
+    StringBuilder prefixCondition = new($"__positionalArgs_{routeIndex}.Length >= {literalPrefix.Count}");
+    for (int i = 0; i < literalPrefix.Count; i++)
+    {
+      prefixCondition.Append($" && __positionalArgs_{routeIndex}[{i}] == \"{EmitterStringUtils.EscapeForStringLiteral(literalPrefix[i])}\"");
+    }
+
+    sb.AppendLine($"      if (__unknownOption_{routeIndex} is not null)");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        if ({prefixCondition})");
+    sb.AppendLine("        {");
+    EmitUnknownOptionRecord(sb, routeIndex, indent: 10);
+    sb.AppendLine("        }");
+    sb.AppendLine($"        goto {skipLabel};");
+    sb.AppendLine("      }");
+  }
+
+  /// <summary>
+  /// Emits the unknown-option stop for a route with no leading literal, after the whole route matched.
+  /// </summary>
+  private static void EmitUnknownOptionMatchCheck(StringBuilder sb, int routeIndex, string skipLabel)
+  {
+    sb.AppendLine($"      if (__unknownOption_{routeIndex} is not null)");
+    sb.AppendLine("      {");
+    EmitUnknownOptionRecord(sb, routeIndex, indent: 8);
+    sb.AppendLine($"        goto {skipLabel};");
+    sb.AppendLine("      }");
+  }
+
+  private static void EmitUnknownOptionRecord(StringBuilder sb, int routeIndex, int indent)
+  {
+    string pad = new(' ', indent);
+    sb.AppendLine($"{pad}__unknownOption ??= __unknownOption_{routeIndex};");
+    sb.AppendLine($"{pad}__unknownOptionForms.UnionWith(__optionForms_{routeIndex});");
   }
 
   /// <summary>
@@ -526,6 +599,7 @@ internal static class RouteMatcherEmitter
       _ => throw new InvalidOperationException("Option must have at least one form")
     };
 
+    // Every occurrence is consumed, so a repeated flag (--verbose --verbose) is not left as a positional
     sb.AppendLine($"      bool {escapedVarName} = false;");
     sb.AppendLine($"      for (int __i = 0; __i < __endOfOptions_{routeIndex}; __i++)");
     sb.AppendLine("      {");
@@ -533,7 +607,6 @@ internal static class RouteMatcherEmitter
     sb.AppendLine("        {");
     sb.AppendLine($"          {escapedVarName} = true;");
     sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
-    sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
 
@@ -1667,6 +1740,10 @@ internal static class RouteMatcherEmitter
     sb.AppendLine($"        if (routeArgs[__i] == \"--{longForm}\" || routeArgs[__i].StartsWith(\"--{longForm}=\", global::System.StringComparison.Ordinal))");
     sb.AppendLine("        {");
     sb.AppendLine($"          {rejectedFlag} = true;");
+    // Consume the member and its value so the after-match rejection, not the exact-length check, answers
+    sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+    sb.AppendLine($"          if (routeArgs[__i] == \"--{longForm}\" && __i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]))");
+    sb.AppendLine($"            __consumed_{routeIndex}.Add(__i + 1);");
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");

@@ -67,8 +67,16 @@ Acceptance:
 - 2026-10-21 implementer-claude (ganda task work, headless): socket per build + refuse on a shared socket;
   tests, docs, smoke with two copies of the 16-daemon sample. CI multi-mode exit 0; `ganda repo audit` clean
   (no fixes needed).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-21T01:22:46Z
+- Review round 1: grok session `01a15c0d-bddb-7211-8558-a8e2fcaf8e2e` (2026-10-21), effort 2, roster general. `daemon-01-server.cs` Total 19, Passed 19. Open finding M1 (changelog). Disposition not written.
+
+## Learnings
+
+Compared `## Goal (implementer restatement)` with `## Requirements`. No misread. The restatement takes the recommended model (socket per build, plus an explicit `serve --stop`, idle timeout still cleans up) and, when `socketPath` or `NURU_DAEMON_SOCKET` forces one socket, refuses instead of replacing. That keeps "a client never stops a server that has calls in flight" on the shared-socket case. `--replace` is only in the refuse alternative, which this walk did not pick. Ping still carries the build id; status shows the entry path and write time, which are the parts of that id a person reads.
 
 ## Results
+
+Review round 1 (effort 2, roster general) is open. Counts: suggestion 1 open (M1, `changelog.md` Unreleased still says a different build is stopped). Bugs 0. Disposition is not written. Paths: `review/review-framework.md`, `review/round-1/merged.md`.
 
 **Model: socket per build, and refuse (never replace) on a shared socket.** Recorded in the served-apps doc
 ("Two builds of one app", with the why) and the `#region Design` of `nuru-daemon-client.cs` and

@@ -24,6 +24,25 @@ using System.Text;
 /// <param name="Examples">
 /// Usage examples declared via <c>[NuruRouteExample]</c> or <c>.WithExample()</c>, in declaration order.
 /// </param>
+/// <param name="Destructive">
+/// The endpoint class's <c>[Destructive]</c> value: true, false for <c>[Destructive(false)]</c>, null without it.
+/// </param>
+/// <param name="IsLocalOnly">
+/// True when the route carries <c>[LocalOnly]</c> or <c>.LocalOnly()</c>: a served app never forwards it.
+/// </param>
+/// <param name="IsExclusive">
+/// True when the route carries <c>[Exclusive]</c> or <c>.Exclusive()</c>: its calls take the app's exclusive gate.
+/// </param>
+/// <param name="GroupPath">
+/// Metadata-only group segments from <c>[Operation(Group = ...)]</c>. Not part of the route pattern.
+/// Empty when the group comes from <see cref="GroupPrefix"/> or the route is ungrouped.
+/// </param>
+/// <param name="OpenWorld">The endpoint class's <c>[OpenWorld]</c> value, or null without it.</param>
+/// <param name="Title">The endpoint class's <c>[DisplayName]</c> text, or null without it.</param>
+/// <param name="IsExplicitOnly">
+/// True for a referenced-assembly endpoint found only through <c>Map&lt;T&gt;()</c>. Only an app
+/// that maps it gets it; <c>DiscoverEndpoints()</c> does not.
+/// </param>
 public sealed record RouteDefinition(
   string OriginalPattern,
   EquatableArray<SegmentDefinition> Segments,
@@ -37,7 +56,14 @@ public sealed record RouteDefinition(
   int Order,
   EquatableArray<InterfaceImplementationDefinition> Implements = default,
   EquatableArray<string> GroupTypeHierarchy = default,
-  EquatableArray<ExampleDefinition> Examples = default)
+  EquatableArray<ExampleDefinition> Examples = default,
+  bool? Destructive = null,
+  bool IsLocalOnly = false,
+  EquatableArray<string> GroupPath = default,
+  bool IsExclusive = false,
+  bool? OpenWorld = null,
+  string? Title = null,
+  bool IsExplicitOnly = false)
 {
   /// <summary>
   /// Creates a RouteDefinition with default values for optional parameters.
@@ -55,7 +81,13 @@ public sealed record RouteDefinition(
     int order = 0,
     EquatableArray<InterfaceImplementationDefinition>? implements = null,
     EquatableArray<string>? groupTypeHierarchy = null,
-    EquatableArray<ExampleDefinition>? examples = null)
+    EquatableArray<ExampleDefinition>? examples = null,
+    bool? destructive = null,
+    bool isLocalOnly = false,
+    EquatableArray<string>? groupPath = null,
+    bool isExclusive = false,
+    bool? openWorld = null,
+    string? title = null)
   {
     return new RouteDefinition(
       OriginalPattern: originalPattern,
@@ -70,7 +102,30 @@ public sealed record RouteDefinition(
       Order: order,
       Implements: implements ?? [],
       GroupTypeHierarchy: groupTypeHierarchy ?? [],
-      Examples: examples ?? []);
+      Examples: examples ?? [],
+      Destructive: destructive,
+      IsLocalOnly: isLocalOnly,
+      GroupPath: groupPath ?? [],
+      IsExclusive: isExclusive,
+      OpenWorld: openWorld,
+      Title: title);
+  }
+
+  /// <summary>
+  /// Gets the catalog <c>groupPath</c>: <see cref="GroupPath"/> when set, otherwise the
+  /// <see cref="GroupPrefix"/> words.
+  /// </summary>
+  public IReadOnlyList<string> CatalogGroupPath
+  {
+    get
+    {
+      if (!GroupPath.IsDefaultOrEmpty)
+        return GroupPath;
+
+      return string.IsNullOrEmpty(GroupPrefix)
+        ? []
+        : GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    }
   }
 
   /// <summary>

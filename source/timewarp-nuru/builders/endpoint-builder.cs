@@ -156,6 +156,28 @@ public class EndpointBuilder<TBuilder>
   }
 
   /// <summary>
+  /// Keeps this route in the CLI process: a served app (<c>AddServeRoute()</c>) never forwards it
+  /// to a running server. The fluent form of <see cref="LocalOnlyAttribute"/>.
+  /// </summary>
+  /// <returns>This configurator for further route configuration.</returns>
+  public EndpointBuilder<TBuilder> LocalOnly()
+  {
+    // Source generator reads this at compile time
+    return this;
+  }
+
+  /// <summary>
+  /// Runs this route one call at a time against other exclusive calls on the app, for a handler that
+  /// is not thread-safe. The fluent form of <see cref="ExclusiveAttribute"/>.
+  /// </summary>
+  /// <returns>This builder for further configuration.</returns>
+  public EndpointBuilder<TBuilder> Exclusive()
+  {
+    // Source generator reads this at compile time
+    return this;
+  }
+
+  /// <summary>
   /// Declares that this route's command implements the specified interface.
   /// Used to enable filtered pipeline behaviors that only apply to commands implementing certain interfaces.
   /// </summary>

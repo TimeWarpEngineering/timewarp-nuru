@@ -1,0 +1,9 @@
+<Project>
+  <!-- Daemon tests reference the package with #:project; usings live in each file so the CI
+       multi-mode assembly (tests/ci-tests) gets no extra global usings. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <ItemGroup>
+    <!-- Concurrency test helpers shared with the routing and McpHost/daemon tests (task 508-016). -->
+    <Compile Include="$(MSBuildThisFileDirectory)../shared/call-probes.cs" />
+  </ItemGroup>
+</Project>

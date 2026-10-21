@@ -18,6 +18,8 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="ConstructorDependencies">For Command handlers: constructor parameters of the nested Handler class</param>
 /// <param name="HasAsyncModifier">For Delegate handlers: whether the lambda or anonymous method is declared <c>async</c>,
 /// meaning an expression body already contains its own awaits and must be emitted verbatim</param>
+/// <param name="ProblemRendererTypeName">For a problem pair: the one visible <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c>,
+/// used when no renderer is registered</param>
 public sealed record HandlerDefinition(
   HandlerKind HandlerKind,
   string? FullTypeName,
@@ -37,7 +39,8 @@ public sealed record HandlerDefinition(
   bool ReturnsProblemPair = false,
   string? SuccessTypeName = null,
   string? RendererTypeName = null,
-  EquatableArray<string> ConstructorArguments = default)
+  EquatableArray<string> ConstructorArguments = default,
+  string? ProblemRendererTypeName = null)
 {
   /// <summary>
   /// Creates a handler definition for a delegate-based handler.
@@ -112,7 +115,8 @@ public sealed record HandlerDefinition(
     bool returnsProblemPair,
     string? successTypeName,
     string? rendererTypeName,
-    EquatableArray<string> constructorArguments = default)
+    EquatableArray<string> constructorArguments = default,
+    string? problemRendererTypeName = null)
   {
     return new HandlerDefinition(
       HandlerKind: HandlerKind.Command,
@@ -131,7 +135,8 @@ public sealed record HandlerDefinition(
       ReturnsProblemPair: returnsProblemPair,
       SuccessTypeName: successTypeName,
       RendererTypeName: rendererTypeName,
-      ConstructorArguments: constructorArguments);
+      ConstructorArguments: constructorArguments,
+      ProblemRendererTypeName: problemRendererTypeName);
   }
 
   /// <summary>

@@ -1,0 +1,8 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+    <!-- Concurrency test helpers shared with the daemon and McpHost tests (task 508-016). -->
+    <Compile Include="$(MSBuildThisFileDirectory)../../shared/call-probes.cs" />
+  </ItemGroup>
+</Project>

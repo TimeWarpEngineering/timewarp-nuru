@@ -12,6 +12,9 @@
 // One extra instance keeps the emitted code linear in the number of such members.
 // A type with no parameterless constructor is new(args) for constructor parameters
 // that match bound properties.
+// A member is written as declared (ParameterName holds the property identifier), so a
+// camelCase contract property such as solutionId is assigned as solutionId. Locals stay
+// lowercase because the route matcher declares them that way.
 // On --json-args the supplied test is __supplied_{id}. That flag is declared in
 // the route case and assigned inside the bind attempt, where __av_ and __jsonMap
 // are still in scope.
@@ -64,7 +67,7 @@ internal static class CommandConstructionEmitter
       if (constructorProperties.Contains(param.ParameterName))
         continue;
 
-      string property = ToPascalCase(param.ParameterName);
+      string property = CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName);
       string variable = LocalName(param, routeIndex);
       OptionDefinition? option = OptionBindingMatcher.Match(route, param);
       bool required = option?.IsRequiredMember == true;
@@ -164,12 +167,4 @@ internal static class CommandConstructionEmitter
       BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(CSharpIdentifierUtils.ToCamelCase(param.SourceName)),
       _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
     };
-
-  private static string ToPascalCase(string value)
-  {
-    if (string.IsNullOrEmpty(value))
-      return value;
-
-    return char.ToUpperInvariant(value[0]) + value[1..];
-  }
 }

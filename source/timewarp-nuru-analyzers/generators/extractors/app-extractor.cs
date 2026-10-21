@@ -243,22 +243,12 @@ internal static class AppExtractor
     if (compilationUnit is null)
       return ExtractionResult.Empty;
 
-    // 4. Find the containing block or use top-level statements
+    // 4. Interpret the containing method body, or the top-level statements, and take the app
+    // this Build() call builds. An expression-bodied member has neither: the call is evaluated alone.
     DslInterpreter interpreter = new(context.SemanticModel, cancellationToken);
-    ExtractionResult result;
-
-    BlockSyntax? block = FindContainingBlock(buildInvocation);
-
-    if (block is not null)
-    {
-      // Traditional method body - interpret the whole block
-      result = interpreter.InterpretWithDiagnostics(block);
-    }
-    else
-    {
-      // Top-level statements
-      result = interpreter.InterpretTopLevelStatementsWithDiagnostics(compilationUnit);
-    }
+    RoslynSyntaxNode? scope = (RoslynSyntaxNode?)FindContainingBlock(buildInvocation)
+      ?? (IsInTopLevelStatement(buildInvocation) ? compilationUnit : null);
+    ExtractionResult result = interpreter.InterpretBuildCall(scope, buildInvocation);
 
     // 5. If we have a model, add user usings and set build location
     if (result.Model is not null)
@@ -460,6 +450,12 @@ internal static class AppExtractor
 
     return null;
   }
+
+  /// <summary>
+  /// True when <paramref name="node"/> is inside a top-level statement.
+  /// </summary>
+  private static bool IsInTopLevelStatement(RoslynSyntaxNode node) =>
+    node.FirstAncestorOrSelf<GlobalStatementSyntax>() is not null;
 
   /// <summary>
   /// Finds the containing CompilationUnit for a syntax node.

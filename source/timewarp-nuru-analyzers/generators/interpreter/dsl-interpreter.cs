@@ -37,6 +37,7 @@ public sealed class DslInterpreter
   // Per-interpretation state
   private Dictionary<ISymbol, object?> VariableState = null!;
   private List<IrAppBuilder> BuiltApps = null!;
+  private Dictionary<InvocationExpressionSyntax, IrAppBuilder> BuildCalls = null!;
   private List<Diagnostic> CollectedDiagnostics = null!;
 
   /// <summary>
@@ -62,6 +63,7 @@ public sealed class DslInterpreter
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    BuildCalls = [];
     CollectedDiagnostics = [];
 
     try
@@ -75,38 +77,6 @@ public sealed class DslInterpreter
 
     // Finalize all built apps
     return BuiltApps.ConvertAll(app => app.FinalizeModel());
-  }
-
-  /// <summary>
-  /// Interprets a block of statements to produce an ExtractionResult with diagnostics.
-  /// </summary>
-  /// <param name="block">The block containing DSL statements.</param>
-  /// <returns>Extraction result containing models and any diagnostics.</returns>
-  public ExtractionResult InterpretWithDiagnostics(BlockSyntax block)
-  {
-    ArgumentNullException.ThrowIfNull(block);
-
-    // Fresh state per interpretation
-    VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
-    BuiltApps = [];
-    CollectedDiagnostics = [];
-
-    try
-    {
-      ProcessBlock(block);
-    }
-    catch (Exception ex) when (ex is not OperationCanceledException)
-    {
-      // Convert exception to diagnostic (fallback for not-yet-converted throws)
-      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, block.GetLocation()));
-    }
-
-    // Finalize all built apps
-    List<AppModel> models = BuiltApps.ConvertAll(app => app.FinalizeModel());
-
-    // Return first model (or null) with collected diagnostics
-    AppModel? model = models.Count > 0 ? models[0] : null;
-    return new ExtractionResult(model, [.. CollectedDiagnostics]);
   }
 
   /// <summary>
@@ -122,6 +92,7 @@ public sealed class DslInterpreter
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    BuildCalls = [];
     CollectedDiagnostics = [];
 
     try
@@ -147,45 +118,74 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// Interprets top-level statements to produce an ExtractionResult with diagnostics.
+  /// Interprets the code around one Build() call and returns the app that call builds (task 508-008).
   /// </summary>
-  /// <param name="compilationUnit">The compilation unit containing top-level statements.</param>
-  /// <returns>Extraction result containing models and any diagnostics.</returns>
-  public ExtractionResult InterpretTopLevelStatementsWithDiagnostics(CompilationUnitSyntax compilationUnit)
+  /// <remarks>
+  /// <para>
+  /// <paramref name="scope"/> is the method body (a <see cref="BlockSyntax"/>), the file's top-level
+  /// statements (a <see cref="CompilationUnitSyntax"/>), or null for an expression-bodied member or
+  /// an initializer. The whole scope is walked so that variables, fragmented builder calls and
+  /// RunAsync() sites are seen, and then the app built by <paramref name="buildInvocation"/> is
+  /// returned. A scope can build several apps, so the first app is not necessarily this one.
+  /// </para>
+  /// <para>
+  /// When the walk does not reach the Build() call (an expression lambda, a method argument, a
+  /// member with no block), the call itself is evaluated with the state the walk produced.
+  /// </para>
+  /// </remarks>
+  /// <param name="scope">The block, compilation unit, or null.</param>
+  /// <param name="buildInvocation">The Build() call whose app is returned.</param>
+  /// <returns>Extraction result containing the app built by <paramref name="buildInvocation"/> and any diagnostics.</returns>
+  public ExtractionResult InterpretBuildCall(RoslynSyntaxNode? scope, InvocationExpressionSyntax buildInvocation)
   {
-    ArgumentNullException.ThrowIfNull(compilationUnit);
+    ArgumentNullException.ThrowIfNull(buildInvocation);
 
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    BuildCalls = [];
     CollectedDiagnostics = [];
 
     try
     {
-      // Process each GlobalStatementSyntax member
-      foreach (MemberDeclarationSyntax member in compilationUnit.Members)
+      switch (scope)
       {
-        CancellationToken.ThrowIfCancellationRequested();
+        case BlockSyntax block:
+          ProcessBlock(block);
+          break;
 
-        if (member is GlobalStatementSyntax globalStatement)
-        {
-          ProcessStatement(globalStatement.Statement);
-        }
+        case CompilationUnitSyntax compilationUnit:
+          foreach (MemberDeclarationSyntax member in compilationUnit.Members)
+          {
+            CancellationToken.ThrowIfCancellationRequested();
+
+            if (member is GlobalStatementSyntax globalStatement)
+            {
+              ProcessStatement(globalStatement.Statement);
+            }
+          }
+
+          break;
       }
+
+      if (FindBuiltApp(buildInvocation) is null)
+        EvaluateExpression(buildInvocation);
     }
     catch (Exception ex) when (ex is not OperationCanceledException)
     {
       // Convert exception to diagnostic (fallback for not-yet-converted throws)
-      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, compilationUnit.GetLocation()));
+      CollectedDiagnostics.Add(CreateDiagnosticFromException(ex, (scope ?? buildInvocation).GetLocation()));
     }
 
-    // Finalize all built apps
-    List<AppModel> models = BuiltApps.ConvertAll(app => app.FinalizeModel());
-
-    // Return first model (or null) with collected diagnostics
-    AppModel? model = models.Count > 0 ? models[0] : null;
+    AppModel? model = FindBuiltApp(buildInvocation)?.FinalizeModel();
     return new ExtractionResult(model, [.. CollectedDiagnostics]);
   }
+
+  /// <summary>
+  /// The app built by <paramref name="buildInvocation"/> during this interpretation, if any.
+  /// </summary>
+  private IrAppBuilder? FindBuiltApp(InvocationExpressionSyntax buildInvocation) =>
+    BuildCalls.TryGetValue(buildInvocation, out IrAppBuilder? app) ? app : null;
 
   /// <summary>
   /// Extracts an AppModel by tracing back from an entry point call (RunAsync or RunReplAsync) to find the app builder.
@@ -201,6 +201,7 @@ public sealed class DslInterpreter
     // Fresh state per interpretation
     VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
     BuiltApps = [];
+    BuildCalls = [];
     CollectedDiagnostics = [];
 
     try
@@ -307,7 +308,70 @@ public sealed class DslInterpreter
 
         break;
 
-      // Ignore other statement types (if, etc.)
+      // Nested bodies (task 508-008). Both branches of an if are walked: the generator sees every
+      // app the code can build. Local functions are their own scope and are not walked here.
+      case BlockSyntax nestedBlock:
+        ProcessBlock(nestedBlock);
+        break;
+
+      case IfStatementSyntax ifStmt:
+        ProcessStatement(ifStmt.Statement);
+        if (ifStmt.Else is not null)
+          ProcessStatement(ifStmt.Else.Statement);
+        break;
+
+      case CommonForEachStatementSyntax forEachStmt:
+        ProcessStatement(forEachStmt.Statement);
+        break;
+
+      case ForStatementSyntax forStmt:
+        ProcessStatement(forStmt.Statement);
+        break;
+
+      case WhileStatementSyntax whileStmt:
+        ProcessStatement(whileStmt.Statement);
+        break;
+
+      case DoStatementSyntax doStmt:
+        ProcessStatement(doStmt.Statement);
+        break;
+
+      case UsingStatementSyntax usingStmt:
+        if (usingStmt.Declaration is not null)
+          ProcessVariableDeclaration(usingStmt.Declaration);
+        ProcessStatement(usingStmt.Statement);
+        break;
+
+      case LockStatementSyntax lockStmt:
+        ProcessStatement(lockStmt.Statement);
+        break;
+
+      case FixedStatementSyntax fixedStmt:
+        ProcessStatement(fixedStmt.Statement);
+        break;
+
+      case CheckedStatementSyntax checkedStmt:
+        ProcessBlock(checkedStmt.Block);
+        break;
+
+      case UnsafeStatementSyntax unsafeStmt:
+        ProcessBlock(unsafeStmt.Block);
+        break;
+
+      case LabeledStatementSyntax labeledStmt:
+        ProcessStatement(labeledStmt.Statement);
+        break;
+
+      case SwitchStatementSyntax switchStmt:
+        foreach (SwitchSectionSyntax section in switchStmt.Sections)
+        {
+          foreach (StatementSyntax sectionStatement in section.Statements)
+            ProcessStatement(sectionStatement);
+        }
+
+        break;
+
+      // Ignore other statement types (local functions, etc.)
       default:
         break;
     }
@@ -329,9 +393,15 @@ public sealed class DslInterpreter
   /// <summary>
   /// Processes a local variable declaration (e.g., "var app = NuruApp.CreateBuilder(...)...").
   /// </summary>
-  private void ProcessLocalDeclaration(LocalDeclarationStatementSyntax localDecl)
+  private void ProcessLocalDeclaration(LocalDeclarationStatementSyntax localDecl) =>
+    ProcessVariableDeclaration(localDecl.Declaration);
+
+  /// <summary>
+  /// Processes the variables of a local declaration or a using statement's declaration.
+  /// </summary>
+  private void ProcessVariableDeclaration(VariableDeclarationSyntax declaration)
   {
-    foreach (VariableDeclaratorSyntax declarator in localDecl.Declaration.Variables)
+    foreach (VariableDeclaratorSyntax declarator in declaration.Variables)
     {
       if (declarator.Initializer?.Value is null)
         continue;
@@ -575,6 +645,10 @@ public sealed class DslInterpreter
 
       "AsIdempotentCommand" => DispatchAsIdempotentCommand(receiver),
 
+      "LocalOnly" => DispatchLocalOnly(receiver),
+
+      "Exclusive" => DispatchExclusive(receiver),
+
       "Done" => DispatchDone(invocation, receiver),
 
       "Build" => DispatchBuild(invocation, receiver),
@@ -591,6 +665,10 @@ public sealed class DslInterpreter
 
       "AddCheckUpdatesRoute" => DispatchAddCheckUpdatesRoute(receiver),
 
+      "AddMcpRoute" => DispatchAddMcpRoute(invocation, receiver),
+
+      "AddServeRoute" => DispatchAddServeRoute(invocation, receiver),
+
       "ConfigureServices" => DispatchConfigureServices(invocation, receiver),
 
       "AddBehavior" => DispatchAddBehavior(invocation, receiver),
@@ -602,6 +680,10 @@ public sealed class DslInterpreter
       "UseMicrosoftDependencyInjection" => DispatchUseMicrosoftDependencyInjection(receiver),
 
       "UseDirectInvoke" => DispatchUseDirectInvoke(receiver),
+
+      "UseVerbatimRendererOutput" => DispatchUseVerbatimRendererOutput(receiver),
+
+      "UseProblemRendererForErrors" => DispatchUseProblemRendererForErrors(receiver),
 
       "EnableCompletion" => DispatchEnableCompletion(receiver),
 
@@ -1109,6 +1191,79 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
+  /// Dispatches AddMcpRoute() (TimeWarp.Nuru.McpHost) to IIrAppBuilder.
+  /// Arguments are read as compile-time constants; the generated mcp route passes them to the host.
+  /// </summary>
+  private object? DispatchAddMcpRoute(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"AddMcpRoute() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? instructions = ExtractConstantArgument<string>(invocation, 0, "instructions", "AddMcpRoute");
+    string? groupFilter = ExtractConstantArgument<string>(invocation, 1, "groupFilter", "AddMcpRoute");
+    int contentFormat = ExtractConstantArgument<int?>(invocation, 2, "contentFormat", "AddMcpRoute") ?? 0;
+
+    return appBuilder.AddMcpRoute(new McpRouteModel(instructions, groupFilter, contentFormat));
+  }
+
+  /// <summary>
+  /// Dispatches AddServeRoute() (TimeWarp.Nuru.Daemon) to IIrAppBuilder.
+  /// Arguments are read as compile-time constants; the generated serve route and forwarding client use them.
+  /// </summary>
+  private object? DispatchAddServeRoute(InvocationExpressionSyntax invocation, object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+    {
+      throw new InvalidOperationException(
+        $"AddServeRoute() must be called on an app builder. Location: {invocation.GetLocation().GetLineSpan()}");
+    }
+
+    string? socketPath = ExtractConstantArgument<string>(invocation, 0, "socketPath", "AddServeRoute");
+    int idleTimeoutSeconds = ExtractConstantArgument<int?>(invocation, 1, "idleTimeoutSeconds", "AddServeRoute") ?? DefaultServeIdleTimeoutSeconds;
+    bool autoStart = ExtractConstantArgument<bool?>(invocation, 2, "autoStart", "AddServeRoute") ?? false;
+    bool exclusiveCalls = ExtractConstantArgument<bool?>(invocation, 3, "exclusiveCalls", "AddServeRoute") ?? false;
+
+    return appBuilder.AddServeRoute(new ServeRouteModel(socketPath, idleTimeoutSeconds, autoStart, exclusiveCalls));
+  }
+
+  /// <summary>Default of AddServeRoute(idleTimeoutSeconds), mirrored from NuruDaemonOptions.</summary>
+  private const int DefaultServeIdleTimeoutSeconds = 600;
+
+  /// <summary>
+  /// Reads a compile-time constant argument by name or position. Absent arguments and
+  /// <c>null</c> return default; any other non-constant expression is an error.
+  /// </summary>
+  private T? ExtractConstantArgument<T>(InvocationExpressionSyntax invocation, int index, string parameterName, string methodName)
+  {
+    ArgumentSyntax? argument = ResolveArgumentAt(invocation, index, parameterName);
+    if (argument is null)
+      return default;
+
+    // A later positional slot may hold a named argument for another parameter.
+    if (argument.NameColon is not null && argument.NameColon.Name.Identifier.Text != parameterName)
+      return default;
+
+    Optional<object?> constant = SemanticModel.GetConstantValue(argument.Expression, CancellationToken);
+    if (!constant.HasValue)
+    {
+      throw new InvalidOperationException(
+        $"{methodName}() argument '{parameterName}' must be a compile-time constant. Location: {argument.GetLocation().GetLineSpan()}");
+    }
+
+    return constant.Value switch
+    {
+      null => default,
+      T value => value,
+      int intValue when typeof(T) == typeof(int?) => (T)(object)intValue,
+      _ => throw new InvalidOperationException(
+        $"{methodName}() argument '{parameterName}' has an unexpected type. Location: {argument.GetLocation().GetLineSpan()}")
+    };
+  }
+
+  /// <summary>
   /// Dispatches ConfigureServices() call to IIrAppBuilder.
   /// Extracts service registrations from the lambda and adds them to the IR model.
   /// Also captures the raw lambda body for runtime invocation when UseMicrosoftDependencyInjection is enabled.
@@ -1489,6 +1644,30 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
+  /// Dispatches UseVerbatimRendererOutput() to IIrAppBuilder.
+  /// Renderer text is written with Write, so no newline is added.
+  /// </summary>
+  private static object? DispatchUseVerbatimRendererOutput(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+      throw new InvalidOperationException("UseVerbatimRendererOutput() must be called on an app builder.");
+
+    return appBuilder.UseVerbatimRendererOutput();
+  }
+
+  /// <summary>
+  /// Dispatches UseProblemRendererForErrors() to IIrAppBuilder.
+  /// CLI binding errors go through the app's problem renderer.
+  /// </summary>
+  private static object? DispatchUseProblemRendererForErrors(object? receiver)
+  {
+    if (receiver is not IIrAppBuilder appBuilder)
+      throw new InvalidOperationException("UseProblemRendererForErrors() must be called on an app builder.");
+
+    return appBuilder.UseProblemRendererForErrors();
+  }
+
+  /// <summary>
   /// Dispatches EnableCompletion() call to IIrAppBuilder.
   /// Marks the app as having shell completion enabled.
   /// </summary>
@@ -1696,6 +1875,32 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
+  /// Dispatches LocalOnly() call to IIrRouteBuilder.
+  /// </summary>
+  private static object? DispatchLocalOnly(object? receiver)
+  {
+    if (receiver is not IIrRouteBuilder routeBuilder)
+    {
+      throw new InvalidOperationException("LocalOnly() must be called on a route builder.");
+    }
+
+    return routeBuilder.LocalOnly();
+  }
+
+  /// <summary>
+  /// Dispatches Exclusive() call to IIrRouteBuilder.
+  /// </summary>
+  private static object? DispatchExclusive(object? receiver)
+  {
+    if (receiver is not IIrRouteBuilder routeBuilder)
+    {
+      throw new InvalidOperationException("Exclusive() must be called on a route builder.");
+    }
+
+    return routeBuilder.Exclusive();
+  }
+
+  /// <summary>
   /// Dispatches Done() call to IIrRouteBuilder or IIrGroupBuilder.
   /// </summary>
   private object? DispatchDone(InvocationExpressionSyntax invocation, object? receiver)
@@ -1751,8 +1956,9 @@ public sealed class DslInterpreter
     // Mark as built, recording the Build() call so the emitter can attach the capabilities catalog
     appBuilder.Build(ExtractBuildInterceptSite(invocation));
 
-    // Track this built app for finalization
+    // Track this built app for finalization, and which Build() call built it
     BuiltApps.Add(appBuilder);
+    BuildCalls[invocation] = appBuilder;
 
     // Return a marker for RunAsync detection
     return new BuiltAppMarker(appBuilder);

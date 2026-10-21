@@ -14,8 +14,8 @@ namespace TimeWarp.Nuru.Generators;
 /// values. The two downstream resolution sites are:
 /// <list type="number">
 ///   <item><c>CompletionDataExtractor.ExtractEnumParameters</c> — <c>Handler.Parameters[*].ParameterTypeName</c>.</item>
-///   <item><c>CapabilitiesEmitter.ExtractEnumValues</c> — <c>ParameterDefinition/OptionDefinition.ResolvedClrTypeName</c>
-///     with a fallback to the matching handler parameter type (already covered by set 1).</item>
+///   <item><c>CapabilitiesEmitter.ExtractEnumValues</c> — <c>ParameterDefinition/OptionDefinition.ResolvedClrTypeName</c>,
+///     then the matching handler parameter type when that does not resolve (already covered by set 1).</item>
 /// </list>
 /// A superset is safe (extra entries are harmless).
 /// </remarks>
@@ -53,8 +53,8 @@ internal static class EnumInfoExtractor
     {
       cancellationToken.ThrowIfCancellationRequested();
 
-      INamedTypeSymbol? typeSymbol = compilation.GetTypeByMetadataName(typeName);
-      if (typeSymbol?.TypeKind != TypeKind.Enum)
+      INamedTypeSymbol? typeSymbol = ResolveEnumSymbol(compilation, typeName);
+      if (typeSymbol is null)
         continue;
 
       EquatableArray<string> members =
@@ -152,6 +152,108 @@ internal static class EnumInfoExtractor
     }
 
     return false;
+  }
+
+  /// <summary>
+  /// Resolves a normalized C# type name (as produced by <c>FullyQualifiedFormat</c>, minus
+  /// <c>global::</c>) to its enum symbol. A nested type's display name (<c>NS.Outer.Inner</c>,
+  /// <c>NS.Outer&lt;int&gt;.Inner</c>) is not its metadata name (<c>NS.Outer+Inner</c>,
+  /// <c>NS.Outer`1+Inner</c>), so <see cref="Compilation.GetTypeByMetadataName"/> misses it; the
+  /// fallback walks the namespace and type members of <see cref="Compilation.GlobalNamespace"/>
+  /// segment by segment, matching each type segment by name and generic arity.
+  /// </summary>
+  private static INamedTypeSymbol? ResolveEnumSymbol(Compilation compilation, string typeName)
+  {
+    INamedTypeSymbol? byMetadata = compilation.GetTypeByMetadataName(typeName);
+    if (byMetadata is not null)
+      return byMetadata.TypeKind == TypeKind.Enum ? byMetadata : null;
+
+    List<(string Name, int Arity)>? segments = SplitTypeName(typeName);
+    if (segments is null || segments.Count < 2)
+      return null;
+
+    return FindEnum(compilation.GlobalNamespace, segments, 0);
+  }
+
+  private static INamedTypeSymbol? FindEnum(INamespaceOrTypeSymbol container, List<(string Name, int Arity)> segments, int index)
+  {
+    (string name, int arity) = segments[index];
+    bool isLast = index == segments.Count - 1;
+
+    foreach (ISymbol member in container.GetMembers(name))
+    {
+      if (member is INamedTypeSymbol type && type.Arity == arity)
+      {
+        if (isLast)
+        {
+          if (type.TypeKind == TypeKind.Enum)
+            return type;
+        }
+        else if (FindEnum(type, segments, index + 1) is INamedTypeSymbol nested)
+        {
+          return nested;
+        }
+      }
+      else if (!isLast && arity == 0 && member is INamespaceSymbol ns
+        && FindEnum(ns, segments, index + 1) is INamedTypeSymbol inNamespace)
+      {
+        return inNamespace;
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Splits <c>NS.Outer&lt;A.B, C&gt;.Inner</c> on top-level dots into (name, generic arity)
+  /// segments: <c>(NS, 0), (Outer, 2), (Inner, 0)</c>. Returns null for a malformed name.
+  /// </summary>
+  private static List<(string Name, int Arity)>? SplitTypeName(string typeName)
+  {
+    List<(string Name, int Arity)> segments = [];
+    int depth = 0;
+    int arity = 0;
+    int nameEnd = -1;
+    int start = 0;
+
+    for (int i = 0; i <= typeName.Length; i++)
+    {
+      char c = i < typeName.Length ? typeName[i] : '.';
+      switch (c)
+      {
+        case '<' or '(' or '[':
+          if (depth == 0 && c == '<')
+          {
+            nameEnd = i;
+            arity = 1;
+          }
+
+          depth++;
+          break;
+        case '>' or ')' or ']':
+          depth--;
+          if (depth < 0)
+            return null;
+          break;
+        case ',' when depth == 1 && nameEnd >= 0:
+          arity++;
+          break;
+        case '.' when depth == 0:
+          string name = typeName[start..(nameEnd >= 0 ? nameEnd : i)].Trim();
+          if (name.StartsWith('@'))
+            name = name[1..];
+          if (name.Length == 0)
+            return null;
+
+          segments.Add((name, nameEnd >= 0 ? arity : 0));
+          start = i + 1;
+          nameEnd = -1;
+          arity = 0;
+          break;
+      }
+    }
+
+    return depth == 0 ? segments : null;
   }
 
   private static void AddCandidate(HashSet<string> candidates, string? typeName)

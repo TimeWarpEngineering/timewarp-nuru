@@ -47,6 +47,20 @@ How an agent calls a route with a large payload:
 - Exact `name` keys and argv-overrides-JSON
 - App-level fat field when the app does not emit `invocation`
 
+### [MCP hosting](mcp-hosting.md)
+Every route as an MCP tool, from package `TimeWarp.Nuru.McpHost`:
+- `AddMcpRoute()` adds a stdio `mcp` route; `WithNuruTools(app)` adds the tools to an existing MCP host, including streamable HTTP
+- Tool names, schemas, and binding are the same as `--capabilities` and `--json-args`
+- Real JSON Schema for object and array members, from the type the binder deserializes into
+- Annotations from the endpoint kind, `[Destructive]`, `[OpenWorld]` and `[DisplayName]`, with a per-tool host override
+- Defaults in the `default` keyword and in the description, for harnesses that drop `default`
+
+### [Served apps](served-apps.md)
+A warm local server for the app's own CLI, from package `TimeWarp.Nuru.Daemon`:
+- `AddServeRoute()` adds `serve`, `serve --status` and `serve --stop` on a per-user Unix domain socket
+- Matched routes forward to a running server; `--daemon` starts one, `--no-daemon` runs locally
+- `[LocalOnly]` / `.LocalOnly()` keep a route in the CLI; the MCP host forwards to the same server
+
 ### [Neutral contracts](neutral-contracts.md)
 Endpoints derived from `TimeWarp.Contracts` `[Operation]` requests:
 - Option names, required members, defaults, enums, repeated scalars, and JSON members
@@ -109,6 +123,8 @@ Built-in widgets for formatted terminal output:
 | 📖 Auto-Help | No manual documentation | [Auto-Help](auto-help.md) |
 | 🔧 Built-in Routes | Version, updates, REPL out-of-box | [Built-in Routes](built-in-routes.md) |
 | 🤖 Agent invocation | `--capabilities` then `--json-args` | [Agent invocation](agent-invocation.md) |
+| 🔌 MCP hosting | Routes as MCP tools, same names and arguments | [MCP hosting](mcp-hosting.md) |
+| 🔥 Served apps | Warm local server the CLI forwards to | [Served apps](served-apps.md) |
 | ⚙️ Configuration | IOptions<T> and DI integration | [Configuration](configuration.md) |
 | ⌨️ REPL Key Bindings | Shortcuts and `key-bindings` | [REPL Key Bindings](repl-key-bindings.md) |
 | ⌨️ Shell Completion | Tab completion in all shells | [Shell Completion](shell-completion.md) |

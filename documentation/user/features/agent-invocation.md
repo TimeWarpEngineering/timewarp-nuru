@@ -35,7 +35,26 @@ myapp apply_patch --json-args @./apply-patch.json
 
 `invocation` is nullable. A document that omits it still deserializes, and `Invocation` is null. A reader that does not declare the property ignores the JSON field. `TimeWarp.Nuru.Search` indexes `endpoints` and leaves `invocation` in the stored capabilities document. It does not copy the object onto search results.
 
-`parameters[]` and `options[]` remain the schema. `--capabilities` does not emit a JSON Schema.
+`parameters[]` and `options[]` remain the schema. The one exception is a member that binds as one JSON value (`type` `json` plus the CLR type name): it also carries `schema`, the JSON Schema of that type exported from the source-generated metadata the `--json-args` binder deserializes with. Its property names, required members (`required` and constructor parameters), nullability and string-enum values are therefore what binds. A nested property's `[Description]` becomes its `description`. The root type includes `"null"` only when the member is nullable.
+
+```json
+{
+  "name": "Notes",
+  "type": "json CalculatorContracts.Endpoints.LabeledAmount[]",
+  "required": false,
+  "isFlag": false,
+  "isRepeated": false,
+  "defaultValue": "[]",
+  "schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": { "Label": { "type": "string" }, "Amount": { "type": "number" } },
+      "required": ["Label"]
+    }
+  }
+}
+```
 
 Each endpoint ends with `returnType`: the CLR type name of the result (the awaited type for an async handler, without `global::`) and how the CLI writes it.
 
@@ -55,6 +74,19 @@ Each endpoint ends with `returnType`: the CLR type name of the result (the await
 An endpoint that returns `OneOf<TSuccess, SharedProblemDetails>` is described by `TSuccess`, because the CLI writes the success value to stdout and the problem to stderr with an exit code. `IQuery<OneOf<string, SharedProblemDetails>>` is `{"name": "string", "kind": "primitive"}`. Any other `OneOf` is `json` under its own name.
 
 `returnType` is nullable for the same reason as `invocation`: a document from a CLI built before it existed still deserializes, with `ReturnType` null.
+
+These members follow `returnType` only when the route declares them. Nothing infers them, so other endpoints' documents are unchanged.
+
+| Member | Declared with | Meaning |
+|--------|---------------|---------|
+| `destructive` | `[Destructive]` (`true`) or `[Destructive(false)]` on the endpoint class | The route may delete or overwrite data, or (`false`) it only adds |
+| `localOnly` | `[LocalOnly]` (endpoint class) or `.LocalOnly()` (fluent route) | A served app never forwards it to its server (see [Served apps](served-apps.md)) |
+| `openWorld` | `[OpenWorld]` (`true`) or `[OpenWorld(false)]` on the endpoint class | The route reaches outside the app (the web, a remote service), or (`false`) it works only on local state |
+| `title` | `[System.ComponentModel.DisplayName("...")]` on the endpoint class | A human-readable display name |
+
+## MCP
+
+`TimeWarp.Nuru.McpHost` serves the same routes as MCP tools: `AddMcpRoute()` adds a stdio `mcp` route, and `WithNuruTools(app)` adds the tools to an existing MCP host. A tool's name is the route's literal words joined by `_`. Its input schema is built from this catalog, and `tools/call` uses the binder described below. A tool therefore takes exactly the arguments `--json-args` takes for that route and returns the text the CLI prints. See [MCP hosting](mcp-hosting.md).
 
 ## In-process catalog
 
@@ -79,6 +111,32 @@ foreach (EndpointCapability endpoint in catalog.Endpoints)
 - `Capabilities` is built on first access and cached. `--capabilities` serializes that same instance, so the two cannot drift. Treat it as read-only.
 - `FilterByGroup` splits the filter on `.` and compares each segment ignoring case. It returns a new response with `filter.group` set.
 - Each app built in one assembly has its own catalog with only its own routes.
+
+## In-process bind and invoke
+
+A host that gets a JSON object from somewhere other than argv (an MCP `tools/call`, a batch file, a daemon request) binds it to a route and runs that route in the same process. Binding uses the same generated code as `--json-args`, so the rules below apply unchanged.
+
+```csharp
+using JsonDocument doc = JsonDocument.Parse("""{"env":"prod","count":3}""");
+
+if (!app.TryBind("deploy {env} --count {count:int}", doc.RootElement, out NuruBoundRequest? request, out NuruBindError? error))
+{
+  // error.Kind, error.Key, and error.Message (the text --json-args prints)
+  return Fail(error.Message);
+}
+
+object? result = await app.InvokeAsync(request, cancellationToken); // typed result, nothing written
+
+using TestTerminal text = new();
+int exitCode = await app.RenderAsync(request, result, text);        // the CLI's text, when a host wants it
+```
+
+- `TryBind(route, arguments, out request, out error)` names the route by its catalog `pattern` (ordinal). `arguments` is a JSON object; `default(JsonElement)` binds no arguments. No argv is parsed: the binder sees only the route's literal words, so every parameter and option comes from JSON. Keys, types, `null`, arrays, defaults, and the first failure reported are the same as `--json-args` without argv.
+- `NuruBindError.Kind` is `UnknownRoute`, `NotAnObject`, `UnknownKey`, `MissingValue`, `WrongType`, `InvalidValue`, or `UnexpectedArgument`. `Key` is the JSON key the failure is about, or null. `Message` is the line `--json-args` writes to stderr.
+- `InvokeAsync(request, cancellationToken)` runs the same configuration, services, command scope, `INuruBehavior` chain, and handler (or mediator dispatch) as the CLI. It returns the handler's result boxed, without writing it: for `OneOf<T, SharedProblemDetails>` the `OneOf` itself, and null for `void` or `Unit`. Handler exceptions propagate. It throws `InvalidOperationException` when route execution stops before the handler (for example, no handler is registered), and `ArgumentException` for a request another app bound.
+- `RenderAsync(request, result, terminal)` writes the result as the CLI does for that route: a registered or declared `IResponseRenderer<T>`, problem details to stderr, otherwise the output strategy (`returnType.kind`). It returns the exit code the CLI would: the problem status, otherwise 0. `RenderAsync(request, result, terminal, context)` renders the result of `InvokeAsync(request, context, …)` as the rest of that call: it starts from the exit code the handler set (`NuruCallContext.CurrentExitCode`), resolves paths against the call's working directory, and returns the call's exit code (the problem status overwrites the handler's code). The daemon and MCP hosts render this way.
+- The binder and invoker are attached with the catalog, by the generated `Build()` interceptor, so an app that is built but never run supports them. The code is generated: no reflection, AOT-safe.
+- Calls may run concurrently. Each `InvokeAsync` and standalone `RenderAsync` call runs in its own `NuruCallContext`: its own exit code and service scope, never `Environment.ExitCode`. `InvokeAsync(request, context, cancellationToken)` also gives the call its own terminal and working directory (`new NuruCallContext(terminal, workingDirectory) { CaptureConsole = true }`), which is how the daemon and MCP hosts run each call. `[Exclusive]` / `.Exclusive()` routes run one at a time. See [Served apps](served-apps.md#concurrent-calls).
 
 ## `--json-args`
 
@@ -117,5 +175,6 @@ The handler reads stdin when `Patch` is `-`, the path after `@`, or the literal.
 
 ## Related documentation
 
+- **[MCP hosting](mcp-hosting.md)** - the same routes as MCP tools, with the same names and arguments
 - **[Built-in Routes](built-in-routes.md)** - `--capabilities` and `--json-args` beside the other built-ins
 - **[Auto-Help](auto-help.md)** - root help lists `--json-args`; per-route help says values may come from it

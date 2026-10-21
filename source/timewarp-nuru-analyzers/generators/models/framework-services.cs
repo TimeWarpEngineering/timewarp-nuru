@@ -111,7 +111,7 @@ internal static class FrameworkServices
 
     // ITerminal
     if (normalized.StartsWith("TimeWarp.Terminal.ITerminal", StringComparison.Ordinal))
-      return "app.Terminal";
+      return "new global::TimeWarp.Nuru.NuruCallTerminal(app)";
 
     // IConfiguration / IConfigurationRoot
     if (normalized.StartsWith("Microsoft.Extensions.Configuration.IConfiguration", StringComparison.Ordinal))

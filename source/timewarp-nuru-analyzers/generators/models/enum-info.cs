@@ -11,8 +11,9 @@ namespace TimeWarp.Nuru.Generators;
 /// model compares equal whenever the enum shape is unchanged, letting the emit stage cache.
 /// </remarks>
 /// <param name="MetadataTypeName">
-/// The normalized metadata type name (no <c>global::</c> prefix, no trailing <c>?</c>) used as
-/// the lookup key by the emitters.
+/// The normalized C# type name (no <c>global::</c> prefix, no trailing <c>?</c>) used as the lookup
+/// key by the emitters. It is the <c>FullyQualifiedFormat</c> display name the model carries, so a
+/// nested enum is keyed <c>NS.Outer.Inner</c>, not its metadata name <c>NS.Outer+Inner</c>.
 /// </param>
 /// <param name="MemberNames">Enum member names in declaration order.</param>
 public sealed record EnumInfo(

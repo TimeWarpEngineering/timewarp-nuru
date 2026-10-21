@@ -58,6 +58,7 @@ return await app.RunAsync(args);
 ```
 
 `DiscoverEndpoints()` auto-discovers all classes with `[NuruRoute]`.
+Endpoints in a referenced contracts assembly are discovered only after an opt-in: `[assembly: NuruEndpointAssembly(typeof(AnyTypeInIt))]`, or `Map<T>()` for one type. Do not link contract files into the CLI as sources. See `documentation/user/features/neutral-contracts.md`.
 `.AddRepl()` enables interactive REPL mode. `AutoStartWhenEmpty = true` starts REPL when no args provided.
 
 ### Commands, Queries, and Idempotent Commands
@@ -343,6 +344,8 @@ public sealed class Handler : ICommandHandler<DeployCommand, Unit>
 
 **Common mistake**: returning `int` thinking it sets the exit code. `.WithHandler(() => 42)` outputs `"42"` to the terminal but the exit code is still 0.
 
+**Served apps and MCP hosts** (`TimeWarp.Nuru.Daemon`, `TimeWarp.Nuru.McpHost`) run calls concurrently, so `Environment.ExitCode` and `Environment.CurrentDirectory` are not per call. Set `NuruCallContext.CurrentExitCode` (or return `OneOf<T, SharedProblemDetails>`) and resolve paths with `NuruCallContext.GetFullPath(path)`; both also work in a plain CLI run. Mark a handler that is not thread-safe `[Exclusive]` / `.Exclusive()`.
+
 ## REPL Mode
 
 Add interactive REPL to any Nuru app with `.AddRepl()`:
@@ -528,6 +531,12 @@ For CLIs with multiple endpoint files, use a `Directory.Build.props` to include 
 `--capabilities` prints the agent catalog. `parameters[]` and `options[]` `name` values are the argument schema. The optional top-level `invocation` object names the `--json-args` transport (`-` for stdin, `@` for a file, `argvOverridesJson`).
 
 Each endpoint ends with `returnType` (`name`, and `kind` of `unit`, `primitive`, or `json`). In process, `app.Capabilities` returns the same `CapabilitiesResponse` right after `Build()` (no reflection, AOT-safe), and `app.Capabilities.FilterByGroup("admin")` matches `--group-filter admin`.
+
+To run a route from JSON in process (an MCP host, a batch), call `app.TryBind(pattern, jsonElement, out var request, out var error)`, then `await app.InvokeAsync(request)` for the typed result, and `await app.RenderAsync(request, result, terminal)` for the CLI text. With a `NuruCallContext`, pass it to both (`InvokeAsync(request, context)`, `RenderAsync(request, result, terminal, context)`) so the handler's `CurrentExitCode` and the call's directory carry into render. Binding is the `--json-args` binder; `error.Message` is what `--json-args` prints.
+
+To serve the routes as MCP tools, reference `TimeWarp.Nuru.McpHost` and call `.AddMcpRoute()` (stdio `myapp mcp`), or `builder.Services.AddMcpServer().WithNuruTools(app)` in an existing MCP host such as ASP.NET Core with `WithHttpTransport()`. MCP and the CLI share names and arguments exactly: the tool for `config set {key} {value}` is `config_set`, its input schema is the route's `parameters[]` and `options[]`, and `tools/call` uses the `--json-args` binder (unknown keys are a tool error). Queries are read-only and idempotent, idempotent commands are idempotent. On an endpoint class, `[Destructive]` / `[Destructive(false)]` sets `destructiveHint`, `[OpenWorld]` / `[OpenWorld(false)]` sets `openWorldHint`, and `[DisplayName("...")]` sets the title; `NuruMcpHostOptions.ToolAnnotations["tool_name"]` overrides them. A member that binds as one JSON value (an object or an array of objects) publishes the real JSON Schema of its type, so pass the object, not a string. A default is in the `default` keyword and also as `Default: X.` in the description. See [MCP hosting](../../documentation/user/features/mcp-hosting.md).
+
+To keep warm state (a loaded workspace) across CLI calls, reference `TimeWarp.Nuru.Daemon` and call `.AddServeRoute()`. `myapp serve` runs a server on a per-user Unix domain socket, and matched routes then forward to it with the same output and exit code. `--daemon` starts the server and forwards. `--no-daemon` runs the call locally. `serve --status` and `serve --stop` manage the server. Mark routes that must stay in the CLI process with `[LocalOnly]` or `.LocalOnly()`. The `mcp` route forwards to the same server. Load expensive state lazily, because generated DI builds singletons on every call. See [Served apps](../../documentation/user/features/served-apps.md).
 
 The agent loop, the exact-name rule, argv-overrides-JSON, and the app-level fat-field pattern are in [Agent invocation](../../documentation/user/features/agent-invocation.md).
 

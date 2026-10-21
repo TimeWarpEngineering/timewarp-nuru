@@ -148,9 +148,7 @@ internal static class CapabilitiesEmitter
   private static void EmitEndpointCapabilityAdd(StringBuilder sb, RouteDefinition route, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues)
   {
     string pattern = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
-    string[] groupPathParts = string.IsNullOrEmpty(route.GroupPrefix)
-      ? []
-      : route.GroupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    IReadOnlyList<string> groupPathParts = route.CatalogGroupPath;
     string kindValue = MapMessageTypeToKind(route.MessageType);
 
     sb.AppendLine("    __endpoints.Add(");
@@ -160,7 +158,7 @@ internal static class CapabilitiesEmitter
 
     // GroupPath
     sb.Append("        GroupPath = [");
-    for (int i = 0; i < groupPathParts.Length; i++)
+    for (int i = 0; i < groupPathParts.Count; i++)
     {
       if (i > 0)
         sb.Append(", ");
@@ -240,13 +238,39 @@ internal static class CapabilitiesEmitter
       sb.AppendLine("        ],");
     }
 
-    // ReturnType (always emitted, last)
+    // ReturnType (always emitted)
     (string returnTypeName, string returnTypeKind) = DescribeReturnType(route.Handler);
     sb.AppendLine("        ReturnType = new global::TimeWarp.Nuru.ReturnTypeCapability");
     sb.AppendLine("        {");
     sb.AppendLine($"          Name = \"{EmitterStringUtils.EscapeForStringLiteral(returnTypeName)}\",");
     sb.AppendLine($"          Kind = global::TimeWarp.Nuru.ReturnTypeKind.{returnTypeKind}");
-    sb.AppendLine("        }");
+    sb.AppendLine("        },");
+
+    // Hints below are set only when the endpoint declares them; otherwise null and omitted from JSON.
+    // [Destructive] / [Destructive(false)]
+    if (route.Destructive is bool destructive)
+    {
+      sb.AppendLine($"        Destructive = {(destructive ? "true" : "false")},");
+    }
+
+    // [LocalOnly] / .LocalOnly()
+    if (route.IsLocalOnly)
+    {
+      sb.AppendLine("        LocalOnly = true,");
+    }
+
+    // [OpenWorld] / [OpenWorld(false)]
+    if (route.OpenWorld is bool openWorld)
+    {
+      sb.AppendLine($"        OpenWorld = {(openWorld ? "true" : "false")},");
+    }
+
+    // [DisplayName("...")]
+    if (route.Title is not null)
+    {
+      sb.AppendLine($"        Title = \"{EmitterStringUtils.EscapeForStringLiteral(route.Title)}\",");
+    }
+
     sb.AppendLine("      });");
   }
 
@@ -279,9 +303,11 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 
-    // Use resolved CLR type name first; fall back to handler's parameter type when pattern has no type annotation
-    string? typeNameForEnum = param.ResolvedClrTypeName ?? handlerTypeName;
-    string[]? allowedValues = ExtractEnumValues(typeNameForEnum, enumValues);
+    // Use resolved CLR type name first; fall back to the handler's parameter type when the pattern
+    // has no type annotation, or when its annotation is a bare name (`{x:Inner}` resolves to
+    // `global::Inner`) that only the handler parameter type qualifies.
+    string[]? allowedValues = ExtractEnumValues(param.ResolvedClrTypeName, enumValues)
+      ?? ExtractEnumValues(handlerTypeName, enumValues);
     if (allowedValues is not null)
     {
       sb.Append("              AllowedValues = [");
@@ -342,9 +368,11 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"              DefaultValue = \"{defaultValue}\",");
     }
 
-    // Use resolved CLR type name first; fall back to handler's parameter type when pattern has no type annotation
-    string? typeNameForEnum = option.ResolvedClrTypeName ?? handlerTypeName;
-    string[]? allowedValues = ExtractEnumValues(typeNameForEnum, enumValues);
+    // Use resolved CLR type name first; fall back to the handler's parameter type when the pattern
+    // has no type annotation, or when its annotation is a bare name (`{x:Inner}` resolves to
+    // `global::Inner`) that only the handler parameter type qualifies.
+    string[]? allowedValues = ExtractEnumValues(option.ResolvedClrTypeName, enumValues)
+      ?? ExtractEnumValues(handlerTypeName, enumValues);
     if (allowedValues is not null)
     {
       sb.Append("              AllowedValues = [");
@@ -357,6 +385,14 @@ internal static class CapabilitiesEmitter
       }
 
       sb.AppendLine("],");
+    }
+
+    // A JSON member publishes the schema of the type its binder deserializes into, from the same
+    // generated NuruJsonMemberContext the --json-args binder uses.
+    if (option.IsJsonValue && option.ResolvedClrTypeName is string jsonType)
+    {
+      string nullable = option.ParameterIsOptional ? "true" : "false";
+      sb.AppendLine($"              Schema = global::TimeWarp.Nuru.NuruJsonMemberSchema.Create(global::TimeWarp.Nuru.Generated.NuruJsonMemberContext.Default, typeof({jsonType.TrimEnd('?')}), {nullable}),");
     }
 
     string comma = isLast ? "" : ",";

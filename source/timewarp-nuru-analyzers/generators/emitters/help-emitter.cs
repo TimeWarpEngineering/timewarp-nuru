@@ -198,6 +198,18 @@ internal static class HelpEmitter
     sb.AppendLine("      .AddRow(\"--capabilities --group-filter <group>\", \"Filter capabilities by group prefix\")");
     sb.AppendLine("      .AddRow(\"--capabilities --search <query>\", \"Search capabilities using nuru\")");
     sb.AppendLine("      .AddRow(\"--json-args <value>\", \"Bind arguments from -, @path, or an inline JSON object\")");
+    if (model.McpRoute is not null)
+    {
+      sb.AppendLine($"      .AddRow(\"{BuiltInFlags.McpRouteForm}\", \"Serve the routes as MCP tools over stdio\")");
+    }
+
+    if (model.ServeRoute is not null)
+    {
+      sb.AppendLine($"      .AddRow(\"{BuiltInFlags.ServeRouteForm}\", \"Serve the routes from a local server that later calls forward to\")");
+      sb.AppendLine($"      .AddRow(\"{BuiltInFlags.ServeRouteForm} --status | --stop\", \"Report or stop the running server\")");
+      sb.AppendLine("      .AddRow(\"--daemon | --no-daemon\", \"Forward this call to the server (starting it) or run it here\")");
+    }
+
     if (helpOptions.ShowCompletionRoutes && model.HasCompletion)
     {
       sb.AppendLine("      .AddRow(\"__complete\", \"Shell completion callback\")");

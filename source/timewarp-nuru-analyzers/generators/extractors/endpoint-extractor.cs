@@ -11,6 +11,9 @@
 // ENDPOINT SCOPING: All [NuruRoute] classes in a compilation are collected globally by the
 // source generator. They are filtered per-app via FilterEndpointsForApp() during emission.
 // .DiscoverEndpoints() includes ALL endpoints; .Map<T>() includes only that type.
+// Extraction runs on the type symbol, so a referenced-assembly type (ReferencedEndpointLocator)
+// goes through the same code. A diagnostic whose attribute syntax is not in this compilation
+// (metadata, or an IDE project reference) uses the opt-in site.
 //
 // ALIAS GENERATION: ExtractAndCombineAliases builds full alias strings that completely replace
 // groupPrefix + pattern. For group aliases, the alias replaces one GROUP's entire prefix (which
@@ -31,6 +34,9 @@
 // The object initializer omits default! until the caller supplies a value, so the
 // declared initializer runs. A type with no parameterless constructor is new(args)
 // for the constructor whose parameters match property names.
+// A property with no syntax in this compilation (a referenced assembly) has an unknown
+// initializer: default!, so the compiled initializer runs, with [DefaultValue] as the capabilities
+// display only. A positional record parameter default is in metadata and is copied.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -45,6 +51,12 @@ internal static partial class EndpointExtractor
   private const string NuruRouteAttributeName = "NuruRoute";
   private const string NuruRouteAliasAttributeName = "NuruRouteAlias";
   private const string NuruRouteExampleAttributeName = "NuruRouteExample";
+  private const string DestructiveAttributeFullName = "TimeWarp.Nuru.DestructiveAttribute";
+  private const string LocalOnlyAttributeFullName = "TimeWarp.Nuru.LocalOnlyAttribute";
+  private const string ExclusiveAttributeFullName = "TimeWarp.Nuru.ExclusiveAttribute";
+  private const string OpenWorldAttributeFullName = "TimeWarp.Nuru.OpenWorldAttribute";
+  private const string DisplayNameAttributeFullName = "System.ComponentModel.DisplayNameAttribute";
+  private const string DefaultValueAttributeFullName = "System.ComponentModel.DefaultValueAttribute";
   private const string ParameterAttributeName = "Parameter";
   private const string OptionAttributeName = "Option";
   private const string GroupOptionAttributeName = "GroupOption";
@@ -91,7 +103,33 @@ internal static partial class EndpointExtractor
     CancellationToken cancellationToken
   )
   {
-    RouteIdentity identity = ResolveRouteIdentity(classDeclaration, semanticModel, cancellationToken);
+    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
+    if (classSymbol is null)
+      return EndpointExtractionResult.Empty;
+
+    return Extract(classSymbol, semanticModel.Compilation, classDeclaration.Identifier.GetLocation(), cancellationToken);
+  }
+
+  /// <summary>
+  /// Extracts a RouteDefinition from a [NuruRoute] or [Operation] type symbol.
+  /// The type can be declared in this compilation or in a referenced assembly.
+  /// </summary>
+  /// <param name="classSymbol">The endpoint type.</param>
+  /// <param name="compilation">The compilation the generated code belongs to.</param>
+  /// <param name="fallbackLocation">
+  /// Diagnostic location when an attribute has no syntax, as for a referenced-assembly type.
+  /// </param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>An extraction result containing the route definition and any diagnostics.</returns>
+  public static EndpointExtractionResult Extract
+  (
+    INamedTypeSymbol classSymbol,
+    Compilation compilation,
+    Location fallbackLocation,
+    CancellationToken cancellationToken
+  )
+  {
+    RouteIdentity identity = ResolveRouteIdentity(classSymbol, compilation, fallbackLocation);
     if (!identity.HasNuruRoute && !identity.HasOperation)
       return EndpointExtractionResult.Empty;
 
@@ -104,7 +142,7 @@ internal static partial class EndpointExtractor
     // [Operation] without a mediator kind is not an endpoint. [NuruRoute] still is.
     // Run this before pattern validation so a non-endpoint operation does not
     // report a route-pattern diagnostic.
-    string messageType = InferMessageType(classDeclaration, semanticModel, cancellationToken);
+    string messageType = InferMessageType(classSymbol);
     if (!identity.HasNuruRoute && messageType == "Unspecified")
       return EndpointExtractionResult.Empty;
 
@@ -115,16 +153,17 @@ internal static partial class EndpointExtractor
       return EndpointExtractionResult.Failure(patternDiagnostic);
     }
 
-    // Get the group info from base class hierarchy - always collect full hierarchy
-    GroupInfo groupInfo = ExtractGroupInfo(classDeclaration, semanticModel, cancellationToken);
-    groupInfo = ApplyCliBindingGroup(groupInfo, classDeclaration, semanticModel, cancellationToken);
-
-    INamedTypeSymbol? endpointSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (endpointSymbol is null)
-      return EndpointExtractionResult.Empty;
+    // Get the group info from base class hierarchy - always collect full hierarchy.
+    // A non-blank [Operation(Group)] is metadata only and replaces any route-group prefix.
+    EquatableArray<string> operationGroupPath = SplitOperationGroup(identity.OperationGroup);
+    GroupInfo groupInfo = ExtractGroupInfo(classSymbol);
+    groupInfo = operationGroupPath.IsDefaultOrEmpty
+      ? ApplyCliBindingGroup(groupInfo, classSymbol)
+      : WithoutRoutePrefix(groupInfo);
 
     if (!TrySelectConstructorArguments(
-      endpointSymbol,
+      classSymbol,
+      compilation,
       attributeLocation,
       identity.HasOperation,
       out EquatableArray<string> constructorArguments,
@@ -135,8 +174,8 @@ internal static partial class EndpointExtractor
 
     // Extract parameters and options from properties
     ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(
-      classDeclaration,
-      semanticModel,
+      classSymbol,
+      compilation,
       cancellationToken,
       identity.HasOperation);
 
@@ -151,19 +190,15 @@ internal static partial class EndpointExtractor
 
     // Get handler info (requires nested Handler class)
     HandlerDefinition? handler = ExtractHandler(
-      classDeclaration,
-      semanticModel,
+      classSymbol,
+      compilation,
       cancellationToken,
       identity.HasOperation,
       constructorArguments);
     Diagnostic? missingHandler = null;
     if (handler is null)
     {
-      INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-      if (classSymbol is null)
-        return EndpointExtractionResult.Empty;
-
-      bool visible = HasVisibleHandler(semanticModel.Compilation, classSymbol);
+      bool visible = HasVisibleHandler(compilation, classSymbol);
       if (!identity.HasOperation && !visible)
         return EndpointExtractionResult.Empty;
 
@@ -171,7 +206,7 @@ internal static partial class EndpointExtractor
         classSymbol,
         messageType,
         handlerVisible: visible,
-        semanticModel.Compilation,
+        compilation,
         cancellationToken,
         constructorArguments);
 
@@ -185,25 +220,16 @@ internal static partial class EndpointExtractor
     }
 
     // Extract filter interfaces (for behavior filtering)
-    ImmutableArray<InterfaceImplementationDefinition> filterInterfaces =
-      ExtractFilterInterfaces(classDeclaration, semanticModel, cancellationToken);
+    ImmutableArray<InterfaceImplementationDefinition> filterInterfaces = ExtractFilterInterfaces(classSymbol);
 
     // Calculate specificity
     int specificity = mergedSegments.Sum(s => s.SpecificityContribution);
 
     // Extract and combine aliases
-    ImmutableArray<string> aliases = ExtractAndCombineAliases(
-      classDeclaration,
-      semanticModel,
-      groupInfo,
-      pattern,
-      cancellationToken);
+    ImmutableArray<string> aliases = ExtractAndCombineAliases(classSymbol, groupInfo, pattern);
 
     // Extract usage examples (all [NuruRouteExample] attributes, in source order)
-    ImmutableArray<ExampleDefinition> examples = ExtractNuruRouteExampleAttributes(
-      classDeclaration,
-      semanticModel,
-      cancellationToken);
+    ImmutableArray<ExampleDefinition> examples = ExtractNuruRouteExampleAttributes(classSymbol);
 
     RouteDefinition route = RouteDefinition.Create(
       originalPattern: pattern,
@@ -216,7 +242,13 @@ internal static partial class EndpointExtractor
       computedSpecificity: specificity,
       aliases: aliases,
       implements: filterInterfaces,
-      examples: examples);
+      examples: examples,
+      destructive: BoolAttributeValue(classSymbol, DestructiveAttributeFullName),
+      isLocalOnly: HasAttribute(classSymbol, LocalOnlyAttributeFullName),
+      groupPath: operationGroupPath,
+      isExclusive: HasAttribute(classSymbol, ExclusiveAttributeFullName),
+      openWorld: BoolAttributeValue(classSymbol, OpenWorldAttributeFullName),
+      title: StringAttributeValue(classSymbol, DisplayNameAttributeFullName));
 
     if (missingHandler is not null)
       return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);
@@ -228,16 +260,14 @@ internal static partial class EndpointExtractor
   /// Extracts and combines aliases from the command class and group hierarchy.
   /// </summary>
   private static ImmutableArray<string> ExtractAndCombineAliases(
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
+    INamedTypeSymbol classSymbol,
     GroupInfo groupInfo,
-    string pattern,
-    CancellationToken cancellationToken)
+    string pattern)
   {
     List<string> allAliases = [];
 
     // Extract direct aliases from command class
-    ImmutableArray<string> directAliases = ExtractNuruRouteAliasAttribute(classDeclaration, semanticModel, cancellationToken);
+    ImmutableArray<string> directAliases = ExtractNuruRouteAliasAttribute(classSymbol);
     allAliases.AddRange(directAliases);
 
     // Generate full alias patterns from group aliases. GroupPrefixIndex selects a GROUP
@@ -318,15 +348,8 @@ internal static partial class EndpointExtractor
   /// <summary>
   /// Extracts aliases from [NuruRouteAlias] attribute on the command class.
   /// </summary>
-  private static ImmutableArray<string> ExtractNuruRouteAliasAttribute(
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken)
+  private static ImmutableArray<string> ExtractNuruRouteAliasAttribute(INamedTypeSymbol classSymbol)
   {
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol is null)
-      return [];
-
     foreach (AttributeData attribute in classSymbol.GetAttributes())
     {
       string? attributeName = attribute.AttributeClass?.Name;
@@ -360,20 +383,66 @@ internal static partial class EndpointExtractor
   }
 
   /// <summary>
+  /// True when the command class carries the attribute <paramref name="attributeFullName"/>
+  /// (<c>[Destructive]</c>, <c>[LocalOnly]</c>).
+  /// </summary>
+  private static bool HasAttribute(INamedTypeSymbol classSymbol, string attributeFullName)
+  {
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() == attributeFullName)
+        return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// The bool constructor argument of a hint attribute on the command class (<c>[Destructive]</c>,
+  /// <c>[OpenWorld]</c>): true when it is omitted, null when the attribute is absent.
+  /// </summary>
+  private static bool? BoolAttributeValue(INamedTypeSymbol classSymbol, string attributeFullName)
+  {
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() != attributeFullName)
+        continue;
+
+      // [Destructive] with no argument is true.
+      return attribute.ConstructorArguments.Length == 0 || attribute.ConstructorArguments[0].Value is not false;
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// The string constructor argument of an attribute on the command class (<c>[DisplayName]</c>),
+  /// or null when the attribute is absent or its text is blank.
+  /// </summary>
+  private static string? StringAttributeValue(INamedTypeSymbol classSymbol, string attributeFullName)
+  {
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() != attributeFullName)
+        continue;
+
+      return attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is string text
+        && !string.IsNullOrWhiteSpace(text)
+        ? text
+        : null;
+    }
+
+    return null;
+  }
+
+  /// <summary>
   /// Extracts usage examples from all <c>[NuruRouteExample]</c> attributes on the command class.
   /// Unlike aliases, examples use <c>AllowMultiple = true</c>, so every matching attribute is
   /// accumulated (not just the first), preserving source declaration order. Attributes with a
   /// null or empty command are silently skipped.
   /// </summary>
-  private static ImmutableArray<ExampleDefinition> ExtractNuruRouteExampleAttributes(
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken)
+  private static ImmutableArray<ExampleDefinition> ExtractNuruRouteExampleAttributes(INamedTypeSymbol classSymbol)
   {
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol is null)
-      return [];
-
     List<ExampleDefinition> examples = [];
 
     foreach (AttributeData attribute in classSymbol.GetAttributes())
@@ -442,27 +511,9 @@ internal static partial class EndpointExtractor
   /// This always returns the full hierarchy - filtering by group types happens in
   /// FilterEndpointsForApp after extraction.
   /// </summary>
-  private static GroupInfo ExtractGroupInfo
-  (
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken
-  )
+  private static GroupInfo ExtractGroupInfo(INamedTypeSymbol classSymbol)
   {
-    if (classDeclaration.BaseList is null)
-    {
-      // No base class - ungrouped endpoint
-      return new GroupInfo
-      (
-        TypeHierarchy: [],
-        FullPrefix: null,
-        GroupAliases: [],
-        GroupPrefixes: []
-      );
-    }
-
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol?.BaseType is null)
+    if (classSymbol.BaseType is null)
     {
       return new GroupInfo
       (
@@ -583,17 +634,13 @@ internal static partial class EndpointExtractor
   /// </summary>
   private static ImmutableArray<SegmentDefinition> ExtractGroupOptionsFromBaseClasses
   (
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
+    INamedTypeSymbol classSymbol,
+    Compilation compilation,
     int startPosition,
     CancellationToken cancellationToken
   )
   {
-    if (classDeclaration.BaseList is null)
-      return [];
-
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol?.BaseType is null)
+    if (classSymbol.BaseType is null)
       return [];
 
     ImmutableArray<SegmentDefinition>.Builder options = ImmutableArray.CreateBuilder<SegmentDefinition>();
@@ -611,7 +658,7 @@ internal static partial class EndpointExtractor
           if (attributeName != GroupOptionAttributeName && attributeName != $"{GroupOptionAttributeName}Attribute")
             continue;
 
-          OptionDefinition? option = ExtractGroupOptionFromAttribute(property, attribute, position++, semanticModel.Compilation, cancellationToken);
+          OptionDefinition? option = ExtractGroupOptionFromAttribute(property, attribute, position++, compilation, cancellationToken);
           if (option is not null)
             options.Add(option);
         }
@@ -787,17 +834,8 @@ internal static partial class EndpointExtractor
   /// <c>IIdempotentCommand&lt;T&gt;</c> derives <c>ICommand&lt;T&gt;</c>, so a first-match scan of
   /// <see cref="ITypeSymbol.AllInterfaces"/> could classify it as a plain Command.
   /// </remarks>
-  private static string InferMessageType
-  (
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken
-  )
+  private static string InferMessageType(INamedTypeSymbol classSymbol)
   {
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol is null)
-      return "Unspecified";
-
     bool isCommand = false;
     bool isIdempotent = false;
 
@@ -842,19 +880,14 @@ internal static partial class EndpointExtractor
   /// </summary>
   private static ImmutableArray<SegmentDefinition> ExtractSegmentsFromProperties
   (
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
+    INamedTypeSymbol classSymbol,
+    Compilation compilation,
     CancellationToken cancellationToken,
     bool deriveUnmarkedMembers = false
   )
   {
     ImmutableArray<SegmentDefinition>.Builder segments = ImmutableArray.CreateBuilder<SegmentDefinition>();
     int position = 100; // Start after pattern segments
-
-    // Get the type symbol to find ALL properties including those in partial classes
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol is null)
-      return segments.ToImmutable();
 
     // A derived member can redeclare a base property under a different option name.
     // Skip the base property by the declared name, not by the option spelling.
@@ -864,9 +897,9 @@ internal static partial class EndpointExtractor
     foreach (IPropertySymbol propertySymbol in classSymbol.GetMembers().OfType<IPropertySymbol>())
     {
       seenPropertyNames.Add(propertySymbol.Name);
-      SegmentDefinition? segment = ExtractSegmentFromPropertySymbol(propertySymbol, position++, semanticModel.Compilation, cancellationToken);
+      SegmentDefinition? segment = ExtractSegmentFromPropertySymbol(propertySymbol, position++, compilation, cancellationToken);
       if (segment is null && deriveUnmarkedMembers)
-        segment = TryDeriveSegment(propertySymbol, position - 1, semanticModel.Compilation, cancellationToken);
+        segment = TryDeriveSegment(propertySymbol, position - 1, compilation, cancellationToken);
       if (segment is not null)
         segments.Add(segment);
     }
@@ -891,7 +924,7 @@ internal static partial class EndpointExtractor
           SegmentDefinition? inherited = TryDeriveSegment(
             propertySymbol,
             position,
-            semanticModel.Compilation,
+            compilation,
             cancellationToken);
           if (inherited is null)
             continue;
@@ -904,8 +937,8 @@ internal static partial class EndpointExtractor
 
     // Extract GroupOptions from base classes and add them to segments
     ImmutableArray<SegmentDefinition> groupOptions = ExtractGroupOptionsFromBaseClasses(
-      classDeclaration,
-      semanticModel,
+      classSymbol,
+      compilation,
       position,
       cancellationToken);
     segments.AddRange(groupOptions);
@@ -1104,10 +1137,15 @@ internal static partial class EndpointExtractor
   /// <returns>The C# literal and the capabilities display, or nulls when the property has no initializer.</returns>
   private static PropertyDefault ExtractPropertyDefaultValueFromSymbol(IPropertySymbol property, Compilation? compilation, CancellationToken cancellationToken)
   {
-    // Get syntax references for this property (handles partial classes correctly)
+    // Get syntax references for this property (handles partial classes correctly).
+    // A referenced-assembly property has none, or (for an IDE project reference) syntax
+    // from another compilation that this one cannot bind.
     ImmutableArray<SyntaxReference> syntaxReferences = property.DeclaringSyntaxReferences;
-    if (syntaxReferences.Length == 0)
-      return default;
+    if (syntaxReferences.Length == 0
+        || compilation?.ContainsSyntaxTree(syntaxReferences[0].SyntaxTree) == false)
+    {
+      return MetadataPropertyDefault(property, compilation);
+    }
 
     // A positional record property is declared by its primary-constructor parameter.
     // The parameter default, when there is one, is the default.
@@ -1194,6 +1232,81 @@ internal static partial class EndpointExtractor
 
     string text = initializerValue.ToString();
     return new PropertyDefault(text, text);
+  }
+
+  /// <summary>
+  /// Default for a property with no initializer syntax, as in a referenced assembly.
+  /// A record constructor parameter counts only on the constructor the generated code calls.
+  /// An explicit parameter default is real code, so it is copied. A parameter with no default
+  /// on that constructor is a required argument. Otherwise the initializer cannot be seen: the
+  /// object initializer leaves the member out (default!) so the compiled initializer runs, and
+  /// a [DefaultValue] only feeds capabilities.
+  /// </summary>
+  private static PropertyDefault MetadataPropertyDefault(IPropertySymbol property, Compilation? compilation)
+  {
+    if (property.ContainingType is { IsRecord: true } record)
+    {
+      IMethodSymbol? parameterless = compilation is null ? null : CallableParameterlessConstructor(compilation, record);
+      foreach (IMethodSymbol constructor in record.InstanceConstructors)
+      {
+        if (parameterless is not null && !SymbolEqualityComparer.Default.Equals(constructor, parameterless))
+          continue;
+
+        if (compilation is not null && !IsAccessibleConstructor(compilation, constructor))
+          continue;
+
+        if (IsCopyConstructor(record, constructor))
+          continue;
+
+        foreach (IParameterSymbol parameter in constructor.Parameters)
+        {
+          if (parameter.Name == property.Name
+              && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type)
+              && (parameter.HasExplicitDefaultValue || parameterless is null))
+          {
+            return ParameterDefault(parameter, property.Type);
+          }
+        }
+      }
+    }
+
+    return new PropertyDefault(UnemittableDefaultLiteral, DefaultValueAttributeDisplay(property));
+  }
+
+  /// <summary>
+  /// Capabilities text of a <c>[DefaultValue(constant)]</c>, or null.
+  /// </summary>
+  private static string? DefaultValueAttributeDisplay(IPropertySymbol property)
+  {
+    foreach (AttributeData attribute in property.GetAttributes())
+    {
+      if (attribute.AttributeClass?.ToDisplayString() != DefaultValueAttributeFullName
+          || attribute.ConstructorArguments.Length != 1)
+      {
+        continue;
+      }
+
+      TypedConstant argument = attribute.ConstructorArguments[0];
+      if (argument.Kind != TypedConstantKind.Primitive && argument.Kind != TypedConstantKind.Enum)
+        return null;
+
+      object? value = argument.Value;
+      if (value is null)
+        return null;
+
+      if (UnwrapNullableType(property.Type) is INamedTypeSymbol { TypeKind: TypeKind.Enum } enumType)
+        return EnumDisplay(enumType, value);
+
+      return value switch
+      {
+        bool flag => flag ? "true" : "false",
+        string text => text,
+        IFormattable formattable => formattable.ToString(null, global::System.Globalization.CultureInfo.InvariantCulture),
+        _ => value.ToString()
+      };
+    }
+
+    return null;
   }
 
   /// <summary>
@@ -1550,19 +1663,16 @@ internal static partial class EndpointExtractor
   /// <returns>The handler definition, or null if no nested Handler class is found.</returns>
   private static HandlerDefinition? ExtractHandler
   (
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
+    INamedTypeSymbol classSymbol,
+    Compilation compilation,
     CancellationToken cancellationToken,
     bool hasOperation = false,
     EquatableArray<string> constructorArguments = default
   )
   {
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol is null)
-      return null;
-
-    // 1. Find nested Handler class (required)
-    INamedTypeSymbol? handlerClass = classSymbol.GetTypeMembers("Handler").FirstOrDefault();
+    // 1. Find nested Handler class (required). A referenced assembly's Handler must be
+    // accessible from this compilation, or generated code cannot name it.
+    INamedTypeSymbol? handlerClass = FindNestedHandler(compilation, classSymbol);
     if (handlerClass is null)
     {
       // No nested Handler class found - skip this route
@@ -1577,11 +1687,11 @@ internal static partial class EndpointExtractor
 
     // 4. Infer return type from interface
     HandlerReturnType returnType = InferReturnTypeFromInterfaces(classSymbol);
-    ResponseShape shape = DescribeResponse(semanticModel.Compilation, classSymbol, InferMessageType(classDeclaration, semanticModel, cancellationToken));
+    ResponseShape shape = DescribeResponse(compilation, classSymbol, InferMessageType(classSymbol));
     ImmutableArray<ParameterBinding> propertyBindings = BuildPropertyBindings(
       classSymbol,
       hasOperation,
-      semanticModel.Compilation,
+      compilation,
       cancellationToken);
 
     return HandlerDefinition.ForCommand(
@@ -1595,7 +1705,8 @@ internal static partial class EndpointExtractor
       ReturnsProblemPair = shape.ReturnsProblemPair,
       SuccessTypeName = shape.SuccessTypeName,
       RendererTypeName = shape.RendererTypeName,
-      ConstructorArguments = constructorArguments
+      ConstructorArguments = constructorArguments,
+      ProblemRendererTypeName = shape.ProblemRendererTypeName
     };
   }
 
@@ -1655,17 +1766,8 @@ internal static partial class EndpointExtractor
   /// Extracts filter interfaces from the command class.
   /// Excludes message interfaces (ICommand, IQuery, etc.) as those are for message typing, not behavior filtering.
   /// </summary>
-  private static ImmutableArray<InterfaceImplementationDefinition> ExtractFilterInterfaces
-  (
-    TypeDeclarationSyntax classDeclaration,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken
-  )
+  private static ImmutableArray<InterfaceImplementationDefinition> ExtractFilterInterfaces(INamedTypeSymbol classSymbol)
   {
-    INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken);
-    if (classSymbol is null)
-      return [];
-
     ImmutableArray<InterfaceImplementationDefinition>.Builder filterInterfaces =
       ImmutableArray.CreateBuilder<InterfaceImplementationDefinition>();
 

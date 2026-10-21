@@ -103,4 +103,26 @@ public sealed class GroupEndpointBuilder<TGroupParent> : INestedBuilder<GroupBui
     // Source generator sets MessageType at compile time
     return this;
   }
+
+  /// <summary>
+  /// Keeps this route in the CLI process: a served app (<c>AddServeRoute()</c>) never forwards it
+  /// to a running server. The fluent form of <see cref="LocalOnlyAttribute"/>.
+  /// </summary>
+  /// <returns>This builder for further configuration.</returns>
+  public GroupEndpointBuilder<TGroupParent> LocalOnly()
+  {
+    // Source generator reads this at compile time
+    return this;
+  }
+
+  /// <summary>
+  /// Runs this route one call at a time against other exclusive calls on the app, for a handler that
+  /// is not thread-safe. The fluent form of <see cref="ExclusiveAttribute"/>.
+  /// </summary>
+  /// <returns>This builder for further configuration.</returns>
+  public GroupEndpointBuilder<TGroupParent> Exclusive()
+  {
+    // Source generator reads this at compile time
+    return this;
+  }
 }

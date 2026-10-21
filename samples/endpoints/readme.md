@@ -73,6 +73,8 @@ await app.RunAsync(args);
 | `02-calculator/` | 1 + messages/ | Full-featured calculator |
 | `03-syntax/` | 1 | Route pattern reference |
 | `04-async/` | 1 | Async/await patterns |
+| `16-daemon/` | 1 | Served app: routes forward to a warm local server (`TimeWarp.Nuru.Daemon`) |
+| `17-referenced-contracts/` | 1 + contracts/ | `[Operation]` endpoints from a referenced contracts assembly (`[assembly: NuruEndpointAssembly]`) |
 
 ### Pipeline & Middleware
 
@@ -178,6 +180,9 @@ dotnet run samples/endpoints/02-calculator/endpoint-calculator.cs -- --help
 
 # Contracts-first sibling (options are the property names)
 dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- calc add --X 2 --Y 3
+
+# Endpoints from a referenced contracts assembly
+dotnet run samples/endpoints/17-referenced-contracts/referenced-contracts.cs -- greet --Name Ada
 ```
 
 ## Comparison with Fluent DSL

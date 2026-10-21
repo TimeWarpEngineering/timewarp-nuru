@@ -12,6 +12,9 @@ When you use `NuruApp.CreateBuilder()`, several utility routes are built in to p
 | `--interactive`, `-i` | Enter REPL mode (requires `AddRepl()`) |
 | `--capabilities` | Machine-readable endpoint catalog for agents |
 | `--json-args <value>` | Bind parameter and option values from JSON |
+| `mcp` | Serve the routes as MCP tools over stdio (opt-in via `AddMcpRoute()`, package `TimeWarp.Nuru.McpHost`) |
+| `serve`, `serve --status`, `serve --stop` | Run, report or stop the app's local server (opt-in via `AddServeRoute()`, package `TimeWarp.Nuru.Daemon`) |
+| `--daemon`, `--no-daemon` | Forward this call to the server, starting it, or run it here (with `AddServeRoute()`) |
 
 ## Version Route (`--version`)
 
@@ -118,6 +121,14 @@ See [Auto-Help](auto-help.md) for the shared-prefix case.
 
 The same catalog is available in process as `NuruApp.Capabilities`, with `CapabilitiesResponse.FilterByGroup(group)` for `--group-filter`. `--capabilities` prints that instance. See [In-process catalog](agent-invocation.md#in-process-catalog).
 
+## MCP Route (`mcp`)
+
+`AddMcpRoute()` from the `TimeWarp.Nuru.McpHost` package adds an `mcp` route. It runs an MCP server on stdio that publishes every route as a tool, with the tool names, schemas, and binding described in [MCP hosting](mcp-hosting.md). Root help lists it when it is enabled.
+
+## Serve Routes (`serve`)
+
+`AddServeRoute()` from the `TimeWarp.Nuru.Daemon` package adds `serve` (run the app's routes from a server on a per-user local socket, in the foreground), `serve --status` (exit 0 when a server answers, 1 when none does) and `serve --stop`. Matched routes then forward to a running server. `--daemon` and `--no-daemon` are removed from every call's arguments and choose between the server and this process. See [Served apps](served-apps.md). Root help lists these rows when the routes are enabled.
+
 ## Overriding Built-in Routes
 
 There is no option to switch built-in routes off. The generator emits your own routes first and the built-in `--help`, `--version` and `--capabilities` handling after them, so a route you map with the same pattern takes precedence:
@@ -135,6 +146,8 @@ Two routes are different:
 
 - `--check-updates` is opt-in. It exists only when you call `AddCheckUpdatesRoute()` (see below).
 - `--interactive` / `-i` exists only when you call `AddRepl()`, and it is matched before your routes so a catch-all route cannot intercept it.
+- `mcp` is opt-in. It exists only when you call `AddMcpRoute()` (package `TimeWarp.Nuru.McpHost`), and like `--check-updates` it is matched after your routes.
+- `serve` is opt-in. It exists only when you call `AddServeRoute()` (package `TimeWarp.Nuru.Daemon`), and it is matched after your routes.
 
 ## Manual Feature Registration
 
@@ -155,6 +168,8 @@ See [Architecture Choices](../guides/architecture-choices.md) for more guidance.
 ## Related Documentation
 
 - **[Agent invocation](agent-invocation.md)** - `--capabilities` then `--json-args`
+- **[MCP hosting](mcp-hosting.md)** - the `mcp` route and `WithNuruTools`
+- **[Served apps](served-apps.md)** - the `serve` routes and route forwarding
 - **[Auto-Help](auto-help.md)** - Help generation and customization
 - **[REPL Key Bindings](repl-key-bindings.md)** - Interactive mode keyboard shortcuts
 - **[Getting Started](../getting-started.md)** - Quick start guide

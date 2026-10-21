@@ -19,17 +19,17 @@ public sealed class CapabilitiesResponse
   /// Returns the endpoints whose group path starts with <paramref name="groupFilter"/>.
   /// </summary>
   /// <remarks>
-  /// The filter is dot-separated (<c>admin.config</c>) and each segment is compared ignoring case,
-  /// the same rule <c>--capabilities --group-filter</c> uses. The result carries
-  /// <see cref="Filter"/> set to the filter.
+  /// Segments are separated by <c>.</c> or space (<c>admin.config</c> or <c>admin config</c>) and each
+  /// segment is compared ignoring case, the same rule <c>--capabilities --group-filter</c> uses.
+  /// A blank filter keeps every endpoint. The result carries <see cref="Filter"/> set to the filter.
   /// </remarks>
-  /// <param name="groupFilter">Dot-separated group prefix.</param>
+  /// <param name="groupFilter">Group prefix, dot- or space-separated.</param>
   /// <returns>A new response with the matching endpoints.</returns>
   public CapabilitiesResponse FilterByGroup(string groupFilter)
   {
     ArgumentNullException.ThrowIfNull(groupFilter);
 
-    string[] groupParts = groupFilter.Split('.');
+    string[] groupParts = groupFilter.Split(['.', ' ', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     EndpointCapability[] endpoints =
     [
       .. Endpoints.Where(e => e.GroupPath.Count >= groupParts.Length &&
@@ -116,6 +116,31 @@ public sealed class EndpointCapability
   // Last property, so it is the only addition to each endpoint in existing documents.
   // Nullable so a document from a CLI that predates it still loads.
   public ReturnTypeCapability? ReturnType { get; init; }
+
+  /// <summary>
+  /// The endpoint class's <see cref="DestructiveAttribute"/>: true for <c>[Destructive]</c>, false for
+  /// <c>[Destructive(false)]</c>. Null without the attribute, and then omitted from JSON.
+  /// </summary>
+  public bool? Destructive { get; init; }
+
+  /// <summary>
+  /// True when the route always runs in the CLI process (<see cref="LocalOnlyAttribute"/> or
+  /// <c>.LocalOnly()</c>): a served app never forwards it. Null otherwise, and then omitted from JSON.
+  /// </summary>
+  public bool? LocalOnly { get; init; }
+
+  /// <summary>
+  /// The endpoint class's <see cref="OpenWorldAttribute"/>: true when the route reaches outside the app
+  /// (the web, a remote service), false when it works only on local state. Null without the attribute,
+  /// and then omitted from JSON.
+  /// </summary>
+  public bool? OpenWorld { get; init; }
+
+  /// <summary>
+  /// Human-readable display name from <see cref="DisplayNameAttribute"/> on the endpoint class.
+  /// Null without the attribute, and then omitted from JSON.
+  /// </summary>
+  public string? Title { get; init; }
 }
 
 /// <summary>
@@ -208,6 +233,13 @@ public sealed class OptionCapability
   public string? Description { get; init; }
   public string? DefaultValue { get; init; }
   public IReadOnlyList<string>? AllowedValues { get; init; }
+
+  /// <summary>
+  /// JSON Schema of a member that binds as one JSON value (<see cref="Type"/> <c>json ...</c>), exported
+  /// from the type the <c>--json-args</c> binder deserializes into. Null for other members, and then
+  /// omitted from JSON.
+  /// </summary>
+  public JsonElement? Schema { get; init; }
 }
 
 /// <summary>

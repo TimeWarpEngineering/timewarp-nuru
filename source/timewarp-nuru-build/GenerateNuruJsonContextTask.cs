@@ -152,6 +152,9 @@ public class GenerateNuruJsonContextTask : Task
       ExtractFromEndpoints(root, semanticModel, jsonTypes, jsonMemberTypes, cancellationToken);
     }
 
+    // 4c. Endpoints in referenced assemblies: [assembly: NuruEndpointAssembly] and Map<T>()
+    ExtractFromReferencedEndpoints(compilation, syntaxTrees, jsonTypes, jsonMemberTypes, cancellationToken);
+
     // 5. If no types need JSON serialization, skip generation
     if (jsonTypes.Count == 0 && jsonMemberTypes.Count == 0)
     {
@@ -162,7 +165,9 @@ public class GenerateNuruJsonContextTask : Task
 
     // 6. Generate the JsonSerializerContext file
     string outputFile = Path.Combine(IntermediateOutputPath, "NuruUserTypesJsonContext.g.cs");
-    string content = GenerateContextFile(jsonTypes, jsonMemberTypes);
+    string content = GenerateContextFile(
+      JsonContextTypeNames.Assign(compilation, jsonTypes),
+      JsonContextTypeNames.Assign(compilation, jsonMemberTypes));
 
     // Ensure directory exists
     string? directory = Path.GetDirectoryName(outputFile);
@@ -271,23 +276,69 @@ public class GenerateNuruJsonContextTask : Task
       {
         EndpointExtractionResult result = EndpointExtractor.Extract(classDecl, semanticModel, cancellationToken);
         if (result.Route is not null)
-        {
-          RouteDefinition route = result.Route;
-          string? returnTypeName = GetReturnTypeName(route.Handler.ReturnType);
-          if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
-          {
-            jsonTypes.Add(returnTypeName);
-            Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from endpoint: {returnTypeName}");
-          }
-
-          AddJsonMemberTypes(route, jsonMemberTypes);
-        }
+          AddEndpointJsonTypes(result.Route, jsonTypes, jsonMemberTypes);
       }
       catch (Exception ex)
       {
         Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to extract endpoint from {classDecl.Identifier}: {ex.Message}");
       }
     }
+  }
+
+  /// <summary>
+  /// Extracts endpoint types that live in referenced assemblies, using the generator's opt-in rules:
+  /// every endpoint in an assembly that <c>[assembly: NuruEndpointAssembly]</c> names, and the type
+  /// argument of each <c>Map&lt;T&gt;()</c> that is a referenced endpoint type.
+  /// </summary>
+  private void ExtractFromReferencedEndpoints(
+    CSharpCompilation compilation,
+    List<SyntaxTree> syntaxTrees,
+    HashSet<string> jsonTypes,
+    HashSet<string> jsonMemberTypes,
+    CancellationToken cancellationToken)
+  {
+    HashSet<INamedTypeSymbol> types = new(SymbolEqualityComparer.Default);
+    foreach ((INamedTypeSymbol type, Location _) in ReferencedEndpointLocator.FromAssemblyAttributes(compilation, cancellationToken))
+      types.Add(type);
+
+    foreach (SyntaxTree tree in syntaxTrees)
+    {
+      SemanticModel semanticModel = compilation.GetSemanticModel(tree);
+      foreach (InvocationExpressionSyntax invocation in tree.GetRoot(cancellationToken).DescendantNodes().OfType<InvocationExpressionSyntax>())
+      {
+        if (ReferencedEndpointLocator.MapTypeArgument(invocation, semanticModel, cancellationToken) is INamedTypeSymbol type)
+          types.Add(type);
+      }
+    }
+
+    foreach (INamedTypeSymbol type in types)
+    {
+      try
+      {
+        EndpointExtractionResult result = EndpointExtractor.Extract(type, compilation, Location.None, cancellationToken);
+        if (result.Route is not null)
+          AddEndpointJsonTypes(result.Route, jsonTypes, jsonMemberTypes);
+      }
+      catch (Exception ex)
+      {
+        Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Failed to extract referenced endpoint {type.Name}: {ex.Message}");
+      }
+    }
+  }
+
+  /// <summary>
+  /// Registers an endpoint's JSON response type and JSON member types.
+  /// </summary>
+  private void AddEndpointJsonTypes(RouteDefinition route, HashSet<string> jsonTypes, HashSet<string> jsonMemberTypes)
+  {
+    string? returnTypeName = GetEndpointJsonTypeName(route.Handler);
+    if (!string.IsNullOrEmpty(returnTypeName) && ShouldSerializeAsJson(returnTypeName))
+    {
+      jsonTypes.Add(returnTypeName);
+      Log.LogMessage(MessageImportance.Low, $"TimeWarp.Nuru.Build: Found JSON type from endpoint: {returnTypeName}");
+    }
+
+    AddJsonMemberTypes(route, jsonMemberTypes);
   }
 
   /// <summary>
@@ -327,6 +378,21 @@ public class GenerateNuruJsonContextTask : Task
       return returnType.FullTypeName;
 
     return null;
+  }
+
+  /// <summary>
+  /// Gets the type an endpoint writes as JSON. A problem pair writes only its success value,
+  /// and a value with a renderer is never serialized.
+  /// </summary>
+  private static string? GetEndpointJsonTypeName(HandlerDefinition handler)
+  {
+    if (handler.RendererTypeName is not null)
+      return null;
+
+    if (handler.ReturnsProblemPair)
+      return handler.SuccessTypeName;
+
+    return GetReturnTypeName(handler.ReturnType);
   }
 
   /// <summary>
@@ -393,7 +459,9 @@ public class GenerateNuruJsonContextTask : Task
   /// <summary>
   /// Generates the JsonSerializerContext file content.
   /// </summary>
-  private static string GenerateContextFile(HashSet<string> types, HashSet<string> jsonMemberTypes)
+  private static string GenerateContextFile(
+    IReadOnlyList<JsonContextRegistration> types,
+    IReadOnlyList<JsonContextRegistration> jsonMemberTypes)
   {
     StringBuilder sb = new();
 
@@ -407,11 +475,7 @@ public class GenerateNuruJsonContextTask : Task
 
     if (types.Count > 0)
     {
-      foreach (string typeName in types.OrderBy(t => t, StringComparer.Ordinal))
-      {
-        string fullTypeName = EnsureGlobalPrefix(typeName);
-        sb.AppendLine($"[global::System.Text.Json.Serialization.JsonSerializable(typeof({fullTypeName}))]");
-      }
+      AppendRegistrations(sb, types);
 
       // Return values keep the camelCase output used by the existing JSON strategy.
       sb.AppendLine("[global::System.Text.Json.Serialization.JsonSourceGenerationOptions(");
@@ -423,18 +487,33 @@ public class GenerateNuruJsonContextTask : Task
 
     if (jsonMemberTypes.Count > 0)
     {
-      foreach (string typeName in jsonMemberTypes.OrderBy(t => t, StringComparer.Ordinal))
-      {
-        string fullTypeName = EnsureGlobalPrefix(typeName);
-        sb.AppendLine($"[global::System.Text.Json.Serialization.JsonSerializable(typeof({fullTypeName}))]");
-      }
+      AppendRegistrations(sb, jsonMemberTypes);
 
       // JSON members keep the declared property names. --json-args keys are those names.
+      // Nested names match ignoring case, so an MCP client's camelCase {"tool":...} binds Tool.
+      sb.AppendLine("[global::System.Text.Json.Serialization.JsonSourceGenerationOptions(");
+      sb.AppendLine("  PropertyNameCaseInsensitive = true)]");
       sb.AppendLine("internal partial class NuruJsonMemberContext");
       sb.AppendLine("  : global::System.Text.Json.Serialization.JsonSerializerContext;");
     }
 
     return sb.ToString();
+  }
+
+  /// <summary>
+  /// Writes one [JsonSerializable] per type. A type whose STJ name collides gets its own
+  /// TypeInfoPropertyName (SYSLIB1031).
+  /// </summary>
+  private static void AppendRegistrations(StringBuilder sb, IReadOnlyList<JsonContextRegistration> registrations)
+  {
+    foreach (JsonContextRegistration registration in registrations)
+    {
+      string fullTypeName = EnsureGlobalPrefix(registration.TypeName);
+      string propertyName = registration.TypeInfoPropertyName is string name
+        ? $", TypeInfoPropertyName = \"{name}\""
+        : "";
+      sb.AppendLine($"[global::System.Text.Json.Serialization.JsonSerializable(typeof({fullTypeName}){propertyName})]");
+    }
   }
 
   /// <summary>

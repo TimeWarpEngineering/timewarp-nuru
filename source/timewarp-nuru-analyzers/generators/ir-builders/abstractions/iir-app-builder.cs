@@ -93,6 +93,20 @@ public interface IIrAppBuilder : IIrRouteSource
   IIrAppBuilder AddCheckUpdatesRoute();
 
   /// <summary>
+  /// Enables the built-in mcp route (TimeWarp.Nuru.McpHost).
+  /// </summary>
+  /// <param name="mcpRoute">Options from the AddMcpRoute() arguments.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddMcpRoute(McpRouteModel mcpRoute);
+
+  /// <summary>
+  /// Enables the built-in serve route and route forwarding (TimeWarp.Nuru.Daemon).
+  /// </summary>
+  /// <param name="serveRoute">Options from the AddServeRoute() arguments.</param>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder AddServeRoute(ServeRouteModel serveRoute);
+
+  /// <summary>
   /// Adds a behavior (pipeline middleware).
   /// </summary>
   /// <param name="behavior">The behavior definition.</param>
@@ -144,6 +158,18 @@ public interface IIrAppBuilder : IIrRouteSource
   /// </summary>
   /// <returns>This builder for chaining.</returns>
   IIrAppBuilder UseDirectInvoke();
+
+  /// <summary>
+  /// Writes renderer text with <c>Write</c> instead of <c>WriteLine</c>.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseVerbatimRendererOutput();
+
+  /// <summary>
+  /// Sends CLI binding errors through the app's problem renderer.
+  /// </summary>
+  /// <returns>This builder for chaining.</returns>
+  IIrAppBuilder UseProblemRendererForErrors();
 
   /// <summary>
   /// Sets the raw ConfigureServices lambda body for runtime invocation.

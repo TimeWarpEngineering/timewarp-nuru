@@ -208,6 +208,9 @@ In the REPL it follows command scope.
 Starting the REPL (`--interactive`, `-i`, or `AutoStartWhenEmpty`) does not open a command scope, so each command opens its own.
 In the REPL, `UseMicrosoftDependencyInjection()` opens an `IServiceScope` per command and disposes it after the command.
 Session-scoped services stay on the root provider, including when a scoped service injects them, and are disposed when the REPL exits.
+With source-generated DI, an `AddScoped` service that injects a session- or command-scoped service is built once per command and disposed with it.
+A singleton that injects a session- or command-scoped service, or a Scoped service that injects one, gets NURU056: the singleton outlives that instance.
+Source-generated DI gives such a singleton its own copy, so it never holds an instance a command disposed.
 `AddGeneratedMediator()` still resolves for each command.
 
 ## User Secrets

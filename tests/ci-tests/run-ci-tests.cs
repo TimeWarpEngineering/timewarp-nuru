@@ -62,6 +62,10 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-53-invalid-route-patterns.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-54-h002-nested-lambda-parameter.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-55-missing-operation-handler.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-56-problem-renderer.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-58-nuru056-per-run-scoped.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-59-referenced-operation-endpoints.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-60-json-context-referenced-endpoints.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "auto", "operation-endpoint-dispatch.cs"),
 ];
 

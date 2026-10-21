@@ -30,6 +30,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private ReplModel? ReplOptions;
   private bool HasConfiguration;
   private bool HasCheckUpdatesRoute;
+  private McpRouteModel? McpRoute;
+  private ServeRouteModel? ServeRoute;
   private LoggingConfiguration? LoggingConfiguration;
   private readonly List<RouteDefinition> Routes = [];
   private readonly List<BehaviorDefinition> Behaviors = [];
@@ -44,6 +46,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool CompletionEnabled;
   private bool MicrosoftDependencyInjectionEnabled;
   private bool DirectInvokeEnabled;
+  private bool VerbatimRendererOutputEnabled;
+  private bool ProblemRendererForErrorsEnabled;
   private string? ConfigureServicesBody;
   private readonly List<string> ExplicitEndpointTypes = [];
   private readonly List<ExtensionMethodCall> ExtensionMethods = [];
@@ -167,6 +171,28 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   }
 
   /// <summary>
+  /// Enables the built-in mcp route (stdio MCP server over the app's routes).
+  /// Mirrors: NuruMcpAppBuilderExtensions.AddMcpRoute() in TimeWarp.Nuru.McpHost
+  /// </summary>
+  /// <param name="mcpRoute">Options from the AddMcpRoute() arguments.</param>
+  public TSelf AddMcpRoute(McpRouteModel mcpRoute)
+  {
+    McpRoute = mcpRoute;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Enables the built-in serve route and route forwarding (local daemon over the app's routes).
+  /// Mirrors: NuruDaemonAppBuilderExtensions.AddServeRoute() in TimeWarp.Nuru.Daemon
+  /// </summary>
+  /// <param name="serveRoute">Options from the AddServeRoute() arguments.</param>
+  public TSelf AddServeRoute(ServeRouteModel serveRoute)
+  {
+    ServeRoute = serveRoute;
+    return (TSelf)this;
+  }
+
+  /// <summary>
   /// Adds a behavior (pipeline middleware).
   /// Mirrors: NuruAppBuilder.AddBehavior(Type)
   /// </summary>
@@ -258,6 +284,24 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   public TSelf UseDirectInvoke()
   {
     DirectInvokeEnabled = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Writes renderer text with Write, so no newline is added after it.
+  /// </summary>
+  public TSelf UseVerbatimRendererOutput()
+  {
+    VerbatimRendererOutputEnabled = true;
+    return (TSelf)this;
+  }
+
+  /// <summary>
+  /// Sends CLI binding errors through the app's problem renderer.
+  /// </summary>
+  public TSelf UseProblemRendererForErrors()
+  {
+    ProblemRendererForErrorsEnabled = true;
     return (TSelf)this;
   }
 
@@ -416,7 +460,11 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       HttpClientConfigurations: [.. HttpClientConfigurations],
       FilterGroupTypeNames: [.. FilterGroupTypeNames],
       UseDirectInvoke: DirectInvokeEnabled,
-      BuildSite: BuildSite);
+      VerbatimRendererOutput: VerbatimRendererOutputEnabled,
+      ProblemRendererForErrors: ProblemRendererForErrorsEnabled,
+      BuildSite: BuildSite,
+      McpRoute: McpRoute,
+      ServeRoute: ServeRoute);
   }
 
   /// <summary>
@@ -444,6 +492,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.SetLoggingConfiguration(LoggingConfiguration config) => SetLoggingConfiguration(config);
   IIrAppBuilder IIrAppBuilder.AddHttpClientConfiguration(HttpClientConfiguration config) => AddHttpClientConfiguration(config);
   IIrAppBuilder IIrAppBuilder.AddCheckUpdatesRoute() => AddCheckUpdatesRoute();
+  IIrAppBuilder IIrAppBuilder.AddMcpRoute(McpRouteModel mcpRoute) => AddMcpRoute(mcpRoute);
+  IIrAppBuilder IIrAppBuilder.AddServeRoute(ServeRouteModel serveRoute) => AddServeRoute(serveRoute);
   IIrAppBuilder IIrAppBuilder.AddBehavior(BehaviorDefinition behavior) => AddBehavior(behavior);
   IIrAppBuilder IIrAppBuilder.AddService(ServiceDefinition service) => AddService(service);
   IIrAppBuilder IIrAppBuilder.AddExtensionMethodCall(ExtensionMethodCall extensionMethod) => AddExtensionMethodCall(extensionMethod);
@@ -452,6 +502,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.UseTelemetry(TelemetryModel telemetryOptions) => UseTelemetry(telemetryOptions);
   IIrAppBuilder IIrAppBuilder.UseMicrosoftDependencyInjection() => UseMicrosoftDependencyInjection();
   IIrAppBuilder IIrAppBuilder.UseDirectInvoke() => UseDirectInvoke();
+  IIrAppBuilder IIrAppBuilder.UseVerbatimRendererOutput() => UseVerbatimRendererOutput();
+  IIrAppBuilder IIrAppBuilder.UseProblemRendererForErrors() => UseProblemRendererForErrors();
   IIrAppBuilder IIrAppBuilder.SetConfigureServicesBody(string lambdaBody) => SetConfigureServicesBody(lambdaBody);
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);

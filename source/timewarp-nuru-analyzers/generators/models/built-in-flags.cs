@@ -29,6 +29,19 @@ internal static class BuiltInFlags
   public const string JsonArgsForm = "--json-args";
 
   /// <summary>
+  /// Built-in route that serves the app's routes as MCP tools over stdio.
+  /// Opt-in via <c>AddMcpRoute()</c> (package TimeWarp.Nuru.McpHost). Not part of <see cref="All"/>.
+  /// </summary>
+  public const string McpRouteForm = "mcp";
+
+  /// <summary>
+  /// Built-in route that serves the app's routes from a long-lived local server
+  /// (also <c>serve --status</c> and <c>serve --stop</c>).
+  /// Opt-in via <c>AddServeRoute()</c> (package TimeWarp.Nuru.Daemon). Not part of <see cref="All"/>.
+  /// </summary>
+  public const string ServeRouteForm = "serve";
+
+  /// <summary>
   /// Search flag forms: --search, -s
   /// </summary>
   public static readonly string[] SearchForms = ["--search", "-s"];

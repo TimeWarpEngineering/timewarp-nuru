@@ -242,4 +242,27 @@ public partial class NuruAppBuilder
   /// and the endpoint has a nested handler. Endpoints with no nested handler still go through the mediator.
   /// </remarks>
   public virtual NuruAppBuilder UseDirectInvoke() => this;
+
+  /// <summary>
+  /// Writes <c>IResponseRenderer&lt;T&gt;</c> text exactly as the renderer returns it, with no added newline.
+  /// </summary>
+  /// <remarks>
+  /// By default the CLI adds a newline after renderer text. With this call the text is written with
+  /// <c>Write</c>, so a CLI and an MCP host that use the same renderer write the same bytes. This applies to
+  /// success renderers on stdout and to an <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c> on stderr.
+  /// Output with no renderer (raw text, ISO 8601, JSON) still ends with a newline.
+  /// </remarks>
+  public virtual NuruAppBuilder UseVerbatimRendererOutput() => this;
+
+  /// <summary>
+  /// Sends CLI binding errors through the app's <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c>.
+  /// </summary>
+  /// <remarks>
+  /// With this call and a problem renderer, a <c>--json-args</c> bind failure or an argv value that does not
+  /// convert is rendered as <see cref="NuruProblems.Invalid"/> (Type <c>Invalid</c>, Status 400) on stderr, in
+  /// the same format as a handler's problem details. Without it, or with no problem renderer, the CLI writes
+  /// its plain <c>Error: ...</c> text. The exit code is unchanged. An MCP host or a daemon server renders bind
+  /// failures and escaped exceptions through the problem renderer without this call.
+  /// </remarks>
+  public virtual NuruAppBuilder UseProblemRendererForErrors() => this;
 }

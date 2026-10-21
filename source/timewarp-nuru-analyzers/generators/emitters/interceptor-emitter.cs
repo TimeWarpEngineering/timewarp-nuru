@@ -111,6 +111,18 @@ internal static class InterceptorEmitter
     sb.AppendLine("  {");
     sb.AppendLine("    global::TimeWarp.Nuru.NuruApp app = builder.Build();");
     sb.AppendLine($"    app.CapabilitiesProvider = GetCapabilities{methodSuffix};");
+    if (EmitsExecuteRoute(app, model))
+    {
+      sb.AppendLine($"    app.JsonBinder = {JsonArgsEmitter.TryBindMethodName(methodSuffix)};");
+      sb.AppendLine($"    app.InvocationExecutor = __InvokeJson{methodSuffix};");
+      sb.AppendLine($"    app.RouteExecutor = __RunArgs{methodSuffix};");
+      EmitProblemRendererAttach(sb, app, model, methodSuffix, fallback: false);
+      if (app.ServeRoute is not null)
+      {
+        sb.AppendLine($"    app.RouteForwarder = new global::TimeWarp.Nuru.Daemon.NuruDaemonClient(__DaemonOptions{methodSuffix}());");
+      }
+    }
+
     sb.AppendLine("    return app;");
     sb.AppendLine("  }");
     sb.AppendLine();
@@ -127,11 +139,7 @@ internal static class InterceptorEmitter
     // Get RunAsync intercept sites from the dictionary
     bool hasRunAsyncSites = app.InterceptSitesByMethod.TryGetSites("RunAsync", out EquatableArray<InterceptSiteModel> runAsyncSites);
 
-    // Emit ExecuteRouteAsync when:
-    // - App has routes (needs route matching)
-    // - App has REPL (REPL calls ExecuteRouteAsync)
-    // - App has RunAsync intercept sites (RunAsync_Intercepted calls ExecuteRouteAsync)
-    if (app.HasRoutes || app.HasRepl || hasRunAsyncSites)
+    if (EmitsExecuteRoute(app, model))
     {
       EmitExecuteRouteAsyncMethod(sb, app, appIndex, model, methodSuffix, loggerFactoryFieldName);
     }
@@ -177,6 +185,25 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
+  /// True when ExecuteRouteAsync is emitted for <paramref name="app"/>: it has routes or endpoints
+  /// (route matching, and NuruApp.InvokeAsync on a Build()-only app), a REPL (the REPL calls
+  /// ExecuteRouteAsync), or RunAsync intercept sites (RunAsync_Intercepted calls it). The public bind
+  /// and invoke entry points exist exactly when it does.
+  /// </summary>
+  private static bool EmitsExecuteRoute(AppModel app, GeneratorModel model) =>
+    app.HasRoutes
+    || app.HasRepl
+    || app.InterceptSitesByMethod.TryGetSites("RunAsync", out _)
+    || FilterEndpointsForApp(app, model.Endpoints).Length > 0;
+
+  /// <summary>
+  /// Routes in route-index order: the app's routes, then its endpoints. Route indices name the
+  /// generated command classes and the JSON bind methods.
+  /// </summary>
+  private static List<RouteDefinition> RoutesInIndexOrder(AppModel app, GeneratorModel model) =>
+    [.. app.Routes.Concat(FilterEndpointsForApp(app, model.Endpoints))];
+
+  /// <summary>
   /// Emits the core route execution method that handles all route matching.
   /// This is called by both RunAsync_Intercepted and the REPL command executor.
   /// </summary>
@@ -190,13 +217,38 @@ internal static class InterceptorEmitter
     // and doubles as the declaration that handler CancellationToken parameters bind to.
     // fromRepl is true only for the REPL command callback. --json-args - is rejected there.
     sb.AppendLine("    global::System.Threading.CancellationToken cancellationToken = default,");
-    sb.AppendLine("    bool fromRepl = false");
+    sb.AppendLine("    bool fromRepl = false,");
+    // Set only by NuruApp.InvokeAsync / RenderAsync: run (or render) a request bound by TryBind.
+    sb.AppendLine("    global::TimeWarp.Nuru.NuruInvocation? __invocation = null");
     sb.AppendLine("  )");
     sb.AppendLine("  {");
-    // A previous command may have stored a problem status. This invocation starts clean.
-    sb.AppendLine("    global::System.Environment.ExitCode = 0;");
-    // Fallback for an app whose Build() call was not intercepted.
+    // A previous command may have stored a problem status. This invocation starts clean. A render
+    // continues its call: it keeps the exit code the handler set, and problem details overwrite it.
+    sb.AppendLine("    if (__invocation?.RenderTerminal is null)");
+    sb.AppendLine("      global::TimeWarp.Nuru.NuruCallContext.CurrentExitCode = 0;");
+    // Fallback for an app whose Build() call was not intercepted. The forwarder is attached only
+    // then, so an app may set RouteForwarder = null after Build() to run every route here.
+    if (app.ServeRoute is not null)
+    {
+      sb.AppendLine("    if (app.CapabilitiesProvider is null)");
+      sb.AppendLine($"      app.RouteForwarder ??= new global::TimeWarp.Nuru.Daemon.NuruDaemonClient(__DaemonOptions{methodSuffix}());");
+    }
+
+    // Before CapabilitiesProvider: a null provider means Build() was not intercepted.
+    EmitProblemRendererAttach(sb, app, model, methodSuffix, fallback: true);
     sb.AppendLine($"    app.CapabilitiesProvider ??= GetCapabilities{methodSuffix};");
+    sb.AppendLine($"    app.JsonBinder ??= {JsonArgsEmitter.TryBindMethodName(methodSuffix)};");
+    sb.AppendLine($"    app.InvocationExecutor ??= __InvokeJson{methodSuffix};");
+    sb.AppendLine($"    app.RouteExecutor ??= __RunArgs{methodSuffix};");
+
+    // --daemon / --no-daemon choose between a running server and this process (AddServeRoute()).
+    // They are removed before routing, so they work with every route and never reach the server.
+    if (app.ServeRoute is not null)
+    {
+      sb.AppendLine("    global::TimeWarp.Nuru.NuruForwardMode __forwardMode = global::TimeWarp.Nuru.NuruForwardMode.Auto;");
+      sb.AppendLine("    if (__invocation is null && !fromRepl)");
+      sb.AppendLine("      args = global::TimeWarp.Nuru.NuruForwarding.PeelFlags(args, out __forwardMode);");
+    }
 
     // Set up completion support (only when completion or REPL is enabled)
     if (app.HasCompletion || app.HasRepl)
@@ -212,6 +264,74 @@ internal static class InterceptorEmitter
     EmitMethodBody(sb, app, appIndex, model, loggerFactoryFieldName);
 
     sb.AppendLine("  }");
+    sb.AppendLine();
+
+    // Public bind and invoke: NuruApp.TryBind / InvokeAsync / RenderAsync.
+    JsonArgsEmitter.EmitBindMethods(sb, RoutesInIndexOrder(app, model), app, methodSuffix);
+    sb.AppendLine($"  private static global::System.Threading.Tasks.Task<int> __InvokeJson{methodSuffix}(NuruApp app, global::TimeWarp.Nuru.NuruInvocation invocation, global::System.Threading.CancellationToken cancellationToken) =>");
+    sb.AppendLine($"    ExecuteRouteAsync{methodSuffix}(app, [], cancellationToken, fromRepl: false, __invocation: invocation);");
+    sb.AppendLine();
+    // NuruApp.ExecuteAsync: argv routing for code the generator does not intercept (a daemon host).
+    sb.AppendLine($"  private static global::System.Threading.Tasks.Task<int> __RunArgs{methodSuffix}(NuruApp app, string[] args, global::System.Threading.CancellationToken cancellationToken) =>");
+    sb.AppendLine($"    ExecuteRouteAsync{methodSuffix}(app, args, cancellationToken);");
+    sb.AppendLine();
+
+    if (HandlerInvokerEmitter.HasProblemRenderer(app, model.ProblemRendererTypeName))
+      HandlerInvokerEmitter.EmitProblemRendererMethod(sb, app, methodSuffix, model.ProblemRendererTypeName);
+
+    if (app.ServeRoute is ServeRouteModel serveRoute)
+    {
+      EmitDaemonOptionsMethod(sb, serveRoute, methodSuffix);
+    }
+  }
+
+  /// <summary>
+  /// Attaches the app's problem renderer, when it can have one, and its error-output flags (task 508-018). The
+  /// Build() interceptor sets them; ExecuteRouteAsync sets them only for an app whose Build() was not intercepted.
+  /// </summary>
+  private static void EmitProblemRendererAttach(StringBuilder sb, AppModel app, GeneratorModel model, string methodSuffix, bool fallback)
+  {
+    List<string> assignments = [];
+    if (HandlerInvokerEmitter.HasProblemRenderer(app, model.ProblemRendererTypeName))
+      assignments.Add($"app.ProblemRenderer = __RenderProblem{methodSuffix};");
+    if (app.ProblemRendererForErrors)
+      assignments.Add("app.ProblemRendererForErrors = true;");
+    if (app.VerbatimRendererOutput)
+      assignments.Add("app.VerbatimRendererOutput = true;");
+    if (assignments.Count == 0)
+      return;
+
+    if (!fallback)
+    {
+      foreach (string assignment in assignments)
+        sb.AppendLine($"    {assignment}");
+      return;
+    }
+
+    sb.AppendLine("    if (app.CapabilitiesProvider is null)");
+    sb.AppendLine("    {");
+    foreach (string assignment in assignments)
+      sb.AppendLine($"      {assignment}");
+    sb.AppendLine("    }");
+  }
+
+  /// <summary>
+  /// Emits the factory for the TimeWarp.Nuru.Daemon options from the AddServeRoute() arguments.
+  /// The serve route and the forwarding client share it, so both use the same socket.
+  /// </summary>
+  private static void EmitDaemonOptionsMethod(StringBuilder sb, ServeRouteModel serveRoute, string methodSuffix)
+  {
+    string socketPath = serveRoute.SocketPath is null
+      ? "null"
+      : $"\"{EmitterStringUtils.EscapeForStringLiteral(serveRoute.SocketPath)}\"";
+
+    sb.AppendLine($"  private static global::TimeWarp.Nuru.Daemon.NuruDaemonOptions __DaemonOptions{methodSuffix}() => new()");
+    sb.AppendLine("  {");
+    sb.AppendLine($"    SocketPath = {socketPath},");
+    sb.AppendLine($"    IdleTimeout = global::System.TimeSpan.FromSeconds({serveRoute.IdleTimeoutSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture)}),");
+    sb.AppendLine($"    AutoStart = {(serveRoute.AutoStart ? "true" : "false")},");
+    sb.AppendLine($"    ExclusiveCalls = {(serveRoute.ExclusiveCalls ? "true" : "false")}");
+    sb.AppendLine("  };");
     sb.AppendLine();
   }
 
@@ -354,18 +474,22 @@ internal static class InterceptorEmitter
 
   /// <summary>
   /// Emits generated command classes for delegate routes.
-  /// These provide command instances for behaviors.
+  /// These provide command instances for behaviors. Each app gets its own classes, indexed like
+  /// its route matcher (<see cref="RoutesInIndexOrder"/>), so two apps never share a class name.
   /// </summary>
   private static void EmitCommandClasses(StringBuilder sb, GeneratorModel model)
   {
-    // Emit command classes for all routes across all apps
-    CommandClassEmitter.EmitCommandClasses(sb, model.AllRoutes);
+    for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
+    {
+      string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+      CommandClassEmitter.EmitCommandClasses(sb, RoutesInIndexOrder(model.Apps[appIndex], model), methodSuffix);
+    }
   }
 
   /// <summary>
   /// Emits static nullable fields for Singleton and Scoped services.
-  /// These are initialized lazily in EnsureServicesInitialized.
-  /// Services are sorted topologically to ensure dependencies are emitted first.
+  /// Each field is built on first read by its <c>__Resolve</c> accessor, so a call that never
+  /// reaches a service (a built-in, a parse error, a forwarded route) never constructs it.
   /// </summary>
   private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, bool hasGeneratedMediator, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
   {
@@ -402,8 +526,14 @@ internal static class InterceptorEmitter
     ImmutableArray<ServiceDefinition> sortedProcessServices =
       DependencyGraphBuilder.TopologicalSort([.. processServices]);
 
-    sb.AppendLine("  // Static service fields (initialized in EnsureServicesInitialized)");
-    sb.AppendLine("  // Services are sorted topologically to ensure dependencies are emitted first");
+    // A Scoped service that injects a session or command service has no process field:
+    // it lives in the run's command slot (508-007 review M1).
+    ImmutableArray<ServiceDefinition> cachedProcessServices =
+    [
+      .. sortedProcessServices.Where(service => !ServiceScopeExpressions.IsPerRun(service, allServices))
+    ];
+
+    sb.AppendLine("  // Static service fields, built on first read by their __Resolve accessors");
 
     // Emit framework service fields (always needed)
     sb.AppendLine("  private static global::TimeWarp.Terminal.ITerminal? __fw_ITerminal;");
@@ -420,43 +550,52 @@ internal static class InterceptorEmitter
     }
 
     // Emit user service fields
-    foreach (ServiceDefinition service in sortedProcessServices)
+    foreach (ServiceDefinition service in cachedProcessServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
       sb.AppendLine(
         $"  private static {service.ImplementationTypeName}? {fieldName};");
     }
 
-    foreach (ServiceDefinition service in sessionServices)
-    {
-      sb.AppendLine(
-        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.SessionField(service.ImplementationTypeName)};");
-    }
+    // Session and command state lives on a __NuruCall: the process one outside a call context (a CLI run,
+    // the REPL), or the call's own one for a daemon or MCP host call (NuruCallContext), so concurrent calls
+    // never share or dispose each other's scope. The static properties keep the field names generated code uses.
+    // REPL (and isolated-call) Scoped uses a per-command field. Non-REPL Scoped keeps the process field above,
+    // except a Scoped service that injects a session or command service, which always uses the command field.
+    List<(string TypeName, string Name)> callFields =
+    [
+      .. sessionServices.Select(static service => (service.ImplementationTypeName, ServiceScopeExpressions.SessionField(service.ImplementationTypeName))),
+      .. commandServices.Select(static service => (service.ImplementationTypeName, ServiceScopeExpressions.CommandField(service.ImplementationTypeName))),
+      .. sortedProcessServices
+        .Where(static service => service.Lifetime == ServiceLifetime.Scoped)
+        .Select(static service => (service.ImplementationTypeName, ServiceScopeExpressions.CommandField(service.ImplementationTypeName)))
+    ];
 
-    foreach (ServiceDefinition service in commandServices)
-    {
-      sb.AppendLine(
-        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)};");
-    }
+    sb.AppendLine("  private sealed partial class __NuruCall");
+    sb.AppendLine("  {");
+    sb.AppendLine("    public bool ReplCommandActive;");
+    sb.AppendLine("    public readonly global::System.Collections.Generic.List<object> CommandDisposables = new();");
+    sb.AppendLine("    public readonly global::System.Collections.Generic.List<object> SessionDisposables = new();");
+    foreach ((string typeName, string name) in callFields)
+      sb.AppendLine($"    public {typeName}? {name};");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+    sb.AppendLine("  private static readonly __NuruCall __nuruProcessCall = new();");
+    sb.AppendLine("  private static readonly global::System.Threading.AsyncLocal<__NuruCall?> __nuruCall = new();");
+    sb.AppendLine("  private static readonly global::System.Threading.Lock __nuruInitLock = new();");
+    sb.AppendLine("  private static __NuruCall __CurrentCall => __nuruCall.Value ?? __nuruProcessCall;");
+    foreach ((string typeName, string name) in callFields)
+      sb.AppendLine($"  private static {typeName}? {name} {{ get => __CurrentCall.{name}; set => __CurrentCall.{name} = value; }}");
 
-    // REPL Scoped uses a per-command field. Non-REPL Scoped keeps the process field above.
-    foreach (ServiceDefinition service in sortedProcessServices.Where(static service => service.Lifetime == ServiceLifetime.Scoped))
-    {
-      sb.AppendLine(
-        $"  private static {service.ImplementationTypeName}? {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)};");
-    }
-
-    sb.AppendLine("  private static bool __replCommandActive;");
-    sb.AppendLine("  private static bool __sessionServicesReady;");
-    sb.AppendLine("  private static bool __nonReplScopedReady;");
-    sb.AppendLine("  private static readonly global::System.Collections.Generic.List<object> __commandDisposables = new();");
-    sb.AppendLine("  private static readonly global::System.Collections.Generic.List<object> __sessionDisposables = new();");
+    sb.AppendLine("  private static bool __replCommandActive { get => __CurrentCall.ReplCommandActive; set => __CurrentCall.ReplCommandActive = value; }");
+    sb.AppendLine("  private static global::System.Collections.Generic.List<object> __commandDisposables => __CurrentCall.CommandDisposables;");
+    sb.AppendLine("  private static global::System.Collections.Generic.List<object> __sessionDisposables => __CurrentCall.SessionDisposables;");
 
     sb.AppendLine();
 
     // Emit EnsureServicesInitialized method
-    EmitEnsureServicesInitialized(sb, sortedProcessServices, allServices, frameworkServiceTypes, requiresMediator);
-    EmitSourceGenScopeMethods(sb, allServices, sortedProcessServices);
+    EmitEnsureServicesInitialized(sb, cachedProcessServices, frameworkServiceTypes, requiresMediator);
+    EmitSourceGenScopeMethods(sb, allServices, cachedProcessServices);
 
     if (requiresMediator)
       EmitSourceGenMediator(sb, allServices, hasGeneratedMediator, loggerFactoryFieldName, httpClientConfigurations);
@@ -488,6 +627,8 @@ internal static class InterceptorEmitter
     }
 
     sb.AppendLine("    if (__mediatorServiceProvider is null)");
+    sb.AppendLine("    lock (__nuruInitLock)");
+    sb.AppendLine("    if (__mediatorServiceProvider is null)");
     sb.AppendLine("    {");
     sb.AppendLine("      var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
     sb.AppendLine($"      {Sce}.AddTransient<global::TimeWarp.Terminal.ITerminal>(services, static _ => __fw_ITerminal!);");
@@ -508,7 +649,7 @@ internal static class InterceptorEmitter
     {
       string factory = service.Lifetime == ServiceLifetime.Transient
         ? ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.Command)
-        : ServiceScopeExpressions.Read(service, ServiceResolveMode.Command);
+        : ServiceScopeExpressions.Read(service, allServices, ServiceResolveMode.Command);
       sb.AppendLine($"      {Sce}.AddTransient<{service.ServiceTypeName}>(services, static _ => {factory});");
     }
 
@@ -569,29 +710,31 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Emits the EnsureServicesInitialized method that initializes all service fields.
+  /// Emits the EnsureServicesInitialized method that sets the framework service fields.
   /// This is called after configuration is built in ExecuteRouteAsync.
   /// Uses app instance check instead of boolean flag to support multiple app instances
-  /// in the same process (e.g., CI multi-mode tests).
+  /// in the same process (e.g., CI multi-mode tests). User services are not built here:
+  /// a new app clears the process fields and each <c>__Resolve</c> accessor builds on first read.
   /// </summary>
-  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, ImmutableArray<ServiceDefinition> allServices, HashSet<string> frameworkServiceTypes, bool requiresMediator)
+  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, HashSet<string> frameworkServiceTypes, bool requiresMediator)
   {
-    sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration, bool fromRepl)");
+    sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
     sb.AppendLine("  {");
-    // Already initialized for this app. Non-REPL Scoped is created on the first single-run
-    // command when the first call was a REPL command (which skips process-scoped fields).
+    // Concurrent first calls (a daemon or MCP host) must not set up an app twice.
+    sb.AppendLine("    lock (__nuruInitLock)");
+    sb.AppendLine("      EnsureServicesInitializedLocked(app, configuration);");
+    sb.AppendLine("  }");
+    sb.AppendLine();
+    sb.AppendLine("  private static void EnsureServicesInitializedLocked(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
+    sb.AppendLine("  {");
     sb.AppendLine("    if (__fw_NuruApp == app)");
-    sb.AppendLine("    {");
-    sb.AppendLine("      if (!fromRepl)");
-    sb.AppendLine("        EnsureNonReplScoped();");
     sb.AppendLine("      return;");
-    sb.AppendLine("    }");
     sb.AppendLine();
 
     // Initialize framework services
     sb.AppendLine("    // Framework services");
     sb.AppendLine("    __fw_NuruApp = app;");
-    sb.AppendLine("    __fw_ITerminal = app.Terminal;");
+    sb.AppendLine("    __fw_ITerminal = new global::TimeWarp.Nuru.NuruCallTerminal(app);");
     if (requiresMediator)
     {
       sb.AppendLine("    __mediatorConfiguration = configuration;");
@@ -611,33 +754,11 @@ internal static class InterceptorEmitter
 
     sb.AppendLine();
 
-    // Initialize user services in topological order.
-    // Scoped process fields are skipped in the REPL so each command can construct __cmd_ instead.
-    sb.AppendLine("    // User services");
+    // One instance per app: drop the previous app's singletons and process-scoped services.
+    sb.AppendLine("    // User services: built on first read; a new app drops the previous app's instances");
     foreach (ServiceDefinition service in sortedServices)
-    {
-      string fieldName = GetServiceFieldName(service.ImplementationTypeName);
-      string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
-      if (service.Lifetime == ServiceLifetime.Scoped)
-      {
-        // Session and command fields are assigned in BeginSingleRunServices.
-        // A scoped service that injects them is built there, not here.
-        if (DependencyGraphBuilder.DependsOnInvocationScope(service, allServices))
-          continue;
+      sb.AppendLine($"    {GetServiceFieldName(service.ImplementationTypeName)} = null;");
 
-        sb.AppendLine("    if (!fromRepl && !__nonReplScopedReady)");
-        sb.AppendLine("    {");
-        sb.AppendLine($"      {fieldName} = {constructed};");
-        sb.AppendLine("    }");
-      }
-      else
-      {
-        sb.AppendLine($"    {fieldName} = {constructed};");
-      }
-    }
-
-    sb.AppendLine("    if (!fromRepl)");
-    sb.AppendLine("      __nonReplScopedReady = true;");
     sb.AppendLine("  }");
     sb.AppendLine();
   }
@@ -649,7 +770,7 @@ internal static class InterceptorEmitter
   (
     StringBuilder sb,
     ImmutableArray<ServiceDefinition> allServices,
-    ImmutableArray<ServiceDefinition> sortedProcessServices
+    ImmutableArray<ServiceDefinition> cachedProcessServices
   )
   {
     ImmutableArray<ServiceDefinition> sessionServices = DependencyGraphBuilder.TopologicalSort
@@ -697,71 +818,35 @@ internal static class InterceptorEmitter
     sb.AppendLine("  }");
     sb.AppendLine();
 
-    sb.AppendLine("  private static void EnsureSessionServices()");
-    sb.AppendLine("  {");
-    sb.AppendLine("    if (__sessionServicesReady) return;");
-    sb.AppendLine("    __sessionServicesReady = true;");
-    EmitConstructions(sb, sessionServices, allServices, ServiceResolveMode.Session, ServiceScopeExpressions.SessionField, "    ");
-    sb.AppendLine("  }");
-    sb.AppendLine();
+    // A Scoped service that injects a session or command service is built per run in its command
+    // slot on the call, tracked with the command, and cleared when the run ends.
+    ImmutableArray<ServiceDefinition> lateScoped =
+    [
+      .. replCommandServices.Where(service =>
+        service.Lifetime == ServiceLifetime.Scoped &&
+        ServiceScopeExpressions.IsPerRun(service, allServices))
+    ];
 
-    sb.AppendLine("  private static void EnsureNonReplScoped()");
-    sb.AppendLine("  {");
-    sb.AppendLine("    if (__nonReplScopedReady) return;");
-    sb.AppendLine("    __nonReplScopedReady = true;");
-    foreach (ServiceDefinition service in sortedProcessServices.Where(service =>
-      service.Lifetime == ServiceLifetime.Scoped &&
-      !DependencyGraphBuilder.DependsOnInvocationScope(service, allServices)))
+    // Process instances (singletons, non-REPL Scoped) take the init lock so concurrent served calls build one.
+    foreach (ServiceDefinition service in cachedProcessServices)
     {
       string fieldName = GetServiceFieldName(service.ImplementationTypeName);
       string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
-      sb.AppendLine($"    {fieldName} = {constructed};");
+
+      sb.AppendLine($"  private static {service.ImplementationTypeName} {ServiceScopeExpressions.ResolverName(fieldName)}()");
+      sb.AppendLine("  {");
+      sb.AppendLine($"    {service.ImplementationTypeName}? instance = {fieldName};");
+      sb.AppendLine("    if (instance is not null)");
+      sb.AppendLine("      return instance;");
+      sb.AppendLine("    lock (__nuruInitLock)");
+      sb.AppendLine($"      return {fieldName} ??= {constructed};");
+      sb.AppendLine("  }");
+      sb.AppendLine();
     }
 
-    sb.AppendLine("  }");
-    sb.AppendLine();
-
-    sb.AppendLine("  private static void BeginReplCommandServices()");
-    sb.AppendLine("  {");
-    sb.AppendLine("    EnsureSessionServices();");
-    EmitConstructions(sb, replCommandServices, allServices, ServiceResolveMode.Command, ServiceScopeExpressions.CommandField, "    ");
-    sb.AppendLine("  }");
-    sb.AppendLine();
-
-    ServiceDefinition[] lateScoped =
-    [
-      .. sortedProcessServices.Where(service =>
-        service.Lifetime == ServiceLifetime.Scoped &&
-        DependencyGraphBuilder.DependsOnInvocationScope(service, allServices))
-    ];
-    ImmutableArray<ServiceDefinition> singleRunInvocation = DependencyGraphBuilder.TopologicalSort
-    (
-      [.. commandServices, .. lateScoped]
-    );
-
-    sb.AppendLine("  private static void BeginSingleRunServices()");
-    sb.AppendLine("  {");
-    sb.AppendLine("    EnsureSessionServices();");
-    foreach (ServiceDefinition service in singleRunInvocation)
-    {
-      if (service.Lifetime == ServiceLifetime.CommandScoped)
-      {
-        string constructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.Command);
-        sb.AppendLine($"    {ServiceScopeExpressions.CommandField(service.ImplementationTypeName)} = {constructed};");
-        continue;
-      }
-
-      // Recreate each single-run. The captured session and command instances
-      // are disposed at the end of the invocation.
-      string fieldName = GetServiceFieldName(service.ImplementationTypeName);
-      string lateConstructed = ServiceScopeExpressions.Construct(service, allServices, ServiceResolveMode.ProcessInit);
-      sb.AppendLine($"    {fieldName} = {lateConstructed};");
-      sb.AppendLine($"    if ((object){fieldName} is global::System.IDisposable or global::System.IAsyncDisposable)");
-      sb.AppendLine($"      __commandDisposables.Add({fieldName});");
-    }
-
-    sb.AppendLine("  }");
-    sb.AppendLine();
+    // Session and command fields belong to the call (__NuruCall), so they need no lock.
+    EmitScopeResolvers(sb, sessionServices, allServices, ServiceResolveMode.Session, ServiceScopeExpressions.SessionField);
+    EmitScopeResolvers(sb, replCommandServices, allServices, ServiceResolveMode.Command, ServiceScopeExpressions.CommandField);
 
     sb.AppendLine("  private static async global::System.Threading.Tasks.ValueTask EndReplCommandServicesAsync()");
     sb.AppendLine("  {");
@@ -777,7 +862,7 @@ internal static class InterceptorEmitter
     sb.AppendLine("    await __DisposeTrackedAsync(__sessionDisposables).ConfigureAwait(false);");
     EmitNullAssignments(sb, commandServices, ServiceScopeExpressions.CommandField, "    ");
     EmitNullAssignments(sb, sessionServices, ServiceScopeExpressions.SessionField, "    ");
-    sb.AppendLine("    __sessionServicesReady = false;");
+    EmitNullAssignments(sb, lateScoped, ServiceScopeExpressions.CommandField, "    ");
     sb.AppendLine("    __replCommandActive = false;");
     sb.AppendLine("  }");
     sb.AppendLine();
@@ -786,26 +871,28 @@ internal static class InterceptorEmitter
     sb.AppendLine("  {");
     sb.AppendLine("    await __DisposeTrackedAsync(__sessionDisposables).ConfigureAwait(false);");
     EmitNullAssignments(sb, sessionServices, ServiceScopeExpressions.SessionField, "    ");
-    sb.AppendLine("    __sessionServicesReady = false;");
     sb.AppendLine("  }");
     sb.AppendLine();
   }
 
-  private static void EmitConstructions
+  private static void EmitScopeResolvers
   (
     StringBuilder sb,
     ImmutableArray<ServiceDefinition> services,
     ImmutableArray<ServiceDefinition> allServices,
     ServiceResolveMode mode,
-    Func<string, string> fieldName,
-    string indent
+    Func<string, string> fieldName
   )
   {
     foreach (ServiceDefinition service in services)
     {
+      string field = fieldName(service.ImplementationTypeName);
       string constructed = ServiceScopeExpressions.Construct(service, allServices, mode);
-      sb.AppendLine($"{indent}{fieldName(service.ImplementationTypeName)} = {constructed};");
+      sb.AppendLine($"  private static {service.ImplementationTypeName} {ServiceScopeExpressions.ResolverName(field)}() => {field} ??= {constructed};");
     }
+
+    if (services.Length > 0)
+      sb.AppendLine();
   }
 
   private static void EmitNullAssignments
@@ -863,16 +950,27 @@ internal static class InterceptorEmitter
       }
 
       sb.AppendLine($"  private static global::System.IServiceProvider? __serviceProvider{suffix};");
-      sb.AppendLine($"  private static global::Microsoft.Extensions.DependencyInjection.IServiceScope? __commandScope{suffix};");
+      // The command scope belongs to the call (see __NuruCall): concurrent served calls each have one.
+      sb.AppendLine("  private sealed partial class __NuruCall");
+      sb.AppendLine("  {");
+      sb.AppendLine($"    public global::Microsoft.Extensions.DependencyInjection.IServiceScope? CommandScope{suffix};");
+      sb.AppendLine("  }");
+      sb.AppendLine();
+      sb.AppendLine($"  private static global::Microsoft.Extensions.DependencyInjection.IServiceScope? __commandScope{suffix} {{ get => __CurrentCall.CommandScope{suffix}; set => __CurrentCall.CommandScope{suffix} = value; }}");
       sb.AppendLine();
       sb.AppendLine($"  private static global::System.IServiceProvider GetServiceProvider{suffix}(NuruApp app)");
       sb.AppendLine("  {");
       sb.AppendLine($"    if (__serviceProvider{suffix} is not null) return __serviceProvider{suffix};");
+      sb.AppendLine("    lock (__nuruInitLock)");
+      sb.AppendLine($"      return __serviceProvider{suffix} ?? BuildServiceProvider{suffix}(app);");
+      sb.AppendLine("  }");
       sb.AppendLine();
+      sb.AppendLine($"  private static global::System.IServiceProvider BuildServiceProvider{suffix}(NuruApp app)");
+      sb.AppendLine("  {");
       sb.AppendLine("    var services = new global::Microsoft.Extensions.DependencyInjection.ServiceCollection();");
       sb.AppendLine();
       sb.AppendLine("    // Register Nuru built-ins so they're available for user services");
-      sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, app.Terminal);");
+      sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::TimeWarp.Terminal.ITerminal>(services, new global::TimeWarp.Nuru.NuruCallTerminal(app));");
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
       sb.AppendLine();
 
@@ -1156,27 +1254,29 @@ internal static class InterceptorEmitter
 
     // Peel --json-args before the command scope so the REPL host check sees routeArgs
     // (config args stripped), including AutoStartWhenEmpty on an empty route.
-    sb.AppendLine("    __replCommandActive = fromRepl;");
+    // A call in a NuruCallContext (daemon, MCP host) is isolated: its own __NuruCall, scoped like a REPL
+    // command (Scoped per call), and its session and command instances disposed when it returns.
+    sb.AppendLine("    bool __isolatedCall = !fromRepl && global::TimeWarp.Nuru.NuruCallContext.Current is not null;");
+    sb.AppendLine("    if (__isolatedCall)");
+    sb.AppendLine("      __nuruCall.Value = new __NuruCall();");
+    sb.AppendLine("    __replCommandActive = fromRepl || __isolatedCall;");
     JsonArgsEmitter.EmitPrepare(sb, app);
 
     // The REPL host must not open a command scope. Nested commands open their own.
     // await using disposes that scope on every later return, including early exits.
     string enteringRepl = EnteringReplExpression(app);
     sb.AppendLine("    // Initialize services with app and configuration");
-    sb.AppendLine($"    bool __enteringRepl = {enteringRepl};");
+    sb.AppendLine($"    bool __enteringRepl = __invocation is null && ({enteringRepl});");
     string scopeSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
     if (app.UseMicrosoftDependencyInjection)
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl);");
-      sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: __enteringRepl);");
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
+      sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: __enteringRepl, isolatedCall: __isolatedCall);");
     }
     else
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration, fromRepl || __enteringRepl);");
-      sb.AppendLine("    if (fromRepl)");
-      sb.AppendLine("      BeginReplCommandServices();");
-      sb.AppendLine("    else if (!__enteringRepl)");
-      sb.AppendLine("      BeginSingleRunServices();");
+      // Services are built when a handler or behavior first reads them, not here.
+      sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
       sb.AppendLine("    await using global::TimeWarp.Nuru.NuruAsyncLease __nuruLease = __enteringRepl");
       sb.AppendLine("      ? global::TimeWarp.Nuru.NuruAsyncLease.Idle()");
       sb.AppendLine("      : global::TimeWarp.Nuru.NuruAsyncLease.For(fromRepl, EndReplCommandServicesAsync, EndSingleRunServicesAsync);");
@@ -1196,10 +1296,13 @@ internal static class InterceptorEmitter
     // Build a lookup from route to its original index for command class naming
     // IMPORTANT: Use only this app's routes (plus filtered endpoints), not all routes from all apps
     // Using model.AllRoutes would cause route index collisions between different apps
-    List<RouteDefinition> allRoutesOrdered = [.. app.Routes.Concat(endpointsForApp)];
+    List<RouteDefinition> allRoutesOrdered = RoutesInIndexOrder(app, model);
+
+    // A request bound by NuruApp.TryBind runs here, after services and the command scope.
+    JsonArgsEmitter.EmitInvocationDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);
 
     // JSON selection returns. Calls without --json-args leave __jsonDoc null and fall through.
-    JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);
+    JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null);
 
     sb.AppendLine("    if (!__jsonBuiltInOnly)");
     sb.AppendLine("    {");
@@ -1226,7 +1329,7 @@ internal static class InterceptorEmitter
         allRoutesOrdered.Add(route);
       }
 
-      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke, model.HasGeneratedMediator);
+      RouteMatcherEmitter.Emit(sb, route, routeIndex, app.Services, app.Behaviors, app.CustomConverters, loggerFactoryFieldName, app.UseMicrosoftDependencyInjection, methodSuffix, app.HttpClientConfigurations, sharedPrefixHelpRoutes, app.UseDirectInvoke, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null, verbatimRendererOutput: app.VerbatimRendererOutput);
     }
 
     sb.AppendLine("    }");
@@ -1238,6 +1341,33 @@ internal static class InterceptorEmitter
 
     // No match fallback
     EmitNoMatch(sb);
+  }
+
+  /// <summary>
+  /// For an <c>[Exclusive]</c> / <c>.Exclusive()</c> route, takes the app's exclusive gate before the
+  /// behaviors and handler; the lease releases it when the dispatch block exits. Without a call context
+  /// (a plain CLI run) the lease is a no-op, since nothing runs concurrently there.
+  /// </summary>
+  /// <remarks>
+  /// With <paramref name="openBlock"/>, the lease opens a block that <see cref="EmitExclusiveGateEnd"/>
+  /// closes: argv matching jumps past the dispatch with <c>goto</c>, which C# forbids across a using
+  /// declaration in the same block (CS8648).
+  /// </remarks>
+  internal static void EmitExclusiveGate(StringBuilder sb, RouteDefinition route, string indent, bool openBlock = false)
+  {
+    if (!route.IsExclusive)
+      return;
+
+    if (openBlock)
+      sb.AppendLine($"{indent}{{");
+    sb.AppendLine($"{indent}await using global::TimeWarp.Nuru.NuruExclusiveLease __exclusive = await global::TimeWarp.Nuru.NuruExclusiveLease.EnterAsync(app, cancellationToken).ConfigureAwait(false);");
+  }
+
+  /// <summary>Closes the block <see cref="EmitExclusiveGate"/> opened with <c>openBlock</c>.</summary>
+  internal static void EmitExclusiveGateEnd(StringBuilder sb, RouteDefinition route, string indent)
+  {
+    if (route.IsExclusive)
+      sb.AppendLine($"{indent}}}");
   }
 
   /// <summary>
@@ -1314,7 +1444,7 @@ internal static class InterceptorEmitter
       return
       [
         .. allEndpoints
-          .Where(e => MatchesFilterGroupType(e, app.FilterGroupTypeNames))
+          .Where(e => !e.IsExplicitOnly && MatchesFilterGroupType(e, app.FilterGroupTypeNames))
           .Select(e => StripGroupPrefixAboveMatchedType(e, app.FilterGroupTypeNames))
       ];
     }
@@ -1336,8 +1466,9 @@ internal static class InterceptorEmitter
     }
 
     // Priority 3: DiscoverEndpoints() without filters - include all endpoints
+    // A referenced endpoint found only through Map<T>() belongs to the app that maps it.
     if (app.DiscoverEndpoints)
-      return allEndpoints;
+      return [.. allEndpoints.Where(static e => !e.IsExplicitOnly)];
 
     // Default: no endpoints (test isolation)
     return [];
@@ -1505,11 +1636,67 @@ internal static class InterceptorEmitter
       sb.AppendLine();
     }
 
+    // mcp route (opt-in via AddMcpRoute() from TimeWarp.Nuru.McpHost)
+    if (app.McpRoute is McpRouteModel mcpRoute)
+    {
+      EmitMcpRoute(sb, mcpRoute);
+    }
+
+    // serve route (opt-in via AddServeRoute() from TimeWarp.Nuru.Daemon)
+    if (app.ServeRoute is not null)
+    {
+      EmitServeRoute(sb, methodSuffix);
+    }
+
     // Shell completion routes (opt-in via EnableCompletion())
     if (app.HasCompletion)
     {
       EmitCompletionRoutes(sb, methodSuffix);
     }
+  }
+
+  /// <summary>
+  /// Emits the built-in mcp route. It runs the TimeWarp.Nuru.McpHost stdio server over this app,
+  /// with the options from the AddMcpRoute() arguments.
+  /// </summary>
+  private static void EmitMcpRoute(StringBuilder sb, McpRouteModel mcpRoute)
+  {
+    string instructions = mcpRoute.Instructions is null
+      ? "null"
+      : $"\"{EmitterStringUtils.EscapeForStringLiteral(mcpRoute.Instructions)}\"";
+    string groupFilter = mcpRoute.GroupFilter is null
+      ? "null"
+      : $"\"{EmitterStringUtils.EscapeForStringLiteral(mcpRoute.GroupFilter)}\"";
+
+    sb.AppendLine("    // Built-in: mcp (opt-in via AddMcpRoute())");
+    sb.AppendLine($"    if (routeArgs is [\"{BuiltInFlags.McpRouteForm}\"])");
+    sb.AppendLine("    {");
+    sb.AppendLine("      global::TimeWarp.Nuru.McpHost.NuruMcpHostOptions __mcpOptions = new()");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        Instructions = {instructions},");
+    sb.AppendLine($"        GroupFilter = {groupFilter},");
+    sb.AppendLine($"        ContentFormat = (global::TimeWarp.Nuru.McpHost.NuruMcpContentFormat){mcpRoute.ContentFormat.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+    sb.AppendLine("      };");
+    sb.AppendLine("      return await global::TimeWarp.Nuru.McpHost.NuruMcpServer.RunStdioAsync(app, __mcpOptions, cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Emits the built-in serve routes. They run the TimeWarp.Nuru.Daemon server over this app, or report
+  /// and stop a running one, with the options from the AddServeRoute() arguments.
+  /// </summary>
+  private static void EmitServeRoute(StringBuilder sb, string methodSuffix)
+  {
+    string form = BuiltInFlags.ServeRouteForm;
+    sb.AppendLine("    // Built-in: serve, serve --status, serve --stop (opt-in via AddServeRoute())");
+    sb.AppendLine($"    if (routeArgs is [\"{form}\"])");
+    sb.AppendLine($"      return await global::TimeWarp.Nuru.Daemon.NuruDaemonServer.RunAsync(app, __DaemonOptions{methodSuffix}(), cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine($"    if (routeArgs is [\"{form}\", \"--status\"])");
+    sb.AppendLine($"      return await global::TimeWarp.Nuru.Daemon.NuruDaemonServer.StatusAsync(app, __DaemonOptions{methodSuffix}(), cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine($"    if (routeArgs is [\"{form}\", \"--stop\"])");
+    sb.AppendLine($"      return await global::TimeWarp.Nuru.Daemon.NuruDaemonServer.StopAsync(app, __DaemonOptions{methodSuffix}(), cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine();
   }
 
   /// <summary>
@@ -1633,12 +1820,11 @@ internal static class InterceptorEmitter
       AppModel app = model.Apps[appIndex];
       string methodSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
 
-      // Enrich app with version metadata and routes for help/capabilities
-      // For DiscoverEndpoints() or Map<T>() apps, routes come from model.Endpoints
-      // For Map() with inline lambdas, routes are already in app.Routes
-      ImmutableArray<RouteDefinition> appRoutes = app.Routes.Length > 0
-        ? app.Routes
-        : FilterEndpointsForApp(app, model.Endpoints);
+      // Enrich app with version metadata and routes for help/capabilities.
+      // Fluent Map() routes are in app.Routes; DiscoverEndpoints() / Map<T>() endpoints come from
+      // model.Endpoints. An app can use both, so help and the catalog list the same routes the
+      // matcher and the JSON binder dispatch (RoutesInIndexOrder), not only the fluent ones.
+      ImmutableArray<RouteDefinition> appRoutes = [.. RoutesInIndexOrder(app, model)];
       AppModel enrichedApp = app with
       {
         Version = model.Version,

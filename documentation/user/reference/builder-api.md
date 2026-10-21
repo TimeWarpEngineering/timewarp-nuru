@@ -237,7 +237,9 @@ Methods available on `NuruApp` after building:
 `RunAsync` returns the process exit code:
 
 - **0**: The matched route finished and `Environment.ExitCode` is still 0.
-- **Non-zero**: The handler set `Environment.ExitCode`, or the generated host returned 1 because argument binding failed or no route matched.
+- **Non-zero**: The handler set `Environment.ExitCode` (or `NuruCallContext.CurrentExitCode`), or the generated host returned 1 because argument binding failed or no route matched.
+
+In a served app or MCP host, calls run concurrently and `Environment.ExitCode` is not per call: set `NuruCallContext.CurrentExitCode`, which sets the call's own exit code there and `Environment.ExitCode` in a plain CLI run. See [Served apps](../features/served-apps.md#concurrent-calls).
 
 Handler return values are written to the terminal. They are not the exit code. A handler exception is not turned into exit code 1. It propagates out of `RunAsync`. When telemetry is enabled, the host records `error.type` and rethrows.
 

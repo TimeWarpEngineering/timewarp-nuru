@@ -60,6 +60,10 @@ Acceptance:
 - [x] AGENTS rule updated to point at the diagnostic
 - [x] CI tests green; changelog entry
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Follow-ups, not in this task: convert the flagged tests to `Map<T>()` and re-measure generated size and CI compile time and memory; possibly split the CI assembly in two; a design note on how multi-mode Jaribu compilation interacts with Nuru code generation (for example, scoping discovery per file in multi-mode).
@@ -71,6 +75,7 @@ Acceptance:
 - 2026-10-23 implementer (Claude Opus 5.5, ganda task work): NURU_A003 in the generator, generator-63 tests, validation below, temporary CI `NoWarn`. `ganda repo audit` flagged `runfile-executable` on the new generator-63 runfile at commit time; `ganda repo audit --fix` set its executable bit.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-22T19:56:20Z
 - Review oracle: tw-implementation-review, effort 2, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 120), round 1, disposition clean — 2026-10-23
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-22T20:13:01Z
 
 ## Results
 

@@ -437,16 +437,8 @@ internal static class InterceptorEmitter
     sb.AppendLine("using global::TimeWarp.Nuru;");
     sb.AppendLine("using global::TimeWarp.Terminal;");
 
-    // OpenTelemetry usings (only when telemetry is enabled)
-    if (model.HasTelemetry)
-    {
-      sb.AppendLine("using global::OpenTelemetry;");
-      sb.AppendLine("using global::OpenTelemetry.Extensions.Hosting;");
-      sb.AppendLine("using global::OpenTelemetry.Logs;");
-      sb.AppendLine("using global::OpenTelemetry.Metrics;");
-      sb.AppendLine("using global::OpenTelemetry.Resources;");
-      sb.AppendLine("using global::OpenTelemetry.Trace;");
-    }
+    // No OpenTelemetry usings: TelemetryEmitter writes every OpenTelemetry type and extension
+    // call fully qualified, so these names cannot clash with the user's usings (task 521).
 
     // User-defined usings from source file
     if (model.UserUsings.Length > 0)

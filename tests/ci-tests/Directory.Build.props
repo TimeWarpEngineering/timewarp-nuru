@@ -124,6 +124,10 @@
     <!-- generator-60: runs the JSON context MSBuild task in-process (task 508-013); it references
          timewarp-nuru-build, which the multi-mode compilation does not. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-60-json-context-referenced-endpoints.cs" />
+    <!-- generator-63: same Roslyn-hosted generator test pattern as generator-28
+         (task 521 UseTelemetry without a logging using); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-63-telemetry-without-logging-using.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

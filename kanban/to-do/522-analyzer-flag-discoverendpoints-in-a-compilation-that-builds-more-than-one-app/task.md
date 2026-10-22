@@ -175,15 +175,18 @@ Smoke:
 ```bash
 ganda runfile cache --clear
 dotnet run tests/timewarp-nuru-tests/generator/generator-63-discover-endpoints-across-apps.cs
-dotnet build tests/ci-tests/run-ci-tests.cs -p:NoWarn=NURU_A003_OFF -p:TreatWarningsAsErrors=false 2>&1 | grep -c "warning NURU_A003"
+sed -i 's/;NURU_A003<\/NoWarn>/<\/NoWarn>/' tests/ci-tests/Directory.Build.props
+dotnet build tests/ci-tests/run-ci-tests.cs -p:TreatWarningsAsErrors=false 2>&1 | grep -c "warning NURU_A003"
+git checkout tests/ci-tests/Directory.Build.props
 dotnet run tests/ci-tests/run-ci-tests.cs
 ```
 
 Expect:
 
 - generator-63: 6 passed.
-- The middle command sets `NoWarn` as a global property, which replaces the project's list, so the
-  temporary suppression is off for that build only (about 5 minutes). It prints 49, one line per site in
-  the table above (as of master d0a93b17 plus this branch).
+- The `sed` / build / `git checkout` lines turn the temporary suppression off for one build (about
+  5 minutes) and print 49, one line per site in the table above (as of master d0a93b17 plus this
+  branch). Do not pass `-p:NoWarn=...` instead: a global `NoWarn` replaces every referenced
+  project's own list, and their build fails (CA1305 in the analyzers project).
 - `run-ci-tests.cs` exits 0 with the suppression in place, with no NURU_A003 in its output.
 - `dotnet build samples/endpoints/01-hello-world/endpoint-hello-world.cs` shows no NURU_A003.

@@ -68,7 +68,7 @@ Acceptance:
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23). Steven: "we should first create an Analyzer if possible to catch this. And then validate we can. Before changing."
-- 2026-10-23 implementer (Claude Opus 5.5, ganda task work): NURU_A003 in the generator, generator-63 tests, validation below, temporary CI `NoWarn`. `ganda repo audit` passed with no fixes needed.
+- 2026-10-23 implementer (Claude Opus 5.5, ganda task work): NURU_A003 in the generator, generator-63 tests, validation below, temporary CI `NoWarn`. `ganda repo audit` flagged `runfile-executable` on the new generator-63 runfile at commit time; `ganda repo audit --fix` set its executable bit.
 
 ## Results
 

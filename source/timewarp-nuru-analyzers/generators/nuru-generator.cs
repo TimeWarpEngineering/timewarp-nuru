@@ -566,12 +566,18 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .OfType<RouteDefinition>()
       .DistinctBy(route => route.Handler.FullTypeName ?? route.EffectivePattern)];
 
+    // NURU_A003 fires only when apps are built in more than one source file
+    int appFileCount = DiscoverEndpointsValidator.CountAppFiles(uniqueApps.Values);
+
     // Validate each app's combined routes (fluent + filtered endpoints)
     // This catches duplicate routes between fluent and endpoint definitions
     foreach (AppModel app in uniqueApps.Values)
     {
       // Filter endpoints based on app's discovery mode
       ImmutableArray<RouteDefinition> endpointsForApp = FilterEndpointsForApp(app, allEndpoints);
+
+      allDiagnostics.AddRange(
+        DiscoverEndpointsValidator.Validate(app, endpointsForApp.Length, appFileCount, compilation));
 
       // Combine this app's fluent routes with filtered endpoints
       ImmutableArray<RouteDefinition> combinedRoutes = [.. app.Routes.Concat(endpointsForApp)];

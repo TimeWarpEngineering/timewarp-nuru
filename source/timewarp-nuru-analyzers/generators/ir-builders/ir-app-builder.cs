@@ -41,6 +41,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   private bool IsBuilt;
   private BuildInterceptSite? BuildSite;
   private bool DiscoverEndpointsEnabled;
+  private LocationInfo? DiscoverEndpointsLocation;
   private bool TelemetryEnabled;
   private TelemetryModel? TelemetryOptions;
   private bool CompletionEnabled;
@@ -355,9 +356,11 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   /// Marks that all [NuruRoute] endpoints should be discovered and included.
   /// Mirrors: NuruAppBuilder.DiscoverEndpoints()
   /// </summary>
-  public TSelf DiscoverEndpoints()
+  /// <param name="callLocation">Source location of the call, kept for NURU_A003.</param>
+  public TSelf DiscoverEndpoints(LocationInfo? callLocation = null)
   {
     DiscoverEndpointsEnabled = true;
+    DiscoverEndpointsLocation ??= callLocation;
     return (TSelf)this;
   }
 
@@ -464,7 +467,8 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       ProblemRendererForErrors: ProblemRendererForErrorsEnabled,
       BuildSite: BuildSite,
       McpRoute: McpRoute,
-      ServeRoute: ServeRoute);
+      ServeRoute: ServeRoute,
+      DiscoverEndpointsLocation: DiscoverEndpointsLocation);
   }
 
   /// <summary>
@@ -507,7 +511,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   IIrAppBuilder IIrAppBuilder.SetConfigureServicesBody(string lambdaBody) => SetConfigureServicesBody(lambdaBody);
   IIrAppBuilder IIrAppBuilder.AddTypeConverter(CustomConverterDefinition converter) => AddTypeConverter(converter);
   IIrAppBuilder IIrAppBuilder.AddInterceptSite(string methodName, InterceptSiteModel site) => AddInterceptSite(methodName, site);
-  IIrAppBuilder IIrAppBuilder.DiscoverEndpoints() => DiscoverEndpoints();
+  IIrAppBuilder IIrAppBuilder.DiscoverEndpoints(LocationInfo? callLocation) => DiscoverEndpoints(callLocation);
   IIrAppBuilder IIrAppBuilder.DiscoverEndpoints(ImmutableArray<string> groupTypeNames) => DiscoverEndpoints(groupTypeNames);
   IIrAppBuilder IIrAppBuilder.MapEndpoint(string endpointTypeName) => MapEndpoint(endpointTypeName);
   IIrAppBuilder IIrAppBuilder.EnableCompletion() => EnableCompletion();

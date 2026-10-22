@@ -19,6 +19,7 @@
 
 namespace TimeWarp.Nuru.Generators;
 
+using Microsoft.CodeAnalysis.Text;
 using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
 
 /// <summary>
@@ -804,8 +805,15 @@ public sealed class DslInterpreter
       return appBuilder.DiscoverEndpoints(typeNames.ToImmutable());
     }
 
-    // No arguments - discover all endpoints
-    return appBuilder.DiscoverEndpoints();
+    // No arguments - discover all endpoints. NURU_A003 points at the method name, not at the
+    // start of the builder chain, so a #pragma on the DiscoverEndpoints() line suppresses it.
+    LocationInfo? callLocation = invocation.Expression is MemberAccessExpressionSyntax memberAccess
+      ? LocationInfo.CreateFrom(Location.Create(
+          invocation.SyntaxTree,
+          TextSpan.FromBounds(memberAccess.Name.SpanStart, invocation.Span.End)))
+      : LocationInfo.CreateFrom(invocation.GetLocation());
+
+    return appBuilder.DiscoverEndpoints(callLocation);
   }
 
   /// <summary>

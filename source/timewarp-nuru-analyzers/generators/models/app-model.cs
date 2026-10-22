@@ -41,6 +41,8 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="BuildSite">The Build() call that creates this app, intercepted to attach the capabilities catalog</param>
 /// <param name="McpRoute">Options for the built-in mcp route when AddMcpRoute() was called (TimeWarp.Nuru.McpHost), otherwise null</param>
 /// <param name="ServeRoute">Options for the built-in serve route and route forwarding when AddServeRoute() was called (TimeWarp.Nuru.Daemon), otherwise null</param>
+/// <param name="DiscoverEndpointsLocation">Source location of an unfiltered DiscoverEndpoints() call, for NURU_A003</param>
+/// <param name="BuildFilePath">Path of the source file that holds the Build() call</param>
 public sealed record AppModel(
   string? VariableName,
   string? Name,
@@ -78,7 +80,9 @@ public sealed record AppModel(
   bool ProblemRendererForErrors = false,
   BuildInterceptSite? BuildSite = null,
   McpRouteModel? McpRoute = null,
-  ServeRouteModel? ServeRoute = null)
+  ServeRouteModel? ServeRoute = null,
+  LocationInfo? DiscoverEndpointsLocation = null,
+  string? BuildFilePath = null)
 {
   /// <summary>
   /// Creates an empty AppModel with required intercept sites.

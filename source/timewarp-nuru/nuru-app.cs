@@ -433,9 +433,16 @@ public partial class NuruApp
   /// Flushes all telemetry data and disposes providers.
   /// Called automatically by generated RunAsync code when telemetry is enabled.
   /// </summary>
+  /// <remarks>
+  /// Returns immediately when no provider was created (no OTLP endpoint configured),
+  /// so the grace delay is only paid when there is telemetry to export.
+  /// </remarks>
   /// <param name="delayMs">Delay in milliseconds to allow export to complete. Default: 1000ms.</param>
   public async Task FlushTelemetryAsync(int delayMs = 1000)
   {
+    if (TracerProvider is null && MeterProvider is null && LoggerFactory is null)
+      return;
+
     TracerProvider?.ForceFlush();
     MeterProvider?.ForceFlush();
 

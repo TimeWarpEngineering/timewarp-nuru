@@ -42,6 +42,10 @@ Acceptance:
 - [x] Regression test that is not masked by tests/Directory.Build.props
 - [x] CI tests green; changelog entry
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Related: 517 (FlushTelemetryAsync no-provider delay), 520 (telemetry overhead benchmark, which will hit this when its apps have no global usings).
@@ -83,3 +87,4 @@ Expect: generator-63 reports `Passed: 2`, and generator-43 reports `Passed: 2`. 
 - 2026-10-23 implementer (claude, ganda task work): reproduced CS1061 in a Roslyn-hosted test; static-form emission; SetMinimumLevel replaced by Configure<LoggerFilterOptions> (CS0433); dropped the OpenTelemetry usings; CI, build and audit green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-22T17:04:49Z
 - Review oracle: reviewed by general (cursor, model grok-4.7), session not reported, max-turns uncapped (review budget 120), clean — 2026-10-23
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-22T17:16:26Z

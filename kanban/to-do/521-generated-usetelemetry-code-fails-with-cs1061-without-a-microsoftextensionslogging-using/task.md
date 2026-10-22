@@ -59,6 +59,12 @@ Acceptance:
 - Changelog: entry under Unreleased / Fixed.
 - Gates: ran `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs`: exit 0 with 0 failures (multi-mode plus standalone, generator-63 included). `./bin/dev build` passed. `ganda repo audit` passed with nothing to fix. The `samples/aspire-otel/nuru-client.cs` build passed.
 
+### Review
+
+- Round 1, effort 2, roster: general. Counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix).
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
@@ -75,3 +81,5 @@ Expect: generator-63 reports `Passed: 2`, and generator-43 reports `Passed: 2`. 
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-22), from 517 follow-up (c); Steven asked to file it.
 - 2026-10-23 implementer (claude, ganda task work): reproduced CS1061 in a Roslyn-hosted test; static-form emission; SetMinimumLevel replaced by Configure<LoggerFilterOptions> (CS0433); dropped the OpenTelemetry usings; CI, build and audit green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-22T17:04:49Z
+- Review oracle: reviewed by general (cursor, model grok-4.7), session not reported, max-turns uncapped (review budget 120), clean — 2026-10-23

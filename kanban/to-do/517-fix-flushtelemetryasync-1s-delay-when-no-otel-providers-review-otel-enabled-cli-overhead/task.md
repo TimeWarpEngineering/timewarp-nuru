@@ -103,7 +103,7 @@ Conclusions:
   - `Should_return_immediately_when_no_provider_exists`: `FlushTelemetryAsync(delayMs: 5000)` with no providers returns in under 1 s.
   - `Should_flush_delay_and_dispose_when_tracer_provider_exists`: regression guard. A tracer provider with a batch processor (60 s scheduled delay) and a counting exporter: flush exports the buffered span, honors the grace delay, shuts the exporter down, and nulls `TracerProvider`.
   - With the early return disabled, the first two tests fail (2.03 s and 5.00 s) and the third still passes.
-- `./bin/dev build` and `./bin/dev test` (multi-mode + standalone phases) are green, and FlushWithoutProviders is 3/3 in multi-mode. `ganda repo audit` passes with nothing to fix.
+- `./bin/dev build` and `./bin/dev test` (multi-mode + standalone phases) are green, and FlushWithoutProviders is 3/3 in multi-mode. `ganda repo audit` passes. The pre-push audit flagged `runfile-executable` on the new test file, so it is now committed as mode 100755.
 - Verified against the current master (`d39e6c0e`, version 4.0.0-beta.5) at implementation time.
 
 ### How to validate

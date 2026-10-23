@@ -1,0 +1,2 @@
+CS8852: Init-only property or indexer 'HelpOptions.ExcludePatterns' can only be assigned in an object initializer, or on 'this' or 'base' in an instance constructor or an 'init' accessor.
+NURU_S999: Unrecognized DSL method: ConfigureHelp.

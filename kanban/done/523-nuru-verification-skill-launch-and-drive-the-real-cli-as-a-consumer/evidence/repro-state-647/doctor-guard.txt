@@ -1,0 +1,2 @@
+doctor: 4.0.0-beta.5 is a released version on nuget.org; pack local candidates under a unique prerelease version
+doctor rc=2

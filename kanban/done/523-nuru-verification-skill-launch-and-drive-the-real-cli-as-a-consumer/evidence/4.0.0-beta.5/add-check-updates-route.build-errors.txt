@@ -1,0 +1,1 @@
+CS0122: 'CheckUpdatesJsonSerializerContext' is inaccessible due to its protection level

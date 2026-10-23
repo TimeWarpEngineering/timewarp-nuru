@@ -88,31 +88,33 @@ internal static class TelemetryEmitter
     }
 
     sb.AppendLine();
-    sb.AppendLine("      global::OpenTelemetry.Resources.ResourceBuilder __resource = global::OpenTelemetry.Resources.ResourceBuilder.CreateDefault()");
-    sb.AppendLine("        .AddService(serviceName: __serviceName, serviceVersion: __serviceVersion);");
+    // Extension methods are called in static form with global:: declaring types: the generated
+    // file cannot rely on the app's usings to bring them into scope (task 521).
+    sb.AppendLine("      global::OpenTelemetry.Resources.ResourceBuilder __resource = global::OpenTelemetry.Resources.ResourceBuilderExtensions.AddService(");
+    sb.AppendLine("        global::OpenTelemetry.Resources.ResourceBuilder.CreateDefault(), serviceName: __serviceName, serviceVersion: __serviceVersion);");
     sb.AppendLine();
     sb.AppendLine("      global::System.Uri __endpoint = new(__otlpEndpoint);");
     sb.AppendLine();
 
     if (options.EnableTracing)
     {
-      sb.AppendLine("      app.TracerProvider = global::OpenTelemetry.Sdk.CreateTracerProviderBuilder()");
-      sb.AppendLine("        .SetResourceBuilder(__resource)");
-      sb.AppendLine("        .AddSource(__activitySource.Name)");
-      sb.AppendLine("        .AddSource(\"TimeWarp.Nuru.Behavior\") // For TelemetryBehavior");
-      sb.AppendLine("        .AddOtlpExporter(o => o.Endpoint = __endpoint)");
-      sb.AppendLine("        .Build();");
+      sb.AppendLine("      global::OpenTelemetry.Trace.TracerProviderBuilder __tracerBuilder = global::OpenTelemetry.Sdk.CreateTracerProviderBuilder();");
+      sb.AppendLine("      __tracerBuilder = global::OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResourceBuilder(__tracerBuilder, __resource);");
+      sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(__activitySource.Name);");
+      sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(\"TimeWarp.Nuru.Behavior\"); // For TelemetryBehavior");
+      sb.AppendLine("      __tracerBuilder = global::OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(__tracerBuilder, o => o.Endpoint = __endpoint);");
+      sb.AppendLine("      app.TracerProvider = global::OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(__tracerBuilder);");
       sb.AppendLine();
     }
 
     if (options.EnableMetrics)
     {
-      sb.AppendLine("      app.MeterProvider = global::OpenTelemetry.Sdk.CreateMeterProviderBuilder()");
-      sb.AppendLine("        .SetResourceBuilder(__resource)");
-      sb.AppendLine("        .AddMeter(__meter.Name)");
-      sb.AppendLine("        .AddMeter(\"TimeWarp.Nuru.Behavior\") // For TelemetryBehavior");
-      sb.AppendLine("        .AddOtlpExporter(o => o.Endpoint = __endpoint)");
-      sb.AppendLine("        .Build();");
+      sb.AppendLine("      global::OpenTelemetry.Metrics.MeterProviderBuilder __meterBuilder = global::OpenTelemetry.Sdk.CreateMeterProviderBuilder();");
+      sb.AppendLine("      __meterBuilder = global::OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(__meterBuilder, __resource);");
+      sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(__meter.Name);");
+      sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(\"TimeWarp.Nuru.Behavior\"); // For TelemetryBehavior");
+      sb.AppendLine("      __meterBuilder = global::OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(__meterBuilder, o => o.Endpoint = __endpoint);");
+      sb.AppendLine("      app.MeterProvider = global::OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(__meterBuilder);");
       sb.AppendLine();
     }
 
@@ -121,11 +123,15 @@ internal static class TelemetryEmitter
       sb.AppendLine("      // Logging: Export structured logs to OTLP");
       sb.AppendLine("      app.LoggerFactory = global::Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>");
       sb.AppendLine("      {");
-      sb.AppendLine("        builder.SetMinimumLevel(global::Microsoft.Extensions.Logging.LogLevel.Information);");
-      sb.AppendLine("        builder.AddOpenTelemetry(options =>");
+      // SetMinimumLevel cannot be called in static form: Microsoft.Extensions.Logging.LoggingBuilderExtensions
+      // is declared in both Microsoft.Extensions.Logging and Microsoft.Extensions.Logging.Configuration
+      // (CS0433). Configure LoggerFilterOptions.MinLevel directly, which is what SetMinimumLevel does.
+      sb.AppendLine("        global::Microsoft.Extensions.DependencyInjection.OptionsServiceCollectionExtensions.Configure<global::Microsoft.Extensions.Logging.LoggerFilterOptions>(");
+      sb.AppendLine("          builder.Services, o => o.MinLevel = global::Microsoft.Extensions.Logging.LogLevel.Information);");
+      sb.AppendLine("        global::Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(builder, options =>");
       sb.AppendLine("        {");
       sb.AppendLine("          options.SetResourceBuilder(__resource);");
-      sb.AppendLine("          options.AddOtlpExporter(o => o.Endpoint = __endpoint);");
+      sb.AppendLine("          global::OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(options, o => o.Endpoint = __endpoint);");
       sb.AppendLine("        });");
       sb.AppendLine("      });");
     }

@@ -128,6 +128,9 @@
          timewarp-nuru-build, which the multi-mode compilation does not. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-60-json-context-referenced-endpoints.cs" />
     <!-- generator-63: same Roslyn-hosted generator test pattern as generator-28
+         (task 521 UseTelemetry without a logging using); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-63-telemetry-without-logging-using.cs" />
          (task 522 NURU_A003 DiscoverEndpoints across apps); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-63-discover-endpoints-across-apps.cs" />

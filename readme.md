@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/mascot/nuru-hero.png" alt="Nuru, the TimeWarp Nuru mascot" width="240" /></p>
+
 # TimeWarp.Nuru
 
 <div align="center">

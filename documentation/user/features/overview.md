@@ -52,7 +52,7 @@ Every route as an MCP tool, from package `TimeWarp.Nuru.McpHost`:
 - `AddMcpRoute()` adds a stdio `mcp` route; `WithNuruTools(app)` adds the tools to an existing MCP host, including streamable HTTP
 - Tool names, schemas, and binding are the same as `--capabilities` and `--json-args`
 - Real JSON Schema for object and array members, from the type the binder deserializes into
-- Annotations from the endpoint kind, `[Destructive]`, `[OpenWorld]` and `[DisplayName]`, with a per-tool host override
+- Annotations from the endpoint kind, `[Destructive]`, `[OpenWorld]`, and `[Operation(Title)]` (or `[DisplayName]` on a route class), with a per-tool host override
 - Defaults in the `default` keyword and in the description, for harnesses that drop `default`
 
 ### [Served apps](served-apps.md)

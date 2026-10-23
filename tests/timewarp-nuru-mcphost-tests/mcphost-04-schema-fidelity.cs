@@ -19,6 +19,7 @@ using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using TimeWarp.Amuru;
 using TimeWarp.Contracts;
+using TimeWarp.Nuru;
 using TimeWarp.Nuru.McpHost;
 
 [TestTag("McpHost")]
@@ -110,6 +111,7 @@ public class McpHostSchemaFidelityTests
     EndpointCapability plain = Endpoint(app, "mf-plain");
     plain.Destructive.ShouldBeNull();
     plain.OpenWorld.ShouldBeNull();
+    plain.Title.ShouldBeNull();
 
     IReadOnlyList<NuruMcpToolDefinition> tools = NuruMcpToolCatalog.CreateTools(app.Capabilities);
     Tool purgeTool = tools.Single(t => t.Tool.Name == "mf-purge").Tool;
@@ -316,8 +318,7 @@ public sealed class MfBatchQuery : IQuery<string>
   }
 }
 
-[Operation("mf-purge", Description = "Delete every stored entry")]
-[DisplayName("Purge the store")]
+[Operation("mf-purge", Description = "Delete every stored entry", Title = "Purge the store")]
 [Destructive]
 [OpenWorld]
 public sealed class MfPurgeCommand : ICommand<string>
@@ -333,6 +334,7 @@ public sealed class MfPurgeCommand : ICommand<string>
 }
 
 [Operation("mf-append", Description = "Append an entry")]
+[DisplayName("Append should not become the title")]
 [Destructive(false)]
 [OpenWorld(false)]
 public sealed class MfAppendCommand : ICommand<string>
@@ -347,7 +349,8 @@ public sealed class MfAppendCommand : ICommand<string>
   }
 }
 
-[Operation("mf-plain", Description = "A command with defaults")]
+[Operation("mf-plain", Description = "A command with defaults", Title = "   ")]
+[DisplayName("Plain display name")]
 public sealed class MfPlainCommand : ICommand<string>
 {
   [Description("How many times to retry")]

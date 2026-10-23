@@ -72,21 +72,19 @@ A contract says how a harness should treat its operation with attributes on the 
 | The mediator kind (`IQuery`, `IIdempotentCommand`, `ICommand`) | `kind` | `readOnlyHint`, `idempotentHint` |
 | `[Destructive]`, or `[Destructive(false)]` for a command that only adds | `destructive` | `destructiveHint` |
 | `[OpenWorld]`, or `[OpenWorld(false)]` for an operation that works only on local state | `openWorld` | `openWorldHint` |
-| `[System.ComponentModel.DisplayName("...")]` | `title` | `title` |
+| `[Operation(Title = "...")]` | `title` | `title` |
 
 ```csharp
-using System.ComponentModel;
 using TimeWarp.Contracts;
 using TimeWarp.Nuru;
 
-[Operation("rename_symbol", Description = "Rename a symbol across the solution")]
-[DisplayName("Rename symbol")]
+[Operation("rename_symbol", Description = "Rename a symbol across the solution", Title = "Rename symbol")]
 [Destructive(false)]
 [OpenWorld(false)]
 public sealed class RenameSymbolCommand : ICommand<string> { ... }
 ```
 
-`DisplayName` is the BCL attribute, like the `Description` on members. `Destructive` and `OpenWorld` are in `TimeWarp.Nuru`, because `TimeWarp.Contracts` 2.0.0-beta.23 has no place for them: `McpOperationBinding` carries `ToolName` only. When TimeWarp.Contracts gains these hints, Nuru will read them too. An app that serves contracts it does not own overrides any hint per tool with `NuruMcpHostOptions.ToolAnnotations` (see [MCP hosting](mcp-hosting.md#annotations)).
+`Destructive`, `OpenWorld`, and `Operation.Title` are `TimeWarp.Contracts` (2.0.0-beta.24). Nuru reads them by metadata name. A blank or whitespace `Title` publishes no title. `[DisplayName]` does not set an operation's title. A `[NuruRoute]` class that is not an operation still uses `[DisplayName]` for its title, and the same two Contracts attributes for the hints, so the short names exist once. Importing `TimeWarp.Nuru` and `TimeWarp.Contracts` in one file compiles. An app that serves contracts it does not own overrides any hint per tool with `NuruMcpHostOptions.ToolAnnotations` (see [MCP hosting](mcp-hosting.md#annotations)).
 
 ## Bool defaults
 

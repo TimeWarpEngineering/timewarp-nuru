@@ -265,7 +265,7 @@ internal static class CapabilitiesEmitter
       sb.AppendLine($"        OpenWorld = {(openWorld ? "true" : "false")},");
     }
 
-    // [DisplayName("...")]
+    // Operation Title, or [DisplayName] on a route class with no operation
     if (route.Title is not null)
     {
       sb.AppendLine($"        Title = \"{EmitterStringUtils.EscapeForStringLiteral(route.Title)}\",");

@@ -37,6 +37,13 @@
 // A property with no syntax in this compilation (a referenced assembly) has an unknown
 // initializer: default!, so the compiled initializer runs, with [DefaultValue] as the capabilities
 // display only. A positional record parameter default is in metadata and is copied.
+//
+// TOOL HINTS: Destructive and OpenWorld are TimeWarp.Contracts attributes, matched by metadata
+// name, on every endpoint class. Absence is unset. No argument, or any argument other than false,
+// is true. TimeWarp.Nuru does not define those attributes, so one short name exists.
+// An operation's title is OperationAttribute.Title. Blank or whitespace is no title, and
+// [DisplayName] is not a title source for an operation. A [NuruRoute] class with no [Operation]
+// reads [DisplayName], because it has no operation attribute to carry a title.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -51,10 +58,10 @@ internal static partial class EndpointExtractor
   private const string NuruRouteAttributeName = "NuruRoute";
   private const string NuruRouteAliasAttributeName = "NuruRouteAlias";
   private const string NuruRouteExampleAttributeName = "NuruRouteExample";
-  private const string DestructiveAttributeFullName = "TimeWarp.Nuru.DestructiveAttribute";
+  private const string DestructiveAttributeFullName = "TimeWarp.Contracts.DestructiveAttribute";
   private const string LocalOnlyAttributeFullName = "TimeWarp.Nuru.LocalOnlyAttribute";
   private const string ExclusiveAttributeFullName = "TimeWarp.Nuru.ExclusiveAttribute";
-  private const string OpenWorldAttributeFullName = "TimeWarp.Nuru.OpenWorldAttribute";
+  private const string OpenWorldAttributeFullName = "TimeWarp.Contracts.OpenWorldAttribute";
   private const string DisplayNameAttributeFullName = "System.ComponentModel.DisplayNameAttribute";
   private const string DefaultValueAttributeFullName = "System.ComponentModel.DefaultValueAttribute";
   private const string ParameterAttributeName = "Parameter";
@@ -248,7 +255,7 @@ internal static partial class EndpointExtractor
       groupPath: operationGroupPath,
       isExclusive: HasAttribute(classSymbol, ExclusiveAttributeFullName),
       openWorld: BoolAttributeValue(classSymbol, OpenWorldAttributeFullName),
-      title: StringAttributeValue(classSymbol, DisplayNameAttributeFullName));
+      title: TitleValue(classSymbol, identity.HasOperation));
 
     if (missingHandler is not null)
       return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);
@@ -398,8 +405,9 @@ internal static partial class EndpointExtractor
   }
 
   /// <summary>
-  /// The bool constructor argument of a hint attribute on the command class (<c>[Destructive]</c>,
-  /// <c>[OpenWorld]</c>): true when it is omitted, null when the attribute is absent.
+  /// The bool constructor argument of a Contracts hint attribute (<c>[Destructive]</c>,
+  /// <c>[OpenWorld]</c>): true when it is omitted or anything other than <see langword="false"/>,
+  /// null when the attribute is absent.
   /// </summary>
   private static bool? BoolAttributeValue(INamedTypeSymbol classSymbol, string attributeFullName)
   {
@@ -408,8 +416,30 @@ internal static partial class EndpointExtractor
       if (attribute.AttributeClass?.ToDisplayString() != attributeFullName)
         continue;
 
-      // [Destructive] with no argument is true.
+      // [Destructive] with no argument is true. Only an explicit false is false.
       return attribute.ConstructorArguments.Length == 0 || attribute.ConstructorArguments[0].Value is not false;
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Catalog title. An operation reads <c>OperationAttribute.Title</c> and ignores
+  /// <c>[DisplayName]</c>. A route class with no operation reads <c>[DisplayName]</c>.
+  /// Blank or whitespace is no title.
+  /// </summary>
+  private static string? TitleValue(INamedTypeSymbol classSymbol, bool hasOperation)
+  {
+    if (!hasOperation)
+      return StringAttributeValue(classSymbol, DisplayNameAttributeFullName);
+
+    foreach (AttributeData attribute in classSymbol.GetAttributes())
+    {
+      if (!IsMetadataAttribute(attribute, OperationAttributeMetadataName))
+        continue;
+
+      string? title = NamedString(attribute, "Title");
+      return string.IsNullOrWhiteSpace(title) ? null : title;
     }
 
     return null;

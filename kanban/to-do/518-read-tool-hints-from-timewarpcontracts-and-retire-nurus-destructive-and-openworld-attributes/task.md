@@ -38,6 +38,20 @@ Do not start before that package is published. Never pin backward or use a proje
   `[Operation(Title = …)]`. Recommended: Contracts `Title` only for contract endpoints; record the decision.
 - Keep the host-override precedence from 508-015 (a host override wins over the contract).
 
+## Goal (implementer restatement)
+
+TimeWarp.Contracts 2.0.0-beta.24 is on nuget.org and is the home for tool hints. Nuru pins that package and reads those hints. It stops shipping a second `[Destructive]` and `[OpenWorld]`.
+
+Acceptance:
+
+- `Directory.Packages.props` pins `TimeWarp.Contracts` 2.0.0-beta.24 (or later). No project reference and no older pin.
+- The generator matches these by metadata name. An operation's catalog title is `TimeWarp.Contracts.OperationAttribute.Title`; null, empty, or whitespace means no title. `TimeWarp.Contracts.DestructiveAttribute` and `TimeWarp.Contracts.OpenWorldAttribute` are tri-state: absent is unset, and no argument or any argument other than `false` is true.
+- Route endpoints use the same Contracts attributes. A fluent `Map()` route still has no attribute target. One name everywhere: Nuru already depends on Contracts, and a second pair makes `using TimeWarp.Nuru` together with `using TimeWarp.Contracts` fail to compile (CS0104).
+- An operation's title comes only from `Operation.Title`. `[DisplayName]` does not set it. A `[NuruRoute]` class with no `[Operation]` still uses `[DisplayName]`, because it has no operation attribute to carry a title.
+- A host entry in `NuruMcpHostOptions.ToolAnnotations` still replaces each hint it sets. A contract's hints show up in `--capabilities` and in the MCP tool list.
+- `TimeWarp.Nuru.DestructiveAttribute` and `TimeWarp.Nuru.OpenWorldAttribute` are gone. Samples and docs follow. A file that imports both namespaces compiles.
+- The changelog records the break for callers of the Nuru attributes, and for an operation that took its title from `[DisplayName]`.
+
 ## Where the stopgap lives (from 508-015)
 
 - `source/timewarp-nuru/attributes/destructive-attribute.cs`, `open-world-attribute.cs`
@@ -48,17 +62,42 @@ Do not start before that package is published. Never pin backward or use a proje
 
 ## Checklist
 
-- [ ] TimeWarp.Contracts with the hints is published; bump the pin
-- [ ] Contract endpoints read Title, Destructive, and OpenWorld from TimeWarp.Contracts
-- [ ] Decide route-endpoint hints and the `[DisplayName]` title source; record why
-- [ ] Remove Nuru's `[Destructive]` / `[OpenWorld]` (or record why one stays) and update samples and docs
-- [ ] Tests: contract with Contracts hints publishes them in `--capabilities` and the MCP tool list; host
+- [x] TimeWarp.Contracts with the hints is published; bump the pin
+- [x] Contract endpoints read Title, Destructive, and OpenWorld from TimeWarp.Contracts
+- [x] Decide route-endpoint hints and the `[DisplayName]` title source; record why
+- [x] Remove Nuru's `[Destructive]` / `[OpenWorld]` (or record why one stays) and update samples and docs
+- [x] Tests: contract with Contracts hints publishes them in `--capabilities` and the MCP tool list; host
       override still wins; a file importing both namespaces compiles
-- [ ] Release note: breaking for anyone using `TimeWarp.Nuru.Destructive` / `OpenWorld`
+- [x] Release note: breaking for anyone using `TimeWarp.Nuru.Destructive` / `OpenWorld`
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22) from the timewarp-architecture 391 merge review.
+
+## Results
+
+Route endpoints use `TimeWarp.Contracts.DestructiveAttribute` and `OpenWorldAttribute`. Fluent `Map()` routes still have no attribute target. One short name: Nuru already depends on Contracts, and a second pair makes a file that imports both namespaces fail with CS0104.
+
+An operation's title is `OperationAttribute.Title` only. Blank or whitespace publishes nothing, and `[DisplayName]` does not set it. A `[NuruRoute]` class with no `[Operation]` still uses `[DisplayName]`, because it has no operation attribute to carry a title. `NuruMcpHostOptions.ToolAnnotations` still replaces each hint it sets.
+
+`TimeWarp.Nuru.DestructiveAttribute` and `OpenWorldAttribute` are removed. The pin is `TimeWarp.Contracts` 2.0.0-beta.24. The changelog records the break.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run tests/timewarp-nuru-mcphost-tests/mcphost-04-schema-fidelity.cs
+dotnet run samples/endpoints/02-calculator-contracts/calculator-contracts.cs -- --capabilities
+```
+
+Expect:
+
+- `mcphost-04` prints `Total: 6` and `Passed: 6`. `mf-purge` has `destructive` true, `openWorld` true, and `title` `Purge the store` from `[Operation(Title)]`. `mf-append` has both hints false and no title even with `[DisplayName]`. `mf-plain` has no title when `Title` is whitespace. A host override replaces the hints it sets and leaves the rest. The stdio call lists `calc_total` with title `Total numbers` and `openWorldHint` false.
+- `--capabilities` for the calculator sample includes `"title": "Total numbers"` and `"openWorld": false` on `calc total`.
+- `tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs` and `mcphost-04-schema-fidelity.cs` both `using TimeWarp.Nuru` and `using TimeWarp.Contracts` and compile. `mh-wipe` is a route class: `[Destructive]` is true and `[DisplayName]` is the title.
+
+Verified here: `dotnet build` of `timewarp-nuru` and `timewarp-nuru-mcphost` succeeded with 0 warnings. `mcphost-01` 16/16 and `mcphost-04` 6/6. `./bin/dev test` exited 0: multi-mode 2117 total, 2111 passed, 6 skipped, 0 failed; standalone 0 failed. `ganda repo audit` passed all checks.
 
 ## Notes
 

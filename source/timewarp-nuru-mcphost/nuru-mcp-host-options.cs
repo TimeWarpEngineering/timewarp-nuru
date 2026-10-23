@@ -65,7 +65,8 @@ public sealed class NuruMcpHostOptions
   /// <summary>
   /// Annotation overrides keyed by tool name, for an app that serves contracts it does not own.
   /// Every hint an entry sets (non-null) replaces the one derived from the catalog (endpoint kind,
-  /// <see cref="DestructiveAttribute"/>, <see cref="OpenWorldAttribute"/>, <c>[DisplayName]</c>); the
+  /// <c>[TimeWarp.Contracts.Destructive]</c>, <c>[TimeWarp.Contracts.OpenWorld]</c>, an operation's
+  /// <c>Title</c>, or <c>[DisplayName]</c> on a route class with no operation); the
   /// others keep the derived value. An entry's <see cref="ModelContextProtocol.Protocol.ToolAnnotations.Title"/> is also the tool title.
   /// </summary>
   /// <example>

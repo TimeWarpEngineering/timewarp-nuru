@@ -118,8 +118,8 @@ public sealed class EndpointCapability
   public ReturnTypeCapability? ReturnType { get; init; }
 
   /// <summary>
-  /// The endpoint class's <see cref="DestructiveAttribute"/>: true for <c>[Destructive]</c>, false for
-  /// <c>[Destructive(false)]</c>. Null without the attribute, and then omitted from JSON.
+  /// The endpoint's <see cref="TimeWarp.Contracts.DestructiveAttribute"/>: true for <c>[Destructive]</c>,
+  /// false for <c>[Destructive(false)]</c>. Null without the attribute, and then omitted from JSON.
   /// </summary>
   public bool? Destructive { get; init; }
 
@@ -130,15 +130,17 @@ public sealed class EndpointCapability
   public bool? LocalOnly { get; init; }
 
   /// <summary>
-  /// The endpoint class's <see cref="OpenWorldAttribute"/>: true when the route reaches outside the app
-  /// (the web, a remote service), false when it works only on local state. Null without the attribute,
-  /// and then omitted from JSON.
+  /// The endpoint's <see cref="TimeWarp.Contracts.OpenWorldAttribute"/>: true when the route reaches
+  /// outside the app (the web, a remote service), false when it works only on local state. Null without
+  /// the attribute, and then omitted from JSON.
   /// </summary>
   public bool? OpenWorld { get; init; }
 
   /// <summary>
-  /// Human-readable display name from <see cref="DisplayNameAttribute"/> on the endpoint class.
-  /// Null without the attribute, and then omitted from JSON.
+  /// Human-readable title. An <c>[Operation]</c> endpoint uses
+  /// <see cref="TimeWarp.Contracts.OperationAttribute.Title"/> (blank or whitespace is none).
+  /// A <c>[NuruRoute]</c> class with no operation uses <see cref="System.ComponentModel.DisplayNameAttribute"/>.
+  /// Null when unset, and then omitted from JSON.
   /// </summary>
   public string? Title { get; init; }
 }

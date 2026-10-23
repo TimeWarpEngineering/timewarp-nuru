@@ -182,8 +182,9 @@ public static class NuruMcpToolCatalog
   /// <returns>
   /// Query: read-only and idempotent. IdempotentCommand: idempotent, not read-only. Command: neither.
   /// Unspecified: no hints. <c>destructiveHint</c> and <c>openWorldHint</c> are the values the route
-  /// declares with <see cref="DestructiveAttribute"/> and <see cref="OpenWorldAttribute"/>, and otherwise
-  /// unset (never inferred). <c>title</c> is the route's <see cref="System.ComponentModel.DisplayNameAttribute"/>.
+  /// declares with <c>[TimeWarp.Contracts.Destructive]</c> and <c>[TimeWarp.Contracts.OpenWorld]</c>, and
+  /// otherwise unset (never inferred). <c>title</c> is the operation's <c>Title</c>, or
+  /// <see cref="System.ComponentModel.DisplayNameAttribute"/> on a route class with no operation.
   /// </returns>
   public static ToolAnnotations CreateAnnotations(EndpointCapability endpoint)
   {

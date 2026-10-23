@@ -72,7 +72,7 @@ Acceptance:
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23). Steven: "we should first create an Analyzer if possible to catch this. And then validate we can. Before changing."
-- 2026-10-23 implementer (Claude Opus 5.5, ganda task work): NURU_A003 in the generator, generator-64 tests, validation below, temporary CI `NoWarn`. `ganda repo audit` flagged `runfile-executable` on the new generator-64 runfile at commit time; `ganda repo audit --fix` set its executable bit.
+- 2026-10-23 implementer (Claude Opus 5.5, ganda task work): NURU_A003 in the generator, generator-63 tests, validation below, temporary CI `NoWarn`. `ganda repo audit` flagged `runfile-executable` on the new generator-63 runfile at commit time; `ganda repo audit --fix` set its executable bit.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-22T19:56:20Z
 - Review oracle: tw-implementation-review, effort 2, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 120), round 1, disposition clean — 2026-10-23
 - Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-22T20:13:01Z
@@ -166,8 +166,14 @@ and the follow-up conversion. Remove it when the 49 sites move to `Map<T>()`.
   - Single app: silent. Many apps in one file: silent. `DiscoverEndpoints(typeof(Group))`, or discovery plus `Map<T>()`: silent.
   - `#pragma warning disable NURU_A003` around the call: the diagnostic is dropped by Roslyn's pragma
     filter (replayed through `CompilationWithAnalyzers`), and a control case without the pragma keeps it.
-- `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs`: multi-mode 2117 total,
-  2111 passed, 6 skipped; standalone 35 files, 0 failed (multi-mode execute 129.9s).
+- `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs` (before the master
+  merge): multi-mode 2117 total, 2111 passed, 6 skipped; standalone 35 files, 0 failed (multi-mode
+  execute 129.9s).
+- After merging origin/master, `dotnet run tests/ci-tests/run-ci-tests.cs` on this tree (compile was
+  fresh; the cache was not cleared a second time): multi-mode 2117 total, 2111 passed, 6 skipped
+  (execute 131.7s); standalone 36 files, 0 failed (14.9s). The extra file is task 521's
+  `generator-63-telemetry-without-logging-using.cs` (2 passed). This task's test, renumbered to
+  generator-64, passed 6. No NURU_A003 in that output.
 
 ### Docs
 
@@ -206,4 +212,4 @@ Expect:
 
 ## Session
 
-- Merge conflict fix, 2026-10-23: PR 349 conflicts with master (cb2979a and later) in tests/ci-tests/Directory.Build.props and tests/ci-tests/run-ci-tests.cs, so no CI has run. Merge origin/master into the task branch, resolve both files keeping master's entries and the new generator-64 test entry, push so CI runs, and do not merge the PR. Requested by Usiku hourly PR check.
+- 2026-10-23: Merged `origin/master` (`b5958cd7`) into the task branch. PR 349 conflicted in `tests/ci-tests/Directory.Build.props` and `tests/ci-tests/run-ci-tests.cs` because task 521 had already registered `generator-63-telemetry-without-logging-using.cs`. Kept that entry and renumbered this task's Roslyn-hosted test to `generator-64-discover-endpoints-across-apps.cs` (`CiTestExcludes` and the standalone list). `NURU_A003` stays on the temporary `NoWarn`. Did not merge the PR. Requested by Usiku hourly PR check.

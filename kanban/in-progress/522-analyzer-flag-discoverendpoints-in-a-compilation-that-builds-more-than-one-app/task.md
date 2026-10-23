@@ -63,8 +63,7 @@ Acceptance:
 ## Review
 
 - Round 1: Done
-- Round 2: Done (after the master merge; 2 nits wontfix, accepted-exceptions)
-
+- Round 2: Done
 ## Notes
 
 - Follow-ups, not in this task: convert the flagged tests to `Map<T>()` and re-measure generated size and CI compile time and memory; possibly split the CI assembly in two; a design note on how multi-mode Jaribu compilation interacts with Nuru code generation (for example, scoping discovery per file in multi-mode).
@@ -79,6 +78,7 @@ Acceptance:
 - Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-22T20:13:01Z
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T01:37:46Z
 - Review oracle: tw-implementation-review, effort 2, roster general (Claude Opus 5.5), session not reported, review budget 120, round 2, disposition accepted-exceptions (M1, M2 nits wontfix) — 2026-10-23
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-23T01:39:43Z
 
 ## Results
 

@@ -1,0 +1,129 @@
+snippet	source	result	first_error
+s-documentation-user-features-agent-invocation-md-96	documentation/user/features/agent-invocation.md#L96	compiles	
+s-documentation-user-features-analyzer-md-179	documentation/user/features/analyzer.md#L179	fragment	CS8803: Top-level statements must precede namespace and type declarations.
+s-documentation-user-features-auto-help-md-10	documentation/user/features/auto-help.md#L10	fragment	CS0103: The name 'Backup' does not exist in the current context
+s-documentation-user-features-auto-help-md-60	documentation/user/features/auto-help.md#L60	fragment	CS0103: The name 'Backup' does not exist in the current context
+s-documentation-user-features-auto-help-md-131	documentation/user/features/auto-help.md#L131	fragment	CS0103: The name 'Backup' does not exist in the current context
+s-documentation-user-features-built-in-routes-md-137	documentation/user/features/built-in-routes.md#L137	compiles	
+s-documentation-user-features-built-in-routes-md-157	documentation/user/features/built-in-routes.md#L157	broken	CS0122: 'CheckUpdatesJsonSerializerContext' is inaccessible due to its protection level
+s-documentation-user-features-configuration-md-8	documentation/user/features/configuration.md#L8	compiles	
+s-documentation-user-features-configuration-md-53	documentation/user/features/configuration.md#L53	fragment	CS0246: The type or namespace name 'DatabaseOptions' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-configuration-md-129	documentation/user/features/configuration.md#L129	fragment	CS8803: Top-level statements must precede namespace and type declarations.
+s-documentation-user-features-configuration-md-156	documentation/user/features/configuration.md#L156	fragment	CS0128: A local variable or function named 'app' is already defined in this scope
+s-documentation-user-features-endpoints-md-24	documentation/user/features/endpoints.md#L24	compiles	
+s-documentation-user-features-endpoints-md-248	documentation/user/features/endpoints.md#L248	compiles	
+s-documentation-user-features-logging-md-10	documentation/user/features/logging.md#L10	broken	NURU_S999: Unrecognized DSL method: UseConsoleLogging.
+s-documentation-user-features-logging-md-84	documentation/user/features/logging.md#L84	broken	NURU_S999: Unrecognized DSL method: UseLogging.
+s-documentation-user-features-logging-md-104	documentation/user/features/logging.md#L104	broken	NURU_S999: Unrecognized DSL method: UseLogging.
+s-documentation-user-features-logging-md-123	documentation/user/features/logging.md#L123	broken	NURU_S999: Unrecognized DSL method: UseLogging.
+s-documentation-user-features-logging-md-217	documentation/user/features/logging.md#L217	broken	NURU_S999: Unrecognized DSL method: UseLogging.
+s-documentation-user-features-logging-md-279	documentation/user/features/logging.md#L279	fragment	CS8803: Top-level statements must precede namespace and type declarations.
+s-documentation-user-features-mcp-hosting-md-17	documentation/user/features/mcp-hosting.md#L17	compiles	
+s-documentation-user-features-mcp-hosting-md-50	documentation/user/features/mcp-hosting.md#L50	broken	NURU_S999: Unrecognized DSL method: AddMcpServer.
+s-documentation-user-features-neutral-contracts-md-41	documentation/user/features/neutral-contracts.md#L41	fragment	CS0246: The type or namespace name 'AddQuery' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-neutral-contracts-md-135	documentation/user/features/neutral-contracts.md#L135	compiles	
+s-documentation-user-features-neutral-contracts-md-146	documentation/user/features/neutral-contracts.md#L146	compiles	
+s-documentation-user-features-output-handling-md-121	documentation/user/features/output-handling.md#L121	broken	NURU_S999: Unrecognized DSL method: UseConsoleLogging.
+s-documentation-user-features-pipeline-behaviors-md-18	documentation/user/features/pipeline-behaviors.md#L18	fragment	CS0246: The type or namespace name 'LoggingBehavior' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-pipeline-behaviors-md-170	documentation/user/features/pipeline-behaviors.md#L170	fragment	CS0246: The type or namespace name 'ExceptionHandlingBehavior' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-pipeline-behaviors-md-233	documentation/user/features/pipeline-behaviors.md#L233	fragment	CS0246: The type or namespace name 'AuthorizationBehavior' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-repl-key-bindings-md-26	documentation/user/features/repl-key-bindings.md#L26	compiles	
+s-documentation-user-features-repl-key-bindings-md-45	documentation/user/features/repl-key-bindings.md#L45	compiles	
+s-documentation-user-features-repl-key-bindings-md-179	documentation/user/features/repl-key-bindings.md#L179	fragment	CS0029: Cannot implicitly convert type 'void' to 'System.Threading.Tasks.Task'
+s-documentation-user-features-repl-key-bindings-md-218	documentation/user/features/repl-key-bindings.md#L218	compiles	
+s-documentation-user-features-routing-md-23	documentation/user/features/routing.md#L23	fragment	CS0103: The name 'Download' does not exist in the current context
+s-documentation-user-features-routing-md-72	documentation/user/features/routing.md#L72	compiles	
+s-documentation-user-features-routing-md-94	documentation/user/features/routing.md#L94	compiles	
+s-documentation-user-features-routing-md-130	documentation/user/features/routing.md#L130	broken	NURU_R003: Route '' is unreachable. Route '{*args}' (defined at Program.cs:10) will match all the same inputs with equal or higher specificity (10 vs 0 points).
+s-documentation-user-features-served-apps-md-12	documentation/user/features/served-apps.md#L12	compiles	
+s-documentation-user-features-shell-completion-md-29	documentation/user/features/shell-completion.md#L29	fragment	CS0103: The name 'Deploy' does not exist in the current context
+s-documentation-user-features-shell-completion-md-57	documentation/user/features/shell-completion.md#L57	fragment	CS0103: The name 'Deploy' does not exist in the current context
+s-documentation-user-features-shell-completion-md-276	documentation/user/features/shell-completion.md#L276	fragment	CS0103: The name 'CreateOrder' does not exist in the current context
+s-documentation-user-features-shell-completion-md-459	documentation/user/features/shell-completion.md#L459	fragment	CS0103: The name 'Deploy' does not exist in the current context
+s-documentation-user-features-shell-completion-md-665	documentation/user/features/shell-completion.md#L665	fragment	CS0246: The type or namespace name 'EnvironmentCompletionSource' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-telemetry-md-8	documentation/user/features/telemetry.md#L8	compiles	
+s-documentation-user-features-telemetry-md-38	documentation/user/features/telemetry.md#L38	fragment	CS0103: The name 'DistributedApplication' does not exist in the current context
+s-documentation-user-features-telemetry-md-82	documentation/user/features/telemetry.md#L82	compiles	
+s-documentation-user-features-terminal-abstractions-md-28	documentation/user/features/terminal-abstractions.md#L28	fragment	CS0246: The type or namespace name 'ITerminal' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-terminal-abstractions-md-56	documentation/user/features/terminal-abstractions.md#L56	fragment	CS0103: The name 'Assert' does not exist in the current context
+s-documentation-user-features-terminal-abstractions-md-238	documentation/user/features/terminal-abstractions.md#L238	fragment	CS0246: The type or namespace name 'ITerminal' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-terminal-abstractions-md-301	documentation/user/features/terminal-abstractions.md#L301	fragment	CS0103: The name 'Assert' does not exist in the current context
+s-documentation-user-features-terminal-abstractions-md-321	documentation/user/features/terminal-abstractions.md#L321	fragment	CS0103: The name 'Assert' does not exist in the current context
+s-documentation-user-features-terminal-abstractions-md-340	documentation/user/features/terminal-abstractions.md#L340	fragment	CS0103: The name 'Assert' does not exist in the current context
+s-documentation-user-features-terminal-abstractions-md-392	documentation/user/features/terminal-abstractions.md#L392	fragment	CS0246: The type or namespace name 'MyCustomTerminal' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-terminal-abstractions-md-422	documentation/user/features/terminal-abstractions.md#L422	fragment	CS0246: The type or namespace name 'ITerminal' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-features-widgets-md-472	documentation/user/features/widgets.md#L472	fragment	CS0103: The name 'Assert' does not exist in the current context
+s-documentation-user-getting-started-md-22	documentation/user/getting-started.md#L22	compiles	
+s-documentation-user-getting-started-md-44	documentation/user/getting-started.md#L44	compiles	
+s-documentation-user-getting-started-md-151	documentation/user/getting-started.md#L151	fragment	CS0103: The name 'Deploy' does not exist in the current context
+s-documentation-user-getting-started-md-176	documentation/user/getting-started.md#L176	fragment	CS0246: The type or namespace name 'IOptions<>' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-getting-started-md-199	documentation/user/getting-started.md#L199	compiles	
+s-documentation-user-getting-started-md-238	documentation/user/getting-started.md#L238	compiles	
+s-documentation-user-guides-architecture-choices-md-24	documentation/user/guides/architecture-choices.md#L24	compiles	
+s-documentation-user-guides-architecture-choices-md-59	documentation/user/guides/architecture-choices.md#L59	fragment	CS0246: The type or namespace name 'AnalyzeCommand' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-architecture-choices-md-86	documentation/user/guides/architecture-choices.md#L86	fragment	CS0246: The type or namespace name 'AnalyzeCommand' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-architecture-choices-md-190	documentation/user/guides/architecture-choices.md#L190	fragment	CS0103: The name 'Times' does not exist in the current context
+s-documentation-user-guides-architecture-choices-md-217	documentation/user/guides/architecture-choices.md#L217	fragment	CS0103: The name 'Deploy' does not exist in the current context
+s-documentation-user-guides-architecture-choices-md-245	documentation/user/guides/architecture-choices.md#L245	fragment	CS0246: The type or namespace name 'AnalyzeCommand' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-architecture-choices-md-264	documentation/user/guides/architecture-choices.md#L264	fragment	CS0103: The name 'Base64' does not exist in the current context
+s-documentation-user-guides-architecture-choices-md-285	documentation/user/guides/architecture-choices.md#L285	fragment	CS0246: The type or namespace name 'ReportGenerateCommand' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-architecture-choices-md-305	documentation/user/guides/architecture-choices.md#L305	fragment	CS0103: The name 'ShowStatus' does not exist in the current context
+s-documentation-user-guides-architecture-choices-md-334	documentation/user/guides/architecture-choices.md#L334	fragment	CS0128: A local variable or function named 'app' is already defined in this scope
+s-documentation-user-guides-architecture-choices-md-368	documentation/user/guides/architecture-choices.md#L368	fragment	CS1022: Type or namespace definition, or end-of-file expected
+s-documentation-user-guides-best-practices-md-28	documentation/user/guides/best-practices.md#L28	broken	CS1061: 'NuruAppBuilder' does not contain a definition for 'WithGroup' and no accessible extension method 'WithGroup' accepting a first argument of type 'NuruAppBuilder' could be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-best-practices-md-259	documentation/user/guides/best-practices.md#L259	fragment	CS0106: The modifier 'public' is not valid for this item
+s-documentation-user-guides-best-practices-md-310	documentation/user/guides/best-practices.md#L310	compiles	
+s-documentation-user-guides-best-practices-md-321	documentation/user/guides/best-practices.md#L321	compiles	
+s-documentation-user-guides-best-practices-md-366	documentation/user/guides/best-practices.md#L366	fragment	CS8803: Top-level statements must precede namespace and type declarations.
+s-documentation-user-guides-best-practices-md-386	documentation/user/guides/best-practices.md#L386	fragment	CS8803: Top-level statements must precede namespace and type declarations.
+s-documentation-user-guides-deployment-md-55	documentation/user/guides/deployment.md#L55	fragment	CS0246: The type or namespace name 'Greeter' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-deployment-md-69	documentation/user/guides/deployment.md#L69	fragment	CS0246: The type or namespace name 'Greeter' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-deployment-md-118	documentation/user/guides/deployment.md#L118	compiles	
+s-documentation-user-guides-migrating-to-3-0-md-87	documentation/user/guides/migrating-to-3.0.md#L87	compiles	
+s-documentation-user-guides-subset-publishing-md-103	documentation/user/guides/subset-publishing.md#L103	fragment	CS0246: The type or namespace name 'MyApp' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-subset-publishing-md-115	documentation/user/guides/subset-publishing.md#L115	fragment	CS0246: The type or namespace name 'MyApp' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-subset-publishing-md-182	documentation/user/guides/subset-publishing.md#L182	fragment	CS0246: The type or namespace name 'ConsoleLogger' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-subset-publishing-md-269	documentation/user/guides/subset-publishing.md#L269	fragment	CS8803: Top-level statements must precede namespace and type declarations.
+s-documentation-user-guides-subset-publishing-md-308	documentation/user/guides/subset-publishing.md#L308	fragment	CS0246: The type or namespace name 'GitGroupBase' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-subset-publishing-md-331	documentation/user/guides/subset-publishing.md#L331	compiles	
+s-documentation-user-guides-subset-publishing-md-478	documentation/user/guides/subset-publishing.md#L478	fragment	CS0246: The type or namespace name 'KanbanGroup' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-subset-publishing-md-585	documentation/user/guides/subset-publishing.md#L585	fragment	CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-guides-using-repl-mode-md-18	documentation/user/guides/using-repl-mode.md#L18	compiles	
+s-documentation-user-guides-using-repl-mode-md-164	documentation/user/guides/using-repl-mode.md#L164	compiles	
+s-documentation-user-guides-using-repl-mode-md-333	documentation/user/guides/using-repl-mode.md#L333	compiles	
+s-documentation-user-guides-using-repl-mode-md-355	documentation/user/guides/using-repl-mode.md#L355	compiles	
+s-documentation-user-reference-builder-api-md-10	documentation/user/reference/builder-api.md#L10	compiles	
+s-documentation-user-reference-builder-api-md-296	documentation/user/reference/builder-api.md#L296	fragment	CS0246: The type or namespace name 'Deployer' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-reference-nuru-app-options-md-8	documentation/user/reference/nuru-app-options.md#L8	compiles	
+s-documentation-user-reference-nuru-app-options-md-33	documentation/user/reference/nuru-app-options.md#L33	compiles	
+s-documentation-user-reference-nuru-app-options-md-75	documentation/user/reference/nuru-app-options.md#L75	compiles	
+s-documentation-user-reference-nuru-app-options-md-108	documentation/user/reference/nuru-app-options.md#L108	fragment	CS0246: The type or namespace name 'LogLevel' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-reference-nuru-app-options-md-155	documentation/user/reference/nuru-app-options.md#L155	compiles	
+s-documentation-user-reference-nuru-app-options-md-181	documentation/user/reference/nuru-app-options.md#L181	compiles	
+s-documentation-user-reference-nuru-app-options-md-208	documentation/user/reference/nuru-app-options.md#L208	fragment	CS1061: 'ILoggingBuilder' does not contain a definition for 'AddOpenTelemetry' and no accessible extension method 'AddOpenTelemetry' accepting a first argument of type 'ILoggingBuilder' could be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-reference-supported-types-md-28	documentation/user/reference/supported-types.md#L28	broken	NURU_H005: Handler parameter 'msg' doesn't match any route segment; available segments: echo, {message}
+s-documentation-user-reference-supported-types-md-49	documentation/user/reference/supported-types.md#L49	broken	NURU_H005: Handler parameter 'sec' doesn't match any route segment; available segments: wait, {seconds}
+s-documentation-user-reference-supported-types-md-73	documentation/user/reference/supported-types.md#L73	fragment	CS0103: The name 'Scale' does not exist in the current context
+s-documentation-user-reference-supported-types-md-93	documentation/user/reference/supported-types.md#L93	fragment	CS0103: The name 'Config' does not exist in the current context
+s-documentation-user-reference-supported-types-md-109	documentation/user/reference/supported-types.md#L109	broken	NURU_H005: Handler parameter 'dt' doesn't match any route segment; available segments: schedule, {when}
+s-documentation-user-reference-supported-types-md-125	documentation/user/reference/supported-types.md#L125	fragment	CS0103: The name 'DeleteUser' does not exist in the current context
+s-documentation-user-reference-supported-types-md-144	documentation/user/reference/supported-types.md#L144	fragment	CS0103: The name 'Allocate' does not exist in the current context
+s-documentation-user-reference-supported-types-md-159	documentation/user/reference/supported-types.md#L159	fragment	CS0103: The name 'ProcessPayment' does not exist in the current context
+s-documentation-user-reference-supported-types-md-174	documentation/user/reference/supported-types.md#L174	fragment	CS0103: The name 'SetTimeout' does not exist in the current context
+s-documentation-user-reference-supported-types-md-190	documentation/user/reference/supported-types.md#L190	fragment	CS0103: The name 'Download' does not exist in the current context
+s-documentation-user-reference-supported-types-md-207	documentation/user/reference/supported-types.md#L207	compiles	
+s-documentation-user-reference-supported-types-md-233	documentation/user/reference/supported-types.md#L233	fragment	CS0103: The name 'ProcessFile' does not exist in the current context
+s-documentation-user-reference-supported-types-md-329	documentation/user/reference/supported-types.md#L329	fragment	CS0246: The type or namespace name 'Color' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-reference-supported-types-md-384	documentation/user/reference/supported-types.md#L384	fragment	CS1002: ; expected
+s-documentation-user-use-cases-md-14	documentation/user/use-cases.md#L14	fragment	CS0103: The name 'GetConfig' does not exist in the current context
+s-documentation-user-use-cases-md-49	documentation/user/use-cases.md#L49	fragment	CS0246: The type or namespace name 'Mediator' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-use-cases-md-89	documentation/user/use-cases.md#L89	fragment	CS0103: The name 'CloneRepository' does not exist in the current context
+s-documentation-user-use-cases-md-149	documentation/user/use-cases.md#L149	fragment	CS1501: No overload for method 'Map' takes 2 arguments
+s-documentation-user-use-cases-md-295	documentation/user/use-cases.md#L295	fragment	CS0246: The type or namespace name 'ITelemetryService' could not be found (are you missing a using directive or an assembly reference?)
+s-documentation-user-use-cases-md-344	documentation/user/use-cases.md#L344	fragment	CS0103: The name 'PingHost' does not exist in the current context
+s-documentation-user-use-cases-md-374	documentation/user/use-cases.md#L374	fragment	CS0103: The name 'ListDatabases' does not exist in the current context
+s-readme-md-33	readme.md#L33	fragment	CS8803: Top-level statements must precede namespace and type declarations.
+s-readme-md-68	readme.md#L68	compiles	
+s-readme-md-164	readme.md#L164	fragment	CS0103: The name 'Deploy' does not exist in the current context
+s-readme-md-176	readme.md#L176	broken	CS1501: No overload for method 'CreateBuilder' takes 1 arguments
+s-readme-md-246	readme.md#L246	broken	CS1501: No overload for method 'CreateBuilder' takes 1 arguments

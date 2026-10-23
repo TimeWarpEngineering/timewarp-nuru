@@ -1,0 +1,9 @@
+version=4.0.0-beta.5
+source=https://api.nuget.org/v3/index.json
+docs_ref=v4.0.0-beta.5
+repo=~/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-523-nuru-verification-skill-launch-and-drive-the-real
+work=~/.cache/nuru-verify/4.0.0-beta.5-20261023T140329Z-3746445
+nuget_packages=~/.cache/nuru-verify/4.0.0-beta.5-20261023T140329Z-3746445/nuget-packages
+global_cache_audited=~/.cache/nuru-verify/repro-647/fake-global-cache
+dotnet=10.0.402
+started=20261023T140329Z

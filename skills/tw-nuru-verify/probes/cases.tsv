@@ -1,0 +1,32 @@
+probe	api	mode	env	args	stdin	exit	contains	not_contains
+core-routing	Map/WithHandler/AsQuery	run	-	add 2 3	-	0	sum=5	-
+core-routing	optional parameter and option	run	-	deploy prod	-	0	env=prod tag=none force=False	-
+core-routing	optional parameter and option	run	-	deploy prod v1 -f	-	0	env=prod tag=v1 force=True	-
+core-routing	AsIdempotentCommand	run	-	set color blue	-	0	set color=blue	-
+core-routing	catch-all parameter	run	-	docker run alpine	-	0	docker args=run,alpine	-
+core-routing	exit code from handler	run	-	fail	-	3	failed	-
+core-routing	unknown command	run	-	bogus	-	1	Unknown command	-
+core-routing	WithDescription/--help	run	-	--help	-	0	Nuru consumer probe	-
+core-routing	route description in --help	run	-	--help	-	0	Add two integers	-
+core-routing	--version	run	-	--version	-	0	-	Unknown command
+core-routing	--capabilities	run	-	--capabilities	-	0	"description": "Add two integers"	-
+core-routing	route kind in --capabilities	run	-	--capabilities	-	0	"kind": "idempotent	-
+group-prefix	WithGroupPrefix	run	-	admin status	-	0	admin status ok	-
+group-prefix	nested WithGroupPrefix	run	-	admin config get region	-	0	value: region	-
+configure-services	ConfigureServices	run	-	greet Ada	-	0	greeter says hello to Ada	-
+add-configuration	AddConfiguration	run	Probe__Greeting=from-env	setting	-	0	greeting=from-env	-
+add-behavior	AddBehavior (before)	run	-	ping	-	0	behavior-before	-
+add-behavior	AddBehavior (after)	run	-	ping	-	0	behavior-after	-
+type-converter	AddTypeConverter	run	-	color #FF8000	-	0	rgb(255,128,0)	-
+enable-completion	EnableCompletion script	run	-	--generate-completion bash	-	0	complete	-
+enable-completion	EnableCompletion callback	run	-	__complete 1 de	-	0	deploy	-
+help-hide-rows	ConfigureHelp ShowPerCommandHelpRoutes=false	run	-	--help	-	0	status	status --help
+help-hide-rows	ConfigureHelp ShowCompletionRoutes=false	run	-	--help	-	0	status	__complete
+help-show-rows	ConfigureHelp ShowPerCommandHelpRoutes=true	run	-	--help	-	0	status --help	-
+help-show-rows	ConfigureHelp ShowCompletionRoutes=true	run	-	--help	-	0	__complete	-
+help-exclude	ConfigureHelp ExcludePatterns	run	-	--help	-	0	visible	secret-debug
+endpoint-dsl	Endpoint DSL (README)	run	-	add 2 3	-	0	2 + 3 = 5	-
+repl	AddRepl	pty	-	-i	add 2 3\nexit	0	sum=5	-
+repl	AddRepl options (prompt, welcome, goodbye)	pty	-	-i	add 2 3\nexit	0	probe-goodbye	-
+telemetry	UseTelemetry options	otlp	-	ping	-	0	nuru-probe-telemetry	-
+use-logging	UseLogging	run	-	work	-	0	logged: probe-log-entry	-

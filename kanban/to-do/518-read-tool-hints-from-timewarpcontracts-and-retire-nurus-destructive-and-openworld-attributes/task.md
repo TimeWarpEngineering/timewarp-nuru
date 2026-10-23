@@ -75,6 +75,7 @@ Acceptance:
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22) from the timewarp-architecture 391 merge review.
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-23T07:45:03Z
 - Review oracle: general reviewer (claude, claude-opus-5-5), effort 2 (by-diff, 240 lines), session not reported, 1 round, accepted-exceptions — 2026-10-23
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-23T07:47:54Z
 
 ## Results
 
@@ -109,6 +110,10 @@ Verified here: `dotnet build` of `timewarp-nuru` and `timewarp-nuru-mcphost` suc
 - The reviewer re-ran these after `ganda runfile cache --clear`: `mcphost-04` 6/6, `mcphost-01` 16/16, and the calculator `--capabilities` (`openWorld` false, `title` "Total numbers").
 - The restatement matches the task Goal. No misread.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

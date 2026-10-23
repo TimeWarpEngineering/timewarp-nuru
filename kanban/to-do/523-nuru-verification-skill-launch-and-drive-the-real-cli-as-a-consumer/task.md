@@ -58,6 +58,8 @@ Acceptance:
   4.0.0-beta.5 (current) and 3.0.0-beta.76 (before the #242 and #296 fixes), and on a scratch
   cache poisoned the state#647 way. Evidence is under `evidence/`. `ganda repo audit` passed
   (30/0/1 skip). Nothing to fix.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-23T14:11:00Z
+- Review oracle: round 1 by general (cursor, model grok-4.7), session not reported, max-turns uncapped (review bound 200), open findings M1 M2 M3 M4 — 2026-10-23
 
 ## Notes
 
@@ -190,3 +192,15 @@ skills/tw-nuru-verify/scripts/nuru-consumer-check.sh --version 4.0.0-beta.5 --so
 - Run 3: `exit=2`, with `doctor: 4.0.0-beta.5 is a released version on nuget.org; pack local
   candidates under a unique prerelease version`.
 - `~/.nuget/packages` is unchanged by all three runs. `~/.cache/nuru-verify/` is empty afterwards.
+
+### Review
+
+Round 1, effort 3, roster general. The goal restatement matches the original task (no misread). Disposition is not written: findings are still open, so this is not `clean` or `accepted-exceptions`.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 3 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 1 | 0 | 0 |
+
+Open ids: M1, M2, M3, M4. Ledger: `review/round-1/merged.md`. Also `review/review-framework.md` and `review/round-1/general.md`.

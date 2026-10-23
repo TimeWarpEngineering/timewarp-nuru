@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 68
+- Lines changed: 32
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -24,3 +24,10 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Scope (round 2)
+
+**Date:** 2026-10-23
+**Diff scope:** delta since round 1, `ecaee5e3..ab4f6f80` (fix pass implement-fix-2): `readme.md` line 1, task file, round-1 ledger.
+**Effort:** 1 (general only), budget by diff 32 lines
+**Reviewer roster:** general (review oracle, Claude Opus 5.5, headless)

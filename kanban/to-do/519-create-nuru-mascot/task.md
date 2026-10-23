@@ -40,7 +40,8 @@ Acceptance:
 
 ## Review
 
-- Round 1: M1 fixed on the live ledger (implement-fix-2). The hero `src` is the raw master URL. Round 2 has not run.
+- Round 1: M1 fixed on the live ledger (implement-fix-2). The hero `src` is the raw master URL.
+- Round 2: M1 re-verified fixed and no new findings. Disposition: clean (`review/disposition.md`).
 
 ## Notes
 
@@ -69,6 +70,7 @@ The final art and derived cards are already built.  Do not regenerate or redraw 
 - 2026-10-23 review oracle round 1 (Claude Opus 5.5, headless task work, effort 1, roster: general): 1 open suggestion (M1). The README hero uses a relative image path, which breaks on the NuGet package page. A fix pass is requested. See `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-23T07:27:39Z
 - 2026-10-23 implement-fix-2 (grok, headless task work, session 01a167a8-83e6-7270-ae61-fcbf2a7fb570): pointed the README hero `src` at `https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-nuru/master/assets/mascot/nuru-hero.png` so the packed NuGet readme can resolve it. Alt text and width are unchanged. Marked M1 fixed in `review/round-1/merged.md`. Steven's approval stays open. `ganda repo audit` passed (30 passed, 0 failed, 1 skipped). The five PNGs still match the kit.
+- 2026-10-23 review oracle round 2 (Claude Opus 5.5, headless task work, effort 1, roster: general): reviewed delta `ecaee5e3..ab4f6f80`. M1 is fixed and there are no new findings. Disposition: clean. See `review/round-2/merged.md` and `review/disposition.md`.
 
 ## Results
 
@@ -101,5 +103,8 @@ Not in scope: a live 200 from that raw URL. The file is not on `master` until th
 
 ### Review
 
-- Round 1 (effort 1, general): 0 bug, 1 suggestion, 0 nit. After the fix pass the live ledger is 0 open, 1 fixed, 0 wontfix. Disposition is not written. The host runs review round 2 to confirm M1.
-- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 1 (effort 1, general): 0 bug, 1 suggestion, 0 nit. M1 (relative hero `src`) was fixed by implement-fix-2.
+- Round 2 (effort 1, general, delta `ecaee5e3..ab4f6f80`): M1 re-verified fixed, no new findings.
+- Final counts: bug 0, suggestion 1 fixed, nit 0. 0 open, 0 wontfix.
+- Disposition: **clean**. 2 rounds, no exceptions or escalations.
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.

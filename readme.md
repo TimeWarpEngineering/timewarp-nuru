@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/mascot/nuru-hero.png" alt="Nuru, the TimeWarp Nuru mascot" width="240" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/TimeWarpEngineering/timewarp-nuru/master/assets/mascot/nuru-hero.png" alt="Nuru, the TimeWarp Nuru mascot" width="240" /></p>
 
 # TimeWarp.Nuru
 

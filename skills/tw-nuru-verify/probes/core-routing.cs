@@ -1,4 +1,4 @@
-// Probe: the README surface. Map, WithHandler, AsQuery/AsCommand/AsIdempotentCommand, typed,
+// Probe: the core routing surface (source/timewarp-nuru/builders/nuru-app-builder/nuru-app-builder.routes.cs, NuruAppBuilder.Map). Map, WithHandler, AsQuery/AsCommand/AsIdempotentCommand, typed,
 // optional, option and catch-all parameters, WithName/WithDescription, exit codes.
 using TimeWarp.Nuru;
 

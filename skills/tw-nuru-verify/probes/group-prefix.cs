@@ -1,4 +1,4 @@
-// Probe: WithGroupPrefix, including a nested group (builder-api.md "Route Groups").
+// Probe: WithGroupPrefix, including a nested group (source/timewarp-nuru/builders/group-builder.cs, GroupBuilder.WithGroupPrefix).
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()

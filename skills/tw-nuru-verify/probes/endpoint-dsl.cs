@@ -1,4 +1,4 @@
-// Probe: the README Endpoint DSL. A [NuruRoute] class with a nested handler, registered by Map<T>().
+// Probe: the Endpoint DSL (NuruAppBuilder.Map<TEndpoint>() in nuru-app-builder.routes.cs). A [NuruRoute] class with a nested handler, registered by Map<T>().
 using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 

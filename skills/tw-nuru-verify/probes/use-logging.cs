@@ -1,4 +1,4 @@
-// Probe: UseLogging (builder-api.md "Terminal", logging.md) routes a handler's ILogger<T> to the
+// Probe: UseLogging (source/timewarp-nuru/builders/nuru-app-builder/nuru-app-builder.configuration.cs, NuruAppBuilder.UseLogging) routes a handler's ILogger<T> to the
 // factory the app passes in. A marker provider writes each entry to stdout.
 using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru;

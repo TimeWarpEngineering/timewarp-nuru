@@ -61,6 +61,11 @@ Acceptance:
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-23T14:11:00Z
 - Review oracle: round 1 by general (cursor, model grok-4.7), session not reported, max-turns uncapped (review bound 200), open findings M1 M2 M3 M4 — 2026-10-23
 - Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-23T14:26:13Z
+- 2026-10-23 reframed per Steven (2026-10-23): "the docs are NOT the source of truth of the design";
+  source is authority. Probes now cite shipped source APIs (plus an uncovered list), docs are a
+  separate DOC-DEFECT report that no longer fails the exit code unless `--docs-strict`. Added
+  probes `use-console-logging` and `add-check-updates-route`. Re-ran 4.0.0-beta.5: verdict FAIL
+  37/6 (all code defects), 26 doc defects.
 - 2026-10-23 implementer-claude (implement-fix-2, round-1 findings): M1, the docs step now builds
   `builder.Map(pattern, handler)` fences after a `var builder = NuruApp.CreateBuilder();` line,
   and classifies `CS1501` as broken. It also classifies `CS1061`/`CS0117` as broken unless the
@@ -114,7 +119,7 @@ Acceptance:
   - **docs**: compiles every `CreateBuilder` snippet in `readme.md` and `documentation/user/**`
     at tag `v<version>`. It also compiles every `builder.Map(pattern, handler)` fence inside a
     builder context. It checks `dotnet run -- …` / `# Output:` pairs.
-- `skills/tw-nuru-verify/probes/*.cs` + `cases.tsv`: 15 probes, 33 cases.
+- `skills/tw-nuru-verify/probes/*.cs` + `cases.tsv`: 17 probes, 35 cases.
 - `evidence/` in this task folder: summaries and TSVs from the three runs below.
 
 ### Proof the check fails on each known failure (shipped builds)
@@ -130,36 +135,52 @@ not enabled`: the package did not set `InterceptorsNamespaces` for consumers. Re
 not see this, because the repo's `Directory.Build.props` sets the property. 4.0.0-beta.5 no longer
 has the problem (core probes compile).
 
-### Current release: 4.0.0-beta.5, 38 passed / 29 failed
+### Current release: 4.0.0-beta.5, release verdict FAIL (37 passed / 6 failed), 26 doc defects reported separately
 
 Passed: launch from nuget.org; cache (44 packages match); 31 of 33 probe cases (routing,
 groups, DI, configuration, behaviors, converters, completion, ConfigureHelp ×3, Endpoint DSL,
 DiscoverEndpoints ×2, REPL over PTY, telemetry export); the CLI install / version / index /
 search; README quick start `dotnet run -- add 15 25` prints `15 + 25 = 40`.
 
-Docs: 26 broken, 38 compile, 74 fragments, 138 snippets (`evidence/4.0.0-beta.5/snippets.tsv`).
+Reframed 2026-10-23 per Steven: the source (code plus `#region Purpose` / `#region Design`) is the
+authority, not the docs. The verdict is split in two. The run above was regenerated with the
+reframed script and two new probes (`use-console-logging`, `add-check-updates-route`).
+
+**Code defects (release verdict FAIL, public APIs in source, 3 probes fail to compile):**
+
+- `UseLogging(ILoggerFactory)`, `NuruAppBuilder` in `nuru-app-builder.configuration.cs`:
+  `NURU_S999 Unrecognized DSL method` (probe `use-logging`).
+- `UseConsoleLogging`, `logging/nuru-logging-extensions.cs`: `NURU_S999` (probe `use-console-logging`).
+- `AddCheckUpdatesRoute`, `nuru-app-builder-extensions.updates.cs`: `CS0122
+  CheckUpdatesJsonSerializerContext is inaccessible` (probe `add-check-updates-route`).
+
+**Doc defects (docs out of date with source, reported, not part of the verdict):** 26 broken, 38
+compile, 74 fragments, 138 snippets (`evidence/4.0.0-beta.5/snippets.tsv`, `summary.md` second
+section). The list under "doc defects" below. Snippets that call the three code-defect APIs above
+are doc-reported too, but their cause is the code defect.
 The `context` column is `builder` for the 10 fences compiled after a `var builder` line.
 
-The failures are real consumer-visible defects in the current release. Each was confirmed by
-hand, not just reported by the script:
+The failures were confirmed by hand, not just reported by the script. Items 1 and 3 are code
+defects (public APIs in source, with probes). The rest are doc defects unless noted.
 
-1. **`UseLogging` / `UseConsoleLogging` don't compile.** They are advertised in builder-api.md,
-   logging.md and output-handling.md, and the generator rejects them with `NURU_S999 Unrecognized
-   DSL method` (probe `use-logging` plus 6 doc snippets). This is the #242 class.
-2. **The MCP hosting snippet doesn't compile.** mcp-hosting.md#L50
+1. **Code defect: `UseLogging` / `UseConsoleLogging` don't compile.** Both are public in source
+   and the generator rejects them with `NURU_S999 Unrecognized DSL method` (probes `use-logging`,
+   `use-console-logging`; 6 doc snippets hit the same cause). This is the #242 class.
+2. **The MCP hosting snippet doesn't compile (undecided: doc or code).** mcp-hosting.md#L50
    (`builder.Services.AddMcpServer()…WithNuruTools(nuruApp)`) fails with `NURU_S999: Unrecognized
    DSL method: AddMcpServer`, even in a real `Microsoft.NET.Sdk.Web` project with
    TimeWarp.Nuru.McpHost and ModelContextProtocol.AspNetCore. The generator misreads the ASP.NET
    builder chain.
-3. **`AddCheckUpdatesRoute()` doesn't compile for a consumer** (built-in-routes.md#L157):
+3. **Code defect: `AddCheckUpdatesRoute()` doesn't compile for a consumer** (probe
+   `add-check-updates-route`; also built-in-routes.md#L157):
    `CS0122 CheckUpdatesJsonSerializerContext is inaccessible`, because the generated code uses an
    internal type.
-4. **Docs still teach pre-3.0 APIs.** The README still teaches `NuruApp.CreateBuilder(args)` and
+4. **Doc defect: docs still teach pre-3.0 APIs.** The README still teaches `NuruApp.CreateBuilder(args)` and
    `EnableStaticCompletion()` (readme.md#L176, #L246). The #296 sweep fixed `documentation/` but
    missed the README. It also missed the two-argument `builder.Map(pattern, handler)`, which is
    CS1501 against 4.0.0-beta.5, in output-handling.md (#L32, #L69, #L155, #L181, #L209, #L243,
    #L271, #L347) and use-cases.md (#L149, #L193, #L241).
-5. **Other doc bugs:**
+5. **Other doc defects:**
    - best-practices.md#L28 uses `WithGroup`, which does not exist.
    - routing.md#L130 shows `Map("")` next to `{*args}`, which NURU_R003 rejects as unreachable.
    - supported-types.md#L28/#L49/#L109 name handler parameters differently from their route

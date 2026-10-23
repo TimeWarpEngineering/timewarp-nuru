@@ -32,3 +32,5 @@ repl	AddRepl	pty	-	-i	add 2 3\nexit	0	sum=5	-
 repl	AddRepl options (prompt, welcome, goodbye)	pty	-	-i	add 2 3\nexit	0	probe-goodbye	-
 telemetry	UseTelemetry options	otlp	-	ping	-	0	nuru-probe-telemetry	-
 use-logging	UseLogging	run	-	work	-	0	logged: probe-log-entry	-
+add-check-updates-route	AddCheckUpdatesRoute	run	-	ping	-	0	pong	-
+use-console-logging	UseConsoleLogging	run	-	ping	-	0	pong	-

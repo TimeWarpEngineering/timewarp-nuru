@@ -1,4 +1,4 @@
-// Probe (nuru#242): ConfigureHelp ExcludePatterns, assigned as the docs show it.
+// Probe (nuru#242): ConfigureHelp ExcludePatterns, assigned as HelpOptions (NuruAppBuilder.ConfigureHelp in nuru-app-builder.cs) declares it.
 using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()

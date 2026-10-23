@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # nuru-consumer-check.sh: install a shipped TimeWarp.Nuru the way a consumer does, drive it,
-# and write evidence. Read ../SKILL.md first. Exit 0 = every selected check ran and passed,
-# 1 = a check failed, 2 = doctor refused to run (the environment would make the result meaningless).
+# and write evidence. Read ../SKILL.md first. The source (code + Purpose/Design regions) is the
+# authority; docs are not. Exit 0 = launch, cache, probes and cli all ran and passed (docs too
+# with --docs-strict), 1 = one of those failed, 2 = doctor refused to run. Doc snippet failures
+# are DOC-DEFECT rows in their own summary section and do not change the exit code by default.
 set -uo pipefail
 
 NUGET_ORG="https://api.nuget.org/v3/index.json"
@@ -17,6 +19,7 @@ OUT=""
 GLOBAL_CACHE="${NUGET_PACKAGES:-$HOME/.nuget/packages}"
 WORK_ROOT="${NURU_VERIFY_WORK:-${XDG_CACHE_HOME:-$HOME/.cache}/nuru-verify}"
 KEEP=0
+DOCS_STRICT=0
 
 usage() {
   cat <<'EOF'
@@ -30,6 +33,7 @@ Usage: nuru-consumer-check.sh [options]
   --repo PATH       timewarp-nuru checkout holding the docs (default: git root of cwd)
   --out DIR         Evidence folder (default: <repo>/artifacts/nuru-verify/<version>)
   --global-cache D  Global NuGet cache to audit (default: $NUGET_PACKAGES or ~/.nuget/packages)
+  --docs-strict     Docs failures (DOC-DEFECT) fail the run; default is report-only
   --keep            Keep the scratch work folder
 EOF
 }
@@ -44,6 +48,7 @@ while [[ $# -gt 0 ]]; do
     --repo) REPO="$2"; shift 2 ;;
     --out) OUT="$2"; shift 2 ;;
     --global-cache) GLOBAL_CACHE="$2"; shift 2 ;;
+    --docs-strict) DOCS_STRICT=1; shift ;;
     --keep) KEEP=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -60,9 +65,16 @@ has_step() { [[ ",$STEPS," == *",$1,"* ]]; }
 RESULTS=()   # "step|check|status|evidence|detail"
 FAILED=0
 record() {   # record <step> <check> <PASS|FAIL> <evidence> [detail]
-  RESULTS+=("$1|$2|$3|$4|${5:-}")
   # Exit 0 must mean every selected check ran and passed, so anything but PASS fails the run.
-  [[ "$3" != "PASS" ]] && FAILED=1
+  # Docs are not the authority: a docs failure is a DOC-DEFECT and fails the run only with
+  # --docs-strict. Pass FAIL to record; the docs step is downgraded here.
+  if [[ "$1" == "docs" && "$3" == "FAIL" ]]; then
+    set -- "$1" "$2" "DOC-DEFECT" "$4" "${5:-}"
+    [[ $DOCS_STRICT -eq 1 ]] && FAILED=1
+  elif [[ "$3" != "PASS" ]]; then
+    FAILED=1
+  fi
+  RESULTS+=("$1|$2|$3|$4|${5:-}")
   printf '%-7s %-12s %s %s\n' "$3" "$1" "$2" "${5:+($5)}"
 }
 
@@ -560,7 +572,7 @@ if has_step docs; then
     fi
     printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$where" "$context" "$result" "$first" >>"$table"
     if [[ "$result" == "broken" ]]; then
-      record docs "snippet $where compiles against the package" FAIL docs/snippets.tsv "$first"
+      record docs "snippet ${where%%#L*}:${where##*#L} compiles against the package" FAIL docs/snippets.tsv "$first"
     fi
     if [[ "$result" == "compiles" && -s "$WORK/docs/$name/expect.tsv" ]]; then
       dll="$WORK/docs/$name/bin/Release/net10.0/$name.dll"
@@ -569,9 +581,9 @@ if has_step docs; then
         log="docs/$name.run.log"
         run_logged "$OUT/$log" env HOME="$WORK/home" timeout 120 dotnet "$dll" "${argv[@]}"
         if [[ $RUN_RC -eq 0 && "$RUN_OUT" == *"$o"* ]]; then
-          record docs "$where: dotnet run -- $a prints '$o'" PASS "$log"
+          record docs "${where%%#L*}:${where##*#L}: dotnet run -- $a prints '$o'" PASS "$log"
         else
-          record docs "$where: dotnet run -- $a prints '$o'" FAIL "$log" "exit $RUN_RC"
+          record docs "${where%%#L*}:${where##*#L}: dotnet run -- $a prints '$o'" FAIL "$log" "exit $RUN_RC"
         fi
       done <"$WORK/docs/$name/expect.tsv"
     fi
@@ -586,27 +598,51 @@ fi
 # ---------------------------------------------------------------------------------------------
 # Evidence summary
 # ---------------------------------------------------------------------------------------------
-pass=0; fail=0; other=0
+pass=0; fail=0; docdefects=0
 for r in "${RESULTS[@]}"; do
-  case "$(cut -d'|' -f3 <<<"$r")" in PASS) pass=$((pass + 1)) ;; FAIL) fail=$((fail + 1)) ;; *) other=$((other + 1)) ;; esac
+  case "$(cut -d'|' -f1,3 <<<"$r")" in
+    docs\|*) [[ "$(cut -d'|' -f3 <<<"$r")" == "DOC-DEFECT" ]] && docdefects=$((docdefects + 1)) ;;
+    *\|PASS) pass=$((pass + 1)) ;;
+    *) fail=$((fail + 1)) ;;
+  esac
 done
 {
   echo "# Nuru consumer check: TimeWarp.Nuru $VERSION"
   echo
+  echo "The source (code and its Purpose/Design regions) is the authority. Docs are checked separately."
+  echo
   echo "- Source: \`$SOURCE\` (private cache, \`<clear/>\` nuget.config)"
-  echo "- Docs: \`$DOCS_REF\` ($DOCS)"
+  echo "- Docs: \`$DOCS_REF\` ($DOCS)$([[ $DOCS_STRICT -eq 1 ]] && echo ", --docs-strict")"
   echo "- Run: $STAMP, dotnet $(dotnet --version)"
-  echo "- Result: **$([[ $FAILED -eq 0 ]] && echo PASS || echo FAIL)**: $pass passed, $fail failed, $other skipped"
+  echo "- Release verdict (launch, cache, probes, cli): **$([[ $fail -eq 0 ]] && echo PASS || echo FAIL)**: $pass passed, $fail failed"
+  has_step docs && echo "- Docs out of date with source: **$docdefects** doc defects ($([[ $DOCS_STRICT -eq 1 ]] && echo "failing the run, --docs-strict" || echo "report only, not part of the verdict"))"
+  echo
+  echo "## Release verdict"
   echo
   echo "| Step | Check | Result | Evidence | Detail |"
   echo "|------|-------|--------|----------|--------|"
   for r in "${RESULTS[@]}"; do
     IFS='|' read -r s c st ev de <<<"$r"
+    [[ "$s" == "docs" ]] && continue
     printf '| %s | %s | %s | `%s` | %s |\n' "$s" "${c//|/\\|}" "$st" "$ev" "${de//|/\\|}"
   done
+  if has_step docs; then
+    echo
+    echo "## Docs out of date with source (DOC-DEFECT, file:line)"
+    echo
+    echo "A failing snippet is a doc defect unless the source public API says it should work. Then it is a code defect and the probe for that API shows it."
+    echo
+    echo "| Check | Result | Evidence | Detail |"
+    echo "|-------|--------|----------|--------|"
+    for r in "${RESULTS[@]}"; do
+      IFS='|' read -r s c st ev de <<<"$r"
+      [[ "$s" == "docs" ]] || continue
+      printf '| %s | %s | `%s` | %s |\n' "${c//|/\\|}" "$st" "$ev" "${de//|/\\|}"
+    done
+  fi
 } >"$OUT/summary.md"
 
 echo
-echo "summary: $OUT/summary.md ($pass passed, $fail failed, $other skipped)"
+echo "summary: $OUT/summary.md ($pass passed, $fail failed, $docdefects doc defects)"
 if [[ $KEEP -eq 0 ]]; then rm -rf "$WORK"; else echo "work kept: $WORK"; fi
 exit "$FAILED"

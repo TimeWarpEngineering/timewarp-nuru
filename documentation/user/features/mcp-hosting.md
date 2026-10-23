@@ -70,8 +70,8 @@ await web.RunAsync();
 | `name` | The route's literal words, including any route-group prefix, joined by `_`: `config set {key} {value}` is `config_set`. An `[Operation(Group)]` path is metadata and adds no words. Characters outside `A-Z a-z 0-9 _ - .` become `_`. A route with no literal words is `default`. If two routes get the same name, the later one in catalog order gets `_2`, then `_3`, and so on. |
 | `description` | The route description |
 | `inputSchema` | JSON Schema from `parameters[]` and `options[]` (below) |
-| `title` | `[DisplayName]` on the endpoint class, or a host override (below) |
-| `annotations` | From the endpoint kind, `[Destructive]`, `[OpenWorld]` and `[DisplayName]`, with host overrides (below) |
+| `title` | `[Operation(Title)]` on a contract, `[DisplayName]` on a `[NuruRoute]` class that is not an operation, or a host override (below) |
+| `annotations` | From the endpoint kind, `[Destructive]`, `[OpenWorld]`, and the title source above, with host overrides (below) |
 
 Set `NuruMcpHostOptions.ToolNameSeparator` to use a different separator. `NuruMcpToolCatalog.GetToolName(endpoint)` returns the name for a catalog endpoint, so a client can map tools back to CLI routes.
 
@@ -158,22 +158,24 @@ The other hints are never inferred. The endpoint class (an `[Operation]` contrac
 
 | Attribute on the endpoint class | Annotation | Catalog member |
 |---------------------------------|------------|----------------|
-| `[Destructive]` / `[Destructive(false)]` | `destructiveHint: true` / `false` | `destructive` |
-| `[OpenWorld]` / `[OpenWorld(false)]` | `openWorldHint: true` / `false` | `openWorld` |
-| `[System.ComponentModel.DisplayName("...")]` | `title`, and the tool's `title` | `title` |
+| `[Destructive]` / `[Destructive(false)]` (`TimeWarp.Contracts`) | `destructiveHint: true` / `false` | `destructive` |
+| `[OpenWorld]` / `[OpenWorld(false)]` (`TimeWarp.Contracts`) | `openWorldHint: true` / `false` | `openWorld` |
+| `[Operation(Title = "...")]` on a contract; `[DisplayName("...")]` on a `[NuruRoute]` class with no operation | `title`, and the tool's `title` | `title` |
 
 ```csharp
-[Operation("find_references", Description = "Find every reference to a symbol")]
-[DisplayName("Find references")]
+using TimeWarp.Contracts;
+
+[Operation("find_references", Description = "Find every reference to a symbol", Title = "Find references")]
 [OpenWorld(false)]
 public sealed class FindReferencesQuery : IQuery<string> { ... }
 
 [NuruRoute("cache clear", Description = "Delete every cached entry")]
+[System.ComponentModel.DisplayName("Clear the cache")]
 [Destructive]
 public sealed class ClearCacheCommand : ICommand<Unit> { ... }
 ```
 
-`--capabilities` carries the same members, so a CLI agent sees the same hints. A route without an attribute has no catalog member, and its tool leaves the hint unset. The MCP specification tells clients to treat an unset `destructiveHint` on a tool that is not read-only as possibly destructive, and an unset `openWorldHint` as open-world. `[Destructive(false)]` says a command only adds data. `[OpenWorld(false)]` says a route works only on local state. The attributes are supported on endpoint classes. Fluent `Map()` routes cannot carry them. See [Neutral contracts](neutral-contracts.md#tool-hints) for how a contract carries them.
+`--capabilities` carries the same members, so a CLI agent sees the same hints. A route without an attribute has no catalog member, and its tool leaves the hint unset. The MCP specification tells clients to treat an unset `destructiveHint` on a tool that is not read-only as possibly destructive, and an unset `openWorldHint` as open-world. `[Destructive(false)]` says a command only adds data. `[OpenWorld(false)]` says a route works only on local state. The attributes are supported on endpoint classes, contract and route alike. A blank or whitespace operation `Title` publishes no title, and `[DisplayName]` does not set an operation's title. Fluent `Map()` routes cannot carry them. See [Neutral contracts](neutral-contracts.md#tool-hints) for how a contract carries them.
 
 An app that serves contracts it does not own sets hints per tool with `NuruMcpHostOptions.ToolAnnotations`, keyed by tool name. Every hint an entry sets replaces the derived one, and the others stay derived:
 

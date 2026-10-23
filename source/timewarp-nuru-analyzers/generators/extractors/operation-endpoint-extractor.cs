@@ -22,6 +22,10 @@
 // A problem pair looks up IResponseRenderer<SharedProblemDetails> the same way.
 // An absent [NuruRoute] description keeps the [Operation] description. Empty clears it.
 // A referenced-assembly constructor or nested Handler counts only when this compilation can access it.
+// Title is OperationAttribute.Title. Blank or whitespace is no title. [DisplayName] is not a title
+// source on an operation. A [NuruRoute] class with no [Operation] still reads [DisplayName].
+// Destructive and OpenWorld are TimeWarp.Contracts attributes on every endpoint class. Route
+// endpoints use them too, so the short names exist once. Fluent Map() routes have no attribute target.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;

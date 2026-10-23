@@ -16,6 +16,7 @@ using ModelContextProtocol.Protocol;
 using OneOf;
 using TimeWarp.Contracts;
 using TimeWarp.Foundation.Types;
+using TimeWarp.Nuru;
 using TimeWarp.Nuru.McpHost;
 
 public enum MhEnv
@@ -186,9 +187,11 @@ public class McpHostToolsTests
     ToolAnnotations wipe = Annotations(tools, "mh-wipe");
     wipe.DestructiveHint.ShouldBe(true);
     wipe.ReadOnlyHint.ShouldBe(false);
+    wipe.Title.ShouldBe("Wipe the cache");
 
     EndpointCapability wipeEndpoint = app.Capabilities.Endpoints.Single(e => e.Pattern == "mh-wipe");
     wipeEndpoint.Destructive.ShouldBe(true);
+    wipeEndpoint.Title.ShouldBe("Wipe the cache");
     app.Capabilities.Endpoints.Single(e => e.Pattern == "mh-greet {name}").Destructive.ShouldBeNull();
 
     ToolAnnotations unspecified = NuruMcpToolCatalog.CreateAnnotations(Endpoint("x", EndpointKind.Unspecified));
@@ -533,6 +536,7 @@ internal sealed class RawMcpSession : IAsyncDisposable
 }
 
 [NuruRoute("mh-wipe", Description = "Wipe the cache")]
+[System.ComponentModel.DisplayName("Wipe the cache")]
 [Destructive]
 public sealed class MhWipeCommand : ICommand<Unit>
 {

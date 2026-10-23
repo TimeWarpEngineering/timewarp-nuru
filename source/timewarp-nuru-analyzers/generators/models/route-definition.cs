@@ -24,9 +24,10 @@ using System.Text;
 /// <param name="Examples">
 /// Usage examples declared via <c>[NuruRouteExample]</c> or <c>.WithExample()</c>, in declaration order.
 /// </param>
-/// <param name="Destructive">
-/// The endpoint class's <c>[Destructive]</c> value: true, false for <c>[Destructive(false)]</c>, null without it.
-/// </param>
+  /// <param name="Destructive">
+  /// The endpoint class's <c>TimeWarp.Contracts.DestructiveAttribute</c> value: true, false for
+  /// <c>[Destructive(false)]</c>, null without it.
+  /// </param>
 /// <param name="IsLocalOnly">
 /// True when the route carries <c>[LocalOnly]</c> or <c>.LocalOnly()</c>: a served app never forwards it.
 /// </param>
@@ -37,8 +38,11 @@ using System.Text;
 /// Metadata-only group segments from <c>[Operation(Group = ...)]</c>. Not part of the route pattern.
 /// Empty when the group comes from <see cref="GroupPrefix"/> or the route is ungrouped.
 /// </param>
-/// <param name="OpenWorld">The endpoint class's <c>[OpenWorld]</c> value, or null without it.</param>
-/// <param name="Title">The endpoint class's <c>[DisplayName]</c> text, or null without it.</param>
+  /// <param name="OpenWorld">The endpoint class's <c>TimeWarp.Contracts.OpenWorldAttribute</c> value, or null without it.</param>
+  /// <param name="Title">
+  /// An operation's <c>OperationAttribute.Title</c>, or a route class's <c>[DisplayName]</c> when it has no
+  /// operation. Null when unset or blank.
+  /// </param>
 /// <param name="IsExplicitOnly">
 /// True for a referenced-assembly endpoint found only through <c>Map&lt;T&gt;()</c>. Only an app
 /// that maps it gets it; <c>DiscoverEndpoints()</c> does not.

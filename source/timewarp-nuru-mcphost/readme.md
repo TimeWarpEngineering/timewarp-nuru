@@ -26,7 +26,7 @@ builder.Services.AddMcpServer()
 app.MapMcp();
 ```
 
-An object or array member publishes the real JSON Schema of its type, so a model sends the object itself. Annotations come from the endpoint kind plus `[Destructive]`, `[OpenWorld]` and `[DisplayName]` on the endpoint class, and `NuruMcpHostOptions.ToolAnnotations` overrides them per tool. A default is in both the `default` keyword and the description.
+An object or array member publishes the real JSON Schema of its type, so a model sends the object itself. Annotations come from the endpoint kind plus `[TimeWarp.Contracts.Destructive]`, `[TimeWarp.Contracts.OpenWorld]`, and a title (`[Operation(Title)]` on a contract, `[DisplayName]` on a `[NuruRoute]` class that is not an operation). `NuruMcpHostOptions.ToolAnnotations` overrides them per tool. A default is in both the `default` keyword and the description.
 
 Tool calls run concurrently, each with its own output, exit code and service scope; `notifications/cancelled` cancels only that call. Mark a handler that is not thread-safe `[Exclusive]`, or set `NuruMcpHostOptions.ExclusiveCalls`.
 

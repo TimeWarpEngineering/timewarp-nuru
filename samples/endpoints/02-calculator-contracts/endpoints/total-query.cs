@@ -33,8 +33,7 @@ public sealed class TotalFormat
 /// Notes (an object array) and Format (an object) are JSON values; argv cannot supply them.
 /// The `mcp` route publishes their real JSON schemas, and the class attributes become tool annotations.
 /// </summary>
-[Operation("total", Description = "Total a list of numbers")]
-[DisplayName("Total numbers")]
+[Operation("total", Description = "Total a list of numbers", Title = "Total numbers")]
 [OpenWorld(false)]
 public sealed class TotalQuery : CalcGroup, IQuery<string>
 {

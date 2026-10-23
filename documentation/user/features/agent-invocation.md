@@ -79,10 +79,10 @@ These members follow `returnType` only when the route declares them. Nothing inf
 
 | Member | Declared with | Meaning |
 |--------|---------------|---------|
-| `destructive` | `[Destructive]` (`true`) or `[Destructive(false)]` on the endpoint class | The route may delete or overwrite data, or (`false`) it only adds |
+| `destructive` | `[TimeWarp.Contracts.Destructive]` (`true`) or `[Destructive(false)]` on the endpoint class | The route may delete or overwrite data, or (`false`) it only adds |
 | `localOnly` | `[LocalOnly]` (endpoint class) or `.LocalOnly()` (fluent route) | A served app never forwards it to its server (see [Served apps](served-apps.md)) |
-| `openWorld` | `[OpenWorld]` (`true`) or `[OpenWorld(false)]` on the endpoint class | The route reaches outside the app (the web, a remote service), or (`false`) it works only on local state |
-| `title` | `[System.ComponentModel.DisplayName("...")]` on the endpoint class | A human-readable display name |
+| `openWorld` | `[TimeWarp.Contracts.OpenWorld]` (`true`) or `[OpenWorld(false)]` on the endpoint class | The route reaches outside the app (the web, a remote service), or (`false`) it works only on local state |
+| `title` | `[Operation(Title = "...")]` on a contract, or `[DisplayName("...")]` on a `[NuruRoute]` class that is not an operation | A human-readable name. Blank or whitespace `Title` publishes nothing |
 
 ## MCP
 

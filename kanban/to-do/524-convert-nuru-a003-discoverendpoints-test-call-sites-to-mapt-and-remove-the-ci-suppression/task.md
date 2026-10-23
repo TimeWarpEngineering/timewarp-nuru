@@ -26,6 +26,10 @@ Acceptance:
 - [ ] Measure before and after (local numbers done; GitHub CI compile time is measured after merge): `NuruGenerated.g.cs` size and line count, local multi-mode compile time, and, after merge, the GitHub CI compile time (from "Running CI test suite" to "Multi-Mode Test Runner" in the job log)
 - [x] Record the numbers in Results
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Use `Map<T>()` in tests, not `DiscoverEndpoints()`.
@@ -40,6 +44,7 @@ Acceptance:
 - Implement (2026-10-23): converted 49 sites, removed the NoWarn, measured, CI suite green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-23T02:40:44Z
 - Review oracle: tw-implementation-review, effort 1, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 80), round 1, disposition clean — 2026-10-23
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 80) — 2026-10-23T02:48:52Z
 
 ## Results
 

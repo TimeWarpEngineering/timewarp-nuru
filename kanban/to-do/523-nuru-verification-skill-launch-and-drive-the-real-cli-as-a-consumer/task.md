@@ -156,6 +156,10 @@ follow-up:
    to retrieve git metadata` (the build still succeeds, even with `TreatWarningsAsErrors`).
 10. REPL type-ahead sent before startup loses its Enter key. A person typing after the prompt
     appears is fine.
+11. When `HOME` points at a folder that does not exist, Nuru writes `.nuru/` (REPL history,
+    search index) into the current directory: `GetFolderPath(UserProfile)` returns "". The first
+    commit on this branch picked those files up from a run. The script now creates its scratch
+    HOME, and a follow-up commit removed the files.
 
 Suggested follow-up tasks, not filed from this headless walk: one for 1+2+3 (generator /
 package), one docs sweep for 4+5+7, and one each for 6, 8 and 9. Also wire the release step into

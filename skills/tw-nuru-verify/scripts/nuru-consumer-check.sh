@@ -156,7 +156,9 @@ if has_step docs; then
     || doctor_fail "docs ref $DOCS_REF not found in $REPO (git fetch --tags, or pass --docs-ref)"
 fi
 
-mkdir -p "$WORK" || doctor_fail "cannot create $WORK"
+# The apps and the CLI run with HOME=$WORK/home. It must exist: .NET resolves a missing home
+# folder to "", and Nuru then writes .nuru/ (REPL history, search index) into the cwd.
+mkdir -p "$WORK/home" || doctor_fail "cannot create $WORK"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 touch "$OUT/.nuru-verify"

@@ -203,3 +203,7 @@ Expect:
 - Round 1, roster general, effort 2. Disposition **clean** (0 open; no wontfix).
 - The restatement matches the task: “more than one app” was replaced, as the task allows, by “apps in more than one source file”, and Results record why.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Session
+
+- Merge conflict fix, 2026-10-23: PR 349 conflicts with master (cb2979a and later) in tests/ci-tests/Directory.Build.props and tests/ci-tests/run-ci-tests.cs, so no CI has run. Merge origin/master into the task branch, resolve both files keeping master's entries and the new generator-63 test entry, push so CI runs, and do not merge the PR. Requested by Usiku hourly PR check.

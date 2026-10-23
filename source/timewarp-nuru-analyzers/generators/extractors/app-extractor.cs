@@ -294,6 +294,7 @@ internal static class AppExtractor
       {
         UserUsings = userUsings,
         BuildLocation = buildLocation,
+        BuildFilePath = buildInvocation.SyntaxTree.FilePath,
         InterceptSitesByMethod = interceptSites
       };
       return new ExtractionResult(modelWithMetadata, [.. diagnostics]);

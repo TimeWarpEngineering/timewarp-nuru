@@ -204,8 +204,9 @@ public interface IIrAppBuilder : IIrRouteSource
   /// <summary>
   /// Marks that all [NuruRoute] endpoints should be discovered and included.
   /// </summary>
+  /// <param name="callLocation">Source location of the DiscoverEndpoints() call, for NURU_A003.</param>
   /// <returns>This builder for chaining.</returns>
-  IIrAppBuilder DiscoverEndpoints();
+  IIrAppBuilder DiscoverEndpoints(LocationInfo? callLocation);
 
   /// <summary>
   /// Marks that [NuruRoute] endpoints should be discovered and filtered by group types.

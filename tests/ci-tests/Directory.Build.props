@@ -26,7 +26,10 @@
     <!-- CS0436: this assembly generates TimeWarp.Mediator.Generated.Mediator while
          TimeWarp.Nuru.Mcp already contains that type (visible via InternalsVisibleTo).
          The compiler uses the locally generated type. -->
-    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065;CA5399;CS0436</NoWarn>
+    <!-- NURU_A003 (TEMPORARY, task 522): 49 unfiltered .DiscoverEndpoints() calls in this
+         multi-mode assembly pull every test file's endpoints into each app. The follow-up task
+         converts them to Map<TEndpoint>(); remove NURU_A003 from this list when it lands. -->
+    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065;CA5399;CS0436;NURU_A003</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <!-- ALL test files are included via recursive glob so that new tests are picked up
@@ -128,6 +131,10 @@
          (task 521 UseTelemetry without a logging using); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-63-telemetry-without-logging-using.cs" />
+    <!-- generator-64: same Roslyn-hosted generator test pattern as generator-28
+         (task 522 NURU_A003 DiscoverEndpoints across apps); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-64-discover-endpoints-across-apps.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

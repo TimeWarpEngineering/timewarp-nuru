@@ -1,9 +1,9 @@
 version=3.0.0-beta.76
 source=https://api.nuget.org/v3/index.json
 docs_ref=v3.0.0-beta.76
-repo=~/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-523-nuru-verification-skill-launch-and-drive-the-real
-work=~/.cache/nuru-verify/3.0.0-beta.76-20261023T140645Z-3763429
-nuget_packages=~/.cache/nuru-verify/3.0.0-beta.76-20261023T140645Z-3763429/nuget-packages
-global_cache_audited=~/.nuget/packages
+repo=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-523-nuru-verification-skill-launch-and-drive-the-real
+work=/home/steve/.cache/nuru-verify/3.0.0-beta.76-20261023T143426Z-3877862
+nuget_packages=/home/steve/.cache/nuru-verify/3.0.0-beta.76-20261023T143426Z-3877862/nuget-packages
+global_cache_audited=/home/steve/.nuget/packages
 dotnet=10.0.402
-started=20261023T140645Z
+started=20261023T143426Z

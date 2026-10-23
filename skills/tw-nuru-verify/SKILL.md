@@ -8,6 +8,7 @@ description: Verify a shipped TimeWarp.Nuru release the way a consumer uses it -
 Repo tests build against project references, with this repo's `Directory.Build.props`. A consumer
 gets none of that. They run `dotnet add package TimeWarp.Nuru` and copy a snippet from the README.
 This skill does the same thing and records what happened.
+(why: task 523, Steven approved the consumer-use check 2026-10-23)
 
 It exists because of three failures that got past tests, the REPL and `--capabilities`:
 
@@ -37,7 +38,8 @@ takes about 90 seconds after the first restore.
 | `--global-cache <dir>` | Audit a cache other than `$NUGET_PACKAGES` / `~/.nuget/packages` |
 | `--keep` | Keep the scratch folder to rebuild a probe by hand |
 
-Exit codes: `0` every check passed, `1` a check failed, `2` doctor refused to run.
+Exit codes: `0` every selected check ran and passed, `1` a check failed, `2` doctor refused to
+run. No check is skipped: a check that cannot run in this environment is a doctor refusal.
 
 ## What it does
 
@@ -49,6 +51,9 @@ Exit codes: `0` every check passed, `1` a check failed, `2` doctor refused to ru
 - `--source` is a local feed and the version is already on nuget.org. That is the state#647
   pattern. Pack candidates under a unique prerelease version instead.
 - the version is not on nuget.org, or the docs tag is missing.
+- a selected check cannot run: `script(1)` is missing for the REPL (pty) cases, `nc` is missing
+  for the telemetry (otlp) case, or `cli` is selected without `probes` (it searches the
+  core-routing probe app).
 
 **Launch.** It creates a scratch folder under `~/.cache/nuru-verify/` with its own `nuget.config`
 (`<clear/>` plus one source), `NUGET_PACKAGES` and HTTP cache. Then it runs `dotnet new console`
@@ -67,13 +72,19 @@ from. Nothing in the run writes to the global cache.
 - *cli*: `dotnet tool install TimeWarp.Nuru.Search` into the scratch folder, `nuru --version`, then
   `nuru index rebuild` and `nuru search` against the core-routing probe app.
 - *docs*: extracts every C# block that contains `CreateBuilder` from `readme.md` and
-  `documentation/user/**`, and builds each one as a program. When a block is followed by
+  `documentation/user/**`, and builds each one as a program. A block that calls
+  `builder.Map("pattern", handler)` without `CreateBuilder` is built too, after a
+  `var builder = NuruApp.CreateBuilder();` line, so the pre-3.0 two-argument `Map` meets a real
+  receiver (`context` = `builder` in `snippets.tsv`). When a block is followed by
   `dotnet run -- <args>` and `# Output: <text>`, it runs the app and checks the output. Each
   snippet gets one of three results:
   - `compiles`
-  - `broken`: the build fails on a Nuru API or on the package, for example a `NuruAppBuilder` member
-    that does not exist, `NURU_S999 Unrecognized DSL method`, a route the analyzer rejects, or an
-    inaccessible package type
+  - `broken`: the build fails on a Nuru API or on the package. Examples: a `NuruAppBuilder` member
+    that does not exist, `NURU_S999 Unrecognized DSL method`, a route the analyzer rejects, an
+    inaccessible package type, or a call shape that no longer exists. `CS1501` (wrong argument
+    count, such as `Map` with 2 arguments) is always broken. `CS1061` and `CS0117` (missing member)
+    are broken unless the receiver is a host extension point such as `IServiceCollection` or
+    `ILoggingBuilder`, where docs call their own or another package's extensions.
   - `fragment`: it only lacks names it never defined, such as its own handlers, services or types.
     Generator errors that follow from those missing names count as fragment too.
 
@@ -118,7 +129,7 @@ advertised. Each advertised API has a probe or a stated reason it has none:
 | `AddRepl(options)` | repl | PTY session output |
 | `UseTelemetry(options)` + `TelemetryBehavior` | telemetry | service name in the OTLP export |
 | `UseLogging` | use-logging | handler's `ILogger<T>` reaches the factory |
-| `DiscoverEndpoints()` | none, docs step | README snippet compiles |
+| `DiscoverEndpoints()` | discover-endpoints | two `[NuruRoute]` classes, no `Map<T>()`, both routes run |
 | `UseTerminal` | none | test-only API, covered by the repo's `TestTerminal` tests |
 
 To add a probe, drop `probes/<name>.cs` (a complete `Program.cs`) and add rows to
@@ -148,5 +159,6 @@ change, except docs.
 |---------|-------|
 | doctor: `Directory.Build.props would be imported` | Move the stray file, or set `NURU_VERIFY_WORK` to a folder with no MSBuild files above it |
 | every probe fails with CS9137 interceptors | The package does not enable `InterceptorsNamespaces` for consumers. This is a real package defect |
+| doctor: `script(1)` / `nc` is not on PATH | Install util-linux (`script`) or netcat (`nc`). Without them the REPL and telemetry cases cannot run, and a run that skipped them would not prove anything |
 | REPL case times out | The REPL needs a terminal; the pty mode waits 3s for startup. Raise the sleeps in the script on a slow machine |
-| telemetry case: missing service name | No `nc`, or the app sent nothing. Check `probes/telemetry.otlp-capture.bin` |
+| telemetry case: missing service name | The app sent nothing to the listener. Check `probes/telemetry.otlp-capture.bin` |

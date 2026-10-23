@@ -60,6 +60,19 @@ Acceptance:
   (30/0/1 skip). Nothing to fix.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-23T14:11:00Z
 - Review oracle: round 1 by general (cursor, model grok-4.7), session not reported, max-turns uncapped (review bound 200), open findings M1 M2 M3 M4 — 2026-10-23
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-23T14:26:13Z
+- 2026-10-23 implementer-claude (implement-fix-2, round-1 findings): M1, the docs step now builds
+  `builder.Map(pattern, handler)` fences after a `var builder = NuruApp.CreateBuilder();` line,
+  and classifies `CS1501` as broken. It also classifies `CS1061`/`CS0117` as broken unless the
+  receiver is a host extension point. M2, new `discover-endpoints` probe. M3, doctor refuses when
+  `script`/`nc` is missing for a selected mode or `cli` is selected without `probes`. No SKIP path
+  is left, and any non-PASS fails the run. M4, `why:` clause in SKILL.md. Re-ran 4.0.0-beta.5
+  (38/29) and 3.0.0-beta.76 (132 broken snippets) and refreshed `evidence/`.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4
+- Round 1 fix pass: M1, M2, M3, M4 fixed (see `review/round-1/merged.md` disposition notes)
 
 ## Notes
 
@@ -94,11 +107,13 @@ Acceptance:
   - **cache**: compares content hashes, private cache against global cache, for the whole graph.
   - **probes**: one consumer app per advertised builder API, built in parallel, run as a plain
     process, as a PTY via `script(1)` for the REPL, or against an `nc` OTLP listener for telemetry.
+    Doctor refuses (exit 2) when a selected mode's tool is missing, so exit 0 never hides a skip.
   - **cli**: `dotnet tool install TimeWarp.Nuru.Search`, `nuru --version`, `index rebuild`,
     `search`.
   - **docs**: compiles every `CreateBuilder` snippet in `readme.md` and `documentation/user/**`
-    at tag `v<version>`, and checks `dotnet run -- …` / `# Output:` pairs.
-- `skills/tw-nuru-verify/probes/*.cs` + `cases.tsv`: 14 probes, 31 cases.
+    at tag `v<version>`. It also compiles every `builder.Map(pattern, handler)` fence inside a
+    builder context. It checks `dotnet run -- …` / `# Output:` pairs.
+- `skills/tw-nuru-verify/probes/*.cs` + `cases.tsv`: 15 probes, 33 cases.
 - `evidence/` in this task folder: summaries and TSVs from the three runs below.
 
 ### Proof the check fails on each known failure (shipped builds)
@@ -106,7 +121,7 @@ Acceptance:
 | Failure | Run | What the check reported |
 |---------|-----|-------------------------|
 | nuru#242 stub configure APIs | `--version 3.0.0-beta.76` | `help-hide-rows`, `help-show-rows`: `NURU_S999: Unrecognized DSL method: ConfigureHelp` (the interpreter fix in #242). `help-exclude`: `CS8852 init-only HelpOptions.ExcludePatterns` (the setter fix in #242) |
-| nuru#296 stale docs | `--version 3.0.0-beta.76` (docs at `v3.0.0-beta.76`) | 104 broken snippets: `CreateBuilder(args)` (CS1501), `NuruAppOptions` (CS0246), `TimeWarp.Nuru.Logging` / `.Completion` (CS0234), `WithGroup` (CS1061) |
+| nuru#296 stale docs | `--version 3.0.0-beta.76` (docs at `v3.0.0-beta.76`) | 132 broken snippets: `CreateBuilder(args)` and two-argument `Map(pattern, handler)` (87 × CS1501, 23 of them `Map`), `NuruAppOptions` (CS0246), `TimeWarp.Nuru.Logging` / `.Completion` (CS0234), `WithGroup` (CS1061) |
 | state#647 cache poisoning | repo packed as 4.0.0-beta.5 into a scratch feed, restored into a scratch global cache, `--steps cache --global-cache <scratch>` | `cache FAIL: global cache timewarp.nuru 4.0.0-beta.5 … global entry came from …/feed`. The audit TSV shows both hashes. Doctor also refuses `--source <feed> --version 4.0.0-beta.5` (exit 2) |
 
 The beta.76 run also showed that every consumer build failed with `CS9137 interceptors feature is
@@ -114,12 +129,15 @@ not enabled`: the package did not set `InterceptorsNamespaces` for consumers. Re
 not see this, because the repo's `Directory.Build.props` sets the property. 4.0.0-beta.5 no longer
 has the problem (core probes compile).
 
-### Current release: 4.0.0-beta.5, 36 passed / 18 failed
+### Current release: 4.0.0-beta.5, 38 passed / 29 failed
 
-Passed: launch from nuget.org; cache (44 packages match); 29 of 31 probe cases (routing,
-groups, DI, configuration, behaviors, converters, completion, ConfigureHelp ×3, Endpoint DSL, REPL
-over PTY, telemetry export); the CLI install / version / index / search; README quick start
-`dotnet run -- add 15 25` prints `15 + 25 = 40`.
+Passed: launch from nuget.org; cache (44 packages match); 31 of 33 probe cases (routing,
+groups, DI, configuration, behaviors, converters, completion, ConfigureHelp ×3, Endpoint DSL,
+DiscoverEndpoints ×2, REPL over PTY, telemetry export); the CLI install / version / index /
+search; README quick start `dotnet run -- add 15 25` prints `15 + 25 = 40`.
+
+Docs: 26 broken, 38 compile, 74 fragments, 138 snippets (`evidence/4.0.0-beta.5/snippets.tsv`).
+The `context` column is `builder` for the 10 fences compiled after a `var builder` line.
 
 The failures are real consumer-visible defects in the current release. Each was confirmed by
 hand, not just reported by the script:
@@ -135,8 +153,11 @@ hand, not just reported by the script:
 3. **`AddCheckUpdatesRoute()` doesn't compile for a consumer** (built-in-routes.md#L157):
    `CS0122 CheckUpdatesJsonSerializerContext is inaccessible`, because the generated code uses an
    internal type.
-4. **The README still teaches `NuruApp.CreateBuilder(args)` and `EnableStaticCompletion()`**
-   (readme.md#L176, #L246). The #296 sweep fixed `documentation/` but missed the README.
+4. **Docs still teach pre-3.0 APIs.** The README still teaches `NuruApp.CreateBuilder(args)` and
+   `EnableStaticCompletion()` (readme.md#L176, #L246). The #296 sweep fixed `documentation/` but
+   missed the README. It also missed the two-argument `builder.Map(pattern, handler)`, which is
+   CS1501 against 4.0.0-beta.5, in output-handling.md (#L32, #L69, #L155, #L181, #L209, #L243,
+   #L271, #L347) and use-cases.md (#L149, #L193, #L241).
 5. **Other doc bugs:**
    - best-practices.md#L28 uses `WithGroup`, which does not exist.
    - routing.md#L130 shows `Map("")` next to `{*args}`, which NURU_R003 rejects as unreachable.
@@ -182,16 +203,21 @@ skills/tw-nuru-verify/scripts/nuru-consumer-check.sh --version 4.0.0-beta.5 --so
 
 **Expect**
 
-- Run 1: `exit=1`, `artifacts/nuru-verify/4.0.0-beta.5/summary.md` shows 36 passed / 18 failed.
-  The FAILs are exactly items 1–5 above (`use-logging`, logging/output-handling/mcp-hosting/
-  built-in-routes/routing/best-practices/supported-types/readme snippets). Launch, cache, cli, the
-  REPL and telemetry probes PASS.
+- Run 1: `exit=1`, `artifacts/nuru-verify/4.0.0-beta.5/summary.md` shows 38 passed / 29 failed,
+  0 skipped. The FAILs are exactly items 1–5 above: `use-logging`, plus the logging,
+  output-handling, mcp-hosting, built-in-routes, routing, best-practices, supported-types,
+  use-cases and readme snippets. That includes 10 `CS1501: No overload for method 'Map' takes 2
+  arguments` rows. Launch, cache, cli, the REPL, telemetry and both `discover-endpoints` cases
+  PASS.
 - Run 2: `exit=1`. The summary lists `help-hide-rows` / `help-show-rows` failing on `NURU_S999
-  ConfigureHelp`, `help-exclude` on `CS8852`, and about 100 broken doc snippets (`CreateBuilder`
-  takes 1 arguments, `NuruAppOptions`).
+  ConfigureHelp`, `help-exclude` on `CS8852`, and 132 broken doc snippets (`CreateBuilder` takes 1
+  arguments, `Map` takes 2 arguments, `NuruAppOptions`).
 - Run 3: `exit=2`, with `doctor: 4.0.0-beta.5 is a released version on nuget.org; pack local
   candidates under a unique prerelease version`.
 - `~/.nuget/packages` is unchanged by all three runs. `~/.cache/nuru-verify/` is empty afterwards.
+- Doctor refusal instead of a silent skip (M3): with `script` or `nc` hidden from `PATH`, run 1
+  exits `2` with `doctor: script(1) is not on PATH (needed for the pty cases: AddRepl)`.
+  `--steps cli` alone exits `2` with `doctor: --steps cli needs probes`.
 
 ### Review
 
@@ -199,8 +225,8 @@ Round 1, effort 3, roster general. The goal restatement matches the original tas
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 3 | 0 | 0 |
+| bug | 0 | 3 | 0 |
 | suggestion | 0 | 0 | 0 |
-| nit | 1 | 0 | 0 |
+| nit | 0 | 1 | 0 |
 
-Open ids: M1, M2, M3, M4. Ledger: `review/round-1/merged.md`. Also `review/review-framework.md` and `review/round-1/general.md`.
+Open ids after the review: M1, M2, M3, M4. The implement-fix-2 pass fixed all four (see Session). Ledger: `review/round-1/merged.md`. Also `review/review-framework.md` and `review/round-1/general.md`.

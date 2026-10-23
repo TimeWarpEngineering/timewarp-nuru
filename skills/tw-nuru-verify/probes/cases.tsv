@@ -26,6 +26,8 @@ help-show-rows	ConfigureHelp ShowPerCommandHelpRoutes=true	run	-	--help	-	0	stat
 help-show-rows	ConfigureHelp ShowCompletionRoutes=true	run	-	--help	-	0	__complete	-
 help-exclude	ConfigureHelp ExcludePatterns	run	-	--help	-	0	visible	secret-debug
 endpoint-dsl	Endpoint DSL (README)	run	-	add 2 3	-	0	2 + 3 = 5	-
+discover-endpoints	DiscoverEndpoints (first endpoint)	run	-	add 2 3	-	0	discovered add: 5	-
+discover-endpoints	DiscoverEndpoints (second endpoint)	run	-	subtract 5 3	-	0	discovered subtract: 2	-
 repl	AddRepl	pty	-	-i	add 2 3\nexit	0	sum=5	-
 repl	AddRepl options (prompt, welcome, goodbye)	pty	-	-i	add 2 3\nexit	0	probe-goodbye	-
 telemetry	UseTelemetry options	otlp	-	ping	-	0	nuru-probe-telemetry	-

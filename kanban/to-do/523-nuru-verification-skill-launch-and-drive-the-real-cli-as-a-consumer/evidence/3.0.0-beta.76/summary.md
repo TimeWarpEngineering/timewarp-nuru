@@ -2,8 +2,8 @@
 
 - Source: `https://api.nuget.org/v3/index.json` (private cache, `<clear/>` nuget.config)
 - Docs: `v3.0.0-beta.76` (all)
-- Run: 20261023T140645Z, dotnet 10.0.402
-- Result: **FAIL**: 2 passed, 150 failed, 0 skipped
+- Run: 20261023T143426Z, dotnet 10.0.402
+- Result: **FAIL**: 2 passed, 181 failed, 0 skipped
 
 | Step | Check | Result | Evidence | Detail |
 |------|-------|--------|----------|--------|
@@ -13,6 +13,7 @@
 | probes | add-configuration compiles against the package | FAIL | `probes/add-configuration.build-errors.txt` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
 | probes | configure-services compiles against the package | FAIL | `probes/configure-services.build-errors.txt` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
 | probes | core-routing compiles against the package | FAIL | `probes/core-routing.build-errors.txt` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
+| probes | discover-endpoints compiles against the package | FAIL | `probes/discover-endpoints.build-errors.txt` | CS0234: The type or namespace name 'Mediator' does not exist in the namespace 'TimeWarp' (are you missing an assembly reference?) |
 | probes | enable-completion compiles against the package | FAIL | `probes/enable-completion.build-errors.txt` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
 | probes | endpoint-dsl compiles against the package | FAIL | `probes/endpoint-dsl.build-errors.txt` | CS0234: The type or namespace name 'Mediator' does not exist in the namespace 'TimeWarp' (are you missing an assembly reference?) |
 | probes | group-prefix compiles against the package | FAIL | `probes/group-prefix.build-errors.txt` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
@@ -50,6 +51,8 @@
 | probes | help-show-rows: ConfigureHelp ShowCompletionRoutes=true | FAIL | `probes/help-show-rows.build-errors.txt` | probe did not compile |
 | probes | help-exclude: ConfigureHelp ExcludePatterns | FAIL | `probes/help-exclude.build-errors.txt` | probe did not compile |
 | probes | endpoint-dsl: Endpoint DSL (README) | FAIL | `probes/endpoint-dsl.build-errors.txt` | probe did not compile |
+| probes | discover-endpoints: DiscoverEndpoints (first endpoint) | FAIL | `probes/discover-endpoints.build-errors.txt` | probe did not compile |
+| probes | discover-endpoints: DiscoverEndpoints (second endpoint) | FAIL | `probes/discover-endpoints.build-errors.txt` | probe did not compile |
 | probes | repl: AddRepl | FAIL | `probes/repl.build-errors.txt` | probe did not compile |
 | probes | repl: AddRepl options (prompt, welcome, goodbye) | FAIL | `probes/repl.build-errors.txt` | probe did not compile |
 | probes | telemetry: UseTelemetry options | FAIL | `probes/telemetry.build-errors.txt` | probe did not compile |
@@ -57,6 +60,9 @@
 | docs | snippet documentation/user/features/auto-help.md#L10 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/auto-help.md#L40 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/auto-help.md#L92 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
+| docs | snippet documentation/user/features/auto-help.md#L220 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/auto-help.md#L235 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/auto-help.md#L274 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
 | docs | snippet documentation/user/features/built-in-routes.md#L115 compiles against the package | FAIL | `docs/snippets.tsv` | CS0246: The type or namespace name 'NuruAppOptions' could not be found (are you missing a using directive or an assembly reference?) |
 | docs | snippet documentation/user/features/built-in-routes.md#L132 compiles against the package | FAIL | `docs/snippets.tsv` | CS0246: The type or namespace name 'NuruAppOptions' could not be found (are you missing a using directive or an assembly reference?) |
 | docs | snippet documentation/user/features/built-in-routes.md#L143 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
@@ -66,7 +72,16 @@
 | docs | snippet documentation/user/features/endpoints.md#L24 compiles against the package | FAIL | `docs/snippets.tsv` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
 | docs | snippet documentation/user/features/logging.md#L10 compiles against the package | FAIL | `docs/snippets.tsv` | CS0234: The type or namespace name 'Logging' does not exist in the namespace 'TimeWarp.Nuru' (are you missing an assembly reference?) |
 | docs | snippet documentation/user/features/logging.md#L223 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L11 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L26 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L63 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
 | docs | snippet documentation/user/features/output-handling.md#L115 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L149 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L175 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L203 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L237 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L265 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/output-handling.md#L341 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
 | docs | snippet documentation/user/features/pipeline-behaviors.md#L18 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/pipeline-behaviors.md#L168 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/pipeline-behaviors.md#L231 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
@@ -82,18 +97,30 @@
 | docs | snippet documentation/user/features/shell-completion.md#L29 compiles against the package | FAIL | `docs/snippets.tsv` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
 | docs | snippet documentation/user/features/shell-completion.md#L52 compiles against the package | FAIL | `docs/snippets.tsv` | CS0246: The type or namespace name 'NuruAppOptions' could not be found (are you missing a using directive or an assembly reference?) |
 | docs | snippet documentation/user/features/shell-completion.md#L70 compiles against the package | FAIL | `docs/snippets.tsv` | CS0234: The type or namespace name 'Completion' does not exist in the namespace 'TimeWarp.Nuru' (are you missing an assembly reference?) |
+| docs | snippet documentation/user/features/shell-completion.md#L167 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/shell-completion.md#L182 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/shell-completion.md#L202 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/shell-completion.md#L233 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/shell-completion.md#L246 compiles against the package | FAIL | `docs/snippets.tsv` | CS0234: The type or namespace name 'Completion' does not exist in the namespace 'TimeWarp.Nuru' (are you missing an assembly reference?) |
+| docs | snippet documentation/user/features/shell-completion.md#L317 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
 | docs | snippet documentation/user/features/shell-completion.md#L408 compiles against the package | FAIL | `docs/snippets.tsv` | CS0246: The type or namespace name 'NuruAppOptions' could not be found (are you missing a using directive or an assembly reference?) |
+| docs | snippet documentation/user/features/shell-completion.md#L545 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/shell-completion.md#L570 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/features/shell-completion.md#L599 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
 | docs | snippet documentation/user/features/shell-completion.md#L617 compiles against the package | FAIL | `docs/snippets.tsv` | CS0246: The type or namespace name 'NuruAppOptions' could not be found (are you missing a using directive or an assembly reference?) |
 | docs | snippet documentation/user/features/telemetry.md#L8 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/telemetry.md#L74 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/terminal-abstractions.md#L28 compiles against the package | FAIL | `docs/snippets.tsv` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
-| docs | snippet documentation/user/features/terminal-abstractions.md#L50 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
+| docs | snippet documentation/user/features/terminal-abstractions.md#L50 compiles against the package | FAIL | `docs/snippets.tsv` | CS1061: 'string' does not contain a definition for 'Green' and no accessible extension method 'Green' accepting a first argument of type 'string' could be found (are you missing a using directive or an assembly reference?) |
 | docs | snippet documentation/user/features/terminal-abstractions.md#L230 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/terminal-abstractions.md#L287 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/terminal-abstractions.md#L304 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/terminal-abstractions.md#L320 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/features/terminal-abstractions.md#L369 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
-| docs | snippet documentation/user/features/terminal-abstractions.md#L393 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
+| docs | snippet documentation/user/features/terminal-abstractions.md#L393 compiles against the package | FAIL | `docs/snippets.tsv` | CS1061: 'string' does not contain a definition for 'Green' and no accessible extension method 'Green' accepting a first argument of type 'string' could be found (are you missing a using directive or an assembly reference?) |
+| docs | snippet documentation/user/features/terminal-abstractions.md#L498 compiles against the package | FAIL | `docs/snippets.tsv` | CS1061: 'string' does not contain a definition for 'Green' and no accessible extension method 'Green' accepting a first argument of type 'string' could be found (are you missing a using directive or an assembly reference?) |
+| docs | snippet documentation/user/features/terminal-abstractions.md#L510 compiles against the package | FAIL | `docs/snippets.tsv` | CS1061: 'string' does not contain a definition for 'Green' and no accessible extension method 'Green' accepting a first argument of type 'string' could be found (are you missing a using directive or an assembly reference?) |
+| docs | snippet documentation/user/features/terminal-abstractions.md#L522 compiles against the package | FAIL | `docs/snippets.tsv` | CS1061: 'string' does not contain a definition for 'Green' and no accessible extension method 'Green' accepting a first argument of type 'string' could be found (are you missing a using directive or an assembly reference?) |
 | docs | snippet documentation/user/features/widgets.md#L472 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/getting-started.md#L22 compiles against the package | FAIL | `docs/snippets.tsv` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
 | docs | snippet documentation/user/getting-started.md#L44 compiles against the package | FAIL | `docs/snippets.tsv` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
@@ -104,6 +131,7 @@
 | docs | snippet documentation/user/guides/architecture-choices.md#L24 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/guides/architecture-choices.md#L54 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/guides/architecture-choices.md#L81 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
+| docs | snippet documentation/user/guides/architecture-choices.md#L136 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
 | docs | snippet documentation/user/guides/architecture-choices.md#L180 compiles against the package | FAIL | `docs/snippets.tsv` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
 | docs | snippet documentation/user/guides/architecture-choices.md#L207 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/guides/architecture-choices.md#L229 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
@@ -136,6 +164,7 @@
 | docs | snippet documentation/user/reference/nuru-app-options.md#L227 compiles against the package | FAIL | `docs/snippets.tsv` | CS0246: The type or namespace name 'NuruAppOptions' could not be found (are you missing a using directive or an assembly reference?) |
 | docs | snippet documentation/user/reference/nuru-app-options.md#L251 compiles against the package | FAIL | `docs/snippets.tsv` | CS0246: The type or namespace name 'NuruAppOptions' could not be found (are you missing a using directive or an assembly reference?) |
 | docs | snippet documentation/user/reference/nuru-app-options.md#L300 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
+| docs | snippet documentation/user/reference/performance.md#L100 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 1 arguments |
 | docs | snippet documentation/user/reference/supported-types.md#L27 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/reference/supported-types.md#L48 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/reference/supported-types.md#L72 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
@@ -152,10 +181,12 @@
 | docs | snippet documentation/user/use-cases.md#L14 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/use-cases.md#L71 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/use-cases.md#L116 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
+| docs | snippet documentation/user/use-cases.md#L160 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
+| docs | snippet documentation/user/use-cases.md#L208 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'Map' takes 2 arguments |
 | docs | snippet documentation/user/use-cases.md#L262 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/use-cases.md#L311 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet documentation/user/use-cases.md#L336 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet readme.md#L67 compiles against the package | FAIL | `docs/snippets.tsv` | CS9137: The 'interceptors' feature is not enabled in this namespace. Add '<InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>' to your project. |
 | docs | snippet readme.md#L175 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
 | docs | snippet readme.md#L245 compiles against the package | FAIL | `docs/snippets.tsv` | CS1501: No overload for method 'CreateBuilder' takes 1 arguments |
-| docs | doc snippets (v3.0.0-beta.76) use only APIs the package has | FAIL | `docs/snippets.tsv` | 104 broken, 3 compile, 18 fragments, 125 total |
+| docs | doc snippets (v3.0.0-beta.76) use only APIs the package has | FAIL | `docs/snippets.tsv` | 132 broken, 3 compile, 38 fragments, 173 total |

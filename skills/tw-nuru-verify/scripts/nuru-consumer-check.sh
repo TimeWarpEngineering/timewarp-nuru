@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # nuru-consumer-check.sh: install a shipped TimeWarp.Nuru the way a consumer does, drive it,
-# and write evidence. Read ../SKILL.md first. Exit 0 = every check passed, 1 = a check failed,
-# 2 = doctor refused to run (the environment would make the result meaningless).
+# and write evidence. Read ../SKILL.md first. Exit 0 = every selected check ran and passed,
+# 1 = a check failed, 2 = doctor refused to run (the environment would make the result meaningless).
 set -uo pipefail
 
 NUGET_ORG="https://api.nuget.org/v3/index.json"
@@ -59,9 +59,10 @@ has_step() { [[ ",$STEPS," == *",$1,"* ]]; }
 # ---------------------------------------------------------------------------------------------
 RESULTS=()   # "step|check|status|evidence|detail"
 FAILED=0
-record() {   # record <step> <check> <PASS|FAIL|INCONCLUSIVE|SKIP> <evidence> [detail]
+record() {   # record <step> <check> <PASS|FAIL> <evidence> [detail]
   RESULTS+=("$1|$2|$3|$4|${5:-}")
-  [[ "$3" == "FAIL" ]] && FAILED=1
+  # Exit 0 must mean every selected check ran and passed, so anything but PASS fails the run.
+  [[ "$3" != "PASS" ]] && FAILED=1
   printf '%-7s %-12s %s %s\n' "$3" "$1" "$2" "${5:+($5)}"
 }
 
@@ -118,6 +119,12 @@ doctor_fail() { echo "doctor: $*" >&2; exit 2; }
 
 for tool in dotnet curl; do command -v "$tool" >/dev/null || doctor_fail "$tool is not on PATH"; done
 has_step docs && { command -v git >/dev/null || doctor_fail "git is not on PATH (needed for --steps docs)"; }
+# A case that cannot run is not a pass. Refuse up front rather than skip it and exit 0.
+if has_step probes; then
+  cut -f3 "$PROBES_DIR/cases.tsv" | grep -qx pty && { command -v script >/dev/null || doctor_fail "script(1) is not on PATH (needed for the pty cases: AddRepl)"; }
+  cut -f3 "$PROBES_DIR/cases.tsv" | grep -qx otlp && { command -v nc >/dev/null || doctor_fail "nc is not on PATH (needed for the otlp cases: UseTelemetry)"; }
+fi
+has_step cli && ! has_step probes && doctor_fail "--steps cli needs probes (nuru search indexes the core-routing probe app)"
 
 if [[ -e "$OUT" && ! -e "$OUT/.nuru-verify" && -n "$(ls -A "$OUT" 2>/dev/null)" ]]; then
   doctor_fail "$OUT exists and was not written by this check; pass --out"
@@ -264,8 +271,17 @@ nuru_errors() {
     [[ $undefined -eq 0 ]] && grep -E '^NURU_' <<<"$errors"
     # A symbol exists in a referenced assembly but the snippet may not use it.
     grep -E '^CS0122:' <<<"$errors"
-    # The compiler names a Nuru type or member (CS1061 'NuruAppBuilder' has no X, CS1501, ...).
+    # The compiler names a Nuru type or member.
     grep -E '^CS[0-9]+:' <<<"$errors" | grep -iE 'nuru|CreateBuilder'
+    # A call shape or member that does not exist, even when the message names no Nuru type
+    # (nuru#296: the pre-3.0 two-argument Map(pattern, handler) is CS1501 "No overload for method
+    # 'Map' takes 2 arguments"). A snippet's own undefined names show up as CS0103/CS0246 instead.
+    grep -E '^CS1501:' <<<"$errors"
+    # Missing members, except on host extension points: docs call their own or another package's
+    # extensions there (services.AddDatabase(), logging.AddOpenTelemetry()) and leave the using
+    # directive to the reader. A missing Nuru extension still names Nuru and is caught above.
+    grep -E '^CS(1061|0117):' <<<"$errors" \
+      | grep -vE "^CS[0-9]+: '(IServiceCollection|ILoggingBuilder|IConfigurationBuilder|IHostBuilder|IHostApplicationBuilder|WebApplicationBuilder|IMcpServerBuilder)'"
   } | sort -u
 }
 
@@ -369,7 +385,6 @@ if has_step probes; then
         haystack="$RUN_OUT"
         ;;
       pty)
-        if ! command -v script >/dev/null; then record probes "$label" SKIP - "script(1) not found"; continue; fi
         cmd="$(printf '%q ' dotnet "$dll" "${argv[@]}")"
         # script(1) gives the REPL a real terminal. Lines are typed the way a person types them:
         # wait for startup, then one line and Enter (CR) at a time. Type-ahead sent before the REPL
@@ -385,7 +400,6 @@ if has_step probes; then
         sed -i 's/\x1b\[[0-9;?]*[A-Za-z]//g; s/\x1b[=>]//g' "$OUT/$log"
         ;;
       otlp)
-        if ! command -v nc >/dev/null; then record probes "$label" SKIP - "nc not found"; continue; fi
         # The probe sets OtlpEndpoint as a literal (the generator only reads literals); listen there.
         port="$(grep -o '127\.0\.0\.1:[0-9]*' "$PROBES_DIR/$probe.cs" | head -1 | cut -d: -f2)"
         capture="$OUT/probes/$probe.otlp-capture.bin"
@@ -438,7 +452,7 @@ if has_step cli; then
         record cli "nuru indexes and finds a route in an app built from the package" FAIL cli/search.log "exit $RUN_RC; route not found"
       fi
     else
-      record cli "nuru indexes and finds a route in an app built from the package" SKIP - "core-routing probe was not built (run with --steps probes)"
+      record cli "nuru indexes and finds a route in an app built from the package" FAIL probes/core-routing.build-errors.txt "core-routing probe did not build"
     fi
   fi
 fi
@@ -463,14 +477,36 @@ if has_step docs; then
           in_block = 1; lang = substr($0, 4); gsub(/[ \t].*/, "", lang); body = ""; start = NR + 1; next
         }
         in_block = 0
-        if ((lang == "csharp" || lang == "cs" || lang == "c#") && body ~ /CreateBuilder/) {
+        csharp = (lang == "csharp" || lang == "cs" || lang == "c#")
+        # A fence that calls builder.Map(pattern, handler) without building the app (the pre-3.0
+        # two-argument Map, nuru#296) is compiled after a "var builder = NuruApp.CreateBuilder();"
+        # line, so the call meets a real receiver. Its using directives move above that line and
+        # its column-0 type declarations below the statements (top-level statements come first).
+        wrap = csharp && body !~ /CreateBuilder/ && body ~ /builder[[:space:]]*\.[[:space:]]*Map[[:space:]]*\([[:space:]]*"[^"]*"[[:space:]]*,/
+        if (csharp && (body ~ /CreateBuilder/ || wrap)) {
           n = sprintf("%s#L%d", doc, start)
           slug = doc; gsub(/[^A-Za-z0-9]+/, "-", slug)
           name = sprintf("s-%s-%d", slug, start)
           dir = root "/" name
           system("mkdir -p \"" dir "\"")
-          printf "%s", body > (dir "/Program.cs"); close(dir "/Program.cs")
-          printf "%s\t%s\n", name, n >> idx_file; close(idx_file)
+          program = body
+          if (wrap) {
+            usings = ""; rest = ""; types = ""; in_type = 0
+            m = split(body, lines, "\n")
+            for (i = 1; i < m; i++) {
+              if (!in_type && lines[i] ~ /^using [A-Za-z0-9_. =]+;/) { usings = usings lines[i] "\n"; continue }
+              if (!in_type && lines[i] ~ /^((public|internal|sealed|static|abstract|partial|file|readonly) )*(record|class|struct|interface|enum) /) in_type = 1
+              if (in_type) {
+                types = types lines[i] "\n"
+                if (lines[i] ~ /^(}|\);)/ || lines[i] ~ /^[^ ].*;[ \t]*$/) in_type = 0
+              } else {
+                rest = rest lines[i] "\n"
+              }
+            }
+            program = usings "var builder = NuruApp.CreateBuilder();\n" rest types
+          }
+          printf "%s", program > (dir "/Program.cs"); close(dir "/Program.cs")
+          printf "%s\t%s\t%s\n", name, n, (wrap ? "builder" : "program") >> idx_file; close(idx_file)
           last = name
         } else if ((lang == "bash" || lang == "sh" || lang == "shell") && last != "") {
           m = split(body, lines, "\n")
@@ -506,9 +542,9 @@ if has_step docs; then
   build_solution "$WORK/docs" "$OUT/docs/build.log"
 
   table="$OUT/docs/snippets.tsv"
-  printf 'snippet\tsource\tresult\tfirst_error\n' >"$table"
+  printf 'snippet\tsource\tcontext\tresult\tfirst_error\n' >"$table"
   broken=0; ok=0; fragment=0
-  while IFS=$'\t' read -r name where; do
+  while IFS=$'\t' read -r name where context; do
     proj="$WORK/docs/$name/$name.csproj"
     errors="$(project_errors "$OUT/docs/build.log" "$proj")"
     # Broken: the build fails on a TimeWarp.Nuru API or on the package itself (stale docs, a stub
@@ -522,7 +558,7 @@ if has_step docs; then
     else
       result="fragment"; fragment=$((fragment + 1)); first="$(printf '%s' "$errors" | head -1)"
     fi
-    printf '%s\t%s\t%s\t%s\n' "$name" "$where" "$result" "$first" >>"$table"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$where" "$context" "$result" "$first" >>"$table"
     if [[ "$result" == "broken" ]]; then
       record docs "snippet $where compiles against the package" FAIL docs/snippets.tsv "$first"
     fi

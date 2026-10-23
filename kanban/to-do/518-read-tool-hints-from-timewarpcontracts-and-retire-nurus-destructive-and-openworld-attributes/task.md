@@ -73,6 +73,8 @@ Acceptance:
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22) from the timewarp-architecture 391 merge review.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-23T07:45:03Z
+- Review oracle: general reviewer (claude, claude-opus-5-5), effort 2 (by-diff, 240 lines), session not reported, 1 round, accepted-exceptions — 2026-10-23
 
 ## Results
 
@@ -98,6 +100,15 @@ Expect:
 - `tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs` and `mcphost-04-schema-fidelity.cs` both `using TimeWarp.Nuru` and `using TimeWarp.Contracts` and compile. `mh-wipe` is a route class: `[Destructive]` is true and `[DisplayName]` is the title.
 
 Verified here: `dotnet build` of `timewarp-nuru` and `timewarp-nuru-mcphost` succeeded with 0 warnings. `mcphost-01` 16/16 and `mcphost-04` 6/6. `./bin/dev test` exited 0: multi-mode 2117 total, 2111 passed, 6 skipped, 0 failed; standalone 0 failed. `ganda repo audit` passed all checks.
+
+### Review
+
+- Rounds: 1. Roster: general (claude-opus-5-5), effort 2 (by-diff budget, 240 lines).
+- Final counts: bug 0, suggestion 0, nit 1 (0 open, 0 fixed, 1 wontfix).
+- Disposition: **accepted-exceptions**. M1 (nit) is wontfix: the two-space indent on the rewritten `<param>` doc lines in `route-definition.cs` is whitespace only, and the build and format accept it. Fix it in passing.
+- The reviewer re-ran these after `ganda runfile cache --clear`: `mcphost-04` 6/6, `mcphost-01` 16/16, and the calculator `--capabilities` (`openWorld` false, `title` "Total numbers").
+- The restatement matches the task Goal. No misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Notes
 

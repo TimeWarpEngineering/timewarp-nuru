@@ -72,7 +72,7 @@ Acceptance:
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23). Steven: "we should first create an Analyzer if possible to catch this. And then validate we can. Before changing."
-- 2026-10-23 implementer (Claude Opus 5.5, ganda task work): NURU_A003 in the generator, generator-63 tests, validation below, temporary CI `NoWarn`. `ganda repo audit` flagged `runfile-executable` on the new generator-63 runfile at commit time; `ganda repo audit --fix` set its executable bit.
+- 2026-10-23 implementer (Claude Opus 5.5, ganda task work): NURU_A003 in the generator, generator-64 tests, validation below, temporary CI `NoWarn`. `ganda repo audit` flagged `runfile-executable` on the new generator-64 runfile at commit time; `ganda repo audit --fix` set its executable bit.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-22T19:56:20Z
 - Review oracle: tw-implementation-review, effort 2, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 120), round 1, disposition clean — 2026-10-23
 - Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-22T20:13:01Z
@@ -160,7 +160,7 @@ and the follow-up conversion. Remove it when the 49 sites move to `Map<T>()`.
 
 ### Tests
 
-- `tests/timewarp-nuru-tests/generator/generator-63-discover-endpoints-across-apps.cs` (Roslyn-hosted,
+- `tests/timewarp-nuru-tests/generator/generator-64-discover-endpoints-across-apps.cs` (Roslyn-hosted,
   in `CiTestExcludes` and the `run-ci-tests.cs` standalone list like generator-28..60): 6/6 pass.
   - Apps in two files: one warning at `DiscoverEndpoints()` (line/span checked), count 2, 2 files.
   - Single app: silent. Many apps in one file: silent. `DiscoverEndpoints(typeof(Group))`, or discovery plus `Map<T>()`: silent.
@@ -181,7 +181,7 @@ Smoke:
 
 ```bash
 ganda runfile cache --clear
-dotnet run tests/timewarp-nuru-tests/generator/generator-63-discover-endpoints-across-apps.cs
+dotnet run tests/timewarp-nuru-tests/generator/generator-64-discover-endpoints-across-apps.cs
 sed -i 's/;NURU_A003<\/NoWarn>/<\/NoWarn>/' tests/ci-tests/Directory.Build.props
 dotnet build tests/ci-tests/run-ci-tests.cs -p:TreatWarningsAsErrors=false 2>&1 | grep -c "warning NURU_A003"
 git checkout tests/ci-tests/Directory.Build.props
@@ -190,7 +190,7 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 
 Expect:
 
-- generator-63: 6 passed.
+- generator-64: 6 passed.
 - The `sed` / build / `git checkout` lines turn the temporary suppression off for one build (about
   5 minutes) and print 49, one line per site in the table above (as of master d0a93b17 plus this
   branch). Do not pass `-p:NoWarn=...` instead: a global `NoWarn` replaces every referenced
@@ -206,4 +206,4 @@ Expect:
 
 ## Session
 
-- Merge conflict fix, 2026-10-23: PR 349 conflicts with master (cb2979a and later) in tests/ci-tests/Directory.Build.props and tests/ci-tests/run-ci-tests.cs, so no CI has run. Merge origin/master into the task branch, resolve both files keeping master's entries and the new generator-63 test entry, push so CI runs, and do not merge the PR. Requested by Usiku hourly PR check.
+- Merge conflict fix, 2026-10-23: PR 349 conflicts with master (cb2979a and later) in tests/ci-tests/Directory.Build.props and tests/ci-tests/run-ci-tests.cs, so no CI has run. Merge origin/master into the task branch, resolve both files keeping master's entries and the new generator-64 test entry, push so CI runs, and do not merge the PR. Requested by Usiku hourly PR check.

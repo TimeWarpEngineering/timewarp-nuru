@@ -61,6 +61,8 @@ The final art and derived cards are already built.  Do not regenerate or redraw 
 ## Session
 
 - 2026-10-23 implementer (grok, headless task work, session 01a167a3-a28a-7652-a299-671dcb56b766): copied the five kit PNGs into `assets/mascot/`, added the README header, and left Steven's approval open. `ganda repo audit` passed (30 passed, 0 failed). No code changes.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T07:26:01Z
+- 2026-10-23 review oracle round 1 (Claude Opus 5.5, headless task work, effort 1, roster: general): 1 open suggestion (M1). The README hero uses a relative image path, which breaks on the NuGet package page. A fix pass is requested. See `review/round-1/merged.md`.
 
 ## Results
 
@@ -86,3 +88,8 @@ head -n 1 readme.md
 ```
 
 Expect: `file` reports 1024x1024 for the three heroes, 1200x630 for `nuru-og-card.png`, and 1920x1080 for `nuru-end-card.png`. The SHA-256 lines match the digests in Results. Each `cmp` is silent and exits 0. The first README line is `<p align="center"><img src="assets/mascot/nuru-hero.png" alt="Nuru, the TimeWarp Nuru mascot" width="240" /></p>`. The checklist item "Steven approves the final art" stays unticked.
+
+### Review
+
+- Round 1 (effort 1, general): 0 bug, 1 suggestion, 0 nit. Status: 1 open, 0 fixed, 0 wontfix. Disposition is pending until M1 is fixed or marked wontfix.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

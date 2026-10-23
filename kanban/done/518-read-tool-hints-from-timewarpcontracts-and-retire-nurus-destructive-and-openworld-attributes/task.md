@@ -76,6 +76,10 @@ Acceptance:
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-23T07:45:03Z
 - Review oracle: general reviewer (claude, claude-opus-5-5), effort 2 (by-diff, 240 lines), session not reported, 1 round, accepted-exceptions — 2026-10-23
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-23T07:47:54Z
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-23T10:53:53Z
+- Review oracle: general reviewer (cursor, grok-4.7), effort 1 (by-diff, 0 lines), session not reported, round 2, accepted-exceptions — 2026-10-23
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 80) — 2026-10-23T10:59:06Z
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 80) — 2026-10-23T11:01:08Z
 
 ## Results
 
@@ -104,17 +108,17 @@ Verified here: `dotnet build` of `timewarp-nuru` and `timewarp-nuru-mcphost` suc
 
 ### Review
 
-- Rounds: 1. Roster: general (claude-opus-5-5), effort 2 (by-diff budget, 240 lines).
-- Final counts: bug 0, suggestion 0, nit 1 (0 open, 0 fixed, 1 wontfix).
-- Disposition: **accepted-exceptions**. M1 (nit) is wontfix: the two-space indent on the rewritten `<param>` doc lines in `route-definition.cs` is whitespace only, and the build and format accept it. Fix it in passing.
-- The reviewer re-ran these after `ganda runfile cache --clear`: `mcphost-04` 6/6, `mcphost-01` 16/16, and the calculator `--capabilities` (`openWorld` false, `title` "Total numbers").
-- The restatement matches the task Goal. No misread.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Rounds: 2. Round 1 roster: general (claude-opus-5-5), effort 2 (by-diff, 240 lines). Round 2 roster: general (grok-4.7), effort 1 (by-diff, 0 lines).
+- Final counts (round 2): bug 0, suggestion 0, nit 1 (0 open, 0 fixed, 1 wontfix).
+- Disposition: **accepted-exceptions**. M1 (nit) stays wontfix: the two-space indent on the rewritten `<param>` doc lines in `route-definition.cs` is whitespace only, and the build and format accept it. Fix it in passing. Round 2 found no new issues. The 518 product files are unchanged since `a58b48fc`.
+- Round 1 re-ran these after `ganda runfile cache --clear`: `mcphost-04` 6/6, `mcphost-01` 16/16, and the calculator `--capabilities` (`openWorld` false, `title` "Total numbers"). Round 2 did not re-run them; those files have the same bytes.
+- The restatement matches the task Goal. No misread. Round 2 checked again.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: Done
-
+- Round 2: Done
 ## Notes
 
 - timewarp-architecture 391 Design regions: `source/foundation/timewarp-contracts/destructive-attribute.cs`,

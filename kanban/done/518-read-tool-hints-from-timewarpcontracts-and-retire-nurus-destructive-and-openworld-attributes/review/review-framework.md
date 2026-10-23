@@ -2,21 +2,25 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 240
-- Effort: 2
+- Lines changed: 0
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
 **Date:** 2026-10-23
-**Host task:** kanban/to-do/518-read-tool-hints-from-timewarpcontracts-and-retire-nurus-destructive-and-openworld-attributes/
-**Diff scope:** branch `task/518-read-tool-hints-from-timewarpcontracts-and-retire` (a58b48fc) vs `master` (ba022741), product paths
+**Host task:** kanban/done/518-read-tool-hints-from-timewarpcontracts-and-retire-nurus-destructive-and-openworld-attributes/
+**Diff scope:** round 2 — 0 product lines on the 518 change since `a58b48fc`. HEAD `c85ae3e5` equals `master`. No uncommitted product files.
 **Plan / brief:** task.md `## Goal` and `## Goal (implementer restatement)`
-**Effort:** 2 (by-diff budget), roster axis general only
-**Reviewer roster:** general (review oracle, claude-opus-5-5)
+**Effort:** 1 (by-diff budget, 0 lines), roster axis general only
+**Reviewer roster:** general (review oracle, grok-4.7)
 **Session IDs:** review oracle session not reported by host
+
+## Prior round
+
+Round 1 (2026-10-23) reviewed `a58b48fc` vs `ba022741` (240 lines, effort 2, general, claude-opus-5-5) and closed accepted-exceptions. That round stays under `review/round-1/`.
 
 ## Ground rules
 

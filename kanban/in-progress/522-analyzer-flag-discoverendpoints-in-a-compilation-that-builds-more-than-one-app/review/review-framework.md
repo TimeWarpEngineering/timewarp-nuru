@@ -10,11 +10,15 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 561
+- Lines changed: 745
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
 - Turn cap: 120 (--max-turns; cursor uncapped)
+
+## Round 2 scope
+
+- Branch vs `master` `b5958cd7` after merging `origin/master` (`a5c339bb`, task 521) and renumbering the test to generator-64 (`d505a786`). Product diff: 15 files, +396/−9. Roster general, effort 2.
 
 ## Ground rules
 

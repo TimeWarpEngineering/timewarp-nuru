@@ -41,8 +41,7 @@ Acceptance:
 ## Review
 
 - Round 1: M1 fixed on the live ledger (implement-fix-2). The hero `src` is the raw master URL.
-- Round 2: M1 re-verified fixed and no new findings. Disposition: clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - Filed by Masoko (marketing) on 2026-10-22 at Steven's request.

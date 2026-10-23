@@ -74,8 +74,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Round 1 fix pass: M1, M2, M3, M4 fixed (see `review/round-1/merged.md` disposition notes)
-- Round 2: clean — M1, M2, M3, M4 verified fixed; no new findings (`review/round-2/merged.md`, `review/disposition.md`)
-
+- Round 2: Done
 ## Notes
 
 - Origin: Steven approved the consumer-use scope on 2026-10-23, relayed by Amina; Steven confirmed publishing this task in chat the same day.

@@ -24,7 +24,7 @@ public class EndpointNullableOptionTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<NullLongEndpoint>()
       .Build();
 
     // Act
@@ -44,7 +44,7 @@ public class EndpointNullableOptionTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<NullLongEndpoint>()
       .Build();
 
     // Act
@@ -64,7 +64,7 @@ public class EndpointNullableOptionTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<NullIntEndpoint>()
       .Build();
 
     // Act
@@ -83,7 +83,7 @@ public class EndpointNullableOptionTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<NullIntEndpoint>()
       .Build();
 
     // Act
@@ -102,7 +102,7 @@ public class EndpointNullableOptionTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<NullLongEndpoint>()
       .Build();
 
     // Act
@@ -121,7 +121,7 @@ public class EndpointNullableOptionTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<NullMultiEndpoint>()
       .Build();
 
     // Act
@@ -141,7 +141,7 @@ public class EndpointNullableOptionTests
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<NullMultiEndpoint>()
       .Build();
 
     // Act - only provide one of the two nullable options

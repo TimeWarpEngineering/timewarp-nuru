@@ -53,7 +53,7 @@ public class NestedRouteGroupTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue160TwoLevelCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue160-level1", "two-level-action"]);
@@ -72,7 +72,7 @@ public class NestedRouteGroupTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue160PeekCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue160-ccc1-demo", "queue", "peek"]);
@@ -91,7 +91,7 @@ public class NestedRouteGroupTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue160UploadCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue160-cloud", "azure", "storage", "upload", "myfile.txt"]);
@@ -111,7 +111,7 @@ public class NestedRouteGroupTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue160MixedCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue160-root", "mixed-action"]);

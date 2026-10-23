@@ -52,7 +52,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Endpoints
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<GreetCommand>()
         .Build();
 
       // Act
@@ -74,7 +74,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Endpoints
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<DeployCommand>()
         .Build();
 
       // Act - deploy with --replicas option (int type)
@@ -96,7 +96,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Endpoints
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<BuildCommand>()
         .Build();
 
       // Act - build with --no-cache flag
@@ -118,7 +118,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Endpoints
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<ExecCommand>()
         .Build();
 
       // Act - exec with catch-all args
@@ -139,7 +139,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Endpoints
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<DeployCommand>()
         .Build();
 
       // Act - deploy with multiple options
@@ -163,7 +163,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Endpoints
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<DeployCommand>()
         .Build();
 
       // Act - deploy without --replicas (should use default)
@@ -178,7 +178,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Endpoints
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Command definitions with nested handlers - discovered automatically via [NuruRoute]
+// Command definitions with nested handlers - each test maps the one it runs with Map<T>()
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /// <summary>

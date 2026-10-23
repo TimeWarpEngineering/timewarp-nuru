@@ -48,7 +48,8 @@ public class OptionalIntSkipTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue152WorkspaceCommitsCommand>()
+      .Map<Issue152RepoSetupCommand>()
       .Build();
 
     // This should match Issue152RepoSetupCommand, NOT error from Issue152WorkspaceCommitsCommand
@@ -68,7 +69,8 @@ public class OptionalIntSkipTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue152WorkspaceCommitsCommand>()
+      .Map<Issue152RepoSetupCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue152-workspace", "commits", "--days", "7"]);
@@ -86,7 +88,8 @@ public class OptionalIntSkipTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue152WorkspaceCommitsCommand>()
+      .Map<Issue152RepoSetupCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue152-workspace", "commits"]);

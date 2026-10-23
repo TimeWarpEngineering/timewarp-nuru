@@ -1,49 +1,53 @@
-# DevCli: configurable source directory and package feed for check-version and release
+# DevCli: check-version and release query the package's real feed, not always nuget.org
 
 ## Description
 
-Filed from Roslynk task 008 (fork issue TimeWarpEngineering/Roslynk#13, walk blocked 2026-10-23). The Roslynk
-fork wants the standard `dev check-version` / `dev release` flow, publishing to the private GitHub Packages
-feed like timewarp-taratibu. Two hard-codings in `source/timewarp-nuru-devcli` stop it:
+Filed from Roslynk task 008 (fork issue TimeWarpEngineering/Roslynk#13). Rescoped 2026-10-23, after Steven
+said: "we have our structure this is Pete's structure... do we really want to add configuration? TimeWarp is
+going for consistency." This task originally also added a `sourceDirectory` setting. That part is **dropped**:
+Roslynk will move to the standard `source/` layout instead (Roslynk task after 009), so DevCli keeps
+hard-coding `source/`.
 
-1. **Source directory.** `props-version-reader.cs:35` reads only `{repoRoot}/source/Directory.Build.props`, and
-   `packable-project-service.cs:56` scans only `{repoRoot}/source`. The release workflow's tag check uses the
-   same reader. Roslynk keeps upstream's capital `Source/` (renaming would break merges from Peter Morris's
-   repo), and Linux paths are case-sensitive, so DevCli never finds it. `.timewarp/dev.jsonc` accepts only
-   `checkVersionConfig.packages` and `attestation`.
-2. **Feed.** `nuget-version-service.cs:72` always queries `api.nuget.org`. For a package published only to
-   GitHub Packages, every version looks unpublished, so check-version and release's "already published" guards
-   are meaningless. **timewarp-taratibu has this gap today** (nuget.org 404s for its package).
+What remains is a real bug. `nuget-version-service.cs:72` always queries `api.nuget.org`. TimeWarp packages
+that are published only to the org's private GitHub Packages feed
+(`https://nuget.pkg.github.com/TimeWarpEngineering/index.json`) therefore look unpublished at every version,
+so the "already published" guards in check-version and release do nothing. **timewarp-taratibu has this gap
+today**: nuget.org returns 404 for its package. Roslynk (`TimeWarp.Roslynk`) will have it too.
 
 ## Requirements
 
-- `.timewarp/dev.jsonc`: `sourceDirectory` (string, default `"source"`), relative to the repo root. Used by the
-  version reader, the release tag check, the packable-project scan, and anything else that assumes `source/`
-  (grep for it). Error messages name the configured path.
-- `checkVersionConfig.feed` (NuGet v3 service index URL, default nuget.org). For a non-nuget.org feed,
-  authenticate with `GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token`; resolve the flat-container/registration
-  resource from the index rather than assuming nuget.org URL shapes. **401/403 or unreachable = the check failed**
-  (refuse, with a clear message), never "not published".
-- The release workflow template / `dev workflow` output, if it embeds these assumptions, honors both settings.
-- Tests for both settings (default unchanged; `Source` casing; GitHub Packages feed with auth, and an auth
-  failure refusing).
-- Docs: `documentation/developer/guides/releasing.md` and the dev.jsonc reference.
+- check-version and release ask the feed the package is actually published to.
+  - **Prefer convention over a new setting.** Find the feed from something the repo already declares. Options:
+    the push target in the release workflow DevCli generates, a `nuget.config` package source, or a single
+    org-wide rule such as "a repo that releases to GitHub Packages". Pick the source of truth that already
+    exists. Add a `.timewarp/dev.jsonc` key only if nothing in the repo determines the feed, and give the
+    reason in Results.
+  - For a non-nuget.org feed, authenticate with `GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token`. Look up
+    the flat-container/registration resource from the service index instead of assuming nuget.org URL shapes.
+  - **401, 403 or an unreachable feed means the check failed.** Refuse with a clear message; never report "not
+    published".
+- nuget.org repos behave exactly as they do today.
+- If the release workflow template or `dev workflow` output has the same assumption, apply the same fix there.
+- Tests: nuget.org stays unchanged; a GitHub Packages package found and not found; an auth failure refuses.
+- Docs: `documentation/developer/guides/releasing.md`.
 - Ship in a TimeWarp.Nuru.DevCli prerelease.
 
 ## Checklist
 
-- [ ] `sourceDirectory` setting wired through reader, tag check, project scan
-- [ ] `checkVersionConfig.feed` with token auth; auth/unreachable refuses
+- [ ] Feed derived from the repo's existing declaration (or one justified setting)
+- [ ] Token auth; an auth failure or unreachable feed refuses
 - [ ] Tests
 - [ ] Docs
 - [ ] Released in a DevCli beta
-- [ ] Follow-ups noted: Roslynk 008 bumps DevCli and sets `"sourceDirectory": "Source"` +
-      feed `https://nuget.pkg.github.com/TimeWarpEngineering/index.json`; taratibu sets the feed
+- [ ] Follow-ups noted: taratibu and Roslynk 008 bump DevCli
 
 ## Session
 
 - Created: Roslynk cockpit 1287ec9b-6d3e-4805-9dd9-5ef6634981c8 (2026-10-23)
+- Rescoped (sourceDirectory dropped): same session, 2026-10-23
 
 ## Notes
 
-- Consumers: TimeWarpEngineering/Roslynk 008 (blocked on this), timewarp-taratibu (feed gap).
+- Consumers: timewarp-taratibu (live gap), TimeWarpEngineering/Roslynk 008.
+- The kitchen folder slug still says "configurable-source-directory". Only the title changed; the id is the
+  identity.

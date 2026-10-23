@@ -26,10 +26,7 @@
     <!-- CS0436: this assembly generates TimeWarp.Mediator.Generated.Mediator while
          TimeWarp.Nuru.Mcp already contains that type (visible via InternalsVisibleTo).
          The compiler uses the locally generated type. -->
-    <!-- NURU_A003 (TEMPORARY, task 522): 49 unfiltered .DiscoverEndpoints() calls in this
-         multi-mode assembly pull every test file's endpoints into each app. The follow-up task
-         converts them to Map<TEndpoint>(); remove NURU_A003 from this list when it lands. -->
-    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065;CA5399;CS0436;NURU_A003</NoWarn>
+    <NoWarn>$(NoWarn);RCS1163;IDE0161;IDE0065;CA5399;CS0436</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <!-- ALL test files are included via recursive glob so that new tests are picked up

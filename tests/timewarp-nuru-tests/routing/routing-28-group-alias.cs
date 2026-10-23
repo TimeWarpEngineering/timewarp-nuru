@@ -55,7 +55,7 @@ public class GroupAliasTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue178GoodbyeCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-bye"]);
@@ -70,7 +70,7 @@ public class GroupAliasTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue178GoodbyeCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-cya"]);
@@ -93,7 +93,7 @@ public class GroupAliasTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue178WorkspaceInfoCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-workspace", "info"]);
@@ -113,7 +113,7 @@ public class GroupAliasTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue178WorkspaceInfoCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-ws", "info"]);
@@ -132,7 +132,7 @@ public class GroupAliasTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue178WorkspaceInfoCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-work", "info"]);
@@ -155,7 +155,7 @@ public class GroupAliasTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue178RepoInfoCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-workspace", "repo", "info"]);
@@ -174,7 +174,7 @@ public class GroupAliasTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Issue178RepoInfoCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["issue178-ws", "repo", "info"]);

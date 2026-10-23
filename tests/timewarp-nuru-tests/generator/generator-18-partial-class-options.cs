@@ -53,7 +53,7 @@ namespace TimeWarp.Nuru.Tests.Generator.PartialClassOptions
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<PartialTestCommand>()
         .Build();
 
       // Act - Call the partial-command with options defined in partial file
@@ -75,7 +75,7 @@ namespace TimeWarp.Nuru.Tests.Generator.PartialClassOptions
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<PartialTestCommand>()
         .Build();
 
       // Act - Call without specifying options to test defaults
@@ -97,7 +97,7 @@ namespace TimeWarp.Nuru.Tests.Generator.PartialClassOptions
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<PartialTestCommand>()
         .Build();
 
       // Act - Use short forms for options
@@ -119,7 +119,7 @@ namespace TimeWarp.Nuru.Tests.Generator.PartialClassOptions
 
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
-        .DiscoverEndpoints()
+        .Map<PartialTestCommand>()
         .Build();
 
       // Act - Use options from both main and partial class files

@@ -40,7 +40,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419BasicStatusCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "basic", "status", "--verbose"]);
@@ -55,7 +55,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419BasicStatusCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "basic", "status", "-v"]);
@@ -70,7 +70,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419BasicStatusCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "basic", "status"]);
@@ -89,7 +89,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419MultiDeployCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "multi", "deploy", "--verbose", "--dry-run"]);
@@ -104,7 +104,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419MultiDeployCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "multi", "deploy", "-v", "-d"]);
@@ -119,7 +119,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419MultiDeployCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "multi", "deploy", "--verbose"]);
@@ -138,7 +138,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419MixedCommitCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "mixed", "commit", "--verbose", "--message", "test commit"]);
@@ -153,7 +153,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419MixedCommitCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "mixed", "commit", "-m", "quick fix"]);
@@ -168,7 +168,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419MixedCommitCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "mixed", "commit", "-v"]);
@@ -187,7 +187,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419GrandchildCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "parent", "child", "action", "--verbose"]);
@@ -202,7 +202,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419GrandchildCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "parent", "child", "action", "-v", "-d"]);
@@ -221,7 +221,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419BasicStatusCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "basic", "status", "--help"]);
@@ -238,7 +238,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419MultiDeployCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "multi", "deploy", "--help"]);
@@ -256,7 +256,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419MixedCommitCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "mixed", "commit", "--help"]);
@@ -277,7 +277,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419TypedConfigCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "typed", "config", "--output", "json"]);
@@ -292,7 +292,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419TypedConfigCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "typed", "config", "--verbose", "--count", "42"]);
@@ -308,7 +308,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419TypedConfigCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "typed", "config", "--verbose"]);
@@ -325,7 +325,7 @@ public class GroupOptionTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .DiscoverEndpoints()
+      .Map<Task419TypedConfigCommand>()
       .Build();
 
     int exitCode = await app.RunAsync(["task419", "typed", "config", "--output", "xml", "--limit", "100"]);

@@ -68,11 +68,13 @@ Acceptance:
   `script`/`nc` is missing for a selected mode or `cli` is selected without `probes`. No SKIP path
   is left, and any non-PASS fails the run. M4, `why:` clause in SKILL.md. Re-ran 4.0.0-beta.5
   (38/29) and 3.0.0-beta.76 (132 broken snippets) and refreshed `evidence/`.
+- Review oracle: round 2 by general (cursor, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 200), disposition clean — 2026-10-23
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Round 1 fix pass: M1, M2, M3, M4 fixed (see `review/round-1/merged.md` disposition notes)
+- Round 2: clean — M1, M2, M3, M4 verified fixed; no new findings (`review/round-2/merged.md`, `review/disposition.md`)
 
 ## Notes
 
@@ -221,7 +223,7 @@ skills/tw-nuru-verify/scripts/nuru-consumer-check.sh --version 4.0.0-beta.5 --so
 
 ### Review
 
-Round 1, effort 3, roster general. The goal restatement matches the original task (no misread). Disposition is not written: findings are still open, so this is not `clean` or `accepted-exceptions`.
+Round 1, effort 3, roster general, left M1–M4 open. The fix pass closed them. Round 2, same roster, re-checked the delta `1e767fd6..9b4a097a` and found no new issues. The goal restatement matches the original task (no misread). Disposition: **clean**.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
@@ -229,4 +231,4 @@ Round 1, effort 3, roster general. The goal restatement matches the original tas
 | suggestion | 0 | 0 | 0 |
 | nit | 0 | 1 | 0 |
 
-Open ids after the review: M1, M2, M3, M4. The implement-fix-2 pass fixed all four (see Session). Ledger: `review/round-1/merged.md`. Also `review/review-framework.md` and `review/round-1/general.md`.
+Final open count: 0. Ledger: `review/round-2/merged.md`. Also `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, and `review/disposition.md`.

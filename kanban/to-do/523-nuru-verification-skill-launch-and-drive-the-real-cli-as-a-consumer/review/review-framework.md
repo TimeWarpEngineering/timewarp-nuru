@@ -6,11 +6,11 @@
 **Plan / brief:** Hand-authored consumer verification skill (Launch, Drive, Evidence, Doctor, Cleanup) that installs a shipped TimeWarp.Nuru package and the `nuru` CLI from a private NuGet cache and catches nuru#242, nuru#296, and state#647.
 **Effort:** 3
 **Reviewer roster:** general
-**Session IDs:** review oracle session not reported (cursor, grok-4.7). Bound turn cap 200; Cursor has no `--max-turns`, so the session line records the cap as uncapped.
+**Session IDs:** review oracle session not reported (cursor, grok-4.7). Bound turn cap 200; Cursor has no `--max-turns`, so the session line records the cap as uncapped. Round 2: same, 2026-10-23.
 
 ## Budget (by-diff)
 
-- Lines changed: 1850
+- Lines changed: 872
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -24,3 +24,4 @@
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
 - Goal restatement in `task.md` matches the original task. No misread.
+- Round 2 reviews the delta since round 1 (`1e767fd6..9b4a097a`), not the whole branch diff. Prior rounds stay frozen.

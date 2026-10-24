@@ -132,6 +132,10 @@
          (task 522 NURU_A003 DiscoverEndpoints across apps); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-64-discover-endpoints-across-apps.cs" />
+    <!-- generator-65: same Roslyn-hosted generator test pattern as generator-28
+         (task 528 check-updates consumer compile without InternalsVisibleTo); CS0433 collision
+         applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-65-check-updates-consumer-no-ivt.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

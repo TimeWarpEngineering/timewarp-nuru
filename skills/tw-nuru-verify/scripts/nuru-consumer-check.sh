@@ -188,7 +188,31 @@ export NUGET_PACKAGES="$WORK/nuget-packages"
 export NUGET_HTTP_CACHE_PATH="$WORK/http-cache"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 export MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0
-cat >"$WORK/nuget.config" <<EOF
+# A local feed holds only the candidate's own packages; their dependencies (TimeWarp.Terminal,
+# OpenTelemetry, ...) still come from nuget.org. Source mapping pins TimeWarp.Nuru* to the local
+# feed so nuget.org can never serve the candidate (task 528).
+if is_local_source; then
+  cat >"$WORK/nuget.config" <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="consumer-source" value="$SOURCE" />
+    <add key="nuget.org" value="$NUGET_ORG" />
+  </packageSources>
+  <packageSourceMapping>
+    <packageSource key="consumer-source">
+      <package pattern="TimeWarp.Nuru" />
+      <package pattern="TimeWarp.Nuru.*" />
+    </packageSource>
+    <packageSource key="nuget.org">
+      <package pattern="*" />
+    </packageSource>
+  </packageSourceMapping>
+</configuration>
+EOF
+else
+  cat >"$WORK/nuget.config" <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <packageSources>
@@ -197,6 +221,7 @@ cat >"$WORK/nuget.config" <<EOF
   </packageSources>
 </configuration>
 EOF
+fi
 
 {
   echo "version=$VERSION"

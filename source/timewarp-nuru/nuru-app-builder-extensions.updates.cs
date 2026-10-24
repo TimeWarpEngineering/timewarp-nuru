@@ -1,3 +1,14 @@
+#region Purpose
+// Public opt-in for the generated --check-updates route.
+#endregion
+
+#region Design
+// The method body is a no-op; NuruGenerator recognizes the call and CheckUpdatesEmitter emits the
+// handler into the consumer's assembly. That makes this public contract also a promise about the
+// emitter: generated code may reference only public TimeWarp.Nuru types (see
+// check-updates/check-updates-types.cs and kanban 528).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -29,7 +29,7 @@ WriteLine
 // - generator-19/20: multi-included for filtered cases, but #if !JARIBU_MULTI methods
 //   (NoFilter_IncludesAll, Gen20KanbanQuery) only run in this standalone phase (M29)
 // - operation-endpoint-dispatch: the typed HttpClient case is #if !JARIBU_MULTI (NURU050)
-// - generator-28..63: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
+// - generator-28..65: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
 string ciDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? ".";
 string[] standaloneTests =
 [
@@ -68,6 +68,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-60-json-context-referenced-endpoints.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-63-telemetry-without-logging-using.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-64-discover-endpoints-across-apps.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-65-check-updates-consumer-no-ivt.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "auto", "operation-endpoint-dispatch.cs"),
 ];
 

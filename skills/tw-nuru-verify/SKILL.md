@@ -51,7 +51,7 @@ takes about 90 seconds after the first restore.
 | `--docs-strict` | Doc defects fail the run. Use for doc-changing tasks |
 | `--docs readme` | Only the README snippets |
 | `--docs-ref HEAD` | Check this branch's docs against the shipped package |
-| `--source <feed> --version <v>` | A candidate in a local feed. The version must not exist on nuget.org |
+| `--source <feed> --version <v>` | A candidate in a local feed. The version must not exist on nuget.org. `TimeWarp.Nuru*` restores only from the feed; dependencies come from nuget.org (why: task 528 2026-10-24) |
 | `--global-cache <dir>` | Audit a cache other than `$NUGET_PACKAGES` / `~/.nuget/packages` |
 | `--keep` | Keep the scratch folder to rebuild a probe by hand |
 

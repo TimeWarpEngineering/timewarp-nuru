@@ -33,6 +33,10 @@ Acceptance:
 - [x] `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs` green
 - [x] Verify with the `tw-nuru-verify` probe against the built package in a clean cache
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Related: the task that audits generated code for internal-type references and adds a consumer-compile lane.
@@ -59,6 +63,7 @@ Acceptance:
     candidates with `dotnet build -c Release -p:Version=<unique> -p:PackageOutputPath=<feed>/`.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-24T16:26:05Z
 - Review (2026-10-24, review oracle, cursor, model grok-4.7, session not reported, max-turns uncapped, effort 2, roster general): round 1 clean, final open count 0
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-24T16:43:03Z
 
 ## Results
 

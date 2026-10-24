@@ -33,6 +33,10 @@ Acceptance:
 - [x] `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs` green
 - [x] Verify with the `tw-nuru-verify` probe against the built package in a clean cache
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Related: the task that audits generated code for internal-type references and adds a consumer-compile lane.
@@ -58,6 +62,8 @@ Acceptance:
     binaries without rebuilding; a first candidate (4.0.0-t528.1) carried the stale emitter. Build
     candidates with `dotnet build -c Release -p:Version=<unique> -p:PackageOutputPath=<feed>/`.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-24T16:26:05Z
+- Review (2026-10-24, review oracle, cursor, model grok-4.7, session not reported, max-turns uncapped, effort 2, roster general): round 1 clean, final open count 0
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-24T16:43:03Z
 
 ## Results
 
@@ -97,3 +103,10 @@ Expect:
   The only FAIL rows are the UseLogging/UseConsoleLogging NURU_S999 cases (task 527).
 - To see the regression bite: revert the emitter line to
   `CheckUpdatesJsonSerializerContext.Default.CheckUpdatesGitHubReleaseArray`; generator-65 then fails with CS0122.
+
+### Review
+
+- Round 1. Roster: general. Effort: 2. Session: cursor review oracle, max-turns uncapped (budget turn cap 120).
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
+- Disposition: **clean**. No wontfix. No escalation. The goal restatement matches the original task.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

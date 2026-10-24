@@ -1,0 +1,9 @@
+version=4.0.0-t528.2
+source=/tmp/t528-feed
+docs_ref=v4.0.0-t528.2
+repo=/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-528-addcheckupdatesroute-generated-code-references-int
+work=/home/steve/.cache/nuru-verify/4.0.0-t528.2-20261024T162109Z-3707644
+nuget_packages=/home/steve/.cache/nuru-verify/4.0.0-t528.2-20261024T162109Z-3707644/nuget-packages
+global_cache_audited=/home/steve/.nuget/packages
+dotnet=10.0.402
+started=20261024T162109Z

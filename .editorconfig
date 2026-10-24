@@ -30,7 +30,7 @@ resharper_convert_to_primary_constructor_highlighting = false
 
 # Development files
 [*.{cs,csx,cshtml,csproj,razor,sln,props,targets,json,yml,gitignore,}]
-charset = "utf-8"
+charset = utf-8
 trim_trailing_whitespace = true
 
 #### .NET Coding Conventions ####

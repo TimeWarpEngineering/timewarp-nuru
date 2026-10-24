@@ -1,5 +1,16 @@
-// Emits check-updates route generation code.
-// Generates the CheckForUpdatesAsync method for --check-updates flag handling.
+#region Purpose
+// Emits the --check-updates handler that AddCheckUpdatesRoute() opts into: CheckForUpdatesAsync
+// and its helpers (GitHub URL parsing, release fetch, latest-release pick, SemVer comparison).
+#endregion
+
+#region Design
+// The emitted code compiles in the consumer's assembly, so it may name only public TimeWarp.Nuru
+// surface. JSON deserialization goes through the public CheckUpdatesGitHubRelease.ParseReleases;
+// the source-generated JSON context stays internal to the library (kanban 528 fixed a CS0122 from
+// naming it here). Repo tests get InternalsVisibleTo, so generator-65 guards this with a consumer
+// compilation that has no grant. Regex is constructed at runtime because [GeneratedRegex] cannot
+// run on another generator's output (#358).
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -185,7 +196,7 @@ internal static class CheckUpdatesEmitter
     sb.AppendLine("    response.EnsureSuccessStatusCode();");
     sb.AppendLine();
     sb.AppendLine("    string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);");
-    sb.AppendLine("    return global::System.Text.Json.JsonSerializer.Deserialize(json, global::TimeWarp.Nuru.CheckUpdatesJsonSerializerContext.Default.CheckUpdatesGitHubReleaseArray) ?? [];");
+    sb.AppendLine("    return global::TimeWarp.Nuru.CheckUpdatesGitHubRelease.ParseReleases(json);");
     sb.AppendLine("  }");
   }
 

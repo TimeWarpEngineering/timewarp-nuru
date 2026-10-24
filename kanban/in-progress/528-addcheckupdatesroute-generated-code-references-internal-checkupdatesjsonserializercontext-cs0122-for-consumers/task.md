@@ -57,6 +57,7 @@ Acceptance:
   - Gotcha: in Release, `GeneratePackageOnBuild=true` makes `dotnet pack` repack the existing
     binaries without rebuilding; a first candidate (4.0.0-t528.1) carried the stale emitter. Build
     candidates with `dotnet build -c Release -p:Version=<unique> -p:PackageOutputPath=<feed>/`.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-24T16:26:05Z
 
 ## Results
 

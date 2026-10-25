@@ -118,33 +118,46 @@ Analyzing data.csv...
 Structured logging goes to stderr, results to stdout:
 
 ```csharp
+using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 NuruApp app = NuruApp.CreateBuilder()
-  .UseConsoleLogging()  // Logs → stderr
   .ConfigureServices(services =>
   {
+    // Logs → stderr
+    services.AddLogging(logging => logging
+      .AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace));
     services.AddScoped<IAnalyzer, Analyzer>();
   })
-  .Map("analyze {path}")
-    .WithHandler(async (string path, IAnalyzer analyzer, ILogger<Program> logger) =>
+  .Map<AnalyzeQuery>()
+  .Build();
+
+return await app.RunAsync(args);
+
+[NuruRoute("analyze", Description = "Analyze a path")]
+public sealed class AnalyzeQuery : IQuery<AnalysisResult>
+{
+  [Parameter] public string Path { get; set; } = "";
+
+  public sealed class Handler(IAnalyzer analyzer, ILogger<AnalyzeQuery> logger)
+    : IQueryHandler<AnalyzeQuery, AnalysisResult>
+  {
+    public async Task<AnalysisResult> Handle(AnalyzeQuery query, CancellationToken cancellationToken)
     {
       // Structured logging → stderr
-      logger.LogInformation("Starting analysis of {Path}", path);
+      logger.LogInformation("Starting analysis of {Path}", query.Path);
 
-      AnalysisResult result = await analyzer.AnalyzeAsync(path);
+      AnalysisResult result = await analyzer.AnalyzeAsync(query.Path);
 
       logger.LogInformation("Analysis complete. Found {Count} issues", result.IssueCount);
 
       // Returned object → JSON to stdout
       return result;
-    })
-    .AsQuery().Done()
-  .Build();
-
-return await app.RunAsync(args);
+    }
+  }
+}
 ```
 
 ## Common Patterns

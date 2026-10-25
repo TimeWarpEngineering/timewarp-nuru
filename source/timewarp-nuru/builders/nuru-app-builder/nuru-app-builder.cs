@@ -1,3 +1,15 @@
+#region Purpose
+// Core of the fluent builder that every Nuru app starts from: name, description, help options,
+// behaviors, and Build().
+#endregion
+
+#region Design
+// Build() returns a NuruApp carrying only runtime state the builder really holds (terminal, REPL
+// options, completion registry callback). Everything else is read by the source generator at
+// compile time. NuruApp.LoggerFactory is not set here: generated code sets it for UseTelemetry
+// logging, and AddLogging in ConfigureServices uses a generated static factory (kanban 527).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -8,7 +20,6 @@ public partial class NuruAppBuilder
 {
   private protected IConfiguration? Configuration;
   private protected HelpOptions HelpOptions = new();
-  private protected ILoggerFactory? LoggerFactory;
   private protected ReplOptions? ReplOptions;
   private protected ITerminal? Terminal;
 
@@ -101,7 +112,6 @@ public partial class NuruAppBuilder
     return new NuruApp(Terminal)
     {
       ReplOptions = ReplOptions,
-      LoggerFactory = LoggerFactory,
       CompletionRegistryConfiguration = CompletionRegistryConfiguration
     };
   }

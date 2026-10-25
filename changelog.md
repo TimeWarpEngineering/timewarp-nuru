@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - **`TimeWarp.Nuru.DestructiveAttribute` and `TimeWarp.Nuru.OpenWorldAttribute`**: removed. The same short names mean `TimeWarp.Contracts` only, so a file that imports `TimeWarp.Nuru` and `TimeWarp.Contracts` compiles. Call sites take `using TimeWarp.Contracts`. An `[Operation]` that used `[DisplayName]` for its title uses `[Operation(Title = "...")]` (518).
+- **BREAKING: `UseLogging(ILoggerFactory)`, `UseConsoleLogging(...)`, `UseDebugLogging()` and `ConfigureLogging(...)`**: removed, with the `NuruLoggingExtensions` class. The source generator never supported them, so every app that called one failed to build with `NURU_S999 Unrecognized DSL method`. Configure logging with `ConfigureServices(s => s.AddLogging(b => b.AddConsole().SetMinimumLevel(...)))` and inject `ILogger<T>` into endpoint handlers, behaviors or services. `UseConsoleLogging(level)` becomes `AddLogging(b => b.AddConsole().SetMinimumLevel(level))`, `UseDebugLogging()` becomes the same with `LogLevel.Trace`, and a `UseConsoleLogging`/`ConfigureLogging` lambda moves into `AddLogging` unchanged. `Microsoft.Extensions.Logging.Console` still comes with the package (527).
 
 ## [3.0.0] - 2026-10-14
 

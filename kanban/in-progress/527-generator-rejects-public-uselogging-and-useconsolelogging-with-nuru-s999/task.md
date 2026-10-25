@@ -38,6 +38,11 @@ calling them fails with NURU_S999. Steven decided to remove them. Done means:
 - [x] Update `skills/tw-nuru-verify`: replace the `use-logging` and `use-console-logging` probes and cases with one `add-logging` probe for `ConfigureServices(s => s.AddLogging(...))` plus `ILogger<T>`; drop the removed APIs from SKILL.md's coverage and uncovered tables; run the consumer check against a locally packed candidate (non-release version, private cache) and attach evidence
 - [x] Update logging docs (builder-api.md, logging.md, output-handling.md, README if present) to teach only `AddLogging` in `ConfigureServices`; task 532 covers the broader docs pass
 
+## Review
+
+- Round 1: Blocked — open M1
+- Round 1 fix pass: M1 fixed (both logging.md copies corrected)
+
 ## Notes
 
 ### Decision (Steven, 2026-10-25): remove them
@@ -104,7 +109,12 @@ Both need a task filed from the cockpit (`ganda kanban create` in timewarp-nuru)
   README feature row.
 - Audit: the commit-time audit failed `runfile-executable` on the new generator-66 runfile;
   `ganda repo audit --fix` set the executable bit and the audit passes.
-- Review oracle round 1: Grok 4.7 (tw-implementation-review, effort 3, roster general), session not reported, max-turns uncapped (review budget 200). Counts: bug 0, suggestion 1 open (M1), nit 0. Blocked on the fix loop. The restatement matches the decided checklist; no misread. Paths: `review/review-framework.md`, `review/round-1/merged.md`. No disposition yet.
+- Review oracle round 1: Grok 4.7 (tw-implementation-review, effort 3, roster general), session not reported, max-turns uncapped (review budget 200). Counts: bug 0, suggestion 1 open (M1), nit 0. Blocked on the fix loop. The restatement matches the decided checklist; no misread. Paths: `review/review-framework.md`, `review/round-1/merged.md`.
+- Round 1 fix pass (2026-10-25): M1 fixed. "Nuru's Own Log Messages" in
+  `documentation/user/features/logging.md` and `documentation/developer/guides/logging.md` now says
+  the generator parses with no logger (`TryParse` passes none; logger paths are `#if !ANALYZER_BUILD`),
+  so neither the build nor the running app writes parser/lexer/compiler messages; they appear only
+  through `PatternParser.Parse(pattern, loggerFactory)`. Copies remain identical.
 
 ### How to validate
 
@@ -113,6 +123,7 @@ Smoke:
 ganda runfile cache --clear
 dotnet run tests/timewarp-nuru-tests/generator/generator-66-add-logging-injected-logger.cs
 dotnet run tests/ci-tests/run-ci-tests.cs
+diff documentation/user/features/logging.md documentation/developer/guides/logging.md
 grep -rn "UseLogging\|UseConsoleLogging\|UseDebugLogging" source/ samples/ tests/ --include=*.cs
 dotnet build source/timewarp-nuru/timewarp-nuru.csproj -c Release -p:Version=4.0.0-t527.v -p:PackageOutputPath=/tmp/t527v-feed/
 skills/tw-nuru-verify/scripts/nuru-consumer-check.sh --source /tmp/t527v-feed --version 4.0.0-t527.v --steps cache,probes
@@ -121,6 +132,8 @@ skills/tw-nuru-verify/scripts/nuru-consumer-check.sh --source /tmp/t527v-feed --
 Expect:
 - generator-66: `Passed: 1`, with `info: Gen66WorkCommand[0] gen66-info-entry` on the console.
 - CI runner exits 0, `Standalone finished ... (0 failed)`.
+- `diff documentation/user/features/logging.md documentation/developer/guides/logging.md` prints
+  nothing, and both say the generator parses with no logger.
 - The grep finds only the comment in the `nuru-app-builder.configuration.cs` Design region and the
   generator-66 Purpose region; no call sites.
 - Consumer check exits 0, `0 failed`, and `PASS probes add-logging: ConfigureServices AddLogging + ILogger<T> (Information logged)`.
@@ -132,3 +145,5 @@ Expect:
 - 2026-10-25 implementer (claude): removed the APIs, added generator-66 and the add-logging probe, rewrote the logging docs, CI green, consumer check PASS on 4.0.0-t527.1; two generator follow-ups recorded in Notes
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-25T16:22:30Z
 - Review oracle: tw-implementation-review, effort 3, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 200), round 1, 1 suggestion open (M1) — 2026-10-25
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-25T16:33:53Z
+- 2026-10-25 implementer (claude): round-1 fix pass, M1 fixed in both logging.md copies

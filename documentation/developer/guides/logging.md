@@ -175,7 +175,7 @@ The generator copies the `AddLogging` lambda into generated code, so a type the 
 
 ## Nuru's Own Log Messages
 
-Nuru parses route patterns in the source generator, at build time. The parser, lexer and compiler messages below are written there, not in your running app, so `AddLogging` does not show them. To see them, call the parser yourself with a logger factory:
+Nuru parses route patterns in the source generator, at build time, and the generator parses with no logger. The parser, lexer and compiler messages below are not written by the build or by your running app, so `AddLogging` does not show them. They are written only when you call the parser yourself with a logger factory:
 
 ```csharp
 using Microsoft.Extensions.Logging;

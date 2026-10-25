@@ -46,6 +46,7 @@ Acceptance:
 - 2026-10-26 implementer (claude, ganda task work): shared resolver, validator and H007 changes,
   generator-66/67 tests, docs, probe. Full CI green. The pre-push audit then flagged
   `runfile-executable` on the new generator-67 runfile. `ganda repo audit --fix` set its executable bit.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-25T19:21:51Z
 
 ## Results
 

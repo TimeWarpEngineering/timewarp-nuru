@@ -42,7 +42,7 @@ calling them fails with NURU_S999. Steven decided to remove them. Done means:
 
 - Round 1: Blocked — open M1
 - Round 1 fix pass: M1 fixed (both logging.md copies corrected)
-
+- Round 2: Done
 ## Notes
 
 ### Decision (Steven, 2026-10-25): remove them
@@ -115,6 +115,7 @@ Both need a task filed from the cockpit (`ganda kanban create` in timewarp-nuru)
   the generator parses with no logger (`TryParse` passes none; logger paths are `#if !ANALYZER_BUILD`),
   so neither the build nor the running app writes parser/lexer/compiler messages; they appear only
   through `PatternParser.Parse(pattern, loggerFactory)`. Copies remain identical.
+- Review oracle round 2: Grok 4.7 (tw-implementation-review, effort 1, roster general), session not reported, max-turns uncapped (review budget 80). Re-reviewed `450640e1..ffeddcda`. M1 fixed. No new findings. Counts: bug 0, suggestion 1 fixed (M1), nit 0. Disposition: clean, 0 open. The restatement matches the decided checklist; no misread. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -147,3 +148,5 @@ Expect:
 - Review oracle: tw-implementation-review, effort 3, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 200), round 1, 1 suggestion open (M1) — 2026-10-25
 - Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-25T16:33:53Z
 - 2026-10-25 implementer (claude): round-1 fix pass, M1 fixed in both logging.md copies
+- Review oracle: tw-implementation-review, effort 1, roster general (Grok 4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 80), round 2, disposition clean — 2026-10-25
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 80) — 2026-10-25

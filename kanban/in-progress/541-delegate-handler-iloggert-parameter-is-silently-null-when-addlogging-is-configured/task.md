@@ -44,7 +44,8 @@ Acceptance:
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - 2026-10-26 implementer (claude, ganda task work): shared resolver, validator and H007 changes,
-  generator-66/67 tests, docs, probe. Full CI green. `ganda repo audit` passed with no fixes needed.
+  generator-66/67 tests, docs, probe. Full CI green. The pre-push audit then flagged
+  `runfile-executable` on the new generator-67 runfile. `ganda repo audit --fix` set its executable bit.
 
 ## Results
 

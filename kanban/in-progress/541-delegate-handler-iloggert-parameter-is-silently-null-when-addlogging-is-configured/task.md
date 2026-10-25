@@ -38,8 +38,7 @@ Acceptance:
 ## Review
 
 - Round 1: Blocked — open M1
-- Round 2: clean — M1 fixed, 0 open
-
+- Round 2: Done
 ## Notes
 
 - Source is the authority: `ILogger<T>` injection is supported for endpoints and behaviors, so a delegate handler getting null is a code defect.

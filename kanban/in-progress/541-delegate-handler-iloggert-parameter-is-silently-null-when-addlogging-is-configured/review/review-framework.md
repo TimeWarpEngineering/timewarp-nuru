@@ -10,11 +10,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 902
-- Effort: 3
+- Lines changed: 92
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -23,3 +23,11 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2
+
+**Date:** 2026-10-26
+**Diff scope:** `2e0fd8e8..3b5a6504` (M1 fix pass). 92 lines changed.
+**Effort:** 1 (general only)
+**Reviewer roster:** general
+**Session IDs:** reviewer session not reported

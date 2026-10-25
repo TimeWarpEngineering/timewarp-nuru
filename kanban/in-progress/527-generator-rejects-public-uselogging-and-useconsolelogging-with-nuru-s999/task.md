@@ -104,6 +104,7 @@ Both need a task filed from the cockpit (`ganda kanban create` in timewarp-nuru)
   README feature row.
 - Audit: the commit-time audit failed `runfile-executable` on the new generator-66 runfile;
   `ganda repo audit --fix` set the executable bit and the audit passes.
+- Review oracle round 1: Grok 4.7 (tw-implementation-review, effort 3, roster general), session not reported, max-turns uncapped (review budget 200). Counts: bug 0, suggestion 1 open (M1), nit 0. Blocked on the fix loop. The restatement matches the decided checklist; no misread. Paths: `review/review-framework.md`, `review/round-1/merged.md`. No disposition yet.
 
 ### How to validate
 
@@ -130,3 +131,4 @@ Expect:
 - 2026-10-25 cockpit: recorded the remove decision (Steven) and rewrote the checklist to match
 - 2026-10-25 implementer (claude): removed the APIs, added generator-66 and the add-logging probe, rewrote the logging docs, CI green, consumer check PASS on 4.0.0-t527.1; two generator follow-ups recorded in Notes
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-25T16:22:30Z
+- Review oracle: tw-implementation-review, effort 3, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 200), round 1, 1 suggestion open (M1) — 2026-10-25

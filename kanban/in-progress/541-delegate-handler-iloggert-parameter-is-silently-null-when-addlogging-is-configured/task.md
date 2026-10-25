@@ -47,6 +47,11 @@ Acceptance:
   generator-66/67 tests, docs, probe. Full CI green. The pre-push audit then flagged
   `runfile-executable` on the new generator-67 runfile. `ganda repo audit --fix` set its executable bit.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-25T19:21:51Z
+- 2026-10-26 reviewer (grok, ganda task work, roster general, effort 3): round 1. Session not reported. Turn cap 200 (cursor uncapped).
+
+## Learnings
+
+- The restatement says delegate handlers, endpoint constructors, and behavior constructors share one service path, so typed `AddHttpClient` services behave the same at every injection site. The original task asks for one shared `ILogger<T>` path and a diagnostic where a handler parameter would otherwise be a silent `default!`. Behavior constructors still resolve non-logger services in `BehaviorEmitter.ResolveServiceForBehavior`, which has no typed HttpClient case. That broader parity is a restatement mismatch; the original task does not require it.
 
 ## Results
 
@@ -124,3 +129,9 @@ Expect: generator-67 reports `Total: 6, Passed: 6`, generator-66 reports `Total:
 (including `Should_log_through_delegate_handler_logger_parameter`), and the CI runner exits 0
 with 0 failed. After release, `nuru-consumer-check.sh` shows the new
 `add-logging ... work-delegate` case PASS, with `probe-delegate-entry` present and `probe-delegate-debug` absent.
+
+### Review
+
+- Round 1, roster general, effort 3. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Counts: bug 1 open, 0 fixed, 0 wontfix. Suggestion 0. Nit 0.
+- Disposition: not written. M1 is open (`LoggerExpressions.Resolve` treats any type name ending in `ILoggerFactory` as the factory). A fix pass closes it; then round 2 can exit to disposition.

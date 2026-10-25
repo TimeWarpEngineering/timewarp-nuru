@@ -38,6 +38,7 @@ Acceptance:
 ## Review
 
 - Round 1: Blocked — open M1
+- Round 2: clean — M1 fixed, 0 open
 
 ## Notes
 
@@ -57,6 +58,8 @@ Acceptance:
   `LoggerExpressions.IsLoggerFactoryType` (exact `Microsoft.Extensions.Logging.ILoggerFactory`) and
   used it in `LoggerExpressions.Resolve` and the NURU_H007 skip in place of `EndsWith("ILoggerFactory")`.
   Two generator-67 tests cover `ILogger<ILoggerFactory>`. Full CI green.
+- 2026-10-26 reviewer (grok, ganda task work, roster general, effort 1): round 2. Session not reported. Turn cap 80 (cursor uncapped).
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 80) — 2026-10-25T19:49:48Z
 
 ## Learnings
 
@@ -149,10 +152,8 @@ with 0 failed. After release, `nuru-consumer-check.sh` shows the new
 ### Review
 
 - Round 1, roster general, effort 3. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
-- Counts: bug 1 open, 0 fixed, 0 wontfix. Suggestion 0. Nit 0.
-- Fix pass (implement-fix-2): M1 fixed. `LoggerExpressions.IsLoggerFactoryType` replaces the
-  `EndsWith("ILoggerFactory")` suffix test in `LoggerExpressions.Resolve` and in
-  `NuruGenerator.ReportLoggerWithoutConfigurationWarnings`. The described miscompile does not reproduce:
-  an `ILogger<T>` name is fully qualified and ends with `>`, so the old suffix test never matched it, and
-  the new tests also pass on the pre-fix code. The exact-name check removes that hidden dependency on
-  the name's trailing `>`, and the tests guard it. Disposition is written by round 2.
+- Round 1 counts: bug 1 open (M1), 0 fixed, 0 wontfix. Suggestion 0. Nit 0.
+- Fix pass (implement-fix-2, `3b5a6504`): `LoggerExpressions.IsLoggerFactoryType` is the factory test in `Resolve` and in the NURU_H007 skip. Generator-67 covers `ILogger<ILoggerFactory>` with and without `AddLogging`.
+- Round 2, roster general, effort 1. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Final counts (round 2): bug 0 open, 1 fixed, 0 wontfix. Suggestion 0. Nit 0.
+- Disposition: clean. M1 is fixed. No wontfix and no escalation.

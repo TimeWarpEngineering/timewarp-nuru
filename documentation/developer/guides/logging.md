@@ -146,6 +146,12 @@ NuruApp app = NuruApp.CreateBuilder()
 Implement `ILoggerProvider` and add it with `AddProvider`:
 
 ```csharp
+NuruApp app = NuruApp.CreateBuilder()
+    .ConfigureServices(services => services.AddLogging(logging =>
+        logging.AddProvider(new CustomLoggerProvider())))
+    .Map<WorkCommand>()
+    .Build();
+
 public sealed class CustomLoggerProvider : ILoggerProvider
 {
     public ILogger CreateLogger(string categoryName) => new CustomLogger(categoryName);
@@ -163,12 +169,6 @@ public sealed class CustomLogger(string categoryName) : ILogger
         Console.WriteLine($"[{categoryName}] {formatter(state, exception)}");
     }
 }
-
-NuruApp app = NuruApp.CreateBuilder()
-    .ConfigureServices(services => services.AddLogging(logging =>
-        logging.AddProvider(new CustomLoggerProvider())))
-    .Map<WorkCommand>()
-    .Build();
 ```
 
 The generator copies the `AddLogging` lambda into generated code, so a type the lambda names (such as `CustomLoggerProvider`) must be accessible from the app's own assembly.

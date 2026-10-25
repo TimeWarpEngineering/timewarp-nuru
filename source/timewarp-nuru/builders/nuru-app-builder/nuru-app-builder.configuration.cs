@@ -1,3 +1,17 @@
+#region Purpose
+// Builder configuration calls: configuration sources, service registration, terminal, telemetry.
+#endregion
+
+#region Design
+// Most methods here are no-op stubs. The source generator reads the call and its lambda at compile
+// time and emits the effect into the consumer's assembly, so a method that the DSL interpreter
+// does not recognize fails the build with NURU_S999. Logging has one path:
+// ConfigureServices(s => s.AddLogging(...)), which ServiceExtractor reads into a static
+// LoggerFactory for injected ILogger<T>. The pre-generator UseLogging(ILoggerFactory) and the
+// NuruLoggingExtensions (UseConsoleLogging, UseDebugLogging, ConfigureLogging) were removed
+// because the interpreter never supported them (kanban 527).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>
@@ -95,18 +109,6 @@ public partial class NuruAppBuilder
     // This method is interpreted by the source generator at compile time.
     // The generated code handles service registration via static instantiation.
     // This stub exists for API compatibility - it's a no-op at runtime.
-    return this;
-  }
-
-  /// <summary>
-  /// Configures logging for the application using the provided ILoggerFactory.
-  /// If not called, NullLoggerFactory is used (zero overhead).
-  /// </summary>
-  /// <param name="loggerFactory">The logger factory to use for creating loggers.</param>
-  public virtual NuruAppBuilder UseLogging(ILoggerFactory loggerFactory)
-  {
-    ArgumentNullException.ThrowIfNull(loggerFactory);
-    LoggerFactory = loggerFactory;
     return this;
   }
 

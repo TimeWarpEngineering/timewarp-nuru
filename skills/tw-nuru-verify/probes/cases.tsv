@@ -31,6 +31,5 @@ discover-endpoints	DiscoverEndpoints (second endpoint)	run	-	subtract 5 3	-	0	di
 repl	AddRepl	pty	-	-i	add 2 3\nexit	0	sum=5	-
 repl	AddRepl options (prompt, welcome, goodbye)	pty	-	-i	add 2 3\nexit	0	probe-goodbye	-
 telemetry	UseTelemetry options	otlp	-	ping	-	0	nuru-probe-telemetry	-
-use-logging	UseLogging	run	-	work	-	0	logged: probe-log-entry	-
+add-logging	ConfigureServices AddLogging + ILogger<T> (Information logged)	run	-	work	-	0	probe-log-entry	probe-debug-entry
 add-check-updates-route	AddCheckUpdatesRoute	run	-	ping	-	0	pong	-
-use-console-logging	UseConsoleLogging	run	-	ping	-	0	pong	-

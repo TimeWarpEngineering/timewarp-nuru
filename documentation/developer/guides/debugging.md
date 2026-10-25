@@ -84,9 +84,11 @@ dbug: Registering route: 'subtract {x:double} {y:double}'
 
 **Enable AST Dumping:**
 ```csharp
-.UseConsoleLogging(builder => {
-    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug);  // ParsingPattern (1100) and DumpingAst (1102)
-})
+using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder
+    .AddConsole()
+    .AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug));  // ParsingPattern (1100) and DumpingAst (1102)
+
+PatternParser.Parse("test {param}", loggerFactory);
 ```
 
 ### 🎪 Command Resolution (1200-1210)
@@ -120,16 +122,19 @@ The parser provides extensive debugging capabilities through multiple components
 
 ### 🎯 Enable Parser Debugging
 
-```csharp
-NuruApp app = NuruApp.CreateBuilder()
-    .UseConsoleLogging(LogLevel.Trace)  // Enable ALL parser trace messages
-    .Map("test {param}")
-      .WithHandler((string param) => { })
-      .AsCommand()
-      .Done()
-    .Build();
+Route patterns are parsed by the source generator at build time, so a running app never writes
+parser messages, whatever its `AddLogging` configuration. Call the parser directly with a logger
+factory instead:
 
-await app.RunAsync(args);
+```csharp
+using Microsoft.Extensions.Logging;
+using TimeWarp.Nuru;
+
+using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder
+    .AddConsole()
+    .SetMinimumLevel(LogLevel.Trace));  // Enable ALL parser trace messages
+
+CompiledRoute route = PatternParser.Parse("test {param}", loggerFactory);
 ```
 
 ### 📋 Lexer-Level Debugging
@@ -160,11 +165,13 @@ Debug: AST: Parameter(name=param, isOptional=false) -> Option(longForm=verbose, 
 Enables deep parser inspection:
 ```csharp
 // Enable full parser debugging
-.UseConsoleLogging(builder => {
-    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
-           .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace)
-           .AddFilter("TimeWarp.Nuru.Compiler", LogLevel.Debug);
-})
+using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder
+    .AddConsole()
+    .AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+    .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace)
+    .AddFilter("TimeWarp.Nuru.Compiler", LogLevel.Debug));
+
+PatternParser.Parse("deploy {env} --force", loggerFactory);
 ```
 
 **What this shows:**
@@ -257,10 +264,12 @@ The debugging system works alongside [benchmarking](./TimeWarp.Nuru.Benchmarks/)
 
 ```csharp
 // Debug specific route performance
-.UseConsoleLogging(builder => {
-    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
-           .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace);
-})
+using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder
+    .AddConsole()
+    .AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+    .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace));
+
+PatternParser.Parse("deploy {env}", loggerFactory);
 
 // Combined with benchmark timing for performance debugging
 [Benchmark(Description = "Complex routing with trace logging")]
@@ -282,10 +291,12 @@ public void BenchmarkWithDebugging() { /* ... */ }
 
 ```csharp
 // Pattern parsing. Route matching itself does not log.
-.UseConsoleLogging(builder => {
-    builder.AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
-           .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace);
-})
+using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder
+    .AddConsole()
+    .AddFilter("TimeWarp.Nuru.Parser", LogLevel.Debug)
+    .AddFilter("TimeWarp.Nuru.Lexer", LogLevel.Trace));
+
+PatternParser.Parse("deploy {env}", loggerFactory);
 ```
 
 The sample below is the text of delegates that nothing calls. You will not see it.

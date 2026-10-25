@@ -96,7 +96,7 @@ dotnet run -- add 15 25
 | 🛡️ **Roslyn Analyzer** | Catch route errors at compile-time | [Analyzer Docs](documentation/user/features/analyzer.md) |
 | ⌨️ **Shell Completion** | Tab completion for bash, zsh, PowerShell, fish | [Shell Completion](#-shell-completion) |
 | 🤖 **MCP Server** | AI-assisted development with Claude | [MCP Server Guide](documentation/user/tools/mcp-server.md) |
-| 📊 **Logging Package** | Zero-overhead structured logging | [Logging Docs](documentation/user/features/logging.md) |
+| 📊 **Logging** | Microsoft.Extensions.Logging through `AddLogging` in `ConfigureServices`; zero overhead when off | [Logging Docs](documentation/user/features/logging.md) |
 | 🚀 **Native AOT** | Zero warnings, 3.3 MB binaries, instant startup | [Deployment Guide](documentation/user/guides/deployment.md#native-aot-compilation) |
 | 🔒 **Type-Safe Parameters** | Automatic type conversion and validation | [Supported Types](documentation/user/reference/supported-types.md) |
 | 📖 **Auto-Help** | Generate help from route patterns | [Auto-Help Feature](documentation/user/features/auto-help.md) |

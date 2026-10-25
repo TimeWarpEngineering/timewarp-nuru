@@ -211,10 +211,18 @@ Behaviors wrap handler execution like middleware. See [Pipeline Behaviors](../fe
 ```csharp
 // For testing: inject a test terminal
 .UseTerminal(testTerminal)
-
-// For custom logging
-.UseLogging(loggerFactory)
 ```
+
+### Logging
+
+```csharp
+// Logging is configured through services; inject ILogger<T> where you need it
+.ConfigureServices(services => services.AddLogging(logging => logging
+  .AddConsole()
+  .SetMinimumLevel(LogLevel.Information)))
+```
+
+See [Logging](../features/logging.md).
 
 ### Build
 

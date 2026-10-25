@@ -136,6 +136,11 @@
          (task 528 check-updates consumer compile without InternalsVisibleTo); CS0433 collision
          applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-65-check-updates-consumer-no-ivt.cs" />
+    <!-- generator-66: asserts which logger factory an app's ILogger<T> comes from (task 527
+         AddLogging). In a multi-app compilation every app injects loggers from the first app's
+         AddLogging factory, so the multi-mode assembly cannot see this app's capture provider.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-66-add-logging-injected-logger.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

@@ -10,6 +10,7 @@ gets none of that. They run `dotnet add package TimeWarp.Nuru` and copy a snippe
 This skill does the same thing and records what happened.
 (why: task 523, Steven approved the consumer-use check 2026-10-23)
 (why: Steven 2026-10-23 docs are not the source of truth)
+(why: task 527 2026-10-25, logging probes follow the removal of UseLogging/UseConsoleLogging)
 
 ## The source is the authority
 
@@ -23,8 +24,8 @@ Nuru is meant to do. The docs and the README do not. So:
 - The exception: when the source public API says the snippet should work, the failure is a
   **code defect**. The probe for that API shows it and fails the verdict. Example on
   4.0.0-beta.5: `AddCheckUpdatesRoute()` is public in source but the package gives `CS0122`;
-  `UseLogging` and `UseConsoleLogging` are public in source but the generator answers
-  `NURU_S999`.
+  `UseLogging` and `UseConsoleLogging` were public in source but the generator answered
+  `NURU_S999`. Task 527 removed them from the public API, so their probes went with them.
 
 It exists because of three failures that got past tests, the REPL and `--capabilities`:
 
@@ -150,8 +151,7 @@ uncovered below, never silently omitted.
 | `nuru-app-builder.routes.cs`, `NuruAppBuilder.DiscoverEndpoints()` | discover-endpoints | two `[NuruRoute]` classes, no `Map<T>()`, both routes run |
 | `nuru-app-builder.routes.cs`, `NuruAppBuilder.AddRepl(Action<ReplOptions>)` | repl | PTY session output |
 | `nuru-app-builder.configuration.cs`, `NuruAppBuilder.UseTelemetry(Action<NuruTelemetryOptions>)` | telemetry | service name in the OTLP export |
-| `nuru-app-builder.configuration.cs`, `NuruAppBuilder.UseLogging(ILoggerFactory)` | use-logging | handler's `ILogger<T>` reaches the factory |
-| `logging/nuru-logging-extensions.cs`, `UseConsoleLogging` | use-console-logging | builds, route runs |
+| `nuru-app-builder.configuration.cs`, `NuruAppBuilder.ConfigureServices` with `AddLogging(b => b.AddConsole().SetMinimumLevel(...))`; endpoint handler `ILogger<T>` | add-logging | Information entry on the console, Debug entry filtered out |
 | `nuru-app-builder-extensions.updates.cs`, `NuruAppBuilderExtensions.AddCheckUpdatesRoute` | add-check-updates-route | builds, route runs |
 
 Uncovered public APIs (no probe yet):
@@ -159,7 +159,6 @@ Uncovered public APIs (no probe yet):
 | Source API | Why uncovered |
 |------------|---------------|
 | `nuru-app-builder.configuration.cs`, `NuruAppBuilder.UseTerminal(ITerminal)` | test-only API, covered by the repo's `TestTerminal` tests |
-| `logging/nuru-logging-extensions.cs`, `ConfigureLogging`, `UseDebugLogging` | not yet probed |
 | `nuru-app-builder.configuration.cs`, `UseTelemetry()` (no options) | not yet probed |
 | `nuru-app-builder.routes.cs`, `AddRepl()` (no options), `DiscoverEndpoints(params Type[])` | not yet probed |
 | Public APIs in `timewarp-nuru-mcphost` and `timewarp-nuru-daemon` (`AddMcpServer`, `AddServeRoute`, ...) | separate packages; the probe projects reference `TimeWarp.Nuru` only |

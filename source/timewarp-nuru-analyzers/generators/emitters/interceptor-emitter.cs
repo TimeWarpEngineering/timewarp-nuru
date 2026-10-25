@@ -1126,7 +1126,10 @@ internal static class InterceptorEmitter
   /// <returns>Field name like "__httpClient_IOpenMeteoService".</returns>
   internal static string GetHttpClientFieldName(string serviceTypeName)
   {
-    string name = serviceTypeName;
+    // A global-namespace type has no dot, so strip global:: first (task 541)
+    string name = serviceTypeName.StartsWith("global::", StringComparison.Ordinal)
+      ? serviceTypeName[8..]
+      : serviceTypeName;
     int lastDot = name.LastIndexOf('.');
     if (lastDot >= 0)
       name = name[(lastDot + 1)..];

@@ -141,6 +141,10 @@
          AddLogging factory, so the multi-mode assembly cannot see this app's capture provider.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-66-add-logging-injected-logger.cs" />
+    <!-- generator-67: same Roslyn-hosted generator test pattern as generator-28
+         (task 541 delegate handler service resolution); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-67-delegate-handler-service-resolution.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

@@ -151,7 +151,7 @@ uncovered below, never silently omitted.
 | `nuru-app-builder.routes.cs`, `NuruAppBuilder.DiscoverEndpoints()` | discover-endpoints | two `[NuruRoute]` classes, no `Map<T>()`, both routes run |
 | `nuru-app-builder.routes.cs`, `NuruAppBuilder.AddRepl(Action<ReplOptions>)` | repl | PTY session output |
 | `nuru-app-builder.configuration.cs`, `NuruAppBuilder.UseTelemetry(Action<NuruTelemetryOptions>)` | telemetry | service name in the OTLP export |
-| `nuru-app-builder.configuration.cs`, `NuruAppBuilder.ConfigureServices` with `AddLogging(b => b.AddConsole().SetMinimumLevel(...))`; endpoint handler `ILogger<T>` | add-logging | Information entry on the console, Debug entry filtered out |
+| `nuru-app-builder.configuration.cs`, `NuruAppBuilder.ConfigureServices` with `AddLogging(b => b.AddConsole().SetMinimumLevel(...))`; endpoint handler and delegate handler `ILogger<T>` | add-logging | Information entry on the console, Debug entry filtered out |
 | `nuru-app-builder-extensions.updates.cs`, `NuruAppBuilderExtensions.AddCheckUpdatesRoute` | add-check-updates-route | builds, route runs |
 
 Uncovered public APIs (no probe yet):

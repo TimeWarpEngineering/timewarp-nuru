@@ -32,4 +32,5 @@ repl	AddRepl	pty	-	-i	add 2 3\nexit	0	sum=5	-
 repl	AddRepl options (prompt, welcome, goodbye)	pty	-	-i	add 2 3\nexit	0	probe-goodbye	-
 telemetry	UseTelemetry options	otlp	-	ping	-	0	nuru-probe-telemetry	-
 add-logging	ConfigureServices AddLogging + ILogger<T> (Information logged)	run	-	work	-	0	probe-log-entry	probe-debug-entry
+add-logging	AddLogging + delegate handler ILogger<T> parameter	run	-	work-delegate	-	0	probe-delegate-entry	probe-delegate-debug
 add-check-updates-route	AddCheckUpdatesRoute	run	-	ping	-	0	pong	-

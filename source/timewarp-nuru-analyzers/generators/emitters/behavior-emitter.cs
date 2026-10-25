@@ -351,28 +351,9 @@ internal static class BehaviorEmitter
     if (serviceTypeName is "global::TimeWarp.Nuru.NuruApp" or "TimeWarp.Nuru.NuruApp" or "NuruApp")
       return "app";
 
-    // ILogger<T> - use configured factory if available, otherwise NullLoggerFactory
-    // ILogger<T> resolution - two paths for AOT optimization (see interceptor-emitter.cs)
-    if (serviceTypeName.Contains("ILogger", StringComparison.Ordinal))
-    {
-      string typeArg = ExtractLoggerTypeArg(serviceTypeName);
-      if (loggerFactoryFieldName is not null)
-      {
-        // Runtime path (app.LoggerFactory): nullable, requires null-coalescing
-        // Used for telemetry - OTEL endpoint unknown at compile time
-        if (loggerFactoryFieldName.Contains('.', StringComparison.Ordinal))
-        {
-          return $"({loggerFactoryFieldName}?.CreateLogger<{typeArg}>() ?? global::Microsoft.Extensions.Logging.Abstractions.NullLogger<{typeArg}>.Instance)";
-        }
-
-        // Static path (__loggerFactory): non-null, zero runtime overhead
-        // Used for explicit AddLogging() - fully deterministic at compile time
-        return $"{loggerFactoryFieldName}.CreateLogger<{typeArg}>()";
-      }
-
-      // No logging configured - use NullLogger (optimized away by trimmer)
-      return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
-    }
+    // ILogger<T>, ILogger, ILoggerFactory - the shared logger path (task 541)
+    if (LoggerExpressions.IsLoggingServiceType(serviceTypeName))
+      return LoggerExpressions.Resolve(serviceTypeName, loggerFactoryFieldName);
 
     if (FrameworkServices.IsMediatorServiceType(serviceTypeName))
       return FrameworkServices.MediatorExpression;
@@ -392,20 +373,6 @@ internal static class BehaviorEmitter
 
     // Fallback: emit error
     return $"default! /* ERROR: Service {serviceTypeName} not registered */";
-  }
-
-  /// <summary>
-  /// Extracts the type argument from ILogger&lt;T&gt;.
-  /// </summary>
-  private static string ExtractLoggerTypeArg(string loggerTypeName)
-  {
-    int start = loggerTypeName.IndexOf('<', StringComparison.Ordinal);
-    int end = loggerTypeName.LastIndexOf('>');
-
-    if (start >= 0 && end > start)
-      return loggerTypeName[(start + 1)..end];
-
-    return "object";
   }
 
   /// <summary>

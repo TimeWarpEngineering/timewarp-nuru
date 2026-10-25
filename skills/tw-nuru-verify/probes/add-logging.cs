@@ -3,7 +3,8 @@
 // factory; an endpoint handler's ILogger<T> writes to the console at the configured level, so the
 // Information entry appears and the Debug entry does not. AddConsole comes with the TimeWarp.Nuru
 // package (Microsoft.Extensions.Logging.Console). This is the only logging setup Nuru supports
-// (kanban 527 removed UseLogging and the UseConsoleLogging family).
+// (kanban 527 removed UseLogging and the UseConsoleLogging family). The work-delegate route checks
+// that a WithHandler delegate's ILogger<T> parameter gets the same factory (kanban 541).
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Mediator;
@@ -14,6 +15,12 @@ NuruApp app = NuruApp.CreateBuilder()
     .AddConsole()
     .SetMinimumLevel(LogLevel.Information)))
   .Map<WorkCommand>()
+  .Map("work-delegate").WithHandler((ILogger<WorkCommand> logger) =>
+  {
+    logger.LogDebug("probe-delegate-debug");
+    logger.LogInformation("probe-delegate-entry");
+    return "work-delegate done";
+  }).AsCommand().Done()
   .Build();
 
 return await app.RunAsync(args);

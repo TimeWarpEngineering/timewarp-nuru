@@ -129,3 +129,4 @@ Expect:
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - 2026-10-25 cockpit: recorded the remove decision (Steven) and rewrote the checklist to match
 - 2026-10-25 implementer (claude): removed the APIs, added generator-66 and the add-logging probe, rewrote the logging docs, CI green, consumer check PASS on 4.0.0-t527.1; two generator follow-ups recorded in Notes
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-25T16:22:30Z

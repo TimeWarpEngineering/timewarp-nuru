@@ -42,8 +42,7 @@ calling them fails with NURU_S999. Steven decided to remove them. Done means:
 
 - Round 1: Blocked — open M1
 - Round 1 fix pass: M1 fixed (both logging.md copies corrected)
-- Round 2: clean — M1 fixed, no new findings
-
+- Round 2: Done
 ## Notes
 
 ### Decision (Steven, 2026-10-25): remove them

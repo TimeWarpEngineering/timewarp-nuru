@@ -35,6 +35,10 @@ Acceptance:
 - [x] Extend the tw-nuru-verify `add-logging` probe (or add a case) to cover a delegate handler
 - [x] `ganda runfile cache --clear`, full CI suite green
 
+## Review
+
+- Round 1: Blocked — open M1
+
 ## Notes
 
 - Source is the authority: `ILogger<T>` injection is supported for endpoints and behaviors, so a delegate handler getting null is a code defect.
@@ -47,6 +51,16 @@ Acceptance:
   generator-66/67 tests, docs, probe. Full CI green. The pre-push audit then flagged
   `runfile-executable` on the new generator-67 runfile. `ganda repo audit --fix` set its executable bit.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-25T19:21:51Z
+- 2026-10-26 reviewer (grok, ganda task work, roster general, effort 3): round 1. Session not reported. Turn cap 200 (cursor uncapped).
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-25T19:34:30Z
+- 2026-10-26 implementer (claude, ganda task work, implement-fix-2): review round 1 M1. Added
+  `LoggerExpressions.IsLoggerFactoryType` (exact `Microsoft.Extensions.Logging.ILoggerFactory`) and
+  used it in `LoggerExpressions.Resolve` and the NURU_H007 skip in place of `EndsWith("ILoggerFactory")`.
+  Two generator-67 tests cover `ILogger<ILoggerFactory>`. Full CI green.
+
+## Learnings
+
+- The restatement says delegate handlers, endpoint constructors, and behavior constructors share one service path, so typed `AddHttpClient` services behave the same at every injection site. The original task asks for one shared `ILogger<T>` path and a diagnostic where a handler parameter would otherwise be a silent `default!`. Behavior constructors still resolve non-logger services in `BehaviorEmitter.ResolveServiceForBehavior`, which has no typed HttpClient case. That broader parity is a restatement mismatch; the original task does not require it.
 
 ## Results
 
@@ -84,6 +98,11 @@ Acceptance:
 
 ### Decisions / open items
 
+- A parameterless `services.AddLogging()` is not detected as configured logging
+  (`ServiceExtractor.ExtractLoggingLambdaBody` returns null with no lambda), so the logger is a
+  NullLogger. NURU_H007 does warn in that case, so nothing fails silently. This predates 541 and is
+  outside M1. The review-fix test uses the lambda form.
+
 - I did not extend NURU_H007 to endpoint handler constructors, though they also get a silent
   NullLogger. When I tried it, `timewarp-nuru-search` failed to build: its `SearchQuery.Handler`
   injects `ILogger<T>` and the app has no `AddLogging`. Any consumer app with warnings-as-errors
@@ -95,18 +114,20 @@ Acceptance:
 ### Tests
 
 - `tests/timewarp-nuru-tests/generator/generator-67-delegate-handler-service-resolution.cs` (new,
-  Roslyn-hosted, standalone in CI) has 6 tests. Each one names the generated code or diagnostic it checks:
+  Roslyn-hosted, standalone in CI) has 8 tests. Each one names the generated code or diagnostic it checks:
   - with AddLogging, a delegate gets `__loggerFactory.CreateLogger<T>()`
   - without logging, it gets a NullLogger, `ILoggerFactory` becomes `NullLoggerFactory.Instance`, and H007 is reported once
   - telemetry-only logging produces no H007
   - a typed HttpClient delegate parameter is constructed
   - `IOptionsMonitor<T>` reports NURU050
   - a service named like a logger reports NURU050
+  - `ILogger<ILoggerFactory>` without logging gets `NullLoggerFactory.Instance.CreateLogger<...ILoggerFactory>()` and H007 once (review M1)
+  - `ILogger<ILoggerFactory>` with AddLogging gets `__loggerFactory.CreateLogger<...ILoggerFactory>()` (review M1)
 - `generator-66-add-logging-injected-logger.cs` adds an end-to-end test: a fluent
   `WithHandler((ILogger<T> logger) => ...)` writes Information through the AddLogging factory, and
   Debug is filtered out.
 - `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs`, exit 0:
-  multi-mode passed 2111 with 6 skipped and 0 failed, and standalone had 0 failed.
+  multi-mode passed 2111 with 6 skipped and 0 failed, and standalone had 0 failed (re-run after the M1 fix, same counts).
 - `ganda repo audit`: passes all checks.
 
 ### How to validate
@@ -120,7 +141,18 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-66-add-logging-injected
 dotnet run tests/ci-tests/run-ci-tests.cs
 ```
 
-Expect: generator-67 reports `Total: 6, Passed: 6`, generator-66 reports `Total: 2, Passed: 2`
+Expect: generator-67 reports `Total: 8, Passed: 8`, generator-66 reports `Total: 2, Passed: 2`
 (including `Should_log_through_delegate_handler_logger_parameter`), and the CI runner exits 0
 with 0 failed. After release, `nuru-consumer-check.sh` shows the new
 `add-logging ... work-delegate` case PASS, with `probe-delegate-entry` present and `probe-delegate-debug` absent.
+
+### Review
+
+- Round 1, roster general, effort 3. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Counts: bug 1 open, 0 fixed, 0 wontfix. Suggestion 0. Nit 0.
+- Fix pass (implement-fix-2): M1 fixed. `LoggerExpressions.IsLoggerFactoryType` replaces the
+  `EndsWith("ILoggerFactory")` suffix test in `LoggerExpressions.Resolve` and in
+  `NuruGenerator.ReportLoggerWithoutConfigurationWarnings`. The described miscompile does not reproduce:
+  an `ILogger<T>` name is fully qualified and ends with `>`, so the old suffix test never matched it, and
+  the new tests also pass on the pre-fix code. The exact-name check removes that hidden dependency on
+  the name's trailing `>`, and the tests guard it. Disposition is written by round 2.

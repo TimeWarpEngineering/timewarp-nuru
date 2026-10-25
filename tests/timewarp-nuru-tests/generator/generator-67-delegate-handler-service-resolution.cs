@@ -125,6 +125,51 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen67DelegateHandlerServiceResolution
       await Task.CompletedTask;
     }
 
+    public static async Task Should_treat_logger_of_logger_factory_category_as_logger()
+    {
+      // Review 541 M1: ILogger<ILoggerFactory> ends with "ILoggerFactory" but is a logger, so it gets
+      // CreateLogger<T>() and warns like any other category, not the factory itself.
+      const string Source = """
+        using Microsoft.Extensions.Logging;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen67-factory-category").WithHandler((ILogger<ILoggerFactory> logger) => "ok").AsCommand().Done()
+          .Build();
+        return await app.RunAsync([]);
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      run.GeneratedSource.ShouldContain("logger = global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<global::Microsoft.Extensions.Logging.ILoggerFactory>();");
+      run.GeneratorDiagnostics.Count(static d => d.Id == "NURU_H007").ShouldBe(1, Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_resolve_logger_of_logger_factory_category_from_add_logging_factory()
+    {
+      const string Source = """
+        using Microsoft.Extensions.DependencyInjection;
+        using Microsoft.Extensions.Logging;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .ConfigureServices(services => services.AddLogging(logging => logging.SetMinimumLevel(LogLevel.Information)))
+          .Map("gen67-factory-category-log").WithHandler((ILogger<ILoggerFactory> logger) => "ok").AsCommand().Done()
+          .Build();
+        return await app.RunAsync([]);
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      run.GeneratedSource.ShouldContain("logger = __loggerFactory.CreateLogger<global::Microsoft.Extensions.Logging.ILoggerFactory>();");
+
+      await Task.CompletedTask;
+    }
+
     public static async Task Should_not_warn_when_telemetry_configures_logging()
     {
       // UseTelemetry() logs through app.LoggerFactory, so the logger is not a NullLogger.

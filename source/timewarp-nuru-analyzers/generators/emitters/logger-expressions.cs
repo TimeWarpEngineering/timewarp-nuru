@@ -41,6 +41,20 @@ internal static class LoggerExpressions
   }
 
   /// <summary>
+  /// True only for the non-generic <c>ILoggerFactory</c> from Microsoft.Extensions.Logging.
+  /// <c>ILogger&lt;ILoggerFactory&gt;</c> is a logger, not the factory (review 541 M1).
+  /// </summary>
+  /// <param name="typeName">The type name, with or without the <c>global::</c> prefix.</param>
+  public static bool IsLoggerFactoryType(string? typeName)
+  {
+    if (typeName is null)
+      return false;
+
+    string normalized = typeName.StartsWith("global::", StringComparison.Ordinal) ? typeName[8..] : typeName;
+    return normalized == LoggingNamespace + "ILoggerFactory";
+  }
+
+  /// <summary>
   /// The category type of <c>ILogger&lt;T&gt;</c>, or <c>object</c> for the non-generic <c>ILogger</c>.
   /// </summary>
   public static string GetCategoryTypeName(string loggerTypeName)
@@ -60,7 +74,7 @@ internal static class LoggerExpressions
   {
     bool runtimeFactory = loggerFactoryFieldName?.Contains('.', StringComparison.Ordinal) == true;
 
-    if (typeName.EndsWith("ILoggerFactory", StringComparison.Ordinal))
+    if (IsLoggerFactoryType(typeName))
     {
       return loggerFactoryFieldName switch
       {

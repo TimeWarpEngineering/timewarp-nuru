@@ -305,7 +305,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
     foreach (ParameterBinding dep in loggerSites)
     {
       if (!LoggerExpressions.IsLoggingServiceType(dep.ParameterTypeName)
-        || dep.ParameterTypeName!.EndsWith("ILoggerFactory", StringComparison.Ordinal))
+        || LoggerExpressions.IsLoggerFactoryType(dep.ParameterTypeName))
       {
         continue;
       }

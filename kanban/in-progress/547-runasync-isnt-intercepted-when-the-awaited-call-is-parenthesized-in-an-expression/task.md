@@ -55,6 +55,7 @@ Acceptance criteria:
 - 2026-10-26 implement-fix-3 (claude, ganda task work): fixed review round 2 M4 with regressions.
 - Review oracle: round 3 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3, M4 fixed. Open finding M5. Disposition pending a fix pass — 2026-10-26
 - 2026-10-26 implement-fix-4 (claude, ganda task work): fixed review round 3 M5 with regressions.
+- Review oracle: round 4 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3, M4, M5 fixed. Open finding M6. Disposition pending a fix pass — 2026-10-26
 
 ## Results
 
@@ -156,12 +157,27 @@ was evaluated) were missed the same way.
   (no NURU_I001). Against the round-3 interpreter the two review shapes fail (0 NURU_I001).
 - Changelog: NURU_I001 entry notes an assignment in another lambda counts.
 
+### Review round 4 fixes
+
+- **M6** (`dsl-interpreter.cs`, `IsNullLiteral`): a `null` or `default` write wrapped in
+  parentheses, `!` or a cast (`null!`, `(null)`, `default!`, `(NuruApp?)null`) now counts as null,
+  as it already did for the statement walk, so `HasUnrecordedWrite` no longer treats it as an
+  unrecorded app write. `NuruApp app = null!;` plus one `Build()` and a closure `RunAsync` is
+  intercepted with no NURU_I001.
+- Tests: generator-72 adds the wrapped forms (`null!`, `(null)`, `default!`, `(NuruApp?)null`,
+  `(NuruApp?)(default)`, and a later `app = (null)!;`), each with no compile error and no NURU_I001.
+  Against the round-4 interpreter that test fails.
+
 ### Verification
 
 - `./bin/dev test`: multi-mode 2128 total, 2122 passed, 6 skipped, 0 failed; standalone 41 files, 0 failed.
 - Round 1 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 41 standalone files, 0 failed);
   `./bin/dev verify-samples` 68/68; `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - `./bin/dev verify-samples`: 68/68.
+- Round 4 fix pass: `./bin/dev test` exit 0 (multi-mode 2131 total, 2125 passed, 6 skipped;
+  standalone 0 failed; generator-72 15/15); `dotnet build timewarp-nuru.slnx --no-incremental`
+  0 warnings, 0 errors; `ganda repo audit` failed only `kanban-landed` (round-4 review files not on
+  master), landed with `ganda kanban move 547 in-progress --publish`.
 - Round 3 fix pass: `./bin/dev test` exit 0 (multi-mode 2131, standalone 0 failed; generator-72 14/14,
   generator-71 11/11); `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - Round 2 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 0 failed);
@@ -182,28 +198,30 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-72-run-async-not-interc
 
 Expect: generator-71 reports `Total: 11 Passed: 11` (each context, including a reassigned local,
 `app?.RunAsync`, and a lambda that assigns its own app, ran its handler with exit 0, so every call
-was intercepted once); generator-72 reports `Total: 14 Passed: 14` (NURU_I001 on the parameter, `?.`
+was intercepted once); generator-72 reports `Total: 15 Passed: 15` (NURU_I001 on the parameter, `?.`
 parameter and method-result receivers, on a lambda or local function that captures a local
 assigned two apps, on a nested lambda whose local the outer method reassigns, and on a call before
-the closure's own assignment; none on a null-initialized local captured by a lambda; still on a
+the closure's own assignment; none on a null-initialized local captured by a lambda, including
+`null!`, `(null)`, `default!` and a cast of null; still on a
 parameter call when another app has an extraction error).
 
 ### Review
 
-Round 3, effort 2, roster general (turn cap 120, session max-turns uncapped). Delta `d627bb2e..20bd7c36`. The implementer restatement matches the task checklist.
+Round 4, effort 2, roster general (turn cap 120, session max-turns uncapped). Delta `2ea4f9ac..53b3cc91`. The implementer restatement matches the task checklist.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 1 | 3 | 0 |
+| bug | 1 | 4 | 0 |
 | suggestion | 0 | 1 | 0 |
 | nit | 0 | 0 | 0 |
 
-Disposition: pending. M1, M2, M3, and M4 are fixed. Open finding M5 (a closure call the statement walk does not enter is intercepted as the closure's app). No `review/disposition.md` until that is closed.
+Disposition: pending. M1, M2, M3, M4, and M5 are fixed. Open finding M6 (`IsNullLiteral` ignores a null write wrapped in parentheses or `!`, so a closure call after one `Build()` is left unintercepted). No `review/disposition.md` until that is closed.
 
-Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`. Rounds 1 and 2 are unchanged under `review/round-1/` and `review/round-2/`.
+Paths: `review/review-framework.md`, `review/round-4/general.md`, `review/round-4/merged.md`. Rounds 1–3 are unchanged under `review/round-1/`, `review/round-2/`, and `review/round-3/`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
 - Round 2: Blocked — open M4
 - Round 3: Blocked — open M5
+- Round 4: Blocked — open M6

@@ -171,6 +171,8 @@ public sealed class DslInterpreter
 
       if (FindBuiltApp(buildInvocation) is null)
         EvaluateExpression(buildInvocation);
+
+      RegisterEntryPointCalls(scope ?? EnclosingMember(buildInvocation));
     }
     catch (Exception ex) when (ex is not OperationCanceledException)
     {
@@ -187,6 +189,84 @@ public sealed class DslInterpreter
   /// </summary>
   private IrAppBuilder? FindBuiltApp(InvocationExpressionSyntax buildInvocation) =>
     BuildCalls.TryGetValue(buildInvocation, out IrAppBuilder? app) ? app : null;
+
+  /// <summary>
+  /// The member that holds <paramref name="node"/> when it is not in a method body or top-level
+  /// statements (an expression-bodied member or an initializer), else the node itself.
+  /// </summary>
+  private static RoslynSyntaxNode EnclosingMember(RoslynSyntaxNode node) =>
+    (RoslynSyntaxNode?)node.FirstAncestorOrSelf<MemberDeclarationSyntax>() ?? node;
+
+  /// <summary>
+  /// Registers every RunAsync() and RunReplAsync() invocation in <paramref name="region"/> whose
+  /// receiver is an app this interpretation built (task 547).
+  /// </summary>
+  /// <remarks>
+  /// The statement walk reaches an entry point call only through the expression shapes it
+  /// evaluates, so calls such as <c>(await app.RunAsync(args)).ShouldBe(0)</c>,
+  /// <c>Check(await app.RunAsync(args))</c> or a ternary branch were never intercepted and threw at
+  /// runtime. This pass finds the calls by method symbol wherever they sit. A receiver resolves only
+  /// through state the walk already produced (<see cref="VariableState"/> and
+  /// <see cref="BuildCalls"/>), so no builder chain is evaluated a second time.
+  /// </remarks>
+  private void RegisterEntryPointCalls(RoslynSyntaxNode region)
+  {
+    foreach (InvocationExpressionSyntax invocation in region.DescendantNodesAndSelf().OfType<InvocationExpressionSyntax>())
+    {
+      CancellationToken.ThrowIfCancellationRequested();
+
+      if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+        continue;
+
+      string methodName = memberAccess.Name.Identifier.ValueText;
+      if (methodName is not ("RunAsync" or "RunReplAsync"))
+        continue;
+
+      if (SemanticModel.GetSymbolInfo(invocation, CancellationToken).Symbol is not IMethodSymbol { ContainingType.Name: "NuruApp" })
+        continue;
+
+      if (ResolveBuiltApp(memberAccess.Expression) is not IrAppBuilder appBuilder)
+        continue;
+
+      InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, invocation);
+      if (site is not null)
+        appBuilder.AddInterceptSite(methodName, site);
+    }
+  }
+
+  /// <summary>
+  /// The app an entry point call's receiver refers to, from the walk's state only.
+  /// </summary>
+  private IrAppBuilder? ResolveBuiltApp(ExpressionSyntax receiver)
+  {
+    switch (receiver)
+    {
+      case ParenthesizedExpressionSyntax parenthesized:
+        return ResolveBuiltApp(parenthesized.Expression);
+
+      case PostfixUnaryExpressionSyntax postfix when postfix.IsKind(SyntaxKind.SuppressNullableWarningExpression):
+        return ResolveBuiltApp(postfix.Operand);
+
+      // ...Build().RunAsync(): the Build() call the walk dispatched
+      case InvocationExpressionSyntax invocation:
+        return FindBuiltApp(invocation);
+
+      case IdentifierNameSyntax or MemberAccessExpressionSyntax:
+        ISymbol? symbol = SemanticModel.GetSymbolInfo(receiver, CancellationToken).Symbol;
+        if (symbol is null || !VariableState.TryGetValue(symbol, out object? value))
+          return null;
+
+        return value switch
+        {
+          BuiltAppMarker marker => (IrAppBuilder)marker.Builder,
+          IrAppBuilder builder => builder,
+          _ => null
+        };
+
+      default:
+        return null;
+    }
+  }
 
   /// <summary>
   /// Extracts an AppModel by tracing back from an entry point call (RunAsync or RunReplAsync) to find the app builder.
@@ -454,6 +534,9 @@ public sealed class DslInterpreter
       MemberAccessExpressionSyntax memberAccess => EvaluateMemberAccess(memberAccess),
       IdentifierNameSyntax identifier => ResolveIdentifier(identifier),
       AwaitExpressionSyntax awaitExpr => EvaluateExpression(awaitExpr.Expression),
+      ParenthesizedExpressionSyntax parenthesized => EvaluateExpression(parenthesized.Expression),
+      PostfixUnaryExpressionSyntax postfix when postfix.IsKind(SyntaxKind.SuppressNullableWarningExpression)
+        => EvaluateExpression(postfix.Operand),
       AssignmentExpressionSyntax assignment => EvaluateAssignment(assignment),
       _ => null // Literals, etc. - not relevant for DSL interpretation
     };

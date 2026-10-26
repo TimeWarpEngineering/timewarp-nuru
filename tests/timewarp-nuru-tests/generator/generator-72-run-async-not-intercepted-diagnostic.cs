@@ -1,0 +1,209 @@
+#!/usr/bin/env -S dotnet --
+#:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
+#:project $(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj
+#:package Microsoft.CodeAnalysis.CSharp
+
+#region Purpose
+// Kanban 547: a RunAsync() call the generator does not intercept compiled cleanly and threw
+// "RunAsync was not intercepted" at runtime. The generator now finds RunAsync() calls by method
+// symbol (generator-71 runs each context), and NURU_I001 warns at compile time for any NuruApp.RunAsync()
+// invocation that no app intercepts, such as a call on a NuruApp parameter.
+#endregion
+
+#region Design
+// Roslyn-hosted like generator-69, so the CI multi-mode assembly excludes it (CS0433) and it runs
+// standalone. Assertions read the generator diagnostics and the compile errors of the output.
+#endregion
+
+#if !JARIBU_MULTI
+return await RunAllTests();
+#endif
+
+namespace TimeWarp.Nuru.Tests.Generator.Gen72RunAsyncNotIntercepted
+{
+  using System.Collections.Immutable;
+  using Microsoft.CodeAnalysis;
+  using Microsoft.CodeAnalysis.CSharp;
+  using TimeWarp.Nuru.Generators;
+
+  [TestTag("generator")]
+  public class RunAsyncNotInterceptedTests
+  {
+    [ModuleInitializer]
+    internal static void Register() => RegisterTests<RunAsyncNotInterceptedTests>();
+
+    private sealed record GeneratorRun(
+      ImmutableArray<Diagnostic> GeneratorDiagnostics,
+      ImmutableArray<Diagnostic> CompileErrors);
+
+    private static GeneratorRun Run(string source)
+    {
+      CSharpParseOptions parseOptions = CSharpParseOptions.Default
+        .WithFeatures([new KeyValuePair<string, string>("InterceptorsNamespaces", "TimeWarp.Nuru.Generated")]);
+      SyntaxTree tree = CSharpSyntaxTree.ParseText(source, parseOptions, path: "app.cs");
+
+      string tpa = (string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!;
+      List<MetadataReference> references = [];
+      foreach (string path in tpa.Split(Path.PathSeparator))
+      {
+        // The analyzers assembly shares parsing types with timewarp-nuru (CS0433); a real app
+        // loads it as an analyzer, not as a reference.
+        if (Path.GetFileNameWithoutExtension(path) == "TimeWarp.Nuru.Analyzers")
+          continue;
+        references.Add(MetadataReference.CreateFromFile(path));
+      }
+
+      CSharpCompilation compilation = CSharpCompilation.Create(
+        assemblyName: "Gen72App",
+        syntaxTrees: [tree],
+        references: references,
+        options: new CSharpCompilationOptions(OutputKind.ConsoleApplication, nullableContextOptions: NullableContextOptions.Enable));
+
+      CSharpGeneratorDriver driver = CSharpGeneratorDriver.Create(
+        generators: [new NuruGenerator().AsSourceGenerator()],
+        parseOptions: parseOptions);
+      _ = driver.RunGeneratorsAndUpdateCompilation(compilation, out Compilation output, out ImmutableArray<Diagnostic> generatorDiagnostics);
+
+      ImmutableArray<Diagnostic> errors = [.. output.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error)];
+      return new GeneratorRun(generatorDiagnostics, errors);
+    }
+
+    private static Diagnostic[] I001(GeneratorRun run) =>
+      [.. run.GeneratorDiagnostics.Where(static d => d.Id == "NURU_I001")];
+
+    private static string Describe(IEnumerable<Diagnostic> diagnostics) =>
+      string.Join("\n", diagnostics.Select(static d => d.ToString()));
+
+    public static async Task Should_warn_for_run_async_on_a_parameter()
+    {
+      const string Source = """
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-work").WithHandler(() => "work").AsCommand().Done()
+          .Build();
+        return await Runner.Run(app);
+
+        static class Runner
+        {
+          public static Task<int> Run(NuruApp target) => target.RunAsync(["gen72-work"]);
+        }
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      Diagnostic[] i001 = I001(run);
+      i001.Length.ShouldBe(1, Describe(run.GeneratorDiagnostics));
+      i001[0].Severity.ShouldBe(DiagnosticSeverity.Warning);
+      i001[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture).ShouldContain("'target'");
+      i001[0].Location.GetLineSpan().StartLinePosition.Line.ShouldBe(10);
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_warn_for_run_async_on_a_method_result()
+    {
+      const string Source = """
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        return await Create().RunAsync(["gen72-work"]);
+
+        static NuruApp Create() => NuruApp.CreateBuilder()
+          .Map("gen72-work").WithHandler(() => "work").AsCommand().Done()
+          .Build();
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      Diagnostic[] i001 = I001(run);
+      i001.Length.ShouldBe(1, Describe(run.GeneratorDiagnostics));
+      i001[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture).ShouldContain("'Create()'");
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_not_warn_when_every_context_is_intercepted()
+    {
+      const string Source = """
+        using System;
+        using System.Collections.Generic;
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-work").WithHandler(() => "work").AsCommand().Done()
+          .Build();
+
+        List<int> codes = [];
+        codes.Add((await app.RunAsync(["gen72-work"])));
+        codes.Add(await app.RunAsync(["gen72-work"]).ConfigureAwait(false));
+        int either = codes.Count > 0 ? await app.RunAsync(["gen72-work"]) : await app.RunAsync([]);
+        Func<Task<int>> later = () => app!.RunAsync(["gen72-work"]);
+        codes.Add(either + await later());
+        return await Program2.Run();
+
+        static class Program2
+        {
+          public static Task<int> Run() => NuruApp.CreateBuilder()
+            .Map("gen72-other").WithHandler(() => "other").AsCommand().Done()
+            .Build()
+            .RunAsync(["gen72-other"]);
+        }
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      I001(run).ShouldBeEmpty(Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_not_warn_for_a_method_group()
+    {
+      // A method group conversion is not an invocation, so there is no call site to report
+      const string Source = """
+        using System;
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-work").WithHandler(() => "work").AsCommand().Done()
+          .Build();
+        Func<string[], Task<int>> run = app.RunAsync;
+        return await run(["gen72-work"]);
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      I001(run).ShouldBeEmpty(Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_not_add_a_warning_to_an_extraction_error()
+    {
+      const string Source = """
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-work {").WithHandler(() => "work").AsCommand().Done()
+          .Build();
+        return await app.RunAsync(["gen72-work"]);
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.GeneratorDiagnostics.ShouldContain(static d => d.Severity == DiagnosticSeverity.Error, Describe(run.GeneratorDiagnostics));
+      I001(run).ShouldBeEmpty(Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+  }
+}

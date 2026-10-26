@@ -217,6 +217,19 @@ public sealed class NuruGenerator : IIncrementalGenerator
         ReportLoggerWithoutConfigurationWarnings(ctx, modelWithDiags.Model);
       });
 
+    // Stage A2: NURU_I001 for RunAsync() calls no app intercepts (task 547). Uncached, like Stage A.
+    IncrementalValueProvider<ImmutableArray<RunAsyncCall>> runAsyncCalls = context.SyntaxProvider
+      .CreateSyntaxProvider(
+        predicate: static (node, _) => RunAsyncLocator.IsPotentialMatch(node),
+        transform: static (ctx, ct) => RunAsyncLocator.LocateCall(ctx, ct))
+      .Where(static call => call is not null)
+      .Select(static (call, _) => call!)
+      .Collect();
+
+    context.RegisterSourceOutput(
+      runAsyncCalls.Combine(generatorModelWithDiagnostics),
+      static (ctx, data) => ReportRunAsyncNotIntercepted(ctx, data.Left, data.Right));
+
     // Stage B: emit generated code (cacheable — no Compilation, no diagnostics).
     context.RegisterSourceOutput(
       modelProvider.Combine(enumInfoProvider),
@@ -278,6 +291,49 @@ public sealed class NuruGenerator : IIncrementalGenerator
     Location location = literal.GetLocation();
 
     return new RouteWithLocation(pattern, location, Route: null);
+  }
+
+  /// <summary>
+  /// Reports NURU_I001 for each NuruApp.RunAsync() call that no app's interceptor covers, so the
+  /// "RunAsync was not intercepted" failure shows at compile time instead of at runtime (task 547).
+  /// </summary>
+  /// <remarks>
+  /// Skipped when extraction already reported an error: a failed app has no interceptor, and its
+  /// error says why.
+  /// </remarks>
+  private static void ReportRunAsyncNotIntercepted
+  (
+    SourceProductionContext ctx,
+    ImmutableArray<RunAsyncCall> calls,
+    GeneratorModelWithDiagnostics? modelWithDiags
+  )
+  {
+    if (calls.IsEmpty)
+      return;
+
+    if (modelWithDiags?.Diagnostics.Any(static d => d.Severity == DiagnosticSeverity.Error) == true)
+      return;
+
+    HashSet<InterceptSiteModel> interceptedSites = [];
+    if (modelWithDiags?.Model is { } model)
+    {
+      foreach (AppModel app in model.Apps)
+      {
+        if (app.InterceptSitesByMethod.TryGetSites("RunAsync", out EquatableArray<InterceptSiteModel> sites))
+          interceptedSites.UnionWith(sites);
+      }
+    }
+
+    foreach (RunAsyncCall call in calls)
+    {
+      if (call.Site is not null && interceptedSites.Contains(call.Site))
+        continue;
+
+      ctx.ReportDiagnostic(Diagnostic.Create(
+        DiagnosticDescriptors.RunAsyncNotIntercepted,
+        call.Location,
+        call.ReceiverText));
+    }
   }
 
   /// <summary>

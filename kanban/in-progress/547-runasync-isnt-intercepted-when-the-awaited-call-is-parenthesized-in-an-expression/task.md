@@ -56,6 +56,7 @@ Acceptance criteria:
 - Review oracle: round 3 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3, M4 fixed. Open finding M5. Disposition pending a fix pass — 2026-10-26
 - 2026-10-26 implement-fix-4 (claude, ganda task work): fixed review round 3 M5 with regressions.
 - Review oracle: round 4 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3, M4, M5 fixed. Open finding M6. Disposition pending a fix pass — 2026-10-26
+- Review oracle: round 5 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 80), effort 1. M1–M6 fixed. No new findings. Disposition clean — 2026-10-26
 
 ## Results
 
@@ -207,17 +208,17 @@ parameter call when another app has an extraction error).
 
 ### Review
 
-Round 4, effort 2, roster general (turn cap 120, session max-turns uncapped). Delta `2ea4f9ac..53b3cc91`. The implementer restatement matches the task checklist.
+Round 5, effort 1, roster general (turn cap 80, session max-turns uncapped). Delta `80af7f31..930090e9`. The implementer restatement matches the task checklist.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 1 | 4 | 0 |
+| bug | 0 | 5 | 0 |
 | suggestion | 0 | 1 | 0 |
 | nit | 0 | 0 | 0 |
 
-Disposition: pending. M1, M2, M3, M4, and M5 are fixed. Open finding M6 (`IsNullLiteral` ignores a null write wrapped in parentheses or `!`, so a closure call after one `Build()` is left unintercepted). No `review/disposition.md` until that is closed.
+Disposition: clean. M1, M2, M3, M4, M5, and M6 are fixed. No new findings.
 
-Paths: `review/review-framework.md`, `review/round-4/general.md`, `review/round-4/merged.md`. Rounds 1–3 are unchanged under `review/round-1/`, `review/round-2/`, and `review/round-3/`.
+Paths: `review/review-framework.md`, `review/round-5/general.md`, `review/round-5/merged.md`, `review/disposition.md`. Rounds 1–4 are unchanged under `review/round-1/` through `review/round-4/`.
 
 ## Review
 
@@ -225,3 +226,4 @@ Paths: `review/review-framework.md`, `review/round-4/general.md`, `review/round-
 - Round 2: Blocked — open M4
 - Round 3: Blocked — open M5
 - Round 4: Blocked — open M6
+- Round 5: Done

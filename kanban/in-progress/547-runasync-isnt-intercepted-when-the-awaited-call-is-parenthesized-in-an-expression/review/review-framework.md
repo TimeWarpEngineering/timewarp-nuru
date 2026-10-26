@@ -10,11 +10,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 207
-- Effort: 2
+- Lines changed: 71
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -47,3 +47,11 @@
 **Effort:** 2 (general only; by-diff 207 lines)
 **Reviewer roster:** general
 **Session IDs:** review oracle session not reported (cursor, model Grok 4.7). max-turns uncapped; budget turn cap 120.
+
+## Round 5
+
+**Date:** 2026-10-26
+**Diff scope:** fix delta `80af7f31..930090e9` (head `930090e94d81bb098e0d18a615c2626ff173f2c0`). Re-check of M6 and defects on that delta only.
+**Effort:** 1 (general only; by-diff 71 lines)
+**Reviewer roster:** general
+**Session IDs:** review oracle session not reported (cursor, model Grok 4.7). max-turns uncapped; budget turn cap 80.

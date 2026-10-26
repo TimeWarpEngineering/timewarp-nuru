@@ -5,12 +5,14 @@
 #endregion
 
 #region Design
-// The logger factory source has two shapes (see InterceptorEmitter.GetFirstLoggerFactoryFieldName):
-// a static __loggerFactory field built from AddLogging (the lambda body, or no providers for a
-// parameterless AddLogging(), task 546; non-null), or app.LoggerFactory
-// for telemetry logging (nullable, so the expression falls back to a NullLogger). With neither, the
-// logger is a NullLogger and NURU_H007 warns. Types are matched by full name, so a user interface
-// whose name merely contains "ILogger" is resolved as an ordinary service, not as a logger.
+// The logger factory source is chosen per app (see InterceptorEmitter.GetLoggerFactorySource, task 544)
+// and has two shapes: a static __loggerFactory field built from AddLogging (the lambda body, or no
+// providers for a parameterless AddLogging(), task 546; non-null), or app.LoggerFactory for telemetry
+// logging (nullable, so the expression falls back to a NullLogger). With neither, the logger is a
+// NullLogger and NURU_H007 warns. Code shared by every app in the compilation reads CurrentAppFactory
+// instead, a nullable field EnsureServicesInitialized sets to the running app's source. Types are
+// matched by full name, so a user interface whose name merely contains "ILogger" is resolved as an
+// ordinary service, not as a logger.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -22,6 +24,12 @@ internal static class LoggerExpressions
 {
   private const string LoggingNamespace = "Microsoft.Extensions.Logging.";
   private const string NullLoggerFactory = "global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance";
+
+  /// <summary>
+  /// The generated field holding the running app's logger factory, or null when that app has none.
+  /// Shared static code (service fields, behavior instances, the mediator container) reads it.
+  /// </summary>
+  public const string CurrentAppFactory = "__nuruLoggerFactory";
 
   /// <summary>
   /// True for <c>ILogger&lt;T&gt;</c>, <c>ILogger</c>, and <c>ILoggerFactory</c> from Microsoft.Extensions.Logging.
@@ -70,10 +78,12 @@ internal static class LoggerExpressions
   /// The expression for a logging service. Call only when <see cref="IsLoggingServiceType"/> is true.
   /// </summary>
   /// <param name="typeName">The logging service type.</param>
-  /// <param name="loggerFactoryFieldName">The static factory field, <c>app.LoggerFactory</c>, or null when no logging is configured.</param>
+  /// <param name="loggerFactoryFieldName">The app's static factory field, <c>app.LoggerFactory</c>, <see cref="CurrentAppFactory"/>, or null when no logging is configured.</param>
   public static string Resolve(string typeName, string? loggerFactoryFieldName)
   {
-    bool runtimeFactory = loggerFactoryFieldName?.Contains('.', StringComparison.Ordinal) == true;
+    // app.LoggerFactory and the current-app field are nullable; an AddLogging field never is.
+    bool runtimeFactory = loggerFactoryFieldName is CurrentAppFactory
+      || loggerFactoryFieldName?.Contains('.', StringComparison.Ordinal) == true;
 
     if (IsLoggerFactoryType(typeName))
     {
@@ -89,7 +99,7 @@ internal static class LoggerExpressions
     if (loggerFactoryFieldName is null)
       return $"{NullLoggerFactory}.CreateLogger<{category}>()";
 
-    // Telemetry path: app.LoggerFactory is nullable.
+    // Telemetry path or the current-app field: the factory is nullable.
     if (runtimeFactory)
       return $"({loggerFactoryFieldName}?.CreateLogger<{category}>() ?? global::Microsoft.Extensions.Logging.Abstractions.NullLogger<{category}>.Instance)";
 

@@ -54,7 +54,12 @@ internal static class InterceptorEmitter
         .SelectMany(app => app.HttpClientConfigurations)
         .DistinctBy(config => config.ServiceTypeName)
     ];
-    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.HasGeneratedMediator, GetFirstLoggerFactoryFieldName(model), sourceGenHttpClients);
+    // Shared static state (service framework fields, behavior instances, the mediator container) is
+    // built for whichever app runs, so it reads the running app's factory, set by EnsureServicesInitialized.
+    string? currentAppLoggerFactory = model.Apps.Any(HasLoggerFactorySource) ? LoggerExpressions.CurrentAppFactory : null;
+    ImmutableArray<BehaviorDefinition> allBehaviors = [.. model.AllBehaviors];
+    ImmutableArray<ServiceDefinition> allServices = [.. model.AllServices];
+    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.HasGeneratedMediator, currentAppLoggerFactory, sourceGenHttpClients, allBehaviors, allServices);
 
     // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     // Each app gets its own __ConfigureServices and GetServiceProvider methods
@@ -74,10 +79,7 @@ internal static class InterceptorEmitter
       TelemetryEmitter.EmitTelemetryFields(sb, enableTracing, enableMetrics);
     }
 
-    // Determine the logger factory source for ILogger<T> injection
-    // (static field when explicit logging configured, or app.LoggerFactory when telemetry enabled)
-    string? loggerFactoryFieldName = GetFirstLoggerFactoryFieldName(model);
-    BehaviorEmitter.EmitBehaviorFields(sb, [.. model.AllBehaviors], [.. model.AllServices], loggerFactoryFieldName);
+    BehaviorEmitter.EmitBehaviorFields(sb, allBehaviors, allServices, currentAppLoggerFactory);
 
     // Emit per-app interceptor methods
     // A Build() site is emitted once even when two app models share it.
@@ -86,7 +88,8 @@ internal static class InterceptorEmitter
     {
       AppModel app = model.Apps[appIndex];
       EmitBuildInterceptorMethod(sb, app, appIndex, model, emittedBuildSites);
-      EmitAppInterceptorMethod(sb, app, appIndex, model, loggerFactoryFieldName);
+      // Each app's handlers log through its own factory, not the first app's (task 544)
+      EmitAppInterceptorMethod(sb, app, appIndex, model, GetLoggerFactorySource(model, appIndex));
       EmitRunReplAsyncInterceptorMethod(sb, app, appIndex, model);
     }
 
@@ -483,7 +486,7 @@ internal static class InterceptorEmitter
   /// Each field is built on first read by its <c>__Resolve</c> accessor, so a call that never
   /// reaches a service (a built-in, a parse error, a forwarded route) never constructs it.
   /// </summary>
-  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, bool hasGeneratedMediator, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
+  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, bool hasGeneratedMediator, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, ImmutableArray<BehaviorDefinition> behaviors, ImmutableArray<ServiceDefinition> behaviorServices)
   {
     // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
     ImmutableArray<ServiceDefinition> allServices = [.. services];
@@ -532,14 +535,18 @@ internal static class InterceptorEmitter
     sb.AppendLine("  private static global::TimeWarp.Nuru.NuruApp? __fw_NuruApp;");
 
     // Emit additional framework service fields needed by services
+    HashSet<string> frameworkFieldNames = new(StringComparer.Ordinal) { "__fw_ITerminal", "__fw_NuruApp" };
     foreach (string frameworkType in frameworkServiceTypes)
     {
       string fieldName = FrameworkServices.GetFieldName(frameworkType);
-      if (fieldName == "__fw_ITerminal" || fieldName == "__fw_NuruApp")
-        continue; // Already emitted
+      if (!frameworkFieldNames.Add(fieldName))
+        continue; // Already emitted (or the same type spelled with and without global::)
 
       sb.AppendLine($"  private static {frameworkType}? {fieldName};");
     }
+
+    if (loggerFactoryFieldName is not null)
+      sb.AppendLine($"  private static global::Microsoft.Extensions.Logging.ILoggerFactory? {loggerFactoryFieldName};");
 
     // Emit user service fields
     foreach (ServiceDefinition service in cachedProcessServices)
@@ -586,7 +593,7 @@ internal static class InterceptorEmitter
     sb.AppendLine();
 
     // Emit EnsureServicesInitialized method
-    EmitEnsureServicesInitialized(sb, cachedProcessServices, frameworkServiceTypes, requiresMediator, loggerFactoryFieldName);
+    EmitEnsureServicesInitialized(sb, cachedProcessServices, frameworkServiceTypes, requiresMediator, loggerFactoryFieldName, behaviors, behaviorServices);
     EmitSourceGenScopeMethods(sb, allServices, cachedProcessServices);
 
     if (requiresMediator)
@@ -628,12 +635,8 @@ internal static class InterceptorEmitter
     sb.AppendLine($"      {Sce}.AddTransient<global::Microsoft.Extensions.Configuration.IConfigurationRoot>(services, static _ => __mediatorConfiguration!);");
     sb.AppendLine($"      {Sce}.AddTransient<global::Microsoft.Extensions.Configuration.IConfiguration>(services, static _ => __mediatorConfiguration!);");
 
-    string loggerFactoryExpression = loggerFactoryFieldName switch
-    {
-      null => "global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance",
-      "app.LoggerFactory" => "__fw_NuruApp?.LoggerFactory ?? global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance",
-      _ => loggerFactoryFieldName
-    };
+    // The container is rebuilt per app, and the factory is read per resolve: the running app's (task 544)
+    string loggerFactoryExpression = LoggerExpressions.Resolve("global::Microsoft.Extensions.Logging.ILoggerFactory", loggerFactoryFieldName);
     sb.AppendLine($"      {Sce}.AddTransient<global::Microsoft.Extensions.Logging.ILoggerFactory>(services, static _ => {loggerFactoryExpression});");
     sb.AppendLine($"      {Sce}.AddSingleton(services, typeof(global::Microsoft.Extensions.Logging.ILogger<>), typeof(global::Microsoft.Extensions.Logging.Logger<>));");
 
@@ -708,20 +711,31 @@ internal static class InterceptorEmitter
   /// in the same process (e.g., CI multi-mode tests). User services are not built here:
   /// a new app clears the process fields and each <c>__Resolve</c> accessor builds on first read.
   /// </summary>
-  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, HashSet<string> frameworkServiceTypes, bool requiresMediator, string? loggerFactoryFieldName)
+  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, HashSet<string> frameworkServiceTypes, bool requiresMediator, string? loggerFactoryFieldName, ImmutableArray<BehaviorDefinition> behaviors, ImmutableArray<ServiceDefinition> behaviorServices)
   {
-    sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
+    // The running app passes its own logger factory (task 544); see GetLoggerFactorySource.
+    string loggerFactoryParameter = loggerFactoryFieldName is null
+      ? ""
+      : ", global::Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory";
+    string loggerFactoryArgument = loggerFactoryFieldName is null ? "" : ", loggerFactory";
+
+    sb.AppendLine($"  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration{loggerFactoryParameter})");
     sb.AppendLine("  {");
     // Concurrent first calls (a daemon or MCP host) must not set up an app twice.
     sb.AppendLine("    lock (__nuruInitLock)");
-    sb.AppendLine("      EnsureServicesInitializedLocked(app, configuration);");
+    sb.AppendLine($"      EnsureServicesInitializedLocked(app, configuration{loggerFactoryArgument});");
     sb.AppendLine("  }");
     sb.AppendLine();
-    sb.AppendLine("  private static void EnsureServicesInitializedLocked(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
+    sb.AppendLine($"  private static void EnsureServicesInitializedLocked(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration{loggerFactoryParameter})");
     sb.AppendLine("  {");
     sb.AppendLine("    if (__fw_NuruApp == app)");
     sb.AppendLine("      return;");
     sb.AppendLine();
+    if (loggerFactoryFieldName is not null)
+    {
+      sb.AppendLine("    // Logging: the running app's factory, or null (NullLogger) when it configures none");
+      sb.AppendLine($"    {loggerFactoryFieldName} = loggerFactory;");
+    }
 
     // Initialize framework services
     sb.AppendLine("    // Framework services");
@@ -734,15 +748,16 @@ internal static class InterceptorEmitter
     }
 
     // Initialize additional framework services
+    HashSet<string> frameworkFieldNames = new(StringComparer.Ordinal) { "__fw_ITerminal", "__fw_NuruApp" };
     foreach (string frameworkType in frameworkServiceTypes)
     {
       string fieldName = FrameworkServices.GetFieldName(frameworkType);
-      if (fieldName == "__fw_ITerminal" || fieldName == "__fw_NuruApp")
+      if (!frameworkFieldNames.Add(fieldName))
         continue; // Already initialized
 
       // A service's ILogger<T> or ILoggerFactory comes from the AddLogging or telemetry factory, like a
-      // handler's or behavior's does. It was always a NullLogger before task 545. The telemetry
-      // expression reads app.LoggerFactory, which is this method's app parameter.
+      // handler's or behavior's does. It was always a NullLogger before task 545. It reads the running
+      // app's factory, set above, so a second app never logs through the first app's (task 544).
       string initExpr = LoggerExpressions.IsLoggingServiceType(frameworkType)
         ? LoggerExpressions.Resolve(frameworkType, loggerFactoryFieldName)
         : FrameworkServices.GetInitExpression(frameworkType);
@@ -755,6 +770,8 @@ internal static class InterceptorEmitter
     sb.AppendLine("    // User services: built on first read; a new app drops the previous app's instances");
     foreach (ServiceDefinition service in sortedServices)
       sb.AppendLine($"    {GetServiceFieldName(service.ImplementationTypeName)} = null;");
+
+    BehaviorEmitter.EmitLoggingBehaviorResets(sb, behaviors, behaviorServices, loggerFactoryFieldName);
 
     sb.AppendLine("  }");
     sb.AppendLine();
@@ -1158,10 +1175,10 @@ internal static class InterceptorEmitter
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // LOGGER FACTORY RESOLUTION - TWO PATHS FOR AOT OPTIMIZATION
+  // LOGGER FACTORY RESOLUTION - TWO PATHS FOR AOT OPTIMIZATION, ONE SOURCE PER APP
   // ═══════════════════════════════════════════════════════════════════════════════
   //
-  // Path 1: STATIC FIELD (__loggerFactory)
+  // Path 1: STATIC FIELD (__loggerFactory, or __loggerFactory_N with several apps)
   //   - Used when: User calls ConfigureServices(s => s.AddLogging(...))
   //   - Created at: Static initialization (compile-time deterministic)
   //   - AOT benefit: Zero runtime cost, trimmer sees exact types
@@ -1173,34 +1190,41 @@ internal static class InterceptorEmitter
   //   - AOT tradeoff: Runtime null checks, dynamic factory creation
   //   - Necessary because: OTLP endpoint is environment variable, unknown at compile time
   //
-  // Priority: Static field wins if both are configured (better AOT characteristics)
+  // Priority: Static field wins if an app configures both (better AOT characteristics).
+  //
+  // The source is chosen per app (task 544): app B never logs through app A's factory, and an app
+  // with neither path gets NullLogger. Code emitted once for every app (service framework fields,
+  // behavior instances, the mediator container) reads __nuruLoggerFactory, which
+  // EnsureServicesInitialized sets from the running app's source.
   // ═══════════════════════════════════════════════════════════════════════════════
 
   /// <summary>
-  /// Gets the logger factory source for ILogger&lt;T&gt; injection.
+  /// True when the app has a logger factory: explicit AddLogging(), or telemetry logging.
+  /// </summary>
+  private static bool HasLoggerFactorySource(AppModel app) =>
+    app.HasLogging || (app.HasTelemetry && (app.TelemetryOptions?.EnableLogging ?? true));
+
+  /// <summary>
+  /// Gets one app's logger factory source for ILogger&lt;T&gt; injection.
   /// </summary>
   /// <param name="model">The generator model.</param>
+  /// <param name="appIndex">Index of the app in <see cref="GeneratorModel.Apps"/>.</param>
   /// <returns>
-  /// Static field name (AOT-optimized) when explicit logging is configured,
-  /// "app.LoggerFactory" (runtime) when only telemetry is enabled,
-  /// or null if no logging source is available.
+  /// The app's static field name (AOT-optimized) when it configures AddLogging(),
+  /// "app.LoggerFactory" (runtime) when it only enables telemetry logging,
+  /// or null when the app has no logging source.
   /// </returns>
-  private static string? GetFirstLoggerFactoryFieldName(GeneratorModel model)
+  private static string? GetLoggerFactorySource(GeneratorModel model, int appIndex)
   {
+    AppModel app = model.Apps[appIndex];
+
     // Prefer static field - AOT-friendly, zero runtime cost
-    for (int i = 0; i < model.Apps.Length; i++)
-    {
-      if (model.Apps[i].HasLogging)
-      {
-        return GetLoggerFactoryFieldName(i, model.Apps.Length);
-      }
-    }
+    if (app.HasLogging)
+      return GetLoggerFactoryFieldName(appIndex, model.Apps.Length);
 
     // Fall back to runtime path for telemetry logging (OTEL endpoint is runtime config)
-    if (model.Apps.Any(a => a.HasTelemetry && (a.TelemetryOptions?.EnableLogging ?? true)))
-    {
+    if (HasLoggerFactorySource(app))
       return "app.LoggerFactory";
-    }
 
     return null;
   }
@@ -1272,15 +1296,18 @@ internal static class InterceptorEmitter
     sb.AppendLine("    // Initialize services with app and configuration");
     sb.AppendLine($"    bool __enteringRepl = __invocation is null && ({enteringRepl});");
     string scopeSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+    string ensureArgs = model.Apps.Any(HasLoggerFactorySource)
+      ? $"app, configuration, {loggerFactoryFieldName ?? "null"}"
+      : "app, configuration";
     if (app.UseMicrosoftDependencyInjection)
     {
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
+      sb.AppendLine($"    EnsureServicesInitialized({ensureArgs});");
       sb.AppendLine($"    await using global::TimeWarp.Nuru.NuruCommandLease __nuruLease = global::TimeWarp.Nuru.NuruCommandLease.Enter(GetServiceProvider{scopeSuffix}(app), fromRepl, static scope => __commandScope{scopeSuffix} = scope, hostRepl: __enteringRepl, isolatedCall: __isolatedCall);");
     }
     else
     {
       // Services are built when a handler or behavior first reads them, not here.
-      sb.AppendLine("    EnsureServicesInitialized(app, configuration);");
+      sb.AppendLine($"    EnsureServicesInitialized({ensureArgs});");
       sb.AppendLine("    await using global::TimeWarp.Nuru.NuruAsyncLease __nuruLease = __enteringRepl");
       sb.AppendLine("      ? global::TimeWarp.Nuru.NuruAsyncLease.Idle()");
       sb.AppendLine("      : global::TimeWarp.Nuru.NuruAsyncLease.For(fromRepl, EndReplCommandServicesAsync, EndSingleRunServicesAsync);");

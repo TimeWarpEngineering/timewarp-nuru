@@ -15,10 +15,9 @@
 // System.Console, which TestTerminal does not capture, so the assertions read the capture sink.
 // The tw-nuru-verify add-logging probe checks the console output in a real process.
 // The app uses Map<T>() rather than DiscoverEndpoints() so the CI multi-file assembly does not
-// pull other files' endpoints in. It still runs standalone only: in a multi-app compilation every
-// app injects loggers from the first app's AddLogging factory, so the CI assembly never reaches
-// this app's capture provider (kanban 544). Both apps here use the same AddLogging setup, so either
-// factory reaches the capture sink. The delegate handler test covers kanban 541: a
+// pull other files' endpoints in. It runs in that assembly too: each app logs through its own
+// AddLogging factory (kanban 544), so the other files' apps do not hide this capture provider.
+// generator-70 checks that separation directly. The delegate handler test covers kanban 541: a
 // WithHandler((ILogger<T> logger) => ...) parameter used to compile to a null logger.
 #endregion
 

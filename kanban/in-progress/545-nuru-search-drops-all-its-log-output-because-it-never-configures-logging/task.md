@@ -35,6 +35,10 @@ Acceptance criteria:
 - [x] Test: H007 fires for an endpoint constructor `ILogger<T>` without `AddLogging`, and not with it
 - [x] Verify by hand: `nuru search --cli <bad-path>` prints the warning
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Behaviors and delegate handlers already warn (541). Endpoint constructors are the remaining silent case.
@@ -50,6 +54,8 @@ Acceptance criteria:
   `CapabilitiesClient`/`SearchIndex`. Fixed in the emitter and extended H007 to service constructors too.
   `ganda repo audit` passed with no fixes needed.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-26T06:48:37Z
+- Review oracle: tw-implementation-review, effort 2, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 120), round 1, disposition clean — 2026-10-26
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-26T07:04:29Z
 
 ## Results
 
@@ -102,9 +108,17 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-69-endpoint-constructor
 - `/tmp/err.txt` contains `warning: CLI /usr/bin/false returned exit code 1` (before this task stderr was empty).
 - generator-69 reports 5 passed, 0 failed.
 
+### Review
+
+Round 1, effort 2, roster general. Counts: bug 0, suggestion 0, nit 0, open 0. Disposition: clean. The restatement asks for a console provider; the checklist asks for warnings and errors on stderr. That misread is under `## Learnings`. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### Follow-ups (not filed)
 
 - Pre-existing: the search handler's own "Warning: ..." lines go to stdout through `ITerminal.WriteLineAsync`, not stderr.
 - Pre-existing: `FrameworkServices.GetFieldName` names logger fields by the simple category name, so two
   categories with the same simple name in different namespaces would collide (`__fw_ILogger_X`).
+
+## Learnings
+
+- Misread: the implementer restatement says nuru-search calls `AddLogging` with a console provider routed to stderr. The checklist says `AddLogging` with warnings and errors on stderr so stdout stays results-only, and does not name the console provider. The console logger queues writes, and the generated factory is never disposed, so the last lines can disappear. The implementation writes those lines synchronously and follows the checklist.
 

@@ -38,12 +38,43 @@ internal static class BehaviorEmitter
       string fieldName = GetBehaviorFieldName(behavior);
       string constructorArgs = BuildConstructorArgs(behavior, services, loggerFactoryFieldName);
 
+      // A behavior that takes a logger is rebuilt for each app (EmitLoggingBehaviorResets), so it is not readonly.
+      string modifiers = HasLoggingDependency(behavior) ? "private static" : "private static readonly";
       sb.AppendLine(
-        $"  private static readonly global::System.Lazy<{behavior.FullTypeName}> {fieldName} = new(() => new {behavior.FullTypeName}({constructorArgs}));");
+        $"  {modifiers} global::System.Lazy<{behavior.FullTypeName}> {fieldName} = new(() => new {behavior.FullTypeName}({constructorArgs}));");
     }
 
     sb.AppendLine();
   }
+
+  /// <summary>
+  /// Emits, inside EnsureServicesInitialized, a fresh Lazy for each behavior that takes a logger, so a
+  /// new app's behavior logs through that app's factory rather than the first app's (task 544).
+  /// Behaviors without a logger keep one process-wide instance.
+  /// </summary>
+  /// <param name="sb">StringBuilder to append to.</param>
+  /// <param name="behaviors">Behavior definitions from every app.</param>
+  /// <param name="services">Service definitions for dependency resolution.</param>
+  /// <param name="loggerFactoryFieldName">The current-app factory field, or null if no app configures logging.</param>
+  public static void EmitLoggingBehaviorResets(
+    StringBuilder sb,
+    ImmutableArray<BehaviorDefinition> behaviors,
+    ImmutableArray<ServiceDefinition> services,
+    string? loggerFactoryFieldName)
+  {
+    // Without a logging source every app's behaviors get the same NullLogger, so nothing to rebuild.
+    if (loggerFactoryFieldName is null || behaviors.IsDefaultOrEmpty)
+      return;
+
+    foreach (BehaviorDefinition behavior in behaviors.Where(HasLoggingDependency))
+    {
+      string constructorArgs = BuildConstructorArgs(behavior, services, loggerFactoryFieldName);
+      sb.AppendLine($"    {GetBehaviorFieldName(behavior)} = new(() => new {behavior.FullTypeName}({constructorArgs}));");
+    }
+  }
+
+  private static bool HasLoggingDependency(BehaviorDefinition behavior) =>
+    behavior.ConstructorDependencies.Any(static dep => LoggerExpressions.IsLoggingServiceType(dep.ParameterTypeName));
 
   /// <summary>
   /// Emits the pipeline wrapper around handler invocation.

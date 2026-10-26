@@ -217,7 +217,9 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen69EndpointConstructorLoggerWarning
       GeneratorRun run = Run(Source);
 
       run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
-      run.GeneratedSource.ShouldContain("__fw_ILogger_Gen69Service = __loggerFactory.CreateLogger<global::Gen69Service>();");
+      // The service field reads the running app's factory, which this app passes in (task 544).
+      run.GeneratedSource.ShouldContain("EnsureServicesInitialized(app, configuration, __loggerFactory);");
+      run.GeneratedSource.ShouldContain("__fw_ILogger_Gen69Service = (__nuruLoggerFactory?.CreateLogger<global::Gen69Service>()");
       run.GeneratedSource.ShouldNotContain("NullLoggerFactory.Instance.CreateLogger<global::Gen69Service>()");
       run.GeneratorDiagnostics.Any(static d => d.Id == "NURU_H007").ShouldBeFalse(Describe(run.GeneratorDiagnostics));
 
@@ -226,8 +228,8 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen69EndpointConstructorLoggerWarning
 
     public static async Task Should_resolve_service_constructor_logger_from_telemetry_factory()
     {
-      // UseTelemetry() logs through app.LoggerFactory, which EnsureServicesInitialized reads from its
-      // app parameter. The service logger falls back to a NullLogger when telemetry is off at runtime.
+      // UseTelemetry() logs through app.LoggerFactory, which the app passes to EnsureServicesInitialized.
+      // The service logger falls back to a NullLogger when telemetry is off at runtime.
       const string Source = """
         using System.Threading;
         using System.Threading.Tasks;
@@ -248,7 +250,8 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen69EndpointConstructorLoggerWarning
       GeneratorRun run = Run(Source);
 
       run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
-      run.GeneratedSource.ShouldContain("__fw_ILogger_Gen69Service = (app.LoggerFactory?.CreateLogger<global::Gen69Service>()");
+      run.GeneratedSource.ShouldContain("EnsureServicesInitialized(app, configuration, app.LoggerFactory);");
+      run.GeneratedSource.ShouldContain("__fw_ILogger_Gen69Service = (__nuruLoggerFactory?.CreateLogger<global::Gen69Service>()");
       run.GeneratorDiagnostics.Any(static d => d.Id == "NURU_H007").ShouldBeFalse(Describe(run.GeneratorDiagnostics));
 
       await Task.CompletedTask;

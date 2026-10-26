@@ -81,12 +81,12 @@ internal static class FrameworkServices
       int lastDot = genericTypeName.LastIndexOf('.');
       string simpleGenericName = lastDot >= 0 ? genericTypeName[(lastDot + 1)..] : genericTypeName;
 
-      // Get the simple name of the type argument (e.g., "SearchIndex" from "TimeWarp.Nuru.Search.Services.SearchIndex")
-      int argLastDot = typeArg.LastIndexOf('.');
-      string simpleTypeArg = argLastDot >= 0 ? typeArg[(argLastDot + 1)..] : typeArg;
+      // Name the field by the fully qualified type argument, so A.Foo and B.Foo do not share a field
+      // (task 544): "TimeWarp.Nuru.Search.SearchIndex" -> "TimeWarp_Nuru_Search_SearchIndex"
+      string qualifiedTypeArg = ToIdentifier(typeArg.Replace("global::", "", StringComparison.Ordinal));
 
-      // Create a unique field name: __fw_ILogger_SearchIndex
-      return $"__fw_{simpleGenericName}_{simpleTypeArg}";
+      // Create a unique field name: __fw_ILogger_TimeWarp_Nuru_Search_SearchIndex
+      return $"__fw_{simpleGenericName}_{qualifiedTypeArg}";
     }
 
     // Non-generic types: just use the simple type name
@@ -94,6 +94,21 @@ internal static class FrameworkServices
     string simpleName = simpleLastDot >= 0 ? normalized[(simpleLastDot + 1)..] : normalized;
 
     return $"__fw_{simpleName}";
+  }
+
+  /// <summary>
+  /// Replaces every character that cannot appear in a C# identifier with an underscore.
+  /// </summary>
+  private static string ToIdentifier(string typeName)
+  {
+    char[] chars = typeName.ToCharArray();
+    for (int i = 0; i < chars.Length; i++)
+    {
+      if (!char.IsLetterOrDigit(chars[i]) && chars[i] != '_')
+        chars[i] = '_';
+    }
+
+    return new string(chars);
   }
 
   /// <summary>

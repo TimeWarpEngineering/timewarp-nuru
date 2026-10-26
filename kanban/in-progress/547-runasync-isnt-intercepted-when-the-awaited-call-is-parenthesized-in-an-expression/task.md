@@ -49,6 +49,8 @@ Acceptance criteria:
 - 2026-10-26 implementer (claude, ganda task work): root cause found, fix + NURU_I001 + tests landed.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-26T09:09:50Z
 - Review oracle: round 1 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. Open findings M1, M2, M3. Disposition pending a fix pass — 2026-10-26
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-26T09:29:26Z
+- 2026-10-26 implement-fix-2 (claude, ganda task work): fixed review round 1 M1, M2, M3 with regressions.
 
 ## Results
 
@@ -90,9 +92,36 @@ was evaluated) were missed the same way.
 - Docs: changelog Added/Fixed entries, one line in `skills/tw-nuru/SKILL.md`,
   `AnalyzerReleases.Unshipped.md` row.
 
+### Review round 1 fixes
+
+- **M1** (`dsl-interpreter.cs`): the entry point pass skips a call the statement walk already
+  bound (`BoundEntryPointCalls`), so one call site never lands on two apps (that was CS9153,
+  "intercepted multiple times"). Declarations and assignments now record the app each variable
+  holds (`AppAssignments`), and an identifier receiver resolves to the last assignment before the
+  call in source order. With no earlier assignment (a local function, another file), it binds only
+  when every assignment gave the variable the same app, else it is left for NURU_I001. Known
+  limit, unchanged from before 547: when both arms of an `if` assign the local, a later call binds
+  to the app from the arm that comes later in the source (the statement walk already did this for
+  `await app.RunAsync(...);`).
+- **M2** (`run-async-locator.cs`, `intercept-site-extractor.cs`, `app-extractor.cs`):
+  `RunAsyncLocator.TryGetMemberCall` returns the name and receiver for `x.M(...)` and `x?.M(...)`
+  (a member binding, receiver taken from the enclosing conditional access). `IsPotentialMatch`,
+  `LocateCall`, the entry point pass and the field scan use it. `app?.RunAsync(...)` on a traced
+  local is intercepted, and on a parameter it reports NURU_I001.
+- **M3** (`nuru-generator.cs`): NURU_I001 is suppressed only for a call in the same
+  `RunAsyncLocator.EntryPointScope` (method or other member, or the file's top-level statements) as
+  a generator error. A call elsewhere still warns when another app failed.
+- Tests: generator-71 adds a reassigned local (statement and parenthesized form on each app) and
+  `app?.RunAsync(...)`. generator-72 adds `?.` on a parameter, a reassigned local (no compile
+  error, no NURU_I001), and a broken app plus a valid app plus a parameter call (one NURU_I001, on
+  the parameter). The no-warn test also covers `app?.RunAsync`. Against the round-1 code,
+  generator-71 fails to compile with CS9153 and the three new generator-72 tests fail.
+
 ### Verification
 
 - `./bin/dev test`: multi-mode 2128 total, 2122 passed, 6 skipped, 0 failed; standalone 41 files, 0 failed.
+- Round 1 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 41 standalone files, 0 failed);
+  `./bin/dev verify-samples` 68/68; `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - `./bin/dev verify-samples`: 68/68.
 - `dotnet build timewarp-nuru.slnx --no-incremental`: 0 warnings, 0 errors (no NURU_I001 in repo code).
 - `ganda repo audit`: passes. The push hook flagged `runfile-executable` for the two new test runfiles;
@@ -108,9 +137,10 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-71-run-async-call-conte
 dotnet run tests/timewarp-nuru-tests/generator/generator-72-run-async-not-intercepted-diagnostic.cs
 ```
 
-Expect: generator-71 reports `Total: 8 Passed: 8` (each context ran its handler with exit 0, so
-every call was intercepted); generator-72 reports `Total: 5 Passed: 5` (NURU_I001 on the parameter
-and method-result receivers only).
+Expect: generator-71 reports `Total: 10 Passed: 10` (each context, including a reassigned local
+and `app?.RunAsync`, ran its handler with exit 0, so every call was intercepted once);
+generator-72 reports `Total: 8 Passed: 8` (NURU_I001 on the parameter, `?.` parameter and
+method-result receivers only, and still on a parameter call when another app has an extraction error).
 
 ### Review
 
@@ -126,3 +156,6 @@ Disposition: pending. Open findings M1 (reassigned local binds every `RunAsync` 
 
 Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
+## Review
+
+- Round 1: Blocked — open M1, M2, M3

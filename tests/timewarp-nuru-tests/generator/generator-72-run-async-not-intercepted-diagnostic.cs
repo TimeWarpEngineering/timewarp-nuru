@@ -144,6 +144,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen72RunAsyncNotIntercepted
         int either = codes.Count > 0 ? await app.RunAsync(["gen72-work"]) : await app.RunAsync([]);
         Func<Task<int>> later = () => app!.RunAsync(["gen72-work"]);
         codes.Add(either + await later());
+        codes.Add(await (app?.RunAsync(["gen72-work"]) ?? Task.FromResult(1)));
         return await Program2.Run();
 
         static class Program2
@@ -153,6 +154,68 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen72RunAsyncNotIntercepted
             .Build()
             .RunAsync(["gen72-other"]);
         }
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      I001(run).ShouldBeEmpty(Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_warn_for_conditional_access_on_a_parameter()
+    {
+      // Review round 1 M2: target?.RunAsync(...) was neither intercepted nor reported
+      const string Source = """
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-work").WithHandler(() => "work").AsCommand().Done()
+          .Build();
+        return await Runner.Run(app);
+
+        static class Runner
+        {
+          public static Task<int> Run(NuruApp? target) => target?.RunAsync(["gen72-work"]) ?? Task.FromResult(1);
+        }
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      Diagnostic[] i001 = I001(run);
+      i001.Length.ShouldBe(1, Describe(run.GeneratorDiagnostics));
+      i001[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture).ShouldContain("'target'");
+      i001[0].Location.GetLineSpan().StartLinePosition.Line.ShouldBe(10);
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_bind_a_reassigned_local_in_source_order()
+    {
+      // Review round 1 M1: each call binds to the app the local holds at that point. Binding through
+      // the final value put the first app's calls on the second app too, and two interceptors for one
+      // call site fail to compile.
+      const string Source = """
+        using System.Collections.Generic;
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        List<int> codes = [];
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-first").WithHandler(() => "first").AsCommand().Done()
+          .Build();
+        await app.RunAsync(["gen72-first"]);
+        codes.Add(await app.RunAsync(["gen72-first"]));
+
+        app = NuruApp.CreateBuilder()
+          .Map("gen72-second").WithHandler(() => "second").AsCommand().Done()
+          .Build();
+        await app.RunAsync(["gen72-second"]);
+        codes.Add(await app.RunAsync(["gen72-second"]));
+        return (await app.RunAsync(["gen72-second"])) + codes.Count;
         """;
 
       GeneratorRun run = Run(Source);
@@ -202,6 +265,45 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen72RunAsyncNotIntercepted
 
       run.GeneratorDiagnostics.ShouldContain(static d => d.Severity == DiagnosticSeverity.Error, Describe(run.GeneratorDiagnostics));
       I001(run).ShouldBeEmpty(Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_still_warn_elsewhere_when_another_app_has_an_extraction_error()
+    {
+      // Review round 1 M3: an extraction error suppressed every NURU_I001 in the compilation. Only
+      // calls in the failed app's scope are quiet now; the parameter call in Runner still warns.
+      const string Source = """
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp broken = NuruApp.CreateBuilder()
+          .Map("gen72-work {").WithHandler(() => "work").AsCommand().Done()
+          .Build();
+        await broken.RunAsync(["gen72-work"]);
+        return await Runner.Run();
+
+        static class Runner
+        {
+          public static async Task<int> Run()
+          {
+            NuruApp valid = NuruApp.CreateBuilder()
+              .Map("gen72-valid").WithHandler(() => "valid").AsCommand().Done()
+              .Build();
+            await valid.RunAsync(["gen72-valid"]);
+            return await RunTarget(valid);
+          }
+
+          static Task<int> RunTarget(NuruApp target) => target.RunAsync(["gen72-valid"]);
+        }
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.GeneratorDiagnostics.ShouldContain(static d => d.Severity == DiagnosticSeverity.Error, Describe(run.GeneratorDiagnostics));
+      Diagnostic[] i001 = I001(run);
+      i001.Length.ShouldBe(1, Describe(run.GeneratorDiagnostics));
+      i001[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture).ShouldContain("'target'");
 
       await Task.CompletedTask;
     }

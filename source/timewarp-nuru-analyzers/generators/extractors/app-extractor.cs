@@ -364,16 +364,16 @@ internal static class AppExtractor
       // Find all invocations in the type
       foreach (InvocationExpressionSyntax invocation in typeSyntax.DescendantNodes().OfType<InvocationExpressionSyntax>())
       {
-        // Check if this is a RunAsync or RunReplAsync call
-        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+        // Check if this is a RunAsync or RunReplAsync call (App.RunAsync() or App?.RunAsync())
+        if (!RunAsyncLocator.TryGetMemberCall(invocation, out SimpleNameSyntax name, out ExpressionSyntax receiver))
           continue;
 
-        string methodName = memberAccess.Name.Identifier.Text;
+        string methodName = name.Identifier.Text;
         if (methodName is not ("RunAsync" or "RunReplAsync"))
           continue;
 
         // Check if the receiver is our field
-        ISymbol? receiverSymbol = semanticModel.GetSymbolInfo(memberAccess.Expression, cancellationToken).Symbol;
+        ISymbol? receiverSymbol = semanticModel.GetSymbolInfo(receiver, cancellationToken).Symbol;
         if (receiverSymbol is null || !SymbolEqualityComparer.Default.Equals(receiverSymbol, field))
           continue;
 

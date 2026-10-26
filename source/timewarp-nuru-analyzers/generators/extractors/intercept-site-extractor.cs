@@ -69,6 +69,9 @@ internal static class InterceptSiteExtractor
       // RunAsync() - get location of "RunAsync"
       IdentifierNameSyntax identifier => identifier.GetLocation(),
 
+      // app?.RunAsync() - get location of "RunAsync"
+      MemberBindingExpressionSyntax memberBinding => memberBinding.Name.GetLocation(),
+
       // Fallback to the whole expression
       _ => invocation.Expression.GetLocation()
     };

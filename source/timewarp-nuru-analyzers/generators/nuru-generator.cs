@@ -298,8 +298,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
   /// "RunAsync was not intercepted" failure shows at compile time instead of at runtime (task 547).
   /// </summary>
   /// <remarks>
-  /// Skipped when extraction already reported an error: a failed app has no interceptor, and its
-  /// error says why.
+  /// A call in the same <see cref="RunAsyncLocator.EntryPointScope"/> as a generator error is not
+  /// reported: that error is why its app has no interceptor. A call elsewhere is still reported, even
+  /// when another app in the compilation failed.
   /// </remarks>
   private static void ReportRunAsyncNotIntercepted
   (
@@ -311,8 +312,15 @@ public sealed class NuruGenerator : IIncrementalGenerator
     if (calls.IsEmpty)
       return;
 
-    if (modelWithDiags?.Diagnostics.Any(static d => d.Severity == DiagnosticSeverity.Error) == true)
-      return;
+    HashSet<Location> errorScopes = [];
+    foreach (Diagnostic diagnostic in modelWithDiags?.Diagnostics ?? [])
+    {
+      if (diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Location.SourceTree is not SyntaxTree tree)
+        continue;
+
+      RoslynSyntaxNode node = tree.GetRoot(ctx.CancellationToken).FindNode(diagnostic.Location.SourceSpan, getInnermostNodeForTie: true);
+      errorScopes.Add(RunAsyncLocator.EntryPointScope(node).GetLocation());
+    }
 
     HashSet<InterceptSiteModel> interceptedSites = [];
     if (modelWithDiags?.Model is { } model)
@@ -327,6 +335,9 @@ public sealed class NuruGenerator : IIncrementalGenerator
     foreach (RunAsyncCall call in calls)
     {
       if (call.Site is not null && interceptedSites.Contains(call.Site))
+        continue;
+
+      if (errorScopes.Contains(call.Scope))
         continue;
 
       ctx.ReportDiagnostic(Diagnostic.Create(

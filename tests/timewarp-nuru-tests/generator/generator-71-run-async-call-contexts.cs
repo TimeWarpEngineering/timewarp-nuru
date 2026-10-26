@@ -5,7 +5,8 @@
 // Kanban 547: RunAsync() was intercepted only when the call sat in a statement shape the DSL
 // interpreter walks (await x; var y = await x; return await x;). Other ordinary C# compiled, then
 // threw "RunAsync was not intercepted" at runtime, for example (await app.RunAsync(args)).ShouldBe(0).
-// Each test here runs RunAsync() in one such context and checks the handler ran.
+// Each test here runs RunAsync() in one such context and checks the handler ran. Review round 1
+// added a local reassigned to a second app and app?.RunAsync(...).
 #endregion
 
 #region Design
@@ -155,6 +156,55 @@ public class RunAsyncCallContextTests
       .Build()
       .RunAsync(["gen71-work"])).ShouldBe(0);
     terminal.OutputContains("gen71 chain").ShouldBeTrue();
+  }
+
+  public static async Task Should_bind_each_call_to_the_app_the_local_holds_at_that_point()
+  {
+    // Review round 1 M1: a call bound through the local's final value landed on the second app too,
+    // which emitted two interceptors for one call site and failed the build.
+    // Arrange
+    using TestTerminal first = new();
+    using TestTerminal second = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(first)
+      .Map("gen71-first").WithHandler(() => "gen71 first app").AsCommand().Done()
+      .Build();
+
+    // Act: statement form and an expression form on each app
+    int firstStatement = await app.RunAsync(["gen71-first"]);
+    (await app.RunAsync(["gen71-first"])).ShouldBe(0);
+
+    app = NuruApp.CreateBuilder()
+      .UseTerminal(second)
+      .Map("gen71-second").WithHandler(() => "gen71 second app").AsCommand().Done()
+      .Build();
+
+    int secondStatement = await app.RunAsync(["gen71-second"]);
+    (await app.RunAsync(["gen71-second"])).ShouldBe(0);
+
+    // Assert
+    firstStatement.ShouldBe(0);
+    secondStatement.ShouldBe(0);
+    first.OutputContains("gen71 first app").ShouldBeTrue();
+    second.OutputContains("gen71 second app").ShouldBeTrue();
+  }
+
+  public static async Task Should_intercept_conditional_access()
+  {
+    // Review round 1 M2: app?.RunAsync(...) is a member binding, not a member access
+    // Arrange
+    using TestTerminal terminal = new();
+    NuruApp? app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("gen71-work").WithHandler(() => "gen71 conditional").AsCommand().Done()
+      .Build();
+
+    // Act
+    int exitCode = await (app?.RunAsync(["gen71-work"]) ?? Task.FromResult(1));
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("gen71 conditional").ShouldBeTrue();
   }
 
   private static async Task<int> RunReturnAwait(TestTerminal terminal)

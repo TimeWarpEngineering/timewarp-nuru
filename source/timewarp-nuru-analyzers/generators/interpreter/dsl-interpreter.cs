@@ -41,6 +41,10 @@ public sealed class DslInterpreter
   private Dictionary<InvocationExpressionSyntax, IrAppBuilder> BuildCalls = null!;
   private List<Diagnostic> CollectedDiagnostics = null!;
 
+  // Entry point calls already bound to an app, and the apps each variable held in source order (task 547)
+  private HashSet<InvocationExpressionSyntax> BoundEntryPointCalls = null!;
+  private Dictionary<ISymbol, List<AppAssignment>> AppAssignments = null!;
+
   /// <summary>
   /// Creates a new DSL interpreter.
   /// </summary>
@@ -66,6 +70,8 @@ public sealed class DslInterpreter
     BuiltApps = [];
     BuildCalls = [];
     CollectedDiagnostics = [];
+    BoundEntryPointCalls = [];
+    AppAssignments = new Dictionary<ISymbol, List<AppAssignment>>(SymbolEqualityComparer.Default);
 
     try
     {
@@ -95,6 +101,8 @@ public sealed class DslInterpreter
     BuiltApps = [];
     BuildCalls = [];
     CollectedDiagnostics = [];
+    BoundEntryPointCalls = [];
+    AppAssignments = new Dictionary<ISymbol, List<AppAssignment>>(SymbolEqualityComparer.Default);
 
     try
     {
@@ -146,6 +154,8 @@ public sealed class DslInterpreter
     BuiltApps = [];
     BuildCalls = [];
     CollectedDiagnostics = [];
+    BoundEntryPointCalls = [];
+    AppAssignments = new Dictionary<ISymbol, List<AppAssignment>>(SymbolEqualityComparer.Default);
 
     try
     {
@@ -202,12 +212,19 @@ public sealed class DslInterpreter
   /// receiver is an app this interpretation built (task 547).
   /// </summary>
   /// <remarks>
+  /// <para>
   /// The statement walk reaches an entry point call only through the expression shapes it
   /// evaluates, so calls such as <c>(await app.RunAsync(args)).ShouldBe(0)</c>,
-  /// <c>Check(await app.RunAsync(args))</c> or a ternary branch were never intercepted and threw at
-  /// runtime. This pass finds the calls by method symbol wherever they sit. A receiver resolves only
-  /// through state the walk already produced (<see cref="VariableState"/> and
-  /// <see cref="BuildCalls"/>), so no builder chain is evaluated a second time.
+  /// <c>Check(await app.RunAsync(args))</c>, a ternary branch or <c>app?.RunAsync(args)</c> were
+  /// never intercepted and threw at runtime. This pass finds the calls by method symbol wherever
+  /// they sit. A receiver resolves only through state the walk already produced
+  /// (<see cref="AppAssignments"/>, <see cref="VariableState"/> and <see cref="BuildCalls"/>), so no
+  /// builder chain is evaluated a second time.
+  /// </para>
+  /// <para>
+  /// A call the walk already bound is skipped, so one call site never lands on two apps. A variable
+  /// assigned more than one app resolves to the app it held at that point in source order.
+  /// </para>
   /// </remarks>
   private void RegisterEntryPointCalls(RoslynSyntaxNode region)
   {
@@ -215,37 +232,44 @@ public sealed class DslInterpreter
     {
       CancellationToken.ThrowIfCancellationRequested();
 
-      if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+      if (BoundEntryPointCalls.Contains(invocation))
         continue;
 
-      string methodName = memberAccess.Name.Identifier.ValueText;
+      if (!RunAsyncLocator.TryGetMemberCall(invocation, out SimpleNameSyntax name, out ExpressionSyntax receiver))
+        continue;
+
+      string methodName = name.Identifier.ValueText;
       if (methodName is not ("RunAsync" or "RunReplAsync"))
         continue;
 
       if (SemanticModel.GetSymbolInfo(invocation, CancellationToken).Symbol is not IMethodSymbol { ContainingType.Name: "NuruApp" })
         continue;
 
-      if (ResolveBuiltApp(memberAccess.Expression) is not IrAppBuilder appBuilder)
+      if (ResolveBuiltApp(receiver, invocation.SpanStart) is not IrAppBuilder appBuilder)
         continue;
 
       InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, invocation);
-      if (site is not null)
-        appBuilder.AddInterceptSite(methodName, site);
+      if (site is null)
+        continue;
+
+      appBuilder.AddInterceptSite(methodName, site);
+      BoundEntryPointCalls.Add(invocation);
     }
   }
 
   /// <summary>
-  /// The app an entry point call's receiver refers to, from the walk's state only.
+  /// The app an entry point call's receiver refers to at <paramref name="position"/>, from the
+  /// walk's state only.
   /// </summary>
-  private IrAppBuilder? ResolveBuiltApp(ExpressionSyntax receiver)
+  private IrAppBuilder? ResolveBuiltApp(ExpressionSyntax receiver, int position)
   {
     switch (receiver)
     {
       case ParenthesizedExpressionSyntax parenthesized:
-        return ResolveBuiltApp(parenthesized.Expression);
+        return ResolveBuiltApp(parenthesized.Expression, position);
 
       case PostfixUnaryExpressionSyntax postfix when postfix.IsKind(SyntaxKind.SuppressNullableWarningExpression):
-        return ResolveBuiltApp(postfix.Operand);
+        return ResolveBuiltApp(postfix.Operand, position);
 
       // ...Build().RunAsync(): the Build() call the walk dispatched
       case InvocationExpressionSyntax invocation:
@@ -253,20 +277,67 @@ public sealed class DslInterpreter
 
       case IdentifierNameSyntax or MemberAccessExpressionSyntax:
         ISymbol? symbol = SemanticModel.GetSymbolInfo(receiver, CancellationToken).Symbol;
-        if (symbol is null || !VariableState.TryGetValue(symbol, out object? value))
+        if (symbol is null)
           return null;
 
-        return value switch
-        {
-          BuiltAppMarker marker => (IrAppBuilder)marker.Builder,
-          IrAppBuilder builder => builder,
-          _ => null
-        };
+        if (AppAssignments.TryGetValue(symbol, out List<AppAssignment>? assignments))
+          return AppAt(assignments, receiver.SyntaxTree, position);
+
+        // A field or captured local the walk resolved through its declaration: one value
+        return VariableState.TryGetValue(symbol, out object? value) ? AsAppBuilder(value) : null;
 
       default:
         return null;
     }
   }
+
+  /// <summary>
+  /// The app a variable held at <paramref name="position"/>: the last assignment before it in
+  /// source order. With no assignment before it (a local function declared earlier, another file),
+  /// the variable's app only when every assignment gave it the same one.
+  /// </summary>
+  private static IrAppBuilder? AppAt(List<AppAssignment> assignments, SyntaxTree tree, int position)
+  {
+    AppAssignment? last = null;
+    foreach (AppAssignment assignment in assignments)
+    {
+      if (assignment.Tree == tree && assignment.Position <= position && (last is null || assignment.Position > last.Position))
+        last = assignment;
+    }
+
+    if (last is not null)
+      return last.App;
+
+    IrAppBuilder? only = assignments[0].App;
+    return assignments.TrueForAll(assignment => ReferenceEquals(assignment.App, only)) ? only : null;
+  }
+
+  /// <summary>
+  /// Records that <paramref name="symbol"/> was assigned <paramref name="value"/> at the end of
+  /// <paramref name="node"/>. Only variables that hold an app at some point are tracked; a later
+  /// non-app assignment is recorded as null so a call after it is not bound (task 547).
+  /// </summary>
+  private void RecordAssignment(ISymbol symbol, RoslynSyntaxNode node, object? value)
+  {
+    IrAppBuilder? app = AsAppBuilder(value);
+    if (!AppAssignments.TryGetValue(symbol, out List<AppAssignment>? assignments))
+    {
+      if (app is null)
+        return;
+
+      assignments = [];
+      AppAssignments[symbol] = assignments;
+    }
+
+    assignments.Add(new AppAssignment(node.SyntaxTree, node.Span.End, app));
+  }
+
+  private static IrAppBuilder? AsAppBuilder(object? value) => value switch
+  {
+    BuiltAppMarker marker => (IrAppBuilder)marker.Builder,
+    IrAppBuilder builder => builder,
+    _ => null
+  };
 
   /// <summary>
   /// Extracts an AppModel by tracing back from an entry point call (RunAsync or RunReplAsync) to find the app builder.
@@ -284,6 +355,8 @@ public sealed class DslInterpreter
     BuiltApps = [];
     BuildCalls = [];
     CollectedDiagnostics = [];
+    BoundEntryPointCalls = [];
+    AppAssignments = new Dictionary<ISymbol, List<AppAssignment>>(SymbolEqualityComparer.Default);
 
     try
     {
@@ -497,6 +570,7 @@ public sealed class DslInterpreter
 
       // Store in variable state
       VariableState[symbol] = value;
+      RecordAssignment(symbol, declarator, value);
 
       // If it's an app builder (or built app marker), set the variable name
       IrAppBuilder? appBuilder = value switch
@@ -557,6 +631,9 @@ public sealed class DslInterpreter
     {
       VariableState[leftSymbol] = value;
     }
+
+    if (leftSymbol is not null)
+      RecordAssignment(leftSymbol, assignment, value);
 
     return value;
   }
@@ -2096,6 +2173,7 @@ public sealed class DslInterpreter
     if (site is not null)
     {
       appBuilder.AddInterceptSite("RunAsync", site);
+      BoundEntryPointCalls.Add(invocation);
     }
 
     return null; // RunAsync returns void/Task
@@ -2127,6 +2205,7 @@ public sealed class DslInterpreter
     if (site is not null)
     {
       appBuilder.AddInterceptSite("RunReplAsync", site);
+      BoundEntryPointCalls.Add(invocation);
     }
 
     return null; // RunReplAsync returns void/Task
@@ -2236,6 +2315,12 @@ public sealed class DslInterpreter
 
     return Diagnostic.Create(descriptor, location, exception.Message);
   }
+
+  /// <summary>
+  /// One assignment of an app (or of a non-app value, as null) to a variable, at the end of the
+  /// assignment in its syntax tree.
+  /// </summary>
+  private sealed record AppAssignment(SyntaxTree Tree, int Position, IrAppBuilder? App);
 
   /// <summary>
   /// Marker type indicating a built app (for RunAsync detection).

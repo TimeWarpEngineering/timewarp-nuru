@@ -48,6 +48,7 @@ Acceptance criteria:
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - 2026-10-26 implementer (claude, ganda task work): root cause found, fix + NURU_I001 + tests landed.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-26T09:09:50Z
+- Review oracle: round 1 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. Open findings M1, M2, M3. Disposition pending a fix pass — 2026-10-26
 
 ## Results
 
@@ -110,4 +111,18 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-72-run-async-not-interc
 Expect: generator-71 reports `Total: 8 Passed: 8` (each context ran its handler with exit 0, so
 every call was intercepted); generator-72 reports `Total: 5 Passed: 5` (NURU_I001 on the parameter
 and method-result receivers only).
+
+### Review
+
+Round 1, effort 2, roster general (turn cap 120, session max-turns uncapped). The implementer restatement matches the task checklist.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 2 | 0 | 0 |
+| suggestion | 1 | 0 | 0 |
+| nit | 0 | 0 | 0 |
+
+Disposition: pending. Open findings M1 (reassigned local binds every `RunAsync` to the last app), M2 (`app?.RunAsync` is neither intercepted nor warned), M3 (any extraction error suppresses every NURU_I001). No `review/disposition.md` until those are closed.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 

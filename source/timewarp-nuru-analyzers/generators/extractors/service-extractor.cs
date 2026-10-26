@@ -11,6 +11,7 @@
 // - Constructor dependencies of implementation types (NURU051)
 // - Internal types (NURU054)
 // - Opaque extension method calls (NURU052) after lowering fails
+// - AddLogging calls, matched by method symbol: no delegate, lambda, or anonymous method (task 546)
 // - Multiple constructors (chooses one with most parameters)
 // - Optional parameters with default values. String and char defaults are
 //   SymbolDisplay.FormatLiteral so quotes, backslashes, and newlines compile.
@@ -19,6 +20,7 @@
 
 namespace TimeWarp.Nuru.Generators;
 
+using Microsoft.CodeAnalysis.Operations;
 using System.Globalization;
 
 /// <summary>
@@ -848,6 +850,7 @@ internal static class ServiceExtractor
 
   /// <summary>
   /// Extracts logging configuration from a lambda body.
+  /// The first Microsoft.Extensions.Logging AddLogging call in the body wins (task 546).
   /// </summary>
   private static LoggingConfiguration? ExtractLoggingFromLambdaBody
   (
@@ -856,20 +859,32 @@ internal static class ServiceExtractor
     CancellationToken cancellationToken
   )
   {
-    // Find AddLogging invocations in the body
     IEnumerable<InvocationExpressionSyntax> invocations = body.DescendantNodesAndSelf()
       .OfType<InvocationExpressionSyntax>();
 
     foreach (InvocationExpressionSyntax invocation in invocations)
     {
-      string? methodName = GetMethodName(invocation);
-      if (methodName == "AddLogging")
+      if (semanticModel.GetOperation(invocation, cancellationToken) is not IInvocationOperation operation
+        || !IsAddLoggingMethod(operation.TargetMethod))
       {
-        return ExtractLoggingLambdaBody(invocation);
+        continue;
       }
+
+      return ExtractLoggingLambdaBody(operation);
     }
 
     return null;
+  }
+
+  /// <summary>
+  /// True for <c>LoggingServiceCollectionExtensions.AddLogging</c> from Microsoft.Extensions.DependencyInjection,
+  /// both the parameterless overload and the one that takes a configure delegate.
+  /// </summary>
+  private static bool IsAddLoggingMethod(IMethodSymbol method)
+  {
+    IMethodSymbol target = method.ReducedFrom ?? method;
+    return target.Name == "AddLogging"
+      && target.ContainingType?.ToDisplayString() == "Microsoft.Extensions.DependencyInjection.LoggingServiceCollectionExtensions";
   }
 
   /// <summary>
@@ -918,18 +933,25 @@ internal static class ServiceExtractor
   }
 
   /// <summary>
-  /// Extracts the lambda body text from an AddLogging() invocation.
+  /// Builds the logging configuration from an AddLogging invocation.
+  /// AddLogging() with no configure delegate registers a factory with no providers (task 546),
+  /// so it is an empty configuration, not "no logging".
   /// </summary>
-  private static LoggingConfiguration? ExtractLoggingLambdaBody(InvocationExpressionSyntax addLoggingInvocation)
+  private static LoggingConfiguration? ExtractLoggingLambdaBody(IInvocationOperation addLoggingOperation)
   {
-    ArgumentListSyntax? args = addLoggingInvocation.ArgumentList;
-    if (args is null || args.Arguments.Count == 0)
-      return null;
+    // Extension calls carry the IServiceCollection receiver as an argument in both the reduced
+    // (services.AddLogging(...)) and static (LoggingServiceCollectionExtensions.AddLogging(services, ...))
+    // forms, so the configure delegate is found by its parameter type, which also covers named arguments.
+    IArgumentOperation? configureArgument = addLoggingOperation.Arguments.FirstOrDefault(argument =>
+      argument.Parameter?.Type is INamedTypeSymbol { Name: "Action", TypeArguments: [{ Name: "ILoggingBuilder" }] });
 
-    ExpressionSyntax firstArg = args.Arguments[0].Expression;
+    if (configureArgument is null)
+      return new LoggingConfiguration(string.Empty);
+
+    Microsoft.CodeAnalysis.SyntaxNode configureSyntax = configureArgument.Value.Syntax;
 
     // Handle lambda: AddLogging(builder => builder.AddConsole())
-    if (firstArg is LambdaExpressionSyntax lambda)
+    if (configureSyntax is LambdaExpressionSyntax lambda)
     {
       // Get the lambda body as text
       string bodyText = lambda.Body.ToFullString().Trim();
@@ -946,10 +968,17 @@ internal static class ServiceExtractor
       return new LoggingConfiguration(bodyText, parameterName);
     }
 
-    // Handle method group: AddLogging(ConfigureLogging)
-    // For now, we don't support method groups in AddLogging - they would need more complex resolution
-    // The user would need to inline the configuration
+    // Handle anonymous method: AddLogging(delegate (ILoggingBuilder builder) { ... })
+    if (configureSyntax is AnonymousMethodExpressionSyntax { ParameterList.Parameters.Count: 1 } anonymousMethod)
+    {
+      return new LoggingConfiguration(
+        anonymousMethod.Block.ToFullString().Trim(),
+        anonymousMethod.ParameterList.Parameters[0].Identifier.Text);
+    }
 
+    // Method groups and delegate variables (AddLogging(ConfigureLogging)) are not supported: the
+    // delegate may not be reachable from the generated class, and an empty factory would silently
+    // drop the user's providers. Leaving logging unconfigured keeps NURU_H007 warning about it.
     return null;
   }
 

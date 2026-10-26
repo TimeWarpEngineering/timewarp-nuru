@@ -6,6 +6,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="ConfigurationLambdaBody">
 /// The lambda body text to emit verbatim in LoggerFactory.Create().
 /// Example: For AddLogging(builder => builder.AddConsole()), this would be "builder.AddConsole()".
+/// Empty for AddLogging() with no configure delegate, which builds a factory with no providers.
 /// </param>
 /// <param name="LambdaParameterName">
 /// The parameter name from the user's AddLogging lambda.

@@ -47,6 +47,7 @@ Acceptance criteria:
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - 2026-10-26 implementer (claude, ganda task work): root cause found, fix + NURU_I001 + tests landed.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-26T09:09:50Z
 
 ## Results
 
@@ -93,7 +94,8 @@ was evaluated) were missed the same way.
 - `./bin/dev test`: multi-mode 2128 total, 2122 passed, 6 skipped, 0 failed; standalone 41 files, 0 failed.
 - `./bin/dev verify-samples`: 68/68.
 - `dotnet build timewarp-nuru.slnx --no-incremental`: 0 warnings, 0 errors (no NURU_I001 in repo code).
-- `ganda repo audit`: passes all checks, nothing to fix.
+- `ganda repo audit`: passes. The push hook flagged `runfile-executable` for the two new test runfiles;
+  `ganda repo audit --fix` set their executable bit.
 
 ### How to validate
 

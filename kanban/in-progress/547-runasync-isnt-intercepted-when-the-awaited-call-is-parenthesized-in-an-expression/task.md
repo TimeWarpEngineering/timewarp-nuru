@@ -93,7 +93,8 @@ was evaluated) were missed the same way.
 - `./bin/dev test`: multi-mode 2128 total, 2122 passed, 6 skipped, 0 failed; standalone 41 files, 0 failed.
 - `./bin/dev verify-samples`: 68/68.
 - `dotnet build timewarp-nuru.slnx --no-incremental`: 0 warnings, 0 errors (no NURU_I001 in repo code).
-- `ganda repo audit`: passes all checks, nothing to fix.
+- `ganda repo audit`: passes. The push hook flagged `runfile-executable` for the two new test runfiles;
+  `ganda repo audit --fix` set their executable bit.
 
 ### How to validate
 

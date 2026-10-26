@@ -34,6 +34,8 @@ Acceptance:
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - Implementer (claude, ganda task work) 2026-10-26: semantic AddLogging detection, generator-68 test.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-26T05:03:29Z
+- Review oracle: tw-implementation-review, effort 2, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 120), round 1, disposition clean — 2026-10-26
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-26T05:34:20Z
 
 ## Results
 
@@ -67,6 +69,10 @@ Gates: `dotnet run tests/ci-tests/run-ci-tests.cs` (cache cleared) gave 2111 pas
 multi-mode and 40/40 standalone files passing, generator-68 included. `ganda repo audit` passes.
 On the old service-extractor, 5 of the 8 generator-68 tests fail.
 
+### Review
+
+Round 1, effort 2, roster general. Counts: bug 0, suggestion 0, nit 0, open 0. Disposition: clean. The implementer restatement matches the original description and checklist; no misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
@@ -80,3 +86,7 @@ Expect: 8/8 pass. `Should_give_delegate_a_real_logger_from_parameterless_add_log
 app with `ConfigureServices(s => s.AddLogging())` and a delegate `ILogger<T>` parameter, checks
 that NURU_H007 does not fire, then runs the compiled app. The logger's runtime type is `Logger`1`,
 not `NullLogger`1`. The method-group and no-AddLogging tests still expect exactly one NURU_H007.
+
+## Review
+
+- Round 1: Done

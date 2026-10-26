@@ -226,6 +226,94 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen72RunAsyncNotIntercepted
       await Task.CompletedTask;
     }
 
+    public static async Task Should_warn_for_a_lambda_that_captures_a_reassigned_local()
+    {
+      // Review round 2 M4: the lambda sits between the two assignments but runs after the second,
+      // so source order bound it to the first app. A captured local assigned two apps is not traced.
+      const string Source = """
+        using System;
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-first").WithHandler(() => "first").AsCommand().Done()
+          .Build();
+        Func<Task<int>> run = () => app.RunAsync(["gen72-second"]);
+        app = NuruApp.CreateBuilder()
+          .Map("gen72-second").WithHandler(() => "second").AsCommand().Done()
+          .Build();
+        return await run();
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      Diagnostic[] i001 = I001(run);
+      i001.Length.ShouldBe(1, Describe(run.GeneratorDiagnostics));
+      i001[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture).ShouldContain("'app'");
+      i001[0].Location.GetLineSpan().StartLinePosition.Line.ShouldBe(7);
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_warn_for_a_local_function_that_captures_a_reassigned_local()
+    {
+      // Review round 2 M4: the same hole through a local function declared between the assignments
+      const string Source = """
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-first").WithHandler(() => "first").AsCommand().Done()
+          .Build();
+        Task<int> Run() => app.RunAsync(["gen72-second"]);
+        app = NuruApp.CreateBuilder()
+          .Map("gen72-second").WithHandler(() => "second").AsCommand().Done()
+          .Build();
+        return await Run();
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      Diagnostic[] i001 = I001(run);
+      i001.Length.ShouldBe(1, Describe(run.GeneratorDiagnostics));
+      i001[0].Location.GetLineSpan().StartLinePosition.Line.ShouldBe(6);
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_bind_a_closure_call_to_the_app_the_closure_assigns()
+    {
+      // The lambda assigns the captured local and then runs it. Its own interpretation binds that
+      // call; the outer walk does not see the lambda's assignment, so it must not bind it too (CS9153).
+      const string Source = """
+        using System;
+        using System.Threading.Tasks;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("gen72-first").WithHandler(() => "first").AsCommand().Done()
+          .Build();
+        Func<Task<int>> rebuild = async () =>
+        {
+          app = NuruApp.CreateBuilder()
+            .Map("gen72-second").WithHandler(() => "second").AsCommand().Done()
+            .Build();
+          return await app.RunAsync(["gen72-second"]);
+        };
+        await app.RunAsync(["gen72-first"]);
+        return await rebuild();
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
+      I001(run).ShouldBeEmpty(Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+
     public static async Task Should_not_warn_for_a_method_group()
     {
       // A method group conversion is not an invocation, so there is no call site to report

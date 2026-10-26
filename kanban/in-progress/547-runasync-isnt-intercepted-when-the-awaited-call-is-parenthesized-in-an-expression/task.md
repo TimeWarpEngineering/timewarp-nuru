@@ -52,6 +52,7 @@ Acceptance criteria:
 - Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-26T09:29:26Z
 - 2026-10-26 implement-fix-2 (claude, ganda task work): fixed review round 1 M1, M2, M3 with regressions.
 - Review oracle: round 2 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3 fixed. Open finding M4. Disposition pending a fix pass — 2026-10-26
+- 2026-10-26 implement-fix-3 (claude, ganda task work): fixed review round 2 M4 with regressions.
 
 ## Results
 
@@ -118,12 +119,31 @@ was evaluated) were missed the same way.
   the parameter). The no-warn test also covers `app?.RunAsync`. Against the round-1 code,
   generator-71 fails to compile with CS9153 and the three new generator-72 tests fail.
 
+### Review round 2 fixes
+
+- **M4** (`dsl-interpreter.cs`, `AppAt`): source order now counts only assignments inside the
+  call's innermost lambda, anonymous method or local function. Those bodies usually run later than
+  where they are written, so a call in a closure that captures the local falls to the
+  every-assignment rule: bound only when every assignment gave the local the same app, else left for
+  NURU_I001. The rule also refuses when a closure assigns the local and the walk did not record that
+  assignment (`IsAssignedOutsideWalk`). Without that, the outer walk would bind
+  `() => { app = ...Build(); return app.RunAsync(...); }` to the outer app while the lambda's own
+  interpretation binds it to its app (CS9153). Straight-line calls still bind in source order.
+- Tests: generator-72 adds a lambda and a local function declared between two `Build()`
+  assignments and invoked after the second (one NURU_I001 each, on the closure's call), and a lambda
+  that assigns the captured local its own app (no compile error, no NURU_I001). Against the round-2
+  interpreter all three fail. generator-71 adds the lambda-assigns case at runtime and checks that
+  each app's handler wrote to its own terminal. The single-app lambda test stays intercepted.
+- Docs: NURU_I001 description and changelog name the captured-local case.
+
 ### Verification
 
 - `./bin/dev test`: multi-mode 2128 total, 2122 passed, 6 skipped, 0 failed; standalone 41 files, 0 failed.
 - Round 1 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 41 standalone files, 0 failed);
   `./bin/dev verify-samples` 68/68; `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - `./bin/dev verify-samples`: 68/68.
+- Round 2 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 0 failed);
+  `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - `dotnet build timewarp-nuru.slnx --no-incremental`: 0 warnings, 0 errors (no NURU_I001 in repo code).
 - `ganda repo audit`: passes. The push hook flagged `runfile-executable` for the two new test runfiles;
   `ganda repo audit --fix` set their executable bit.
@@ -138,10 +158,11 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-71-run-async-call-conte
 dotnet run tests/timewarp-nuru-tests/generator/generator-72-run-async-not-intercepted-diagnostic.cs
 ```
 
-Expect: generator-71 reports `Total: 10 Passed: 10` (each context, including a reassigned local
-and `app?.RunAsync`, ran its handler with exit 0, so every call was intercepted once);
-generator-72 reports `Total: 8 Passed: 8` (NURU_I001 on the parameter, `?.` parameter and
-method-result receivers only, and still on a parameter call when another app has an extraction error).
+Expect: generator-71 reports `Total: 11 Passed: 11` (each context, including a reassigned local,
+`app?.RunAsync`, and a lambda that assigns its own app, ran its handler with exit 0, so every call
+was intercepted once); generator-72 reports `Total: 11 Passed: 11` (NURU_I001 on the parameter, `?.`
+parameter and method-result receivers, and on a lambda or local function that captures a local
+assigned two apps; still on a parameter call when another app has an extraction error).
 
 ### Review
 

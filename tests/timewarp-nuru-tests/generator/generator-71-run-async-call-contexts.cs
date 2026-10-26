@@ -6,7 +6,8 @@
 // interpreter walks (await x; var y = await x; return await x;). Other ordinary C# compiled, then
 // threw "RunAsync was not intercepted" at runtime, for example (await app.RunAsync(args)).ShouldBe(0).
 // Each test here runs RunAsync() in one such context and checks the handler ran. Review round 1
-// added a local reassigned to a second app and app?.RunAsync(...).
+// added a local reassigned to a second app and app?.RunAsync(...); review round 2 a lambda that
+// assigns the captured local its own app.
 #endregion
 
 #region Design
@@ -205,6 +206,38 @@ public class RunAsyncCallContextTests
     // Assert
     exitCode.ShouldBe(0);
     terminal.OutputContains("gen71 conditional").ShouldBeTrue();
+  }
+
+  public static async Task Should_run_the_app_a_lambda_assigns_to_a_captured_local()
+  {
+    // Review round 2 M4: the lambda's own interpretation binds its call; the outer walk must not
+    // bind it to the app the local held before the lambda ran.
+    // Arrange
+    using TestTerminal first = new();
+    using TestTerminal second = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(first)
+      .Map("gen71-first").WithHandler(() => "gen71 outer app").AsCommand().Done()
+      .Build();
+
+    Func<Task<int>> rebuild = () =>
+    {
+      app = NuruApp.CreateBuilder()
+        .UseTerminal(second)
+        .Map("gen71-second").WithHandler(() => "gen71 lambda app").AsCommand().Done()
+        .Build();
+      return app.RunAsync(["gen71-second"]);
+    };
+
+    // Act
+    int outer = await app.RunAsync(["gen71-first"]);
+    int inner = await rebuild();
+
+    // Assert
+    outer.ShouldBe(0);
+    inner.ShouldBe(0);
+    first.OutputContains("gen71 outer app").ShouldBeTrue();
+    second.OutputContains("gen71 lambda app").ShouldBeTrue();
   }
 
   private static async Task<int> RunReturnAwait(TestTerminal terminal)

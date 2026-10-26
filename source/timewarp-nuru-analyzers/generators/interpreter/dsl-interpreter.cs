@@ -223,7 +223,8 @@ public sealed class DslInterpreter
   /// </para>
   /// <para>
   /// A call the walk already bound is skipped, so one call site never lands on two apps. A variable
-  /// assigned more than one app resolves to the app it held at that point in source order.
+  /// assigned more than one app resolves to the app it held at that point in source order, unless
+  /// the call sits in a lambda or local function that captures it (see <see cref="AppAt"/>).
   /// </para>
   /// </remarks>
   private void RegisterEntryPointCalls(RoslynSyntaxNode region)
@@ -245,7 +246,7 @@ public sealed class DslInterpreter
       if (SemanticModel.GetSymbolInfo(invocation, CancellationToken).Symbol is not IMethodSymbol { ContainingType.Name: "NuruApp" })
         continue;
 
-      if (ResolveBuiltApp(receiver, invocation.SpanStart) is not IrAppBuilder appBuilder)
+      if (ResolveBuiltApp(receiver, invocation) is not IrAppBuilder appBuilder)
         continue;
 
       InterceptSiteModel? site = InterceptSiteExtractor.Extract(SemanticModel, invocation);
@@ -258,18 +259,18 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// The app an entry point call's receiver refers to at <paramref name="position"/>, from the
-  /// walk's state only.
+  /// The app an entry point call's receiver refers to at <paramref name="call"/>, from the walk's
+  /// state only.
   /// </summary>
-  private IrAppBuilder? ResolveBuiltApp(ExpressionSyntax receiver, int position)
+  private IrAppBuilder? ResolveBuiltApp(ExpressionSyntax receiver, InvocationExpressionSyntax call)
   {
     switch (receiver)
     {
       case ParenthesizedExpressionSyntax parenthesized:
-        return ResolveBuiltApp(parenthesized.Expression, position);
+        return ResolveBuiltApp(parenthesized.Expression, call);
 
       case PostfixUnaryExpressionSyntax postfix when postfix.IsKind(SyntaxKind.SuppressNullableWarningExpression):
-        return ResolveBuiltApp(postfix.Operand, position);
+        return ResolveBuiltApp(postfix.Operand, call);
 
       // ...Build().RunAsync(): the Build() call the walk dispatched
       case InvocationExpressionSyntax invocation:
@@ -281,7 +282,7 @@ public sealed class DslInterpreter
           return null;
 
         if (AppAssignments.TryGetValue(symbol, out List<AppAssignment>? assignments))
-          return AppAt(assignments, receiver.SyntaxTree, position);
+          return AppAt(symbol, assignments, call);
 
         // A field or captured local the walk resolved through its declaration: one value
         return VariableState.TryGetValue(symbol, out object? value) ? AsAppBuilder(value) : null;
@@ -292,24 +293,68 @@ public sealed class DslInterpreter
   }
 
   /// <summary>
-  /// The app a variable held at <paramref name="position"/>: the last assignment before it in
-  /// source order. With no assignment before it (a local function declared earlier, another file),
-  /// the variable's app only when every assignment gave it the same one.
+  /// The app a variable held at <paramref name="call"/>: the last assignment before it in source
+  /// order. With no assignment before it (a captured variable, another file), the variable's app
+  /// only when every assignment gave it the same one.
   /// </summary>
-  private static IrAppBuilder? AppAt(List<AppAssignment> assignments, SyntaxTree tree, int position)
+  /// <remarks>
+  /// A lambda, anonymous method or local function usually runs after the code that follows it, so
+  /// its source position says nothing about which app a captured variable holds when it runs. Only
+  /// an assignment inside the call's innermost closure counts as before the call; an assignment
+  /// outside it falls to the every-assignment rule, and a captured variable assigned two apps is
+  /// left for NURU_I001 (review round 2 M4). So is a variable a closure assigns: the walk does not
+  /// enter closures, so that assignment is not in <paramref name="assignments"/>.
+  /// </remarks>
+  private IrAppBuilder? AppAt(ISymbol symbol, List<AppAssignment> assignments, InvocationExpressionSyntax call)
   {
+    RoslynSyntaxNode? closure = call.Ancestors().FirstOrDefault(IsClosure);
+    TextSpan scope = closure?.Span ?? call.SyntaxTree.GetRoot().FullSpan;
+    int position = call.SpanStart;
+
     AppAssignment? last = null;
     foreach (AppAssignment assignment in assignments)
     {
-      if (assignment.Tree == tree && assignment.Position <= position && (last is null || assignment.Position > last.Position))
+      if (assignment.Tree == call.SyntaxTree
+        && assignment.Position >= scope.Start
+        && assignment.Position <= position
+        && (last is null || assignment.Position > last.Position))
+      {
         last = assignment;
+      }
     }
 
     if (last is not null)
       return last.App;
 
     IrAppBuilder? only = assignments[0].App;
-    return assignments.TrueForAll(assignment => ReferenceEquals(assignment.App, only)) ? only : null;
+    if (!assignments.TrueForAll(assignment => ReferenceEquals(assignment.App, only)))
+      return null;
+
+    return IsAssignedOutsideWalk(symbol, assignments, call.SyntaxTree.GetRoot(CancellationToken)) ? null : only;
+  }
+
+  /// <summary>
+  /// True when a lambda, anonymous method or local function in <paramref name="root"/> assigns
+  /// <paramref name="symbol"/> and the walk did not record that assignment.
+  /// </summary>
+  private bool IsAssignedOutsideWalk(ISymbol symbol, List<AppAssignment> assignments, RoslynSyntaxNode root)
+  {
+    foreach (AssignmentExpressionSyntax assignment in root.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+    {
+      if (assignment.Left is not IdentifierNameSyntax identifier || identifier.Identifier.ValueText != symbol.Name)
+        continue;
+
+      if (!assignment.Ancestors().Any(IsClosure))
+        continue;
+
+      if (assignments.Exists(recorded => recorded.Tree == assignment.SyntaxTree && recorded.Position == assignment.Span.End))
+        continue;
+
+      if (SymbolEqualityComparer.Default.Equals(SemanticModel.GetSymbolInfo(identifier, CancellationToken).Symbol, symbol))
+        return true;
+    }
+
+    return false;
   }
 
   /// <summary>
@@ -331,6 +376,9 @@ public sealed class DslInterpreter
 
     assignments.Add(new AppAssignment(node.SyntaxTree, node.Span.End, app));
   }
+
+  private static bool IsClosure(RoslynSyntaxNode node) =>
+    node is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax;
 
   private static IrAppBuilder? AsAppBuilder(object? value) => value switch
   {

@@ -76,7 +76,7 @@ old names (`__fw_ILogger_Gen69Service`). Field declaration and init now dedupe b
   with this task.
 
 **Gates.** `ganda runfile cache --clear` then `dotnet run tests/ci-tests/run-ci-tests.cs`: multi-mode 2120 total,
-2114 passed, 6 skipped, 0 failed; standalone 40 files, 0 failed. `ganda repo audit` passes, with no fixes needed.
+2114 passed, 6 skipped, 0 failed; standalone 40 files, 0 failed. `ganda repo audit` passes. `audit --fix` set the executable bit on the new generator-70 runfile (runfile-executable).
 
 **Observation (not fixed here).** `(await app.RunAsync([...])).ShouldBe(0)` is not intercepted. A parenthesized await
 receiver fails at runtime with "RunAsync was not intercepted". generator-70 uses `int x = await app.RunAsync(...)`

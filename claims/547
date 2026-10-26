@@ -1,1 +1,1 @@
-{"task":"547","holder":"cramer","session":"1051747","machine":"TWE-001","acquiredAt":"2026-10-26T08:53:28.1200185+00:00"}
+{"task":"547","holder":"cramer","session":"1051747","machine":"TWE-001","worktree":"/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-547-runasync-isnt-intercepted-when-the-awaited-call-is","branch":"task/547-runasync-isnt-intercepted-when-the-awaited-call-is","acquiredAt":"2026-10-26T08:53:28.1200185+00:00"}

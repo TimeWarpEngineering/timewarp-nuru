@@ -49,6 +49,7 @@ Acceptance criteria:
   `NullLoggerFactory`). So adding logging to nuru-search alone printed nothing from
   `CapabilitiesClient`/`SearchIndex`. Fixed in the emitter and extended H007 to service constructors too.
   `ganda repo audit` passed with no fixes needed.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-26T06:48:37Z
 
 ## Results
 

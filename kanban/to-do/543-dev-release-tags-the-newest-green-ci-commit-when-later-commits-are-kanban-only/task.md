@@ -50,6 +50,7 @@ commit after it, up to HEAD, changes only paths under `kanban/`. Tag that commit
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-25)
+- Reopened 2026-10-26 (Steve "yes"): PR #357 carried only this spec and a .gitignore line, but merging it with `--task-id 543` moved the task to done. No implementation has landed; 4.0.0-beta.6 does not contain it.
 
 ## Notes
 

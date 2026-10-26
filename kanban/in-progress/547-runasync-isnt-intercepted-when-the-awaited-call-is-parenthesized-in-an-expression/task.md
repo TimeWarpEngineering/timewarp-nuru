@@ -226,4 +226,4 @@ Paths: `review/review-framework.md`, `review/round-5/general.md`, `review/round-
 - Round 2: Blocked — open M4
 - Round 3: Blocked — open M5
 - Round 4: Blocked — open M6
-- Round 5: Done — disposition clean, 0 open
+- Round 5: Done

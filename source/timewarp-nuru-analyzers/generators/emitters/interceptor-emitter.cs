@@ -586,7 +586,7 @@ internal static class InterceptorEmitter
     sb.AppendLine();
 
     // Emit EnsureServicesInitialized method
-    EmitEnsureServicesInitialized(sb, cachedProcessServices, frameworkServiceTypes, requiresMediator);
+    EmitEnsureServicesInitialized(sb, cachedProcessServices, frameworkServiceTypes, requiresMediator, loggerFactoryFieldName);
     EmitSourceGenScopeMethods(sb, allServices, cachedProcessServices);
 
     if (requiresMediator)
@@ -708,7 +708,7 @@ internal static class InterceptorEmitter
   /// in the same process (e.g., CI multi-mode tests). User services are not built here:
   /// a new app clears the process fields and each <c>__Resolve</c> accessor builds on first read.
   /// </summary>
-  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, HashSet<string> frameworkServiceTypes, bool requiresMediator)
+  private static void EmitEnsureServicesInitialized(StringBuilder sb, ImmutableArray<ServiceDefinition> sortedServices, HashSet<string> frameworkServiceTypes, bool requiresMediator, string? loggerFactoryFieldName)
   {
     sb.AppendLine("  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration)");
     sb.AppendLine("  {");
@@ -740,7 +740,12 @@ internal static class InterceptorEmitter
       if (fieldName == "__fw_ITerminal" || fieldName == "__fw_NuruApp")
         continue; // Already initialized
 
-      string initExpr = FrameworkServices.GetInitExpression(frameworkType);
+      // A service's ILogger<T> or ILoggerFactory comes from the AddLogging or telemetry factory, like a
+      // handler's or behavior's does. It was always a NullLogger before task 545. The telemetry
+      // expression reads app.LoggerFactory, which is this method's app parameter.
+      string initExpr = LoggerExpressions.IsLoggingServiceType(frameworkType)
+        ? LoggerExpressions.Resolve(frameworkType, loggerFactoryFieldName)
+        : FrameworkServices.GetInitExpression(frameworkType);
       sb.AppendLine($"    {fieldName} = {initExpr};");
     }
 

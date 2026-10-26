@@ -53,6 +53,7 @@ Acceptance criteria:
 - 2026-10-26 implement-fix-2 (claude, ganda task work): fixed review round 1 M1, M2, M3 with regressions.
 - Review oracle: round 2 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3 fixed. Open finding M4. Disposition pending a fix pass — 2026-10-26
 - 2026-10-26 implement-fix-3 (claude, ganda task work): fixed review round 2 M4 with regressions.
+- Review oracle: round 3 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3, M4 fixed. Open finding M5. Disposition pending a fix pass — 2026-10-26
 
 ## Results
 
@@ -166,19 +167,20 @@ assigned two apps; still on a parameter call when another app has an extraction 
 
 ### Review
 
-Round 2, effort 2, roster general (turn cap 120, session max-turns uncapped). Delta `993f24bd..31353fd4`. The implementer restatement matches the task checklist.
+Round 3, effort 2, roster general (turn cap 120, session max-turns uncapped). Delta `d627bb2e..20bd7c36`. The implementer restatement matches the task checklist.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 1 | 2 | 0 |
+| bug | 1 | 3 | 0 |
 | suggestion | 0 | 1 | 0 |
 | nit | 0 | 0 | 0 |
 
-Disposition: pending. M1, M2, and M3 are fixed. Open finding M4 (a lambda or local function between two app assignments is intercepted as the earlier app). No `review/disposition.md` until that is closed.
+Disposition: pending. M1, M2, M3, and M4 are fixed. Open finding M5 (a closure call the statement walk does not enter is intercepted as the closure's app). No `review/disposition.md` until that is closed.
 
-Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`. Round 1 is unchanged under `review/round-1/`.
+Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`. Rounds 1 and 2 are unchanged under `review/round-1/` and `review/round-2/`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
 - Round 2: Blocked — open M4
+- Round 3: Blocked — open M5

@@ -71,6 +71,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-65-check-updates-consumer-no-ivt.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-66-add-logging-injected-logger.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-67-delegate-handler-service-resolution.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-68-add-logging-call-shapes.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "auto", "operation-endpoint-dispatch.cs"),
 ];
 

@@ -6,7 +6,8 @@
 
 #region Design
 // The logger factory source has two shapes (see InterceptorEmitter.GetFirstLoggerFactoryFieldName):
-// a static __loggerFactory field built from the AddLogging lambda (non-null), or app.LoggerFactory
+// a static __loggerFactory field built from AddLogging (the lambda body, or no providers for a
+// parameterless AddLogging(), task 546; non-null), or app.LoggerFactory
 // for telemetry logging (nullable, so the expression falls back to a NullLogger). With neither, the
 // logger is a NullLogger and NURU_H007 warns. Types are matched by full name, so a user interface
 // whose name merely contains "ILogger" is resolved as an ordinary service, not as a logger.

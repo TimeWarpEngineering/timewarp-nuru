@@ -1049,13 +1049,17 @@ internal static class InterceptorEmitter
       string paramName = app.LoggingConfiguration.LambdaParameterName;
 
       // Ensure lambda body ends with semicolon
-      if (!lambdaBody.EndsWith(';'))
+      if (lambdaBody.Length > 0 && !lambdaBody.EndsWith(';'))
         lambdaBody += ";";
 
       sb.AppendLine($"  private static readonly global::Microsoft.Extensions.Logging.ILoggerFactory {fieldName} =");
       sb.AppendLine($"    global::Microsoft.Extensions.Logging.LoggerFactory.Create({paramName} =>");
       sb.AppendLine("    {");
-      sb.AppendLine($"      {lambdaBody}");
+
+      // AddLogging() with no configure delegate: a factory with no providers (task 546)
+      if (lambdaBody.Length > 0)
+        sb.AppendLine($"      {lambdaBody}");
+
       sb.AppendLine("    });");
     }
 

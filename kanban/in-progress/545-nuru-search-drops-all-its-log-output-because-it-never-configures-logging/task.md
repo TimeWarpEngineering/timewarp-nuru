@@ -35,6 +35,10 @@ Acceptance criteria:
 - [x] Test: H007 fires for an endpoint constructor `ILogger<T>` without `AddLogging`, and not with it
 - [x] Verify by hand: `nuru search --cli <bad-path>` prints the warning
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Behaviors and delegate handlers already warn (541). Endpoint constructors are the remaining silent case.
@@ -51,6 +55,7 @@ Acceptance criteria:
   `ganda repo audit` passed with no fixes needed.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-26T06:48:37Z
 - Review oracle: tw-implementation-review, effort 2, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 120), round 1, disposition clean — 2026-10-26
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-26T07:04:29Z
 
 ## Results
 

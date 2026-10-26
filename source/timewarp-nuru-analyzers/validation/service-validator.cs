@@ -210,10 +210,12 @@ internal static class ServiceValidator
         ? RouteLocationLookup.FindOrNone(route, routeLocations)
         : Location.None;
 
-      // Check handler service parameters
+      // Check handler service parameters. ServiceResolverEmitter binds IOptions<T> only, so an
+      // unregistered IOptionsSnapshot<T> or IOptionsMonitor<T> parameter is reported here rather
+      // than compiled to a null (task 541).
       foreach (ParameterBinding param in route.Handler.ServiceParameters)
       {
-        ValidateServiceRequirement(param.ParameterTypeName, registeredServices, routeLocation, diagnostics);
+        ValidateServiceRequirement(param.ParameterTypeName, registeredServices, routeLocation, diagnostics, onlyBoundOptionsResolve: true);
       }
 
       // Check constructor dependencies for endpoint handlers
@@ -245,21 +247,26 @@ internal static class ServiceValidator
   /// <summary>
   /// Validates a single service requirement and adds diagnostic if not registered.
   /// </summary>
+  /// <param name="onlyBoundOptionsResolve">
+  /// True for handler parameters, where only <c>IOptions&lt;T&gt;</c> is bound from configuration.
+  /// False skips every options type, as constructor dependencies have.
+  /// </param>
   private static void ValidateServiceRequirement(
     string? typeName,
     HashSet<string> registeredServices,
     Location location,
-    List<Diagnostic> diagnostics)
+    List<Diagnostic> diagnostics,
+    bool onlyBoundOptionsResolve = false)
   {
     if (typeName is null)
       return;
 
     // Skip IOptions<T> - validated separately
-    if (IsOptionsType(typeName))
+    if (onlyBoundOptionsResolve ? IsBoundOptionsType(typeName) : IsOptionsType(typeName))
       return;
 
-    // Skip ILogger<T> - handled by NURU_H007
-    if (IsLoggerType(typeName))
+    // Skip ILogger<T>, ILogger, ILoggerFactory - always resolvable, NURU_H007 warns without logging
+    if (LoggerExpressions.IsLoggingServiceType(typeName))
       return;
 
     if (!IsServiceRegistered(typeName, registeredServices))
@@ -299,7 +306,7 @@ internal static class ServiceValidator
             continue;
 
           // Skip ILogger<T> - always available via NullLogger
-          if (IsLoggerType(depType))
+          if (LoggerExpressions.IsLoggingServiceType(depType))
             continue;
 
           // Skip IOptions<T> - handled separately
@@ -470,11 +477,13 @@ internal static class ServiceValidator
   }
 
   /// <summary>
-  /// Checks if a type name is ILogger&lt;T&gt; or ILogger.
+  /// Checks if a type name is <c>IOptions&lt;T&gt;</c>, the options type a handler parameter binds from configuration.
   /// </summary>
-  private static bool IsLoggerType(string typeName)
+  private static bool IsBoundOptionsType(string typeName)
   {
-    return typeName.Contains("ILogger", StringComparison.Ordinal);
+    string normalized = NormalizeTypeName(typeName);
+    return normalized.StartsWith("Microsoft.Extensions.Options.IOptions<", StringComparison.Ordinal)
+        || normalized.StartsWith("IOptions<", StringComparison.Ordinal);
   }
 
   /// <summary>

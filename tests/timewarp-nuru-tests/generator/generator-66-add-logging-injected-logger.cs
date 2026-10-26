@@ -17,8 +17,9 @@
 // The app uses Map<T>() rather than DiscoverEndpoints() so the CI multi-file assembly does not
 // pull other files' endpoints in. It still runs standalone only: in a multi-app compilation every
 // app injects loggers from the first app's AddLogging factory, so the CI assembly never reaches
-// this app's capture provider. A delegate handler parameter ILogger<T> is not covered: the
-// generator does not resolve it yet. Both gaps are recorded as follow-ups on kanban 527.
+// this app's capture provider (kanban 544). Both apps here use the same AddLogging setup, so either
+// factory reaches the capture sink. The delegate handler test covers kanban 541: a
+// WithHandler((ILogger<T> logger) => ...) parameter used to compile to a null logger.
 #endregion
 
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,8 @@ public sealed class Gen66CaptureProvider : ILoggerProvider
       Gen66LogSink.Entries.Enqueue($"{logLevel}|{categoryName}|{formatter(state, exception)}");
   }
 }
+
+public sealed class Gen66DelegateCategory;
 
 [NuruRoute("gen66-work", Description = "Logs through an injected ILogger<T>")]
 public sealed class Gen66WorkCommand : ICommand<Unit>
@@ -95,6 +98,38 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen66AddLoggingInjectedLogger
       string[] entries = [.. Gen66LogSink.Entries];
       entries.ShouldContain($"Information|{typeof(Gen66WorkCommand).FullName}|gen66-info-entry");
       entries.Any(e => e.Contains("gen66-debug-entry", StringComparison.Ordinal)).ShouldBeFalse();
+    }
+
+    public static async Task Should_log_through_delegate_handler_logger_parameter()
+    {
+      // Arrange
+      using TestTerminal terminal = new();
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .ConfigureServices(services => services.AddLogging(builder => builder
+          .AddConsole()
+          .AddProvider(new Gen66CaptureProvider())
+          .SetMinimumLevel(LogLevel.Information)))
+        .Map("gen66-delegate").WithHandler((ILogger<Gen66DelegateCategory> logger) =>
+        {
+#pragma warning disable CA1848 // Use LoggerMessage delegates
+          logger.LogDebug("gen66-delegate-debug");
+          logger.LogInformation("gen66-delegate-info");
+#pragma warning restore CA1848
+          return "gen66 delegate done";
+        }).AsCommand().Done()
+        .Build();
+
+      // Act
+      int exitCode = await app.RunAsync(["gen66-delegate"]);
+
+      // Assert
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("gen66 delegate done").ShouldBeTrue();
+      string[] entries = [.. Gen66LogSink.Entries];
+      entries.ShouldContain($"Information|{typeof(Gen66DelegateCategory).FullName}|gen66-delegate-info");
+      entries.Any(e => e.Contains("gen66-delegate-debug", StringComparison.Ordinal)).ShouldBeFalse();
     }
   }
 }

@@ -22,20 +22,22 @@ internal static class ServiceResolverEmitter
   /// <param name="indent">Number of spaces for indentation.</param>
   /// <param name="useRuntimeDI">When true, emits GetServiceProvider().GetRequiredService&lt;T&gt;() instead of static instantiation.</param>
   /// <param name="runtimeDISuffix">Suffix for per-app runtime DI methods (e.g., "_0" for multi-app assemblies).</param>
-  public static void Emit(StringBuilder sb, HandlerDefinition handler, ImmutableArray<ServiceDefinition> services, int indent = 6, bool useRuntimeDI = false, string runtimeDISuffix = "")
+  /// <param name="loggerFactoryFieldName">Logger factory source (static field name or "app.LoggerFactory"), or null if no logging.</param>
+  /// <param name="httpClientConfigurations">Typed clients registered with AddHttpClient.</param>
+  public static void Emit(StringBuilder sb, HandlerDefinition handler, ImmutableArray<ServiceDefinition> services, int indent = 6, bool useRuntimeDI = false, string runtimeDISuffix = "", string? loggerFactoryFieldName = null, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
   {
     string indentStr = new(' ', indent);
 
     foreach (ParameterBinding param in handler.ServiceParameters)
     {
-      EmitServiceResolution(sb, param, services, indentStr, useRuntimeDI, runtimeDISuffix);
+      EmitServiceResolution(sb, param, services, httpClientConfigurations, loggerFactoryFieldName, indentStr, useRuntimeDI, runtimeDISuffix);
     }
   }
 
   /// <summary>
   /// Emits a single service resolution from a parameter binding.
   /// </summary>
-  private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, ImmutableArray<ServiceDefinition> services, string indent, bool useRuntimeDI, string runtimeDISuffix)
+  private static void EmitServiceResolution(StringBuilder sb, ParameterBinding param, ImmutableArray<ServiceDefinition> services, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, string? loggerFactoryFieldName, string indent, bool useRuntimeDI, string runtimeDISuffix)
   {
     string typeName = param.ParameterTypeName;
     string varName = CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName);
@@ -76,6 +78,34 @@ internal static class ServiceResolverEmitter
       return;
     }
 
+    string expression = ResolveServiceExpression(typeName, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
+    sb.AppendLine(
+      $"{indent}{typeName} {varName} = {expression};");
+  }
+
+  /// <summary>
+  /// Resolves a handler service to its expression. Delegate handler parameters and endpoint handler
+  /// constructors share this, so a type resolves the same way at either injection site.
+  /// Built-in services (ITerminal, IConfiguration, NuruApp) are resolved by the caller first.
+  /// </summary>
+  /// <returns>
+  /// The expression, or <c>default! /* ERROR: Service T not registered */</c> when nothing provides
+  /// the type. Source-gen DI reports NURU050 for that case.
+  /// </returns>
+  internal static string ResolveServiceExpression
+  (
+    string typeName,
+    ImmutableArray<ServiceDefinition> services,
+    ImmutableArray<HttpClientConfiguration> httpClientConfigurations,
+    string? loggerFactoryFieldName,
+    bool useRuntimeDI,
+    string runtimeDISuffix
+  )
+  {
+    // ILogger<T>, ILogger, ILoggerFactory come from the app's logger factory, also under runtime DI
+    if (LoggerExpressions.IsLoggingServiceType(typeName))
+      return LoggerExpressions.Resolve(typeName, loggerFactoryFieldName);
+
     // Runtime DI path: use the command scope when one is active.
     // Session-scoped services stay on the root provider so a command scope does not dispose them.
     if (useRuntimeDI)
@@ -84,43 +114,37 @@ internal static class ServiceResolverEmitter
       string providerMethod = runtimeService?.Lifetime == ServiceLifetime.SessionScoped
         ? $"GetServiceProvider{runtimeDISuffix}"
         : $"GetResolutionProvider{runtimeDISuffix}";
-      sb.AppendLine(
-        $"{indent}{typeName} {varName} = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>({providerMethod}(app));");
-      return;
+      return $"global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{typeName}>({providerMethod}(app))";
     }
 
     // Source-gen DI path: ISender / IPublisher / IMediator come from the generated mediator
     if (FrameworkServices.IsMediatorServiceType(typeName))
-    {
-      sb.AppendLine(
-        $"{indent}{typeName} {varName} = {FrameworkServices.MediatorExpression};");
-      return;
-    }
+      return FrameworkServices.MediatorExpression;
 
     // Source-gen DI path: static instantiation or static fields
-    // Look up service in registered services
     ServiceDefinition? service = FindService(typeName, services);
     if (service is not null)
     {
-      if (service.Lifetime == ServiceLifetime.Transient)
-      {
-        sb.AppendLine(
-          $"{indent}{typeName} {varName} = {ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command)};");
-      }
-      else
-      {
-        sb.AppendLine(
-          $"{indent}{typeName} {varName} = {ServiceScopeExpressions.Read(service, services, ServiceResolveMode.Command)};");
-      }
-
-      return;
+      return service.Lifetime == ServiceLifetime.Transient
+        ? ServiceScopeExpressions.Construct(service, services, ServiceResolveMode.Command)
+        : ServiceScopeExpressions.Read(service, services, ServiceResolveMode.Command);
     }
 
-    // Service not found - emit error comment
-    sb.AppendLine(
-      $"{indent}// ERROR: Service {typeName} not registered. Use ConfigureServices to register it.");
-    sb.AppendLine(
-      $"{indent}{typeName} {varName} = default!; // Service not registered");
+    // Typed HttpClient service: construct the implementation with its static HttpClient field
+    if (!httpClientConfigurations.IsDefaultOrEmpty)
+    {
+      string normalizedTypeName = NormalizeTypeName(typeName);
+      HttpClientConfiguration? httpClientConfig = httpClientConfigurations.FirstOrDefault(c =>
+        c.ServiceTypeName is not null && NormalizeTypeName(c.ServiceTypeName) == normalizedTypeName);
+
+      if (httpClientConfig?.ImplementationTypeName is not null)
+      {
+        string httpClientField = InterceptorEmitter.GetHttpClientFieldName(httpClientConfig.ServiceTypeName!);
+        return $"new {httpClientConfig.ImplementationTypeName}({httpClientField})";
+      }
+    }
+
+    return $"default! /* ERROR: Service {typeName} not registered */";
   }
 
   /// <summary>

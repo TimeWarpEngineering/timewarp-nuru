@@ -281,46 +281,44 @@ public sealed class NuruGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Reports NURU_H007 warnings when ILogger&lt;T&gt; is injected but no AddLogging() is configured.
+  /// Reports NURU_H007 warnings when ILogger&lt;T&gt; is injected but neither AddLogging() nor
+  /// telemetry logging is configured. Each logger category warns once.
   /// </summary>
   private static void ReportLoggerWithoutConfigurationWarnings(SourceProductionContext ctx, GeneratorModel model)
   {
-    // Check if any app has logging configured
-    bool hasLoggingConfigured = model.Apps.Any(a => a.HasLogging);
+    // Logging is configured by AddLogging or by telemetry logging, the same two sources
+    // InterceptorEmitter picks the logger factory from.
+    bool hasLoggingConfigured = model.Apps.Any(a =>
+      a.HasLogging || (a.HasTelemetry && (a.TelemetryOptions?.EnableLogging ?? true)));
     if (hasLoggingConfigured)
       return; // No warning needed - logging is configured
 
-    // Find all behaviors with ILogger<T> dependencies
-    foreach (BehaviorDefinition behavior in model.AllBehaviors)
+    // Behavior constructors and delegate/method handler parameters (task 541) warn. Endpoint handler
+    // constructors do not yet: they also get a NullLogger, but warning there would newly fail
+    // warnings-as-errors builds such as timewarp-nuru-search, so that is a separate decision.
+    IEnumerable<ParameterBinding> loggerSites = model.AllBehaviors
+      .SelectMany(behavior => behavior.ConstructorDependencies)
+      .Concat(model.AllRoutes.SelectMany(route => route.Handler.ServiceParameters));
+
+    // A route can appear both in an app's routes and in the endpoint list
+    HashSet<string> reportedCategories = new(StringComparer.Ordinal);
+    foreach (ParameterBinding dep in loggerSites)
     {
-      foreach (ParameterBinding dep in behavior.ConstructorDependencies)
+      if (!LoggerExpressions.IsLoggingServiceType(dep.ParameterTypeName)
+        || LoggerExpressions.IsLoggerFactoryType(dep.ParameterTypeName))
       {
-        if (dep.ParameterTypeName?.Contains("ILogger", StringComparison.Ordinal) == true)
-        {
-          // Extract the type argument from ILogger<T> for the message
-          string typeArg = ExtractLoggerTypeArg(dep.ParameterTypeName);
-
-          ctx.ReportDiagnostic(Diagnostic.Create(
-            DiagnosticDescriptors.LoggerInjectedWithoutConfiguration,
-            Location.None, // No specific location available from the model
-            typeArg));
-        }
+        continue;
       }
+
+      string category = LoggerExpressions.GetCategoryTypeName(dep.ParameterTypeName);
+      if (!reportedCategories.Add(category))
+        continue;
+
+      ctx.ReportDiagnostic(Diagnostic.Create(
+        DiagnosticDescriptors.LoggerInjectedWithoutConfiguration,
+        Location.None, // No specific location available from the model
+        category));
     }
-  }
-
-  /// <summary>
-  /// Extracts the type argument from ILogger&lt;T&gt;.
-  /// </summary>
-  private static string ExtractLoggerTypeArg(string loggerTypeName)
-  {
-    int start = loggerTypeName.IndexOf('<', StringComparison.Ordinal);
-    int end = loggerTypeName.LastIndexOf('>');
-
-    if (start >= 0 && end > start)
-      return loggerTypeName[(start + 1)..end];
-
-    return "T";
   }
 
   /// <summary>

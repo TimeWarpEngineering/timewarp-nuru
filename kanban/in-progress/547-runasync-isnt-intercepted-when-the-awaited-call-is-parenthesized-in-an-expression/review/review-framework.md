@@ -10,7 +10,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 232
+- Lines changed: 207
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -37,5 +37,13 @@
 **Date:** 2026-10-26
 **Diff scope:** fix delta `d627bb2e..20bd7c36` (head `20bd7c36c86f0202be47178d3cb14ef27866403a`). Re-check of M4 and defects on that delta only.
 **Effort:** 2 (general only; by-diff 232 lines)
+**Reviewer roster:** general
+**Session IDs:** review oracle session not reported (cursor, model Grok 4.7). max-turns uncapped; budget turn cap 120.
+
+## Round 4
+
+**Date:** 2026-10-26
+**Diff scope:** fix delta `2ea4f9ac..53b3cc91` (head `53b3cc91b82abeb842704dcb97fabe2fbecb480b`). Re-check of M5 and defects on that delta only.
+**Effort:** 2 (general only; by-diff 207 lines)
 **Reviewer roster:** general
 **Session IDs:** review oracle session not reported (cursor, model Grok 4.7). max-turns uncapped; budget turn cap 120.

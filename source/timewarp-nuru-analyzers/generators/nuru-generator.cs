@@ -293,24 +293,29 @@ public sealed class NuruGenerator : IIncrementalGenerator
     if (hasLoggingConfigured)
       return; // No warning needed - logging is configured
 
-    // Behavior constructors and delegate/method handler parameters (task 541) warn. Endpoint handler
-    // constructors do not yet: they also get a NullLogger, but warning there would newly fail
-    // warnings-as-errors builds such as timewarp-nuru-search, so that is a separate decision.
-    IEnumerable<ParameterBinding> loggerSites = model.AllBehaviors
+    // Behavior constructors, delegate/method handler parameters (task 541), endpoint handler
+    // constructors and registered service constructors (task 545) all get a NullLogger without
+    // logging, so all of them warn.
+    IEnumerable<string> loggerSiteTypes = model.AllBehaviors
       .SelectMany(behavior => behavior.ConstructorDependencies)
-      .Concat(model.AllRoutes.SelectMany(route => route.Handler.ServiceParameters));
+      .Concat(model.AllRoutes.SelectMany(route =>
+        route.Handler.ServiceParameters.Concat(route.Handler.ConstructorDependencies)))
+      .Select(dep => dep.ParameterTypeName)
+      .Concat(model.AllServices.SelectMany(service =>
+        service.ConstructorParameters.Select(parameter => parameter.TypeName)
+          .Concat(service.ConstructorDependencyTypes)));
 
     // A route can appear both in an app's routes and in the endpoint list
     HashSet<string> reportedCategories = new(StringComparer.Ordinal);
-    foreach (ParameterBinding dep in loggerSites)
+    foreach (string typeName in loggerSiteTypes)
     {
-      if (!LoggerExpressions.IsLoggingServiceType(dep.ParameterTypeName)
-        || LoggerExpressions.IsLoggerFactoryType(dep.ParameterTypeName))
+      if (!LoggerExpressions.IsLoggingServiceType(typeName)
+        || LoggerExpressions.IsLoggerFactoryType(typeName))
       {
         continue;
       }
 
-      string category = LoggerExpressions.GetCategoryTypeName(dep.ParameterTypeName);
+      string category = LoggerExpressions.GetCategoryTypeName(typeName);
       if (!reportedCategories.Add(category))
         continue;
 

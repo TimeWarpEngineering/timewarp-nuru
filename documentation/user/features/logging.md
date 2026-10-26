@@ -60,11 +60,12 @@ Other providers (Serilog, NLog, Application Insights) need their own package.
 | Endpoint handler constructor (`Handler(ILogger<MyCommand> logger)`) | the `AddLogging` factory |
 | Pipeline behavior constructor (`AddBehavior(typeof(MyBehavior))`) | the `AddLogging` factory |
 | Delegate handler parameter (`.WithHandler((ILogger<MyCategory> logger) => ...)`) | the `AddLogging` factory |
+| Registered service constructor (`AddSingleton<MyService>()`) | the `AddLogging` factory |
 | Any service, with `UseMicrosoftDependencyInjection()` | the runtime container |
 
 `ILoggerFactory` can be injected in the same places and is the `AddLogging` factory itself.
 
-When the app has no `AddLogging(...)` (and no `UseTelemetry()` logging), every injected logger discards its messages. A behavior or delegate handler that injects `ILogger<T>` also gets a `NURU_H007` build warning; an endpoint handler constructor does not warn yet.
+When the app has no `AddLogging(...)` (and no `UseTelemetry()` logging), every injected logger discards its messages. An endpoint handler constructor, behavior, delegate handler, or registered service that injects `ILogger<T>` also gets a `NURU_H007` build warning.
 
 ## Log Levels
 

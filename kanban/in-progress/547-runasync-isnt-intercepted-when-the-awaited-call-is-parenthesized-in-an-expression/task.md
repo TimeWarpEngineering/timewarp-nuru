@@ -157,12 +157,27 @@ was evaluated) were missed the same way.
   (no NURU_I001). Against the round-3 interpreter the two review shapes fail (0 NURU_I001).
 - Changelog: NURU_I001 entry notes an assignment in another lambda counts.
 
+### Review round 4 fixes
+
+- **M6** (`dsl-interpreter.cs`, `IsNullLiteral`): a `null` or `default` write wrapped in
+  parentheses, `!` or a cast (`null!`, `(null)`, `default!`, `(NuruApp?)null`) now counts as null,
+  as it already did for the statement walk, so `HasUnrecordedWrite` no longer treats it as an
+  unrecorded app write. `NuruApp app = null!;` plus one `Build()` and a closure `RunAsync` is
+  intercepted with no NURU_I001.
+- Tests: generator-72 adds the wrapped forms (`null!`, `(null)`, `default!`, `(NuruApp?)null`,
+  `(NuruApp?)(default)`, and a later `app = (null)!;`), each with no compile error and no NURU_I001.
+  Against the round-4 interpreter that test fails.
+
 ### Verification
 
 - `./bin/dev test`: multi-mode 2128 total, 2122 passed, 6 skipped, 0 failed; standalone 41 files, 0 failed.
 - Round 1 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 41 standalone files, 0 failed);
   `./bin/dev verify-samples` 68/68; `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - `./bin/dev verify-samples`: 68/68.
+- Round 4 fix pass: `./bin/dev test` exit 0 (multi-mode 2131 total, 2125 passed, 6 skipped;
+  standalone 0 failed; generator-72 15/15); `dotnet build timewarp-nuru.slnx --no-incremental`
+  0 warnings, 0 errors; `ganda repo audit` failed only `kanban-landed` (round-4 review files not on
+  master), landed with `ganda kanban move 547 in-progress --publish`.
 - Round 3 fix pass: `./bin/dev test` exit 0 (multi-mode 2131, standalone 0 failed; generator-72 14/14,
   generator-71 11/11); `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - Round 2 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 0 failed);
@@ -183,10 +198,11 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-72-run-async-not-interc
 
 Expect: generator-71 reports `Total: 11 Passed: 11` (each context, including a reassigned local,
 `app?.RunAsync`, and a lambda that assigns its own app, ran its handler with exit 0, so every call
-was intercepted once); generator-72 reports `Total: 14 Passed: 14` (NURU_I001 on the parameter, `?.`
+was intercepted once); generator-72 reports `Total: 15 Passed: 15` (NURU_I001 on the parameter, `?.`
 parameter and method-result receivers, on a lambda or local function that captures a local
 assigned two apps, on a nested lambda whose local the outer method reassigns, and on a call before
-the closure's own assignment; none on a null-initialized local captured by a lambda; still on a
+the closure's own assignment; none on a null-initialized local captured by a lambda, including
+`null!`, `(null)`, `default!` and a cast of null; still on a
 parameter call when another app has an extraction error).
 
 ### Review

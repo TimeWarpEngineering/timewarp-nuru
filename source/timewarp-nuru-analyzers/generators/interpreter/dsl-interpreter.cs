@@ -411,10 +411,18 @@ public sealed class DslInterpreter
   private static bool IsRecorded(List<AppAssignment> assignments, RoslynSyntaxNode write) =>
     assignments.Exists(recorded => recorded.Tree == write.SyntaxTree && recorded.Position == write.Span.End);
 
-  private static bool IsNullLiteral(ExpressionSyntax expression) =>
-    expression.IsKind(SyntaxKind.NullLiteralExpression)
-    || expression.IsKind(SyntaxKind.DefaultLiteralExpression)
-    || expression is DefaultExpressionSyntax;
+  /// <summary>
+  /// True for <c>null</c> or <c>default</c>, also wrapped in parentheses, <c>!</c> or a cast
+  /// (<c>null!</c>, <c>(null)</c>, <c>(NuruApp?)null</c>; review round 4 M6).
+  /// </summary>
+  private static bool IsNullLiteral(ExpressionSyntax expression) => expression switch
+  {
+    ParenthesizedExpressionSyntax parenthesized => IsNullLiteral(parenthesized.Expression),
+    PostfixUnaryExpressionSyntax postfix when postfix.IsKind(SyntaxKind.SuppressNullableWarningExpression) => IsNullLiteral(postfix.Operand),
+    CastExpressionSyntax cast => IsNullLiteral(cast.Expression),
+    DefaultExpressionSyntax => true,
+    _ => expression.IsKind(SyntaxKind.NullLiteralExpression) || expression.IsKind(SyntaxKind.DefaultLiteralExpression)
+  };
 
   /// <summary>
   /// Records that <paramref name="symbol"/> was assigned <paramref name="value"/> at the end of

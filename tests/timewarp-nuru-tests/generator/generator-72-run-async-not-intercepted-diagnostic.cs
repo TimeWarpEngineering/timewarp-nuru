@@ -397,6 +397,41 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen72RunAsyncNotIntercepted
       await Task.CompletedTask;
     }
 
+    public static async Task Should_bind_a_closure_call_when_the_local_starts_null_wrapped()
+    {
+      // null!, (null), default!, a cast of null and a later `app = null!;` before Build() hold no app either
+      string[] nullWrites =
+      [
+        "NuruApp app = null!;",
+        "NuruApp? app = (null);",
+        "NuruApp app = default!;",
+        "NuruApp? app = (NuruApp?)null;",
+        "NuruApp? app = (NuruApp?)(default);",
+        "NuruApp app = null!; app = (null)!;",
+      ];
+
+      foreach (string nullWrite in nullWrites)
+      {
+        string source = $$"""
+          using System;
+          using System.Threading.Tasks;
+          using TimeWarp.Nuru;
+
+          {{nullWrite}}
+          app = NuruApp.CreateBuilder().Map("gen72-work").WithHandler(() => "work").AsCommand().Done().Build();
+          Func<Task<int>> run = () => app!.RunAsync(["gen72-work"]);
+          return await run();
+          """;
+
+        GeneratorRun run = Run(source);
+
+        run.CompileErrors.ShouldBeEmpty($"{nullWrite}\n{Describe(run.CompileErrors)}");
+        I001(run).ShouldBeEmpty($"{nullWrite}\n{Describe(run.GeneratorDiagnostics)}");
+      }
+
+      await Task.CompletedTask;
+    }
+
     public static async Task Should_not_warn_for_a_method_group()
     {
       // A method group conversion is not an invocation, so there is no call site to report

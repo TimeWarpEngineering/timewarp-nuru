@@ -295,15 +295,16 @@ public sealed class DslInterpreter
   /// <summary>
   /// The app a variable held at <paramref name="call"/>: the last assignment before it in source
   /// order. With no assignment before it (a captured variable, another file), the variable's app
-  /// only when every assignment gave it the same one.
+  /// only when every write of it gave it the same one.
   /// </summary>
   /// <remarks>
   /// A lambda, anonymous method or local function usually runs after the code that follows it, so
   /// its source position says nothing about which app a captured variable holds when it runs. Only
   /// an assignment inside the call's innermost closure counts as before the call; an assignment
-  /// outside it falls to the every-assignment rule, and a captured variable assigned two apps is
-  /// left for NURU_I001 (review round 2 M4). So is a variable a closure assigns: the walk does not
-  /// enter closures, so that assignment is not in <paramref name="assignments"/>.
+  /// outside it falls to the every-write rule, and a captured variable assigned two apps is left for
+  /// NURU_I001 (review round 2 M4). So is a variable with a write this interpretation did not record
+  /// (review round 3 M5): the walk does not enter closures, and a <c>Build()</c> inside a closure is
+  /// its own interpretation that never sees the enclosing method's assignments.
   /// </remarks>
   private IrAppBuilder? AppAt(ISymbol symbol, List<AppAssignment> assignments, InvocationExpressionSyntax call)
   {
@@ -330,32 +331,90 @@ public sealed class DslInterpreter
     if (!assignments.TrueForAll(assignment => ReferenceEquals(assignment.App, only)))
       return null;
 
-    return IsAssignedOutsideWalk(symbol, assignments, call.SyntaxTree.GetRoot(CancellationToken)) ? null : only;
+    return HasUnrecordedWrite(symbol, assignments, call.SyntaxTree.GetRoot(CancellationToken)) ? null : only;
   }
 
   /// <summary>
-  /// True when a lambda, anonymous method or local function in <paramref name="root"/> assigns
-  /// <paramref name="symbol"/> and the walk did not record that assignment.
+  /// True when <paramref name="root"/> writes <paramref name="symbol"/> anywhere (a declaration,
+  /// an assignment, a deconstruction or a <c>ref</c>/<c>out</c> argument) that this interpretation
+  /// did not record. A <c>null</c> or <c>default</c> write never holds an app and is ignored.
   /// </summary>
-  private bool IsAssignedOutsideWalk(ISymbol symbol, List<AppAssignment> assignments, RoslynSyntaxNode root)
+  private bool HasUnrecordedWrite(ISymbol symbol, List<AppAssignment> assignments, RoslynSyntaxNode root)
   {
-    foreach (AssignmentExpressionSyntax assignment in root.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+    foreach (RoslynSyntaxNode node in root.DescendantNodes())
     {
-      if (assignment.Left is not IdentifierNameSyntax identifier || identifier.Identifier.ValueText != symbol.Name)
-        continue;
+      CancellationToken.ThrowIfCancellationRequested();
 
-      if (!assignment.Ancestors().Any(IsClosure))
-        continue;
+      switch (node)
+      {
+        case VariableDeclaratorSyntax declarator when declarator.Identifier.ValueText == symbol.Name:
+          if (declarator.Initializer is null || IsNullLiteral(declarator.Initializer.Value) || IsRecorded(assignments, declarator))
+            continue;
 
-      if (assignments.Exists(recorded => recorded.Tree == assignment.SyntaxTree && recorded.Position == assignment.Span.End))
-        continue;
+          if (SymbolEqualityComparer.Default.Equals(SemanticModel.GetDeclaredSymbol(declarator, CancellationToken), symbol))
+            return true;
 
-      if (SymbolEqualityComparer.Default.Equals(SemanticModel.GetSymbolInfo(identifier, CancellationToken).Symbol, symbol))
-        return true;
+          break;
+
+        case IdentifierNameSyntax identifier when identifier.Identifier.ValueText == symbol.Name:
+          RoslynSyntaxNode? write = WriteOf(identifier);
+          if (write is null || IsRecorded(assignments, write))
+            continue;
+
+          if (write is AssignmentExpressionSyntax { Right: ExpressionSyntax right } && IsNullLiteral(right))
+            continue;
+
+          if (SymbolEqualityComparer.Default.Equals(SemanticModel.GetSymbolInfo(identifier, CancellationToken).Symbol, symbol))
+            return true;
+
+          break;
+      }
     }
 
     return false;
   }
+
+  /// <summary>
+  /// The assignment or argument that writes <paramref name="identifier"/>, or null when it is only read.
+  /// </summary>
+  private static RoslynSyntaxNode? WriteOf(IdentifierNameSyntax identifier)
+  {
+    RoslynSyntaxNode target = identifier;
+    if (target.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Name == target)
+      target = memberAccess;
+
+    while (true)
+    {
+      switch (target.Parent)
+      {
+        case ParenthesizedExpressionSyntax parenthesized:
+          target = parenthesized;
+          continue;
+
+        // (app, other) = ...: the tuple is the assignment's left side
+        case ArgumentSyntax { Parent: TupleExpressionSyntax tuple }:
+          target = tuple;
+          continue;
+
+        case AssignmentExpressionSyntax assignment when assignment.Left == target:
+          return assignment;
+
+        case ArgumentSyntax argument when !argument.RefKindKeyword.IsKind(SyntaxKind.None) && !argument.RefKindKeyword.IsKind(SyntaxKind.InKeyword):
+          return argument;
+
+        default:
+          return null;
+      }
+    }
+  }
+
+  private static bool IsRecorded(List<AppAssignment> assignments, RoslynSyntaxNode write) =>
+    assignments.Exists(recorded => recorded.Tree == write.SyntaxTree && recorded.Position == write.Span.End);
+
+  private static bool IsNullLiteral(ExpressionSyntax expression) =>
+    expression.IsKind(SyntaxKind.NullLiteralExpression)
+    || expression.IsKind(SyntaxKind.DefaultLiteralExpression)
+    || expression is DefaultExpressionSyntax;
 
   /// <summary>
   /// Records that <paramref name="symbol"/> was assigned <paramref name="value"/> at the end of

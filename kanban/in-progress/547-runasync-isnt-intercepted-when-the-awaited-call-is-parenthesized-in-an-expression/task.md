@@ -54,6 +54,7 @@ Acceptance criteria:
 - Review oracle: round 2 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3 fixed. Open finding M4. Disposition pending a fix pass — 2026-10-26
 - 2026-10-26 implement-fix-3 (claude, ganda task work): fixed review round 2 M4 with regressions.
 - Review oracle: round 3 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3, M4 fixed. Open finding M5. Disposition pending a fix pass — 2026-10-26
+- 2026-10-26 implement-fix-4 (claude, ganda task work): fixed review round 3 M5 with regressions.
 
 ## Results
 
@@ -137,12 +138,32 @@ was evaluated) were missed the same way.
   each app's handler wrote to its own terminal. The single-app lambda test stays intercepted.
 - Docs: NURU_I001 description and changelog name the captured-local case.
 
+### Review round 3 fixes
+
+- **M5** (`dsl-interpreter.cs`, `AppAt`, `HasUnrecordedWrite`): the every-assignment fallback
+  (a closure call with no assignment before it inside its innermost closure) now binds only when
+  every write of the variable in the file is one this interpretation recorded, all with the same
+  app. `HasUnrecordedWrite` replaces `IsAssignedOutsideWalk` and counts declarations, assignments
+  (also inside a tuple deconstruction) and `ref`/`out` arguments anywhere in the file, not only
+  writes inside closures. A `null`/`default` write never holds an app and is ignored, so
+  `NuruApp? app = null; app = ...Build();` still traces a closure call. A `Build()` inside a lambda is
+  its own interpretation and does not record the enclosing method's assignments, so a nested lambda
+  or a call before the closure's own assignment is now left for NURU_I001 instead of being bound to
+  the closure's app.
+- Tests: generator-72 adds the two review shapes (nested lambda run after the outer method assigns
+  a third app; `Check(app.RunAsync(...))` before the lambda's assignment), each expecting one
+  NURU_I001 on the call (so no app intercepts it), and a null-initialized local captured by a lambda
+  (no NURU_I001). Against the round-3 interpreter the two review shapes fail (0 NURU_I001).
+- Changelog: NURU_I001 entry notes an assignment in another lambda counts.
+
 ### Verification
 
 - `./bin/dev test`: multi-mode 2128 total, 2122 passed, 6 skipped, 0 failed; standalone 41 files, 0 failed.
 - Round 1 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 41 standalone files, 0 failed);
   `./bin/dev verify-samples` 68/68; `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - `./bin/dev verify-samples`: 68/68.
+- Round 3 fix pass: `./bin/dev test` exit 0 (multi-mode 2131, standalone 0 failed; generator-72 14/14,
+  generator-71 11/11); `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - Round 2 fix pass: `./bin/dev test` exit 0 (multi-mode and standalone, 0 failed);
   `dotnet build timewarp-nuru.slnx --no-incremental` 0 warnings, 0 errors.
 - `dotnet build timewarp-nuru.slnx --no-incremental`: 0 warnings, 0 errors (no NURU_I001 in repo code).
@@ -161,9 +182,11 @@ dotnet run tests/timewarp-nuru-tests/generator/generator-72-run-async-not-interc
 
 Expect: generator-71 reports `Total: 11 Passed: 11` (each context, including a reassigned local,
 `app?.RunAsync`, and a lambda that assigns its own app, ran its handler with exit 0, so every call
-was intercepted once); generator-72 reports `Total: 11 Passed: 11` (NURU_I001 on the parameter, `?.`
-parameter and method-result receivers, and on a lambda or local function that captures a local
-assigned two apps; still on a parameter call when another app has an extraction error).
+was intercepted once); generator-72 reports `Total: 14 Passed: 14` (NURU_I001 on the parameter, `?.`
+parameter and method-result receivers, on a lambda or local function that captures a local
+assigned two apps, on a nested lambda whose local the outer method reassigns, and on a call before
+the closure's own assignment; none on a null-initialized local captured by a lambda; still on a
+parameter call when another app has an extraction error).
 
 ### Review
 

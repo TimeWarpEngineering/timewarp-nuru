@@ -51,6 +51,7 @@ Acceptance criteria:
 - Review oracle: round 1 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. Open findings M1, M2, M3. Disposition pending a fix pass — 2026-10-26
 - Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-26T09:29:26Z
 - 2026-10-26 implement-fix-2 (claude, ganda task work): fixed review round 1 M1, M2, M3 with regressions.
+- Review oracle: round 2 by general (cursor, model Grok 4.7), session not reported, max-turns uncapped (budget turn cap 120), effort 2. M1, M2, M3 fixed. Open finding M4. Disposition pending a fix pass — 2026-10-26
 
 ## Results
 
@@ -144,18 +145,19 @@ method-result receivers only, and still on a parameter call when another app has
 
 ### Review
 
-Round 1, effort 2, roster general (turn cap 120, session max-turns uncapped). The implementer restatement matches the task checklist.
+Round 2, effort 2, roster general (turn cap 120, session max-turns uncapped). Delta `993f24bd..31353fd4`. The implementer restatement matches the task checklist.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 2 | 0 | 0 |
-| suggestion | 1 | 0 | 0 |
+| bug | 1 | 2 | 0 |
+| suggestion | 0 | 1 | 0 |
 | nit | 0 | 0 | 0 |
 
-Disposition: pending. Open findings M1 (reassigned local binds every `RunAsync` to the last app), M2 (`app?.RunAsync` is neither intercepted nor warned), M3 (any extraction error suppresses every NURU_I001). No `review/disposition.md` until those are closed.
+Disposition: pending. M1, M2, and M3 are fixed. Open finding M4 (a lambda or local function between two app assignments is intercepted as the earlier app). No `review/disposition.md` until that is closed.
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`. Round 1 is unchanged under `review/round-1/`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
+- Round 2: Blocked — open M4

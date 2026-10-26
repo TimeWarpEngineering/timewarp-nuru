@@ -46,6 +46,7 @@ Acceptance:
 - Scope added 2026-10-26 by cockpit 7dce871f (logger field name clash from 545)
 - Implement 2026-10-26 (implementer-claude, ganda task work): per-app logger factory source, current-app
   factory for shared code, FQ framework field names, generator-70 added, generator-66 back in multi-mode.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-26T07:59:56Z
 
 ## Results
 

@@ -401,7 +401,10 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       InterceptSitesByMethod[methodName] = sites;
     }
 
-    sites.Add(site);
+    // The statement walk and the entry point pass (DslInterpreter) can both find the same call
+    if (!sites.Contains(site))
+      sites.Add(site);
+
     return (TSelf)this;
   }
 

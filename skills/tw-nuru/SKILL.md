@@ -60,6 +60,7 @@ return await app.RunAsync(args);
 `DiscoverEndpoints()` auto-discovers all classes with `[NuruRoute]`.
 When one compilation builds apps in several source files (a multi-file test assembly), analyzer NURU_A003 warns on unfiltered `DiscoverEndpoints()`: each app would get every file's endpoints. Use `Map<TEndpoint>()` there.
 Endpoints in a referenced contracts assembly are discovered only after an opt-in: `[assembly: NuruEndpointAssembly(typeof(AnyTypeInIt))]`, or `Map<T>()` for one type. Do not link contract files into the CLI as sources. See `documentation/user/features/neutral-contracts.md`.
+The generator intercepts each `RunAsync()` call on an app it can trace to a `Build()` call (a local, a field, or the `Build()` chain itself), in any expression. NURU_I001 warns when it cannot, such as `RunAsync()` on a `NuruApp` parameter, because that call would throw at runtime.
 `.AddRepl()` enables interactive REPL mode. `AutoStartWhenEmpty = true` starts REPL when no args provided.
 
 ### Commands, Queries, and Idempotent Commands

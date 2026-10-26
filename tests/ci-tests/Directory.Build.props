@@ -148,6 +148,10 @@
          (task 545 NURU_H007 for endpoint constructors); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-69-endpoint-constructor-logger-warning.cs" />
+    <!-- generator-72: same Roslyn-hosted generator test pattern as generator-28
+         (task 547 NURU_I001 for RunAsync calls no app intercepts); CS0433 collision applies.
+         Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-72-run-async-not-intercepted-diagnostic.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

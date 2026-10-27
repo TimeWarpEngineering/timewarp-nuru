@@ -26,6 +26,9 @@ Source: [CI speed eval (timewarp-intel PR #74)](https://github.com/TimeWarpEngin
 ## Notes
 
 - Filed 2026-10-25 at Steven's request, relayed by Amina. File only, do not launch.
+- Released safety: `dev release` (543, PR #364) tags the newest commit with a green `workflow.yml` run when only kanban-only commits follow it. A kanban-only push that no longer runs the build must not break that: the release run's `locate-run`/`download-artifact` still needs the `Packages-*` artifact of the tagged (build) commit, and a skipped-build run must not count as the "successful CI run" dev release looks for, or it would tag a commit with no artifact. Verify with `dev release --dry-run` after a kanban-only push. See also 549.
+- The `release:` trigger and `workflow_dispatch` modes must never be path-filtered.
+- Launched 2026-10-26 at Steven's request ("can we do 537 next?", 2026-10-28). why: cockpit 7dce871f
 - Follow-up task for splitting CI into parallel jobs depends on this one.
 
 ## Results

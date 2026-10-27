@@ -38,6 +38,10 @@ Acceptance:
 - [ ] Prove it with a kanban-only PR (build skipped, checks green) and a code PR (full build runs) — gate proven offline against real PRs #364/#357/#363/#362 and the wiring by dispatch run 40560311385; the live code PR is this task's PR (host open-pr), the live kanban-only PR is the first one after merge (see How to validate)
 - [ ] Open a PR with run links as proof — host open-pr node
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Filed 2026-10-25 at Steven's request, relayed by Amina. File only, do not launch.
@@ -154,6 +158,16 @@ Smoke:
 Expect: steps 2–3 cost no build minutes; `ci` stays green on step 3; step 5 never accepts a commit
 without a `Packages-*` artifact.
 
+### Review
+
+- Rounds: 1. Effort 2, roster `general`. Turn cap 120, recorded as uncapped (cursor has no `--max-turns`).
+- Final counts: bug 0, suggestion 0, nit 0. All statuses 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- The restatement matches the task, including the Notes constraints on release, dispatch, and `dev release`. No misread.
+
 ## Session
 
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-27T18:41:11Z
+- Review oracle: reviewer-cursor (cursor, model grok-4.7), body tw-implementation-review, effort 2, roster general, session not reported, max-turns uncapped (bound 120), round 1, disposition clean — 2026-10-28
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-27T18:59:44Z

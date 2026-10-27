@@ -4,6 +4,24 @@ on:
   push:
     branches:
       - master
+    # Non-code paths (task 537). A push that changes only these paths gets no
+    # run at all. That is deliberate: a run with the build skipped would still
+    # conclude success, and `dev release` (step 8) and release-mode locate-run
+    # treat a successful push run at the tag sha as tested, with a Packages-*
+    # artifact. No run keeps that true. Required checks gate pull requests, not
+    # pushes, so nothing waits on a missing push run. Pull requests use the
+    # `changes` job below, which reads this list, so the list lives only here.
+    # Use `dir/**` or exact file names; the gate matches them as bash globs.
+    # readme.md and assets/logo.png are packed into the nupkgs, so they stay code.
+    paths-ignore:
+      - 'kanban/**'
+      - 'documentation/**'
+      - 'skills/**'
+      - '.agent/**'
+      - '.claude/**'
+      - 'assets/mascot/**'
+      - 'assets/timewarp-nuru-avatar.svg'
+      - 'changelog.md'
   pull_request:
     branches:
       - master
@@ -25,8 +43,87 @@ on:
         type: string
         default: ''
 
+# Superseded pull request runs are cancelled. Every other event gets a group of
+# its own (run_id), so master, release and dispatch runs are never cancelled or
+# queued behind one another.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  changes:
+    # Path gate for pull requests (task 537). Sets code=false only when every
+    # file the PR changes (and every rename source) matches push.paths-ignore.
+    # Any other event, or any failure here, means code=true. `ci` is the
+    # required check; a skipped job reports success, so a kanban-only PR stays
+    # mergeable without a build. release and workflow_dispatch are never gated.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.gate.outputs.code }}
+    steps:
+      - name: Checkout workflow file
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/workflows/workflow.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Classify changed paths
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "Event ${EVENT_NAME} is never path-gated: full build."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          mapfile -t patterns < <(yq -r '.on.push."paths-ignore"[]' .github/workflows/workflow.yml)
+          if [ "${#patterns[@]}" -eq 0 ]; then
+            echo "::warning::No push.paths-ignore patterns read from workflow.yml; building."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          mapfile -t files < <(gh api --paginate \
+            "/repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" \
+            --jq '.[] | .filename, (.previous_filename // empty)')
+          # The files API stops at 3000 entries. A short list could hide code.
+          if [ "${#files[@]}" -eq 0 ] || [ "${#files[@]}" -lt "$PR_CHANGED_FILES" ]; then
+            echo "Listed ${#files[@]} of ${PR_CHANGED_FILES} changed files; building."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          for f in "${files[@]}"; do
+            matched=false
+            for p in "${patterns[@]}"; do
+              # Unquoted on purpose: glob match, and * crosses / in [[ ]].
+              # shellcheck disable=SC2053
+              if [[ "$f" == $p ]]; then matched=true; break; fi
+            done
+            if [ "$matched" = false ]; then
+              echo "Code path changed: ${f}. Full build."
+              echo "code=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+
+          echo "All ${#files[@]} changed paths are non-code (${patterns[*]}). Skipping the build."
+          echo "code=false" >> "$GITHUB_OUTPUT"
+
   ci:
+    needs: changes
+    # Only an explicit code=false skips. A failed or missing gate still builds.
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,12 +134,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Full history required for the release gate's tag/ancestor checks (git merge-base, tag-pin, ls-remote comparisons)
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
           # Global-packages cache. The key is package manifests, so a source-only
@@ -111,7 +208,7 @@ jobs:
           github.ref == 'refs/heads/master' &&
           github.event_name != 'release' &&
           !(github.event_name == 'workflow_dispatch' && (inputs.mode == 'release' || inputs.mode == 'probe'))
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Packages-${{ github.run_number }}
           path: artifacts/packages/*.nupkg

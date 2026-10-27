@@ -154,3 +154,6 @@ Smoke:
 Expect: steps 2–3 cost no build minutes; `ci` stays green on step 3; step 5 never accepts a commit
 without a `Packages-*` artifact.
 
+## Session
+
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-27T18:41:11Z

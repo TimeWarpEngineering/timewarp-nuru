@@ -6,14 +6,32 @@
 
 Found by task 551 (PR #367). Blocks ganda 488 (wire `UseTelemetry` so ganda task spans reach SigNoz): Steven wants spans in the next beta, so beta.7 waits for this.
 
+## Goal (implementer restatement)
+
+`UseTelemetry()` alone must produce a trace span for every command it runs, so a host such as ganda
+sees command spans in SigNoz without also calling `.AddBehavior(typeof(TelemetryBehavior))`.
+
+Acceptance:
+
+- One mechanism. The generator registers `TelemetryBehavior` itself when `UseTelemetry()` is
+  called, as the outermost behavior. The dead `EmitTelemetryStart/Success/Catch` twins are deleted
+  (they referenced counters that were never declared).
+- With `UseTelemetry()` only, each command run produces one span named by its route pattern, with
+  `command.name` / `command.type` tags, status Ok on success, status Error plus `error.type` on
+  failure (no exception message, per 470-015 redaction).
+- An app that also adds `TelemetryBehavior` gets one span per command, not two.
+- The span is a child of `Activity.Current` when the caller has one.
+- An end-to-end OTLP/HTTP test shows a command span reaching `/v1/traces` with no hand-made span.
+- `documentation/user/features/telemetry.md` says what `UseTelemetry()` emits.
+
 ## Checklist
 
-- [ ] Read the Purpose/Design regions of `telemetry-emitter.cs`, `interceptor-emitter.cs` and `TelemetryBehavior`; decide whether `UseTelemetry()` should emit spans directly or register `TelemetryBehavior` implicitly (one mechanism, no double spans when an app also adds the behavior)
-- [ ] With only `UseTelemetry()`, every executed command produces one span: name, route pattern/command tags, status OK, and status Error with the exception recorded on failure
-- [ ] An app that already adds `TelemetryBehavior` gets exactly one span per command, not two
-- [ ] Span parentage: the command span is a child of any ambient `Activity` (so a host like ganda can nest it)
-- [ ] End-to-end test with an OTLP HTTP listener (like `telemetry-04`) proving a span reaches `/v1/traces` from `UseTelemetry()` alone
-- [ ] Update `documentation/user/features/telemetry.md` to state what `UseTelemetry()` emits
+- [x] Read the Purpose/Design regions of `telemetry-emitter.cs`, `interceptor-emitter.cs` and `TelemetryBehavior`; decide whether `UseTelemetry()` should emit spans directly or register `TelemetryBehavior` implicitly (one mechanism, no double spans when an app also adds the behavior)
+- [x] With only `UseTelemetry()`, every executed command produces one span: name, route pattern/command tags, status OK, and status Error with the exception recorded on failure
+- [x] An app that already adds `TelemetryBehavior` gets exactly one span per command, not two
+- [x] Span parentage: the command span is a child of any ambient `Activity` (so a host like ganda can nest it)
+- [x] End-to-end test with an OTLP HTTP listener (like `telemetry-04`) proving a span reaches `/v1/traces` from `UseTelemetry()` alone
+- [x] Update `documentation/user/features/telemetry.md` to state what `UseTelemetry()` emits
 
 ## Notes
 
@@ -23,3 +41,70 @@ Found by task 551 (PR #367). Blocks ganda 488 (wire `UseTelemetry` so ganda task
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
+- 2026-10-28 implementer (claude, ganda task work): implicit `TelemetryBehavior` registration,
+  dead emitter twins removed, method-group command class fix, tests and docs. CI multi-mode
+  2128 passed / 6 skipped / 0 failed; standalone phase 0 failed; `ganda repo audit` clean (no
+  audit fixes were needed).
+
+## Results
+
+### Decision
+
+One mechanism: `UseTelemetry()` registers the built-in `global::TimeWarp.Nuru.TelemetryBehavior`
+as the app's first (outermost) behavior, in `IrAppBuilder.EffectiveBehaviors()` at
+`FinalizeModel()`. It is skipped when the app already added `TelemetryBehavior` (that copy keeps
+its position) or when `EnableTracing` and `EnableMetrics` are both false. The generated OTLP
+setup already listened to the behavior's `TimeWarp.Nuru.Behavior` source and meter.
+
+`TelemetryEmitter.EmitTelemetryStart/Success/Catch` are deleted. They had no caller and could
+not have compiled (they used `__commandsInvoked` / `__commandDuration`, which were never
+declared). telemetry-02's source-parity test on `EmitTelemetryCatch` went with them; the
+redaction it guarded is now checked end to end in telemetry-05.
+
+### Pre-existing bug found and fixed
+
+A fluent route whose handler is a method group (`HandlerKind.Method`, e.g.
+`.WithHandler(Tel01Capture.Probe)`) got no generated command class, so any behavior on it emitted
+`Command = __command` with no `__command` declared (CS0103). Implicit registration made every
+`UseTelemetry()` app with a method-group handler hit it (telemetry-01, -03, -04). Fix:
+`CommandClassEmitter.HasCommandClass(route)` is true for `Delegate` and `Method`, used by the
+class emitter and the behavior emitter's command and context creation.
+
+### Span shape
+
+Name = route pattern; tags `command.name` (pattern), `command.type` (endpoint class or generated
+command class); `ActivityKind.Internal`; status Ok, or Error with `error.type` and no message or
+status description (470-015 redaction kept). Parent = `Activity.Current`.
+
+### Files
+
+- `source/timewarp-nuru-analyzers/generators/ir-builders/ir-app-builder.cs`: `EffectiveBehaviors()`
+- `source/timewarp-nuru-analyzers/generators/emitters/telemetry-emitter.cs`: dead span helpers removed, header updated
+- `source/timewarp-nuru-analyzers/generators/emitters/command-class-emitter.cs`, `behavior-emitter.cs`: method-group command class
+- `source/timewarp-nuru/telemetry/telemetry-behavior.cs`: remarks
+- `tests/timewarp-nuru-tests/telemetry/telemetry-05-use-telemetry-command-spans.cs` (new, CI multi-mode): one Ok span, Error span with `error.type`, no double span with explicit `AddBehavior`, parent = ambient activity
+- `tests/timewarp-nuru-tests/telemetry/telemetry-04-otlp-endpoint-paths.cs` (standalone): probe no longer starts its own span; new `Should_export_command_span_from_UseTelemetry_alone` waits for `/v1/traces`
+- `tests/timewarp-nuru-tests/telemetry/telemetry-02-error-message-redaction.cs`: emitter-twin test removed
+- `documentation/user/features/telemetry.md` ("What UseTelemetry() emits"), `pipeline-behaviors.md`, `changelog.md`
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/telemetry/telemetry-05-use-telemetry-command-spans.cs
+dotnet run tests/timewarp-nuru-tests/telemetry/telemetry-04-otlp-endpoint-paths.cs
+dotnet run tests/ci-tests/run-ci-tests.cs
+```
+
+Expect:
+
+- telemetry-05: 4/4 passed (one `tel05-ok` span with status Ok from `UseTelemetry()` alone;
+  `tel05-fail` span status Error, `error.type` = `InvalidOperationException`, no `error.message`;
+  one `tel05-dup` span with `AddBehavior(typeof(TelemetryBehavior))` too; `tel05-child` parent
+  span id = the host activity's span id).
+- telemetry-04: 9/9 passed, including `Should_export_command_span_from_UseTelemetry_alone`
+  (the sink records `/v1/traces` though the handler starts no span).
+- CI: multi-mode 0 failed (2128 passed, 6 skipped at implementation time), standalone 0 failed.
+

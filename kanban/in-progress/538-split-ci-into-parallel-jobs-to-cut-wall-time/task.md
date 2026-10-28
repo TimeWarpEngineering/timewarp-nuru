@@ -123,3 +123,7 @@ Expect:
 - `dev test` with no phase runs both phases. Locally: 4458 tests, 0 failed.
 - actionlint prints nothing and exits 0.
 - The run shows build, samples, test-multi, test-standalone and ci all `success`, and release `skipped`.
+
+## Session
+
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-28T01:06:52Z

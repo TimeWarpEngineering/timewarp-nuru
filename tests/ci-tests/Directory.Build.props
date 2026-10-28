@@ -152,6 +152,11 @@
          (task 547 NURU_I001 for RunAsync calls no app intercepts); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-72-run-async-not-intercepted-diagnostic.cs" />
+    <!-- telemetry-04: end-to-end OTLP/HTTP export to a local sink (task 551). OpenTelemetry log
+         export never reaches the sink inside this shared assembly, even from a plain
+         LoggerFactory with no Nuru code; traces and metrics do. It passes as its own app, which
+         is what users run. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/telemetry/telemetry-04-otlp-endpoint-paths.cs" />
     <Compile
       Include="../timewarp-nuru-tests/**/*.cs"
       Exclude="../timewarp-nuru-tests/**/obj/**;../timewarp-nuru-tests/**/bin/**;@(CiTestExcludes)" />

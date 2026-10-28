@@ -38,13 +38,22 @@ public sealed class NuruTelemetryOptions
   public bool EnableLogging { get; set; } = true;
 
   /// <summary>
-  /// OTLP endpoint for telemetry export.
+  /// OTLP collector base URL for telemetry export.
   /// If not set, reads from OTEL_EXPORTER_OTLP_ENDPOINT environment variable.
   /// If neither is set, telemetry export is disabled.
   /// </summary>
   /// <remarks>
+  /// This is a base URL, with the same meaning as OTEL_EXPORTER_OTLP_ENDPOINT. With
+  /// <c>OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf</c>, traces, metrics, and logs post to
+  /// <c>{base}/v1/traces</c>, <c>{base}/v1/metrics</c>, and <c>{base}/v1/logs</c>. A path that
+  /// already ends with the signal path is kept. With gRPC the URL is used unchanged.
+  /// A value set here takes precedence over every OTEL_EXPORTER_OTLP_*_ENDPOINT variable.
+  /// When it is not set, OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT override the base
+  /// variable for their signal and are used as-is.
+  /// <para>
   /// OTLP sinks receive process telemetry and must be treated as a trust boundary.
   /// Point this only at collectors you control or otherwise trust.
+  /// </para>
   /// </remarks>
   public string? OtlpEndpoint { get; set; }
 

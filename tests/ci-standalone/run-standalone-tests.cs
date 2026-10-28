@@ -67,6 +67,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-69-endpoint-constructor-logger-warning.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-72-run-async-not-intercepted-diagnostic.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "auto", "operation-endpoint-dispatch.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "telemetry", "telemetry-04-otlp-endpoint-paths.cs"),
 ];
 
 int parallelism = Math.Max(1, Environment.ProcessorCount);

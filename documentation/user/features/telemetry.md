@@ -19,8 +19,26 @@ This configures:
 
 | Variable | Description |
 |----------|-------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint (e.g., `http://localhost:4317`) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector base URL (e.g., `http://localhost:4317`). Export is on only when this or `OtlpEndpoint` is set |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` (SDK default) or `http/protobuf` |
+| `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT` | Full URL for one signal, used as-is; overrides the base URL for that signal |
+| `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_PROTOCOL` | Protocol for one signal; overrides `OTEL_EXPORTER_OTLP_PROTOCOL` |
 | `OTEL_SERVICE_NAME` | Service name for telemetry (defaults to app name) |
+
+### Endpoint paths
+
+The endpoint, from `OTEL_EXPORTER_OTLP_ENDPOINT` or the `OtlpEndpoint` option, is a **base URL**.
+With `http/protobuf`, each signal posts to its own path under it:
+
+| Signal | URL for base `https://collector:4318/` |
+|--------|----------------------------------------|
+| Traces | `https://collector:4318/v1/traces` |
+| Metrics | `https://collector:4318/v1/metrics` |
+| Logs | `https://collector:4318/v1/logs` |
+
+The signal path is not added twice when the base already ends with it. With gRPC, the URL is
+used unchanged. A per-signal `OTEL_EXPORTER_OTLP_{SIGNAL}_ENDPOINT` is a full URL and is used
+as-is. An `OtlpEndpoint` set in code takes precedence over every endpoint variable.
 
 ## OTLP sink trust
 

@@ -28,5 +28,9 @@ Source: [CI speed eval (timewarp-intel PR #74)](https://github.com/TimeWarpEngin
 ## Notes
 
 - Filed 2026-10-25 at Steven's request, relayed by Amina. File only, do not launch.
+- Keep a final job named `ci` that needs all the parallel jobs (and is skipped exactly when 537's `changes` job says skip), so the required check name stays `ci` and branch protection needs no edit. Do not change branch protection or repo settings yourself; if a settings change is unavoidable, stop and write the exact change in Results for Steven.
+- The release pipeline (`locate-run`, `download-artifact`, `verify`, `push`) promotes the `Packages-*` artifact from the CI run of the tagged commit. Keep that artifact name and contents, and keep it uploaded by the run of that commit, or releases break. Check with `dev release --dry-run` logic and the release jobs in `workflow.yml`.
+- 537 (PR #365) merged 2026-10-28: master non-code pushes start no run; PRs run a `changes` job and skip `ci` when every path is non-code.
+- Launched 2026-10-28 at Steven's request. why: cockpit 7dce871f, Steven "yes" to launching 538, 2026-10-28
 
 ## Results

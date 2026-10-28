@@ -1,0 +1,25 @@
+name: Setup .NET
+description: .NET SDK with the NuGet global-packages cache. Shared by the workflow.yml jobs (task 538).
+
+runs:
+  using: composite
+  steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: '10.0.x'
+        # Global-packages cache. The key is package manifests, so a source-only
+        # change restores packages and restore downloads anything new. The
+        # parallel jobs share one key; the first job to finish on a new key
+        # saves it, and the others restore it on the next run.
+        # The file-based runfile directory is not cached: the SDK skips a rebuild
+        # from source mtimes versus build-success.cache, and checkout stamps
+        # sources at checkout time, so a restored cache either misses or can
+        # skip work that should run. Local invalidation stays
+        # `ganda runfile cache --clear`.
+        cache: true
+        cache-dependency-path: |
+          Directory.Packages.props
+          global.json
+          nuget.config
+          **/*.csproj

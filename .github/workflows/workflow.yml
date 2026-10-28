@@ -56,7 +56,8 @@ jobs:
     # file the PR changes (and every rename source) matches push.paths-ignore.
     # Any other event, or any failure here, means code=true. `ci` is the
     # required check; a skipped job reports success, so a kanban-only PR stays
-    # mergeable without a build. release and workflow_dispatch are never gated.
+    # mergeable without a build (the stage jobs skip too). release and
+    # workflow_dispatch are never gated.
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -120,94 +121,138 @@ jobs:
           echo "All ${#files[@]} changed paths are non-code (${patterns[*]}). Skipping the build."
           echo "code=false" >> "$GITHUB_OUTPUT"
 
-  ci:
-    needs: changes
+  stage:
+    # The PR/merge pipeline as parallel jobs (task 538): build (pack plus the
+    # package gates), samples, and the two test phases. Each job is its own
+    # runner, so samples and tests cannot touch the packages the build job
+    # verified. Release and probe runs build nothing (the release job).
     # Only an explicit code=false skips. A failed or missing gate still builds.
-    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
+    name: ${{ matrix.stage }}
+    needs: changes
+    if: >-
+      ${{ !cancelled() && needs.changes.outputs.code != 'false' &&
+      github.event_name != 'release' &&
+      !(github.event_name == 'workflow_dispatch' && inputs.mode != 'merge') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
-      # write: keep-last-two prune deletes older Packages-* artifacts.
-      # Release-mode list/download still works with write (superset of read).
-      actions: write
+    strategy:
+      # Report every stage. A samples failure no longer hides the tests.
+      fail-fast: false
+      matrix:
+        stage: [build, samples, test-multi, test-standalone]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # Full history required for the release gate's tag/ancestor checks (git merge-base, tag-pin, ls-remote comparisons)
+          fetch-depth: 0  # Full history: attestation notes, version and tag checks
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: '10.0.x'
-          # Global-packages cache. The key is package manifests, so a source-only
-          # change restores packages and restore downloads anything new.
-          # The file-based runfile directory is not cached: the SDK skips a rebuild
-          # from source mtimes versus build-success.cache, and checkout stamps
-          # sources at checkout time, so a restored cache either misses or can
-          # skip work that should run. Local invalidation stays
-          # `ganda runfile cache --clear`.
-          cache: true
-          cache-dependency-path: |
-            Directory.Packages.props
-            global.json
-            nuget.config
-            **/*.csproj
+        uses: ./.github/actions/setup-dotnet
 
       - name: Runner size
         run: nproc && free -h
 
-      - name: Validate break-glass confirmation
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm != 'release'
+      - name: Read OS codename
+        # completion-31 (multi-mode phase) drives a fresh zsh, which the runner
+        # image does not ship. The apt mirror sometimes serves the debs at
+        # 60 kB/s (1.5 to 5 minutes), so the debs are cached.
+        if: matrix.stage == 'test-multi'
+        id: os
         run: |
-          echo "::error::mode=release requires confirm=release. Refusing to run a break-glass release."
-          exit 1
+          . /etc/os-release
+          echo "codename=${VERSION_CODENAME}" >> "$GITHUB_OUTPUT"
 
-      - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
-        id: nuget-login
-        uses: nuget/login@v1
+      - name: Cache zsh packages
+        if: matrix.stage == 'test-multi'
+        uses: actions/cache@v6
         with:
-          user: TimeWarp.Enterprises
-
-      - name: Trusted publishing probe result
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
-        run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
+          path: ${{ runner.temp }}/zsh-debs
+          key: zsh-debs-${{ runner.os }}-${{ runner.arch }}-${{ steps.os.outputs.codename }}-v1
 
       - name: Install zsh
-        # completion-31 drives a fresh zsh (fpath autoload and zpty Tab). The runner image does not ship zsh.
+        if: matrix.stage == 'test-multi'
+        env:
+          DEBS: ${{ runner.temp }}/zsh-debs
         run: |
-          if ! command -v zsh >/dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y zsh
+          set -euo pipefail
+          if command -v zsh >/dev/null; then
+            echo "zsh is already installed."
+            exit 0
           fi
+          if compgen -G "${DEBS}/*.deb" >/dev/null && sudo dpkg -i "${DEBS}"/*.deb; then
+            echo "Installed zsh from the cached packages."
+            exit 0
+          fi
+          echo "No usable cached zsh packages; installing from apt."
+          sudo apt-get update
+          rm -rf "${DEBS}"
+          mkdir -p "${DEBS}"
+          (cd "${DEBS}" && apt-get download zsh zsh-common)
+          sudo apt-get install -y "${DEBS}"/*.deb
 
-      - name: Run CI Pipeline
-        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+      - name: Run CI stage
         env:
           GH_TOKEN: ${{ github.token }}
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage ${{ matrix.stage }}
+
+      - name: Stage packages for the ci job
+        # Green master only (see the ci job). The ci job uploads these bytes as
+        # Packages-<run_number> once every stage passed, then deletes this one.
+        # The name must not start with Packages-: release locate-run takes any
+        # Packages-* artifact of a successful run.
+        if: matrix.stage == 'build' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v7
+        with:
+          name: staged-packages
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+          # Kept for `gh run rerun --failed` of a red run; a green run deletes it.
+          retention-days: 3
+
+  ci:
+    # Required check. Needs every stage and fails unless all of them passed.
+    # Skipped exactly when changes says code=false (a skipped job reports
+    # success) and on release and probe runs, which have no stages. always()
+    # rather than !cancelled(): a cancelled run must fail this check, not skip it.
+    needs: [changes, stage]
+    if: >-
+      ${{ always() && needs.changes.outputs.code != 'false' &&
+      github.event_name != 'release' &&
+      !(github.event_name == 'workflow_dispatch' && inputs.mode != 'merge') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # write: keep-last-two prune deletes older Packages-* artifacts and the
+      # staged-packages artifact.
+      actions: write
+
+    steps:
+      - name: Require every stage
+        env:
+          STAGE_RESULT: ${{ needs.stage.result }}
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            dotnet run --file tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          elif [ "${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release' }}" == "true" ]; then
-            dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          else
-            dotnet run --file tools/dev-cli/dev.cs -- workflow
+          echo "stage result: ${STAGE_RESULT}"
+          if [ "${STAGE_RESULT}" != "success" ]; then
+            echo "::error::A CI stage did not succeed (${STAGE_RESULT})."
+            exit 1
           fi
+
+      - name: Download staged packages
+        if: github.ref == 'refs/heads/master'
+        uses: actions/download-artifact@v8
+        with:
+          name: staged-packages
+          path: artifacts/packages
 
       - name: Upload Artifacts
         # Green master only: 458-002 promotes Packages-* from a push run at the
-        # tag SHA. PR / always() uploads filled the org quota. Skip failed runs,
-        # probe (no nupkgs), and release-mode re-upload (the run just downloaded
-        # the same bytes).
+        # tag SHA. PR / always() uploads filled the org quota. Failed runs never
+        # reach this step; release and probe runs have no ci job. The bytes are
+        # the build stage's verified Release packages.
         id: upload-packages
-        if: >-
-          success() &&
-          github.ref == 'refs/heads/master' &&
-          github.event_name != 'release' &&
-          !(github.event_name == 'workflow_dispatch' && (inputs.mode == 'release' || inputs.mode == 'probe'))
+        if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v7
         with:
           name: Packages-${{ github.run_number }}
@@ -245,3 +290,67 @@ jobs:
             echo "Deleting ${name} (id=${id}, created=${created_at})"
             gh api --method DELETE "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}"
           done < "$tmp"
+
+      - name: Delete staged packages
+        # Storage only; a leftover expires with its retention.
+        if: success() && steps.upload-packages.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          for id in $(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name == "staged-packages") | .id'); do
+            echo "Deleting staged-packages (id=${id})"
+            gh api --method DELETE "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}"
+          done
+
+  release:
+    # Release event, break-glass dispatch (mode=release) and the trusted
+    # publishing probe. Release mode builds nothing: it promotes the Packages-*
+    # artifact from the successful CI run of the tagged commit.
+    if: >-
+      ${{ github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && (inputs.mode == 'release' || inputs.mode == 'probe')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
+      actions: read    # locate-run lists runs and downloads the Packages-* artifact
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # Full history required for the release gate's tag/ancestor checks (git merge-base, tag-pin, ls-remote comparisons)
+
+      - name: Setup .NET
+        uses: ./.github/actions/setup-dotnet
+
+      - name: Validate break-glass confirmation
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm != 'release'
+        run: |
+          echo "::error::mode=release requires confirm=release. Refusing to run a break-glass release."
+          exit 1
+
+      - name: NuGet login (OIDC Trusted Publishing)
+        id: nuget-login
+        uses: nuget/login@v1
+        with:
+          user: TimeWarp.Enterprises
+
+      - name: Trusted publishing probe result
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
+        run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
+
+      - name: Run release pipeline
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release' && inputs.confirm == 'release')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            dotnet run --file tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          else
+            dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          fi

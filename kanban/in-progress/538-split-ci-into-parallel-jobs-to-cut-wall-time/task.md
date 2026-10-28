@@ -17,6 +17,19 @@ Source: [CI speed eval (timewarp-intel PR #74)](https://github.com/TimeWarpEngin
 - Measure before and after wall time and total runner-minutes over several runs and record them in Results. Parallel jobs can raise total runner-minutes, so report both.
 - Use the newest current releases of actions and tools, not LTS lines.
 
+## Goal (implementer restatement)
+
+Cut CI wall time by running the independent stages of the single `ci` job as parallel jobs.
+
+Acceptance criteria:
+
+- `workflow.yml` runs build (pack plus package gates), sample verification, and the two test phases (multi-mode assembly, standalone files) as separate parallel jobs.
+- A final job named `ci` needs every parallel job, fails when any of them did not succeed, and is skipped exactly when `changes` says `code=false`. The required check name stays `ci`; no branch protection or settings edit.
+- The green-master `Packages-<run_number>` artifact keeps its name and contents (the nupkgs from the Release build that passed the layout and configuration gates). It is uploaded only after every job passed, by the run of that commit, so `dev release` locate-run and download-artifact still work. Release and probe modes still run.
+- Local `dev workflow` with no stage still runs the whole pipeline, including the package integrity gate.
+- Newest action releases.
+- Results record before and after wall time and runner-minutes over several runs.
+
 ## Checklist
 
 - [ ] Profile the current run to find the slow independent stages

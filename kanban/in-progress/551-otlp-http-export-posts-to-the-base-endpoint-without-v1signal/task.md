@@ -54,6 +54,7 @@ Acceptance:
 - 2026-10-28 implementer (claude, headless task work): implemented the fix, tests, and docs.
   Boy-scout: `ganda repo audit` failed on the new `glossary` check. `ganda repo audit --fix`
   scaffolded `glossary.md`, and I seeded it with OTLP, signal, and base endpoint.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 1e504216-e493-4b62-971e-4684c110fd05, max-turns 500, Done — 2026-10-28T04:57:09Z
 
 ## Results
 

@@ -38,6 +38,10 @@ Acceptance criteria:
 - [x] Record before and after wall time and runner-minutes
 - [ ] Open a PR with run links as proof (host open-pr node; run links are in Results)
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Filed 2026-10-25 at Steven's request, relayed by Amina. File only, do not launch.
@@ -124,6 +128,14 @@ Expect:
 - actionlint prints nothing and exits 0.
 - The run shows build, samples, test-multi, test-standalone and ci all `success`, and release `skipped`.
 
+### Review
+
+Round 1, effort 3, roster general. Counts: bug 0 open / 0 fixed / 0 wontfix, suggestion 0/0/0, nit 0/0/0. Disposition: **clean**. No wontfix and no escalation. The implementer restatement matches the task and the Notes.
+
+Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-28T01:06:52Z
+- Review oracle: general (grok, model Grok 4.7), session not reported, max-turns uncapped (review budget 200), clean — 2026-10-28
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-28T01:22:11Z

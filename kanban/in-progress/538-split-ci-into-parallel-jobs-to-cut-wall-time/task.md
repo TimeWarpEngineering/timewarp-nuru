@@ -32,11 +32,11 @@ Acceptance criteria:
 
 ## Checklist
 
-- [ ] Profile the current run to find the slow independent stages
-- [ ] Split into parallel jobs
-- [ ] Update required checks
-- [ ] Record before and after wall time and runner-minutes
-- [ ] Open a PR with run links as proof
+- [x] Profile the current run to find the slow independent stages
+- [x] Split into parallel jobs
+- [x] Update required checks (no edit needed: the aggregate job is still `ci`)
+- [x] Record before and after wall time and runner-minutes
+- [ ] Open a PR with run links as proof (host open-pr node; run links are in Results)
 
 ## Notes
 
@@ -47,3 +47,79 @@ Acceptance criteria:
 - Launched 2026-10-28 at Steven's request. why: cockpit 7dce871f, Steven "yes" to launching 538, 2026-10-28
 
 ## Results
+
+CI wall time fell from a 12.7 min median to 5.4 min. Runner time rose from 12.6 to 16.2 min (median).
+
+### Profile (before)
+
+From run [40567323828](https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/40567323828) (4 vCPU), one `ci` job, 14.4 min:
+
+| Stage | Time |
+|---|---|
+| Checkout and setup .NET | about 20s |
+| Install zsh (apt) | 99s here. Usually 10 to 20s, but the mirror sometimes serves 5 MB at 60 kB/s: 90s, 93s, 4m58s, 4m26s in the last 30 runs |
+| Compile `dev.cs` | about 49s |
+| Build and pack | 47s |
+| Verify samples | 191s |
+| Test: multi-mode compile | about 138s |
+| Test: multi-mode run | 145s |
+| Test: standalone phase | 149s |
+
+Build, samples, and the two test phases do not depend on each other. Samples and tests build what they need themselves.
+
+### What changed
+
+- `workflow.yml`: a `stage` matrix job runs `build`, `samples`, `test-multi` and `test-standalone` in parallel (`fail-fast: false`, so every stage reports).
+- `ci` needs `changes` and `stage`. It fails unless `needs.stage.result == success` and is skipped exactly when `changes` says `code=false`. It uses `always()`, not `!cancelled()`, so a cancelled run fails the required check instead of skipping it. On green master it downloads the build stage's `staged-packages` artifact, uploads it as `Packages-<run_number>` (same name, same nupkgs, 7 days), runs the keep-last-two prune, and deletes `staged-packages`.
+- `staged-packages` deliberately does not start with `Packages-`, because `CiRunPromotion.SelectPackagesArtifact` takes any `Packages-*` artifact. Failed runs keep it for 3 days so `gh run rerun --failed` still works.
+- Release events, break-glass dispatch, and the probe moved to a `release` job. Its steps, conditions and commands are the old ones, minus zsh and the upload. Its permissions are `actions: read` and `id-token: write`.
+- Setup .NET and its cache config moved to the composite action `.github/actions/setup-dotnet`. The test-multi job caches the zsh debs (`actions/cache@v6`) and falls back to apt. A cache hit installs in 2 to 4s.
+- `dev workflow --stage all|build|samples|test-multi|test-standalone`. With no `--stage`, local runs still run the full pipeline, including the task 503 integrity gate. The build stage keeps the layout and Release-configuration gates. In CI the separate runners do the integrity gate's job, because samples and tests cannot touch the build job's bytes.
+- `dev test --phase all|multi|standalone`.
+- The standalone list and loop moved to `tests/ci-standalone/run-standalone-tests.cs`, outside `tests/ci-tests`. Its job therefore skips the 140s multi-mode compile. `run-ci-tests.cs` still runs it after the multi phase unless `NURU_CI_PHASE=multi`. `.agent/local/nuru-specific.md` points at the new path.
+- Action versions are the newest releases (checked 2026-10-28): checkout v7 (7.0.1), setup-dotnet v6 (6.0.0), upload-artifact v7 (7.0.2), download-artifact v8 (8.0.2), cache v6 (6.1.0), nuget/login v1 (1.2.0).
+- Required checks: branch protection requires `ci` (app 15368, GitHub Actions), and the aggregate job keeps that name. No settings change is needed and none was made.
+
+### Before and after
+
+Before: the last 20 green non-release runs on master and PRs, 2026-10-26 to 2026-10-27. After: 3 `workflow_dispatch` (merge) runs of this branch. Runner time is the sum of job durations, including `changes` and `ci`. Billed counts each job rounded up to whole minutes; the repo is public, so this is a proxy.
+
+| | Wall median | Wall range | Runner median | Billed median |
+|---|---|---|---|---|
+| Before (n=20) | 12.7 min | 9.9 to 14.7 | 12.6 min | 13 min |
+| After (n=3) | 5.5 min | 5.4 to 5.5 | 16.2 min | 21 min |
+
+After runs: [40611642444](https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/40611642444) (5.47 min, zsh cache miss), [40612260218](https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/40612260218) (5.37 min), [40612266762](https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/40612266762) (5.48 min).
+
+Job times in 40612266762: build 1.5 min, test-standalone 4.3 min, samples 5.1 min, test-multi 5.2 min, `ci` 3s. Samples and test-multi now tie for the critical path. The extra runner time is mostly each job's own checkout, setup and `dev.cs` compile (about 1 min per job).
+
+### Not verifiable before merge
+
+- The green-master upload path (`staged-packages` to `Packages-<run_number>`, prune, staged delete) runs only on `refs/heads/master`. Branch dispatch runs skip it.
+- After merge, the first master push run should list `Packages-<n>` and no `staged-packages` (`gh api repos/TimeWarpEngineering/timewarp-nuru/actions/runs/<id>/artifacts --jq '.artifacts[].name'`), and `dev release --dry-run` should find that run.
+- The non-code PR skip is unchanged (`changes` job untouched); the new jobs use the same `code != 'false'` gate.
+
+### Boy-scout
+
+`ganda repo audit` passed with no fixes needed.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run --file tools/dev-cli/dev.cs -- workflow --stage build
+dotnet run --file tools/dev-cli/dev.cs -- test --phase standalone
+dotnet run --file tools/dev-cli/dev.cs -- test --phase multi
+actionlint .github/workflows/workflow.yml   # rhysd/actionlint 1.7.12
+gh run view 40612266762 --json jobs -q '.jobs[] | [.name,.conclusion] | @tsv'
+```
+
+Expect:
+
+- The build stage prints `Step 3/3`, `Package layout verified`, `Package configuration verified` and `Pipeline SUCCEEDED`.
+- The standalone phase prints `Standalone tests: 41 files` and `Standalone finished ... (0 failed)` and exits 0.
+- The multi phase prints `Multi-mode execute finished` and `NURU_CI_PHASE=multi: standalone phase skipped.` and exits 0.
+- `dev test` with no phase runs both phases. Locally: 4458 tests, 0 failed.
+- actionlint prints nothing and exits 0.
+- The run shows build, samples, test-multi, test-standalone and ci all `success`, and release `skipped`.

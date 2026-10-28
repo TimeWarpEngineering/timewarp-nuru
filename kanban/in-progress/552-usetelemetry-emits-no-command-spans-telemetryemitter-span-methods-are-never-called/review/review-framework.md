@@ -10,7 +10,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 540
+- Lines changed: 211
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -23,3 +23,12 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2
+
+**Date:** 2026-10-28
+**Diff scope:** fix delta `2f834e7d` vs round-1 base `1c4555d1`. Product files: `behavior-emitter.cs`, `command-class-emitter.cs`, `command-construction-emitter.cs`, `telemetry-05-use-telemetry-command-spans.cs`.
+**Effort:** 2
+**Reviewer roster:** general
+**Turn cap:** 120 (Cursor uncapped; no `--max-turns`)
+**Session IDs:** reviewer session id not exposed (headless print mode)

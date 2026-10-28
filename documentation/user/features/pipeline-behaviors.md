@@ -101,7 +101,9 @@ public sealed class PerformanceBehavior : INuruBehavior
 
 ### Telemetry Behavior
 
-Using `System.Diagnostics.Activity` for OpenTelemetry integration:
+`UseTelemetry()` already registers the built-in `TimeWarp.Nuru.TelemetryBehavior`, which emits a
+span and metrics per command (see [Telemetry](telemetry.md#what-usetelemetry-emits)). The example
+below shows how such a behavior is written with `System.Diagnostics.Activity`:
 
 ```csharp
 public sealed class TelemetryBehavior : INuruBehavior

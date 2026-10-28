@@ -2,9 +2,11 @@
 //
 // When telemetry is enabled, this emitter generates:
 // - ActivitySource and Meter static fields
-// - Counter and Histogram metrics instruments
 // - TracerProvider and MeterProvider setup code
-// - Command execution instrumentation helpers
+//
+// Command spans and command metrics are not emitted here. UseTelemetry() registers
+// TelemetryBehavior as the app's outermost behavior (IrAppBuilder.EffectiveBehaviors, task 552),
+// and the setup below listens to its "TimeWarp.Nuru.Behavior" source and meter.
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -113,7 +115,7 @@ internal static class TelemetryEmitter
       sb.AppendLine("      global::OpenTelemetry.Trace.TracerProviderBuilder __tracerBuilder = global::OpenTelemetry.Sdk.CreateTracerProviderBuilder();");
       sb.AppendLine("      __tracerBuilder = global::OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResourceBuilder(__tracerBuilder, __resource);");
       sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(__activitySource.Name);");
-      sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(\"TimeWarp.Nuru.Behavior\"); // For TelemetryBehavior");
+      sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(\"TimeWarp.Nuru.Behavior\"); // Command spans (TelemetryBehavior)");
       sb.AppendLine($"      __tracerBuilder = global::OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(__tracerBuilder, {ConfigureExporter("Traces")});");
       sb.AppendLine("      app.TracerProvider = global::OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(__tracerBuilder);");
       sb.AppendLine();
@@ -124,7 +126,7 @@ internal static class TelemetryEmitter
       sb.AppendLine("      global::OpenTelemetry.Metrics.MeterProviderBuilder __meterBuilder = global::OpenTelemetry.Sdk.CreateMeterProviderBuilder();");
       sb.AppendLine("      __meterBuilder = global::OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(__meterBuilder, __resource);");
       sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(__meter.Name);");
-      sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(\"TimeWarp.Nuru.Behavior\"); // For TelemetryBehavior");
+      sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(\"TimeWarp.Nuru.Behavior\"); // Command metrics (TelemetryBehavior)");
       sb.AppendLine($"      __meterBuilder = global::OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(__meterBuilder, {ConfigureExporter("Metrics")});");
       sb.AppendLine("      app.MeterProvider = global::OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(__meterBuilder);");
       sb.AppendLine();
@@ -159,54 +161,6 @@ internal static class TelemetryEmitter
   private static string ConfigureExporter(string signalConstant) =>
     "o => global::TimeWarp.Nuru.NuruOtlpEndpoint.Configure(o, __otlpCodeEndpoint, "
     + $"global::TimeWarp.Nuru.NuruOtlpEndpoint.{signalConstant})";
-
-  /// <summary>
-  /// Emits code to start a telemetry span and stopwatch before route execution.
-  /// </summary>
-  public static void EmitTelemetryStart(StringBuilder sb, string routePattern)
-  {
-    string escapedPattern = EmitterStringUtils.EscapeForStringLiteral(routePattern);
-    sb.AppendLine($"      using global::System.Diagnostics.Activity? __activity = __activitySource.StartActivity(\"{escapedPattern}\", global::System.Diagnostics.ActivityKind.Internal);");
-    sb.AppendLine($"      __activity?.SetTag(\"command.pattern\", \"{escapedPattern}\");");
-    sb.AppendLine("      global::System.Diagnostics.Stopwatch __sw = global::System.Diagnostics.Stopwatch.StartNew();");
-    sb.AppendLine("      try");
-    sb.AppendLine("      {");
-  }
-
-  /// <summary>
-  /// Emits code to record successful telemetry after route execution.
-  /// </summary>
-  public static void EmitTelemetrySuccess(StringBuilder sb, string routePattern)
-  {
-    string escapedPattern = EmitterStringUtils.EscapeForStringLiteral(routePattern);
-    sb.AppendLine("        __sw.Stop();");
-    sb.AppendLine("        __activity?.SetStatus(global::System.Diagnostics.ActivityStatusCode.Ok);");
-    sb.AppendLine($"        __commandsInvoked.Add(1, new global::System.Collections.Generic.KeyValuePair<string, object?>(\"command\", \"{escapedPattern}\"));");
-    sb.AppendLine($"        __commandDuration.Record(__sw.ElapsedMilliseconds, new global::System.Collections.Generic.KeyValuePair<string, object?>(\"command\", \"{escapedPattern}\"));");
-  }
-
-  /// <summary>
-  /// Emits the catch block for recording telemetry errors.
-  /// </summary>
-  public static void EmitTelemetryCatch(StringBuilder sb, string routePattern)
-  {
-    string escapedPattern = EmitterStringUtils.EscapeForStringLiteral(routePattern);
-    sb.AppendLine("      }");
-    sb.AppendLine("      catch (global::System.Exception __telemetryEx)");
-    sb.AppendLine("      {");
-    sb.AppendLine("        __sw.Stop();");
-    // Prefer error.type only — exception messages can embed argv/secrets (parity with TelemetryBehavior).
-    sb.AppendLine("        __activity?.SetStatus(global::System.Diagnostics.ActivityStatusCode.Error);");
-    sb.AppendLine("        __activity?.SetTag(\"error.type\", __telemetryEx.GetType().Name);");
-    sb.AppendLine("        __commandsErrored.Add(1,");
-    sb.AppendLine($"          new global::System.Collections.Generic.KeyValuePair<string, object?>(\"command\", \"{escapedPattern}\"),");
-    sb.AppendLine("          new global::System.Collections.Generic.KeyValuePair<string, object?>(\"error.type\", __telemetryEx.GetType().Name));");
-    sb.AppendLine("        __commandDuration.Record(__sw.ElapsedMilliseconds,");
-    sb.AppendLine($"          new global::System.Collections.Generic.KeyValuePair<string, object?>(\"command\", \"{escapedPattern}\"),");
-    sb.AppendLine("          new global::System.Collections.Generic.KeyValuePair<string, object?>(\"status\", \"error\"));");
-    sb.AppendLine("        throw;");
-    sb.AppendLine("      }");
-  }
 
   /// <summary>
   /// Emits code to flush telemetry before returning from RunAsync.

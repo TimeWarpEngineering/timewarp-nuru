@@ -10,8 +10,10 @@ using System.Diagnostics.Metrics;
 /// </summary>
 /// <remarks>
 /// This behavior creates its own ActivitySource and Meter instances for telemetry.
-/// When used with UseTelemetry(), the generated code will configure OTLP exporters
-/// that automatically pick up these sources.
+/// <c>UseTelemetry()</c> registers it as the outermost behavior, so an app does not need
+/// <c>AddBehavior(typeof(TelemetryBehavior))</c>; adding it anyway does not create a second span.
+/// The generated OTLP setup listens to the <c>TimeWarp.Nuru.Behavior</c> source and meter.
+/// The span is a child of <see cref="Activity.Current"/> when the caller has one.
 /// On failure it records <c>error.type</c> only — not <c>error.message</c> or status
 /// detail from <see cref="Exception.Message"/> — so argv/secrets in exception text
 /// are not exported. OTLP sinks must be trusted (see <see cref="NuruTelemetryOptions.OtlpEndpoint"/>).

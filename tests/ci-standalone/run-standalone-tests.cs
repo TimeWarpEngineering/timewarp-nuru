@@ -1,0 +1,139 @@
+#!/usr/bin/env -S dotnet --
+#:package TimeWarp.Amuru
+
+// Standalone CI test phase (task 538). These files cannot run inside the
+// JARIBU_MULTI assembly, so each one runs as its own `dotnet run`.
+// tests/ci-tests/run-ci-tests.cs runs this file after the multi-mode phase.
+// CI runs it as its own job. It lives outside tests/ci-tests so that
+// directory's Directory.Build.props does not pull every test file into this
+// compile, which would cost the multi-mode compile (about 140s) for nothing.
+
+using TimeWarp.Amuru;
+
+// Runner progress is process stdout. RS0030 bans System.Console in app code.
+#pragma warning disable RS0030
+
+// Files that cannot run (or whose gated cases cannot run) inside the JARIBU_MULTI
+// assembly are listed in CiTestExcludes (tests/ci-tests/Directory.Build.props)
+// and/or executed here so CI still covers them:
+// - generator-17: top-level-statements local-function ConfigureServices (M14 / 470-010)
+// - check-version-04: entire body #if !JARIBU_MULTI; needs CheckVersionCommand endpoint (M15)
+// - check-version-07: entire body #if !JARIBU_MULTI; needs CheckVersionCommand endpoint (task 456)
+// - generator-19/20: multi-included for filtered cases, but #if !JARIBU_MULTI methods
+//   (NoFilter_IncludesAll, Gen20KanbanQuery) only run in this standalone phase (M29)
+// - operation-endpoint-dispatch: the typed HttpClient case is #if !JARIBU_MULTI (NURU050)
+// - generator-28..65: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
+string ciDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? ".";
+string[] standaloneTests =
+[
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-17-local-function-config.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-04-endpoint-zero-package.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-07-endpoint-fail-closed.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-19-group-filtering.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-20-parameterized-service-constructor.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-28-interpreter-cycle-guard.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-29-h002-named-arguments.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-30-nuru-r003-overlap.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-31-m7-param-mismatch.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-32-m9-unrelated-fluent.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-33-m6-failsoft-catch.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-34-m8-ilistmanager-repeated.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-35-m8-idata-service.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-36-m8-typeconverter-fqn.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-37-incrementality-caching.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-38-h002-sole-identifier-body.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-39-keyword-param-identifiers.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-40-with-example-non-literal-command.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-42-extension-method-lowering-diagnostics.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-43-telemetry-options.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-44-referenced-type-arguments.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-45-constructor-default-literals.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-48-async-expression-body-emission.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-49-nuru-r004-repl-default-route.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-50-json-args-reserved.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-52-configuration-detection.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-53-invalid-route-patterns.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-54-h002-nested-lambda-parameter.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-55-missing-operation-handler.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-56-problem-renderer.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-58-nuru056-per-run-scoped.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-59-referenced-operation-endpoints.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-60-json-context-referenced-endpoints.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-63-telemetry-without-logging-using.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-64-discover-endpoints-across-apps.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-65-check-updates-consumer-no-ivt.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-67-delegate-handler-service-resolution.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-68-add-logging-call-shapes.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-69-endpoint-constructor-logger-warning.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-72-run-async-not-intercepted-diagnostic.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "auto", "operation-endpoint-dispatch.cs"),
+];
+
+int parallelism = Math.Max(1, Environment.ProcessorCount);
+WriteLine();
+WriteLine($"Standalone tests: {standaloneTests.Length} files, parallelism {parallelism}");
+
+// Build the shared ProjectReferences once (Debug, serially) so the parallel
+// `dotnet run` invocations below do not race on the same obj/bin outputs (task 503).
+string ciRepoRoot = Path.GetFullPath(Path.Combine(ciDir, "..", ".."));
+string[] sharedProjects =
+[
+  "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
+  "source/timewarp-nuru-build/timewarp-nuru-build.csproj",
+  "source/timewarp-nuru/timewarp-nuru.csproj"
+];
+
+foreach (string sharedProject in sharedProjects)
+{
+  CommandOutput sharedBuild = await Shell.Builder("dotnet")
+    .WithArguments("build", Path.Combine(ciRepoRoot, sharedProject), "-c", "Debug", "-v", "quiet")
+    .WithNoValidation()
+    .CaptureAsync();
+  if (sharedBuild.ExitCode != 0)
+  {
+    WriteLine(sharedBuild.Stdout);
+    WriteLine(sharedBuild.Stderr);
+    WriteLine($"❌ Shared project build failed: {sharedProject}");
+    return 1;
+  }
+}
+
+int standaloneFailures = 0;
+object writeLock = new();
+Stopwatch standaloneExecute = Stopwatch.StartNew();
+await Parallel.ForEachAsync
+(
+  standaloneTests,
+  new ParallelOptions { MaxDegreeOfParallelism = parallelism },
+  async (testFile, cancellationToken) =>
+  {
+    string fullPath = Path.GetFullPath(testFile);
+    string name = Path.GetFileName(fullPath);
+    CommandOutput result = await Shell.Builder("dotnet")
+      .WithArguments("run", "-p:BuildProjectReferences=false", fullPath)
+      .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
+      .WithEnvironmentVariable("DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER", "1")
+      .WithNoValidation()
+      .CaptureAsync(cancellationToken);
+
+    lock (writeLock)
+    {
+      WriteLine();
+      WriteLine($"Running standalone: {name}");
+      WriteLine(result.Stdout);
+      if (result.ExitCode != 0)
+      {
+        standaloneFailures++;
+        WriteLine(result.Stderr);
+        WriteLine($"❌ {name} failed with exit code {result.ExitCode}");
+      }
+    }
+  }
+);
+standaloneExecute.Stop();
+WriteLine
+(
+  $"Standalone finished in {standaloneExecute.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}s ({standaloneFailures} failed)"
+);
+
+return standaloneFailures > 0 ? 1 : 0;

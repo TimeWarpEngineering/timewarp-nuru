@@ -125,6 +125,65 @@ namespace TimeWarp.Nuru.Tests.Telemetry
         spans[0].ParentSpanId.ShouldBe(host.SpanId);
       }
     }
+    public static async Task Should_compile_and_span_short_only_flag_route()
+    {
+      using Tel05SpanRecorder recorder = new();
+      using TestTerminal terminal = new();
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .UseTelemetry()
+        .Map("tel05-build -v")
+          .WithHandler((bool v) => v ? "verbose" : "quiet")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      int exitCode = await app.RunAsync(["tel05-build", "-v"]);
+
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("verbose").ShouldBeTrue();
+      recorder.Named("tel05-build -v").Length.ShouldBe(1);
+    }
+
+    public static async Task Should_compile_and_span_several_short_only_flags()
+    {
+      using Tel05SpanRecorder recorder = new();
+      using TestTerminal terminal = new();
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .UseTelemetry()
+        .Map("tel05-docker run -i -t")
+          .WithHandler((bool i, bool t) => $"i={i} t={t}")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      int exitCode = await app.RunAsync(["tel05-docker", "run", "-i", "-t"]);
+
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("i=True t=True").ShouldBeTrue();
+      recorder.Named("tel05-docker run -i -t").Length.ShouldBe(1);
+    }
+
+    public static async Task Should_compile_and_span_short_and_camel_case_value_options()
+    {
+      using Tel05SpanRecorder recorder = new();
+      using TestTerminal terminal = new();
+      NuruApp app = NuruApp.CreateBuilder()
+        .UseTerminal(terminal)
+        .UseTelemetry()
+        .Map("tel05-commit -m {message} --target-name {targetName?}")
+          .WithHandler((string message, string? targetName) => $"{message}/{targetName}")
+          .AsCommand()
+          .Done()
+        .Build();
+
+      int exitCode = await app.RunAsync(["tel05-commit", "-m", "hi", "--target-name", "main"]);
+
+      exitCode.ShouldBe(0);
+      terminal.OutputContains("hi/main").ShouldBeTrue();
+      recorder.Named("tel05-commit -m {message} --target-name {targetName?}").Length.ShouldBe(1);
+    }
   }
 
   public static class Tel05Handlers

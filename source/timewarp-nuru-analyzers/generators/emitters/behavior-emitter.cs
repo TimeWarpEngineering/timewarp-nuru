@@ -196,7 +196,7 @@ internal static class BehaviorEmitter
       // Set route parameter properties
       foreach (ParameterDefinition param in route.Parameters)
       {
-        string propertyName = ToPascalCase(param.Name);
+        string propertyName = CommandClassEmitter.GetParameterPropertyName(param);
         // Variable names must match what route-matcher-emitter generates
         // Catch-all uses unique name; others need keyword escaping
         string varName = param.IsCatchAll
@@ -209,12 +209,13 @@ internal static class BehaviorEmitter
       // Set option properties
       foreach (OptionDefinition option in route.Options)
       {
-        // Use LongForm as property name
-        string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? "option");
-        // Variable names must match what route-matcher-emitter generates
+        // Property name matches the generated command class (short-only options use ShortForm)
+        string propertyName = CommandClassEmitter.GetOptionPropertyName(option);
+        // Variable names must match what route-matcher-emitter generates:
+        // flags use LongForm ?? ShortForm; value options use ParameterName as written
         string varName = option.IsFlag
-          ? CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(option.LongForm ?? "flag"))
-          : CSharpIdentifierUtils.EscapeIfKeyword(option.ParameterName?.ToLowerInvariant() ?? "value");
+          ? CSharpIdentifierUtils.EscapeIfKeyword(ToCamelCase(option.LongForm ?? option.ShortForm ?? "flag"))
+          : CSharpIdentifierUtils.EscapeIfKeyword(option.ParameterName ?? ToCamelCase(option.LongForm ?? option.ShortForm ?? "value"));
 
         sb.AppendLine($"{indent}  {propertyName} = {varName},");
       }
@@ -422,17 +423,6 @@ internal static class BehaviorEmitter
   internal static string GetBehaviorFieldName(BehaviorDefinition behavior)
   {
     return $"__behavior_{behavior.SafeIdentifierName}";
-  }
-
-  /// <summary>
-  /// Converts a string to PascalCase.
-  /// </summary>
-  private static string ToPascalCase(string value)
-  {
-    if (string.IsNullOrEmpty(value))
-      return value;
-
-    return char.ToUpperInvariant(value[0]) + value[1..];
   }
 
   private static string ToCamelCase(string value) => CSharpIdentifierUtils.ToCamelCase(value);

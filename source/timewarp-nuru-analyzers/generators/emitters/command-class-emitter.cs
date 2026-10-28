@@ -104,6 +104,20 @@ internal static class CommandClassEmitter
   }
 
   /// <summary>
+  /// Gets the generated command class property name for a route parameter.
+  /// The behavior emitter's command initializer uses the same name.
+  /// </summary>
+  internal static string GetParameterPropertyName(ParameterDefinition param) => ToPascalCase(param.Name);
+
+  /// <summary>
+  /// Gets the generated command class property name for an option: LongForm, else ParameterName
+  /// for value options, else ShortForm for short-only options.
+  /// The behavior emitter's command initializer uses the same name.
+  /// </summary>
+  internal static string GetOptionPropertyName(OptionDefinition option) =>
+    ToPascalCase(option.LongForm ?? option.ParameterName ?? option.ShortForm ?? "option");
+
+  /// <summary>
   /// Builds the interface list for the class declaration.
   /// </summary>
   private static string BuildInterfaceList(RouteDefinition route)
@@ -130,7 +144,7 @@ internal static class CommandClassEmitter
         hasParams = true;
       }
 
-      string propertyName = ToPascalCase(param.Name);
+      string propertyName = GetParameterPropertyName(param);
       string propertyType = GetPropertyType(param, handler);
 
       sb.AppendLine($"    public {propertyType} {propertyName} {{ get; init; }}");
@@ -147,8 +161,7 @@ internal static class CommandClassEmitter
         hasParams = true;
       }
 
-      // Use LongForm as property name, or ParameterName for value options, or ShortForm for short-only options
-      string propertyName = ToPascalCase(option.LongForm ?? option.ParameterName ?? option.ShortForm ?? "option");
+      string propertyName = GetOptionPropertyName(option);
       string propertyType = GetOptionPropertyType(option, handler);
 
       sb.AppendLine($"    public {propertyType} {propertyName} {{ get; init; }}");

@@ -43,8 +43,9 @@ Acceptance:
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - 2026-10-28 implementer (claude, ganda task work): implicit `TelemetryBehavior` registration,
   dead emitter twins removed, method-group command class fix, tests and docs. CI multi-mode
-  2128 passed / 6 skipped / 0 failed; standalone phase 0 failed; `ganda repo audit` clean (no
-  audit fixes were needed).
+  2128 passed / 6 skipped / 0 failed; standalone phase 0 failed. Audit fix: the pre-push audit
+  failed `runfile-executable` on the new telemetry-05 file; `ganda repo audit --fix` set its
+  executable bit.
 
 ## Results
 

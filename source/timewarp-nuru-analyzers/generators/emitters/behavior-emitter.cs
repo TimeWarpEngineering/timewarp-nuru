@@ -184,9 +184,9 @@ internal static class BehaviorEmitter
     string indent,
     bool jsonArgsPath)
   {
-    if (route.Handler.HandlerKind == HandlerKind.Delegate)
+    if (CommandClassEmitter.HasCommandClass(route))
     {
-      // Delegate routes: create generated command class
+      // Fluent routes: create generated command class
       string className = CommandClassEmitter.GetCommandClassName(routeIndex, methodSuffix);
 
       sb.AppendLine($"{indent}// Create command instance for behaviors");
@@ -239,7 +239,7 @@ internal static class BehaviorEmitter
     string indent)
   {
     string commandName = EmitterStringUtils.EscapeForStringLiteral(route.FullPattern);
-    string commandTypeName = route.Handler.HandlerKind == HandlerKind.Delegate
+    string commandTypeName = CommandClassEmitter.HasCommandClass(route)
       ? CommandClassEmitter.GetCommandClassName(routeIndex, methodSuffix)
       : (route.Handler.FullTypeName ?? $"Route_{routeIndex}");
 

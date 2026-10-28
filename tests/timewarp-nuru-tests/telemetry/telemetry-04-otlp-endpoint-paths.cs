@@ -7,6 +7,8 @@
 // signal-path append, so every export posted to "/" and the collector returned 404.
 // Covers NuruOtlpEndpoint resolution (http/protobuf and grpc, code and env endpoints) and an
 // end-to-end run against a local HTTP sink that records the request paths.
+// Kanban 552: the probe starts no span of its own, so /v1/traces proves UseTelemetry() alone
+// exports a command span.
 #endregion
 
 #if !JARIBU_MULTI
@@ -16,7 +18,6 @@ return await RunAllTests();
 namespace TimeWarp.Nuru.Tests.Telemetry
 {
   using System.Collections.Concurrent;
-  using System.Diagnostics;
   using System.Net;
   using System.Net.Sockets;
   using Microsoft.Extensions.Logging;
@@ -124,6 +125,19 @@ namespace TimeWarp.Nuru.Tests.Telemetry
       paths.ShouldContain("/v1/metrics");
       paths.ShouldContain("/v1/logs");
       paths.ShouldNotContain("/");
+    }
+
+    public static async Task Should_export_command_span_from_UseTelemetry_alone()
+    {
+      using Tel04Environment environment = new();
+      using Tel04OtlpSink sink = new();
+      Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT", sink.Prefix);
+      Environment.SetEnvironmentVariable("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf");
+
+      await Tel04Capture.RunProbeAsync();
+
+      string[] paths = await sink.WaitForPathsAsync("/v1/traces");
+      paths.ShouldContain("/v1/traces");
     }
 
     public static async Task Should_export_to_signal_env_endpoint_when_set()
@@ -261,10 +275,6 @@ namespace TimeWarp.Nuru.Tests.Telemetry
 
   public static class Tel04Capture
   {
-    // Generated UseTelemetry() setup listens to this source (TelemetryBehavior uses it), so a
-    // span started here exports through the generated TracerProvider.
-    private static readonly ActivitySource BehaviorSource = new("TimeWarp.Nuru.Behavior");
-
     private static readonly Action<ILogger, Exception?> LogProbe =
       LoggerMessage.Define(LogLevel.Information, new EventId(1, "Tel04Probe"), "tel04 probe ran");
 
@@ -272,6 +282,7 @@ namespace TimeWarp.Nuru.Tests.Telemetry
 
     /// <summary>
     /// Runs one command through UseTelemetry() so a span, metrics, and a log record export.
+    /// The span comes from UseTelemetry() itself; the handler starts none.
     /// </summary>
     public static async Task RunProbeAsync()
     {
@@ -300,7 +311,6 @@ namespace TimeWarp.Nuru.Tests.Telemetry
 
     public static string Probe()
     {
-      using Activity? activity = BehaviorSource.StartActivity("tel04-probe");
       ILogger? logger = App?.LoggerFactory?.CreateLogger("Tel04");
       if (logger is not null)
         LogProbe(logger, null);

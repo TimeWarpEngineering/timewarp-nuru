@@ -29,8 +29,8 @@ internal static class CommandClassEmitter
 
     foreach (RouteDefinition route in routes)
     {
-      // Only generate command classes for delegate routes
-      if (route.Handler.HandlerKind == HandlerKind.Delegate)
+      // Only generate command classes for fluent routes (lambda or method group handlers)
+      if (HasCommandClass(route))
       {
         if (!hasAny)
         {
@@ -52,6 +52,17 @@ internal static class CommandClassEmitter
       sb.AppendLine();
     }
   }
+
+  /// <summary>
+  /// Gets whether the route gets a generated command class: a fluent route whose handler is a
+  /// lambda or a method group. Endpoint routes (<see cref="HandlerKind.Command"/>) use their own class.
+  /// </summary>
+  /// <remarks>
+  /// Method group handlers were left out before task 552, so any behavior on such a route
+  /// referenced a <c>__command</c> that was never created and the app failed to compile.
+  /// </remarks>
+  public static bool HasCommandClass(RouteDefinition route) =>
+    route.Handler.HandlerKind is HandlerKind.Delegate or HandlerKind.Method;
 
   /// <summary>
   /// Emits a single command class for a delegate route.

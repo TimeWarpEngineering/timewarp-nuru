@@ -36,8 +36,7 @@ Acceptance:
 ## Review
 
 - Round 1: Blocked — open M1
-- Fix pass for round 2: M1 fixed (see Session); round 2 review pending.
-
+- Round 2: Done
 ## Notes
 
 - 551 (PR #367) fixed the OTLP HTTP `/v1/{signal}` paths; build on it.
@@ -62,6 +61,7 @@ Acceptance:
   on the same line: `--target-name {targetName?}` emitted `Target-name = targetname`. The command
   construction emitter's `Supplied()` flag name also gets `?? ShortForm`. CI multi-mode 2131 passed /
   6 skipped / 0 failed; standalone 0 failed.
+- Review oracle round 2: reviewer-grok (grok, model grok-4.7), session id not exposed, turn cap 120 (Cursor uncapped; no --max-turns), effort 2, roster general — 2026-10-28. Disposition clean. M1 fixed; no new findings.
 
 ## Results
 
@@ -131,13 +131,13 @@ Expect:
 
 ### Review
 
-Round 1, effort 2, roster general. The goal restatement matches the task. Final disposition is not written: M1 is open.
+Round 2, effort 2, roster general. Re-review of the M1 fix (`2f834e7d` vs round-1 base `1c4555d1`). The goal restatement matches the task. Disposition: clean.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 1 | 0 | 0 |
+| bug | 0 | 1 | 0 |
 | suggestion | 0 | 0 | 0 |
 | nit | 0 | 0 | 0 |
 
-M1: `UseTelemetry()` fails to compile a fluent route with a short-only flag (`build -v`, `docker run -i -t`) because the behavior initializer emits `Option = flag` while the command class and the matcher use the short form. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+M1 fixed: the behavior initializer takes property names from `CommandClassEmitter` and local names from the route matcher, so a short-only flag and a kebab value option compile under `UseTelemetry()`. Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 

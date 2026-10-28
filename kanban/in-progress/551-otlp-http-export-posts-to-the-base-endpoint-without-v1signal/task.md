@@ -43,6 +43,10 @@ Acceptance:
 - [x] Generator snapshot/emitter tests cover http/protobuf and grpc
 - [ ] Release a Nuru beta and tell ganda (task 488 resumes on it)
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - why: ganda overnight stack 2026-10-28, task 488 parked on this; Steve's cockpit session filed it.
@@ -55,6 +59,8 @@ Acceptance:
   Boy-scout: `ganda repo audit` failed on the new `glossary` check. `ganda repo audit --fix`
   scaffolded `glossary.md`, and I seeded it with OTLP, signal, and base endpoint.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 1e504216-e493-4b62-971e-4684c110fd05, max-turns 500, Done — 2026-10-28T04:57:09Z
+- Reviewer: cursor (Grok 4.7), review oracle, max-turns uncapped (review budget 120), effort 2, roster general, round 1, disposition clean — 2026-10-28
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-28T05:09:55Z
 
 ## Results
 
@@ -117,6 +123,18 @@ Acceptance:
    `() => Tel04Capture.Probe()` fails CS0103 when the type is in another namespace.
 4. The checklist item "Release a Nuru beta and tell ganda" happens after merge, through the
    release flow (tw-release), not in this implement node.
+
+### Review
+
+Round 1, effort 2, roster general. The implementer restatement matches the task; no misread.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 0 | 0 |
+
+Disposition: **clean** (0 open). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 

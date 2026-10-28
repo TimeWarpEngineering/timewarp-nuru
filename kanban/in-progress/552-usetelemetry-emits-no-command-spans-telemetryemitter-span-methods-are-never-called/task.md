@@ -33,6 +33,11 @@ Acceptance:
 - [x] End-to-end test with an OTLP HTTP listener (like `telemetry-04`) proving a span reaches `/v1/traces` from `UseTelemetry()` alone
 - [x] Update `documentation/user/features/telemetry.md` to state what `UseTelemetry()` emits
 
+## Review
+
+- Round 1: Blocked — open M1
+- Fix pass for round 2: M1 fixed (see Session); round 2 review pending.
+
 ## Notes
 
 - 551 (PR #367) fixed the OTLP HTTP `/v1/{signal}` paths; build on it.
@@ -47,6 +52,16 @@ Acceptance:
   failed `runfile-executable` on the new telemetry-05 file; `ganda repo audit --fix` set its
   executable bit.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 36ace3e3-c175-4a27-9f0a-e64aa801ab45, max-turns 500, Done — 2026-10-28T06:17:43Z
+- Review oracle round 1: reviewer-grok (grok, model grok-4.7), session id not exposed, turn cap 120 (Cursor uncapped), effort 2, roster general — 2026-10-28. Fix pass needed for open finding M1.
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-28T06:32:23Z
+- 2026-10-28 implement-fix-2 (claude, ganda task work): fixed M1. The behavior emitter's
+  command initializer now takes property names from `CommandClassEmitter`
+  (`GetParameterPropertyName` / `GetOptionPropertyName`: `LongForm ?? ParameterName ?? ShortForm`,
+  kebab split) and local names from the matcher's rule (flags `LongForm ?? ShortForm`; value
+  options `ParameterName` as written, not lowercased). Writing the test found two more mismatches
+  on the same line: `--target-name {targetName?}` emitted `Target-name = targetname`. The command
+  construction emitter's `Supplied()` flag name also gets `?? ShortForm`. CI multi-mode 2131 passed /
+  6 skipped / 0 failed; standalone 0 failed.
 
 ## Results
 
@@ -83,8 +98,10 @@ status description (470-015 redaction kept). Parent = `Activity.Current`.
 - `source/timewarp-nuru-analyzers/generators/ir-builders/ir-app-builder.cs`: `EffectiveBehaviors()`
 - `source/timewarp-nuru-analyzers/generators/emitters/telemetry-emitter.cs`: dead span helpers removed, header updated
 - `source/timewarp-nuru-analyzers/generators/emitters/command-class-emitter.cs`, `behavior-emitter.cs`: method-group command class
+- `command-class-emitter.cs`, `behavior-emitter.cs`, `command-construction-emitter.cs`: one naming rule for the
+  behavior command initializer (review M1: short-only flags, kebab long forms, camelCase value parameters)
 - `source/timewarp-nuru/telemetry/telemetry-behavior.cs`: remarks
-- `tests/timewarp-nuru-tests/telemetry/telemetry-05-use-telemetry-command-spans.cs` (new, CI multi-mode): one Ok span, Error span with `error.type`, no double span with explicit `AddBehavior`, parent = ambient activity
+- `tests/timewarp-nuru-tests/telemetry/telemetry-05-use-telemetry-command-spans.cs` (new, CI multi-mode): one Ok span, Error span with `error.type`, no double span with explicit `AddBehavior`, parent = ambient activity; `-v`, `-i -t` and `-m {message} --target-name {targetName?}` routes compile, run and emit one span
 - `tests/timewarp-nuru-tests/telemetry/telemetry-04-otlp-endpoint-paths.cs` (standalone): probe no longer starts its own span; new `Should_export_command_span_from_UseTelemetry_alone` waits for `/v1/traces`
 - `tests/timewarp-nuru-tests/telemetry/telemetry-02-error-message-redaction.cs`: emitter-twin test removed
 - `documentation/user/features/telemetry.md` ("What UseTelemetry() emits"), `pipeline-behaviors.md`, `changelog.md`
@@ -102,11 +119,25 @@ dotnet run tests/ci-tests/run-ci-tests.cs
 
 Expect:
 
-- telemetry-05: 4/4 passed (one `tel05-ok` span with status Ok from `UseTelemetry()` alone;
+- telemetry-05: 7/7 passed (one `tel05-ok` span with status Ok from `UseTelemetry()` alone;
   `tel05-fail` span status Error, `error.type` = `InvalidOperationException`, no `error.message`;
   one `tel05-dup` span with `AddBehavior(typeof(TelemetryBehavior))` too; `tel05-child` parent
-  span id = the host activity's span id).
+  span id = the host activity's span id; `tel05-build -v`, `tel05-docker run -i -t` and
+  `tel05-commit -m {message} --target-name {targetName?}` compile under `UseTelemetry()`, bind
+  their values, and emit one span each).
 - telemetry-04: 9/9 passed, including `Should_export_command_span_from_UseTelemetry_alone`
   (the sink records `/v1/traces` though the handler starts no span).
-- CI: multi-mode 0 failed (2128 passed, 6 skipped at implementation time), standalone 0 failed.
+- CI: multi-mode 0 failed (2131 passed, 6 skipped after the M1 fix), standalone 0 failed.
+
+### Review
+
+Round 1, effort 2, roster general. The goal restatement matches the task. Final disposition is not written: M1 is open.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 1 | 0 | 0 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 0 | 0 |
+
+M1: `UseTelemetry()` fails to compile a fluent route with a short-only flag (`build -v`, `docker run -i -t`) because the behavior initializer emits `Option = flag` while the command class and the matcher use the short form. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 

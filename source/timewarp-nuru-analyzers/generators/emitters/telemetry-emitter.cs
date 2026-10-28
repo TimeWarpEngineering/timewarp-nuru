@@ -93,7 +93,19 @@ internal static class TelemetryEmitter
     sb.AppendLine("      global::OpenTelemetry.Resources.ResourceBuilder __resource = global::OpenTelemetry.Resources.ResourceBuilderExtensions.AddService(");
     sb.AppendLine("        global::OpenTelemetry.Resources.ResourceBuilder.CreateDefault(), serviceName: __serviceName, serviceVersion: __serviceVersion);");
     sb.AppendLine();
-    sb.AppendLine("      global::System.Uri __endpoint = new(__otlpEndpoint);");
+    // OTLP endpoint (task 551). Exporters never get o.Endpoint = <base> directly: that turns off
+    // the SDK's /v1/{signal} append for http/protobuf. NuruOtlpEndpoint.Configure sets the
+    // per-signal URL from a code-set OtlpEndpoint (a base URL) or from
+    // OTEL_EXPORTER_OTLP_{SIGNAL}_ENDPOINT, and otherwise leaves the SDK's env handling on.
+    if (!string.IsNullOrEmpty(options.OtlpEndpoint))
+    {
+      sb.AppendLine("      string? __otlpCodeEndpoint = __otlpEndpoint;");
+    }
+    else
+    {
+      sb.AppendLine("      string? __otlpCodeEndpoint = null;");
+    }
+
     sb.AppendLine();
 
     if (options.EnableTracing)
@@ -102,7 +114,7 @@ internal static class TelemetryEmitter
       sb.AppendLine("      __tracerBuilder = global::OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResourceBuilder(__tracerBuilder, __resource);");
       sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(__activitySource.Name);");
       sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(\"TimeWarp.Nuru.Behavior\"); // For TelemetryBehavior");
-      sb.AppendLine("      __tracerBuilder = global::OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(__tracerBuilder, o => o.Endpoint = __endpoint);");
+      sb.AppendLine($"      __tracerBuilder = global::OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(__tracerBuilder, {ConfigureExporter("Traces")});");
       sb.AppendLine("      app.TracerProvider = global::OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(__tracerBuilder);");
       sb.AppendLine();
     }
@@ -113,7 +125,7 @@ internal static class TelemetryEmitter
       sb.AppendLine("      __meterBuilder = global::OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(__meterBuilder, __resource);");
       sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(__meter.Name);");
       sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(\"TimeWarp.Nuru.Behavior\"); // For TelemetryBehavior");
-      sb.AppendLine("      __meterBuilder = global::OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(__meterBuilder, o => o.Endpoint = __endpoint);");
+      sb.AppendLine($"      __meterBuilder = global::OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(__meterBuilder, {ConfigureExporter("Metrics")});");
       sb.AppendLine("      app.MeterProvider = global::OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(__meterBuilder);");
       sb.AppendLine();
     }
@@ -131,7 +143,7 @@ internal static class TelemetryEmitter
       sb.AppendLine("        global::Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(builder, options =>");
       sb.AppendLine("        {");
       sb.AppendLine("          options.SetResourceBuilder(__resource);");
-      sb.AppendLine("          global::OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(options, o => o.Endpoint = __endpoint);");
+      sb.AppendLine($"          global::OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(options, {ConfigureExporter("Logs")});");
       sb.AppendLine("        });");
       sb.AppendLine("      });");
     }
@@ -139,6 +151,14 @@ internal static class TelemetryEmitter
     sb.AppendLine("    }");
     sb.AppendLine();
   }
+
+  /// <summary>
+  /// Returns the AddOtlpExporter configure delegate for one signal.
+  /// </summary>
+  /// <param name="signalConstant">The NuruOtlpEndpoint constant name: Traces, Metrics, or Logs.</param>
+  private static string ConfigureExporter(string signalConstant) =>
+    "o => global::TimeWarp.Nuru.NuruOtlpEndpoint.Configure(o, __otlpCodeEndpoint, "
+    + $"global::TimeWarp.Nuru.NuruOtlpEndpoint.{signalConstant})";
 
   /// <summary>
   /// Emits code to start a telemetry span and stopwatch before route execution.

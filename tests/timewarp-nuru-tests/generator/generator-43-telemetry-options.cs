@@ -5,6 +5,8 @@
 
 #region Purpose
 // Kanban 470-001: Roslyn-hosted check that UseTelemetry(Action<>) options appear in generated setup.
+// Kanban 551: every OTLP exporter resolves its endpoint through NuruOtlpEndpoint.Configure, so
+// the generated code never sets o.Endpoint to the base URL (which broke /v1/{signal} for HTTP).
 #endregion
 
 #if !JARIBU_MULTI
@@ -79,6 +81,61 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen43TelemetryOptions
       generated.ShouldContain("app.MeterProvider");
 
       await Task.CompletedTask;
+    }
+
+    public static async Task Should_resolve_code_endpoint_per_signal()
+    {
+      const string Source = """
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry(options => options.OtlpEndpoint = "https://otlp.example.test/")
+          .Map("tel43-code").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+        """;
+
+      string generated = GeneratedSource(RunNuruGenerator(Source));
+
+      generated.ShouldContain("string? __otlpEndpoint = \"https://otlp.example.test/\";");
+      generated.ShouldContain("string? __otlpCodeEndpoint = __otlpEndpoint;");
+      AssertConfigurePerSignal(generated);
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_leave_env_endpoint_to_sdk_when_not_set_in_code()
+    {
+      const string Source = """
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry()
+          .Map("tel43-env").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+        """;
+
+      string generated = GeneratedSource(RunNuruGenerator(Source));
+
+      generated.ShouldContain("GetEnvironmentVariable(\"OTEL_EXPORTER_OTLP_ENDPOINT\")");
+      generated.ShouldContain("string? __otlpCodeEndpoint = null;");
+      AssertConfigurePerSignal(generated);
+
+      await Task.CompletedTask;
+    }
+
+    private static void AssertConfigurePerSignal(string generated)
+    {
+      // Before kanban 551 every exporter got o => o.Endpoint = __endpoint (the base URL).
+      generated.Contains("o.Endpoint = __endpoint").ShouldBeFalse();
+      generated.Contains("__endpoint = new(").ShouldBeFalse();
+      foreach (string signal in new[] { "Traces", "Metrics", "Logs" })
+      {
+        generated.ShouldContain(
+          "o => global::TimeWarp.Nuru.NuruOtlpEndpoint.Configure(o, __otlpCodeEndpoint, "
+          + $"global::TimeWarp.Nuru.NuruOtlpEndpoint.{signal})");
+      }
     }
 
     public static async Task Should_omit_tracer_setup_when_tracing_disabled()

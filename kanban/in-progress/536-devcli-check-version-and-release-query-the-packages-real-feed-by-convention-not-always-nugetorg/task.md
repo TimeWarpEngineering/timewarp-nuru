@@ -72,22 +72,176 @@ Repo visibility is **not** a usable convention, because Roslynk is public but pu
   (`tools/dev-cli/endpoints/workflow-command.cs`, a hard-coded GitHub Packages push target). Say whether DevCli
   could own that push target too, as a candidate follow-up. Do not change taratibu here.
 
+## Goal (implementer restatement)
+
+DevCli's publish gates (`check-version`, and `dev release` step 7) ask only nuget.org whether a version
+exists. Packages on the org's GitHub Packages feed therefore always look unpublished, so the guards never
+fire and a version can be released twice. Make the gates ask both org feeds, with no new setting.
+
+Acceptance:
+
+- A version is published when nuget.org **or** `https://nuget.pkg.github.com/TimeWarpEngineering/index.json`
+  lists it. Both URLs are DevCli constants. The GitHub Packages flat container is the service index's
+  `PackageBaseAddress/3.0.0` resource.
+- Token order: `GITHUB_TOKEN`, `GH_TOKEN`, `gh auth token`.
+- Fail-safe: found on either feed means published. Not on nuget.org and GitHub Packages unreadable (no token,
+  401/403, unreachable, malformed) refuses with its own message (feed, HTTP status, fix), never "already
+  published" and never "not published". nuget.org failure still refuses. A GitHub Packages 404 is not found.
+- `check-version`, the `dev release` publish guard (all and partial states) and the `dev workflow` release
+  pipeline use it. The pipeline abort names the feed problem, not "version already released".
+- `packages: read` on every `workflow.yml` job that runs check-version or `dev release`.
+- Fake-HTTP tests for the seven listed cases, mocked on live-observed responses. Live shapes recorded.
+- Docs in `documentation/developer/guides/releasing.md` (with `packages: read`), DevCli readme.
+- Results list consumer repos needing `packages: read`, and the follow-ups (ganda convention or audit,
+  taratibu's local workflow fork, the DevCli beta release).
+
 ## Checklist
 
-- [ ] Both org feeds checked, with no setting
-- [ ] Token auth; an unverifiable GitHub Packages refuses; a 404 counts as not found
-- [ ] check-version and both release guards use it
-- [ ] Live GitHub Packages shapes verified and recorded (Roslynk lookup resolved)
-- [ ] `packages: read` added to the release job (and any other job that runs check-version)
-- [ ] Distinct refusal message for an unreadable GitHub Packages
-- [ ] Tests (fake HTTP)
-- [ ] Docs
-- [ ] Released in a DevCli beta
-- [ ] Follow-ups noted: consumer repos needing `packages: read`; taratibu and Roslynk 008 bump DevCli; taratibu's local workflow fork
+- [x] Both org feeds checked, with no setting
+- [x] Token auth; an unverifiable GitHub Packages refuses; a 404 counts as not found
+- [x] check-version and both release guards use it
+- [x] Live GitHub Packages shapes verified and recorded (Roslynk lookup resolved)
+- [x] `packages: read` added to the release job (and any other job that runs check-version)
+- [x] Distinct refusal message for an unreadable GitHub Packages
+- [x] Tests (fake HTTP)
+- [x] Docs
+- [ ] Released in a DevCli beta (after merge: the next 4.0.0-beta.8 release task; this repo bumps versions in release tasks, see 554)
+- [x] Follow-ups noted: consumer repos needing `packages: read`; taratibu and Roslynk 008 bump DevCli; taratibu's local workflow fork
+
+## Results
+
+### Live GitHub Packages shapes (2026-10-29, read-only, `gh auth token` with `read:packages`)
+
+| Request | Status | Body |
+|---|---|---|
+| Service index, token | 200 | `PackageBaseAddress/3.0.0` = `https://nuget.pkg.github.com/TimeWarpEngineering/download` (no trailing slash) |
+| `download/timewarp.taratibu/index.json`, token | 200 | `{"versions":["1.0.0-beta.16","1.0.0-beta.15",...]}`, **newest first** (nuget.org lists oldest first) |
+| `download/timewarp.taratibu.routines/index.json`, token | 200 | versions beta.16 to beta.10 |
+| Unknown id `timewarp.does-not-exist-536`, token | 404 | `{"errors":[{"code":"NAME_UNKNOWN",...}]}` |
+| No token: index, known id, unknown id | 401 | `WWW-Authenticate: Basic realm="GitHub Package Registry"` |
+| Invalid token (Basic or Bearer) | index 200, unknown id 404, known id 401 | `"Your request could not be authenticated by the GitHub Packages service..."` |
+| gh token without `read:packages`, known id | 403 | recorded in ganda task 363 (2026-10-08). The only gh account here has `read:packages`, so this was not re-probed |
+
+Both Basic (`user:token`) and Bearer auth return 200. DevCli uses Basic, the scheme NuGet clients use.
+
+**Roslynk 404, resolved.** The URL shape and the owner are both right. `TimeWarp.Roslynk` has **never been
+published**: TimeWarpEngineering/Roslynk has 0 tags, 0 releases and 0 Actions runs, and its workflow only pushes
+on a tag. The org package list has TimeWarp.Taratibu, TimeWarp.Taratibu.Routines, TimeWarp.Ganda, TimeWarp.Flexbox
+and TimeWarp.Zana. So the cockpit's 404 was the correct "not found" answer. Taratibu stood in as the known package.
+
+Two findings the probe changed in the design:
+
+- "Latest NuGet version" is now the SemVer maximum across both feeds. `versions[^1]` would have picked the
+  oldest GitHub Packages version.
+- A bad token cannot hide a known package (it gets 401, so the gate refuses), and an unknown id still gets 404.
+
+### What changed
+
+- `nuget-version-service.cs`: constants `NuGetOrgFlatContainerUrl`, `GitHubPackagesServiceIndexUrl`,
+  `PackageBaseAddressResourceType`. New `LookupAsync` (both feeds) and `GetGitHubPackagesVersionsAsync`. The
+  service index is read once per service and the flat container comes from its `PackageBaseAddress/3.0.0`.
+  `GetPackageVersionsAsync` (nuget.org) is unchanged. A test-seam constructor takes a credential provider.
+- New `package-feed-lookup.cs`: `PackageFeedLookup` (`Check` returns Published, NotPublished or Unknown;
+  `LatestVersion`; `FormatUnknownRefusal`) and `PackageFeedUnreadableException : HttpRequestException`.
+- New `github-packages-credential.cs`: `GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token`. `ToString` never
+  prints the token.
+- New `check-version-outcome.cs`: `CheckVersionOutcome` and `CheckVersionAbort.FormatAbortReason`.
+- `check-version-command.cs`: uses `LookupAsync`, refuses on Unknown with the feed message, and records
+  `Outcome` and `GitHubPackagesFailure`.
+- `release-command.cs` step 7: uses `LookupAsync`, so the All ("already released") and Partial ("partially
+  published but was never tagged") refusals count both feeds. Refuses on Unknown with the same feed message.
+- `tools/dev-cli/endpoints/workflow-command.cs`: the Step 2/6 abort line comes from `FormatAbortReason`. An
+  unreadable feed prints `Pipeline ABORTED — GitHub Packages feed https://nuget.pkg.github.com/TimeWarpEngineering/index.json unreadable (HTTP 401 Unauthorized) — add 'packages: read' to the job permissions`,
+  never "version already released".
+- `.github/workflows/workflow.yml`: `packages: read` on the `release` job. Audit of every job: `changes`,
+  `stage` (`dev workflow --stage`), `ci` and `release` probe mode never run check-version or `dev release`.
+  Only the `release` job's "Run release pipeline" step does. `dev release` runs on an operator machine, not in
+  CI.
+- Tests: new `check-version-09-two-feed-lookup.cs` (17 tests, multi-mode). `check-version-07-endpoint-fail-closed.cs`
+  routes its stubs through both feeds and adds the endpoint-level 403 refusal and the GitHub-only
+  already-released case. Both test props files compile the three new service files. InternalsVisibleTo lists
+  were regenerated by `runfiles/generate-internals-visible-to.cs`.
+- Docs: `documentation/developer/guides/releasing.md` gets a new "Feeds the publish gates read" section with
+  the `packages: read` requirement, and Step 2/6 notes the distinct abort. The DevCli readme gets a migration
+  note and the service table. `changelog.md` gets an entry under Unreleased / Fixed.
+
+Required test cases, each on fake HTTP that mirrors the observed responses:
+
+| Case | Test |
+|---|---|
+| found on nuget.org only | `Found_on_nuget_org_only_is_published` |
+| found on GitHub Packages only | `Found_on_github_packages_only_is_published`, endpoint `Found_on_github_packages_only_is_already_released` |
+| found on neither | `Found_on_neither_is_not_published`, endpoint `Not_found_for_every_package_reports_safe` |
+| GitHub Packages auth failure refuses | `Github_packages_auth_failure_is_unknown`, `No_token_is_unknown_without_a_request` |
+| GitHub Packages 404 is not found | `Github_packages_404_for_unknown_id_is_not_found` |
+| nuget.org unreachable | `Nuget_org_unreachable_throws`, `Nuget_org_outage_throws_with_status`, endpoint `Nuget_outage_fails_closed_instead_of_reporting_safe` |
+| token without packages access refuses with the distinct message | `Token_without_packages_access_is_unknown_not_published`, endpoint `Token_without_packages_access_refuses_with_the_feed_message` |
+
+### Gates
+
+- `dotnet build tools/dev-cli/dev.cs`: clean (warnings are errors).
+- `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode and
+  standalone both passed, 0 failed, with 09 in multi-mode and 07 in standalone.
+- `ganda repo audit`: passes, nothing to fix.
+- Live smoke with real feeds: `dev check-version` on this repo reports 4.0.0-beta.7 already released (nuget.org
+  read, GitHub Packages 404s). `--package TimeWarp.Taratibu` reports latest 1.0.0-beta.16 from GitHub Packages.
+  `GITHUB_TOKEN=<invalid>` refuses with HTTP 401 and the fix lines.
+
+### Follow-ups (not changed here)
+
+- **Consumer repos that must add `packages: read` before taking this DevCli.** Each of these runs
+  `dev workflow` release mode (check-version) from a job with explicit `permissions` and no packages scope:
+  sovereign-intelligence-agency, timewarp-amina, timewarp-amuru, timewarp-architecture, timewarp-bayline,
+  timewarp-flexbox, timewarp-health, timewarp-jaribu, timewarp-mediator, timewarp-quickbooks,
+  timewarp-session-lake-tools, timewarp-source-generators, timewarp-state, timewarp-terminal. Already covered:
+  timewarp-taratibu (`packages: write`, which includes read) and timewarp-ganda (`packages: read`). Roslynk's
+  current workflow has `packages: write` and does not run check-version yet; Roslynk 008 must keep a packages
+  scope when it adopts the dev-cli release flow. This list comes from the local master checkouts on
+  2026-10-29. A nuget.org-only repo may still pass without the scope, because an Actions token probably gets
+  404 for an unknown id the way an invalid token does. That was not observed, so add the scope anyway.
+- **Candidate ganda follow-up:** the ganda workflow convention (template) and a `ganda repo audit` check
+  should carry `packages: read` on any job that runs check-version, `dev release` or `dev workflow` release
+  mode. File it in timewarp-ganda.
+- **taratibu and Roslynk 008** bump TimeWarp.Nuru.DevCli to the release that carries this (4.0.0-beta.8).
+- **taratibu's local workflow fork** (`tools/dev-cli/endpoints/workflow-command.cs`) hard-codes
+  `GitHubPackagesSource` for the push and still aborts with "version already released" (line 243). DevCli
+  could own the push target too: `NuGetVersionService.GitHubPackagesServiceIndexUrl` now exists, so a shared
+  push step could pick nuget.org (OIDC key) or GitHub Packages (`GITHUB_TOKEN`) by convention. That is a
+  candidate DevCli follow-up. Until then, taratibu should call `CheckVersionAbort.FormatAbortReason` at
+  line 243.
+- **Release:** "Ship in a DevCli prerelease" happens after merge. Version bumps here ride release tasks (554
+  did beta.7), so this PR does not bump `source/Directory.Build.props`.
+- Residual: a valid token without access to one specific private package could get 404 instead of 403, which
+  would read as "not found". This was not observed. Org packages are org-scoped, so a `read:packages` token
+  sees them all.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/devcli/check-version-09-two-feed-lookup.cs
+dotnet run tests/timewarp-nuru-tests/devcli/check-version-07-endpoint-fail-closed.cs
+dotnet run --file tools/dev-cli/dev.cs -- check-version --package TimeWarp.Taratibu
+GITHUB_TOKEN=ghp_invalid0000000000000000000000000000 dotnet run --file tools/dev-cli/dev.cs -- check-version --package TimeWarp.Taratibu
+grep -n "packages: read" .github/workflows/workflow.yml
+```
+
+**Expect:**
+
+- 09: 17 passed. 07: 9 passed.
+- Taratibu check (needs `gh` logged in with `read:packages`): `Latest NuGet version: 1.0.0-beta.16`, and
+  "safe to release" for the source version 4.0.0-beta.7.
+- Invalid-token check: `Error: GitHub Packages lookup for 'TimeWarp.Taratibu' failed (HTTP 401 Unauthorized)`,
+  then the feed URL and the two Fix lines. No "already released", exit 1.
+- `workflow.yml`: one `packages: read` line, in the `release` job.
 
 ## Session
 
 - Created: Roslynk cockpit 1287ec9b-6d3e-4805-9dd9-5ef6634981c8 (2026-10-24)
+- 2026-10-29 implementer (claude, headless task work): live probe, implementation, tests, docs. `ganda repo audit`
+  passed with no fixes needed.
 
 ## Notes
 

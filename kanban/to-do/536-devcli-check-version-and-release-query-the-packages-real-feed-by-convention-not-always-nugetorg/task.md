@@ -40,9 +40,33 @@ Repo visibility is **not** a usable convention, because Roslynk is public but pu
   - GitHub Packages auth failure, which refuses
   - GitHub Packages 404 for an unknown id, which counts as not found
   - nuget.org unreachable
+  - a token without packages access refuses with the distinct message, not "already published"
 
   Use a fake HTTP handler; no live network in tests.
-- Docs: `documentation/developer/guides/releasing.md`.
+- **Rollout safety (added 2026-10-29, cockpit review):** the fail-safe refusal would break every release
+  pipeline as it stands. The `release` job in `.github/workflows/workflow.yml` runs `dev workflow` (step 2 is
+  check-version) with `GH_TOKEN: ${{ github.token }}` and explicit permissions `contents: read`,
+  `id-token: write`, `actions: read`. Because the permissions are explicit, that token has **no** packages
+  access: GitHub Packages answers 401, check-version refuses, and the pipeline aborts with "version already
+  released". This hits every repo on the shared workflow, including nuget.org-only repos like Nuru.
+  - Add `packages: read` to the `release` job permissions in this repo's `workflow.yml`, in this PR.
+  - Any other job that runs check-version or `dev release` needs the same. Audit every job in `workflow.yml`.
+  - Make the refusal for an unreadable GitHub Packages **distinct** from "already published". Name the feed, the
+    HTTP status and the fix. The pipeline abort must not print "version already released" for it.
+  - Results: list every consumer repo (at least timewarp-taratibu and Roslynk) that must add `packages: read`
+    before it takes this DevCli. Say whether the ganda workflow convention or audit should carry it as a
+    candidate follow-up. Do not change other repos here.
+- **Verify the real GitHub Packages shapes before coding (live, read-only, with `gh auth token`):**
+  - Read the service index at `https://nuget.pkg.github.com/TimeWarpEngineering/index.json` and use its
+    `PackageBaseAddress/3.0.0` resource.
+  - Look up `timewarp.roslynk` and a taratibu package. A cockpit probe of the guessed
+    `.../download/timewarp.roslynk/index.json` returned **404** even though Roslynk publishes there. Find out
+    whether the URL shape or the owner is wrong.
+  - Record the observed status for an unknown id, a known id, no token (401 was observed), and a token without
+    `read:packages`.
+  - Mock exactly those responses in the tests. If a known package cannot be found live, stop and record it as a
+    blocker instead of guessing.
+- Docs: `documentation/developer/guides/releasing.md`. Include the `packages: read` requirement.
 - Ship in a TimeWarp.Nuru.DevCli prerelease.
 - Results note: timewarp-taratibu forks DevCli's `workflow` command locally
   (`tools/dev-cli/endpoints/workflow-command.cs`, a hard-coded GitHub Packages push target). Say whether DevCli
@@ -53,10 +77,13 @@ Repo visibility is **not** a usable convention, because Roslynk is public but pu
 - [ ] Both org feeds checked, with no setting
 - [ ] Token auth; an unverifiable GitHub Packages refuses; a 404 counts as not found
 - [ ] check-version and both release guards use it
+- [ ] Live GitHub Packages shapes verified and recorded (Roslynk lookup resolved)
+- [ ] `packages: read` added to the release job (and any other job that runs check-version)
+- [ ] Distinct refusal message for an unreadable GitHub Packages
 - [ ] Tests (fake HTTP)
 - [ ] Docs
 - [ ] Released in a DevCli beta
-- [ ] Follow-ups noted: taratibu and Roslynk 008 bump DevCli; taratibu's local workflow fork
+- [ ] Follow-ups noted: consumer repos needing `packages: read`; taratibu and Roslynk 008 bump DevCli; taratibu's local workflow fork
 
 ## Session
 

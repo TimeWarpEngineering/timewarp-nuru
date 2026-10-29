@@ -237,12 +237,31 @@ grep -n "packages: read" .github/workflows/workflow.yml
   then the feed URL and the two Fix lines. No "already released", exit 1.
 - `workflow.yml`: one `packages: read` line, in the `release` job.
 
+### Review
+
+- Rounds: 1. Roster: general. Effort: 3 (by-diff, 1731 lines). Turn cap 200 (cursor uncapped).
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: Roslynk cockpit 1287ec9b-6d3e-4805-9dd9-5ef6634981c8 (2026-10-24)
 - 2026-10-29 implementer (claude, headless task work): live probe, implementation, tests, docs. `ganda repo audit`
   --fix set the executable bit on the new test runfile (runfile-executable); it then passes.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session bb03761c-eba3-48f9-ba58-9e8f7995b48f, max-turns 500, Done — 2026-10-29T13:45:39Z
+- Review oracle: tw-implementation-review, effort 3, reviewer general (cursor, Grok 4.7), session not reported, turn cap 200 (cursor uncapped), round 1, disposition clean — 2026-10-29
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-29T13:55:02Z
+
+## Learnings
+
+The restatement matches the task on both feeds, the fail-safe, the distinct abort, `packages: read`, the seven fake-HTTP cases, and the releasing guide. It adds two stricter items the code also does: a malformed GitHub Packages body counts as unreadable, and the DevCli readme carries the migration note.
+
+Misread, with no gate change: the task says ship this in a TimeWarp.Nuru.DevCli prerelease. The restatement records that as a follow-up after merge. `source/Directory.Build.props` is still `4.0.0-beta.7`, and the checklist leaves the beta item open because version bumps ride release tasks (554 shipped beta.7).
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

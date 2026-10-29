@@ -182,7 +182,7 @@ Required test cases, each on fake HTTP that mirrors the observed responses:
 - `dotnet build tools/dev-cli/dev.cs`: clean (warnings are errors).
 - `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode and
   standalone both passed, 0 failed, with 09 in multi-mode and 07 in standalone.
-- `ganda repo audit`: passes, nothing to fix.
+- `ganda repo audit`: passes after `--fix` set the executable bit on `check-version-09-two-feed-lookup.cs`.
 - Live smoke with real feeds: `dev check-version` on this repo reports 4.0.0-beta.7 already released (nuget.org
   read, GitHub Packages 404s). `--package TimeWarp.Taratibu` reports latest 1.0.0-beta.16 from GitHub Packages.
   `GITHUB_TOKEN=<invalid>` refuses with HTTP 401 and the fix lines.
@@ -241,7 +241,7 @@ grep -n "packages: read" .github/workflows/workflow.yml
 
 - Created: Roslynk cockpit 1287ec9b-6d3e-4805-9dd9-5ef6634981c8 (2026-10-24)
 - 2026-10-29 implementer (claude, headless task work): live probe, implementation, tests, docs. `ganda repo audit`
-  passed with no fixes needed.
+  --fix set the executable bit on the new test runfile (runfile-executable); it then passes.
 
 ## Notes
 

@@ -552,7 +552,9 @@ public sealed class WorkflowCommand : ICommand<Unit>
 
       if (Environment.ExitCode != 0)
       {
-        AbortPipeline("version already released");
+        // 536: name the real cause. A job token without packages: read makes
+        // check-version refuse, and that is not "version already released".
+        AbortPipeline(CheckVersionAbort.FormatAbortReason(checkVersionHandler.Outcome, checkVersionHandler.GitHubPackagesFailure));
         return;
       }
 

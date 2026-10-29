@@ -142,6 +142,9 @@ distinct failure class:
 is safe to let through at this point because the tag was already created and
 pushed back in `dev release` step 3, so the tag-pin check in Step 1/6 above has
 already pinned this run to the same commit the earlier partial push used.
+If check-version refuses because the GitHub Packages feed could not be read,
+the abort line names that feed, its HTTP status and `packages: read` instead (see
+[Feeds the publish gates read](#feeds-the-publish-gates-read)).
 Immediately after, the packable project set is derived
 (`IPackableProjectService`); an empty set aborts **"no packable projects found
 under source/."**
@@ -229,6 +232,41 @@ tag-pin check guarantees whenever the release was cut through `dev release` (the
 tag exists before any push happens, so any resume is pinned to it). If the source
 has genuinely changed since the partial push, bump the version instead of
 resuming.
+
+## Feeds the publish gates read
+
+`check-version`, `dev release` guard 7 and the promotion pipeline's Step 2/6 ask
+both feeds TimeWarp publishes to. There is no setting:
+
+- nuget.org: `https://api.nuget.org/v3-flatcontainer/{id}/index.json`
+- the org GitHub Packages feed: `https://nuget.pkg.github.com/TimeWarpEngineering/index.json`.
+  The flat container comes from that index's `PackageBaseAddress/3.0.0` resource.
+
+A version listed on either feed is published. That covers the **All** and the
+**Partial** verdicts.
+
+GitHub Packages needs a token, even to say a package does not exist. DevCli uses
+`GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token`. The token needs the
+`read:packages` scope. In GitHub Actions the job needs `packages: read`. A job that
+lists its `permissions` gets no packages access unless it names it. The `release`
+job in `workflow.yml` has `packages: read` for this reason.
+
+| GitHub Packages answer | Verdict |
+|---|---|
+| 200 with versions | Read (published if the version is listed) |
+| 404 (`NAME_UNKNOWN`) | Not found on GitHub Packages |
+| No token, 401, 403, other status, timeout, malformed answer | Unreadable |
+
+When the version is not on nuget.org and GitHub Packages is unreadable, the gate
+refuses. It does not report the version as published or as new. The error names
+the feed, the HTTP status and the fix:
+
+- Local: `gh auth refresh -h github.com -s read:packages`, or set `GITHUB_TOKEN` /
+  `GH_TOKEN` to a token with `read:packages`. A `GITHUB_TOKEN` in your shell wins
+  over the gh login.
+- GitHub Actions: add `packages: read` to the job's `permissions`.
+
+A nuget.org failure still refuses, as before.
 
 ## Trusted publishing
 

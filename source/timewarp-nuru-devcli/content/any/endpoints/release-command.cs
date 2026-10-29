@@ -50,6 +50,12 @@
 // every guard needs real git/gh process execution to exercise meaningfully;
 // see release-guard.cs's pure matrix tests and this task's --dry-run
 // verification runs instead.
+//
+// D6 (kanban task 536): step 7 reads both org feeds through
+// NuGetVersionService.LookupAsync, so the All and Partial refusals count a
+// package as published when nuget.org or the org GitHub Packages feed lists
+// the version. A version not on nuget.org while GitHub Packages is unreadable
+// refuses with PackageFeedLookup.FormatUnknownRefusal (feed, status, fix).
 #endregion
 
 namespace DevCli;
@@ -314,11 +320,11 @@ public sealed class ReleaseCommand : ICommand<Unit>
       List<string> alreadyPublished = [];
       foreach (string pkg in packages)
       {
-        IReadOnlyList<string> versions;
+        PackageFeedLookup lookup;
         try
         {
-          versions = await NuGetVersionService
-            .GetPackageVersionsAsync(pkg, cancellationToken)
+          lookup = await NuGetVersionService
+            .LookupAsync(pkg, cancellationToken)
             .ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
@@ -331,7 +337,22 @@ public sealed class ReleaseCommand : ICommand<Unit>
           return Unit.Value;
         }
 
-        if (NuGetVersionService.IsVersionPublished(version, versions))
+        PackagePublishVerdict verdict = lookup.Check(version);
+
+        if (verdict == PackagePublishVerdict.Unknown)
+        {
+          // 536: not on nuget.org and GitHub Packages unreadable — refuse with
+          // the feed's own message, not the already-released one.
+          foreach (string line in lookup.FormatUnknownRefusal(version))
+          {
+            Terminal.WriteErrorLine(line);
+          }
+
+          Environment.ExitCode = 1;
+          return Unit.Value;
+        }
+
+        if (verdict == PackagePublishVerdict.Published)
         {
           alreadyPublished.Add(pkg);
         }

@@ -24,6 +24,15 @@
 // exits 0 — a deliberate jump is legitimate. --strict turns that warning into
 // exit code 1 for CI. Every other shape (core change, different label, no
 // published version) keeps the two version lines and omits the distance.
+//
+// Both org feeds (kanban task 536): each package is read from nuget.org and
+// the org GitHub Packages feed (NuGetVersionService.LookupAsync), and a
+// version on either is published. "Latest NuGet version" is the highest
+// version on either feed. A version that is not on nuget.org while GitHub
+// Packages could not be read refuses with its own message (feed, HTTP status,
+// fix), never "already released". The handler records Outcome and
+// GitHubPackagesFailure so a pipeline running the gate can name the cause
+// (CheckVersionAbort.FormatAbortReason).
 #endregion
 
 namespace DevCli;
@@ -55,6 +64,12 @@ public sealed class CheckVersionCommand : ICommand<Unit>
     private readonly IRepoConfigService ConfigService;
     private readonly IPackableProjectService PackableProjectService;
 
+    /// <summary>How the last <see cref="Handle"/> call ended.</summary>
+    public CheckVersionOutcome Outcome { get; private set; }
+
+    /// <summary>The GitHub Packages failure behind <see cref="CheckVersionOutcome.GitHubPackagesUnreadable"/>.</summary>
+    public PackageFeedUnreadableException? GitHubPackagesFailure { get; private set; }
+
     public Handler
     (
       ITerminal terminal,
@@ -72,6 +87,9 @@ public sealed class CheckVersionCommand : ICommand<Unit>
     public async Task<Unit> Handle(CheckVersionCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
+
+      Outcome = CheckVersionOutcome.InvalidInput;
+      GitHubPackagesFailure = null;
 
       string? repoRoot = Git.FindRoot();
 
@@ -142,11 +160,11 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       {
         checkedPackages.Add(pkg);
 
-        IReadOnlyList<string> versions;
+        PackageFeedLookup lookup;
         try
         {
-          versions = await NuGetVersionService
-            .GetPackageVersionsAsync(pkg, cancellationToken)
+          lookup = await NuGetVersionService
+            .LookupAsync(pkg, cancellationToken)
             .ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
@@ -156,23 +174,37 @@ public sealed class CheckVersionCommand : ICommand<Unit>
           // "safe to release" — refuse to answer instead.
           Terminal.WriteErrorLine($"Error: NuGet lookup for '{pkg}' failed: {ex.Message}");
           Terminal.WriteErrorLine("  Cannot determine whether this version is already published; refusing to report it as safe to release. Retry when NuGet is reachable.");
+          Outcome = CheckVersionOutcome.NuGetOrgLookupFailed;
           Environment.ExitCode = 1;
           return Unit.Value;
         }
 
-        if (versions.Count == 0)
+        PackagePublishVerdict verdict = lookup.Check(version);
+
+        if (verdict == PackagePublishVerdict.Unknown)
         {
-          continue;
+          // 536: not on nuget.org and GitHub Packages unreadable. Unknown, so
+          // refuse; never "not published", and never "already released".
+          foreach (string line in lookup.FormatUnknownRefusal(version))
+          {
+            Terminal.WriteErrorLine(line);
+          }
+
+          Outcome = CheckVersionOutcome.GitHubPackagesUnreadable;
+          GitHubPackagesFailure = lookup.GitHubPackagesFailure;
+          Environment.ExitCode = 1;
+          return Unit.Value;
         }
 
-        string highestVersion = versions[^1];
+        string? highestVersion = lookup.LatestVersion;
 
-        if (latestNuGetVersion is null || NuGetVersionService.CompareVersions(highestVersion, latestNuGetVersion) > 0)
+        if (highestVersion is not null &&
+            (latestNuGetVersion is null || NuGetVersionService.CompareVersions(highestVersion, latestNuGetVersion) > 0))
         {
           latestNuGetVersion = highestVersion;
         }
 
-        if (NuGetVersionService.IsVersionPublished(version, versions))
+        if (verdict == PackagePublishVerdict.Published)
         {
           alreadyPublished.Add(pkg);
         }
@@ -205,10 +237,12 @@ public sealed class CheckVersionCommand : ICommand<Unit>
       switch (publishState)
       {
         case PublishState.None:
+          Outcome = CheckVersionOutcome.NewVersion;
           Terminal.WriteLine("✓ Version in source is new — safe to release.".Green());
           break;
 
         case PublishState.Partial:
+          Outcome = CheckVersionOutcome.PartiallyPublished;
           List<string> missingPackages = [.. checkedPackages.Except(alreadyPublished)];
           Terminal.WriteLine($"Partial publish detected: {alreadyPublished.Count} of {checkedPackages.Count} packages already have {version}.".Yellow());
           Terminal.WriteLine($"  Already published: {string.Join(", ", alreadyPublished)}".Yellow());
@@ -218,6 +252,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
           break;
 
         case PublishState.All:
+          Outcome = CheckVersionOutcome.AlreadyReleased;
           Terminal.WriteLine($"✗ Version {version} was already released.".Red());
           Terminal.WriteLine("  Bump the version before releasing.".Yellow());
           Terminal.WriteLine($"  Already published: {string.Join(", ", alreadyPublished)}".Yellow());

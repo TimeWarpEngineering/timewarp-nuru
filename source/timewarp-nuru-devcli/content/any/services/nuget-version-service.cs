@@ -1,7 +1,9 @@
 #region Purpose
 // HttpClient-based NuGet version checking — replaces TimeWarp.Amuru's NuGetPackageService
 // which depends on NuGet.Protocol/NuGet.Packaging (pulls in Newtonsoft.Json, incompatible with AOT).
-// Uses the NuGet.org V3 Flat Container API directly with System.Text.Json.
+// Uses the NuGet V3 Flat Container API directly with System.Text.Json.
+// Reads both org feeds, nuget.org and the org GitHub Packages feed, so the
+// already-released gates see packages published to either (kanban task 536).
 #endregion
 #region Design
 // Calls https://api.nuget.org/v3-flatcontainer/{id}/index.json
@@ -17,6 +19,33 @@
 // (ASCII word chars with single '.'/'-' separators, max 100 chars) and the
 // path segment is escaped, so a --package like "../evil" cannot walk off
 // v3-flatcontainer. The HttpMessageHandler constructor exists for tests.
+//
+// Two feeds, no setting (kanban task 536). TimeWarp publishes to nuget.org
+// and to the org GitHub Packages feed only, so both are constants here and
+// LookupAsync always reads both. Repo visibility is no guide: Roslynk is
+// public and publishes to GitHub Packages. GitHub Packages shapes, observed
+// live 2026-10-29 with a read:packages gh token:
+//   - The service index answers 200; its PackageBaseAddress/3.0.0 resource is
+//     https://nuget.pkg.github.com/TimeWarpEngineering/download (no trailing
+//     slash). The flat container is {base}/{lowercase id}/index.json, read
+//     from the index rather than assumed.
+//   - Known id: 200 {"versions":[...]} listed NEWEST FIRST (nuget.org lists
+//     oldest first), so callers take the SemVer maximum, not versions[^1].
+//   - Unknown id: 404 {"errors":[{"code":"NAME_UNKNOWN",...}]} = not found.
+//   - No token: 401 (WWW-Authenticate: Basic) for the index, a known id and
+//     an unknown id alike.
+//   - An invalid token: index 200, unknown id 404, known id 401. A bad token
+//     cannot make a published package look unpublished.
+//   - A gh token without read:packages: 403 on the flat container (ganda task
+//     363, 2026-10-08).
+// Auth is HTTP Basic with the token as password, the scheme NuGet clients
+// use; GitHubPackagesCredential finds the token. Every GitHub Packages
+// failure (no token, 401/403, other non-404, timeout, malformed answer) is a
+// PackageFeedUnreadableException. LookupAsync keeps it on the result instead
+// of throwing, because a version found on nuget.org is published regardless;
+// the gates refuse only when the version is not on nuget.org. The service
+// index is read once per service instance, and its answer (base address or
+// failure) is reused for every package.
 #endregion
 
 namespace DevCli;
@@ -28,7 +57,20 @@ public sealed class NuGetVersionService : IDisposable
 {
   private readonly HttpClient HttpClient;
 
+  private readonly Func<CancellationToken, Task<GitHubPackagesCredential?>> GitHubCredentialProvider;
+  private bool GitHubCredentialResolved;
+  private GitHubPackagesCredential? GitHubCredential;
+  private Uri? GitHubPackagesBaseAddress;
+  private PackageFeedUnreadableException? GitHubPackagesIndexFailure;
+
   public const int MaxPackageIdLength = 100;
+
+  public const string NuGetOrgFlatContainerUrl = "https://api.nuget.org/v3-flatcontainer/";
+
+  /// <summary>The org's private GitHub Packages feed, the only other feed TimeWarp publishes to.</summary>
+  public const string GitHubPackagesServiceIndexUrl = "https://nuget.pkg.github.com/TimeWarpEngineering/index.json";
+
+  public const string PackageBaseAddressResourceType = "PackageBaseAddress/3.0.0";
 
   public NuGetVersionService()
     : this
@@ -36,7 +78,8 @@ public sealed class NuGetVersionService : IDisposable
       new HttpClientHandler
       {
         AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
-      }
+      },
+      GitHubPackagesCredential.ResolveAsync
     )
   {
   }
@@ -50,9 +93,25 @@ public sealed class NuGetVersionService : IDisposable
   /// assembly, so internal is visible there.
   /// </summary>
   internal NuGetVersionService(HttpMessageHandler handler)
+    : this(handler, _ => Task.FromResult<GitHubPackagesCredential?>(null))
+  {
+  }
+
+  /// <summary>
+  /// Test seam with a fixed GitHub Packages credential source, so a test never
+  /// reads the machine's GITHUB_TOKEN, GH_TOKEN or gh login. The one-argument
+  /// overload has no credential, so GitHub Packages is always unreadable there.
+  /// </summary>
+  internal NuGetVersionService
+  (
+    HttpMessageHandler handler,
+    Func<CancellationToken, Task<GitHubPackagesCredential?>> gitHubCredentialProvider
+  )
   {
     ArgumentNullException.ThrowIfNull(handler);
+    ArgumentNullException.ThrowIfNull(gitHubCredentialProvider);
     HttpClient = new HttpClient(handler);
+    GitHubCredentialProvider = gitHubCredentialProvider;
   }
 
   /// <summary>
@@ -63,14 +122,35 @@ public sealed class NuGetVersionService : IDisposable
   {
     ArgumentNullException.ThrowIfNull(packageId);
 
+    ThrowIfInvalidPackageId(packageId);
+
+    return new Uri($"{NuGetOrgFlatContainerUrl}{GetIdSegment(packageId)}/index.json");
+  }
+
+  /// <summary>
+  /// Builds the flat-container index URL for <paramref name="packageId"/> under a
+  /// feed's <c>PackageBaseAddress/3.0.0</c> resource. Throws
+  /// <see cref="ArgumentException"/> when the id fails <see cref="IsValidPackageId"/>.
+  /// </summary>
+  public static Uri GetIndexUrl(Uri packageBaseAddress, string packageId)
+  {
+    ArgumentNullException.ThrowIfNull(packageBaseAddress);
+    ArgumentNullException.ThrowIfNull(packageId);
+
+    ThrowIfInvalidPackageId(packageId);
+
+    return new Uri($"{packageBaseAddress.AbsoluteUri.TrimEnd('/')}/{GetIdSegment(packageId)}/index.json");
+  }
+
+  private static void ThrowIfInvalidPackageId(string packageId)
+  {
     if (!IsValidPackageId(packageId))
     {
       throw new ArgumentException($"'{packageId}' is not a valid NuGet package id (letters, digits, '_', with single '.' or '-' separators; max {MaxPackageIdLength} chars).", nameof(packageId));
     }
-
-    string segment = Uri.EscapeDataString(packageId.ToLowerInvariant());
-    return new Uri($"https://api.nuget.org/v3-flatcontainer/{segment}/index.json");
   }
+
+  private static string GetIdSegment(string packageId) => Uri.EscapeDataString(packageId.ToLowerInvariant());
 
   /// <summary>
   /// NuGet package id grammar (mirrors NuGet.Packaging's PackageIdValidator):
@@ -185,6 +265,185 @@ public sealed class NuGetVersionService : IDisposable
     catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
     {
       throw new HttpRequestException($"NuGet version lookup for '{packageId}' timed out requesting {url}.", ex, System.Net.HttpStatusCode.RequestTimeout);
+    }
+  }
+
+  /// <summary>
+  /// Reads <paramref name="packageId"/> from both org feeds. A nuget.org failure
+  /// throws <see cref="HttpRequestException"/>, as <see cref="GetPackageVersionsAsync"/>
+  /// does. A GitHub Packages failure is returned on the result, never thrown.
+  /// </summary>
+  public async Task<PackageFeedLookup> LookupAsync(string packageId, CancellationToken cancellationToken)
+  {
+    IReadOnlyList<string> nuGetOrgVersions = await GetPackageVersionsAsync(packageId, cancellationToken).ConfigureAwait(false);
+
+    try
+    {
+      IReadOnlyList<string> gitHubPackagesVersions = await GetGitHubPackagesVersionsAsync(packageId, cancellationToken).ConfigureAwait(false);
+      return new PackageFeedLookup(packageId, nuGetOrgVersions, gitHubPackagesVersions, gitHubPackagesFailure: null);
+    }
+    catch (PackageFeedUnreadableException ex)
+    {
+      return new PackageFeedLookup(packageId, nuGetOrgVersions, [], ex);
+    }
+  }
+
+  /// <summary>
+  /// Versions of <paramref name="packageId"/> on the org GitHub Packages feed; empty
+  /// on 404. Throws <see cref="PackageFeedUnreadableException"/> when the feed could
+  /// not be read, and <see cref="ArgumentException"/> for an invalid id.
+  /// </summary>
+  public async Task<IReadOnlyList<string>> GetGitHubPackagesVersionsAsync
+  (
+    string packageId,
+    CancellationToken cancellationToken
+  )
+  {
+    ArgumentNullException.ThrowIfNull(packageId);
+
+    // Reject before any credential lookup or request.
+    ThrowIfInvalidPackageId(packageId);
+
+    GitHubPackagesCredential credential = await GetGitHubCredentialAsync(cancellationToken).ConfigureAwait(false);
+    Uri baseAddress = await GetGitHubPackagesBaseAddressAsync(credential, cancellationToken).ConfigureAwait(false);
+    Uri url = GetIndexUrl(baseAddress, packageId);
+
+    using HttpResponseMessage response = await SendGitHubPackagesAsync(url, credential, cancellationToken).ConfigureAwait(false);
+
+    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+    {
+      return [];
+    }
+
+    if (!response.IsSuccessStatusCode)
+    {
+      throw new PackageFeedUnreadableException
+      (
+        $"GitHub Packages answered HTTP {(int)response.StatusCode} ({response.StatusCode}) for {url} using the {credential.Source} token.",
+        inner: null,
+        response.StatusCode
+      );
+    }
+
+    NuGetVersionIndex? index = await ReadGitHubPackagesJsonAsync(response, url, DevCliJsonContext.Default.NuGetVersionIndex, cancellationToken).ConfigureAwait(false);
+
+    if (index?.Versions is not { Count: > 0 } versions)
+    {
+      throw new PackageFeedUnreadableException($"GitHub Packages returned HTTP 200 with no versions index from {url}.", inner: null, response.StatusCode);
+    }
+
+    return versions;
+  }
+
+  private async Task<GitHubPackagesCredential> GetGitHubCredentialAsync(CancellationToken cancellationToken)
+  {
+    if (!GitHubCredentialResolved)
+    {
+      GitHubCredential = await GitHubCredentialProvider(cancellationToken).ConfigureAwait(false);
+      GitHubCredentialResolved = true;
+    }
+
+    return GitHubCredential ?? throw new PackageFeedUnreadableException
+    (
+      $"no GitHub token: {GitHubPackagesCredential.GitHubTokenVariable} and {GitHubPackagesCredential.GhTokenVariable} are unset and '{GitHubPackagesCredential.GhAuthTokenSource}' returned none.",
+      inner: null,
+      statusCode: null
+    );
+  }
+
+  private async Task<Uri> GetGitHubPackagesBaseAddressAsync(GitHubPackagesCredential credential, CancellationToken cancellationToken)
+  {
+    if (GitHubPackagesBaseAddress is not null)
+    {
+      return GitHubPackagesBaseAddress;
+    }
+
+    if (GitHubPackagesIndexFailure is not null)
+    {
+      throw GitHubPackagesIndexFailure;
+    }
+
+    try
+    {
+      GitHubPackagesBaseAddress = await ReadGitHubPackagesBaseAddressAsync(credential, cancellationToken).ConfigureAwait(false);
+      return GitHubPackagesBaseAddress;
+    }
+    catch (PackageFeedUnreadableException ex)
+    {
+      GitHubPackagesIndexFailure = ex;
+      throw;
+    }
+  }
+
+  private async Task<Uri> ReadGitHubPackagesBaseAddressAsync(GitHubPackagesCredential credential, CancellationToken cancellationToken)
+  {
+    Uri indexUrl = new(GitHubPackagesServiceIndexUrl);
+    using HttpResponseMessage response = await SendGitHubPackagesAsync(indexUrl, credential, cancellationToken).ConfigureAwait(false);
+
+    if (!response.IsSuccessStatusCode)
+    {
+      throw new PackageFeedUnreadableException
+      (
+        $"GitHub Packages answered HTTP {(int)response.StatusCode} ({response.StatusCode}) for its service index {indexUrl} using the {credential.Source} token.",
+        inner: null,
+        response.StatusCode
+      );
+    }
+
+    NuGetServiceIndex? serviceIndex = await ReadGitHubPackagesJsonAsync(response, indexUrl, DevCliJsonContext.Default.NuGetServiceIndex, cancellationToken).ConfigureAwait(false);
+
+    foreach (NuGetServiceIndexResource resource in serviceIndex?.Resources ?? [])
+    {
+      if (string.Equals(resource.Type, PackageBaseAddressResourceType, StringComparison.Ordinal) &&
+          Uri.TryCreate(resource.Id, UriKind.Absolute, out Uri? baseAddress) &&
+          baseAddress.Scheme == Uri.UriSchemeHttps)
+      {
+        return baseAddress;
+      }
+    }
+
+    throw new PackageFeedUnreadableException($"GitHub Packages service index {indexUrl} has no https {PackageBaseAddressResourceType} resource.", inner: null, response.StatusCode);
+  }
+
+  private async Task<HttpResponseMessage> SendGitHubPackagesAsync(Uri url, GitHubPackagesCredential credential, CancellationToken cancellationToken)
+  {
+    using HttpRequestMessage request = new(HttpMethod.Get, url);
+    string basic = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"DevCli:{credential.Token}"));
+    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", basic);
+
+    try
+    {
+      return await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+    catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+    {
+      throw new PackageFeedUnreadableException($"GitHub Packages request timed out for {url}.", ex, System.Net.HttpStatusCode.RequestTimeout);
+    }
+    catch (HttpRequestException ex)
+    {
+      throw new PackageFeedUnreadableException($"GitHub Packages is unreachable at {url}: {ex.Message}", ex, ex.StatusCode);
+    }
+  }
+
+  private static async Task<T?> ReadGitHubPackagesJsonAsync<T>
+  (
+    HttpResponseMessage response,
+    Uri url,
+    System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> typeInfo,
+    CancellationToken cancellationToken
+  )
+  {
+    Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+    await using (stream.ConfigureAwait(false))
+    {
+      try
+      {
+        return await JsonSerializer.DeserializeAsync(stream, typeInfo, cancellationToken).ConfigureAwait(false);
+      }
+      catch (JsonException ex)
+      {
+        throw new PackageFeedUnreadableException($"GitHub Packages returned HTTP {(int)response.StatusCode} with a non-JSON body from {url}: {ex.Message}", ex, response.StatusCode);
+      }
     }
   }
 
@@ -379,4 +638,20 @@ public sealed class NuGetVersionIndex
 {
   [JsonPropertyName("versions")]
   public IReadOnlyList<string> Versions { get; init; } = [];
+}
+
+/// <summary>A NuGet V3 service index; only the resources list is read.</summary>
+public sealed class NuGetServiceIndex
+{
+  [JsonPropertyName("resources")]
+  public IReadOnlyList<NuGetServiceIndexResource>? Resources { get; init; }
+}
+
+public sealed class NuGetServiceIndexResource
+{
+  [JsonPropertyName("@id")]
+  public string? Id { get; init; }
+
+  [JsonPropertyName("@type")]
+  public string? Type { get; init; }
 }

@@ -90,6 +90,8 @@ Acceptance:
 - 2026-10-30 fix pass (implementer-claude, implement-fix-2): fixed review round 1 M1 (walk diff
   uses `--no-renames`) and M2 (git show failure is a git error; unreadable props has its own
   sentence). Guard matrix 32 passed; CI tests exit 0 (standalone 0 failed); `ganda repo audit` passes.
+- Reviewer (general), round 2: cursor session not reported (2026-10-30), effort 1, roster general, max-turns uncapped (review budget 80). Re-checked the fix delta. M1 and M2 stay fixed. No new findings.
+- Review oracle: review-2 by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 80) — 2026-10-30
 
 ## Results
 
@@ -158,7 +160,7 @@ Expect:
 
 ### Review
 
-Round 1 (effort 2, roster general): M1 (bug) and M2 (suggestion) fixed in the fix pass on 2026-10-30. Nothing is open. Round 2 is next. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 (effort 2, roster general) raised M1 (bug) and M2 (suggestion). Both were fixed in the fix pass. Round 2 (effort 1, roster general) reviewed the fix delta `03ff8dbb..61e90dc4` and raised nothing new. Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0 open / 1 fixed / 0 wontfix; nit 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Learnings
 
@@ -168,8 +170,8 @@ The restatement also says the tag and publish-state guards run after the target 
 
 ## Review
 
-- Round 1: Blocked — open M1, M2
-
+- Round 1: M1 (bug) and M2 (suggestion), fixed before round 2
+- Round 2: Done
 ## Notes
 
 Requested by Steve 2026-10-26 ("yes" to filing it) after the beta.26 race in timewarp-architecture.

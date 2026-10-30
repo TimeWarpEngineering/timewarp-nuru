@@ -55,16 +55,147 @@ Steve 2026-10-30: "i don't want us to supress the damn thing either so generate 
   `ganda repo audit` passes.
 - Ships in the next DevCli beta (4.0.0-beta.9). Don't bump the version here.
 
+## Goal (implementer restatement)
+
+DevCli ships C# source that compiles under each consumer's analyzer rules, so that source must pass the
+rules on its own merits — no hiding it. Nuru's own `.editorconfig` masked RCS1194 (missing exception
+constructors), so `PackageFeedUnreadableException` reached timewarp-architecture with a warning.
+
+Acceptance:
+- No suppression mechanism (auto-generated header, pragma, SuppressMessage, globalconfig) added for DevCli content.
+- `RCS1194.severity = none` removed; every RCS1194 violation in the repo fixed, including
+  `PackageFeedUnreadableException` getting the missing `HttpRequestException` constructor(s).
+- The other 20 `severity = none` entries classified as preference (kept, with a reason comment) or
+  debt (re-enabled and fixed, or kept and listed as a follow-up with a violation count). Table in Results.
+- `[ganda.audit]` untouched; version not bumped.
+- Build (warnings as errors), CI tests (after `ganda runfile cache --clear`), and `ganda repo audit` pass.
+
 ## Checklist
 
-- [ ] No suppression mechanism added for DevCli content
-- [ ] RCS1194 re-enabled; violations fixed, including PackageFeedUnreadableException
-- [ ] Other 20 suppressions classified; debt re-enabled and fixed, or listed with counts
-- [ ] CI tests, build and audit pass
+- [x] No suppression mechanism added for DevCli content
+- [x] RCS1194 re-enabled; violations fixed, including PackageFeedUnreadableException
+- [x] Other 20 suppressions classified; debt re-enabled and fixed, or listed with counts
+- [x] CI tests, build and audit pass
 
 ## Session
 
 - Created: Nuru cockpit 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-30)
+- 2026-10-30 implementer-claude (ganda task work, headless): measured every `none` rule by forcing it to
+  `warning` and building `timewarp-nuru.slnx` and `tools/dev-cli/dev.cs` with warnings-as-errors off. Ran the
+  same build again with `GenerateDocumentationFile=true` to count the doc-comment rules. CI multi-mode
+  does not run analyzers (`RunAnalyzersDuringBuild=false`), but the 42 standalone files do, so they were
+  fixed too.
+- First attempt scoped the constants naming rule to fields only, so that local constants are camelCase as
+  tw-csharp says. The standalone tests have about 117 PascalCase local constants, so I reverted it. The
+  existing rule stays, and the 6 camelCase local constants in source were renamed to PascalCase instead.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b2f8fb14-050b-4a05-b393-97c549e97adf, max-turns 500, Done — 2026-10-30T13:10:27Z
+
+## Results
+
+DevCli content no longer depends on Nuru's `.editorconfig` hiding anything. RCS1194 is back on as
+`warning`, and every violation is fixed by adding constructors. No suppression mechanism was added. The
+existing `CA1032` `[SuppressMessage]` attributes on the three non-DevCli exceptions were removed because the
+constructors now exist. Version not bumped (ships in 4.0.0-beta.9). `[ganda.audit]` untouched.
+
+### RCS1194 fixes (4)
+
+| Type | Added |
+|------|-------|
+| `PackageFeedUnreadableException` (DevCli content, `HttpRequestException`) | `(HttpRequestError, string?, Exception?, HttpStatusCode?)`, the missing base constructor; RCS1194 cleared once it was added |
+| `HandlerParameterMismatchException` (analyzers, internal) | `()`, `(string)`, `(string, Exception)`; structured props default to `string.Empty` |
+| `PatternException` (parsing, public) | `()`, `(string)`, `(string, Exception)`; `RoutePattern` = `string.Empty`, error lists null |
+| `KeyBindingConfigException` (nuru, public) | `()` |
+
+### Pre-existing suppressions removed from DevCli content
+
+Requirement 1 says the content must pass on its own merits, so the pre-existing in-content suppressions
+were reviewed too:
+
+| File | Was | Now |
+|------|-----|-----|
+| `endpoints/self-install-command.cs` | `#pragma warning disable CA1031` | removed; the only catch is `catch (IOException)`, so the pragma was dead |
+| `services/windows-exe-replace.cs` | `#pragma warning disable CA1031` + `catch (Exception) when (...)` | two typed catches (`IOException`, `UnauthorizedAccessException`), pragma removed |
+| `services/props-version-reader.cs` | `#pragma warning disable IDE0007` around `XDocument doc = XDocument.Parse(...)` | `XElement? root = XDocument.Parse(...).Root;` (not an apparent-type local, so it is neutral to either var preference) |
+| `services/repo-config-service.cs` | `Deserialize<RepoConfig>(json, options)` raised IL2026/IL3050, hidden by the root `NoWarn` | resolves `JsonTypeInfo<RepoConfig>` via `JsonOptions.GetTypeInfo`, so the call is AOT-clean |
+| `services/attestation-verifier.cs` | `[SuppressMessage("CA1819")]` on `AttestationEvaluation` (`byte[]?` members) | **kept, follow-up.** Changing the attestation result contract and its tests is its own review |
+
+Verified by building `tools/dev-cli/dev.cs` with `NoWarn` cleared (`-p:NoWarn=IL2104;IL3053`) and with
+CodeAnalysisTreatWarningsAsErrors off. No CA1031, IDE0007 or IL2026/IL3050 remain in the content.
+
+### Classification of the other 20 `severity = none` entries
+
+Counts are unique violation sites in `source/` + `tools/dev-cli` when the rule is forced to `warning`.
+
+| Rule | Class | Count | Disposition |
+|------|-------|------:|-------------|
+| CA1034 nested types | preference | 6 | kept; reason on line (encapsulation) |
+| CA1308 normalize to uppercase | preference | 51 | kept; reason on line (CLI names/kebab paths/JSON are lowercase by design) |
+| RCS1139 add summary | debt | 0 / 1* | kept off; follow-up |
+| RCS1140 add exception | debt | 0 / 68* | kept off; follow-up |
+| RCS1141 add param | debt | 0 / 732* | kept off; follow-up |
+| RCS1142 add typeparam | debt | 0 / 18* | kept off; follow-up |
+| RCS1181 convert comment to doc comment | debt | 103 | kept off; follow-up (3 DevCli-content hits fixed here) |
+| RCS1021 expression-bodied lambda | debt | 1 (+1 test) | **re-enabled (warning), fixed** |
+| RCS1238 nested ?: | debt | 6 | **re-enabled (warning), fixed** |
+| RCS1045 underscore fields | preference | 0 | kept; reason on line (conventions forbid `_`) |
+| RCS0051 new line before `while` | preference | 0 | kept; reason on line (no house option chosen, dotnet format owns layout) |
+| RCS0052 new line before `=` | preference | 0 | kept; same reason |
+| RCS0036 remove blank line between single-line decls | preference | 438 | kept; reason on line (house style keeps blank lines between members) |
+| RCS1123 add parentheses | debt | 2 | **re-enabled (warning), fixed** |
+| RCS1124 inline local variable | preference | 12 | kept; reason on line (debugging clarity); the 1 DevCli-content hit fixed anyway |
+| RCS9001 / RCS9002 / RCS9003 | debt | 0 | **re-enabled (warning)**; comment fixed (they are Roslynator.CodeAnalysis rules, not "Unity-specific") |
+| IDE0290 primary constructor | preference | n/a (also in `NoWarn`) | kept; reason on line |
+| IDE1006 naming styles | debt | 31 (+8 test) | **re-enabled (warning), fixed** with Roslynk renames: `_x`/camelCase fields to PascalCase, camelCase local consts to PascalCase, `GroupNode(string Name)` to `name` |
+
+\* `0` in Nuru's build because no project sets `GenerateDocumentationFile`; the second number is with it on.
+
+### DevCli content exposure after this task
+
+The content was compiled with every rule above forced to `warning`, under `GenerateDocumentationFile=false`
+and `=true`:
+- Without a doc file, only **RCS0036** remains (24 sites). It is a Roslynator formatting rule that is off by
+  default and contradicts the house blank-line style.
+- With a doc file, **CS1591** (116), **RCS1141** (48), **RCS1140** (8) and RCS0036 (6) remain.
+
+A consumer that turns on `GenerateDocumentationFile` with warnings as errors would still trip CS1591 on
+DevCli content.
+
+### Follow-ups (not done here)
+
+- Documentation-comment debt: RCS1139/1140/1141/1142 (1/68/732/18 with a doc file) and RCS1181 (103). Fix
+  DevCli content first (CS1591 116, RCS1141 48, RCS1140 8) so doc-file consumers stay clean.
+- MSBuild `NoWarn` also hides content diagnostics. That is a second suppression layer, outside this task's
+  `.editorconfig` scope. With dev-cli's and the root's `NoWarn` cleared, the DevCli content reports
+  **CA1849** (89: sync `ITerminal.WriteLine` in async handlers), **CA1515** (56: public types in an exe
+  consumer) and **CA2000** (1). A consumer without the same `NoWarn` entries would see these.
+- `AttestationEvaluation` CA1819 `[SuppressMessage]` (see above).
+- `./bin/dev format` (check) reports pre-existing whitespace errors in files this task did not touch:
+  `endpoint-extractor.cs` (71), `route-definition.cs` (2), `add-configuration-locator.cs` (1),
+  daemon/mcphost `console-redirect.cs` (2+2), mcphost `global-usings.cs` (1). This is not a build or audit
+  gate.
+
+### Gates
+
+- `dotnet build timewarp-nuru.slnx`: 0 warnings, 0 errors (source has TreatWarningsAsErrors).
+- `dotnet build tools/dev-cli/dev.cs`: clean.
+- `ganda runfile cache --clear` then `dotnet run tests/ci-tests/run-ci-tests.cs`: exit 0. Multi-mode 2159
+  passed, 6 skipped; standalone 42 files, 0 failed.
+- `ganda repo audit`: passes all checks.
+
+### How to validate
+
+**Smoke:**
+```bash
+grep -n "RCS1194\|RCS1238\|RCS1123\|RCS1021\|IDE1006\|RCS900" .editorconfig
+dotnet build timewarp-nuru.slnx
+ganda runfile cache --clear && dotnet run tests/ci-tests/run-ci-tests.cs
+grep -rn "auto-generated\|#pragma warning disable\|SuppressMessage" source/timewarp-nuru-devcli/content
+ganda repo audit
+```
+
+**Expect:** each listed rule is `severity = warning`. The build reports 0 warnings and 0 errors. CI exits 0
+with 0 failed (2159 passed and 6 skipped in multi-mode; 42 standalone files, 0 failed). The DevCli content
+grep returns only `attestation-verifier.cs:170` (the CA1819 follow-up). The audit passes.
 
 ## Notes
 

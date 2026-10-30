@@ -42,3 +42,10 @@ Seen 2026-10-27 cutting timewarp-taratibu v1.0.0-beta.14: the bump merge `8a10b2
 ## Notes
 
 Steve 2026-10-27: "HOW is Directory.Build.props change considered Kanban only????????" → "yes create the task".
+
+## Closed
+
+- 2026-10-30: archived as a duplicate of 543 (PR #371, merged at 83dbe451). `dev release` now tags the
+  newest green first-parent commit when every later commit changes only `kanban/`, and any other path
+  refuses, naming the commit and path. The dry run prints the count of skipped board commits, not each
+  one. The `tw-release` skill note goes to timewarp-flow. Steve "yes" 2026-10-30.

@@ -5,7 +5,8 @@
 // no process execution here, so the guard matrix is unit-testable without
 // invoking git or gh. release-command.cs owns the git/gh orchestration and the
 // fail-fast order these are called in (D1: tree -> branch -> sync -> tag ->
-// publish-state -> CI run).
+// publish-state -> release target, the newest green commit with only kanban/
+// commits after it).
 #endregion
 #region Design
 // CheckWorkingTree: `git status --porcelain` is empty (or whitespace-only) iff
@@ -52,6 +53,29 @@
 // so this is a plain string check, not NuGetVersion.IsPrerelease. The gh
 // argument list is built in ONE place so the --dry-run / recovery string and
 // the executed WithArguments(...) cannot drift.
+//
+// SelectReleaseTarget (kanban task 543): the CI path filters give a commit
+// that changes only kanban/ no run at all, and board commits land on master
+// at any moment. Requiring a green run at HEAD turned every release into a
+// race against board traffic. The input is first-parent history from HEAD,
+// newest first, as far as the caller walked it. The target is the newest
+// commit with a successful run, provided every commit before it in the list
+// changes only kanban/ paths. Such a commit cannot change <Version> or any
+// packed file, so the tagged commit's artifact is the HEAD artifact.
+// The first non-kanban commit found (walking newest first) ends the walk with
+// today's refusal plus that commit and path: the code at HEAD is untested.
+// An exhausted list (the caller's bounded walk, ReleaseTargetWalkLimit) is
+// today's refusal unchanged. Only the kanban/ prefix is exempt. workflow.yml
+// path filters list more paths (documentation/, skills/, ...), but kanban/
+// is the only observed case and reading the filters is out of scope (543).
+// A commit with no changed paths (empty commit) changes nothing outside
+// kanban/, so it is skipped too.
+//
+// CheckTargetVersion: the tag and publish-state guards check the version
+// read from the working tree (HEAD). When the target is behind HEAD, the
+// props file is re-read at the target and must match. A kanban-only walk
+// makes a mismatch impossible, so a mismatch is a caller bug or a
+// rewritten history, and it refuses rather than tag a different version.
 #endregion
 
 namespace DevCli;
@@ -68,11 +92,37 @@ public sealed record GuardVerdict(bool Ok, string? Reason)
 }
 
 /// <summary>
+/// One first-parent commit walked back from HEAD: its sha, the paths it changes
+/// against its first parent, and the id of its preferred successful
+/// <c>workflow.yml</c> run (<see langword="null"/> when it has none).
+/// </summary>
+public sealed record ReleaseTargetCommit(string Sha, IReadOnlyList<string> ChangedPaths, long? SuccessfulRunId);
+
+/// <summary>
+/// Outcome of <see cref="ReleaseGuard.SelectReleaseTarget"/>: the commit to tag, its
+/// CI run, and how many kanban-only commits HEAD is past it. When it fails,
+/// <see cref="Reason"/> holds the operator-facing refusal.
+/// </summary>
+public sealed record ReleaseTargetVerdict(bool Ok, string? TargetSha, long? RunId, int SkippedCommitCount, string? Reason)
+{
+  public static ReleaseTargetVerdict Target(string targetSha, long runId, int skippedCommitCount) =>
+    new(true, targetSha, runId, skippedCommitCount, null);
+
+  public static ReleaseTargetVerdict Fail(string reason) => new(false, null, null, 0, reason);
+}
+
+/// <summary>
 /// Pure per-guard classifiers for the `dev release` pipeline. See the Design
 /// region above for the rationale behind each guard's pass/fail boundary.
 /// </summary>
 public static class ReleaseGuard
 {
+  /// <summary>Paths under this prefix never ship, so commits that touch only them may sit past the tagged commit.</summary>
+  public const string NonShippingPathPrefix = "kanban/";
+
+  /// <summary>How many first-parent commits back from HEAD the release-target walk looks for a green run.</summary>
+  public const int ReleaseTargetWalkLimit = 50;
+
   public static GuardVerdict CheckWorkingTree(string statusPorcelainOutput)
   {
     ArgumentNullException.ThrowIfNull(statusPorcelainOutput);
@@ -170,6 +220,59 @@ public static class ReleaseGuard
     }
   }
 
+  /// <summary>
+  /// The first path in <paramref name="changedPaths"/> outside
+  /// <see cref="NonShippingPathPrefix"/>, or <see langword="null"/> when every path is under it.
+  /// </summary>
+  public static string? FindShippingPath(IReadOnlyList<string> changedPaths)
+  {
+    ArgumentNullException.ThrowIfNull(changedPaths);
+
+    return changedPaths.FirstOrDefault(path => !path.StartsWith(NonShippingPathPrefix, StringComparison.Ordinal));
+  }
+
+  public static ReleaseTargetVerdict SelectReleaseTarget(string headSha, IReadOnlyList<ReleaseTargetCommit> commitsNewestFirst)
+  {
+    ArgumentNullException.ThrowIfNull(headSha);
+    ArgumentNullException.ThrowIfNull(commitsNewestFirst);
+
+    string noRunReason = FormatNoSuccessfulRun(headSha);
+
+    for (int index = 0; index < commitsNewestFirst.Count; index++)
+    {
+      ReleaseTargetCommit commit = commitsNewestFirst[index];
+
+      if (commit.SuccessfulRunId is long runId)
+      {
+        return ReleaseTargetVerdict.Target(commit.Sha, runId, index);
+      }
+
+      string? shippingPath = FindShippingPath(commit.ChangedPaths);
+      if (shippingPath is not null)
+      {
+        int otherPaths = commit.ChangedPaths.Count(path => !path.StartsWith(NonShippingPathPrefix, StringComparison.Ordinal)) - 1;
+        string more = otherPaths > 0 ? $" (and {otherPaths} more)" : "";
+        return ReleaseTargetVerdict.Fail($"{noRunReason} Commit {commit.Sha} changes {shippingPath}{more}, outside {NonShippingPathPrefix}, so no earlier green run can stand in for it.");
+      }
+    }
+
+    return ReleaseTargetVerdict.Fail(noRunReason);
+  }
+
+  public static GuardVerdict CheckTargetVersion(string headVersion, string? targetVersion, string targetSha)
+  {
+    ArgumentNullException.ThrowIfNull(headVersion);
+    ArgumentNullException.ThrowIfNull(targetSha);
+
+    if (string.Equals(headVersion, targetVersion, StringComparison.Ordinal))
+    {
+      return GuardVerdict.Pass();
+    }
+
+    string display = targetVersion ?? "(unreadable)";
+    return GuardVerdict.Fail($"<Version> at release target {targetSha} is {display}, but HEAD has {headVersion} — the commits between them are not kanban-only. Wait for CI on HEAD.");
+  }
+
   public static bool IsPrerelease(string version)
   {
     ArgumentNullException.ThrowIfNull(version);
@@ -199,4 +302,7 @@ public static class ReleaseGuard
 
     return $"gh {string.Join(' ', arguments)}";
   }
+
+  private static string FormatNoSuccessfulRun(string headSha) =>
+    $"no successful CI run of workflow.yml exists for {headSha}. The Release event would fail at locate-run — wait for CI on this commit or rerun it (gh run rerun <id>).";
 }

@@ -11,8 +11,15 @@
 // region for the rationale behind each individual verdict): props version
 // readable -> gh available/authed -> tree clean -> on master -> synced with
 // origin -> tag v{Version} absent local AND remote -> check-version 3-state
-// (None proceed; All/Partial refuse) -> a successful CI run of workflow.yml
-// exists at HEAD (else the release event would fail at locate-run).
+// (None proceed; All/Partial refuse) -> step 8, the release target: the
+// newest first-parent commit (within ReleaseTargetWalkLimit of HEAD) with a
+// successful CI run of workflow.yml, where every commit after it changes only
+// kanban/ (kanban task 543; else the release event would fail at locate-run).
+// The walk asks gh for runs one commit at a time and stops at the first green
+// commit or the first commit outside kanban/, so a release at a green HEAD
+// costs one gh call, as before. When the target is behind HEAD, <Version> is
+// re-read at the target with `git show` and must match the version steps 6
+// and 7 checked (ReleaseGuard.CheckTargetVersion).
 //
 // D2: pure per-guard classifiers live in release-guard.cs (GuardVerdict);
 // this handler owns the git/gh process orchestration and prints a short
@@ -22,7 +29,8 @@
 // while the shared pure logic (PublishStateClassifier, CiRunPromotion,
 // DevCliJsonContext) IS reused.
 //
-// D3: annotated local tag at the verified sha -> push tag -> `gh release
+// D3: annotated local tag at the release target sha (step 8: HEAD, or the
+// green commit HEAD is kanban-only commits past) -> push tag -> `gh release
 // create v{X} --title v{X} --generate-notes --verify-tag [--prerelease]`
 // (--prerelease iff the version has a SemVer prerelease suffix, mirroring
 // NuGet — task 486). Not `--target`:
@@ -370,34 +378,61 @@ public sealed class ReleaseCommand : ICommand<Unit>
 
       Terminal.WriteLine($"✓ version {version} not yet published".Green());
 
-      // --- Step 8: successful CI run of workflow.yml exists at HEAD ----------
-      CommandOutput runListResult = await Shell.Builder("gh")
-        .WithArguments("run", "list", "--workflow", "workflow.yml", "--commit", headSha, "--status", "success", "--json", "databaseId,event,headSha,createdAt")
-        .WithNoValidation()
-        .CaptureAsync(cancellationToken)
-        .ConfigureAwait(false);
-
-      if (runListResult.ExitCode != 0)
+      // --- Step 8: release target — newest green commit, kanban-only after it --
+      ReleaseTargetVerdict? targetVerdict = await LocateReleaseTargetAsync(headSha, cancellationToken).ConfigureAwait(false);
+      if (targetVerdict is null)
       {
-        Terminal.WriteErrorLine($"Error: gh run list failed.\n{runListResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
         return Unit.Value;
       }
 
-      List<CiRunSummary>? runs = JsonSerializer.Deserialize(runListResult.Stdout, DevCliJsonContext.Default.ListCiRunSummary);
-      IReadOnlyList<CiRunSummary> candidateRuns = CiRunPromotion.OrderCandidateRuns(runs ?? [], headSha);
-
-      if (candidateRuns.Count == 0)
+      if (!targetVerdict.Ok)
       {
-        Terminal.WriteErrorLine($"Error: no successful CI run of workflow.yml exists for {headSha}. The Release event would fail at locate-run — wait for CI on this commit or rerun it (gh run rerun <id>).");
+        Terminal.WriteErrorLine($"Error: {targetVerdict.Reason}");
         Environment.ExitCode = 1;
         return Unit.Value;
       }
 
-      Terminal.WriteLine($"✓ successful CI run found ({candidateRuns[0].DatabaseId})".Green());
+      string targetSha = targetVerdict.TargetSha!;
+
+      if (targetVerdict.SkippedCommitCount == 0)
+      {
+        Terminal.WriteLine($"✓ successful CI run found ({targetVerdict.RunId})".Green());
+      }
+      else
+      {
+        CommandOutput targetPropsResult = await Shell.Builder("git")
+          .WithArguments("show", $"{targetSha}:source/Directory.Build.props")
+          .WithNoValidation()
+          .CaptureAsync(cancellationToken)
+          .ConfigureAwait(false);
+
+        string? targetVersion = null;
+        if (targetPropsResult.ExitCode == 0)
+        {
+          try
+          {
+            targetVersion = PropsVersionReader.Parse(targetPropsResult.Stdout);
+          }
+          catch (System.Xml.XmlException)
+          {
+            // Unparseable props at the target: CheckTargetVersion refuses it as unreadable.
+          }
+        }
+
+        GuardVerdict targetVersionVerdict = ReleaseGuard.CheckTargetVersion(version, targetVersion, targetSha);
+        if (!targetVersionVerdict.Ok)
+        {
+          Terminal.WriteErrorLine($"Error: {targetVersionVerdict.Reason}");
+          Environment.ExitCode = 1;
+          return Unit.Value;
+        }
+
+        Terminal.WriteLine($"✓ HEAD is {targetVerdict.SkippedCommitCount} kanban-only commit(s) past {ShortSha(targetSha)} (CI run {targetVerdict.RunId})".Green());
+      }
 
       // --- Step 9: --dry-run stops here ---------------------------------------
-      string tagCommand = $"git tag -a {tag} -m \"Release {tag}\" {headSha}";
+      string tagCommand = $"git tag -a {tag} -m \"Release {tag}\" {targetSha}";
       string pushCommand = $"git push origin {tag}";
       IReadOnlyList<string> releaseCreateArguments = ReleaseGuard.BuildReleaseCreateArguments(tag, version);
       string releaseCommand = ReleaseGuard.FormatReleaseCreateCommand(releaseCreateArguments);
@@ -408,7 +443,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
         Terminal.WriteLine("Dry run — no changes made.".Cyan());
         Terminal.WriteLine($"Version: {version}");
         Terminal.WriteLine($"Tag: {tag}");
-        Terminal.WriteLine($"Target commit: {ShortSha(headSha)} ({headSha})");
+        Terminal.WriteLine($"Target commit: {ShortSha(targetSha)} ({targetSha})");
         Terminal.WriteLine("All guards passed.");
         Terminal.WriteLine("Would run:");
         Terminal.WriteLine($"  {tagCommand}");
@@ -419,7 +454,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
 
       // --- Step 10: execute — tag, push, gh release create --------------------
       CommandOutput tagCreateResult = await Shell.Builder("git")
-        .WithArguments("tag", "-a", tag, "-m", $"Release {tag}", headSha)
+        .WithArguments("tag", "-a", tag, "-m", $"Release {tag}", targetSha)
         .WithNoValidation()
         .CaptureAsync(cancellationToken)
         .ConfigureAwait(false);
@@ -431,7 +466,7 @@ public sealed class ReleaseCommand : ICommand<Unit>
         return Unit.Value;
       }
 
-      Terminal.WriteLine($"Created tag {tag} at {ShortSha(headSha)}.");
+      Terminal.WriteLine($"Created tag {tag} at {ShortSha(targetSha)}.");
 
       CommandOutput pushResult = await Shell.Builder("git")
         .WithArguments("push", "origin", tag)
@@ -477,6 +512,77 @@ public sealed class ReleaseCommand : ICommand<Unit>
       Terminal.WriteLine($"✓ Released {tag}".Green());
 
       return Unit.Value;
+    }
+
+    /// <summary>
+    /// Walks first-parent history back from <paramref name="headSha"/> (at most
+    /// <see cref="ReleaseGuard.ReleaseTargetWalkLimit"/> commits) and returns
+    /// <see cref="ReleaseGuard.SelectReleaseTarget"/>'s verdict over what it found. The walk
+    /// stops at the first commit with a successful run or a path outside kanban/. Returns
+    /// <see langword="null"/> after printing the error when git or gh fails.
+    /// </summary>
+    private async Task<ReleaseTargetVerdict?> LocateReleaseTargetAsync(string headSha, CancellationToken cancellationToken)
+    {
+      CommandOutput revListResult = await Shell.Builder("git")
+        .WithArguments("rev-list", "--first-parent", $"--max-count={ReleaseGuard.ReleaseTargetWalkLimit}", headSha)
+        .WithNoValidation()
+        .CaptureAsync(cancellationToken)
+        .ConfigureAwait(false);
+
+      if (revListResult.ExitCode != 0)
+      {
+        Terminal.WriteErrorLine($"Error: git rev-list failed.\n{revListResult.Stderr.Trim()}");
+        return null;
+      }
+
+      string[] shas = revListResult.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+      List<ReleaseTargetCommit> commits = [];
+
+      foreach (string sha in shas)
+      {
+        CommandOutput runListResult = await Shell.Builder("gh")
+          .WithArguments("run", "list", "--workflow", "workflow.yml", "--commit", sha, "--status", "success", "--json", "databaseId,event,headSha,createdAt")
+          .WithNoValidation()
+          .CaptureAsync(cancellationToken)
+          .ConfigureAwait(false);
+
+        if (runListResult.ExitCode != 0)
+        {
+          Terminal.WriteErrorLine($"Error: gh run list failed.\n{runListResult.Stderr.Trim()}");
+          return null;
+        }
+
+        List<CiRunSummary>? runs = JsonSerializer.Deserialize(runListResult.Stdout, DevCliJsonContext.Default.ListCiRunSummary);
+        IReadOnlyList<CiRunSummary> candidateRuns = CiRunPromotion.OrderCandidateRuns(runs ?? [], sha);
+
+        if (candidateRuns.Count > 0)
+        {
+          commits.Add(new ReleaseTargetCommit(sha, [], candidateRuns[0].DatabaseId));
+          break;
+        }
+
+        CommandOutput diffResult = await Shell.Builder("git")
+          .WithArguments("diff", "--name-only", $"{sha}^1", sha)
+          .WithNoValidation()
+          .CaptureAsync(cancellationToken)
+          .ConfigureAwait(false);
+
+        if (diffResult.ExitCode != 0)
+        {
+          Terminal.WriteErrorLine($"Error: could not list the paths changed by {sha}.\n{diffResult.Stderr.Trim()}");
+          return null;
+        }
+
+        string[] changedPaths = diffResult.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        commits.Add(new ReleaseTargetCommit(sha, changedPaths, null));
+
+        if (ReleaseGuard.FindShippingPath(changedPaths) is not null)
+        {
+          break;
+        }
+      }
+
+      return ReleaseGuard.SelectReleaseTarget(headSha, commits);
     }
 
     private static string ShortSha(string sha) => sha.Length > 7 ? sha[..7] : sha;

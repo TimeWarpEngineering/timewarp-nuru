@@ -25,32 +25,30 @@ When every commit between the latest successful CI run on master and HEAD change
 under `kanban/`, `dev release` releases that green run's commit (and its `Packages-*` artifact)
 without a new CI run. Any non-`kanban/` change after the green run keeps today's refusal.
 
-## Open question (Steve decides)
+## Decision
 
-Which commit gets the tag:
+Tag the green commit. `dev release` tags the last green commit, not HEAD, when every later
+commit changes only `kanban/`. The workflow's locate-run and tag-pin gates keep matching the tag
+sha, so the release workflow does not change and no other repo needs a change. The tag may sit a
+few board commits behind master.
 
-1. **Tag the green commit.** `dev release` tags the last green commit, not HEAD. The workflow's
-   locate-run and tag-pin gates keep matching the tag sha as they do now. The tag sits a few
-   board commits behind master.
-2. **Tag HEAD.** The workflow's locate-run walks back from the tag sha over `kanban/`-only
-   commits to the green run. This changes the release workflow, and every repo that mirrors
-   `workflow.yml` would need the same change.
-
-If the answer needs changes outside this repo, stop and report them. Do not edit other repos.
+If the work turns out to need changes outside this repo, stop and report them. Do not edit other
+repos.
 
 ## Checklist
 
-- [ ] Decision on the open question recorded here
+- [x] Decision recorded: tag the green commit
 - [ ] `dev release` (and `--dry-run`) find the last green run and accept `kanban/`-only commits after it
 - [ ] Any other path change after the green run still refuses, naming the commit and paths
 - [ ] Dry-run output says which commit is released and which board commits it skipped
 - [ ] Tests cover: HEAD green; kanban-only commits after green; a code commit after green
-- [ ] Release workflow gates agree with the chosen tag commit
+- [ ] Release workflow gates accept the green-commit tag unchanged (prove with a dry run)
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-30), filed from the timewarp-architecture
   session at Steve's request.
+- 2026-10-30: Steve left the tag choice to the session; chose tagging the green commit.
 
 ## Notes
 

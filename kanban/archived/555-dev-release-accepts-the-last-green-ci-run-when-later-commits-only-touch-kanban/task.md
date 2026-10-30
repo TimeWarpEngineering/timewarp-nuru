@@ -56,3 +56,10 @@ repos.
   around step 8. `CiRunPromotion.OrderCandidateRuns` picks among candidate runs.
 - Release workflow: `.github/workflows/workflow.yml` (locate-run treats a successful push run at
   the tag sha as tested, with a `Packages-*` artifact).
+
+## Closed
+
+- 2026-10-30: archived as a duplicate of 543 (PR #371, merged at 83dbe451). `dev release` now tags the
+  newest green first-parent commit when every later commit changes only `kanban/`, and any other path
+  refuses, naming the commit and path. The dry run prints the count of skipped board commits, not each
+  one. The `tw-release` skill note goes to timewarp-flow. Steve "yes" 2026-10-30.

@@ -85,6 +85,11 @@ Acceptance:
   Fixed (BOM trimmed, unparseable XML at target refuses as unreadable) with a regression test.
   `ganda repo audit` passed with no fixes needed.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1d5be352-95f1-4e60-96b2-54c8f8eb134e, max-turns 500, Done — 2026-10-30T03:22:47Z
+- Reviewer (general): cursor session 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-30), effort 2, roster general, max-turns uncapped (review budget 120). Round 1 open.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-30T03:34:26Z
+- 2026-10-30 fix pass (implementer-claude, implement-fix-2): fixed review round 1 M1 (walk diff
+  uses `--no-renames`) and M2 (git show failure is a git error; unreadable props has its own
+  sentence). Guard matrix 32 passed; CI tests exit 0 (standalone 0 failed); `ganda repo audit` passes.
 
 ## Results
 
@@ -97,10 +102,13 @@ Acceptance:
 - `release-command.cs` `LocateReleaseTargetAsync` runs `git rev-list --first-parent --max-count=50 HEAD`.
   For each commit it calls `gh run list --commit <sha> --status success` (the
   `CiRunPromotion.OrderCandidateRuns` filter, so `pull_request` runs never count), then
-  `git diff --name-only <sha>^1 <sha>`. It stops at the first green commit or the first path outside
+  `git diff --name-only --no-renames <sha>^1 <sha>` (both sides of a rename, so a move out of
+  `source/` into `kanban/` still counts as a shipping change). It stops at the first green commit or the first path outside
   `kanban/`, so a green HEAD still costs one gh call.
 - When the target is behind HEAD, `<Version>` is re-read with `git show <target>:source/Directory.Build.props`
-  and must match (`ReleaseGuard.CheckTargetVersion`). The tag and publish guards keep their step
+  and must match (`ReleaseGuard.CheckTargetVersion`). A failed `git show` is reported as a git
+  error with stderr. Props that do not parse or have no `<Version>` refuse as unreadable. The
+  "not kanban-only" sentence is only for two versions that were both read and differ. The tag and publish guards keep their step
   numbers (6, 7) and check that same version.
 - The tag, `Created tag`, the dry-run "Target commit", and the "Would run" lines use the target sha.
   When the target is not HEAD, the command prints `✓ HEAD is N kanban-only commit(s) past <sha> (CI run <id>)`.
@@ -147,6 +155,20 @@ Expect:
   top refused with `Commit 54f48af… changes source/Directory.Build.props, outside kanban/`.
 - `dotnet run tests/ci-tests/run-ci-tests.cs` (cache cleared): multi-mode 2159 passed, 6 skipped;
   standalone 0 failed. `ganda repo audit`: all checks pass.
+
+### Review
+
+Round 1 (effort 2, roster general): M1 (bug) and M2 (suggestion) fixed in the fix pass on 2026-10-30. Nothing is open. Round 2 is next. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Learnings
+
+The implementer restatement says the walk stops at a successful push or release run. The task says a successful `workflow.yml` run. The code follows the task and the existing `CiRunPromotion.OrderCandidateRuns` filter: any non-`pull_request` success, including `workflow_dispatch`.
+
+The restatement also says the tag and publish-state guards run after the target is resolved. The task says to run those guards against the target commit. Steps 6 and 7 still run on the working-tree version, and `<Version>` at the target must match that version, so the guards apply to the target's version.
+
+## Review
+
+- Round 1: Blocked — open M1, M2
 
 ## Notes
 

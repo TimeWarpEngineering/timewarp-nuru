@@ -9,6 +9,9 @@ namespace TimeWarp.Nuru.Generators;
 // (assembly name, assembly version, OTEL_EXPORTER_OTLP_ENDPOINT). Enable* flags default
 // true to match NuruTelemetryOptions. The generator emits property-then-env for the
 // OTLP endpoint and env-then-property for service name, matching the runtime type.
+// ActivitySources / Meters are the extra names an app adds (task 561). They are compile-time
+// constant strings carried into AddSource / AddMeter literals; empty means Nuru's sources only.
+// EquatableArray keeps record equality structural for generator caching.
 #endregion
 
 /// <summary>
@@ -20,13 +23,17 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="EnableMetrics">Whether to emit MeterProvider setup.</param>
 /// <param name="EnableLogging">Whether to emit OpenTelemetry logging provider setup.</param>
 /// <param name="OtlpEndpoint">Explicit OTLP endpoint, or null to read OTEL_EXPORTER_OTLP_ENDPOINT.</param>
+/// <param name="ActivitySources">Extra ActivitySource names the tracer provider subscribes to.</param>
+/// <param name="Meters">Extra Meter names the meter provider subscribes to.</param>
 public sealed record TelemetryModel(
   string? ServiceName,
   string? ServiceVersion,
   bool EnableTracing,
   bool EnableMetrics,
   bool EnableLogging,
-  string? OtlpEndpoint)
+  string? OtlpEndpoint,
+  EquatableArray<string> ActivitySources,
+  EquatableArray<string> Meters)
 {
   /// <summary>
   /// Default telemetry configuration matching <c>NuruTelemetryOptions</c> defaults.
@@ -37,5 +44,7 @@ public sealed record TelemetryModel(
     EnableTracing: true,
     EnableMetrics: true,
     EnableLogging: true,
-    OtlpEndpoint: null);
+    OtlpEndpoint: null,
+    ActivitySources: [],
+    Meters: []);
 }

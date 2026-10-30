@@ -7,6 +7,10 @@
 // Command spans and command metrics are not emitted here. UseTelemetry() registers
 // TelemetryBehavior as the app's outermost behavior (IrAppBuilder.EffectiveBehaviors, task 552),
 // and the setup below listens to its "TimeWarp.Nuru.Behavior" source and meter.
+//
+// Extra sources and meters an app names through NuruTelemetryOptions.ActivitySources / Meters
+// (task 561, e.g. "TimeWarp.Taratibu" walk spans) are added after Nuru's own, one literal
+// AddSource / AddMeter call per name. With none configured the output is unchanged.
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -116,6 +120,11 @@ internal static class TelemetryEmitter
       sb.AppendLine("      __tracerBuilder = global::OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResourceBuilder(__tracerBuilder, __resource);");
       sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(__activitySource.Name);");
       sb.AppendLine("      __tracerBuilder = __tracerBuilder.AddSource(\"TimeWarp.Nuru.Behavior\"); // Command spans (TelemetryBehavior)");
+      foreach (string source in options.ActivitySources)
+      {
+        sb.AppendLine($"      __tracerBuilder = __tracerBuilder.AddSource(\"{EmitterStringUtils.EscapeForStringLiteral(source)}\");");
+      }
+
       sb.AppendLine($"      __tracerBuilder = global::OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(__tracerBuilder, {ConfigureExporter("Traces")});");
       sb.AppendLine("      app.TracerProvider = global::OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(__tracerBuilder);");
       sb.AppendLine();
@@ -127,6 +136,11 @@ internal static class TelemetryEmitter
       sb.AppendLine("      __meterBuilder = global::OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(__meterBuilder, __resource);");
       sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(__meter.Name);");
       sb.AppendLine("      __meterBuilder = __meterBuilder.AddMeter(\"TimeWarp.Nuru.Behavior\"); // Command metrics (TelemetryBehavior)");
+      foreach (string meter in options.Meters)
+      {
+        sb.AppendLine($"      __meterBuilder = __meterBuilder.AddMeter(\"{EmitterStringUtils.EscapeForStringLiteral(meter)}\");");
+      }
+
       sb.AppendLine($"      __meterBuilder = global::OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(__meterBuilder, {ConfigureExporter("Metrics")});");
       sb.AppendLine("      app.MeterProvider = global::OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(__meterBuilder);");
       sb.AppendLine();

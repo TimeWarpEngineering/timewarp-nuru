@@ -3,17 +3,26 @@
 // Handles:
 // - .UseTelemetry(options => { options.ServiceName = "my-cli"; })
 // - .UseTelemetry(options => options.EnableTracing = false)
+// - .UseTelemetry(options => options.ActivitySources.Add("TimeWarp.Taratibu"))
 //
 // Extracts:
-// - ServiceName (string literal)
-// - ServiceVersion (string literal)
+// - ServiceName (constant string)
+// - ServiceVersion (constant string)
 // - EnableTracing / EnableMetrics / EnableLogging (bool)
-// - OtlpEndpoint (string literal)
+// - OtlpEndpoint (constant string)
+// - ActivitySources.Add / Meters.Add (constant string, task 561)
 
 namespace TimeWarp.Nuru.Generators;
 
 #region Purpose
 // Pull NuruTelemetryOptions assignments out of UseTelemetry lambdas into TelemetryModel.
+#endregion
+
+#region Design
+// Values must be compile-time constants (a literal or a const), read through
+// SemanticModel.GetConstantValue. The generated code carries them as literals, so nothing is
+// resolved at run time (AOT and trim safe). A statement the extractor cannot read is skipped.
+// ActivitySources / Meters ignore empty names and repeats.
 #endregion
 
 /// <summary>
@@ -32,20 +41,15 @@ internal static class TelemetryOptionsExtractor
     CancellationToken cancellationToken
   )
   {
-    _ = semanticModel;
-    _ = cancellationToken;
-
     ArgumentListSyntax? args = invocation.ArgumentList;
     if (args is null || args.Arguments.Count == 0)
       return null;
 
     ExpressionSyntax configureExpression = args.Arguments[0].Expression;
 
-    TelemetryModel options = TelemetryModel.Default;
-
     if (configureExpression is LambdaExpressionSyntax lambda)
     {
-      return ExtractFromLambda(lambda, options);
+      return ExtractFromLambda(lambda, TelemetryModel.Default, semanticModel, cancellationToken);
     }
 
     return null;
@@ -54,7 +58,9 @@ internal static class TelemetryOptionsExtractor
   private static TelemetryModel ExtractFromLambda
   (
     LambdaExpressionSyntax lambda,
-    TelemetryModel baseOptions
+    TelemetryModel baseOptions,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
   )
   {
     string? parameterName = lambda switch
@@ -68,135 +74,111 @@ internal static class TelemetryOptionsExtractor
     if (parameterName is null)
       return baseOptions;
 
-    return lambda.Body switch
+    TelemetryModel options = baseOptions;
+    switch (lambda.Body)
     {
-      BlockSyntax block => ExtractFromStatements(block.Statements, baseOptions, parameterName),
-      ExpressionSyntax expression => ExtractFromExpression(expression, baseOptions, parameterName),
-      _ => baseOptions
-    };
-  }
+      case BlockSyntax block:
+        foreach (StatementSyntax statement in block.Statements)
+        {
+          if (statement is ExpressionStatementSyntax exprStmt)
+            options = Apply(exprStmt.Expression, options, parameterName, semanticModel, cancellationToken);
+        }
 
-  private static TelemetryModel ExtractFromStatements
-  (
-    SyntaxList<StatementSyntax> statements,
-    TelemetryModel baseOptions,
-    string parameterName
-  )
-  {
-    string? serviceName = baseOptions.ServiceName;
-    string? serviceVersion = baseOptions.ServiceVersion;
-    bool enableTracing = baseOptions.EnableTracing;
-    bool enableMetrics = baseOptions.EnableMetrics;
-    bool enableLogging = baseOptions.EnableLogging;
-    string? otlpEndpoint = baseOptions.OtlpEndpoint;
-
-    foreach (StatementSyntax statement in statements)
-    {
-      if (statement is not ExpressionStatementSyntax exprStmt)
-        continue;
-
-      if (exprStmt.Expression is not AssignmentExpressionSyntax assignment)
-        continue;
-
-      ApplyAssignment(
-        assignment,
-        parameterName,
-        ref serviceName,
-        ref serviceVersion,
-        ref enableTracing,
-        ref enableMetrics,
-        ref enableLogging,
-        ref otlpEndpoint);
+        break;
+      case ExpressionSyntax expression:
+        options = Apply(expression, options, parameterName, semanticModel, cancellationToken);
+        break;
     }
 
-    return baseOptions with
-    {
-      ServiceName = serviceName,
-      ServiceVersion = serviceVersion,
-      EnableTracing = enableTracing,
-      EnableMetrics = enableMetrics,
-      EnableLogging = enableLogging,
-      OtlpEndpoint = otlpEndpoint
-    };
+    return options;
   }
 
-  private static TelemetryModel ExtractFromExpression
+  private static TelemetryModel Apply
   (
     ExpressionSyntax expression,
-    TelemetryModel baseOptions,
-    string parameterName
+    TelemetryModel options,
+    string parameterName,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
   )
   {
-    string? serviceName = baseOptions.ServiceName;
-    string? serviceVersion = baseOptions.ServiceVersion;
-    bool enableTracing = baseOptions.EnableTracing;
-    bool enableMetrics = baseOptions.EnableMetrics;
-    bool enableLogging = baseOptions.EnableLogging;
-    string? otlpEndpoint = baseOptions.OtlpEndpoint;
-
-    if (expression is AssignmentExpressionSyntax assignment)
+    return expression switch
     {
-      ApplyAssignment(
-        assignment,
-        parameterName,
-        ref serviceName,
-        ref serviceVersion,
-        ref enableTracing,
-        ref enableMetrics,
-        ref enableLogging,
-        ref otlpEndpoint);
-    }
-
-    return baseOptions with
-    {
-      ServiceName = serviceName,
-      ServiceVersion = serviceVersion,
-      EnableTracing = enableTracing,
-      EnableMetrics = enableMetrics,
-      EnableLogging = enableLogging,
-      OtlpEndpoint = otlpEndpoint
+      AssignmentExpressionSyntax assignment
+        => ApplyAssignment(assignment, options, parameterName, semanticModel, cancellationToken),
+      InvocationExpressionSyntax invocation
+        => ApplyAdd(invocation, options, parameterName, semanticModel, cancellationToken),
+      _ => options
     };
   }
 
-  private static void ApplyAssignment
+  private static TelemetryModel ApplyAssignment
   (
     AssignmentExpressionSyntax assignment,
+    TelemetryModel options,
     string parameterName,
-    ref string? serviceName,
-    ref string? serviceVersion,
-    ref bool enableTracing,
-    ref bool enableMetrics,
-    ref bool enableLogging,
-    ref string? otlpEndpoint
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
   )
   {
-    if (!IsParameterPropertyAssignment(assignment.Left, parameterName, out string? propertyName))
-      return;
+    if (!IsParameterProperty(assignment.Left, parameterName, out string? propertyName))
+      return options;
 
-    switch (propertyName)
+    object? value = semanticModel.GetConstantValue(assignment.Right, cancellationToken) is { HasValue: true } constant
+      ? constant.Value
+      : null;
+
+    return (propertyName, value) switch
     {
-      case "ServiceName" when TryExtractString(assignment.Right, out string name):
-        serviceName = name;
-        break;
-      case "ServiceVersion" when TryExtractString(assignment.Right, out string version):
-        serviceVersion = version;
-        break;
-      case "EnableTracing" when ExtractBool(assignment.Right) is bool tracing:
-        enableTracing = tracing;
-        break;
-      case "EnableMetrics" when ExtractBool(assignment.Right) is bool metrics:
-        enableMetrics = metrics;
-        break;
-      case "EnableLogging" when ExtractBool(assignment.Right) is bool logging:
-        enableLogging = logging;
-        break;
-      case "OtlpEndpoint" when TryExtractString(assignment.Right, out string endpoint):
-        otlpEndpoint = endpoint;
-        break;
-    }
+      ("ServiceName", string name) => options with { ServiceName = name },
+      ("ServiceVersion", string version) => options with { ServiceVersion = version },
+      ("EnableTracing", bool tracing) => options with { EnableTracing = tracing },
+      ("EnableMetrics", bool metrics) => options with { EnableMetrics = metrics },
+      ("EnableLogging", bool logging) => options with { EnableLogging = logging },
+      ("OtlpEndpoint", string endpoint) => options with { OtlpEndpoint = endpoint },
+      _ => options
+    };
   }
 
-  private static bool IsParameterPropertyAssignment
+  /// <summary>
+  /// Applies <c>options.ActivitySources.Add("name")</c> or <c>options.Meters.Add("name")</c>.
+  /// </summary>
+  private static TelemetryModel ApplyAdd
+  (
+    InvocationExpressionSyntax invocation,
+    TelemetryModel options,
+    string parameterName,
+    SemanticModel semanticModel,
+    CancellationToken cancellationToken
+  )
+  {
+    if (invocation.Expression is not MemberAccessExpressionSyntax { Name.Identifier.Text: "Add" } addAccess)
+      return options;
+
+    if (!IsParameterProperty(addAccess.Expression, parameterName, out string? propertyName))
+      return options;
+
+    if (invocation.ArgumentList.Arguments.Count != 1)
+      return options;
+
+    if (semanticModel.GetConstantValue(invocation.ArgumentList.Arguments[0].Expression, cancellationToken)
+      is not { HasValue: true, Value: string name } || string.IsNullOrWhiteSpace(name))
+    {
+      return options;
+    }
+
+    return propertyName switch
+    {
+      "ActivitySources" => options with { ActivitySources = AddDistinct(options.ActivitySources, name) },
+      "Meters" => options with { Meters = AddDistinct(options.Meters, name) },
+      _ => options
+    };
+  }
+
+  private static EquatableArray<string> AddDistinct(EquatableArray<string> names, string name) =>
+    names.Contains(name, StringComparer.Ordinal) ? names : names.AddRange([name]);
+
+  private static bool IsParameterProperty
   (
     ExpressionSyntax expression,
     string parameterName,
@@ -216,24 +198,5 @@ internal static class TelemetryOptionsExtractor
 
     propertyName = memberAccess.Name.Identifier.Text;
     return true;
-  }
-
-  private static bool? ExtractBool(ExpressionSyntax expression)
-  {
-    return expression is LiteralExpressionSyntax literal && literal.Token.Value is bool boolValue
-      ? boolValue
-      : null;
-  }
-
-  private static bool TryExtractString(ExpressionSyntax expression, out string value)
-  {
-    if (expression is LiteralExpressionSyntax literal && literal.Token.Value is string stringValue)
-    {
-      value = stringValue;
-      return true;
-    }
-
-    value = "";
-    return false;
   }
 }

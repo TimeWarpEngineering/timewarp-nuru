@@ -14,7 +14,7 @@
 
 namespace DevCli;
 
-public enum CheckVersionOutcome
+internal enum CheckVersionOutcome
 {
   NotRun,
   InvalidInput,
@@ -25,7 +25,7 @@ public enum CheckVersionOutcome
   GitHubPackagesUnreadable
 }
 
-public static class CheckVersionAbort
+internal static class CheckVersionAbort
 {
   public static string FormatAbortReason(CheckVersionOutcome outcome, PackageFeedUnreadableException? gitHubPackagesFailure)
   {

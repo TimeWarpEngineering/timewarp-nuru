@@ -32,7 +32,7 @@ using System.Globalization;
 /// Prerelease-increment distance between a source version and the latest
 /// published version. See the Design region for which shapes return a distance.
 /// </summary>
-public static class PrereleaseDistance
+internal static class PrereleaseDistance
 {
   /// <summary>
   /// Returns how many prerelease increments <paramref name="sourceVersion"/> is

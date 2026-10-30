@@ -88,7 +88,7 @@ namespace DevCli;
 /// Outcome of a single release guard: <see cref="Ok"/> plus, when failed, an
 /// operator-facing <see cref="Reason"/>.
 /// </summary>
-public sealed record GuardVerdict(bool Ok, string? Reason)
+internal sealed record GuardVerdict(bool Ok, string? Reason)
 {
   public static GuardVerdict Pass() => new(true, null);
 
@@ -100,14 +100,14 @@ public sealed record GuardVerdict(bool Ok, string? Reason)
 /// against its first parent, and the id of its preferred successful
 /// <c>workflow.yml</c> run (<see langword="null"/> when it has none).
 /// </summary>
-public sealed record ReleaseTargetCommit(string Sha, IReadOnlyList<string> ChangedPaths, long? SuccessfulRunId);
+internal sealed record ReleaseTargetCommit(string Sha, IReadOnlyList<string> ChangedPaths, long? SuccessfulRunId);
 
 /// <summary>
 /// Outcome of <see cref="ReleaseGuard.SelectReleaseTarget"/>: the commit to tag, its
 /// CI run, and how many kanban-only commits HEAD is past it. When it fails,
 /// <see cref="Reason"/> holds the operator-facing refusal.
 /// </summary>
-public sealed record ReleaseTargetVerdict(bool Ok, string? TargetSha, long? RunId, int SkippedCommitCount, string? Reason)
+internal sealed record ReleaseTargetVerdict(bool Ok, string? TargetSha, long? RunId, int SkippedCommitCount, string? Reason)
 {
   public static ReleaseTargetVerdict Target(string targetSha, long runId, int skippedCommitCount) =>
     new(true, targetSha, runId, skippedCommitCount, null);
@@ -119,7 +119,7 @@ public sealed record ReleaseTargetVerdict(bool Ok, string? TargetSha, long? RunI
 /// Pure per-guard classifiers for the `dev release` pipeline. See the Design
 /// region above for the rationale behind each guard's pass/fail boundary.
 /// </summary>
-public static class ReleaseGuard
+internal static class ReleaseGuard
 {
   /// <summary>Paths under this prefix never ship, so commits that touch only them may sit past the tagged commit.</summary>
   public const string NonShippingPathPrefix = "kanban/";

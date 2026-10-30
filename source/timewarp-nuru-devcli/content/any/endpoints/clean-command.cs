@@ -17,9 +17,9 @@ using TimeWarp.Terminal;
 /// Clean solution and build artifacts.
 /// </summary>
 [NuruRoute("clean", Description = "Clean solution and build artifacts")]
-public sealed class CleanCommand : ICommand<Unit>
+internal sealed class CleanCommand : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<CleanCommand, Unit>
+  internal sealed class Handler : ICommandHandler<CleanCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;

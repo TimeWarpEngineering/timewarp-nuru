@@ -16,14 +16,14 @@
 
 namespace DevCli;
 
-public enum CiMode
+internal enum CiMode
 {
   Pr,
   Merge,
   Release
 }
 
-public static class CiModeDetector
+internal static class CiModeDetector
 {
   public static CiMode DetermineMode(string? explicitMode, string? eventName)
   {

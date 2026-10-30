@@ -7,7 +7,7 @@ namespace DevCli;
 /// <summary>
 /// Reads per-repo configuration from <c>.timewarp/dev.jsonc</c>.
 /// </summary>
-public interface IRepoConfigService
+internal interface IRepoConfigService
 {
   /// <summary>
   /// Loads the repo configuration.

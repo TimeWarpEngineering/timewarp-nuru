@@ -31,14 +31,14 @@
 
 namespace DevCli;
 
-public enum PublishState
+internal enum PublishState
 {
   None,
   Partial,
   All
 }
 
-public static class PublishStateClassifier
+internal static class PublishStateClassifier
 {
   /// <summary>
   /// Splits on commas, trimming whitespace and dropping empty entries; null or

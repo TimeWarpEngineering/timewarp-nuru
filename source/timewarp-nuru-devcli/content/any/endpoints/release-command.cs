@@ -74,12 +74,12 @@ using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
 [NuruRoute("release", Description = "Cut a release: tag + GitHub Release from source/Directory.Build.props")]
-public sealed class ReleaseCommand : ICommand<Unit>
+internal sealed class ReleaseCommand : ICommand<Unit>
 {
   [Option("dry-run", Description = "Run every guard and print what would be created, without creating anything")]
   public bool DryRun { get; set; }
 
-  public sealed class Handler : ICommandHandler<ReleaseCommand, Unit>
+  internal sealed class Handler : ICommandHandler<ReleaseCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly NuGetVersionService NuGetVersionService;

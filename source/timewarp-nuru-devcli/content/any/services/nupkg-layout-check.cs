@@ -33,9 +33,9 @@ using System.Text.RegularExpressions;
 /// <param name="Configuration">AssemblyConfigurationAttribute value, or empty when absent.</param>
 /// <param name="DebuggableFlags">DebuggableAttribute DebuggingModes flags, or 0 when absent.</param>
 /// <param name="IsOptimized">True when the DisableOptimizations flag (0x100) is not set.</param>
-public sealed record AssemblyBuildInfo(string Configuration, int DebuggableFlags, bool IsOptimized);
+internal sealed record AssemblyBuildInfo(string Configuration, int DebuggableFlags, bool IsOptimized);
 
-public static class NupkgLayoutCheck
+internal static class NupkgLayoutCheck
 {
   private const int DisableOptimizationsFlag = 0x100;
 

@@ -132,6 +132,21 @@ await app.RunAsync(args);
 
 ## Migration Notes
 
+### 4.0.0-beta.10+: every DevCli type is `internal` (kanban task 560)
+
+Every type in the content, top-level and nested, is `internal`. The files compile into your
+`tools/dev-cli` assembly, so your code still uses them, and the package no longer raises CA1034
+(nested public `Handler`) or CA2000 (`NuGetVersionService`) in your build.
+
+- A public type of yours that exposes a DevCli type in a public signature now fails with CS0051
+  or CS0053. The usual case is a public `WorkflowCommand.Handler` whose constructor takes
+  `NuGetVersionService`, `IRepoConfigService` or `IPackableProjectService`. Make that type
+  `internal`.
+- Take TimeWarp.Nuru at the same version. Its source-generated DI now constructs internal
+  services declared in your assembly; an older Nuru reports NURU054 for the DevCli services.
+- Once you take this version, drop `CA1034` and `CA2000` from `tools/dev-cli` `NoWarn` if they
+  were there only for package content.
+
 ### 4.0.0-beta.8+: publish gates read nuget.org and GitHub Packages (`package-feed-lookup.cs`)
 
 `check-version` and `dev release` used to ask only nuget.org. A package on the org GitHub
@@ -156,7 +171,7 @@ before when the token works.
 - Test runfiles that compile the DevCli services file by file must add
   `package-feed-lookup.cs`, `github-packages-credential.cs` and `check-version-outcome.cs`.
 
-New public types in namespace `DevCli`: `PackageFeedLookup`, `PackagePublishVerdict`,
+New types in namespace `DevCli` (internal since 4.0.0-beta.10): `PackageFeedLookup`, `PackagePublishVerdict`,
 `PackageFeedUnreadableException`, `GitHubPackagesCredential`, `CheckVersionOutcome`,
 `CheckVersionAbort`, `NuGetServiceIndex`, `NuGetServiceIndexResource`.
 

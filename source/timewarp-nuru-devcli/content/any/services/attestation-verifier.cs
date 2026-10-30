@@ -107,7 +107,7 @@ using System.Text.Json.Serialization;
 /// Wire shape of a ganda-audit attestation note body (frozen v1 field
 /// names — see the Design region above).
 /// </summary>
-public sealed class AttestationNoteDto
+internal sealed class AttestationNoteDto
 {
   [JsonPropertyName("v")]
   public int V { get; set; } = 1;
@@ -132,7 +132,7 @@ public sealed class AttestationNoteDto
 }
 
 /// <summary>Verdict from evaluating an attestation note (see Design region above).</summary>
-public enum AttestationVerificationStatus
+internal enum AttestationVerificationStatus
 {
   /// <summary>Note parsed, key known, tree matches — caller must still run the Ed25519 verify.</summary>
   ReadyToVerify,
@@ -173,7 +173,7 @@ public enum AttestationVerificationStatus
   "CA1819:Properties should not return arrays",
   Justification = "Record type carrying raw byte payloads (canonical bytes, signature) for the caller's openssl step is intentional"
 )]
-public sealed record AttestationEvaluation(
+internal sealed record AttestationEvaluation(
   AttestationVerificationStatus Status,
   AttestationNoteDto? Note,
   byte[]? CanonicalBytes,
@@ -186,7 +186,7 @@ public sealed record AttestationEvaluation(
 /// see the Purpose/Design regions above for the full frozen v1 contract and
 /// why the actual Ed25519 verify happens in the caller via openssl.
 /// </summary>
-public static class AttestationVerifier
+internal static class AttestationVerifier
 {
   /// <summary>Notes ref short name (git prefixes <c>refs/notes/</c>).</summary>
   public const string NotesRefShort = "ganda-audit";

@@ -6,7 +6,7 @@
 
 namespace DevCli;
 
-public static class TagAssertion
+internal static class TagAssertion
 {
   public static TagAssertionResult Validate(string? refName, string? propsVersion)
   {
@@ -31,4 +31,4 @@ public static class TagAssertion
   }
 }
 
-public sealed record TagAssertionResult(bool IsValid, string? ExpectedTag, string? Error);
+internal sealed record TagAssertionResult(bool IsValid, string? ExpectedTag, string? Error);

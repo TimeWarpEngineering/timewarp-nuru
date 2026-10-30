@@ -15,7 +15,7 @@ using System.Text.Json.Serialization.Metadata;
 /// <summary>
 /// Reads per-repo configuration from <c>.timewarp/dev.jsonc</c>.
 /// </summary>
-public sealed class RepoConfigService : IRepoConfigService
+internal sealed class RepoConfigService : IRepoConfigService
 {
   private const string ConfigFileName = ".timewarp/dev.jsonc";
 

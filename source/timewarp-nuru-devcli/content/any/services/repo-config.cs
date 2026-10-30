@@ -8,7 +8,7 @@ namespace DevCli;
 /// <summary>
 /// Per-repo configuration deserialized from <c>.timewarp/dev.jsonc</c>.
 /// </summary>
-public sealed class RepoConfig
+internal sealed class RepoConfig
 {
   /// <summary>
   /// Configuration for the check-version command.

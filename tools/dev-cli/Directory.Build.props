@@ -47,6 +47,7 @@
     <!-- Include local command files in compilation (excluding shared DevCli endpoints) -->
     <Compile Include="endpoints/**/*.cs"
              Exclude="endpoints/clean-command.cs;endpoints/check-version-command.cs;endpoints/self-install-command.cs" />
+    <Compile Remove="telemetry-proof/**" />
 
     <!-- Include shared DevCli endpoints from source-only project -->
     <Compile Include="../../source/timewarp-nuru-devcli/content/any/endpoints/*.cs" />

@@ -1,0 +1,30 @@
+<Project>
+  <!-- Repo root, not tools/dev-cli: that props file turns on PublishAot and compiles every endpoint. -->
+  <Import Project="$(MSBuildThisFileDirectory)../../../Directory.Build.props" />
+
+  <PropertyGroup>
+    <PublishAot>false</PublishAot>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Harness, same noise as the dev CLI and the test runfiles. -->
+    <NoWarn>$(NoWarn);CA1031;CA1050;CA1303;CA1515;CA1707;CA1849;CA2000;CA2007;CA2016;CS0050;RCS1046;RCS1102;RCS1110;IDE0065</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Globalization" />
+    <Using Include="System.Net" />
+    <Using Include="System.Net.Sockets" />
+    <Using Include="System.Text" />
+    <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Amuru" />
+    <Using Include="TimeWarp.Terminal" />
+    <Compile Include="$(MSBuildThisFileDirectory)../endpoints/workflow-stage-span.cs" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../../source/timewarp-nuru/timewarp-nuru.csproj" />
+    <PackageReference Include="TimeWarp.Amuru" />
+    <PackageReference Include="TimeWarp.Terminal" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

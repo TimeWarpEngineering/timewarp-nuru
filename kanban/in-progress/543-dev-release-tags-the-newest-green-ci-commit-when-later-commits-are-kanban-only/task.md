@@ -84,6 +84,7 @@ Acceptance:
   found `git show` passes the props file's UTF-8 BOM through, so `PropsVersionReader.Parse` failed.
   Fixed (BOM trimmed, unparseable XML at target refuses as unreadable) with a regression test.
   `ganda repo audit` passed with no fixes needed.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1d5be352-95f1-4e60-96b2-54c8f8eb134e, max-turns 500, Done — 2026-10-30T03:22:47Z
 
 ## Results
 

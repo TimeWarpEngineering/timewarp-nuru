@@ -69,6 +69,10 @@ references DevCli types (check the local master checkouts under
 - the one-line fix (usually `public` to `internal` on that repo's own `Handler` or command type)
 - the `NoWarn` entries the repo can drop once it takes this DevCli (for example ganda's `CA1034;CA2000`)
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Filed from timewarp-ganda task 530, review round 1 finding M1. Ganda keeps `CA1034;CA2000` in `tools/dev-cli/Directory.Build.props` until this ships, and cites this id there.
@@ -258,8 +262,22 @@ timewarp-flow, timewarp-options-validation, timewarp-software and timewarp.enter
   together because of the NURU054 fix.
 - Cockpit: file the per-repo tasks above after merge.
 
+### Review
+
+Round 1, effort 2, roster general. Counts: bug 0, suggestion 0, nit 0 (all open/fixed/wontfix zero).
+Disposition: **clean**. No wontfix and no escalation.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+`review/disposition.md`.
+
 ## Session
 
 - Created: 1016182 (2026-10-30), from timewarp-ganda task 530
 - Implemented 2026-10-31: DevCli content internal, CA2000 ownership field, NURU054 same-assembly fix; CI green; audit clean
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 796401fe-ef87-4a30-82af-04402009babd, max-turns 500, Done — 2026-10-30T17:10:48Z
+- Review oracle: round 1, effort 2, roster general, disposition clean (2026-10-31). Turn cap 120. No separate vendor session id.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-30T17:22:26Z
+
+## Learnings
+
+- Misread (mechanism only): the implementer restatement says CA2000 clears because ownership passes to `HttpClient`. The task requires ownership the analyzer can see. Passing a local handler to `new HttpClient(handler)` still raises CA2000. The change keeps the handler in a field and disposes it after the client (`disposeHandler: false`), which meets the task. The restatement's other acceptance lines match the task.

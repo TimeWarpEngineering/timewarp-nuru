@@ -103,7 +103,7 @@ public class CheckVersionEndpointFailClosedTests
       Environment.ExitCode = 0;
 
       using TestTerminal terminal = new();
-      using NuGetVersionService nuGetVersionService = new(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
+      using NuGetVersionService nuGetVersionService = TwoFeeds(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
       RepoConfigService configService = new();
       PackableProjectService packableProjectService = new();
 
@@ -124,6 +124,65 @@ public class CheckVersionEndpointFailClosedTests
     await Task.CompletedTask;
   }
 
+  public static async Task Token_without_packages_access_refuses_with_the_feed_message()
+  {
+    // 536: not on nuget.org and GitHub Packages answers 403 (a token without
+    // read:packages, observed in ganda 363). Refuse, and never say "already released".
+    int originalExitCode = Environment.ExitCode;
+
+    try
+    {
+      Environment.ExitCode = 0;
+
+      using TestTerminal terminal = new();
+      using NuGetVersionService nuGetVersionService = TwoFeeds
+      (
+        _ => new HttpResponseMessage(HttpStatusCode.NotFound),
+        _ => new HttpResponseMessage(HttpStatusCode.Forbidden)
+      );
+
+      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new RepoConfigService(), new PackableProjectService());
+
+      await handler.Handle(new CheckVersionCommand { Package = "TimeWarp.Taratibu", SourceVersion = "1.0.0-beta.17" }, CancellationToken.None);
+
+      terminal.ErrorContains("GitHub Packages lookup for 'TimeWarp.Taratibu' failed (HTTP 403 Forbidden)").ShouldBeTrue();
+      terminal.ErrorContains(NuGetVersionService.GitHubPackagesServiceIndexUrl).ShouldBeTrue();
+      terminal.ErrorContains("gh auth refresh -h github.com -s read:packages").ShouldBeTrue();
+      terminal.ErrorContains("packages: read").ShouldBeTrue();
+      terminal.ErrorContains("already").ShouldBeFalse();
+      terminal.OutputContains("already released").ShouldBeFalse();
+      terminal.OutputContains("safe to release").ShouldBeFalse();
+      Environment.ExitCode.ShouldBe(1);
+      handler.Outcome.ShouldBe(CheckVersionOutcome.GitHubPackagesUnreadable);
+
+      string abortReason = CheckVersionAbort.FormatAbortReason(handler.Outcome, handler.GitHubPackagesFailure);
+      abortReason.ShouldContain("HTTP 403 Forbidden");
+      abortReason.ShouldNotContain("already released");
+    }
+    finally
+    {
+      Environment.ExitCode = originalExitCode;
+    }
+  }
+
+  public static async Task Found_on_github_packages_only_is_already_released()
+  {
+    // Newest first, as GitHub Packages lists them; nuget.org has nothing.
+    await RunAsync
+    (
+      new CheckVersionCommand { Package = "TimeWarp.Taratibu", SourceVersion = "1.0.0-beta.15" },
+      (_ => new HttpResponseMessage(HttpStatusCode.NotFound), _ => VersionsResponse("1.0.0-beta.16", "1.0.0-beta.15")),
+      (terminal, handler) =>
+      {
+        terminal.OutputContains("Latest NuGet version: 1.0.0-beta.16").ShouldBeTrue();
+        terminal.OutputContains("was already released").ShouldBeTrue();
+        terminal.OutputContains("safe to release").ShouldBeFalse();
+        Environment.ExitCode.ShouldBe(1);
+        handler.Outcome.ShouldBe(CheckVersionOutcome.AlreadyReleased);
+      }
+    );
+  }
+
   public static async Task Distance_zero_keeps_the_already_released_failure()
   {
     string source = ReadSourceVersion();
@@ -131,7 +190,7 @@ public class CheckVersionEndpointFailClosedTests
     (
       new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = source },
       Versions(source),
-      terminal =>
+      (terminal, _) =>
       {
         terminal.OutputContains("was already released").ShouldBeTrue();
         terminal.OutputContains("Bump the version before releasing.").ShouldBeTrue();
@@ -146,7 +205,7 @@ public class CheckVersionEndpointFailClosedTests
     (
       new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true, SourceVersion = source },
       Versions(source),
-      terminal =>
+      (terminal, _) =>
       {
         terminal.OutputContains("was already released").ShouldBeTrue();
         terminal.OutputContains("never released").ShouldBeFalse();
@@ -167,7 +226,7 @@ public class CheckVersionEndpointFailClosedTests
     (
       new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = source },
       Versions(latest),
-      terminal =>
+      (terminal, _) =>
       {
         terminal.OutputContains(distanceLine).ShouldBeTrue();
         terminal.OutputContains("never released").ShouldBeFalse();
@@ -180,7 +239,7 @@ public class CheckVersionEndpointFailClosedTests
     (
       new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true, SourceVersion = source },
       Versions(latest),
-      _ => Environment.ExitCode.ShouldBe(0)
+      (_, _) => Environment.ExitCode.ShouldBe(0)
     );
   }
 
@@ -199,7 +258,7 @@ public class CheckVersionEndpointFailClosedTests
     (
       new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = source },
       Versions(latest),
-      terminal =>
+      (terminal, _) =>
       {
         int sourceAt = terminal.Output.IndexOf("Version in source", StringComparison.Ordinal);
         int latestAt = terminal.Output.IndexOf("Latest NuGet version", StringComparison.Ordinal);
@@ -218,7 +277,7 @@ public class CheckVersionEndpointFailClosedTests
     (
       new CheckVersionCommand { Package = "TimeWarp.Nuru", Strict = true, SourceVersion = source },
       Versions(latest),
-      terminal =>
+      (terminal, _) =>
       {
         terminal.OutputContains(warning).ShouldBeTrue();
         terminal.OutputContains("safe to release").ShouldBeTrue();
@@ -237,7 +296,7 @@ public class CheckVersionEndpointFailClosedTests
     (
       new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = source },
       Versions(Latest),
-      terminal =>
+      (terminal, _) =>
       {
         terminal.OutputContains($"Version in source: {source}").ShouldBeTrue();
         terminal.OutputContains($"Latest NuGet version: {Latest}").ShouldBeTrue();
@@ -277,17 +336,52 @@ public class CheckVersionEndpointFailClosedTests
     return $"{noBuild[..(dash + 1)]}{prerelease[..(dot + 1)]}{number.ToString(CultureInfo.InvariantCulture)}";
   }
 
-  private static StubHandler Versions(string version) =>
-    new(_ => new HttpResponseMessage(HttpStatusCode.OK)
+  private static (Func<HttpRequestMessage, HttpResponseMessage> NuGetOrg, Func<HttpRequestMessage, HttpResponseMessage>? GitHubPackages) Versions(string version) =>
+    (_ => VersionsResponse(version), null);
+
+  private static HttpResponseMessage VersionsResponse(params string[] versions) =>
+    new(HttpStatusCode.OK)
     {
-      Content = new StringContent($"{{\"versions\":[\"{version}\"]}}", Encoding.UTF8, "application/json")
+      Content = new StringContent($"{{\"versions\":[{string.Join(",", versions.Select(v => $"\"{v}\""))}]}}", Encoding.UTF8, "application/json")
+    };
+
+  /// <summary>
+  /// A service over both feeds with a fake GitHub token (536). nuget.org requests go
+  /// to <paramref name="nuGetOrg"/>; the GitHub Packages service index is the live
+  /// shape; flat-container requests go to <paramref name="gitHubPackages"/>, or 404.
+  /// </summary>
+  private static NuGetVersionService TwoFeeds
+  (
+    Func<HttpRequestMessage, HttpResponseMessage> nuGetOrg,
+    Func<HttpRequestMessage, HttpResponseMessage>? gitHubPackages = null
+  )
+  {
+    StubHandler handler = new(request =>
+    {
+      if (request.RequestUri!.Host == "api.nuget.org")
+      {
+        return nuGetOrg(request);
+      }
+
+      if (request.RequestUri.ToString() == NuGetVersionService.GitHubPackagesServiceIndexUrl)
+      {
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+          Content = new StringContent("{\"version\":\"3.0.0-beta.1\",\"resources\":[{\"@id\":\"https://nuget.pkg.github.com/TimeWarpEngineering/download\",\"@type\":\"PackageBaseAddress/3.0.0\"}]}", Encoding.UTF8, "application/json")
+        };
+      }
+
+      return gitHubPackages?.Invoke(request) ?? new HttpResponseMessage(HttpStatusCode.NotFound);
     });
+
+    return new NuGetVersionService(handler, _ => Task.FromResult<GitHubPackagesCredential?>(new GitHubPackagesCredential("ghs_fake", "GITHUB_TOKEN")));
+  }
 
   private static async Task RunAsync
   (
     CheckVersionCommand command,
-    StubHandler handler,
-    Action<TestTerminal> assert
+    (Func<HttpRequestMessage, HttpResponseMessage> NuGetOrg, Func<HttpRequestMessage, HttpResponseMessage>? GitHubPackages) feeds,
+    Action<TestTerminal, CheckVersionCommand.Handler> assert
   )
   {
     int originalExitCode = Environment.ExitCode;
@@ -297,7 +391,7 @@ public class CheckVersionEndpointFailClosedTests
       Environment.ExitCode = 0;
 
       using TestTerminal terminal = new();
-      using NuGetVersionService nuGetVersionService = new(handler);
+      using NuGetVersionService nuGetVersionService = TwoFeeds(feeds.NuGetOrg, feeds.GitHubPackages);
       CheckVersionCommand.Handler commandHandler = new
       (
         terminal,
@@ -307,7 +401,7 @@ public class CheckVersionEndpointFailClosedTests
       );
 
       await commandHandler.Handle(command, CancellationToken.None);
-      assert(terminal);
+      assert(terminal, commandHandler);
     }
     finally
     {

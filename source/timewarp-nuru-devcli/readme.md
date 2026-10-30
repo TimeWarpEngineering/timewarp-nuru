@@ -23,6 +23,10 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `CheckVersionConfig` | Config model for the check-version command |
 | `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
 | `CiMode` (enum) / `CiModeDetector` | Pure CI mode detection (`pr`/`merge`/`release`); `workflow_dispatch` auto-detects `merge`; unknown explicit mode throws |
+| `NuGetVersionService` | Reads a package's versions from both org feeds: nuget.org and the org GitHub Packages feed (`LookupAsync`). Both URLs are constants; there is no feed setting |
+| `PackageFeedLookup` / `PackagePublishVerdict` / `PackageFeedUnreadableException` | One package's versions on both feeds. `Check(version)` is Published (on either feed), NotPublished, or Unknown (not on nuget.org and GitHub Packages unreadable). `FormatUnknownRefusal` is the shared refusal text |
+| `GitHubPackagesCredential` | The GitHub Packages token: `GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token` |
+| `CheckVersionOutcome` (enum) / `CheckVersionAbort` | How a check-version run ended (`CheckVersionCommand.Handler.Outcome`), and the pipeline abort line for it |
 | `PublishState` (enum) / `PublishStateClassifier` | Pure none/some/all classification of published packages for the `check-version` gate; throws on zero packages or an out-of-range published count |
 | `PrereleaseDistance` | Pure prerelease-increment distance between source and the latest published version. Defined only when major.minor.patch and the prerelease label match and only the numeric identifier differs |
 | `CiRunPromotion` | Pure logic for release-mode artifact promotion: orders candidate CI runs for a commit, selects a run's `Packages-*` artifact (including expiry handling), and verifies a downloaded `.nupkg` set against the derived packable set — no process execution |
@@ -127,6 +131,34 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 4.0.0-beta.8+: publish gates read nuget.org and GitHub Packages (`package-feed-lookup.cs`)
+
+`check-version` and `dev release` used to ask only nuget.org. A package on the org GitHub
+Packages feed (`https://nuget.pkg.github.com/TimeWarpEngineering/index.json`) always looked
+unpublished, so the gates let a version be released twice. Both gates now read both feeds and
+count a version on either as published. There is no setting.
+
+GitHub Packages needs a token with `read:packages` (`GITHUB_TOKEN`, then `GH_TOKEN`, then
+`gh auth token`). When a version is not on nuget.org and GitHub Packages cannot be read (no
+token, 401, 403, unreachable), the gates refuse with a message that names the feed, the HTTP
+status and the fix. A 404 from GitHub Packages means not found, so nuget.org-only repos behave as
+before when the token works.
+
+**To adopt:**
+
+- Add `packages: read` to every workflow job that runs `check-version`, `dev release` or a
+  `dev workflow` release pipeline. A job with explicit `permissions` gets no packages access
+  otherwise, and the gate refuses.
+- A forked `workflow` command that aborts with "version already released" on any non-zero
+  check-version exit should call
+  `CheckVersionAbort.FormatAbortReason(handler.Outcome, handler.GitHubPackagesFailure)` instead.
+- Test runfiles that compile the DevCli services file by file must add
+  `package-feed-lookup.cs`, `github-packages-credential.cs` and `check-version-outcome.cs`.
+
+New public types in namespace `DevCli`: `PackageFeedLookup`, `PackagePublishVerdict`,
+`PackageFeedUnreadableException`, `GitHubPackagesCredential`, `CheckVersionOutcome`,
+`CheckVersionAbort`, `NuGetServiceIndex`, `NuGetServiceIndexResource`.
 
 ### 3.0.0-beta.72+: attestation verify step (`attestation-verifier.cs`, `attestation-config.cs`)
 

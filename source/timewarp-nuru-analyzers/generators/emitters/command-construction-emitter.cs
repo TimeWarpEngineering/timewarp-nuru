@@ -152,7 +152,7 @@ internal static class CommandConstructionEmitter
 
     string rawName = option.ParameterName ?? CSharpIdentifierUtils.ToCamelCase(option.LongForm ?? option.ShortForm ?? "value");
     if (option.IsFlag)
-      return CSharpIdentifierUtils.EscapeIfKeyword(CSharpIdentifierUtils.ToCamelCase(option.LongForm ?? "flag"));
+      return CSharpIdentifierUtils.EscapeIfKeyword(CSharpIdentifierUtils.ToCamelCase(option.LongForm ?? option.ShortForm ?? "flag"));
 
     if (option.IsRepeated)
       return $"__{rawName}_list_{routeIndex}.Count > 0";

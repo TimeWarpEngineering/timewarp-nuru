@@ -2,7 +2,8 @@
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 #region Purpose
-// Kanban 470-015: TelemetryBehavior (and emitter twin) must not export Exception.Message.
+// Kanban 470-015: TelemetryBehavior must not export Exception.Message. Task 552 removed the
+// emitter twin: UseTelemetry() now gets its spans from TelemetryBehavior (see telemetry-05).
 #endregion
 
 #if !JARIBU_MULTI
@@ -59,64 +60,6 @@ namespace TimeWarp.Nuru.Tests.Telemetry
       captured.StatusDescription.ShouldBeNull();
       captured.GetTagItem("error.type").ShouldBe(nameof(InvalidOperationException));
       captured.GetTagItem("error.message").ShouldBeNull();
-    }
-
-    public static async Task Should_keep_emitter_catch_twin_free_of_error_message()
-    {
-      // EmitTelemetryCatch is the generated twin of TelemetryBehavior; assert source parity
-      // (method may not yet be wired into the interceptor).
-      string repoRoot = FindRepoRoot();
-      string emitterPath = Path.Combine(
-        repoRoot,
-        "source",
-        "timewarp-nuru-analyzers",
-        "generators",
-        "emitters",
-        "telemetry-emitter.cs");
-
-      File.Exists(emitterPath).ShouldBeTrue();
-      string source = await File.ReadAllTextAsync(emitterPath);
-
-      int catchStart = source.IndexOf("EmitTelemetryCatch", StringComparison.Ordinal);
-      catchStart.ShouldBeGreaterThan(0);
-      string catchRegion = source[catchStart..];
-      int nextMethod = catchRegion.IndexOf("EmitTelemetryFlush", StringComparison.Ordinal);
-      if (nextMethod > 0)
-        catchRegion = catchRegion[..nextMethod];
-
-      catchRegion.ShouldContain("error.type");
-      catchRegion.Contains("error.message").ShouldBeFalse();
-      catchRegion.Contains("__telemetryEx.Message").ShouldBeFalse();
-      catchRegion.ShouldContain("ActivityStatusCode.Error);");
-    }
-
-    private static string FindRepoRoot()
-    {
-      string? dir = AppContext.BaseDirectory;
-      while (dir is not null)
-      {
-        if (File.Exists(Path.Combine(dir, "Directory.Build.props"))
-            && Directory.Exists(Path.Combine(dir, "source", "timewarp-nuru")))
-        {
-          return dir;
-        }
-
-        dir = Directory.GetParent(dir)?.FullName;
-      }
-
-      dir = Directory.GetCurrentDirectory();
-      while (dir is not null)
-      {
-        if (File.Exists(Path.Combine(dir, "Directory.Build.props"))
-            && Directory.Exists(Path.Combine(dir, "source", "timewarp-nuru")))
-        {
-          return dir;
-        }
-
-        dir = Directory.GetParent(dir)?.FullName;
-      }
-
-      throw new InvalidOperationException("Could not locate repo root from test process.");
     }
   }
 }

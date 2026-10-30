@@ -8,6 +8,7 @@
 // - Method names mirror DSL methods exactly
 // - Build() marks as built but doesn't finalize (for RunAsync intercept sites)
 // - FinalizeModel() creates the actual AppModel
+// - UseTelemetry() registers TelemetryBehavior as the outermost behavior, once (task 552)
 // - Implements IIrAppBuilder for polymorphic dispatch in interpreter
 
 namespace TimeWarp.Nuru.Generators;
@@ -19,6 +20,9 @@ namespace TimeWarp.Nuru.Generators;
 /// <typeparam name="TSelf">The concrete builder type for fluent returns.</typeparam>
 public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSelf>
 {
+  // Behavior UseTelemetry() registers implicitly (task 552)
+  private const string TelemetryBehaviorTypeName = "global::TimeWarp.Nuru.TelemetryBehavior";
+
   // State fields mirroring AppModel properties
   private string? VariableName;
   private string? Name;
@@ -449,7 +453,7 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       HasConfiguration: HasConfiguration,
       HasCheckUpdatesRoute: HasCheckUpdatesRoute,
       Routes: [.. Routes],
-      Behaviors: [.. Behaviors],
+      Behaviors: [.. EffectiveBehaviors()],
       Services: [.. Services],
       InterceptSitesByMethod: [.. InterceptSitesByMethod.Select(kvp => new InterceptSiteGroup(kvp.Key, [.. kvp.Value]))],
       UserUsings: [],  // Usings are populated by AppExtractor, not the builder
@@ -472,6 +476,27 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
       McpRoute: McpRoute,
       ServeRoute: ServeRoute,
       DiscoverEndpointsLocation: DiscoverEndpointsLocation);
+  }
+
+  /// <summary>
+  /// Returns the registered behaviors, with <c>TelemetryBehavior</c> first when telemetry is on.
+  /// </summary>
+  /// <remarks>
+  /// <c>UseTelemetry()</c> gets its command spans and metrics from <c>TelemetryBehavior</c>, so the
+  /// generator has one span mechanism (task 552). It goes first, so its span wraps every other
+  /// behavior. An app that already adds <c>TelemetryBehavior</c> keeps its own position and gets
+  /// no second copy.
+  /// </remarks>
+  private IEnumerable<BehaviorDefinition> EffectiveBehaviors()
+  {
+    TelemetryModel telemetry = TelemetryOptions ?? TelemetryModel.Default;
+    bool addTelemetryBehavior = TelemetryEnabled
+      && (telemetry.EnableTracing || telemetry.EnableMetrics)
+      && !Behaviors.Exists(static b => b.FullTypeName == TelemetryBehaviorTypeName);
+
+    return addTelemetryBehavior
+      ? Behaviors.Prepend(BehaviorDefinition.ForAll(TelemetryBehaviorTypeName))
+      : Behaviors;
   }
 
   /// <summary>

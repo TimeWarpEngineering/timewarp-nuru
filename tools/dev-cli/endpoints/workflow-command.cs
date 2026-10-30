@@ -5,6 +5,12 @@
 #region Design
 // PR/merge prints ProcessorCount and a duration after each step so a hosted
 // log can be compared phase by phase without scraping timestamps.
+// --stage runs one slice of the PR/merge pipeline (task 538). workflow.yml runs
+// build, samples, test-multi and test-standalone as parallel jobs, and its
+// final `ci` job uploads the build job's packages once every job passed.
+// The package integrity gate needs build and tests on one machine, so only
+// the full pipeline (stage all, the local default) runs it. In CI the
+// separate runners give the same guarantee.
 #endregion
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -14,7 +20,8 @@
 // Auto-detects mode from GITHUB_EVENT_NAME or accepts explicit --mode flag.
 //
 // Modes:
-//   pr/merge:  clean -> build -> verify-samples -> test
+//   pr/merge:  attestation -> clean -> build -> verify-samples -> test
+//              (--stage build|samples|test-multi|test-standalone runs one slice)
 //   release:   tag-gate -> check-version -> locate-run -> download-artifact -> verify -> push
 //              (no rebuild — promotes the exact .nupkg set that master-merge CI
 //              already built+tested+uploaded for this commit; kanban task 458-002)
@@ -35,6 +42,9 @@ public sealed class WorkflowCommand : ICommand<Unit>
   [Option("mode", "m", Description = "CI mode: pr, merge, or release (auto-detected from GITHUB_EVENT_NAME if not specified)")]
   public string? Mode { get; set; }
 
+  [Option("stage", "s", Description = "PR/merge stage: all (default), build, samples, test-multi, or test-standalone")]
+  public string? Stage { get; set; }
+
   [Option("api-key", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
   public string? ApiKey { get; set; }
 
@@ -43,6 +53,12 @@ public sealed class WorkflowCommand : ICommand<Unit>
 
   internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
   {
+    private const string StageAll = "all";
+    private const string StageBuild = "build";
+    private const string StageSamples = "samples";
+    private const string StageTestMulti = "test-multi";
+    private const string StageTestStandalone = "test-standalone";
+
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
     private readonly NuGetVersionService NuGetVersionService;
@@ -75,13 +91,24 @@ public sealed class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("===============================================================================");
       Terminal.WriteLine("");
 
+      string stage = string.IsNullOrEmpty(command.Stage) ? StageAll : command.Stage;
+      if (stage is not (StageAll or StageBuild or StageSamples or StageTestMulti or StageTestStandalone))
+      {
+        throw new ArgumentException($"Unknown stage: {stage}. Valid options: all, build, samples, test-multi, test-standalone");
+      }
+
       if (mode == CiMode.Release)
       {
+        if (stage != StageAll)
+        {
+          throw new ArgumentException("--stage applies to PR/merge mode only; release mode builds nothing.");
+        }
+
         await RunReleaseWorkflowAsync(command.ApiKey, command.Attestation);
       }
       else
       {
-        await RunPrWorkflowAsync(command.Attestation);
+        await RunPrWorkflowAsync(command.Attestation, stage);
       }
 
       return Unit.Value;
@@ -110,49 +137,156 @@ public sealed class WorkflowCommand : ICommand<Unit>
       return mode;
     }
 
-    private async Task RunPrWorkflowAsync(string? cliAttestationMode)
+    private async Task RunPrWorkflowAsync(string? cliAttestationMode, string stage)
     {
-      Terminal.WriteLine("Pipeline: attestation -> clean -> build -> verify-samples -> test");
+      bool all = stage == StageAll;
+      bool runBuild = all || stage == StageBuild;
+      bool runSamples = all || stage == StageSamples;
+      string? testPhase = stage switch
+      {
+        StageAll => "all",
+        StageTestMulti => "multi",
+        StageTestStandalone => "standalone",
+        _ => null
+      };
+
+      List<string> stepNames = [];
+      if (runBuild)
+      {
+        stepNames.AddRange(["Attestation", "Clean", "Build"]);
+      }
+
+      if (runSamples)
+      {
+        stepNames.Add("Verify Samples");
+      }
+
+      if (testPhase is not null)
+      {
+        stepNames.Add(all ? "Test" : $"Test ({testPhase})");
+      }
+
+      Terminal.WriteLine($"Pipeline: {string.Join(" -> ", stepNames.Select(static name => name.ToLowerInvariant()))}");
+      if (!all)
+      {
+        Terminal.WriteLine($"Stage: {stage} (the other stages run as parallel CI jobs)");
+      }
+
       Terminal.WriteLine($"ProcessorCount: {Environment.ProcessorCount}");
       Terminal.WriteLine("");
 
       string repoRoot = ResolveRepoRoot();
       Stopwatch pipeline = Stopwatch.StartNew();
       Stopwatch step = Stopwatch.StartNew();
+      int stepNumber = 0;
+      AttestationStepResult? attestationResult = null;
+      Dictionary<string, string>? packageHashes = null;
+      string packagesDir = Path.Combine(repoRoot, "artifacts", "packages");
 
-      // Step 1: Attestation
-      Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 1/5: Attestation");
-      Terminal.WriteLine("===============================================================================");
-      AttestationStepResult attestationResult = await RunAttestationPolicyStepAsync(
-        repoRoot,
-        cliAttestationMode,
-        AttestationConfigResolver.DefaultPrMode).ConfigureAwait(false);
-      WriteStepDuration(step, "Step 1/5");
-
-      if (attestationResult.ShouldAbort)
+      if (runBuild)
       {
-        AbortPipeline("attestation required (mode=require) and not valid");
-        return;
+        // Attestation
+        string label = BeginStep(++stepNumber, stepNames);
+        attestationResult = await RunAttestationPolicyStepAsync(
+          repoRoot,
+          cliAttestationMode,
+          AttestationConfigResolver.DefaultPrMode).ConfigureAwait(false);
+        WriteStepDuration(step, label);
+
+        if (attestationResult.ShouldAbort)
+        {
+          AbortPipeline("attestation required (mode=require) and not valid");
+          return;
+        }
+
+        // Clean
+        label = BeginStep(++stepNumber, stepNames);
+        CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
+        await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
+        WriteStepDuration(step, label);
+
+        // Build
+        label = BeginStep(++stepNumber, stepNames);
+        BuildCommand.Handler buildHandler = new(Terminal);
+        await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
+
+        if (!VerifyBuiltPackages())
+        {
+          return;
+        }
+
+        // Package integrity gate (task 503), part 1: snapshot the hash of every nupkg
+        // so the end of the pipeline can prove the samples/tests steps did not
+        // rebuild or repack them.
+        packageHashes = HashPackages(packagesDir);
+        WriteStepDuration(step, label);
       }
 
-      // Step 2: Clean
+      if (runSamples)
+      {
+        string label = BeginStep(++stepNumber, stepNames);
+        VerifySamplesCommand.Handler verifySamplesHandler = new(Terminal);
+        await verifySamplesHandler.Handle(new VerifySamplesCommand(), CancellationToken.None);
+        WriteStepDuration(step, label);
+      }
+
+      if (testPhase is not null)
+      {
+        string label = BeginStep(++stepNumber, stepNames);
+        TestCommand.Handler testHandler = new(Terminal);
+        await testHandler.Handle(new TestCommand { Phase = testPhase }, CancellationToken.None);
+        WriteStepDuration(step, label);
+      }
+
+      // Package integrity gate (task 503), part 2: the artifact uploaded after this
+      // pipeline must be byte-identical to the Release packages verified in the
+      // build step. Only the full pipeline runs build, samples and tests on one
+      // machine. Split CI (task 538) builds and uploads the packages in the build
+      // job; the samples and test jobs run on other runners and cannot touch them.
+      if (all && packageHashes is not null)
+      {
+        if (!VerifyPackagesUnchanged(packagesDir, packageHashes))
+        {
+          return;
+        }
+      }
+
+      pipeline.Stop();
+      Terminal.WriteLine($"Pipeline finished in {FormatSeconds(pipeline.Elapsed)}");
+
+      // Attestation advisory (warn mode only) is repeated here, immediately
+      // before the SUCCEEDED banner, so it is not lost above scrollback from
+      // clean/build/verify-samples/test output (round-1 self-review finding).
+      if (attestationResult?.RepeatAdvisory is not null)
+      {
+        Terminal.WriteLine("");
+        Terminal.WriteLine(attestationResult.RepeatAdvisory.Yellow());
+      }
+
       Terminal.WriteLine("");
       Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 2/5: Clean");
+      Terminal.WriteLine("  Pipeline SUCCEEDED");
       Terminal.WriteLine("===============================================================================");
-      CleanCommand.Handler cleanHandler = new(Terminal, RepoCleanService);
-      await cleanHandler.Handle(new CleanCommand(), CancellationToken.None);
-      WriteStepDuration(step, "Step 2/5");
+    }
 
-      // Step 3: Build
-      Terminal.WriteLine("");
-      Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 3/5: Build");
-      Terminal.WriteLine("===============================================================================");
-      BuildCommand.Handler buildHandler = new(Terminal);
-      await buildHandler.Handle(new BuildCommand(), CancellationToken.None);
+    private string BeginStep(int stepNumber, List<string> stepNames)
+    {
+      string label = $"Step {stepNumber}/{stepNames.Count}";
+      if (stepNumber > 1)
+      {
+        Terminal.WriteLine("");
+      }
 
+      Terminal.WriteLine("===============================================================================");
+      Terminal.WriteLine($"  {label}: {stepNames[stepNumber - 1]}");
+      Terminal.WriteLine("===============================================================================");
+      return label;
+    }
+
+    // Package layout and Release-configuration gates. Returns false (and sets
+    // the exit code) when the built packages must not ship.
+    private bool VerifyBuiltPackages()
+    {
       // Package layout gate (kanban 461): the nupkgs this run uploads are the
       // exact bytes a future release promotes — verify the critical payload is
       // inside them, because pack can silently produce hollow packages and
@@ -163,7 +297,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("Package layout gate failed: could not read package version from directory.build.props — cannot locate the TimeWarp.Nuru nupkg to verify.");
         Environment.ExitCode = 1;
-        return;
+        return false;
       }
 
       string nuruNupkg = Path.Combine(layoutRepoRoot, "artifacts", "packages", $"TimeWarp.Nuru.{layoutVersion}.nupkg");
@@ -171,7 +305,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Package layout gate failed: expected {nuruNupkg} to exist after build (GeneratePackageOnBuild).");
         Environment.ExitCode = 1;
-        return;
+        return false;
       }
 
       IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(nuruNupkg, NupkgLayoutCheck.NuruRequiredPackageEntries);
@@ -179,7 +313,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Package layout gate failed: TimeWarp.Nuru.{layoutVersion}.nupkg is missing required entries: {string.Join(", ", missing)}. Pack produced a hollow package (kanban 461 class) — do not ship this artifact.");
         Environment.ExitCode = 1;
-        return;
+        return false;
       }
 
       Terminal.WriteLine($"Package layout verified: TimeWarp.Nuru.{layoutVersion}.nupkg contains all {NupkgLayoutCheck.NuruRequiredPackageEntries.Length} required payload entries.");
@@ -191,37 +325,16 @@ public sealed class WorkflowCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Package layout gate failed: TimeWarp.Nuru.{layoutVersion}.nupkg lib/net10.0/TimeWarp.Nuru.dll is not a Release build (Configuration='{packedBuildInfo.Configuration}', Debuggable flags=0x{packedBuildInfo.DebuggableFlags:X}). Do not ship this artifact.");
         Environment.ExitCode = 1;
-        return;
+        return false;
       }
 
       Terminal.WriteLine("Package configuration verified: lib/net10.0/TimeWarp.Nuru.dll is a Release, optimized build.");
+      return true;
+    }
 
-      // Package integrity gate (task 503), part 1: snapshot the hash of every nupkg
-      // so step 5 can prove the samples/tests steps did not rebuild or repack them.
-      string packagesDir = Path.Combine(layoutRepoRoot, "artifacts", "packages");
-      Dictionary<string, string> packageHashes = HashPackages(packagesDir);
-      WriteStepDuration(step, "Step 3/5");
-
-      // Step 4: Verify Samples
-      Terminal.WriteLine("");
-      Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 4/5: Verify Samples");
-      Terminal.WriteLine("===============================================================================");
-      VerifySamplesCommand.Handler verifySamplesHandler = new(Terminal);
-      await verifySamplesHandler.Handle(new VerifySamplesCommand(), CancellationToken.None);
-      WriteStepDuration(step, "Step 4/5");
-
-      // Step 5: Test
-      Terminal.WriteLine("");
-      Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Step 5/5: Test");
-      Terminal.WriteLine("===============================================================================");
-      TestCommand.Handler testHandler = new(Terminal);
-      await testHandler.Handle(new TestCommand(), CancellationToken.None);
-      WriteStepDuration(step, "Step 5/5");
-
-      // Package integrity gate (task 503), part 2: the artifact uploaded after this
-      // pipeline must be byte-identical to the Release packages verified in step 3.
+    // Package integrity gate (task 503), part 2.
+    private bool VerifyPackagesUnchanged(string packagesDir, Dictionary<string, string> packageHashes)
+    {
       Dictionary<string, string> finalHashes = HashPackages(packagesDir);
       List<string> changedPackages = [];
       foreach ((string packageName, string packageHash) in packageHashes)
@@ -248,26 +361,11 @@ public sealed class WorkflowCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Package integrity gate failed: the samples/tests steps rebuilt or repacked a package after the verified build: {string.Join(", ", changedPackages.Order(StringComparer.Ordinal))}. The artifact must not ship.");
         Environment.ExitCode = 1;
-        return;
+        return false;
       }
 
       Terminal.WriteLine($"Package integrity verified: {packageHashes.Count} packages unchanged since build.");
-      pipeline.Stop();
-      Terminal.WriteLine($"Pipeline finished in {FormatSeconds(pipeline.Elapsed)}");
-
-      // Attestation advisory (warn mode only) is repeated here, immediately
-      // before the SUCCEEDED banner, so it is not lost above scrollback from
-      // clean/build/verify-samples/test output (round-1 self-review finding).
-      if (attestationResult.RepeatAdvisory is not null)
-      {
-        Terminal.WriteLine("");
-        Terminal.WriteLine(attestationResult.RepeatAdvisory.Yellow());
-      }
-
-      Terminal.WriteLine("");
-      Terminal.WriteLine("===============================================================================");
-      Terminal.WriteLine("  Pipeline SUCCEEDED");
-      Terminal.WriteLine("===============================================================================");
+      return true;
     }
 
     // Shared attestation policy for PR/merge and release (kanban task 458-011).
@@ -454,7 +552,9 @@ public sealed class WorkflowCommand : ICommand<Unit>
 
       if (Environment.ExitCode != 0)
       {
-        AbortPipeline("version already released");
+        // 536: name the real cause. A job token without packages: read makes
+        // check-version refuse, and that is not "version already released".
+        AbortPipeline(CheckVersionAbort.FormatAbortReason(checkVersionHandler.Outcome, checkVersionHandler.GitHubPackagesFailure));
         return;
       }
 

@@ -93,12 +93,13 @@ NuruApp.CreateBuilder()
 | `EnableTracing` | `bool` | `true` | Enable Activity spans |
 | `EnableMetrics` | `bool` | `true` | Enable metrics collection |
 | `EnableLogging` | `bool` | `true` | Enable OpenTelemetry logging |
-| `OtlpEndpoint` | `string?` | `null` | OTLP endpoint URL |
+| `OtlpEndpoint` | `string?` | `null` | OTLP collector base URL; `http/protobuf` appends `/v1/{signal}` (see [Telemetry](../features/telemetry.md#endpoint-paths)) |
 
 Telemetry respects environment variables:
 - `OTEL_SERVICE_NAME` - Overrides `ServiceName`
 - `OTEL_SERVICE_VERSION` - Overrides `ServiceVersion`
 - `OTEL_EXPORTER_OTLP_ENDPOINT` - Fallback if `OtlpEndpoint` is not set
+- `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT` - Per-signal URL, used as-is when `OtlpEndpoint` is not set
 
 ## EnableCompletion
 

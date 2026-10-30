@@ -17,6 +17,7 @@ Key components:
   test-apps/                    # Integration test applications
   timewarp-nuru-core-tests/     # Core unit tests
   ci-tests/                     # CI multi-mode test runner
+  ci-standalone/                # CI standalone phase (files that cannot run multi-mode)
 /benchmarks/                    # Performance benchmarks
 /samples/                       # Example implementations
 /runfiles/                      # Build and utility runfiles
@@ -28,6 +29,7 @@ Key components:
 
 ```bash
 dotnet run tests/ci-tests/run-ci-tests.cs                              # CI tests (~1000+ tests)
+dotnet run tests/ci-standalone/run-standalone-tests.cs                 # Standalone phase only
 dotnet run tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs  # Single test file
 ```
 
@@ -43,7 +45,7 @@ dotnet run tests/timewarp-nuru-core-tests/routing/routing-01-basic.cs  # Single 
 - `.DiscoverEndpoints()` includes ALL `[NuruRoute]` endpoints in the compilation, not just those in the same file.
 - **Tests must use `.Map<TEndpoint>()` instead of `.DiscoverEndpoints()`** to avoid cross-contamination when multiple test files define endpoints with the same route pattern (e.g., two `[NuruRoute("")]` endpoints).
 - Tests that pass individually but fail in CI multi-mode are almost always caused by endpoint cross-contamination via `DiscoverEndpoints()`.
-- **NURU_A003** enforces this: unfiltered `DiscoverEndpoints()` warns when the compilation builds apps in more than one source file (the CI assembly; a standalone test file never reports). Fix it with `.Map<TEndpoint>()`. A test that exercises discovery itself opts out with `#pragma warning disable NURU_A003` around the call, or runs standalone only (`#if !JARIBU_MULTI` plus the standalone list in `run-ci-tests.cs`). The CI assembly does not suppress NURU_A003 (task 524 converted the last call sites), so a new unfiltered call in a multi-included test fails the CI build.
+- **NURU_A003** enforces this: unfiltered `DiscoverEndpoints()` warns when the compilation builds apps in more than one source file (the CI assembly; a standalone test file never reports). Fix it with `.Map<TEndpoint>()`. A test that exercises discovery itself opts out with `#pragma warning disable NURU_A003` around the call, or runs standalone only (`#if !JARIBU_MULTI` plus the standalone list in `tests/ci-standalone/run-standalone-tests.cs`). The CI assembly does not suppress NURU_A003 (task 524 converted the last call sites), so a new unfiltered call in a multi-included test fails the CI build.
 
 ### Route Pattern Support
 

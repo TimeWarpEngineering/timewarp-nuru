@@ -13,6 +13,7 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(CheckVersionConfig))]
 [JsonSerializable(typeof(AttestationConfig))]
 [JsonSerializable(typeof(NuGetVersionIndex))]
+[JsonSerializable(typeof(NuGetServiceIndex))]
 [JsonSerializable(typeof(MsBuildEvaluationOutput))]
 [JsonSerializable(typeof(List<CiRunSummary>))]
 [JsonSerializable(typeof(RunArtifactListResponse))]

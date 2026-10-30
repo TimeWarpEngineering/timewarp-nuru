@@ -68,6 +68,12 @@ Acceptance:
 - 2026-10-31 implement (ganda task work, implementer-claude): context-instance fix,
   `tests/devcli-consumer-check` + CI step, boy-scout IDE1006 in check-version-02.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0cfdedef-883a-4b18-b818-2be5cd1e031f, max-turns 500, Done — 2026-10-30T19:37:34Z
+- Review oracle: tw-implementation-review, effort 2, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 120), round 1, disposition clean — 2026-10-31
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-30T19:53:47Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -167,6 +173,10 @@ There is no version bump here. By convention a `release-400-betaN` task (559 for
 callout: DevCli `RepoConfigService` no longer trips CA2263 for net11 consumers, and Nuru CI now
 compiles DevCli content as a net11 consumer (562). After that, architecture task 457 can take the pin.
 
+### Review
+
+Round 1, effort 2, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 120). Counts: bug 0, suggestion 0, nit 0, open 0. Disposition: clean. The restatement matches the task outcome. The suggested `GetTypeInfo<RepoConfig>()` call is net11-only, so the context-instance fix is the net10-compatible form of that outcome; no goal misread. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:**
@@ -185,3 +195,7 @@ restore the old line (`git show 0ab1c314:source/timewarp-nuru-devcli/content/any
 it fails with CA2263. The dev-cli build reports 0 warnings, 0 errors. The Parse test passes 3/3,
 CI exits 0 with 0 failed, and the audit passes. On the PR, the `samples` CI job shows a passing
 "DevCli consumer check" step.
+
+## Learnings
+
+The task text names `JsonOptions.GetTypeInfo<RepoConfig>()` as the edit. The restatement's acceptance criteria do not: they require CA2263 gone, the source-generated resolver, and the `.jsonc` options. `GetTypeInfo<T>()` is present on .NET 11.0.0-rc.3 and absent from the net10.0 ref assembly, so that call does not compile for Nuru or a net10 consumer. The context-instance implementation matches the restatement and the task's outcome. No goal misread.

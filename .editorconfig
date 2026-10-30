@@ -341,15 +341,15 @@ dotnet_code_quality.null_check_validation_methods = NotNull
 # dotnet_diagnostic.NURU_DEBUG_CONV1.severity = warning
 
 # CA1034: Do not nest types - Nested types are valuable for encapsulation
-dotnet_diagnostic.CA1034.severity = none
+dotnet_diagnostic.CA1034.severity = none # preference: nested types are valuable for encapsulation
 
 # CA1308: Normalize strings to uppercase
-dotnet_diagnostic.ca1308.severity = none
+dotnet_diagnostic.ca1308.severity = none # preference: CLI names, kebab-case paths and JSON values are lowercase by design
 
 # Roslynator configuration - comprehensive settings
 # See Scripts/Documentation/Developer/Reference/RoslynatorRules.md for full rule descriptions
 
-# Documentation comments - disabled for now
+# Documentation comments - debt, kept off until a follow-up fixes the violations (counts in kanban 558)
 dotnet_diagnostic.RCS1139.severity = none # Add summary element to documentation comment
 dotnet_diagnostic.RCS1140.severity = none # Add exception to documentation comment
 dotnet_diagnostic.RCS1141.severity = none # Add 'param' element to documentation comment
@@ -357,21 +357,21 @@ dotnet_diagnostic.RCS1142.severity = none # Add 'typeparam' element to documenta
 dotnet_diagnostic.RCS1181.severity = none # Convert comment to documentation comment
 
 # Expression preferences
-dotnet_diagnostic.RCS1021.severity = none # Use expression-bodied lambda
-dotnet_diagnostic.RCS1238.severity = none # Avoid nested ?: operators
+dotnet_diagnostic.RCS1021.severity = warning # Use expression-bodied lambda
+dotnet_diagnostic.RCS1238.severity = warning # Avoid nested ?: operators
 dotnet_diagnostic.RCS1077.severity = warning # Optimize LINQ method call
 dotnet_diagnostic.RCS1128.severity = warning # Use coalesce expression
 dotnet_diagnostic.RCS1146.severity = warning # Use conditional access
 
 # Naming conventions
-dotnet_diagnostic.RCS1045.severity = none # Rename private field to camel case with underscore
+dotnet_diagnostic.RCS1045.severity = none # Rename private field to camel case with underscore - preference: conventions forbid underscore prefixes
 dotnet_diagnostic.RCS1046.severity = warning # Use 'Async' suffix for async method
 dotnet_diagnostic.RCS1047.severity = warning # Non-asynchronous method name should not end with 'Async'
 
 # Line breaks and formatting
-dotnet_diagnostic.RCS0051.severity = none # Add/remove new line before 'while' in 'do' statement
-dotnet_diagnostic.RCS0052.severity = none # Add/remove new line before equals sign
-dotnet_diagnostic.RCS0036.severity = none # Remove blank line between single-line declarations
+dotnet_diagnostic.RCS0051.severity = none # Add/remove new line before 'while' in 'do' statement - preference: no house option chosen, dotnet format owns layout
+dotnet_diagnostic.RCS0052.severity = none # Add/remove new line before equals sign - preference: no house option chosen, dotnet format owns layout
+dotnet_diagnostic.RCS0036.severity = none # Remove blank line between single-line declarations - preference: house style keeps a blank line between members
 
 # Code quality and best practices
 dotnet_diagnostic.RCS1018.severity = warning # Add/remove accessibility modifiers
@@ -381,13 +381,13 @@ dotnet_diagnostic.RCS1058.severity = warning # Use compound assignment
 dotnet_diagnostic.RCS1089.severity = warning # Use --/++ operator instead of assignment
 dotnet_diagnostic.RCS1090.severity = warning # Add/remove 'ConfigureAwait(false)' call
 dotnet_diagnostic.RCS1104.severity = warning # Simplify conditional expression
-dotnet_diagnostic.RCS1123.severity = none # Add parentheses when necessary
-dotnet_diagnostic.RCS1124.severity = none # Inline local variable - disabled for debugging clarity
+dotnet_diagnostic.RCS1123.severity = warning # Add parentheses when necessary
+dotnet_diagnostic.RCS1124.severity = none # Inline local variable - preference: named locals kept for debugging clarity
 dotnet_diagnostic.RCS1132.severity = warning # Remove redundant overriding member
 dotnet_diagnostic.RCS1133.severity = warning # Remove redundant Dispose/Close call
 dotnet_diagnostic.RCS1134.severity = warning # Remove redundant statement
 dotnet_diagnostic.RCS1175.severity = warning # Unused 'this' parameter
-dotnet_diagnostic.RCS1194.severity = none # Implement exception constructors
+dotnet_diagnostic.RCS1194.severity = warning # Implement exception constructors
 dotnet_diagnostic.RCS1197.severity = warning # Optimize StringBuilder.Append/AppendLine call
 dotnet_diagnostic.RCS1214.severity = warning # Unnecessary interpolated string
 dotnet_diagnostic.RCS1220.severity = warning # Use pattern matching instead of combination of 'is' operator and cast operator
@@ -414,10 +414,10 @@ dotnet_diagnostic.RCS1166.severity = warning # Value type object is never equal 
 dotnet_diagnostic.RCS1248.severity = warning # Use 'is null' instead of '== null'
 dotnet_diagnostic.RCS1249.severity = warning # Unnecessary null-forgiving operator
 
-# Unity-specific rules (if applicable)
-dotnet_diagnostic.RCS9001.severity = none # Use predefined type
-dotnet_diagnostic.RCS9002.severity = none # Use property instead of field.name
-dotnet_diagnostic.RCS9003.severity = none # Unnecessary conditional access
+# Roslynator.CodeAnalysis.Analyzers (Roslyn analyzer-authoring rules)
+dotnet_diagnostic.RCS9001.severity = warning # Use pattern matching
+dotnet_diagnostic.RCS9002.severity = warning # Use property SyntaxNode.SpanStart
+dotnet_diagnostic.RCS9003.severity = warning # Unnecessary conditional access
 
 # Global Usings Analyzer
 
@@ -429,10 +429,10 @@ dotnet_diagnostic.globalusingsanalyzer0003.severity = warning
 dotnet_diagnostic.TWA002.severity = silent
 
 # IDE0290: Use primary constructor - disabled per project preference
-dotnet_diagnostic.IDE0290.severity = none
+dotnet_diagnostic.IDE0290.severity = none # preference: primary constructors off by project choice
 
 # IDE1006: Naming Styles
-dotnet_diagnostic.IDE1006.severity = none
+dotnet_diagnostic.IDE1006.severity = warning
 
 # IDE0290: Use primary constructor
 csharp_style_prefer_primary_constructors = false

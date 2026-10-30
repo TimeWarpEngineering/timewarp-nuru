@@ -2177,9 +2177,9 @@ internal static class JsonArgsEmitter
 
   private static string SimpleName(string typeName)
   {
-    const string globalPrefix = "global::";
-    if (typeName.StartsWith(globalPrefix, StringComparison.Ordinal))
-      typeName = typeName[globalPrefix.Length..];
+    const string GlobalPrefix = "global::";
+    if (typeName.StartsWith(GlobalPrefix, StringComparison.Ordinal))
+      typeName = typeName[GlobalPrefix.Length..];
 
     int dot = typeName.LastIndexOf('.');
     return dot >= 0 ? typeName[(dot + 1)..] : typeName;

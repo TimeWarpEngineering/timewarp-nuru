@@ -26,10 +26,10 @@ namespace TimeWarp.Nuru;
 /// </example>
 public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
 {
-  private readonly List<RouteMatcher> _segments = [];
-  private string? _catchAllParameterName;
-  private int _specificity;
-  private MessageType _messageType = MessageType.Command;
+  private readonly List<RouteMatcher> Segments = [];
+  private string? CatchAllParameterName;
+  private int Specificity;
+  private MessageType MessageType = MessageType.Command;
 
   // Specificity scoring constants - must match Compiler exactly
   // See: documentation/developer/design/resolver/specificity-algorithm.md
@@ -49,8 +49,8 @@ public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
   public CompiledRouteBuilder WithLiteral(string value)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(value);
-    _segments.Add(new LiteralMatcher(value));
-    _specificity += SpecificityLiteralSegment;
+    Segments.Add(new LiteralMatcher(value));
+    Specificity += SpecificityLiteralSegment;
     return this;
   }
 
@@ -69,15 +69,15 @@ public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
     bool isOptional = false)
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(name);
-    _segments.Add(new ParameterMatcher(name, isCatchAll: false, type, description, isOptional));
+    Segments.Add(new ParameterMatcher(name, isCatchAll: false, type, description, isOptional));
 
     if (isOptional)
     {
-      _specificity += SpecificityOptionalParameter;
+      Specificity += SpecificityOptionalParameter;
     }
     else
     {
-      _specificity += string.IsNullOrEmpty(type) ? SpecificityUntypedParameter : SpecificityTypedParameter;
+      Specificity += string.IsNullOrEmpty(type) ? SpecificityUntypedParameter : SpecificityTypedParameter;
     }
 
     return this;
@@ -135,7 +135,7 @@ public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
     // Determine runtime optionality: boolean flags and repeated options are always optional
     bool isOptionalAtRuntime = isOptionalFlag || !expectsValue || isRepeated;
 
-    _segments.Add(new OptionMatcher(
+    Segments.Add(new OptionMatcher(
       matchPattern: matchPattern,
       expectsValue: expectsValue,
       parameterName: resolvedParamName,
@@ -147,22 +147,22 @@ public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
     ));
 
     // Score the option flag itself (only explicitly optional flags get lower specificity)
-    _specificity += isOptionalFlag ? SpecificityOptionalOption : SpecificityRequiredOption;
+    Specificity += isOptionalFlag ? SpecificityOptionalOption : SpecificityRequiredOption;
 
     // Score the option's parameter value if present
     if (expectsValue)
     {
       if (parameterIsOptional)
       {
-        _specificity += SpecificityOptionalParameter;
+        Specificity += SpecificityOptionalParameter;
       }
       else if (!string.IsNullOrEmpty(parameterType))
       {
-        _specificity += SpecificityTypedParameter;
+        Specificity += SpecificityTypedParameter;
       }
       else
       {
-        _specificity += SpecificityUntypedParameter;
+        Specificity += SpecificityUntypedParameter;
       }
     }
 
@@ -187,14 +187,14 @@ public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
   {
     ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-    if (_catchAllParameterName is not null)
+    if (CatchAllParameterName is not null)
     {
       throw new InvalidOperationException("Only one catch-all parameter is allowed per route.");
     }
 
-    _catchAllParameterName = name;
-    _segments.Add(new ParameterMatcher(name, isCatchAll: true, type, description, isOptional: false));
-    _specificity += SpecificityCatchAll;
+    CatchAllParameterName = name;
+    Segments.Add(new ParameterMatcher(name, isCatchAll: true, type, description, isOptional: false));
+    Specificity += SpecificityCatchAll;
     return this;
   }
 
@@ -213,7 +213,7 @@ public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
   /// </remarks>
   public CompiledRouteBuilder WithMessageType(MessageType messageType)
   {
-    _messageType = messageType;
+    MessageType = messageType;
     return this;
   }
 
@@ -225,10 +225,10 @@ public sealed class CompiledRouteBuilder : IBuilder<CompiledRoute>
   {
     return new CompiledRoute
     {
-      Segments = _segments.ToArray(),
-      CatchAllParameterName = _catchAllParameterName,
-      Specificity = _specificity,
-      MessageType = _messageType
+      Segments = Segments.ToArray(),
+      CatchAllParameterName = CatchAllParameterName,
+      Specificity = Specificity,
+      MessageType = MessageType
     };
   }
 

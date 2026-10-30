@@ -5,8 +5,8 @@ namespace TimeWarp.Nuru;
 /// </summary>
 public sealed class CompletionSourceRegistry
 {
-  private readonly Dictionary<string, ICompletionSource> parameterSources = [];
-  private readonly Dictionary<Type, ICompletionSource> typeSources = [];
+  private readonly Dictionary<string, ICompletionSource> ParameterSources = [];
+  private readonly Dictionary<Type, ICompletionSource> TypeSources = [];
 
   /// <summary>
   /// Registers a completion source for a specific parameter name.
@@ -18,7 +18,7 @@ public sealed class CompletionSourceRegistry
     ArgumentNullException.ThrowIfNull(parameterName);
     ArgumentNullException.ThrowIfNull(source);
 
-    parameterSources[parameterName] = source;
+    ParameterSources[parameterName] = source;
   }
 
   /// <summary>
@@ -32,7 +32,7 @@ public sealed class CompletionSourceRegistry
     ArgumentNullException.ThrowIfNull(type);
     ArgumentNullException.ThrowIfNull(source);
 
-    typeSources[type] = source;
+    TypeSources[type] = source;
   }
 
   /// <summary>
@@ -44,7 +44,7 @@ public sealed class CompletionSourceRegistry
   {
     ArgumentNullException.ThrowIfNull(parameterName);
 
-    return parameterSources.TryGetValue(parameterName, out ICompletionSource? source)
+    return ParameterSources.TryGetValue(parameterName, out ICompletionSource? source)
       ? source
       : null;
   }
@@ -58,7 +58,7 @@ public sealed class CompletionSourceRegistry
   {
     ArgumentNullException.ThrowIfNull(type);
 
-    return typeSources.TryGetValue(type, out ICompletionSource? source)
+    return TypeSources.TryGetValue(type, out ICompletionSource? source)
       ? source
       : null;
   }

@@ -40,7 +40,7 @@ public partial class NuruApp
   /// <summary>
   /// Whether the completion registry has been configured.
   /// </summary>
-  private bool completionRegistryConfigured;
+  private bool CompletionRegistryConfigured;
 
   /// <summary>
   /// Configures the completion source registry if not already configured.
@@ -48,10 +48,10 @@ public partial class NuruApp
   /// </summary>
   public void ConfigureCompletionRegistry()
   {
-    if (completionRegistryConfigured)
+    if (CompletionRegistryConfigured)
       return;
 
-    completionRegistryConfigured = true;
+    CompletionRegistryConfigured = true;
     CompletionRegistryConfiguration?.Invoke(CompletionSourceRegistry);
   }
 

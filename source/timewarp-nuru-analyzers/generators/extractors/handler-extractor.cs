@@ -236,7 +236,7 @@ internal static class HandlerExtractor
 
     // Anonymous methods always have block bodies (no expression bodies)
     string? lambdaBodySource = anonymousMethod.Block?.ToFullString();
-    const bool isExpressionBody = false;
+    const bool IsExpressionBody = false;
 
     // Try to get symbol info for accurate type resolution
     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(anonymousMethod, cancellationToken);
@@ -248,7 +248,7 @@ internal static class HandlerExtractor
       return baseDefinition with
       {
         LambdaBodySource = lambdaBodySource,
-        IsExpressionBody = isExpressionBody
+        IsExpressionBody = IsExpressionBody
       };
     }
 
@@ -304,7 +304,7 @@ internal static class HandlerExtractor
       FullTypeName: null,
       MethodName: null,
       LambdaBodySource: lambdaBodySource,
-      IsExpressionBody: isExpressionBody,
+      IsExpressionBody: IsExpressionBody,
       Parameters: parameters.ToImmutable(),
       ReturnType: returnType,
       IsAsync: isAsync,
@@ -915,10 +915,10 @@ internal static class HandlerExtractor
     if (configurationKey is null)
     {
       string innerTypeName = innerType.Name;
-      const string optionsSuffix = "Options";
-      if (innerTypeName.EndsWith(optionsSuffix, StringComparison.Ordinal) && innerTypeName.Length > optionsSuffix.Length)
+      const string OptionsSuffix = "Options";
+      if (innerTypeName.EndsWith(OptionsSuffix, StringComparison.Ordinal) && innerTypeName.Length > OptionsSuffix.Length)
       {
-        configurationKey = innerTypeName[..^optionsSuffix.Length];
+        configurationKey = innerTypeName[..^OptionsSuffix.Length];
       }
       else
       {

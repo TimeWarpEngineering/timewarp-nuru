@@ -7,12 +7,15 @@ namespace TimeWarp.Nuru;
 /// Messages for parse and validation failures include a 1-based line number when the
 /// source text can be located.
 /// </remarks>
-[SuppressMessage(
-  "Design",
-  "CA1032:Implement standard exception constructors",
-  Justification = "Callers always supply a message. A parameterless constructor would hide the config error.")]
 public sealed class KeyBindingConfigException : Exception
 {
+  /// <summary>
+  /// Creates an exception with the default message.
+  /// </summary>
+  public KeyBindingConfigException()
+  {
+  }
+
   /// <summary>
   /// Creates an exception with the given message.
   /// </summary>

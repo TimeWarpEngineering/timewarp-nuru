@@ -277,30 +277,30 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen56ProblemRenderer
 
     private sealed class MapConfig : AnalyzerConfigOptionsProvider
     {
-      private readonly MapOptions options;
+      private readonly MapOptions Options;
 
       public MapConfig(IReadOnlyDictionary<string, string> values)
       {
-        options = new MapOptions(values);
+        Options = new MapOptions(values);
       }
 
-      public override AnalyzerConfigOptions GlobalOptions => options;
+      public override AnalyzerConfigOptions GlobalOptions => Options;
 
-      public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => options;
+      public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => Options;
 
-      public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => options;
+      public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => Options;
 
       private sealed class MapOptions : AnalyzerConfigOptions
       {
-        private readonly IReadOnlyDictionary<string, string> values;
+        private readonly IReadOnlyDictionary<string, string> Values;
 
         public MapOptions(IReadOnlyDictionary<string, string> values)
         {
-          this.values = values;
+          Values = values;
         }
 
         public override bool TryGetValue(string key, out string value) =>
-          values.TryGetValue(key, out value!);
+          Values.TryGetValue(key, out value!);
       }
     }
   }

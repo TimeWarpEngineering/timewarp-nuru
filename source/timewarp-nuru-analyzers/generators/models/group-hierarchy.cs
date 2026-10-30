@@ -7,13 +7,13 @@ namespace TimeWarp.Nuru.Generators;
 /// Represents a group node in the capabilities hierarchy.
 /// Used during source generation to organize routes by their group prefixes.
 /// </summary>
-/// <param name="Name">The single-word group name (e.g., "admin", "config")</param>
-internal sealed class GroupNode(string Name)
+/// <param name="name">The single-word group name (e.g., "admin", "config")</param>
+internal sealed class GroupNode(string name)
 {
   /// <summary>
   /// Gets the single-word group name.
   /// </summary>
-  public string Name { get; } = Name;
+  public string Name { get; } = name;
 
   /// <summary>
   /// Gets or sets nested child groups.

@@ -52,7 +52,7 @@ internal static class ServiceScopeExpressions
   /// </summary>
   internal static bool IsPerRun(ServiceDefinition service, ImmutableArray<ServiceDefinition> services) =>
     service.Lifetime is ServiceLifetime.SessionScoped or ServiceLifetime.CommandScoped ||
-    service.Lifetime == ServiceLifetime.Scoped && DependencyGraphBuilder.DependsOnInvocationScope(service, services);
+    (service.Lifetime == ServiceLifetime.Scoped && DependencyGraphBuilder.DependsOnInvocationScope(service, services));
 
   internal static string Read
   (

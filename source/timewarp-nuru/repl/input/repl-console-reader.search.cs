@@ -201,9 +201,11 @@ public sealed partial class ReplConsoleReader
     {
       // Search backward (older entries). When refining the pattern (includeCurrent) start
       // AT the current match so it is re-tested before advancing to an older entry.
-      int searchIndex = startIndex >= History.Count
-        ? History.Count - 1
-        : includeCurrent ? startIndex : startIndex - 1;
+      int searchIndex;
+      if (startIndex >= History.Count)
+        searchIndex = History.Count - 1;
+      else
+        searchIndex = includeCurrent ? startIndex : startIndex - 1;
       while (searchIndex >= 0)
       {
         if (string.IsNullOrEmpty(SearchPattern) ||
@@ -221,9 +223,11 @@ public sealed partial class ReplConsoleReader
     {
       // Search forward (newer entries). When refining the pattern (includeCurrent) start
       // AT the current match so it is re-tested before advancing to a newer entry.
-      int searchIndex = startIndex < 0
-        ? 0
-        : includeCurrent ? startIndex : startIndex + 1;
+      int searchIndex;
+      if (startIndex < 0)
+        searchIndex = 0;
+      else
+        searchIndex = includeCurrent ? startIndex : startIndex + 1;
       while (searchIndex < History.Count)
       {
         if (string.IsNullOrEmpty(SearchPattern) ||

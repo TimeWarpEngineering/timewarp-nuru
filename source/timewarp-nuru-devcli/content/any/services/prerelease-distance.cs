@@ -162,8 +162,7 @@ public static class PrereleaseDistance
       return false;
     }
 
-    string[] parts = core.Split('.');
-    foreach (string part in parts)
+    foreach (string part in core.Split('.'))
     {
       if (part.Length == 0 || !IsAsciiDigits(part))
       {

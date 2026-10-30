@@ -259,17 +259,17 @@ public sealed partial class ReplConsoleReader
   private static class ClipboardToolCache
   {
     private static bool Initialized;
-    private static bool _hasPwsh;
-    private static bool _hasPowershellExe;
-    private static bool _hasClipExe;
-    private static bool _hasXclip;
-    private static bool _hasXsel;
+    private static bool PwshAvailable;
+    private static bool PowershellExeAvailable;
+    private static bool ClipExeAvailable;
+    private static bool XclipAvailable;
+    private static bool XselAvailable;
 
-    public static bool HasPwsh { get { EnsureInitialized(); return _hasPwsh; } }
-    public static bool HasPowershellExe { get { EnsureInitialized(); return _hasPowershellExe; } }
-    public static bool HasClipExe { get { EnsureInitialized(); return _hasClipExe; } }
-    public static bool HasXclip { get { EnsureInitialized(); return _hasXclip; } }
-    public static bool HasXsel { get { EnsureInitialized(); return _hasXsel; } }
+    public static bool HasPwsh { get { EnsureInitialized(); return PwshAvailable; } }
+    public static bool HasPowershellExe { get { EnsureInitialized(); return PowershellExeAvailable; } }
+    public static bool HasClipExe { get { EnsureInitialized(); return ClipExeAvailable; } }
+    public static bool HasXclip { get { EnsureInitialized(); return XclipAvailable; } }
+    public static bool HasXsel { get { EnsureInitialized(); return XselAvailable; } }
 
     private static void EnsureInitialized()
     {
@@ -279,11 +279,11 @@ public sealed partial class ReplConsoleReader
       // Only check Linux-specific tools when running on Linux
       if (OperatingSystem.IsLinux())
       {
-        _hasPwsh = IsCommandAvailable("pwsh");
-        _hasPowershellExe = IsCommandAvailable("powershell.exe");
-        _hasClipExe = IsCommandAvailable("clip.exe");
-        _hasXclip = IsCommandAvailable("xclip");
-        _hasXsel = IsCommandAvailable("xsel");
+        PwshAvailable = IsCommandAvailable("pwsh");
+        PowershellExeAvailable = IsCommandAvailable("powershell.exe");
+        ClipExeAvailable = IsCommandAvailable("clip.exe");
+        XclipAvailable = IsCommandAvailable("xclip");
+        XselAvailable = IsCommandAvailable("xsel");
       }
 
       Initialized = true;

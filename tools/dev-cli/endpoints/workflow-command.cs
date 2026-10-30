@@ -1076,8 +1076,13 @@ public sealed class WorkflowCommand : ICommand<Unit>
         : new TagPinOutcome(TagPinStatus.Mismatch, tagCommit, headCommit, null);
     }
 
-    private static string ShortSha(string? sha) =>
-      string.IsNullOrEmpty(sha) ? "(unknown)" : sha.Length > 7 ? sha[..7] : sha;
+    private static string ShortSha(string? sha)
+    {
+      if (string.IsNullOrEmpty(sha))
+        return "(unknown)";
+
+      return sha.Length > 7 ? sha[..7] : sha;
+    }
 
     private static string? ReadPropsVersion(string repoRoot)
     {

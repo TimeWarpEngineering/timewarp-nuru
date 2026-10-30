@@ -18,7 +18,7 @@ using TimeWarp.Terminal;
 /// <summary>
 /// Helpers for Windows in-place executable replacement used by self-install.
 /// </summary>
-public static class WindowsExeReplace
+internal static class WindowsExeReplace
 {
   /// <summary>
   /// Best-effort delete of <paramref name="oldExe"/> after a successful

@@ -20,6 +20,12 @@
 // path segment is escaped, so a --package like "../evil" cannot walk off
 // v3-flatcontainer. The HttpMessageHandler constructor exists for tests.
 //
+// The service owns its handler in a field and disposes it after the client
+// (kanban task 560). Consumers compile this file, and CA2000 does not treat
+// new HttpClient(handler) as taking ownership, so it flagged the handler the
+// parameterless constructor creates. A field the service disposes is an
+// ownership the analyzer sees; it needs no suppression.
+//
 // Two feeds, no setting (kanban task 536). TimeWarp publishes to nuget.org
 // and to the org GitHub Packages feed only, so both are constants here and
 // LookupAsync always reads both. Repo visibility is no guide: Roslynk is
@@ -53,8 +59,9 @@ namespace DevCli;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-public sealed class NuGetVersionService : IDisposable
+internal sealed class NuGetVersionService : IDisposable
 {
+  private readonly HttpMessageHandler Handler;
   private readonly HttpClient HttpClient;
 
   private readonly Func<CancellationToken, Task<GitHubPackagesCredential?>> GitHubCredentialProvider;
@@ -110,7 +117,8 @@ public sealed class NuGetVersionService : IDisposable
   {
     ArgumentNullException.ThrowIfNull(handler);
     ArgumentNullException.ThrowIfNull(gitHubCredentialProvider);
-    HttpClient = new HttpClient(handler);
+    Handler = handler;
+    HttpClient = new HttpClient(handler, disposeHandler: false);
     GitHubCredentialProvider = gitHubCredentialProvider;
   }
 
@@ -633,23 +641,24 @@ public sealed class NuGetVersionService : IDisposable
   public void Dispose()
   {
     HttpClient.Dispose();
+    Handler.Dispose();
   }
 }
 
-public sealed class NuGetVersionIndex
+internal sealed class NuGetVersionIndex
 {
   [JsonPropertyName("versions")]
   public IReadOnlyList<string> Versions { get; init; } = [];
 }
 
 /// <summary>A NuGet V3 service index; only the resources list is read.</summary>
-public sealed class NuGetServiceIndex
+internal sealed class NuGetServiceIndex
 {
   [JsonPropertyName("resources")]
   public IReadOnlyList<NuGetServiceIndexResource>? Resources { get; init; }
 }
 
-public sealed class NuGetServiceIndexResource
+internal sealed class NuGetServiceIndexResource
 {
   [JsonPropertyName("@id")]
   public string? Id { get; init; }

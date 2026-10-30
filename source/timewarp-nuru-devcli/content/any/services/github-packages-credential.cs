@@ -14,7 +14,7 @@
 
 namespace DevCli;
 
-public sealed record GitHubPackagesCredential(string Token, string Source)
+internal sealed record GitHubPackagesCredential(string Token, string Source)
 {
   public const string GitHubTokenVariable = "GITHUB_TOKEN";
   public const string GhTokenVariable = "GH_TOKEN";

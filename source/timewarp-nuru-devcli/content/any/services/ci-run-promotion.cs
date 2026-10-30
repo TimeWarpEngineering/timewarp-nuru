@@ -63,7 +63,7 @@ using System.Text.Json.Serialization;
 /// <summary>
 /// One row of <c>gh run list --json databaseId,event,headSha,createdAt</c>.
 /// </summary>
-public sealed class CiRunSummary
+internal sealed class CiRunSummary
 {
   [JsonPropertyName("databaseId")]
   public long DatabaseId { get; init; }
@@ -81,7 +81,7 @@ public sealed class CiRunSummary
 /// <summary>
 /// One artifact entry from <c>gh api repos/{owner}/{repo}/actions/runs/{id}/artifacts</c>.
 /// </summary>
-public sealed class RunArtifact
+internal sealed class RunArtifact
 {
   [JsonPropertyName("id")]
   public long Id { get; init; }
@@ -96,7 +96,7 @@ public sealed class RunArtifact
 /// <summary>
 /// Response envelope for the run-artifacts REST endpoint.
 /// </summary>
-public sealed class RunArtifactListResponse
+internal sealed class RunArtifactListResponse
 {
   [JsonPropertyName("artifacts")]
   public IReadOnlyList<RunArtifact> Artifacts { get; init; } = [];
@@ -105,7 +105,7 @@ public sealed class RunArtifactListResponse
 /// <summary>
 /// Outcome of selecting a run's "Packages-*" artifact.
 /// </summary>
-public enum PackagesArtifactStatus
+internal enum PackagesArtifactStatus
 {
   Found,
   NoneMatching,
@@ -118,13 +118,13 @@ public enum PackagesArtifactStatus
 /// is Expired (the names of every matching-but-expired artifact, for the abort
 /// message).
 /// </summary>
-public sealed record PackagesArtifactOutcome(PackagesArtifactStatus Status, RunArtifact? Artifact, IReadOnlyList<string> ExpiredNames);
+internal sealed record PackagesArtifactOutcome(PackagesArtifactStatus Status, RunArtifact? Artifact, IReadOnlyList<string> ExpiredNames);
 
 /// <summary>
 /// Result of <see cref="CiRunPromotion.VerifyPackageSet"/>. <see cref="IsMatch"/>
 /// is true only when both lists are empty.
 /// </summary>
-public sealed record PackageSetVerification(IReadOnlyList<string> Missing, IReadOnlyList<string> Unexpected)
+internal sealed record PackageSetVerification(IReadOnlyList<string> Missing, IReadOnlyList<string> Unexpected)
 {
   public bool IsMatch => Missing.Count == 0 && Unexpected.Count == 0;
 }
@@ -134,7 +134,7 @@ public sealed record PackageSetVerification(IReadOnlyList<string> Missing, IRead
 /// during release. No process execution — see workflow-command.cs for the
 /// gh/git orchestration that calls into this.
 /// </summary>
-public static class CiRunPromotion
+internal static class CiRunPromotion
 {
   /// <summary>
   /// Filters <paramref name="runs"/> to those at <paramref name="headSha"/>

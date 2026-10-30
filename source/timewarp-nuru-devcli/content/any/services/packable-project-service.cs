@@ -42,7 +42,7 @@ namespace DevCli;
 
 using System.Text.Json;
 
-public sealed class PackableProjectService : IPackableProjectService
+internal sealed class PackableProjectService : IPackableProjectService
 {
   /// <inheritdoc />
   public async ValueTask<IReadOnlyList<PackableProject>> GetPackableProjectsAsync
@@ -232,7 +232,7 @@ public sealed class PackableProjectService : IPackableProjectService
 /// Shape of <c>dotnet msbuild -getProperty:...</c> JSON stdout:
 /// <c>{"Properties":{"IsPackable":"true","PackageId":"TimeWarp.Nuru"}}</c>.
 /// </summary>
-public sealed class MsBuildEvaluationOutput
+internal sealed class MsBuildEvaluationOutput
 {
   public Dictionary<string, string>? Properties { get; init; }
 }

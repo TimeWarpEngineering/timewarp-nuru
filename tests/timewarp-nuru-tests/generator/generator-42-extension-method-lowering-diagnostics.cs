@@ -363,6 +363,68 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen42ExtensionMethodLoweringDiagnostics
       await Task.CompletedTask;
     }
 
+    // Task 560: generated code compiles into the app assembly, so an internal impl
+    // declared in the app is reachable and must not raise NURU054 (DevCli content
+    // is internal and is compiled into the consumer).
+    public static async Task Should_not_report_nuru054_for_internal_impl_in_same_compilation()
+    {
+      const string App = AppPreamble + """
+        NuruApp app = NuruApp.CreateBuilder()
+          .ConfigureServices(static services => services.AddSingleton<IEm42Own, Em42Own>())
+          .Map("em42-own").WithHandler(static (IEm42Own o) => o.Name()).AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+
+        internal interface IEm42Own
+        {
+          string Name();
+        }
+
+        internal sealed class Em42Own : IEm42Own
+        {
+          public string Name() => "own";
+        }
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(App);
+      result.Results[0].Exception.ShouldBeNull();
+      result.Diagnostics.ShouldNotContain(static d => d.Id == "NURU054");
+
+      string generated = string.Join("\n", result.Results[0].GeneratedSources.Select(static g => g.SourceText.ToString()));
+      generated.ShouldContain("global::Em42Own");
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_report_nuru054_for_private_nested_impl_in_same_compilation()
+    {
+      const string App = AppPreamble + """
+        NuruApp app = NuruApp.CreateBuilder()
+          .ConfigureServices(Em42Outer.Configure)
+          .Map("em42-nested").WithHandler(static () => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+
+        public interface IEm42Nested { }
+
+        public static class Em42Outer
+        {
+          public static void Configure(IServiceCollection services)
+          {
+            services.AddSingleton<IEm42Nested, Em42Nested>();
+          }
+
+          private sealed class Em42Nested : IEm42Nested { }
+        }
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(App);
+      result.Results[0].Exception.ShouldBeNull();
+      result.Diagnostics.ShouldContain(static d => d.Id == "NURU054");
+
+      await Task.CompletedTask;
+    }
+
     public static async Task Should_include_hatch_guidance_in_nuru052_message()
     {
       const string App = AppPreamble + """

@@ -8,7 +8,7 @@ namespace DevCli;
 /// <summary>
 /// Per-repo configuration for version checking.
 /// </summary>
-public sealed class CheckVersionConfig
+internal sealed class CheckVersionConfig
 {
   /// <summary>
   /// Comma-separated NuGet package IDs to check.

@@ -274,7 +274,7 @@ internal static class ServiceExtractor
     {
       constructorDeps = ExtractConstructorDependencies(implementationSymbol);
       constructorParams = ExtractConstructorParameters(implementationSymbol);
-      isInternalType = IsInternalType(implementationSymbol);
+      isInternalType = IsInternalType(implementationSymbol, semanticModel.Compilation);
     }
 
     services.Add(new ServiceDefinition(
@@ -563,26 +563,13 @@ internal static class ServiceExtractor
   }
 
   /// <summary>
-  /// Checks if an implementation type is internal (not accessible from generated code).
+  /// Checks if an implementation type is not accessible from generated code. The generated
+  /// code compiles into the same assembly, so an internal type declared in this compilation
+  /// (or exposed by [InternalsVisibleTo]) is accessible; a private nested type or an internal
+  /// type from another assembly is not. Same rule as ExtensionMethodLowerer (kanban task 560).
   /// </summary>
-  private static bool IsInternalType(INamedTypeSymbol type)
-  {
-    // Check the type and all containing types
-    INamedTypeSymbol? current = type;
-    while (current is not null)
-    {
-      if (current.DeclaredAccessibility is Accessibility.Internal
-          or Accessibility.Private
-          or Accessibility.ProtectedAndInternal)
-      {
-        return true;
-      }
-
-      current = current.ContainingType;
-    }
-
-    return false;
-  }
+  private static bool IsInternalType(INamedTypeSymbol type, Compilation compilation) =>
+    !compilation.IsSymbolAccessibleWithin(type, compilation.Assembly);
 
   /// <summary>
   /// Extracts service and implementation type names and symbol from an invocation.

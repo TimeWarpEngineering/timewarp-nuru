@@ -45,7 +45,7 @@ namespace DevCli;
 /// <summary>
 /// Per-repo configuration for the attestation verify step.
 /// </summary>
-public sealed class AttestationConfig
+internal sealed class AttestationConfig
 {
   /// <summary>
   /// <c>off</c>, <c>warn</c>, or <c>require</c>. Blank/absent uses a
@@ -58,7 +58,7 @@ public sealed class AttestationConfig
 /// <summary>
 /// Resolved attestation enforcement level for a pipeline run.
 /// </summary>
-public enum AttestationMode
+internal enum AttestationMode
 {
   /// <summary>Skip attestation verify entirely.</summary>
   Off,
@@ -77,14 +77,14 @@ public enum AttestationMode
 /// unrecognized non-blank raw value (callers should warn, then apply
 /// <see cref="AttestationConfigResolver.EffectiveMode"/>).
 /// </summary>
-public readonly record struct AttestationModeResolution(
+internal readonly record struct AttestationModeResolution(
   AttestationMode? Mode,
   string? UnrecognizedValue);
 
 /// <summary>
 /// Pure resolver for <c>attestation.mode</c> — no process execution, no I/O.
 /// </summary>
-public static class AttestationConfigResolver
+internal static class AttestationConfigResolver
 {
   /// <summary>Default when mode is unset in PR/merge pipeline mode.</summary>
   public const AttestationMode DefaultPrMode = AttestationMode.Warn;

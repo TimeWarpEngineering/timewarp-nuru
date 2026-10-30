@@ -43,7 +43,7 @@ using TimeWarp.Terminal;
 
 [NuruRoute("check-version", Description = "Verify version is ready to release")]
 [NuruRouteExample("check-version --strict", Description = "Fail when source is more than one prerelease increment ahead of the latest published version")]
-public sealed class CheckVersionCommand : ICommand<Unit>
+internal sealed class CheckVersionCommand : ICommand<Unit>
 {
   [Option("package", Description = "NuGet package ID to check (comma-separated)")]
   public string? Package { get; set; }
@@ -57,7 +57,7 @@ public sealed class CheckVersionCommand : ICommand<Unit>
   /// </summary>
   public string? SourceVersion { get; set; }
 
-  public sealed class Handler : ICommandHandler<CheckVersionCommand, Unit>
+  internal sealed class Handler : ICommandHandler<CheckVersionCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly NuGetVersionService NuGetVersionService;

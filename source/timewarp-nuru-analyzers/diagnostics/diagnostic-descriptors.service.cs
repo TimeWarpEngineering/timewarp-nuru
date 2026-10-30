@@ -67,7 +67,7 @@ internal static partial class DiagnosticDescriptors
     category: ServiceCategory,
     defaultSeverity: DiagnosticSeverity.Error,
     isEnabledByDefault: true,
-    description: "Generated code runs in a different assembly context and cannot access internal types without [InternalsVisibleTo]. Either expose the type publicly or use .UseMicrosoftDependencyInjection() for runtime DI.");
+    description: "Generated code compiles into the app assembly, so it can reach the app's own internal types but not a private nested type or an internal type from another assembly without [InternalsVisibleTo]. Either expose the type or use .UseMicrosoftDependencyInjection() for runtime DI.");
 
   /// <summary>
   /// NURU055: Circular dependency detected.

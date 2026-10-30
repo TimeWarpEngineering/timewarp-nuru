@@ -24,14 +24,14 @@ namespace DevCli;
 
 using System.Net;
 
-public enum PackagePublishVerdict
+internal enum PackagePublishVerdict
 {
   NotPublished,
   Published,
   Unknown
 }
 
-public sealed class PackageFeedLookup
+internal sealed class PackageFeedLookup
 {
   public PackageFeedLookup
   (
@@ -118,7 +118,7 @@ public sealed class PackageFeedLookup
 /// from <see cref="HttpRequestException"/> so a caller that catches lookup
 /// failures generically still fails closed.
 /// </summary>
-public sealed class PackageFeedUnreadableException : HttpRequestException
+internal sealed class PackageFeedUnreadableException : HttpRequestException
 {
   public PackageFeedUnreadableException(string message, Exception? inner, HttpStatusCode? statusCode)
     : base(message, inner, statusCode)

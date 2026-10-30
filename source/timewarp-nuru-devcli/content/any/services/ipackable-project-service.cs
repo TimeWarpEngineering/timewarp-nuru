@@ -9,13 +9,13 @@ namespace DevCli;
 /// <summary>
 /// A packable MSBuild project discovered under <c>source/</c>.
 /// </summary>
-public sealed record PackableProject(string ProjectPath, string PackageId);
+internal sealed record PackableProject(string ProjectPath, string PackageId);
 
 /// <summary>
 /// Derives the set of packable projects (<c>IsPackable=true</c>) under a repo's
 /// <c>source/</c> tree, so pack/push/check-version stop hand-maintaining lists.
 /// </summary>
-public interface IPackableProjectService
+internal interface IPackableProjectService
 {
   /// <summary>
   /// Returns every packable project under <c>{repoRoot}/source/</c>, sorted by

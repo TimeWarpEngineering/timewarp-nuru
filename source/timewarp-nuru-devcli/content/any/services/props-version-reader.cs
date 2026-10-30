@@ -17,7 +17,7 @@ namespace DevCli;
 
 using System.Xml.Linq;
 
-public static class PropsVersionReader
+internal static class PropsVersionReader
 {
   private static readonly XNamespace MsBuildNamespace = "http://schemas.microsoft.com/developer/msbuild/2003";
 

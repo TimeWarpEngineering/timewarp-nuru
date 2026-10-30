@@ -51,6 +51,10 @@ This task turns telemetry on for this repo's `dev` CLI and adds a child span for
 - [x] AOT `dev self-install` still builds
 - [x] Env vars for CI and ganda are documented next to the dev CLI
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Confirmed on master 2026-10-30: `dev.cs` has no `UseTelemetry()`, and neither `tools/dev-cli` nor `source/timewarp-nuru-devcli/content` references OpenTelemetry.
@@ -63,6 +67,8 @@ This task turns telemetry on for this repo's `dev` CLI and adds a child span for
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a18adc-ffe1-7d63-b6c0-ef595c7b56de, max-turns 500, Blocked — 2026-10-30T03:31:50Z
 - Implement oracle resumed: implementer-grok (grok, vendor xai, model grok-4.7), session 01a18adf-15e3-7c41-8298-e902e6869779, finished the dev telemetry wiring (2026-10-30)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a18adf-15e3-7c41-8298-e902e6869779, max-turns 500, Done — 2026-10-30T04:05:36Z
+- Review oracle: reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session 2cfdcf90-5860-4c1f-ad6d-1819705fab5d, effort 3, roster general, max-turns 200, round 1, disposition accepted-exceptions (2026-10-30)
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-30T04:09:45Z
 
 ## Results
 
@@ -73,3 +79,15 @@ This task turns telemetry on for this repo's `dev` CLI and adds a child span for
 Smoke: from the repo root, run `dotnet tools/dev-cli/telemetry-proof/proof.cs`, then `dotnet tools/dev-cli/telemetry-proof/proof.cs aot`. `dotnet tools/dev-cli/dev.cs self-install` writes `bin/dev`.
 
 Expect: the first command prints `command span: one workflow span, parented to TRACEPARENT, error.type ArgumentException`, `unset endpoint: no trace export`, `stage spans: workflow parent plus one child per pr and release stage`, and `proof ok`. The aot command prints `aot bin/dev: one workflow span, parented to TRACEPARENT; unset endpoint exports nothing`. `bin/dev` is a native ELF executable.
+
+### Review disposition
+
+- Rounds: 1. Effort 3, roster: general (reviewer-claude).
+- Final counts: bug 0. suggestion 2 wontfix. nit 1 wontfix. Open 0.
+- Disposition: **accepted-exceptions**.
+  - M1: the `UnsafeAccessor` write to `Activity._spanId` in `incoming-trace-context.cs` works under JIT and AOT today. The proper fix is in Nuru core: `TelemetryBehavior` should accept a remote parent.
+  - M2: the package integrity gate has no stage span, and the workflow span stays Ok on a non-throwing abort. The gate is not in the task's stage list, and workflow-span status is owned by core.
+  - M3: proof harness polish.
+  - Recommended follow-up: a Nuru-core task so `TelemetryBehavior` parents to `TRACEPARENT` and lets a handler mark the command span Error.
+- The reviewer re-ran both proofs in this worktree, and both passed. `proof.cs` printed `proof ok`. `proof.cs aot` printed the `aot bin/dev` line.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

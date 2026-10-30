@@ -88,6 +88,7 @@ Acceptance:
 - First attempt scoped the constants naming rule to fields only, so that local constants are camelCase as
   tw-csharp says. The standalone tests have about 117 PascalCase local constants, so I reverted it. The
   existing rule stays, and the 6 camelCase local constants in source were renamed to PascalCase instead.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b2f8fb14-050b-4a05-b393-97c549e97adf, max-turns 500, Done — 2026-10-30T13:10:27Z
 
 ## Results
 

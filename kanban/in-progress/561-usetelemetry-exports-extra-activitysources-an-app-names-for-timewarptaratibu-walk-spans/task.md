@@ -14,6 +14,10 @@ TimeWarp.Taratibu 1.0.0-beta.17 (PR #77, task 059) now emits per-node walk spans
 - Tests: the generator emits `AddSource` for each configured name; a sample app that names a custom source exports its spans (in-memory exporter).
 - Document in the telemetry docs, with Taratibu as the example.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Consumer: timewarp-ganda (follow-up there: subscribe `TimeWarp.Taratibu` once this ships, then let ganda's own spans move off the borrowed `TimeWarp.Nuru` source onto a `TimeWarp.Ganda` source).
@@ -53,6 +57,8 @@ Acceptance criteria:
   emitter, tests, docs. CI multi-mode 2161 passed / 6 skipped / 0 failed; standalone phase
   0 failed; `ganda repo audit` clean (no audit fixes needed).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 62028b4e-74d4-4f82-96e4-37a10e56f815, max-turns 500, Done — 2026-10-30T18:53:14Z
+- Review oracle: grok (Grok 4.7, Cursor), tw-implementation-review, effort 2, roster general, session not exposed, max-turns uncapped (review budget turn cap 120), round 1, disposition clean — 2026-10-31
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120) — 2026-10-30T19:08:04Z
 
 ## Results
 
@@ -114,3 +120,13 @@ Expect:
   library span and counter in the OTLP payloads, and `Should_not_export_library_span_without_option`
   does not find the span.
 - CI suite: 0 failed in both the multi-mode and standalone phases.
+
+### Review
+
+- Round 1, effort 2, roster general (Grok 4.7, session not exposed). Disposition **clean**. Open findings: 0.
+- Counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- Misread: the goal restatement changes the task's test mechanism. The task asks for a sample app that names a custom source and exports its spans with an in-memory exporter. The restatement asks for an in-process collector and adds the meter to that same run. The implementation follows the restatement. The generated providers only attach the OTLP exporter, and telemetry-06 uses an in-process HTTP collector (the telemetry-04 pattern) to show the library span and counter in the exported payloads. The review accepts that proof.

@@ -89,6 +89,8 @@ Acceptance:
   tw-csharp says. The standalone tests have about 117 PascalCase local constants, so I reverted it. The
   existing rule stays, and the 6 camelCase local constants in source were renamed to PascalCase instead.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b2f8fb14-050b-4a05-b393-97c549e97adf, max-turns 500, Done — 2026-10-30T13:10:27Z
+- Reviewer: cursor, general roster, effort 3, turn cap 200 (cursor uncapped). No vendor session id on this launch. Round 1 clean — 2026-10-30
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-30T13:20:56Z
 
 ## Results
 
@@ -196,6 +198,16 @@ ganda repo audit
 **Expect:** each listed rule is `severity = warning`. The build reports 0 warnings and 0 errors. CI exits 0
 with 0 failed (2159 passed and 6 skipped in multi-mode; 42 standalone files, 0 failed). The DevCli content
 grep returns only `attestation-verifier.cs:170` (the CA1819 follow-up). The audit passes.
+
+### Review disposition
+
+Round 1, effort 3, roster general. Counts: bug 0, suggestion 0, nit 0, all statuses 0. Outcome: **clean**.
+The implementer restatement matches the task. Paths: `review/review-framework.md`, `review/round-1/general.md`,
+`review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

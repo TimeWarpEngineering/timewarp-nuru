@@ -32,13 +32,30 @@ Fix the content. **No suppression of any kind** (Steve 2026-10-30, 558: "i don't
     and the tests that compile the content.
 - CA2000: restructure `NuGetVersionService()` so ownership is visible to the analyzer. For example, create the handler in a local, pass it to `HttpClient(handler, disposeHandler: true)` inside try/catch that disposes the handler on failure, or use a factory the analyzer accepts.
 
+## Goal (implementer restatement)
+
+DevCli ships source files that compile into the consumer's own assembly, so any analyzer hit in them lands
+on the consumer. Clear CA1034 and CA2000 at the source, with no suppression of any kind.
+
+Acceptance:
+
+- Every type under `source/timewarp-nuru-devcli/content/` is `internal` (top-level and nested). Handlers
+  stay nested. CA1034 only fires on externally visible nested types, so it goes away.
+- `NuGetVersionService()` builds its `HttpClientHandler` so CA2000 sees ownership pass to `HttpClient`.
+- Nuru's own consumers (`tools/dev-cli`, the devcli tests, the CI test assembly) build after the change.
+  Mediator/Nuru still discover and dispatch the internal handlers (the DevCli tests and `dev` run green).
+- A throwaway consumer project that compiles the content with CA1034 and CA2000 at warning, without this
+  repo's `.editorconfig` or dev-cli `NoWarn`, reports neither code.
+- Results lists, per org repo whose `tools/dev-cli` uses DevCli types, each file/type/line that breaks, its
+  one-line fix, and the `NoWarn` entries the repo can drop.
+
 ## Checklist
 
-- [ ] All DevCli content types `internal`; handlers stay nested; Mediator still dispatches
-- [ ] Clear CA2000 on `NuGetVersionService()` with ownership the analyzer accepts (no suppression)
-- [ ] Prove it with a consumer compile that does not copy this repo's `.editorconfig` or dev-cli `NoWarn`
-- [ ] Results: exact consumer fix list per repo (below)
-- [ ] Ship in the next DevCli prerelease after 4.0.0-beta.9
+- [x] All DevCli content types `internal`; handlers stay nested; Mediator still dispatches
+- [x] Clear CA2000 on `NuGetVersionService()` with ownership the analyzer accepts (no suppression)
+- [x] Prove it with a consumer compile that does not copy this repo's `.editorconfig` or dev-cli `NoWarn`
+- [x] Results: exact consumer fix list per repo (below)
+- [ ] Ship in the next DevCli prerelease after 4.0.0-beta.9 (release task after merge; no version bump here, as with 559)
 
 ## Consumer fix list (Results must fill this in)
 
@@ -58,6 +75,191 @@ references DevCli types (check the local master checkouts under
 - Nuru 558 (`kanban/done/558-devcli-source-content-never-causes-a-consumer-diagnostic-auto-generated-headers-rcs1194-on-review-suppressed-rules`): CA1034 classified as preference (6 sites) and kept; CA2000 listed as one remaining DevCli-content hit when `NoWarn` is cleared.
 - Ganda evidence: removing those two codes from dev-cli `NoWarn` fails the build only in the package content paths named above.
 
+## Results
+
+### What changed
+
+- **CA1034.** Every type under `source/timewarp-nuru-devcli/content/` is `internal`: 53 top-level types plus
+  the four nested `Handler`s, which stay nested. CA1034 fires only on externally visible nested types.
+- **NURU054 blocked internal services.** That was a generator defect, fixed here. Once the DevCli services were
+  internal, `tools/dev-cli` failed with NURU054 ("Cannot instantiate internal type") on `NuGetVersionService`,
+  `RepoConfigService` and `PackableProjectService`. The check looked at declared accessibility only. Generated
+  code compiles into the app's own assembly, so it can construct the app's internal types.
+  - `ServiceExtractor.IsInternalType` now uses `compilation.IsSymbolAccessibleWithin(type, compilation.Assembly)`,
+    the rule `ExtensionMethodLowerer` (395) already used for `AddX` from referenced assemblies.
+  - A private nested impl and an internal impl from another assembly still report NURU054.
+  - The descriptor's description no longer claims generated code runs in another assembly.
+  - Two tests were added in `generator-42`: a same-compilation internal impl gets no NURU054 and is constructed,
+    and a private nested impl still reports NURU054.
+  - Consumers must take TimeWarp.Nuru and DevCli at the same version.
+- **CA2000.** `NuGetVersionService` keeps its `HttpMessageHandler` in a field and disposes it after the
+  `HttpClient`, which is built with `disposeHandler: false`.
+  - The analyzer does not treat `new HttpClient(handler)` as taking ownership, so two other attempts still failed
+    under CA2000 defaults. One was a try/catch factory returning `new HttpClient(handler, disposeHandler: true)`.
+    The other was a factory returning the handler, whose invocation result CA2000 also tracks.
+  - A field the service disposes is ownership the analyzer sees. No suppression of any kind.
+- **Mediator and Nuru dispatch internal handlers.** `dev` builds, the consumer harness runs `clean` through
+  `CleanCommand.Handler`, and the DevCli tests pass.
+- **`tools/dev-cli`** dropped `CA1034;CA2000` from `NoWarn`. It builds clean, and its own handlers were already
+  internal. CA1034 stays off in the repo `.editorconfig` as a preference; the package content no longer depends on it.
+- **Docs.** Changelog entries cover the breaking DevCli change, the NURU054 fix and the CA2000 fix. The DevCli
+  readme migration note is "4.0.0-beta.10+: every DevCli type is internal".
+
+### Gates run
+
+- `dotnet build tools/dev-cli/dev.cs` succeeded with no warnings, after removing `CA1034;CA2000` from its `NoWarn`.
+- `dotnet run tests/ci-tests/run-ci-tests.cs`, after `ganda runfile cache --clear`, exited 0.
+  - Multi-mode: 2165 total, 2159 passed, 6 skipped, 0 failed.
+  - Standalone: 42 files, 0 failed, including generator-42 (10/10) and DevCli check-version-04/07.
+- The consumer proof (below) has a control:
+  - Master's content in the same harness reports exactly 5 hits: CA1034 in `check-version-command.cs:60`,
+    `clean-command.cs:22`, `release-command.cs:82` and `self-install-command.cs:26`, and CA2000 in
+    `nuget-version-service.cs:78`.
+  - The new content reports neither code.
+- `ganda repo audit` passes all checks. Nothing needed fixing.
+
+### How to validate
+
+Smoke: build a consumer outside this repo that compiles the content at `AnalysisLevel=latest-all`. The
+consumer has no `NoWarn` and no Nuru `.editorconfig`, and the content is copied out of the repo so the repo
+`.editorconfig` does not apply by path.
+
+```bash
+W=$PWD                                  # this worktree
+N=/tmp/devcli-560-content; C=/tmp/devcli-560-consumer
+rm -rf $N $C; mkdir -p $N/source $C
+cp -r $W/source/timewarp-nuru-devcli $N/source/ && rm -rf $N/source/timewarp-nuru-devcli/{bin,obj}
+printf 'root = true\n' > $C/.editorconfig
+cat > $C/consumer.csproj <<XML
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <InterceptorsNamespaces>\$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+  <Import Project="$N/source/timewarp-nuru-devcli/build/TimeWarp.Nuru.DevCli.props" />
+  <ItemGroup>
+    <Using Include="System.Text.Json" /><Using Include="System.Diagnostics" /><Using Include="System.Xml.Linq" />
+    <Using Include="TimeWarp.Nuru" /><Using Include="TimeWarp.Mediator" /><Using Include="TimeWarp.Amuru" />
+    <Using Include="TimeWarp.Terminal" /><Using Include="DevCli" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" /><Using Include="System.Console" Static="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$W/source/timewarp-nuru/timewarp-nuru.csproj" />
+    <ProjectReference Include="$W/source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <PackageReference Include="TimeWarp.Amuru" Version="2.0.0" />
+    <PackageReference Include="TimeWarp.Amuru.Tools" Version="2.0.0" />
+  </ItemGroup>
+</Project>
+XML
+cat > $C/program.cs <<'CS'
+NuruApp app = NuruApp.CreateBuilder()
+  .WithName("consumer")
+  .ConfigureServices(services =>
+  {
+    services.AddSingleton<IRepoCleanService, RepoCleanService>();
+    services.AddSingleton<NuGetVersionService>();
+    services.AddSingleton<IRepoConfigService, RepoConfigService>();
+    services.AddSingleton<IPackableProjectService, PackableProjectService>();
+  })
+  .DiscoverEndpoints()
+  .Build();
+return await app.RunAsync(args);
+CS
+(cd $C && git init -q && dotnet build 2>&1 | grep -E "CA1034|CA2000|Build succeeded")
+(mkdir -p /tmp/devcli-560-run && cd /tmp/devcli-560-run && git init -q; dotnet $C/bin/Debug/net10.0/consumer.dll clean)
+```
+
+Expect:
+
+- Only `Build succeeded.` is printed, with no CA1034 or CA2000 line.
+- `clean` prints `Clean completed successfully!`: the internal `CleanCommand.Handler` dispatched.
+- For the control, replace `cp -r $W/source/timewarp-nuru-devcli` with
+  `git -C $W archive master source/timewarp-nuru-devcli | tar -x -C $N`. That reports four CA1034 hits (the
+  nested `Handler`s) and one CA2000 hit (`new HttpClientHandler`).
+- `dotnet run tests/timewarp-nuru-tests/generator/generator-42-extension-method-lowering-diagnostics.cs`
+  passes 10/10.
+
+### Consumer fix list
+
+Breaking change for consumers, filed per repo by the cockpit after merge. The survey read every
+`~/worktrees/github.com/TimeWarpEngineering/*/master/tools/dev-cli` (excluding obj, bin and Generated) against the
+53 DevCli type names. Nothing was built.
+
+**Every consumer.**
+
+- Bump `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` together. Every repo registers `NuGetVersionService`,
+  `IRepoConfigService` and `IPackableProjectService` in `tools/dev-cli/dev.cs` under source-generated DI, and an
+  older Nuru reports NURU054 for them now that they are internal.
+- Then drop `CA1034;CA2000` from `tools/dev-cli/Directory.Build.props` `NoWarn`.
+  - CA1034 is safe to drop once the repo's own public nested `Handler`s listed below are internal.
+  - CA2000 is a candidate in every repo, to confirm by build. The survey found no undisposed `IDisposable` in any
+    consumer's own dev-cli code.
+- No consumer has a test project that uses package DevCli types from another assembly, so nothing reports CS0122.
+- 9 repos are still on 3.0.0 or 3.0.0-beta.* and also take the 3.x to 4.0 jump: sovereign-intelligence-agency,
+  amina, bayline, flexbox, health, jaribu, session-lake-tools, source-generators and terminal.
+
+**Repos that fail to compile (CS0051).** Each has one fix:
+
+- **timewarp-amuru** (DevCli 4.0.0-beta.6)
+  - Errors: `tools/dev-cli/endpoints/workflow-command.cs:64`, `:65` and `:66`. The ctor
+    `public Handler(..., NuGetVersionService, IRepoConfigService, IPackableProjectService)` (`:60`) of
+    `public sealed class Handler` (`:50`), nested in public `WorkflowCommand` (`:42`), raises CS0051 three times.
+  - Fix: `public sealed class Handler` to `internal sealed class Handler` at `workflow-command.cs:50`.
+  - CA1034 also needs these own public nested Handlers made internal: `endpoints/build-command.cs:14`,
+    `endpoints/clean-command.cs:23` (the repo's own replacement `CleanCommand`; its Directory.Build.targets removes
+    the package `clean-command.cs` by file name, which still matches), `endpoints/test-command.cs:14` and
+    `endpoints/verify-samples-command.cs:16`.
+  - NoWarn (`tools/dev-cli/Directory.Build.props:26`): drop `CA1034;CA2000` after those.
+- **timewarp-mediator** (DevCli 4.0.0-beta.7)
+  - Errors: `tools/dev-cli/endpoints/workflow-command.cs:41`, `:42` and `:43`. The ctor (`:37`) of
+    `public sealed class Handler` (`:27`), nested in public `WorkflowCommand` (`:19`), raises CS0051 three times.
+  - Fix: `public` to `internal` on `Handler` at `workflow-command.cs:27`.
+  - CA1034 also needs these own public nested Handlers made internal: `endpoints/benchmark-command.cs:49`,
+    `endpoints/build-command.cs:21`, `endpoints/pack-command.cs:30`, `endpoints/test-command.cs:20` and
+    `endpoints/verify-samples-command.cs:25`.
+  - NoWarn (`tools/dev-cli/Directory.Build.props:12`): drop `CA1034;CA2000` after those.
+
+**Repos with no compile break that can drop NoWarn entries** (version bump and `NoWarn` cleanup only):
+
+| Repo | DevCli now | Own public nested Handlers to make internal before dropping CA1034 | NoWarn line |
+|------|-----------|---------------------------------------------------------------------|-------------|
+| Roslynk | 4.0.0-beta.5 | `endpoints/build-command.cs:14`, `endpoints/test-command.cs:14` | `Directory.Build.props:26` |
+| sovereign-intelligence-agency | 3.0.0-beta.76 | none | `:6` |
+| timewarp-amina | 3.0.0-beta.73 | none | `:6` |
+| timewarp-architecture | 4.0.0-beta.7 | none | `:13` |
+| timewarp-bayline | 3.0.0-beta.79 | none | `:6` |
+| timewarp-financial | 4.0.0-beta.7 | none | `:6` |
+| timewarp-flexbox | 3.0.0-beta.71 | none | `:10` |
+| timewarp-ganda | 4.0.0-beta.9 | none; also remove the 560 comment at `Directory.Build.props:11-13` | `:17` (`CA1034;CA2000`) |
+| timewarp-health | 3.0.0-beta.72 | none | `:6` |
+| timewarp-jaribu | 3.0.0-beta.75 | none | `:6` |
+| timewarp-quickbooks | 4.0.0-beta.5 | `endpoints/build-command.cs:21`, `endpoints/test-command.cs:18`, `endpoints/verify-samples-command.cs:13`, `endpoints/workflow-command.cs:17` | `:6` |
+| timewarp-session-lake-tools | 3.0.0-beta.79 | none | `:6` |
+| timewarp-source-generators | 3.0.0-beta.76 | none | `:6` |
+| timewarp-state | 4.0.0-beta.7 | none | `:10` |
+| timewarp-taratibu | 4.0.0-beta.6 | none | `:6` |
+| timewarp-terminal | 3.0.0 | `endpoints/build.cs:18`, `endpoints/test.cs:18`, `endpoints/verify-samples.cs:18`, `endpoints/workflow.cs:23` | `:24` |
+
+Paths are under `tools/dev-cli/`. These repos looked like they might break but do not:
+
+- ganda: `WorkflowCommand.Handler` is already internal, at `workflow-command.cs:49`.
+- jaribu: its local clean, check-version and self-install copies are compile-excluded.
+- architecture and source-generators: their own `internal enum CiMode` shadows the package type and is harmless.
+
+Not DevCli consumers (no package reference): bannamtalay.com, crunchit, timewarp-builder, timewarp-components,
+timewarp-flow, timewarp-options-validation, timewarp-software and timewarp.enterprises.
+
+### Follow-ups
+
+- Release: ship in the next prerelease (4.0.0-beta.10) through a release task, as 559 did. Nuru and DevCli go
+  together because of the NURU054 fix.
+- Cockpit: file the per-repo tasks above after merge.
+
 ## Session
 
 - Created: 1016182 (2026-10-30), from timewarp-ganda task 530
+- Implemented 2026-10-31: DevCli content internal, CA2000 ownership field, NURU054 same-assembly fix; CI green; audit clean
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 796401fe-ef87-4a30-82af-04402009babd, max-turns 500, Done — 2026-10-30T17:10:48Z

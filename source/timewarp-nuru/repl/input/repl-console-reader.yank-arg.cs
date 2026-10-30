@@ -171,7 +171,7 @@ public sealed partial class ReplConsoleReader
     if (DigitArgument.HasValue)
     {
       // Already have a digit - append to form multi-digit number (e.g., Alt+1 Alt+2 = 12)
-      DigitArgument = DigitArgument.Value * 10 + digit;
+      DigitArgument = (DigitArgument.Value * 10) + digit;
     }
     else
     {

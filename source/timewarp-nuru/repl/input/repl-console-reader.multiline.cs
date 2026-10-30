@@ -114,9 +114,11 @@ public sealed partial class ReplConsoleReader
     for (int i = 0; i < lineCount; i++)
     {
       // Write prompt (primary for first line, continuation for rest)
-      string linePrompt = i == 0
-        ? PromptFormatter.Format(ReplOptions)
-        : (ReplOptions.EnableColors ? ContinuationPrompt.WithStyle(ReplOptions.PromptColor) : ContinuationPrompt);
+      string linePrompt;
+      if (i == 0)
+        linePrompt = PromptFormatter.Format(ReplOptions);
+      else
+        linePrompt = ReplOptions.EnableColors ? ContinuationPrompt.WithStyle(ReplOptions.PromptColor) : ContinuationPrompt;
 
       Terminal.Write(linePrompt);
 

@@ -10,6 +10,7 @@
 namespace DevCli;
 
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 /// <summary>
 /// Reads per-repo configuration from <c>.timewarp/dev.jsonc</c>.
@@ -54,7 +55,10 @@ public sealed class RepoConfigService : IRepoConfigService
   /// </summary>
   public static RepoConfig Parse(string json)
   {
-    RepoConfig? config = JsonSerializer.Deserialize<RepoConfig>(json, JsonOptions);
+    // GetTypeInfo keeps the call on the source-generated resolver; the generic
+    // Deserialize<T>(string, options) overload is RequiresUnreferencedCode (IL2026/IL3050).
+    JsonTypeInfo<RepoConfig> typeInfo = (JsonTypeInfo<RepoConfig>)JsonOptions.GetTypeInfo(typeof(RepoConfig));
+    RepoConfig? config = JsonSerializer.Deserialize(json, typeInfo);
 
     return config ?? new RepoConfig();
   }

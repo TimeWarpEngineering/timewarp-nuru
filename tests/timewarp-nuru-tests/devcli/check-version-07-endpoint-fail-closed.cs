@@ -311,9 +311,9 @@ public class CheckVersionEndpointFailClosedTests
   private static string ReadSourceVersion()
   {
     // Fixed prerelease, independent of the repo's real (possibly stable) version.
-    const string source = "3.0.0-beta.80";
-    PrereleaseDistance.TryGetIncrements(source, source).ShouldBe(0);
-    return source;
+    const string Source = "3.0.0-beta.80";
+    PrereleaseDistance.TryGetIncrements(Source, Source).ShouldBe(0);
+    return Source;
   }
 
   private static int ReadPrereleaseNumber(string version)

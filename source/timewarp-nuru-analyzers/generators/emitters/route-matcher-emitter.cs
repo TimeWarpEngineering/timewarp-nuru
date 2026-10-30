@@ -1296,10 +1296,10 @@ internal static class RouteMatcherEmitter
   private static string GetSimpleTypeName(string fullyQualifiedName)
   {
     // First strip global:: prefix if present
-    const string globalPrefix = "global::";
-    if (fullyQualifiedName.StartsWith(globalPrefix, StringComparison.Ordinal))
+    const string GlobalPrefix = "global::";
+    if (fullyQualifiedName.StartsWith(GlobalPrefix, StringComparison.Ordinal))
     {
-      fullyQualifiedName = fullyQualifiedName[globalPrefix.Length..];
+      fullyQualifiedName = fullyQualifiedName[GlobalPrefix.Length..];
     }
 
     // Then get the part after the last dot
@@ -1315,10 +1315,10 @@ internal static class RouteMatcherEmitter
   private static string GetTargetTypeFromConverterName(string converterTypeName)
   {
     string simpleName = GetSimpleTypeName(converterTypeName);
-    const string suffix = "Converter";
-    if (simpleName.EndsWith(suffix, StringComparison.Ordinal) && simpleName.Length > suffix.Length)
+    const string Suffix = "Converter";
+    if (simpleName.EndsWith(Suffix, StringComparison.Ordinal) && simpleName.Length > Suffix.Length)
     {
-      return simpleName[..^suffix.Length];
+      return simpleName[..^Suffix.Length];
     }
 
     return simpleName;

@@ -331,10 +331,10 @@ internal static class ServiceResolverEmitter
       className = className[(lastDot + 1)..];
 
     // Strip "Options" suffix if present
-    const string optionsSuffix = "Options";
-    if (className.EndsWith(optionsSuffix, StringComparison.Ordinal) && className.Length > optionsSuffix.Length)
+    const string OptionsSuffix = "Options";
+    if (className.EndsWith(OptionsSuffix, StringComparison.Ordinal) && className.Length > OptionsSuffix.Length)
     {
-      return className[..^optionsSuffix.Length];
+      return className[..^OptionsSuffix.Length];
     }
 
     return className;

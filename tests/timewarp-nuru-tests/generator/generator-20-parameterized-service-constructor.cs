@@ -88,8 +88,8 @@ public interface ICounter
 
 public class CounterService : ICounter
 {
-  private int count;
-  public int Increment() => ++count;
+  private int Count;
+  public int Increment() => ++Count;
 }
 
 // Service for transitive dependency test
@@ -189,10 +189,7 @@ public sealed class Gen20KanbanQuery : IQuery<Unit>
       NuruApp app = NuruApp.CreateBuilder()
         .UseTerminal(terminal)
         .AddConfiguration()
-        .ConfigureServices(services =>
-        {
-          services.AddTransient<IFormatter, FormatterService>();
-        })
+        .ConfigureServices(services => services.AddTransient<IFormatter, FormatterService>())
         .Map("gen20-format {input}")
           .WithHandler((string input, IFormatter formatter) => formatter.Format(input))
           .AsQuery()

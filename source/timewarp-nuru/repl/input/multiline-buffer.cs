@@ -41,14 +41,14 @@ public readonly record struct MultilineCursor(int Line, int Column)
 /// </remarks>
 public sealed class MultilineBuffer
 {
-  private readonly List<string> _lines = [""];
+  private readonly List<string> LineList = [""];
 
   private static readonly string[] NewlineSeparators = ["\r\n", "\n", "\r"];
 
   /// <summary>
   /// Gets the lines in the buffer.
   /// </summary>
-  public IReadOnlyList<string> Lines => _lines;
+  public IReadOnlyList<string> Lines => LineList;
 
   /// <summary>
   /// Gets or sets the current cursor position.
@@ -58,17 +58,17 @@ public sealed class MultilineBuffer
   /// <summary>
   /// Gets the number of lines in the buffer.
   /// </summary>
-  public int LineCount => _lines.Count;
+  public int LineCount => LineList.Count;
 
   /// <summary>
   /// Gets whether the buffer contains multiple lines.
   /// </summary>
-  public bool IsMultiline => _lines.Count > 1;
+  public bool IsMultiline => LineList.Count > 1;
 
   /// <summary>
   /// Gets the current line text.
   /// </summary>
-  public string CurrentLine => _lines[Cursor.Line];
+  public string CurrentLine => LineList[Cursor.Line];
 
   /// <summary>
   /// Gets the full text content with lines joined by "\n".
@@ -81,22 +81,22 @@ public sealed class MultilineBuffer
   /// Use <see cref="GetFullText(string)"/> for display/output separators.
   /// </remarks>
   /// <returns>The complete text as a single string.</returns>
-  public string GetFullText() => string.Join('\n', _lines);
+  public string GetFullText() => string.Join('\n', LineList);
 
   /// <summary>
   /// Gets the full text content with a custom line separator.
   /// </summary>
   /// <param name="separator">The separator to use between lines.</param>
   /// <returns>The complete text as a single string.</returns>
-  public string GetFullText(string separator) => string.Join(separator, _lines);
+  public string GetFullText(string separator) => string.Join(separator, LineList);
 
   /// <summary>
   /// Clears all content and resets the cursor.
   /// </summary>
   public void Clear()
   {
-    _lines.Clear();
-    _lines.Add(string.Empty);
+    LineList.Clear();
+    LineList.Add(string.Empty);
     Cursor = MultilineCursor.Start;
   }
 
@@ -106,21 +106,21 @@ public sealed class MultilineBuffer
   /// <param name="text">The text to set (may contain newlines).</param>
   public void SetText(string text)
   {
-    _lines.Clear();
+    LineList.Clear();
 
     if (string.IsNullOrEmpty(text))
     {
-      _lines.Add(string.Empty);
+      LineList.Add(string.Empty);
       Cursor = MultilineCursor.Start;
       return;
     }
 
     // Split on any newline style
     string[] splitLines = SplitLines(text);
-    _lines.AddRange(splitLines);
+    LineList.AddRange(splitLines);
 
     // Position cursor at end of last line
-    Cursor = new MultilineCursor(_lines.Count - 1, _lines[^1].Length);
+    Cursor = new MultilineCursor(LineList.Count - 1, LineList[^1].Length);
   }
 
   /// <summary>
@@ -129,10 +129,10 @@ public sealed class MultilineBuffer
   /// <param name="c">The character to insert.</param>
   public void InsertCharacter(char c)
   {
-    string line = _lines[Cursor.Line];
+    string line = LineList[Cursor.Line];
     int col = Cursor.Column;
 
-    _lines[Cursor.Line] = line[..col] + c + line[col..];
+    LineList[Cursor.Line] = line[..col] + c + line[col..];
     Cursor = new MultilineCursor(Cursor.Line, col + 1);
   }
 
@@ -168,8 +168,8 @@ public sealed class MultilineBuffer
     if (Cursor.Column > 0)
     {
       // Delete within current line
-      string line = _lines[Cursor.Line];
-      _lines[Cursor.Line] = line[..(Cursor.Column - 1)] + line[Cursor.Column..];
+      string line = LineList[Cursor.Line];
+      LineList[Cursor.Line] = line[..(Cursor.Column - 1)] + line[Cursor.Column..];
       Cursor = new MultilineCursor(Cursor.Line, Cursor.Column - 1);
       return true;
     }
@@ -177,10 +177,10 @@ public sealed class MultilineBuffer
     if (Cursor.Line > 0)
     {
       // At start of line, merge with previous line
-      string currentLine = _lines[Cursor.Line];
-      int prevLineLength = _lines[Cursor.Line - 1].Length;
-      _lines[Cursor.Line - 1] += currentLine;
-      _lines.RemoveAt(Cursor.Line);
+      string currentLine = LineList[Cursor.Line];
+      int prevLineLength = LineList[Cursor.Line - 1].Length;
+      LineList[Cursor.Line - 1] += currentLine;
+      LineList.RemoveAt(Cursor.Line);
       Cursor = new MultilineCursor(Cursor.Line - 1, prevLineLength);
       return true;
     }
@@ -194,20 +194,20 @@ public sealed class MultilineBuffer
   /// <returns>True if a character was deleted, false if at end of buffer.</returns>
   public bool DeleteCharacterAt()
   {
-    string line = _lines[Cursor.Line];
+    string line = LineList[Cursor.Line];
 
     if (Cursor.Column < line.Length)
     {
       // Delete within current line
-      _lines[Cursor.Line] = line[..Cursor.Column] + line[(Cursor.Column + 1)..];
+      LineList[Cursor.Line] = line[..Cursor.Column] + line[(Cursor.Column + 1)..];
       return true;
     }
 
-    if (Cursor.Line < _lines.Count - 1)
+    if (Cursor.Line < LineList.Count - 1)
     {
       // At end of line, merge with next line
-      _lines[Cursor.Line] += _lines[Cursor.Line + 1];
-      _lines.RemoveAt(Cursor.Line + 1);
+      LineList[Cursor.Line] += LineList[Cursor.Line + 1];
+      LineList.RemoveAt(Cursor.Line + 1);
       return true;
     }
 
@@ -220,12 +220,12 @@ public sealed class MultilineBuffer
   /// </summary>
   public void AddLine()
   {
-    string line = _lines[Cursor.Line];
+    string line = LineList[Cursor.Line];
     string beforeCursor = line[..Cursor.Column];
     string afterCursor = line[Cursor.Column..];
 
-    _lines[Cursor.Line] = beforeCursor;
-    _lines.Insert(Cursor.Line + 1, afterCursor);
+    LineList[Cursor.Line] = beforeCursor;
+    LineList.Insert(Cursor.Line + 1, afterCursor);
     Cursor = new MultilineCursor(Cursor.Line + 1, 0);
   }
 
@@ -243,7 +243,7 @@ public sealed class MultilineBuffer
 
     if (Cursor.Line > 0)
     {
-      Cursor = new MultilineCursor(Cursor.Line - 1, _lines[Cursor.Line - 1].Length);
+      Cursor = new MultilineCursor(Cursor.Line - 1, LineList[Cursor.Line - 1].Length);
       return true;
     }
 
@@ -256,13 +256,13 @@ public sealed class MultilineBuffer
   /// <returns>True if cursor moved, false if at end.</returns>
   public bool MoveCursorRight()
   {
-    if (Cursor.Column < _lines[Cursor.Line].Length)
+    if (Cursor.Column < LineList[Cursor.Line].Length)
     {
       Cursor = new MultilineCursor(Cursor.Line, Cursor.Column + 1);
       return true;
     }
 
-    if (Cursor.Line < _lines.Count - 1)
+    if (Cursor.Line < LineList.Count - 1)
     {
       Cursor = new MultilineCursor(Cursor.Line + 1, 0);
       return true;
@@ -284,7 +284,7 @@ public sealed class MultilineBuffer
   /// </summary>
   public void MoveCursorToLineEnd()
   {
-    Cursor = new MultilineCursor(Cursor.Line, _lines[Cursor.Line].Length);
+    Cursor = new MultilineCursor(Cursor.Line, LineList[Cursor.Line].Length);
   }
 
   /// <summary>
@@ -300,7 +300,7 @@ public sealed class MultilineBuffer
   /// </summary>
   public void MoveCursorToEnd()
   {
-    Cursor = new MultilineCursor(_lines.Count - 1, _lines[^1].Length);
+    Cursor = new MultilineCursor(LineList.Count - 1, LineList[^1].Length);
   }
 
   /// <summary>
@@ -311,10 +311,10 @@ public sealed class MultilineBuffer
   /// <exception cref="ArgumentOutOfRangeException">If position is invalid.</exception>
   public void SetCursor(int line, int column)
   {
-    if (line < 0 || line >= _lines.Count)
-      throw new ArgumentOutOfRangeException(nameof(line), $"Line {line} is out of range [0, {_lines.Count - 1}]");
+    if (line < 0 || line >= LineList.Count)
+      throw new ArgumentOutOfRangeException(nameof(line), $"Line {line} is out of range [0, {LineList.Count - 1}]");
 
-    int maxCol = _lines[line].Length;
+    int maxCol = LineList[line].Length;
     if (column < 0 || column > maxCol)
       throw new ArgumentOutOfRangeException(nameof(column), $"Column {column} is out of range [0, {maxCol}]");
 
@@ -329,9 +329,9 @@ public sealed class MultilineBuffer
   public MultilineCursor PositionToCursor(int position)
   {
     int remaining = position;
-    for (int line = 0; line < _lines.Count; line++)
+    for (int line = 0; line < LineList.Count; line++)
     {
-      int lineLength = _lines[line].Length;
+      int lineLength = LineList[line].Length;
       if (remaining <= lineLength)
         return new MultilineCursor(line, remaining);
 
@@ -339,7 +339,7 @@ public sealed class MultilineBuffer
     }
 
     // Position beyond end, return end of buffer
-    return new MultilineCursor(_lines.Count - 1, _lines[^1].Length);
+    return new MultilineCursor(LineList.Count - 1, LineList[^1].Length);
   }
 
   /// <summary>
@@ -351,7 +351,7 @@ public sealed class MultilineBuffer
   {
     int position = 0;
     for (int line = 0; line < cursor.Line; line++)
-      position += _lines[line].Length + 1; // +1 for newline
+      position += LineList[line].Length + 1; // +1 for newline
 
     position += cursor.Column;
     return position;
@@ -364,14 +364,14 @@ public sealed class MultilineBuffer
   {
     get
     {
-      if (_lines.Count == 0) return 0;
+      if (LineList.Count == 0) return 0;
       int total = 0;
-      foreach (string line in _lines)
+      foreach (string line in LineList)
       {
         total += line.Length;
       }
       // Add newlines between lines
-      total += _lines.Count - 1;
+      total += LineList.Count - 1;
       return total;
     }
   }
@@ -384,9 +384,9 @@ public sealed class MultilineBuffer
     if (segment.Length == 0)
       return;
 
-    string line = _lines[Cursor.Line];
+    string line = LineList[Cursor.Line];
     int col = Cursor.Column;
-    _lines[Cursor.Line] = line[..col] + segment + line[col..];
+    LineList[Cursor.Line] = line[..col] + segment + line[col..];
     Cursor = new MultilineCursor(Cursor.Line, col + segment.Length);
   }
 }

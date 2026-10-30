@@ -28,9 +28,9 @@ namespace TimeWarp.Nuru;
 public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent>
   where TParent : class
 {
-  private readonly CompiledRouteBuilder _inner = new();
-  private readonly TParent _parent;
-  private readonly Action<CompiledRoute> _onBuild;
+  private readonly CompiledRouteBuilder Inner = new();
+  private readonly TParent Parent;
+  private readonly Action<CompiledRoute> OnBuild;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="NestedCompiledRouteBuilder{TParent}"/> class.
@@ -39,8 +39,8 @@ public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent
   /// <param name="onBuild">Callback invoked with the built route when <see cref="Done"/> is called.</param>
   internal NestedCompiledRouteBuilder(TParent parent, Action<CompiledRoute> onBuild)
   {
-    _parent = parent;
-    _onBuild = onBuild;
+    Parent = parent;
+    OnBuild = onBuild;
   }
 
   /// <summary>
@@ -50,7 +50,7 @@ public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent
   /// <returns>This builder for method chaining.</returns>
   public NestedCompiledRouteBuilder<TParent> WithLiteral(string value)
   {
-    _inner.WithLiteral(value);
+    Inner.WithLiteral(value);
     return this;
   }
 
@@ -68,7 +68,7 @@ public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent
     string? description = null,
     bool isOptional = false)
   {
-    _inner.WithParameter(name, type, description, isOptional);
+    Inner.WithParameter(name, type, description, isOptional);
     return this;
   }
 
@@ -96,7 +96,7 @@ public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent
     bool isOptionalFlag = false,
     bool isRepeated = false)
   {
-    _inner.WithOption(longForm, shortForm, parameterName, expectsValue, parameterType, parameterIsOptional, description, isOptionalFlag, isRepeated);
+    Inner.WithOption(longForm, shortForm, parameterName, expectsValue, parameterType, parameterIsOptional, description, isOptionalFlag, isRepeated);
     return this;
   }
 
@@ -112,7 +112,7 @@ public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent
     string? type = null,
     string? description = null)
   {
-    _inner.WithCatchAll(name, type, description);
+    Inner.WithCatchAll(name, type, description);
     return this;
   }
 
@@ -123,7 +123,7 @@ public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent
   /// <returns>This builder for method chaining.</returns>
   public NestedCompiledRouteBuilder<TParent> WithMessageType(MessageType messageType)
   {
-    _inner.WithMessageType(messageType);
+    Inner.WithMessageType(messageType);
     return this;
   }
 
@@ -133,8 +133,8 @@ public sealed class NestedCompiledRouteBuilder<TParent> : INestedBuilder<TParent
   /// <returns>The parent builder for continued chaining.</returns>
   public TParent Done()
   {
-    CompiledRoute route = _inner.Build();
-    _onBuild(route);
-    return _parent;
+    CompiledRoute route = Inner.Build();
+    OnBuild(route);
+    return Parent;
   }
 }

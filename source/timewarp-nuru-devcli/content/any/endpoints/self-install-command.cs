@@ -4,7 +4,7 @@
 #region Design
 // Uses dotnet publish to create the binary in ./bin
 // Standalone - no external service dependencies
-// CA1031 suppressed: catch-all is needed for rollback on any failure.
+// Rollback catches IOException only, so no general-exception catch (CA1031) is needed.
 // Windows: rename running dev.exe -> dev.exe.old before publish so the new
 // binary can replace it; on success best-effort delete the .old (470 M41);
 // on publish failure move .old back.
@@ -16,8 +16,6 @@ using TimeWarp.Amuru;
 using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
-
-#pragma warning disable CA1031 // Do not catch generally exception types
 
 /// <summary>
 /// AOT compile dev CLI to ./bin.
@@ -121,4 +119,3 @@ public sealed class SelfInstallCommand : ICommand<Unit>
   }
 }
 
-#pragma warning restore CA1031

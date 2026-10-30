@@ -62,8 +62,16 @@ public sealed record ParameterDefinition(
   /// Required parameters (100) are more specific than optional (50).
   /// Catch-all parameters have lowest specificity (10).
   /// </summary>
-  public override int SpecificityContribution =>
-    IsCatchAll ? 10 : (IsOptional ? 50 : 100);
+  public override int SpecificityContribution
+  {
+    get
+    {
+      if (IsCatchAll)
+        return 10;
+
+      return IsOptional ? 50 : 100;
+    }
+  }
 
   /// <summary>
   /// Gets the parameter name in camelCase for code generation.

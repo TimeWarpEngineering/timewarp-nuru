@@ -3,7 +3,6 @@ namespace TimeWarp.Nuru;
 /// <summary>
 /// Exception thrown when a route pattern cannot be parsed or validated.
 /// </summary>
-[SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "This is a domain-specific exception only thrown by RoutePatternParser")]
 public class PatternException : Exception
 {
   /// <summary>
@@ -18,6 +17,35 @@ public class PatternException : Exception
   /// Semantic errors encountered during validation.
   /// </summary>
   public IReadOnlyList<SemanticError>? SemanticErrors { get; }
+
+  /// <summary>
+  /// Creates a new <see cref="PatternException"/> with no pattern or error details.
+  /// </summary>
+  public PatternException()
+  {
+    RoutePattern = string.Empty;
+  }
+
+  /// <summary>
+  /// Creates a new <see cref="PatternException"/> with the given message and no error details.
+  /// </summary>
+  /// <param name="message">The error message.</param>
+  public PatternException(string message)
+    : base(message)
+  {
+    RoutePattern = string.Empty;
+  }
+
+  /// <summary>
+  /// Creates a new <see cref="PatternException"/> with the given message and inner exception.
+  /// </summary>
+  /// <param name="message">The error message.</param>
+  /// <param name="innerException">The exception that caused this failure.</param>
+  public PatternException(string message, Exception innerException)
+    : base(message, innerException)
+  {
+    RoutePattern = string.Empty;
+  }
 
   /// <summary>
   /// Creates a new <see cref="PatternException"/> with parsing errors.

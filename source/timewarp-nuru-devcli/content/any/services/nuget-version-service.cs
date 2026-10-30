@@ -506,7 +506,8 @@ public sealed class NuGetVersionService : IDisposable
     return false;
   }
 
-  // Strips build metadata (+...) and returns the core (pre-`-`/pre-`+`) portion.
+  /// <summary>Strips build metadata (+...) and returns the core (pre-`-`/pre-`+`) portion.</summary>
+  /// <param name="version">The version string.</param>
   private static string GetCoreVersion(string version)
   {
     int plus = version.IndexOf('+');
@@ -515,7 +516,8 @@ public sealed class NuGetVersionService : IDisposable
     return dash >= 0 ? noBuild[..dash] : noBuild;
   }
 
-  // Strips build metadata and returns the pre-release portion (after first `-`).
+  /// <summary>Strips build metadata and returns the pre-release portion (after first `-`).</summary>
+  /// <param name="version">The version string.</param>
   private static string GetPreRelease(string version)
   {
     int plus = version.IndexOf('+');

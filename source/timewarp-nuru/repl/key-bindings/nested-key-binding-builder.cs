@@ -35,9 +35,9 @@ namespace TimeWarp.Nuru;
 public sealed class NestedKeyBindingBuilder<TParent> : IKeyBindingBuilder<NestedKeyBindingBuilder<TParent>>, INestedBuilder<TParent>
   where TParent : class
 {
-  private readonly KeyBindingBuilder _inner = new();
-  private readonly TParent _parent;
-  private readonly Action<KeyBindingResult> _onBuild;
+  private readonly KeyBindingBuilder Inner = new();
+  private readonly TParent Parent;
+  private readonly Action<KeyBindingResult> OnBuild;
 
   /// <summary>
   /// Creates a new nested key binding builder.
@@ -48,111 +48,111 @@ public sealed class NestedKeyBindingBuilder<TParent> : IKeyBindingBuilder<Nested
   {
     ArgumentNullException.ThrowIfNull(parent);
     ArgumentNullException.ThrowIfNull(onBuild);
-    _parent = parent;
-    _onBuild = onBuild;
+    Parent = parent;
+    OnBuild = onBuild;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> Bind(ConsoleKey key, Func<Task> action)
   {
-    _inner.Bind(key, action);
+    Inner.Bind(key, action);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> Bind(ConsoleKey key, ConsoleModifiers modifiers, Func<Task> action)
   {
-    _inner.Bind(key, modifiers, action);
+    Inner.Bind(key, modifiers, action);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> BindExit(ConsoleKey key, Func<Task> action)
   {
-    _inner.BindExit(key, action);
+    Inner.BindExit(key, action);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> BindExit(ConsoleKey key, ConsoleModifiers modifiers, Func<Task> action)
   {
-    _inner.BindExit(key, modifiers, action);
+    Inner.BindExit(key, modifiers, action);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> Remove(ConsoleKey key)
   {
-    _inner.Remove(key);
+    Inner.Remove(key);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> Remove(ConsoleKey key, ConsoleModifiers modifiers)
   {
-    _inner.Remove(key, modifiers);
+    Inner.Remove(key, modifiers);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> Clear()
   {
-    _inner.Clear();
+    Inner.Clear();
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> LoadFrom(IKeyBindingProfile profile, ReplConsoleReader reader)
   {
-    _inner.LoadFrom(profile, reader);
+    Inner.LoadFrom(profile, reader);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> MarkAsExit(ConsoleKey key)
   {
-    _inner.MarkAsExit(key);
+    Inner.MarkAsExit(key);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> MarkAsExit(ConsoleKey key, ConsoleModifiers modifiers)
   {
-    _inner.MarkAsExit(key, modifiers);
+    Inner.MarkAsExit(key, modifiers);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> UnmarkAsExit(ConsoleKey key)
   {
-    _inner.UnmarkAsExit(key);
+    Inner.UnmarkAsExit(key);
     return this;
   }
 
   /// <inheritdoc />
   public NestedKeyBindingBuilder<TParent> UnmarkAsExit(ConsoleKey key, ConsoleModifiers modifiers)
   {
-    _inner.UnmarkAsExit(key, modifiers);
+    Inner.UnmarkAsExit(key, modifiers);
     return this;
   }
 
   /// <inheritdoc />
-  public int BindingCount => _inner.BindingCount;
+  public int BindingCount => Inner.BindingCount;
 
   /// <inheritdoc />
-  public int ExitKeyCount => _inner.ExitKeyCount;
+  public int ExitKeyCount => Inner.ExitKeyCount;
 
   /// <inheritdoc />
-  public bool IsBound(ConsoleKey key) => _inner.IsBound(key);
+  public bool IsBound(ConsoleKey key) => Inner.IsBound(key);
 
   /// <inheritdoc />
-  public bool IsBound(ConsoleKey key, ConsoleModifiers modifiers) => _inner.IsBound(key, modifiers);
+  public bool IsBound(ConsoleKey key, ConsoleModifiers modifiers) => Inner.IsBound(key, modifiers);
 
   /// <inheritdoc />
-  public bool IsExitKey(ConsoleKey key) => _inner.IsExitKey(key);
+  public bool IsExitKey(ConsoleKey key) => Inner.IsExitKey(key);
 
   /// <inheritdoc />
-  public bool IsExitKey(ConsoleKey key, ConsoleModifiers modifiers) => _inner.IsExitKey(key, modifiers);
+  public bool IsExitKey(ConsoleKey key, ConsoleModifiers modifiers) => Inner.IsExitKey(key, modifiers);
 
   /// <summary>
   /// Completes the key binding configuration and returns to the parent builder.
@@ -160,8 +160,8 @@ public sealed class NestedKeyBindingBuilder<TParent> : IKeyBindingBuilder<Nested
   /// <returns>The parent builder for continued chaining.</returns>
   public TParent Done()
   {
-    KeyBindingResult result = _inner.Build();
-    _onBuild(result);
-    return _parent;
+    KeyBindingResult result = Inner.Build();
+    OnBuild(result);
+    return Parent;
   }
 }

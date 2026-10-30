@@ -139,6 +139,11 @@ public sealed class PackageFeedUnreadableException : HttpRequestException
   {
   }
 
+  public PackageFeedUnreadableException(HttpRequestError httpRequestError, string? message, Exception? inner, HttpStatusCode? statusCode)
+    : base(httpRequestError, message, inner, statusCode)
+  {
+  }
+
   /// <summary>"HTTP 401 Unauthorized", or "no HTTP response" for a missing token or network failure.</summary>
   public string StatusDisplay => StatusCode is HttpStatusCode status
     ? $"HTTP {(int)status} {status}"

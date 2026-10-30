@@ -2,11 +2,11 @@ namespace TimeWarp.Nuru.Search.Services;
 
 public sealed partial class CapabilitiesClient
 {
-  private readonly ILogger<CapabilitiesClient> logger;
+  private readonly ILogger<CapabilitiesClient> Logger;
 
   public CapabilitiesClient(ILogger<CapabilitiesClient> logger)
   {
-    this.logger = logger;
+    this.Logger = logger;
   }
 
   public async Task<CliCapabilities?> GetCapabilitiesAsync(
@@ -23,7 +23,7 @@ public sealed partial class CapabilitiesClient
 
     if (!output.Success)
     {
-      LogCliFailed(logger, cliPath, output.ExitCode);
+      LogCliFailed(Logger, cliPath, output.ExitCode);
       return null;
     }
 
@@ -31,7 +31,7 @@ public sealed partial class CapabilitiesClient
 
     if (string.IsNullOrEmpty(stdout))
     {
-      LogEmptyCapabilities(logger, cliPath);
+      LogEmptyCapabilities(Logger, cliPath);
       return null;
     }
 
@@ -41,7 +41,7 @@ public sealed partial class CapabilitiesClient
 
       if (response is null)
       {
-        LogDeserializeFailed(logger, cliPath);
+        LogDeserializeFailed(Logger, cliPath);
         return null;
       }
 
@@ -57,7 +57,7 @@ public sealed partial class CapabilitiesClient
     }
     catch (JsonException ex)
     {
-      LogJsonParseError(logger, ex, cliPath);
+      LogJsonParseError(Logger, ex, cliPath);
       return null;
     }
   }

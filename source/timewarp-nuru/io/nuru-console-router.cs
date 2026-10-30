@@ -31,10 +31,16 @@ internal sealed class NuruConsoleRouter : TextWriter
 
   public override Encoding Encoding => Fallback.Encoding;
 
-  private TextWriter Target =>
-    NuruCallContext.Current is { CaptureConsole: true } context
-      ? (IsError ? context.Terminal.Error : context.Terminal.Out)
-      : Fallback;
+  private TextWriter Target
+  {
+    get
+    {
+      if (NuruCallContext.Current is not { CaptureConsole: true } context)
+        return Fallback;
+
+      return IsError ? context.Terminal.Error : context.Terminal.Out;
+    }
+  }
 
   /// <summary>Installs the router as <see cref="Console.Out"/> and <see cref="Console.Error"/> unless it is already there.</summary>
   public static void EnsureInstalled()

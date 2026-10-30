@@ -15,8 +15,6 @@ namespace DevCli;
 
 using TimeWarp.Terminal;
 
-#pragma warning disable CA1031 // Do not catch generally exception types — best-effort delete
-
 /// <summary>
 /// Helpers for Windows in-place executable replacement used by self-install.
 /// </summary>
@@ -41,7 +39,12 @@ public static class WindowsExeReplace
       File.Delete(oldExe);
       return !File.Exists(oldExe);
     }
-    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+    catch (IOException ex)
+    {
+      terminal?.WriteLine($"WARNING: Could not delete {oldExe}: {ex.Message}");
+      return false;
+    }
+    catch (UnauthorizedAccessException ex)
     {
       terminal?.WriteLine($"WARNING: Could not delete {oldExe}: {ex.Message}");
       return false;
@@ -49,4 +52,3 @@ public static class WindowsExeReplace
   }
 }
 
-#pragma warning restore CA1031

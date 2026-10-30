@@ -2,10 +2,10 @@ namespace TimeWarp.Nuru.Search.Services;
 
 public sealed partial class SearchIndex : IAsyncDisposable
 {
-  private readonly SqliteConnection connection;
-  private readonly ILogger<SearchIndex> logger;
-  private readonly string dataSource;
-  private bool initialized;
+  private readonly SqliteConnection Connection;
+  private readonly ILogger<SearchIndex> Logger;
+  private readonly string DataSource;
+  private bool Initialized;
 
   public SearchIndex(ILogger<SearchIndex> logger) : this(logger, DatabasePath.GetIndexPath())
   {
@@ -20,24 +20,24 @@ public sealed partial class SearchIndex : IAsyncDisposable
     ArgumentNullException.ThrowIfNull(logger);
     ArgumentException.ThrowIfNullOrEmpty(dataSource);
 
-    this.logger = logger;
-    this.dataSource = dataSource;
+    this.Logger = logger;
+    this.DataSource = dataSource;
     SqliteConnectionStringBuilder builder = new() { DataSource = dataSource };
-    connection = new SqliteConnection(builder.ConnectionString);
+    Connection = new SqliteConnection(builder.ConnectionString);
   }
 
   public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
   {
-    if (initialized)
+    if (Initialized)
     {
       return;
     }
 
-    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+    await Connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
     await CreateSchemaAsync(cancellationToken).ConfigureAwait(false);
-    initialized = true;
-    LogInitialized(logger, dataSource);
+    Initialized = true;
+    LogInitialized(Logger, DataSource);
   }
 
   [LoggerMessage(LogLevel.Information, "Search index initialized at {Path}")]
@@ -102,37 +102,37 @@ public sealed partial class SearchIndex : IAsyncDisposable
       END
       """;
 
-    await using (SqliteCommand cmd = connection.CreateCommand())
+    await using (SqliteCommand cmd = Connection.CreateCommand())
     {
       cmd.CommandText = createClisTable;
       await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using (SqliteCommand cmd = connection.CreateCommand())
+    await using (SqliteCommand cmd = Connection.CreateCommand())
     {
       cmd.CommandText = createEndpointsTable;
       await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using (SqliteCommand cmd = connection.CreateCommand())
+    await using (SqliteCommand cmd = Connection.CreateCommand())
     {
       cmd.CommandText = createFtsTable;
       await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using (SqliteCommand cmd = connection.CreateCommand())
+    await using (SqliteCommand cmd = Connection.CreateCommand())
     {
       cmd.CommandText = createInsertTrigger;
       await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using (SqliteCommand cmd = connection.CreateCommand())
+    await using (SqliteCommand cmd = Connection.CreateCommand())
     {
       cmd.CommandText = createDeleteTrigger;
       await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using (SqliteCommand cmd = connection.CreateCommand())
+    await using (SqliteCommand cmd = Connection.CreateCommand())
     {
       cmd.CommandText = createUpdateTrigger;
       await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -147,7 +147,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
   /// </summary>
   private async Task EnsureCliPathColumnAsync(CancellationToken cancellationToken)
   {
-    await using (SqliteCommand cmd = connection.CreateCommand())
+    await using (SqliteCommand cmd = Connection.CreateCommand())
     {
       cmd.CommandText = "SELECT COUNT(*) FROM pragma_table_info('clis') WHERE name = 'cli_path'";
       long count = (long)(await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? 0L);
@@ -158,7 +158,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
       }
     }
 
-    await using SqliteCommand alter = connection.CreateCommand();
+    await using SqliteCommand alter = Connection.CreateCommand();
     alter.CommandText = "ALTER TABLE clis ADD COLUMN cli_path TEXT";
     await alter.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
   }
@@ -181,18 +181,18 @@ public sealed partial class SearchIndex : IAsyncDisposable
     ArgumentNullException.ThrowIfNull(capabilitiesJson);
     ArgumentNullException.ThrowIfNull(endpoints);
 
-    if (!initialized)
+    if (!Initialized)
     {
       await InitializeAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using DbTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+    await using DbTransaction transaction = await Connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
     try
     {
       await DeleteCliEndpointsAsync(cliName, transaction, cancellationToken).ConfigureAwait(false);
 
-      await using (SqliteCommand cmd = connection.CreateCommand())
+      await using (SqliteCommand cmd = Connection.CreateCommand())
       {
         cmd.Transaction = (SqliteTransaction)transaction;
         cmd.CommandText = """
@@ -213,7 +213,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
       }
 
       await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-      LogIndexedEndpoints(logger, endpoints.Count, cliName);
+      LogIndexedEndpoints(Logger, endpoints.Count, cliName);
     }
     catch
     {
@@ -227,13 +227,13 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
   private async Task DeleteCliEndpointsAsync(string cliName, DbTransaction transaction, CancellationToken cancellationToken)
   {
-    await using SqliteCommand cmd = connection.CreateCommand();
+    await using SqliteCommand cmd = Connection.CreateCommand();
     cmd.Transaction = (SqliteTransaction)transaction;
     cmd.CommandText = "DELETE FROM endpoints WHERE cli_name = $cliName";
     cmd.Parameters.AddWithValue("$cliName", cliName);
     await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-    await using SqliteCommand cmd2 = connection.CreateCommand();
+    await using SqliteCommand cmd2 = Connection.CreateCommand();
     cmd2.Transaction = (SqliteTransaction)transaction;
     cmd2.CommandText = "DELETE FROM clis WHERE name = $cliName";
     cmd2.Parameters.AddWithValue("$cliName", cliName);
@@ -246,7 +246,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
     DbTransaction transaction,
     CancellationToken cancellationToken)
   {
-    await using SqliteCommand cmd = connection.CreateCommand();
+    await using SqliteCommand cmd = Connection.CreateCommand();
     cmd.Transaction = (SqliteTransaction)transaction;
     cmd.CommandText = """
       INSERT INTO endpoints (cli_name, pattern, description, group_path, endpoint_json)
@@ -269,7 +269,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
   {
     ArgumentNullException.ThrowIfNull(query);
 
-    if (!initialized)
+    if (!Initialized)
     {
       await InitializeAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -282,7 +282,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
       return results;
     }
 
-    await using SqliteCommand cmd = connection.CreateCommand();
+    await using SqliteCommand cmd = Connection.CreateCommand();
 
     StringBuilder sqlBuilder = new();
     sqlBuilder.AppendLine("""
@@ -343,7 +343,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
     {
       // Defense in depth: SanitizeFtsQuery should make every MATCH expression valid, but a
       // malformed query must degrade to "no results", never crash the CLI.
-      LogSearchFailed(logger, ex, query);
+      LogSearchFailed(Logger, ex, query);
       results.Clear();
     }
 
@@ -420,14 +420,14 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
   public async Task<IReadOnlyList<CliInfo>> ListClisAsync(CancellationToken cancellationToken = default)
   {
-    if (!initialized)
+    if (!Initialized)
     {
       await InitializeAsync(cancellationToken).ConfigureAwait(false);
     }
 
     List<CliInfo> clis = [];
 
-    await using SqliteCommand cmd = connection.CreateCommand();
+    await using SqliteCommand cmd = Connection.CreateCommand();
     cmd.CommandText = """
       SELECT name, version, indexed_at,
              (SELECT COUNT(*) FROM endpoints WHERE cli_name = clis.name) as endpoint_count,
@@ -454,20 +454,20 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
   public async Task ClearIndexAsync(CancellationToken cancellationToken = default)
   {
-    if (!initialized)
+    if (!Initialized)
     {
       await InitializeAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using SqliteCommand cmd = connection.CreateCommand();
+    await using SqliteCommand cmd = Connection.CreateCommand();
     cmd.CommandText = "DELETE FROM endpoints";
     await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-    await using SqliteCommand cmd2 = connection.CreateCommand();
+    await using SqliteCommand cmd2 = Connection.CreateCommand();
     cmd2.CommandText = "DELETE FROM clis";
     await cmd2.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-    LogClearedAll(logger);
+    LogClearedAll(Logger);
   }
 
   [LoggerMessage(LogLevel.Information, "Cleared all indexed data")]
@@ -477,18 +477,18 @@ public sealed partial class SearchIndex : IAsyncDisposable
   {
     ArgumentNullException.ThrowIfNull(cliName);
 
-    if (!initialized)
+    if (!Initialized)
     {
       await InitializeAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using DbTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+    await using DbTransaction transaction = await Connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
 
     try
     {
       await DeleteCliEndpointsAsync(cliName, transaction, cancellationToken).ConfigureAwait(false);
       await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-      LogClearedCli(logger, cliName);
+      LogClearedCli(Logger, cliName);
     }
     catch
     {
@@ -507,12 +507,12 @@ public sealed partial class SearchIndex : IAsyncDisposable
   {
     ArgumentNullException.ThrowIfNull(cliName);
 
-    if (!initialized)
+    if (!Initialized)
     {
       await InitializeAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    await using SqliteCommand cmd = connection.CreateCommand();
+    await using SqliteCommand cmd = Connection.CreateCommand();
     cmd.CommandText = "SELECT version FROM clis WHERE name = $name";
     cmd.Parameters.AddWithValue("$name", cliName);
 
@@ -522,8 +522,8 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
   public async ValueTask DisposeAsync()
   {
-    await connection.CloseAsync().ConfigureAwait(false);
-    await connection.DisposeAsync().ConfigureAwait(false);
+    await Connection.CloseAsync().ConfigureAwait(false);
+    await Connection.DisposeAsync().ConfigureAwait(false);
   }
 }
 

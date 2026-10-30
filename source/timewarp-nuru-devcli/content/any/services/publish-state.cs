@@ -40,11 +40,14 @@ public enum PublishState
 
 public static class PublishStateClassifier
 {
-  // Split on commas, trimming whitespace and dropping empty entries; null or
-  // blank input yields an empty list. A delimiter-only input (e.g. ",")
-  // therefore also yields an empty list — callers must check Count == 0
-  // themselves before calling Classify, since a zero package count is a
-  // config error there, not a valid Classify argument.
+  /// <summary>
+  /// Splits on commas, trimming whitespace and dropping empty entries; null or
+  /// blank input yields an empty list. A delimiter-only input (e.g. ",")
+  /// therefore also yields an empty list — callers must check Count == 0
+  /// themselves before calling Classify, since a zero package count is a
+  /// config error there, not a valid Classify argument.
+  /// </summary>
+  /// <param name="input">The comma-separated package list.</param>
   public static IReadOnlyList<string> ParsePackageList(string? input)
   {
     if (string.IsNullOrWhiteSpace(input))

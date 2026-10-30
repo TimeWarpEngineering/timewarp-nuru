@@ -59,10 +59,7 @@
 NuruApp app = NuruApp.CreateBuilder()
   .WithName("dev")
   .WithDescription("Development CLI for timewarp-nuru")
-  .UseTelemetry(options =>
-  {
-    options.ServiceName = "timewarp-nuru-dev";
-  })
+  .UseTelemetry(options => options.ServiceName = "timewarp-nuru-dev")
   .ConfigureServices(services =>
   {
     services.AddSingleton<IRepoCleanService, RepoCleanService>();

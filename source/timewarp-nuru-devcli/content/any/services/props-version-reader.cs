@@ -57,12 +57,10 @@ public static class PropsVersionReader
   {
     ArgumentNullException.ThrowIfNull(xml);
 
-#pragma warning disable IDE0007
-    XDocument doc = XDocument.Parse(xml.TrimStart('\uFEFF'));
-#pragma warning restore IDE0007
+    XElement? root = XDocument.Parse(xml.TrimStart('\uFEFF')).Root;
 
-    XElement? versionElement = doc.Descendants(MsBuildNamespace + "Version").FirstOrDefault()
-      ?? doc.Descendants("Version").FirstOrDefault();
+    XElement? versionElement = root?.Descendants(MsBuildNamespace + "Version").FirstOrDefault()
+      ?? root?.Descendants("Version").FirstOrDefault();
 
     string? version = versionElement?.Value.Trim();
     return string.IsNullOrEmpty(version) ? null : version;

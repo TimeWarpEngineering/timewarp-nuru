@@ -80,9 +80,16 @@ failure aborts with an operator-facing reason and a nonzero exit code:
    check-version step below, which *does* let `Partial` proceed — by the time that
    step runs, the tag already exists and pins the commit, closing the same hazard
    a different way. See [Partial-publish resume](#partial-publish-resume).)
-8. **A successful CI run of `workflow.yml` exists at `HEAD`** — otherwise the
-   `release: published` event's own pipeline would fail later at its
-   "locate CI run" step anyway; this guard catches that up front.
+8. **A successful CI run of `workflow.yml` exists at the release target.** The target
+   is `HEAD`, or the newest first-parent commit with a successful run when every
+   commit after it changes only `kanban/` (at most 50 commits back). Board commits
+   get no CI run, because of the `kanban/**` path filter, so without this a board
+   commit pushed between the merge and the release would block it. The command
+   prints `✓ HEAD is N kanban-only commit(s) past <sha> (CI run <id>)` and re-reads
+   `<Version>` at that commit. A commit outside `kanban/` after the green run
+   refuses and names the commit and path. Without this guard, the
+   `release: published` event's own pipeline would fail later at its "locate CI run"
+   step. This guard catches that up front.
 
 Run `dev release --dry-run` first to see every guard evaluated (all read-only, even
 the `git fetch origin master` step) plus the exact tag/push/`gh release create`
@@ -90,7 +97,7 @@ commands it would run, without creating anything.
 
 With guards passed and not `--dry-run`, `dev release`:
 
-1. Creates an **annotated** tag `v{Version}` at the verified `HEAD` commit.
+1. Creates an **annotated** tag `v{Version}` at the release target commit (guard 8).
 2. Pushes the tag to `origin`. If the push fails, the local tag is deleted and the
    command refuses — nothing was made public, so it is safe to unwind.
 3. Runs `gh release create v{Version} --title v{Version} --generate-notes --verify-tag`,

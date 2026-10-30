@@ -10,7 +10,7 @@ namespace TimeWarp.Nuru.Tests.DevCli
 using global::DevCli;
 
 /// <summary>
-/// Guard matrix for ReleaseGuard's five pure classifiers (kanban task
+/// Guard matrix for ReleaseGuard's pure classifiers (kanban task
 /// 458-006, parent 458 finding F7). No process execution — release-command.cs
 /// owns the git/gh orchestration that feeds these; --dry-run simulations
 /// exercise that wiring separately (this task's verification steps).
@@ -238,6 +238,139 @@ public class ReleaseGuardTests
     verdict.Reason.ShouldContain("never tagged");
     verdict.Reason.ShouldContain("break-glass");
     verdict.Reason.ShouldContain("bump");
+
+    await Task.CompletedTask;
+  }
+
+  // --- SelectReleaseTarget (kanban task 543) ---
+
+  public static async Task Green_head_is_the_target()
+  {
+    ReleaseTargetVerdict verdict = ReleaseGuard.SelectReleaseTarget("head", [new ReleaseTargetCommit("head", [], 101)]);
+    verdict.Ok.ShouldBeTrue();
+    verdict.TargetSha.ShouldBe("head");
+    verdict.RunId.ShouldBe(101);
+    verdict.SkippedCommitCount.ShouldBe(0);
+    verdict.Reason.ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Kanban_only_commits_on_top_of_green_target_the_green_commit()
+  {
+    ReleaseTargetVerdict verdict = ReleaseGuard.SelectReleaseTarget
+    (
+      "head",
+      [
+        new ReleaseTargetCommit("head", ["kanban/done/416-x/task.md"], null),
+        new ReleaseTargetCommit("land", ["kanban/in-progress/401-y/task.md", "kanban/done/401-y/task.md"], null),
+        new ReleaseTargetCommit("empty", [], null),
+        new ReleaseTargetCommit("green", [], 202)
+      ]
+    );
+    verdict.Ok.ShouldBeTrue();
+    verdict.TargetSha.ShouldBe("green");
+    verdict.RunId.ShouldBe(202);
+    verdict.SkippedCommitCount.ShouldBe(3);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Code_commit_between_head_and_green_refuses_naming_commit_and_path()
+  {
+    ReleaseTargetVerdict verdict = ReleaseGuard.SelectReleaseTarget
+    (
+      "head",
+      [
+        new ReleaseTargetCommit("head", ["kanban/done/416-x/task.md"], null),
+        new ReleaseTargetCommit("code", ["kanban/a.md", "source/x.cs", "source/y.cs"], null),
+        new ReleaseTargetCommit("green", [], 202)
+      ]
+    );
+    verdict.Ok.ShouldBeFalse();
+    verdict.TargetSha.ShouldBeNull();
+    verdict.Reason.ShouldNotBeNull();
+    verdict.Reason.ShouldContain("no successful CI run of workflow.yml exists for head");
+    verdict.Reason.ShouldContain("Commit code changes source/x.cs (and 1 more)");
+    verdict.Reason.ShouldContain("outside kanban/");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Code_commit_at_head_without_run_refuses()
+  {
+    ReleaseTargetVerdict verdict = ReleaseGuard.SelectReleaseTarget("head", [new ReleaseTargetCommit("head", ["source/x.cs"], null)]);
+    verdict.Ok.ShouldBeFalse();
+    verdict.Reason.ShouldNotBeNull();
+    verdict.Reason.ShouldContain("Commit head changes source/x.cs,");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task No_green_run_in_range_refuses_with_todays_message()
+  {
+    ReleaseTargetVerdict verdict = ReleaseGuard.SelectReleaseTarget
+    (
+      "head",
+      [
+        new ReleaseTargetCommit("head", ["kanban/a.md"], null),
+        new ReleaseTargetCommit("older", ["kanban/b.md"], null)
+      ]
+    );
+    verdict.Ok.ShouldBeFalse();
+    verdict.Reason.ShouldBe("no successful CI run of workflow.yml exists for head. The Release event would fail at locate-run — wait for CI on this commit or rerun it (gh run rerun <id>).");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Empty_walk_refuses()
+  {
+    ReleaseTargetVerdict verdict = ReleaseGuard.SelectReleaseTarget("head", []);
+    verdict.Ok.ShouldBeFalse();
+    verdict.Reason.ShouldNotBeNull();
+    verdict.Reason.ShouldContain("no successful CI run");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Kanban_lookalike_prefix_is_a_shipping_path()
+  {
+    ReleaseGuard.FindShippingPath(["kanban-tools/x.cs"]).ShouldBe("kanban-tools/x.cs");
+    ReleaseGuard.FindShippingPath(["Kanban/x.md"]).ShouldBe("Kanban/x.md");
+    ReleaseGuard.FindShippingPath(["kanban/x.md"]).ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  // --- CheckTargetVersion ---
+
+  public static async Task Matching_target_version_passes()
+  {
+    ReleaseGuard.CheckTargetVersion("1.0.0-beta.2", "1.0.0-beta.2", "green").Ok.ShouldBeTrue();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Different_target_version_fails()
+  {
+    GuardVerdict verdict = ReleaseGuard.CheckTargetVersion("1.0.0-beta.2", "1.0.0-beta.1", "green");
+    verdict.Ok.ShouldBeFalse();
+    verdict.Reason.ShouldNotBeNull();
+    verdict.Reason.ShouldContain("1.0.0-beta.1");
+    verdict.Reason.ShouldContain("green");
+    verdict.Reason.ShouldContain("not kanban-only");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Unreadable_target_version_fails()
+  {
+    GuardVerdict verdict = ReleaseGuard.CheckTargetVersion("1.0.0", null, "green");
+    verdict.Ok.ShouldBeFalse();
+    verdict.Reason.ShouldNotBeNull();
+    verdict.Reason.ShouldContain("unreadable");
+    verdict.Reason.ShouldContain("source/Directory.Build.props");
+    verdict.Reason.ShouldNotContain("not kanban-only");
 
     await Task.CompletedTask;
   }

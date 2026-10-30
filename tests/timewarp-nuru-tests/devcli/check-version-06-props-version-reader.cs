@@ -51,6 +51,15 @@ public class PropsVersionReaderTests
     await Task.CompletedTask;
   }
 
+  public static async Task Parse_ignores_leading_byte_order_mark()
+  {
+    // `git show {sha}:source/Directory.Build.props` (release target, task 543) keeps the BOM.
+    PropsVersionReader.Parse("﻿<Project><PropertyGroup><Version>4.0.0-beta.7</Version></PropertyGroup></Project>")
+      .ShouldBe("4.0.0-beta.7");
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Namespaced_props_version_is_read()
   {
     string root = CreateFixtureRoot();

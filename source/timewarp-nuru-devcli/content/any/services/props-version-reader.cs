@@ -44,9 +44,21 @@ public static class PropsVersionReader
       return null;
     }
 
-    string xml = File.ReadAllText(buildPropsFiles[0]);
+    return Parse(File.ReadAllText(buildPropsFiles[0]));
+  }
+
+  /// <summary>
+  /// Returns the trimmed <c>&lt;Version&gt;</c> from props XML already in hand (for example
+  /// <c>git show {sha}:source/Directory.Build.props</c>), or <see langword="null"/> when the
+  /// element is missing or blank. A leading UTF-8 byte order mark is ignored: git passes the
+  /// file's BOM through as U+FEFF, where <see cref="File.ReadAllText(string)"/> strips it.
+  /// </summary>
+  public static string? Parse(string xml)
+  {
+    ArgumentNullException.ThrowIfNull(xml);
+
 #pragma warning disable IDE0007
-    XDocument doc = XDocument.Parse(xml);
+    XDocument doc = XDocument.Parse(xml.TrimStart('\uFEFF'));
 #pragma warning restore IDE0007
 
     XElement? versionElement = doc.Descendants(MsBuildNamespace + "Version").FirstOrDefault()

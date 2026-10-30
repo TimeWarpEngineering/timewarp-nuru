@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    DevCli consumer check (kanban 562).
+
+    TimeWarp.Nuru.DevCli ships C# source that consumers compile under their own TFM and
+    analyzer settings. Nuru's own build compiles that source two ways a consumer does not:
+    - on net10.0 only. CA2263 on JsonSerializerOptions.GetTypeInfo(typeof(T)) needs the
+      net11-only GetTypeInfo<T>() overload, so it stayed silent here (4.0.0-beta.9);
+    - under the repo .editorconfig. RCS1194 was set to `none` there (4.0.0-beta.8, task 558).
+    Both broke timewarp-architecture (net11, warnings as errors) before Nuru saw them.
+
+    This project compiles the content the way a net11 consumer does: through the package's own
+    build props, with warnings as errors, no .editorconfig, and the same NoWarn as
+    tools/dev-cli. global.json in this folder selects the .NET 11 SDK. Run from this folder:
+
+      dotnet build
+
+    workflow.yml runs it in the samples stage. It is not in timewarp-nuru.slnx, which builds on
+    the repo's .NET 10 SDK.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Same CLI-tool suppressions as tools/dev-cli/Directory.Build.props, the reference consumer. -->
+    <NoWarn>$(NoWarn);CA1031;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;RCS1046;IDE0065;IL2104;IL3053;CA5399</NoWarn>
+    <!-- Dev CLIs publish AOT with invariant globalization (tools/dev-cli and timewarp-architecture
+         both do). PublishAot turns on the trim/AOT analyzers; InvariantGlobalization turns off the
+         CA1307-family culture rules. Match both so the check sees what those consumers see. -->
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- A consumer compiles the content from its NuGet cache, where no .editorconfig reaches.
+         Here the content sits under the repo root .editorconfig, and a rule set to `none` there
+         stays hidden (RCS1194 on beta.8). Not discovering .editorconfig files compiles this
+         project against analyzer defaults plus AnalysisMode=All, as the consumer does. -->
+    <DiscoverEditorConfigFiles>false</DiscoverEditorConfigFiles>
+  </PropertyGroup>
+
+  <!-- The shipped props: adds content/any/endpoints and content/any/services to Compile. -->
+  <Import Project="../../source/timewarp-nuru-devcli/build/TimeWarp.Nuru.DevCli.props" />
+
+  <ItemGroup>
+    <!-- Global usings the DevCli content expects from its consumer (tools/dev-cli/global-usings.cs). -->
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="TimeWarp.Nuru" />
+    <Using Include="TimeWarp.Mediator" />
+    <Using Include="TimeWarp.Amuru" />
+    <Using Include="TimeWarp.Terminal" />
+    <Using Include="DevCli" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../source/timewarp-nuru/timewarp-nuru.csproj" />
+    <!-- Analyzer references don't flow transitively, so add the generator directly. -->
+    <ProjectReference Include="../../source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <PackageReference Include="TimeWarp.Amuru" />
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
+  </ItemGroup>
+
+</Project>

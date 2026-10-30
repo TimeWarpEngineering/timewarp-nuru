@@ -197,6 +197,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage ${{ matrix.stage }}
 
+      - name: Setup .NET 11 (DevCli consumer check)
+        # DevCli ships C# source that consumers compile on their own TFM and
+        # analyzers. Nuru builds it on net10 under its own .editorconfig, so
+        # CA2263 (net11-only overload) and RCS1194 (hidden by .editorconfig)
+        # reached consumers first (tasks 558, 562). The check compiles the
+        # content as a net11 consumer would. Its global.json selects this SDK.
+        # preview quality while .NET 11 is RC; drop it once 11.0 is GA.
+        if: matrix.stage == 'samples'
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '11.0.x'
+          dotnet-quality: preview
+
+      - name: DevCli consumer check
+        if: matrix.stage == 'samples'
+        working-directory: tests/devcli-consumer-check
+        run: dotnet build
+
       - name: Stage packages for the ci job
         # Green master only (see the ci job). The ci job uploads these bytes as
         # Packages-<run_number> once every stage passed, then deletes this one.

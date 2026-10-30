@@ -1,0 +1,5 @@
+<Project>
+  <!-- Stops the import chain at the repo root targets; tests/Directory.Build.targets wires
+       the AOT JSON build task for file-based tests, which this project does not use. -->
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.targets" />
+</Project>

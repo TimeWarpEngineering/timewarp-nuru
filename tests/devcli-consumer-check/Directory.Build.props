@@ -1,0 +1,6 @@
+<Project>
+  <!-- Import the repo root props directly. tests/Directory.Build.props is skipped on
+       purpose: it adds Jaribu, Shouldly, and test-only NoWarn entries that a consumer's
+       dev CLI does not have. -->
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+</Project>

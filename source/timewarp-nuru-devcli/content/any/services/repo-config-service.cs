@@ -10,7 +10,6 @@
 namespace DevCli;
 
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 /// <summary>
 /// Reads per-repo configuration from <c>.timewarp/dev.jsonc</c>.
@@ -19,13 +18,15 @@ internal sealed class RepoConfigService : IRepoConfigService
 {
   private const string ConfigFileName = ".timewarp/dev.jsonc";
 
-  private static readonly JsonSerializerOptions JsonOptions = new()
-  {
-    PropertyNameCaseInsensitive = true,
-    ReadCommentHandling = JsonCommentHandling.Skip,
-    AllowTrailingCommas = true,
-    TypeInfoResolver = DevCliJsonContext.Default
-  };
+  // A context instance owns the .jsonc options, so its generated RepoConfig
+  // property is a JsonTypeInfo<RepoConfig> that carries them.
+  private static readonly DevCliJsonContext JsonContext = new(
+    new JsonSerializerOptions
+    {
+      PropertyNameCaseInsensitive = true,
+      ReadCommentHandling = JsonCommentHandling.Skip,
+      AllowTrailingCommas = true
+    });
 
   /// <inheritdoc />
   public async ValueTask<RepoConfig> GetConfigAsync(CancellationToken cancellationToken = default)
@@ -55,10 +56,11 @@ internal sealed class RepoConfigService : IRepoConfigService
   /// </summary>
   public static RepoConfig Parse(string json)
   {
-    // GetTypeInfo keeps the call on the source-generated resolver; the generic
-    // Deserialize<T>(string, options) overload is RequiresUnreferencedCode (IL2026/IL3050).
-    JsonTypeInfo<RepoConfig> typeInfo = (JsonTypeInfo<RepoConfig>)JsonOptions.GetTypeInfo(typeof(RepoConfig));
-    RepoConfig? config = JsonSerializer.Deserialize(json, typeInfo);
+    // The generated JsonTypeInfo<RepoConfig> keeps the call on the source-generated
+    // resolver; the generic Deserialize<T>(string, options) overload is
+    // RequiresUnreferencedCode (IL2026/IL3050). Not options.GetTypeInfo(typeof(T)):
+    // on net11 that trips CA2263 in consumers, and GetTypeInfo<T>() is net11-only.
+    RepoConfig? config = JsonSerializer.Deserialize(json, JsonContext.RepoConfig);
 
     return config ?? new RepoConfig();
   }

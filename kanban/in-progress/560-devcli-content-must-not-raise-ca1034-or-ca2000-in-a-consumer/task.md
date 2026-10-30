@@ -20,15 +20,37 @@ Fix the content. **No suppression of any kind** (Steve 2026-10-30, 558: "i don't
 - A consumer project that compiles DevCli content, with CA1034 and CA2000 at warning and absent from `NoWarn`, builds with neither code.
 - Nuru may keep CA1034 off inside this repo. Package content must not depend on that preference.
 - Do not ship a package `.editorconfig` that turns those rules off for the whole consumer project.
-- CA1034: un-nest the four `Handler` types into top-level types (for example `CleanCommandHandler`), and update every reference, including `tools/dev-cli` and tests. If Mediator or the generator needs the nested shape, record why and stop instead of suppressing.
+- **CA1034: make every DevCli content type `internal`** (Steve 2026-10-30: "2, they will break consumers which
+  is great"). Keep handlers nested; nesting is the point (encapsulation). Every top-level and nested type
+  under `source/timewarp-nuru-devcli/content/` goes from `public` to `internal`. DevCli ships no compiled
+  library (`IncludeBuildOutput=false`): `build/TimeWarp.Nuru.DevCli.props` compiles the files into the
+  consumer's own project, so nothing outside that assembly can reference them.
+  - Confirm the Mediator source generator still discovers and dispatches `internal` handlers. Build and run
+    the DevCli tests. If it does not, stop and record why. Do not suppress.
+  - Fix Nuru's own consumers of the content the same way. That is `tools/dev-cli` (its public types that
+    expose DevCli types in public signatures become `internal`, as `workflow-command.cs` Handler already is)
+    and the tests that compile the content.
 - CA2000: restructure `NuGetVersionService()` so ownership is visible to the analyzer. For example, create the handler in a local, pass it to `HttpClient(handler, disposeHandler: true)` inside try/catch that disposes the handler on failure, or use a factory the analyzer accepts.
 
 ## Checklist
 
-- [ ] Clear CA1034 on the four nested `Handler` types by un-nesting them (no suppression)
+- [ ] All DevCli content types `internal`; handlers stay nested; Mediator still dispatches
 - [ ] Clear CA2000 on `NuGetVersionService()` with ownership the analyzer accepts (no suppression)
 - [ ] Prove it with a consumer compile that does not copy this repo's `.editorconfig` or dev-cli `NoWarn`
+- [ ] Results: exact consumer fix list per repo (below)
 - [ ] Ship in the next DevCli prerelease after 4.0.0-beta.9
+
+## Consumer fix list (Results must fill this in)
+
+This is a deliberate breaking change for consumers. Each org repo that takes the new DevCli gets a task
+naming exactly what to fix, filed by the cockpit after merge. Do not edit other repos here. For each of
+timewarp-ganda, timewarp-taratibu, timewarp-architecture and every other org repo whose `tools/dev-cli`
+references DevCli types (check the local master checkouts under
+`~/worktrees/github.com/TimeWarpEngineering/*/master`), list:
+
+- each file and type that will fail (CS0051, CS0053 or CS0122), with its line
+- the one-line fix (usually `public` to `internal` on that repo's own `Handler` or command type)
+- the `NoWarn` entries the repo can drop once it takes this DevCli (for example ganda's `CA1034;CA2000`)
 
 ## Notes
 

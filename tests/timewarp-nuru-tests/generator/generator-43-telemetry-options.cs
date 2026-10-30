@@ -7,6 +7,8 @@
 // Kanban 470-001: Roslyn-hosted check that UseTelemetry(Action<>) options appear in generated setup.
 // Kanban 551: every OTLP exporter resolves its endpoint through NuruOtlpEndpoint.Configure, so
 // the generated code never sets o.Endpoint to the base URL (which broke /v1/{signal} for HTTP).
+// Kanban 561: ActivitySources.Add / Meters.Add (literal or const) emit one AddSource / AddMeter
+// each after Nuru's own; with none configured only Nuru's two of each are emitted.
 #endregion
 
 #if !JARIBU_MULTI
@@ -137,6 +139,110 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen43TelemetryOptions
           + $"global::TimeWarp.Nuru.NuruOtlpEndpoint.{signal})");
       }
     }
+
+    public static async Task Should_emit_add_source_and_add_meter_per_configured_name()
+    {
+      const string Source = """
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry(options =>
+          {
+            options.ActivitySources.Add("TimeWarp.Taratibu");
+            options.ActivitySources.Add(Tel43Names.WalkSource);
+            options.ActivitySources.Add("TimeWarp.Taratibu");
+            options.Meters.Add("Tel43.Meter");
+          })
+          .Map("tel43-sources").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+
+        static class Tel43Names
+        {
+          public const string WalkSource = "Tel43.Walk";
+        }
+        """;
+
+      string generated = GeneratedSource(RunNuruGenerator(Source));
+
+      AddCalls(generated, "AddSource").ShouldBe(
+      [
+        "__tracerBuilder.AddSource(__activitySource.Name)",
+        "__tracerBuilder.AddSource(\"TimeWarp.Nuru.Behavior\")",
+        "__tracerBuilder.AddSource(\"TimeWarp.Taratibu\")",
+        "__tracerBuilder.AddSource(\"Tel43.Walk\")",
+      ]);
+      AddCalls(generated, "AddMeter").ShouldBe(
+      [
+        "__meterBuilder.AddMeter(__meter.Name)",
+        "__meterBuilder.AddMeter(\"TimeWarp.Nuru.Behavior\")",
+        "__meterBuilder.AddMeter(\"Tel43.Meter\")",
+      ]);
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_emit_only_nuru_sources_when_none_configured()
+    {
+      const string Source = """
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry(options => options.ServiceName = "tel43-plain")
+          .Map("tel43-plain").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+        """;
+
+      string generated = GeneratedSource(RunNuruGenerator(Source));
+
+      AddCalls(generated, "AddSource").ShouldBe(
+      [
+        "__tracerBuilder.AddSource(__activitySource.Name)",
+        "__tracerBuilder.AddSource(\"TimeWarp.Nuru.Behavior\")",
+      ]);
+      AddCalls(generated, "AddMeter").ShouldBe(
+      [
+        "__meterBuilder.AddMeter(__meter.Name)",
+        "__meterBuilder.AddMeter(\"TimeWarp.Nuru.Behavior\")",
+      ]);
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_skip_extra_sources_when_tracing_disabled()
+    {
+      const string Source = """
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry(options =>
+          {
+            options.EnableTracing = false;
+            options.ActivitySources.Add("Tel43.Skipped");
+            options.Meters.Add("Tel43.Kept");
+          })
+          .Map("tel43-skip").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+        """;
+
+      string generated = GeneratedSource(RunNuruGenerator(Source));
+
+      generated.Contains("Tel43.Skipped").ShouldBeFalse();
+      generated.ShouldContain("__meterBuilder.AddMeter(\"Tel43.Kept\")");
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Returns each "&lt;builder&gt;.AddSource(...)" or ".AddMeter(...)" call, in emit order.
+    /// </summary>
+    private static string[] AddCalls(string generated, string method) =>
+    [
+      .. System.Text.RegularExpressions.Regex.Matches(generated, $@"__\w+Builder\.{method}\([^)]*\)")
+        .Select(static match => match.Value)
+    ];
 
     public static async Task Should_omit_tracer_setup_when_tracing_disabled()
     {

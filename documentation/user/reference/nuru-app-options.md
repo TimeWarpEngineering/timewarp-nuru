@@ -81,6 +81,8 @@ NuruApp.CreateBuilder()
     options.EnableMetrics = true;
     options.EnableLogging = true;
     options.OtlpEndpoint = "http://localhost:4317";
+    options.ActivitySources.Add("TimeWarp.Taratibu");
+    options.Meters.Add("MyCompany.Billing");
   });
 ```
 
@@ -94,6 +96,8 @@ NuruApp.CreateBuilder()
 | `EnableMetrics` | `bool` | `true` | Enable metrics collection |
 | `EnableLogging` | `bool` | `true` | Enable OpenTelemetry logging |
 | `OtlpEndpoint` | `string?` | `null` | OTLP collector base URL; `http/protobuf` appends `/v1/{signal}` (see [Telemetry](../features/telemetry.md#endpoint-paths)) |
+| `ActivitySources` | `IList<string>` | empty | Extra ActivitySource names to export, added with `Add("<literal or const>")` (see [Telemetry](../features/telemetry.md#exporting-other-activitysources-and-meters)) |
+| `Meters` | `IList<string>` | empty | Extra Meter names to export, added the same way |
 
 Telemetry respects environment variables:
 - `OTEL_SERVICE_NAME` - Overrides `ServiceName`

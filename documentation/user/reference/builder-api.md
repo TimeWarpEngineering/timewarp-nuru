@@ -194,6 +194,7 @@ Behaviors wrap handler execution like middleware. See [Pipeline Behaviors](../fe
   options.ServiceName = "my-cli";
   options.EnableTracing = true;
   options.EnableMetrics = true;
+  options.ActivitySources.Add("TimeWarp.Taratibu"); // export a library's spans too
 })
 ```
 

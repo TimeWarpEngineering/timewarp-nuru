@@ -44,6 +44,30 @@ tagged with `command`.
 
 Setting `EnableTracing` and `EnableMetrics` both to `false` leaves the behavior out.
 
+## Exporting other ActivitySources and Meters
+
+The tracer and meter providers subscribe only to Nuru's own sources (`TimeWarp.Nuru` and
+`TimeWarp.Nuru.Behavior`). A library that creates spans on its own `ActivitySource` is not
+exported until the app names that source. For example, TimeWarp.Taratibu puts its per-node
+walk spans on a source named `TimeWarp.Taratibu`:
+
+```csharp
+NuruApp app = NuruApp.CreateBuilder()
+  .UseTelemetry(options =>
+  {
+    options.ActivitySources.Add("TimeWarp.Taratibu");
+    options.Meters.Add("MyCompany.Billing");
+  })
+  .Build();
+```
+
+Each name becomes an `AddSource` (or `AddMeter`) call in the generated provider setup, after
+Nuru's own. The source generator reads the names at compile time, so each `Add` argument must
+be a string literal or a `const`; any other call is skipped. Nothing is resolved by reflection,
+so this stays AOT and trim safe. OpenTelemetry wildcards such as `"MyCompany.*"` pass through.
+Names only take effect for an enabled signal: `ActivitySources` needs `EnableTracing`, and
+`Meters` needs `EnableMetrics`.
+
 ## Environment Variables
 
 | Variable | Description |

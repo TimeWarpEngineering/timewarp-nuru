@@ -58,6 +58,29 @@ public sealed class NuruTelemetryOptions
   public string? OtlpEndpoint { get; set; }
 
   /// <summary>
+  /// Extra <see cref="System.Diagnostics.ActivitySource"/> names the tracer provider exports,
+  /// in addition to Nuru's own <c>TimeWarp.Nuru</c> and <c>TimeWarp.Nuru.Behavior</c>.
+  /// </summary>
+  /// <remarks>
+  /// Use this for spans a library creates on its own source, for example
+  /// <c>options.ActivitySources.Add("TimeWarp.Taratibu")</c> for Taratibu walk spans.
+  /// The source generator reads each <c>Add</c> call at compile time, so the name must be a
+  /// string literal or a <c>const</c>; other calls are ignored. OpenTelemetry wildcards such as
+  /// <c>"MyCompany.*"</c> are passed through unchanged.
+  /// </remarks>
+  public IList<string> ActivitySources { get; } = [];
+
+  /// <summary>
+  /// Extra <see cref="System.Diagnostics.Metrics.Meter"/> names the meter provider exports,
+  /// in addition to Nuru's own <c>TimeWarp.Nuru</c> and <c>TimeWarp.Nuru.Behavior</c>.
+  /// </summary>
+  /// <remarks>
+  /// Read at compile time like <see cref="ActivitySources"/>: each <c>Add</c> argument must be a
+  /// string literal or a <c>const</c>.
+  /// </remarks>
+  public IList<string> Meters { get; } = [];
+
+  /// <summary>
   /// Gets the effective OTLP endpoint, considering both the property and environment variable.
   /// </summary>
   internal string? EffectiveOtlpEndpoint =>

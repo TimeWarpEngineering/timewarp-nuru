@@ -76,6 +76,10 @@
 // props file is re-read at the target and must match. A kanban-only walk
 // makes a mismatch impossible, so a mismatch is a caller bug or a
 // rewritten history, and it refuses rather than tag a different version.
+// A null target version means the props file did not parse or had no
+// <Version>; that refusal names the props file, not a version mismatch.
+// A failed `git show` never reaches here: the caller reports it as a git
+// error with stderr (543 review M2).
 #endregion
 
 namespace DevCli;
@@ -269,8 +273,12 @@ public static class ReleaseGuard
       return GuardVerdict.Pass();
     }
 
-    string display = targetVersion ?? "(unreadable)";
-    return GuardVerdict.Fail($"<Version> at release target {targetSha} is {display}, but HEAD has {headVersion} — the commits between them are not kanban-only. Wait for CI on HEAD.");
+    if (targetVersion is null)
+    {
+      return GuardVerdict.Fail($"source/Directory.Build.props at release target {targetSha} is unreadable: it does not parse or has no <Version>. Fix the props file and wait for CI on the fix.");
+    }
+
+    return GuardVerdict.Fail($"<Version> at release target {targetSha} is {targetVersion}, but HEAD has {headVersion} — the commits between them are not kanban-only. Wait for CI on HEAD.");
   }
 
   public static bool IsPrerelease(string version)

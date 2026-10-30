@@ -358,6 +358,7 @@ public class ReleaseGuardTests
     verdict.Reason.ShouldNotBeNull();
     verdict.Reason.ShouldContain("1.0.0-beta.1");
     verdict.Reason.ShouldContain("green");
+    verdict.Reason.ShouldContain("not kanban-only");
 
     await Task.CompletedTask;
   }
@@ -367,7 +368,9 @@ public class ReleaseGuardTests
     GuardVerdict verdict = ReleaseGuard.CheckTargetVersion("1.0.0", null, "green");
     verdict.Ok.ShouldBeFalse();
     verdict.Reason.ShouldNotBeNull();
-    verdict.Reason.ShouldContain("(unreadable)");
+    verdict.Reason.ShouldContain("unreadable");
+    verdict.Reason.ShouldContain("source/Directory.Build.props");
+    verdict.Reason.ShouldNotContain("not kanban-only");
 
     await Task.CompletedTask;
   }

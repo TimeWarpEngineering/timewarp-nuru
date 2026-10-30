@@ -407,17 +407,21 @@ public sealed class ReleaseCommand : ICommand<Unit>
           .CaptureAsync(cancellationToken)
           .ConfigureAwait(false);
 
-        string? targetVersion = null;
-        if (targetPropsResult.ExitCode == 0)
+        if (targetPropsResult.ExitCode != 0)
         {
-          try
-          {
-            targetVersion = PropsVersionReader.Parse(targetPropsResult.Stdout);
-          }
-          catch (System.Xml.XmlException)
-          {
-            // Unparseable props at the target: CheckTargetVersion refuses it as unreadable.
-          }
+          Terminal.WriteErrorLine($"Error: git show {ShortSha(targetSha)}:source/Directory.Build.props failed.\n{targetPropsResult.Stderr.Trim()}");
+          Environment.ExitCode = 1;
+          return Unit.Value;
+        }
+
+        string? targetVersion = null;
+        try
+        {
+          targetVersion = PropsVersionReader.Parse(targetPropsResult.Stdout);
+        }
+        catch (System.Xml.XmlException)
+        {
+          // Unparseable props at the target: CheckTargetVersion refuses it as unreadable.
         }
 
         GuardVerdict targetVersionVerdict = ReleaseGuard.CheckTargetVersion(version, targetVersion, targetSha);
@@ -561,8 +565,10 @@ public sealed class ReleaseCommand : ICommand<Unit>
           break;
         }
 
+        // --no-renames lists both sides of a rename, so a move from source/ into
+        // kanban/ still shows the source/ path, whatever diff.renames is set to.
         CommandOutput diffResult = await Shell.Builder("git")
-          .WithArguments("diff", "--name-only", $"{sha}^1", sha)
+          .WithArguments("diff", "--name-only", "--no-renames", $"{sha}^1", sha)
           .WithNoValidation()
           .CaptureAsync(cancellationToken)
           .ConfigureAwait(false);

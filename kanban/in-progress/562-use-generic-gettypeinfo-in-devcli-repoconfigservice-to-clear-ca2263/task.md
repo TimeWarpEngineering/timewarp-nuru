@@ -67,6 +67,7 @@ Acceptance:
   task 457 at Steve's request ("file the bug with Nuru").
 - 2026-10-31 implement (ganda task work, implementer-claude): context-instance fix,
   `tests/devcli-consumer-check` + CI step, boy-scout IDE1006 in check-version-02.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0cfdedef-883a-4b18-b818-2be5cd1e031f, max-turns 500, Done — 2026-10-30T19:37:34Z
 
 ## Notes
 

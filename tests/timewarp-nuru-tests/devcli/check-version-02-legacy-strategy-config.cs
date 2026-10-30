@@ -25,7 +25,7 @@ public class LegacyStrategyConfigTests
 
   public static async Task Legacy_git_tag_strategy_config_parses_without_throw()
   {
-    const string json = """
+    const string Json = """
     {
       // Per-repo configuration for TimeWarp.Nuru dev-cli
       "checkVersionConfig": {
@@ -36,7 +36,7 @@ public class LegacyStrategyConfigTests
     }
     """;
 
-    RepoConfig config = Should.NotThrow(() => RepoConfigService.Parse(json));
+    RepoConfig config = Should.NotThrow(() => RepoConfigService.Parse(Json));
     config.CheckVersionConfig.ShouldNotBeNull();
     config.CheckVersionConfig.Packages.ShouldBe("TimeWarp.Nuru,TimeWarp.Nuru.Analyzers");
 
@@ -45,7 +45,7 @@ public class LegacyStrategyConfigTests
 
   public static async Task Legacy_nuget_search_strategy_config_parses_without_throw()
   {
-    const string json = """
+    const string Json = """
     {
       "checkVersionConfig": {
         "checkVersionStrategy": "nuget-search",
@@ -54,7 +54,7 @@ public class LegacyStrategyConfigTests
     }
     """;
 
-    RepoConfig config = Should.NotThrow(() => RepoConfigService.Parse(json));
+    RepoConfig config = Should.NotThrow(() => RepoConfigService.Parse(Json));
     config.CheckVersionConfig.ShouldNotBeNull();
     config.CheckVersionConfig.Packages.ShouldBe("TimeWarp.Nuru");
 

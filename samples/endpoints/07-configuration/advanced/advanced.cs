@@ -12,7 +12,6 @@
 // DSL: Endpoint with complex IOptions<T> structures
 // ═══════════════════════════════════════════════════════════════════════════════════════
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
-#:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
 #:property EnableConfigurationBindingGenerator=true
 

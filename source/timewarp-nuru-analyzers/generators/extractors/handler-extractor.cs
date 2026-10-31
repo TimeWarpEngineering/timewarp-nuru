@@ -834,7 +834,7 @@ internal static class HandlerExtractor
       typeName = typeName[8..];
 
     // Get last segment after the final dot
-    int lastDot = typeName.LastIndexOf('.');
+    int lastDot = typeName.LastIndexOf('.', StringComparison.Ordinal);
     return lastDot >= 0 ? typeName[(lastDot + 1)..] : typeName;
   }
 

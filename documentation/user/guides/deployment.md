@@ -1,6 +1,6 @@
 # Deployment
 
-Deploy your TimeWarp.Nuru CLI applications as native executables, .NET 10 runfiles, or traditional .NET applications.
+Deploy your TimeWarp.Nuru CLI applications as native executables, .NET runfiles, or traditional .NET applications.
 
 ## Native AOT Compilation
 
@@ -108,7 +108,7 @@ TimeWarp.Nuru uses a **fail-fast, no silent fallback** approach:
 - Third-party libraries in your handlers must be AOT-compatible
 - `UseMicrosoftDependencyInjection()` may limit some DI extension methods
 
-## .NET 10 Runfiles
+## .NET Runfiles
 
 Create single-file executables that run directly.
 
@@ -278,7 +278,7 @@ Bundles into single executable.
 | Self-Contained | ~65 MB | Fast | Moderate | No runtime needed |
 | Self-Contained + Trimmed | ~25 MB | Fast | Slow | Optimized |
 | Native AOT | ~3-5 MB | Instant | Slow | Fastest startup |
-| .NET 10 Runfile | Source file | Fast | On-demand | Development |
+| .NET Runfile | Source file | Fast | On-demand | Development |
 
 See [Performance Reference](../reference/performance.md) for detailed benchmarks.
 
@@ -299,7 +299,7 @@ dotnet run -- command args
 Use framework-dependent builds:
 ```bash
 dotnet publish -c Release
-./bin/Release/net10.0/publish/mycli --version
+./bin/Release/net11.0/publish/mycli --version
 ```
 
 ### Production
@@ -314,7 +314,7 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true
 - **Internal tools**: .NET Global Tool
 - **Public tools**: Native AOT binaries via GitHub Releases
 - **Cross-platform**: Multiple AOT builds for each platform
-- **Quick scripts**: .NET 10 runfiles
+- **Quick scripts**: .NET runfiles
 
 ## CI/CD Integration
 
@@ -346,7 +346,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0.x'
+        dotnet-version: '11.0.x'
 
     - name: Publish
       run: dotnet publish -c Release -r ${{ matrix.rid }} -p:PublishAot=true
@@ -355,7 +355,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: mytool-${{ matrix.rid }}
-        path: bin/Release/net10.0/${{ matrix.rid }}/publish/
+        path: bin/Release/net11.0/${{ matrix.rid }}/publish/
 ```
 
 ## Related Documentation

@@ -161,7 +161,7 @@ internal static class PatternStringExtractor
       return null;
 
     // Handle nullable types (e.g., "int?", "double?")
-    bool isNullable = typeConstraint.EndsWith('?');
+    bool isNullable = typeConstraint.EndsWith('?', StringComparison.Ordinal);
     string baseType = isNullable ? typeConstraint[..^1] : typeConstraint;
 
     // Use shared type conversion map for built-in types

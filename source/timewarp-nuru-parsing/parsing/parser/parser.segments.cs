@@ -245,7 +245,7 @@ internal sealed partial class Parser
     Token token = Advance();
 
     // Special handling for angle bracket syntax
-    if (token.Value.StartsWith('<') && token.Value.EndsWith('>'))
+    if (token.Value.StartsWith('<', StringComparison.Ordinal) && token.Value.EndsWith('>', StringComparison.Ordinal))
     {
       string paramName = token.Value[1..^1]; // Remove < and >
       string suggestion = $"{{{paramName}}}";

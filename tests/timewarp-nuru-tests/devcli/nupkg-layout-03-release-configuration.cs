@@ -23,7 +23,7 @@ using global::DevCli;
 [TestTag("DevCli")]
 public class NupkgLayoutReleaseConfigurationTests
 {
-  private const string EntryName = "lib/net10.0/TimeWarp.Nuru.dll";
+  private const string EntryName = "lib/net11.0/TimeWarp.Nuru.dll";
 
   [ModuleInitializer]
   internal static void Register() => RegisterTests<NupkgLayoutReleaseConfigurationTests>();
@@ -126,7 +126,7 @@ public class NupkgLayoutReleaseConfigurationTests
     string nupkg = MakeNupkg(EmitAssembly("Release", 0));
     try
     {
-      Should.Throw<FileNotFoundException>(() => NupkgLayoutCheck.ReadPackedAssemblyBuildInfo(nupkg, "lib/net10.0/Other.dll"));
+      Should.Throw<FileNotFoundException>(() => NupkgLayoutCheck.ReadPackedAssemblyBuildInfo(nupkg, "lib/net11.0/Other.dll"));
     }
     finally { Directory.Delete(Path.GetDirectoryName(nupkg)!, recursive: true); }
 

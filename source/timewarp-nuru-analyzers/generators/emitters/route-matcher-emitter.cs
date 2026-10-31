@@ -961,7 +961,7 @@ internal static class RouteMatcherEmitter
 
       // Normalize type constraint: strip '?' suffix to get base type
       string typeConstraint = param.TypeConstraint ?? "";
-      string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
+      string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal) ? typeConstraint[..^1] : typeConstraint;
 
       // Handle catchall parameters differently - they're string[] not string
       if (param.IsCatchAll)
@@ -1255,7 +1255,7 @@ internal static class RouteMatcherEmitter
     string tempVarName = $"__temp_{param.CamelCaseName}_{routeIndex}";
 
     // A nullable handler parameter (`Env? env`) arrives as "Env?"; the converter needs the bare enum.
-    if (enumTypeName.EndsWith('?'))
+    if (enumTypeName.EndsWith('?', StringComparison.Ordinal))
       enumTypeName = enumTypeName[..^1];
 
     if (param.IsOptional)
@@ -1303,7 +1303,7 @@ internal static class RouteMatcherEmitter
     }
 
     // Then get the part after the last dot
-    int lastDot = fullyQualifiedName.LastIndexOf('.');
+    int lastDot = fullyQualifiedName.LastIndexOf('.', StringComparison.Ordinal);
     return lastDot >= 0 ? fullyQualifiedName[(lastDot + 1)..] : fullyQualifiedName;
   }
 
@@ -1340,7 +1340,7 @@ internal static class RouteMatcherEmitter
     _ = customConverters; // Custom converters for arrays are not yet supported
 
     string typeConstraint = option.TypeConstraint ?? "";
-    string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
+    string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal) ? typeConstraint[..^1] : typeConstraint;
     string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
 
     // Built-in typed conversion when a type constraint is present (int, double, etc.)
@@ -1429,7 +1429,7 @@ internal static class RouteMatcherEmitter
 
     while (true)
     {
-      if (typeName.EndsWith('?'))
+      if (typeName.EndsWith('?', StringComparison.Ordinal))
       {
         typeName = typeName[..^1];
         continue;
@@ -1477,7 +1477,7 @@ internal static class RouteMatcherEmitter
 
     foreach (string prefix in prefixes)
     {
-      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>'))
+      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>', StringComparison.Ordinal))
       {
         elementType = typeName[prefix.Length..^1];
         return elementType.Length > 0;
@@ -1539,11 +1539,11 @@ internal static class RouteMatcherEmitter
     RouteDefinition route)
   {
     string typeConstraint = option.TypeConstraint ?? "";
-    string baseType = typeConstraint.EndsWith('?') ? typeConstraint[..^1] : typeConstraint;
+    string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal) ? typeConstraint[..^1] : typeConstraint;
     string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
 
     // Use shared type conversion mapping with TryParse for graceful error handling
-    bool isNullableValueType = typeConstraint.EndsWith('?');
+    bool isNullableValueType = typeConstraint.EndsWith('?', StringComparison.Ordinal);
     (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, rawVarName, varName);
 
     if (conversion is var (clrType, tryParseCondition))
@@ -1815,7 +1815,7 @@ internal static class RouteMatcherEmitter
 
     // Strip nullable suffix from the type name for the converter and casts
     // EnumTypeConverter<T> requires the non-nullable enum type
-    string baseEnumType = enumTypeName.EndsWith('?') ? enumTypeName[..^1] : enumTypeName;
+    string baseEnumType = enumTypeName.EndsWith('?', StringComparison.Ordinal) ? enumTypeName[..^1] : enumTypeName;
 
     if (option.ParameterIsOptional)
     {
@@ -1917,7 +1917,7 @@ internal static class RouteMatcherEmitter
 
   private static string JsonArgvRejectedFlag(string varName, int routeIndex)
   {
-    if (varName.StartsWith('@'))
+    if (varName.StartsWith('@', StringComparison.Ordinal))
       varName = varName[1..];
 
     return $"__jsonArgvRejected_{varName}_{routeIndex}";

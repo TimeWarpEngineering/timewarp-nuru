@@ -199,7 +199,7 @@ The published bytes are **byte-identical** to the bytes the merge-CI run already
 built, ran `verify-samples` and `test` against, and uploaded. There is no rebuild
 at release time and therefore no chance of SDK/Roslyn drift between merge time and
 release time changing generated code — a real risk for a source-generator product,
-since `actions/setup-dotnet` resolves `10.0.x` freshly on every run. "Published"
+since `actions/setup-dotnet` resolves `11.0.x` freshly on every run. "Published"
 and "tested" are the same artifact, by construction, not by convention.
 
 ## Break-glass

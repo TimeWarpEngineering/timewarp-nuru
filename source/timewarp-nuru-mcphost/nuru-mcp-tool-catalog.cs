@@ -101,7 +101,7 @@ public static class NuruMcpToolCatalog
     foreach (string token in endpoint.Pattern.Split(' ', StringSplitOptions.RemoveEmptyEntries))
     {
       // Parameters ({x}, {x:int}, {*args}) and options (--name, -n) are not part of the name.
-      if (token.StartsWith('{') || token.StartsWith('-'))
+      if (token.StartsWith('{', StringComparison.Ordinal) || token.StartsWith('-', StringComparison.Ordinal))
         continue;
 
       words.Add(token);
@@ -284,7 +284,7 @@ public static class NuruMcpToolCatalog
       return;
     }
 
-    bool nullable = catalogType.EndsWith('?');
+    bool nullable = catalogType.EndsWith('?', StringComparison.Ordinal);
     bool typedArray = catalogType.EndsWith("[]", StringComparison.Ordinal);
     string itemType = typedArray ? catalogType[..^2] : catalogType;
     isArray = isArray || typedArray;
@@ -490,7 +490,7 @@ public static class NuruMcpToolCatalog
     }
 
     // An enum default is written as "Env.Dev"; publish the member name when it is an allowed value.
-    int dot = literal.LastIndexOf('.');
+    int dot = literal.LastIndexOf('.', StringComparison.Ordinal);
     if (allowedValues is { Count: > 0 } && !allowedValues.Contains(literal) && dot >= 0 && allowedValues.Contains(literal[(dot + 1)..]))
       return literal[(dot + 1)..];
 

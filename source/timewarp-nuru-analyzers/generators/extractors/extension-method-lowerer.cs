@@ -569,7 +569,7 @@ internal static class ExtensionMethodLowerer
 
   private static INamedTypeSymbol? FindTypeByMetadataOrName(INamespaceSymbol namespaceSymbol, string name)
   {
-    int lastDot = name.LastIndexOf('.');
+    int lastDot = name.LastIndexOf('.', StringComparison.Ordinal);
     if (lastDot < 0)
     {
       ImmutableArray<INamedTypeSymbol> members = namespaceSymbol.GetTypeMembers(name);

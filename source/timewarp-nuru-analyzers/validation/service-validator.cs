@@ -499,11 +499,11 @@ internal static class ServiceValidator
     {
       string beforeGeneric = normalized[..genericIndex];
       string genericPart = normalized[genericIndex..];
-      int lastDot = beforeGeneric.LastIndexOf('.');
+      int lastDot = beforeGeneric.LastIndexOf('.', StringComparison.Ordinal);
       return lastDot >= 0 ? beforeGeneric[(lastDot + 1)..] + genericPart : beforeGeneric + genericPart;
     }
 
-    int lastDotIndex = normalized.LastIndexOf('.');
+    int lastDotIndex = normalized.LastIndexOf('.', StringComparison.Ordinal);
     return lastDotIndex >= 0 ? normalized[(lastDotIndex + 1)..] : normalized;
   }
 }

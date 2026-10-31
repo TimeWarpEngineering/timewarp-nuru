@@ -98,7 +98,7 @@ internal static class EnumInfoExtractor
 
     while (true)
     {
-      if (typeName.EndsWith('?'))
+      if (typeName.EndsWith('?', StringComparison.Ordinal))
       {
         typeName = typeName[..^1];
         continue;
@@ -144,7 +144,7 @@ internal static class EnumInfoExtractor
 
     foreach (string prefix in prefixes)
     {
-      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>'))
+      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>', StringComparison.Ordinal))
       {
         elementType = typeName[prefix.Length..^1];
         return elementType.Length > 0;
@@ -240,7 +240,7 @@ internal static class EnumInfoExtractor
           break;
         case '.' when depth == 0:
           string name = typeName[start..(nameEnd >= 0 ? nameEnd : i)].Trim();
-          if (name.StartsWith('@'))
+          if (name.StartsWith('@', StringComparison.Ordinal))
             name = name[1..];
           if (name.Length == 0)
             return null;

@@ -190,7 +190,7 @@ public sealed record ParameterBinding(
         typeName = typeName[8..];
 
       // Get just the type name without namespace
-      int lastDot = typeName.LastIndexOf('.');
+      int lastDot = typeName.LastIndexOf('.', StringComparison.Ordinal);
       if (lastDot >= 0)
         typeName = typeName[(lastDot + 1)..];
 

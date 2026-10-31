@@ -249,7 +249,7 @@ consumer_csproj() {
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -326,7 +326,7 @@ nuru_errors() {
 # Launch: restore the shipped package into the private cache, as a consumer would
 # ---------------------------------------------------------------------------------------------
 mkdir -p "$OUT/launch"
-run_logged "$OUT/launch/new-console.log" dotnet new console -o "$WORK/consumer" --framework net10.0
+run_logged "$OUT/launch/new-console.log" dotnet new console -o "$WORK/consumer" --framework net11.0
 run_logged "$OUT/launch/add-package.log" dotnet add "$WORK/consumer/consumer.csproj" package TimeWarp.Nuru --version "$VERSION"
 if [[ $RUN_RC -ne 0 ]]; then
   record launch "dotnet add package TimeWarp.Nuru $VERSION" FAIL launch/add-package.log "restore failed"
@@ -393,7 +393,7 @@ if has_step probes; then
   for proj in "$WORK/probes"/*/*.csproj; do
     name="$(basename "$proj" .csproj)"
     errors="$(project_errors "$OUT/probes/build.log" "$proj")"
-    if [[ -z "$errors" && -e "$WORK/probes/$name/bin/Release/net10.0/$name.dll" ]]; then
+    if [[ -z "$errors" && -e "$WORK/probes/$name/bin/Release/net11.0/$name.dll" ]]; then
       PROBE_OK[$name]=1
     else
       PROBE_OK[$name]=0
@@ -412,7 +412,7 @@ if has_step probes; then
       record probes "$label" FAIL "probes/$probe.build-errors.txt" "probe did not compile"
       continue
     fi
-    dll="$WORK/probes/$probe/bin/Release/net10.0/$probe.dll"
+    dll="$WORK/probes/$probe/bin/Release/net11.0/$probe.dll"
     read -r -a argv <<<"$([[ "$args" == "-" ]] && echo "" || echo "$args")"
     envs=(); [[ "$env" != "-" ]] && envs=("$env")
     haystack=""
@@ -479,7 +479,7 @@ if has_step cli; then
     else
       record cli "nuru --version reports $VERSION" FAIL cli/version.log "exit $RUN_RC"
     fi
-    target="$WORK/probes/core-routing/bin/Release/net10.0/core-routing"
+    target="$WORK/probes/core-routing/bin/Release/net11.0/core-routing"
     if [[ -x "$target" ]]; then
       run_logged "$OUT/cli/index.log" env HOME="$WORK/home" "${nuru[@]}" index rebuild --cli "$target"
       run_logged "$OUT/cli/search.log" env HOME="$WORK/home" "${nuru[@]}" search --query "integers"
@@ -600,7 +600,7 @@ if has_step docs; then
       record docs "snippet ${where%%#L*}:${where##*#L} compiles against the package" FAIL docs/snippets.tsv "$first"
     fi
     if [[ "$result" == "compiles" && -s "$WORK/docs/$name/expect.tsv" ]]; then
-      dll="$WORK/docs/$name/bin/Release/net10.0/$name.dll"
+      dll="$WORK/docs/$name/bin/Release/net11.0/$name.dll"
       while IFS=$'\t' read -r a o; do
         read -r -a argv <<<"$a"
         log="docs/$name.run.log"

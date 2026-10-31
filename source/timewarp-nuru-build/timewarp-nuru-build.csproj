@@ -46,7 +46,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <None Include="$(OutputPath)/**/*.dll" Pack="true" PackagePath="build/net10.0" Visible="false" />
+    <None Include="$(OutputPath)/**/*.dll" Pack="true" PackagePath="build/net11.0" Visible="false" />
   </ItemGroup>
 
 </Project>

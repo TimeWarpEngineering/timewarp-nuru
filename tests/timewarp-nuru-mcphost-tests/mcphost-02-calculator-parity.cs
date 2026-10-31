@@ -32,7 +32,7 @@ public class McpHostCalculatorParityTests
     await using McpClient client = await StartMcpAsync();
     IList<McpClientTool> tools = await client.ListToolsAsync();
 
-    client.ServerInfo.Name.ShouldBe(catalog.Name);
+    client.ServerInfo.ShouldNotBeNull().Name.ShouldBe(catalog.Name);
     tools.Count.ShouldBe(catalog.Endpoints.Count);
 
     foreach (EndpointCapability endpoint in catalog.Endpoints)

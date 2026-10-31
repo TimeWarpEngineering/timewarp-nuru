@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <_NuruBuildTaskDir>$(MSBuildThisFileDirectory)../timewarp-nuru-build/bin/$(Configuration)/net10.0/</_NuruBuildTaskDir>
+    <_NuruBuildTaskDir>$(MSBuildThisFileDirectory)../timewarp-nuru-build/bin/$(Configuration)/net11.0/</_NuruBuildTaskDir>
   </PropertyGroup>
 
   <Import Project="../timewarp-nuru-build/build/TimeWarp.Nuru.Build.targets" 

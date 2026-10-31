@@ -1,7 +1,6 @@
 #!/usr/bin/env -S dotnet --
-#:sdk Aspire.AppHost.Sdk@13.5.3
+#:sdk Aspire.AppHost.Sdk@13.6.4
 #:property NoWarn=ASPIRE004;ASPIRECSHARPAPPS001;ASPIRETERMINAL001
-#:package MessagePack
 
 // Aspire Host with OpenTelemetry Sample
 // ======================================

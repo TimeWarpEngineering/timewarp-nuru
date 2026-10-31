@@ -241,7 +241,7 @@ internal static class ServiceResolverEmitter
 
     foreach (string prefix in prefixes)
     {
-      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>'))
+      if (typeName.StartsWith(prefix, StringComparison.Ordinal) && typeName.EndsWith('>', StringComparison.Ordinal))
       {
         innerTypeName = typeName[prefix.Length..^1];
         return true;
@@ -303,7 +303,7 @@ internal static class ServiceResolverEmitter
       typeName = typeName[8..];
 
     // Get just the type name (after last dot)
-    int lastDot = typeName.LastIndexOf('.');
+    int lastDot = typeName.LastIndexOf('.', StringComparison.Ordinal);
     if (lastDot >= 0)
       typeName = typeName[(lastDot + 1)..];
 
@@ -326,7 +326,7 @@ internal static class ServiceResolverEmitter
       className = className[8..];
 
     // Get just the class name (after last dot)
-    int lastDot = className.LastIndexOf('.');
+    int lastDot = className.LastIndexOf('.', StringComparison.Ordinal);
     if (lastDot >= 0)
       className = className[(lastDot + 1)..];
 

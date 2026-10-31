@@ -179,7 +179,7 @@ internal sealed class ReplCommands
 
   private static bool TryTakeValue(string[] args, ref int index, out string? value)
   {
-    if (index + 1 >= args.Length || args[index + 1].StartsWith('-'))
+    if (index + 1 >= args.Length || args[index + 1].StartsWith('-', StringComparison.Ordinal))
     {
       value = null;
       return false;

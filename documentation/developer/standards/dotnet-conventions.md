@@ -1,7 +1,7 @@
 .NET CONVENTIONS:
 
 FRAMEWORK:
-- Target net9.0
+- Target net11.0
 
 PROJECT CONFIGURATION:
 - Use Directory.Build.props for shared project properties

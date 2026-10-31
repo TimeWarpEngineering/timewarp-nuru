@@ -37,10 +37,10 @@ public class NupkgLayoutCheckTests
 
   public static async Task All_required_present_returns_empty()
   {
-    string zip = MakeZip("build/TimeWarp.Nuru.targets", "build/net10.0/TimeWarp.Nuru.Build.dll", "lib/net10.0/TimeWarp.Nuru.dll");
+    string zip = MakeZip("build/TimeWarp.Nuru.targets", "build/net11.0/TimeWarp.Nuru.Build.dll", "lib/net11.0/TimeWarp.Nuru.dll");
     try
     {
-      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(zip, ["build/TimeWarp.Nuru.targets", "build/net10.0/TimeWarp.Nuru.Build.dll"]);
+      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(zip, ["build/TimeWarp.Nuru.targets", "build/net11.0/TimeWarp.Nuru.Build.dll"]);
       missing.Count.ShouldBe(0);
     }
     finally { Directory.Delete(Path.GetDirectoryName(zip)!, recursive: true); }
@@ -50,12 +50,12 @@ public class NupkgLayoutCheckTests
 
   public static async Task Missing_payload_is_reported_by_name()
   {
-    string zip = MakeZip("build/TimeWarp.Nuru.targets", "lib/net10.0/TimeWarp.Nuru.dll");
+    string zip = MakeZip("build/TimeWarp.Nuru.targets", "lib/net11.0/TimeWarp.Nuru.dll");
     try
     {
-      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(zip, ["build/TimeWarp.Nuru.targets", "build/net10.0/TimeWarp.Nuru.Build.dll"]);
+      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(zip, ["build/TimeWarp.Nuru.targets", "build/net11.0/TimeWarp.Nuru.Build.dll"]);
       missing.Count.ShouldBe(1);
-      missing[0].ShouldBe("build/net10.0/TimeWarp.Nuru.Build.dll");
+      missing[0].ShouldBe("build/net11.0/TimeWarp.Nuru.Build.dll");
     }
     finally { Directory.Delete(Path.GetDirectoryName(zip)!, recursive: true); }
 
@@ -64,10 +64,10 @@ public class NupkgLayoutCheckTests
 
   public static async Task Comparison_is_ordinal_case_sensitive()
   {
-    string zip = MakeZip("build/net10.0/timewarp.nuru.build.dll");
+    string zip = MakeZip("build/net11.0/timewarp.nuru.build.dll");
     try
     {
-      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(zip, ["build/net10.0/TimeWarp.Nuru.Build.dll"]);
+      IReadOnlyList<string> missing = NupkgLayoutCheck.FindMissing(zip, ["build/net11.0/TimeWarp.Nuru.Build.dll"]);
       missing.Count.ShouldBe(1);
     }
     finally { Directory.Delete(Path.GetDirectoryName(zip)!, recursive: true); }

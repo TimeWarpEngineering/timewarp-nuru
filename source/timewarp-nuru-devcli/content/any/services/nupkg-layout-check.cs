@@ -55,21 +55,21 @@ internal static class NupkgLayoutCheck
     "build/TimeWarp.Nuru.targets",
     "build/TimeWarp.Nuru.props",
     "buildTransitive/TimeWarp.Nuru.props",
-    "build/net10.0/TimeWarp.Nuru.Build.dll",
-    "build/net10.0/TimeWarp.Nuru.Analyzers.dll",
-    "build/net10.0/ICSharpCode.Decompiler.dll",
-    "build/net10.0/Microsoft.Build.Framework.dll",
-    "build/net10.0/Microsoft.Build.Utilities.Core.dll",
-    "build/net10.0/Microsoft.CodeAnalysis.dll",
-    "build/net10.0/Microsoft.CodeAnalysis.CSharp.dll",
-    "build/net10.0/Microsoft.NET.StringTools.dll",
-    "build/net10.0/System.Configuration.ConfigurationManager.dll",
-    "build/net10.0/System.Diagnostics.EventLog.dll",
-    "build/net10.0/System.Security.Cryptography.ProtectedData.dll",
+    "build/net11.0/TimeWarp.Nuru.Build.dll",
+    "build/net11.0/TimeWarp.Nuru.Analyzers.dll",
+    "build/net11.0/ICSharpCode.Decompiler.dll",
+    "build/net11.0/Microsoft.Build.Framework.dll",
+    "build/net11.0/Microsoft.Build.Utilities.Core.dll",
+    "build/net11.0/Microsoft.CodeAnalysis.dll",
+    "build/net11.0/Microsoft.CodeAnalysis.CSharp.dll",
+    "build/net11.0/Microsoft.NET.StringTools.dll",
+    "build/net11.0/System.Configuration.ConfigurationManager.dll",
+    "build/net11.0/System.Diagnostics.EventLog.dll",
+    "build/net11.0/System.Security.Cryptography.ProtectedData.dll",
     "analyzers/dotnet/cs/TimeWarp.Nuru.Analyzers.dll",
     "analyzers/dotnet/cs/Microsoft.Extensions.Logging.Abstractions.dll",
     "analyzers/dotnet/cs/ICSharpCode.Decompiler.dll",
-    "lib/net10.0/TimeWarp.Nuru.dll"
+    "lib/net11.0/TimeWarp.Nuru.dll"
   ];
 
   /// <summary>
@@ -208,7 +208,7 @@ internal static class NupkgLayoutCheck
   /// Resolves the published nupkg entry path for a Pack Include + PackagePath
   /// pair (kanban 462). PackagePath that already names a file is used as-is;
   /// directory PackagePaths append the Include file name. TFM segments like
-  /// net10.0 are treated as directories, not file names.
+  /// net11.0 are treated as directories, not file names.
   /// </summary>
   public static string ResolvePublishedEntry(string include, string packagePath)
   {

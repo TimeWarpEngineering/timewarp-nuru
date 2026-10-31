@@ -123,7 +123,7 @@ internal static class GitHubCacheService
     }
 
     if (Path.IsPathRooted(normalized) ||
-        normalized.StartsWith('/') ||
+        normalized.StartsWith('/', StringComparison.Ordinal) ||
         (normalized.Length >= 2 && char.IsAsciiLetter(normalized[0]) && normalized[1] == ':'))
     {
       return false;

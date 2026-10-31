@@ -5,22 +5,20 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup Label="Microsoft Extensions">
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0-rc.3.26522.148" />
   </ItemGroup>
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0" />
@@ -30,7 +28,10 @@
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.15" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.11" />
-    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.24" />
+    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.29" />
+    <!-- Held at 14.0.0 (task 481): TimeWarp.Contracts (2.0.0-beta.29) still depends on
+         TimeWarp.Mediator.Contracts 14.0.0, whose types collide with TimeWarp.Mediator 15 (TWM008),
+         and 15 removes ICommandHandler/IQueryHandler, which are the Nuru endpoint API. -->
     <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="14.0.0" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0" />
   </ItemGroup>
@@ -43,37 +44,32 @@
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup Label="OpenTelemetry">
-    <PackageVersion Include="OpenTelemetry" Version="1.19.1" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.19.1" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.19.1" />
-  </ItemGroup>
-  <ItemGroup Label="Aspire">
-    <!-- Lifts the transitive MessagePack 2.5.302 pulled in by Aspire.AppHost.Sdk 13.5.3 above
-         GHSA-qhrr-8q5h-9q3h (nested arrays blow past buffer limits); NU1902 is warn-as-error. -->
-    <PackageVersion Include="MessagePack" Version="2.5.303" />
+    <PackageVersion Include="OpenTelemetry" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
   </ItemGroup>
   <ItemGroup Label="Benchmark - CLI Frameworks">
     <PackageVersion Include="CliFx" Version="3.0.1" />
     <PackageVersion Include="Cocona" Version="2.2.0" />
     <PackageVersion Include="Cocona.Lite" Version="2.2.0" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
-    <PackageVersion Include="ConsoleAppFramework" Version="5.7.13" />
+    <PackageVersion Include="ConsoleAppFramework" Version="5.8.0" />
     <PackageVersion Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />
     <PackageVersion Include="PowerArgs" Version="4.0.3" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.57.2" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.12" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.14" />
     <PackageVersion Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta5.25306.1" />
   </ItemGroup>
   <ItemGroup Label="Benchmark - Performance">
     <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
   </ItemGroup>
   <ItemGroup Label="MCP Server">
-    <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
+    <PackageVersion Include="ModelContextProtocol" Version="2.3.0" />
   </ItemGroup>
   <ItemGroup Label="SQLite">
     <!-- .Core + bundle_e_sqlite3 3.x (native SourceGear.sqlite3 3.50.4+) avoids the vulnerable
          SQLitePCLRaw.lib.e_sqlite3 (CVE-2025-6965). See timewarp-nuru-search.csproj for rationale. -->
-    <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
   </ItemGroup>
   <ItemGroup Label="Code Analyzers">
@@ -84,24 +80,26 @@
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
     <PackageVersion Include="Roslynator.CodeAnalysis.Analyzers" Version="5.0.1" />
     <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="5.0.1" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="11.0.100-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.9.0" />
   </ItemGroup>
   <ItemGroup Label="Roslyn Analyzer Dependencies">
     <!-- Pinned: TimeWarp.Nuru.Analyzers compiles against this and does not pack it
          (SuppressDependenciesWhenPacking). The consumer's compiler supplies Microsoft.CodeAnalysis.
-         Raising this raises the minimum Roslyn that can load the analyzer: 5.6 ships in SDK 10.0.3xx,
-         5.9 only in SDK 10.0.400+, so stay on 5.6 until consumers are on 10.0.400. CodeStyle and
+         Raising this raises the minimum Roslyn that can load the analyzer. 5.9 ships in SDK 10.0.400+
+         and every .NET 11 SDK (11.0.100-rc.3 ships Roslyn 5.12), so a net11.0 consumer always has it
+         (task 481). Do not go past the Roslyn in the oldest .NET 11 SDK we support. CodeStyle and
          Microsoft.CodeAnalysis.Analyzers are repo-local / analyzer-authoring packages and may move. -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
     <!-- ILSpy engine: decompile referenced AddX method bodies for source-gen DI lowering (task 395). -->
-    <PackageVersion Include="ICSharpCode.Decompiler" Version="11.1.0.9782" />
+    <PackageVersion Include="ICSharpCode.Decompiler" Version="11.2.0.10050" />
   </ItemGroup>
   <ItemGroup Label="MSBuild Task Dependencies">
-    <!-- 18.10.1 drops lib/net10.0 (net11.0 only) and stops copying Microsoft.Build.Framework.dll
-         into the build-task output that TimeWarp.Nuru packs. 18.9.6 is the latest stable with net10.0. -->
-    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.9.6" />
+    <!-- 18.10+ ships lib/net11.0 only. Held at 18.9.6 while the repo targeted net10.0; task 481
+         (net11.0) lifts it. The build-task payload still copies Microsoft.Build.Framework.dll;
+         the nupkg layout gate checks it. -->
+    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.11.0" />
   </ItemGroup>
 </Project>

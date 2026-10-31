@@ -383,15 +383,15 @@ public sealed class WorkflowCommand : ICommand<Unit>
 
       // Release-configuration gate (task 503): published betas up to beta.80 shipped
       // Debug assemblies because later steps repacked over the Release package.
-      AssemblyBuildInfo packedBuildInfo = NupkgLayoutCheck.ReadPackedAssemblyBuildInfo(nuruNupkg, "lib/net10.0/TimeWarp.Nuru.dll");
+      AssemblyBuildInfo packedBuildInfo = NupkgLayoutCheck.ReadPackedAssemblyBuildInfo(nuruNupkg, "lib/net11.0/TimeWarp.Nuru.dll");
       if (!string.Equals(packedBuildInfo.Configuration, "Release", StringComparison.Ordinal) || !packedBuildInfo.IsOptimized)
       {
-        Terminal.WriteErrorLine($"Package layout gate failed: TimeWarp.Nuru.{layoutVersion}.nupkg lib/net10.0/TimeWarp.Nuru.dll is not a Release build (Configuration='{packedBuildInfo.Configuration}', Debuggable flags=0x{packedBuildInfo.DebuggableFlags:X}). Do not ship this artifact.");
+        Terminal.WriteErrorLine($"Package layout gate failed: TimeWarp.Nuru.{layoutVersion}.nupkg lib/net11.0/TimeWarp.Nuru.dll is not a Release build (Configuration='{packedBuildInfo.Configuration}', Debuggable flags=0x{packedBuildInfo.DebuggableFlags:X}). Do not ship this artifact.");
         Environment.ExitCode = 1;
         return false;
       }
 
-      Terminal.WriteLine("Package configuration verified: lib/net10.0/TimeWarp.Nuru.dll is a Release, optimized build.");
+      Terminal.WriteLine("Package configuration verified: lib/net11.0/TimeWarp.Nuru.dll is a Release, optimized build.");
       return true;
     }
 

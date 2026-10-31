@@ -59,11 +59,14 @@
 // see release-guard.cs's pure matrix tests and this task's --dry-run
 // verification runs instead.
 //
-// D6 (kanban task 536): step 7 reads both org feeds through
+// D6 (kanban tasks 536, 564): step 7 reads the repo's declared feeds
+// (checkVersionConfig.feeds through PackageFeedsResolver, the same resolver
+// check-version uses; default nuget.org) through
 // NuGetVersionService.LookupAsync, so the All and Partial refusals count a
-// package as published when nuget.org or the org GitHub Packages feed lists
-// the version. A version not on nuget.org while GitHub Packages is unreadable
+// package as published when any declared feed lists the version. A version
+// on no declared feed while a declared GitHub Packages feed is unreadable
 // refuses with PackageFeedLookup.FormatUnknownRefusal (feed, status, fix).
+// The feed set is resolved in step 1, before any network call.
 #endregion
 
 namespace DevCli;
@@ -116,6 +119,17 @@ internal sealed class ReleaseCommand : ICommand<Unit>
       }
 
       string tag = $"v{version}";
+
+      // Feed set (kanban task 564): resolved here, before any network call, so a
+      // typo in checkVersionConfig.feeds fails fast. Step 7 reads only these feeds.
+      RepoConfig config = await ConfigService.GetConfigAsync(cancellationToken).ConfigureAwait(false);
+      PackageFeedsResolution feedsResolution = PackageFeedsResolver.Resolve(config.CheckVersionConfig?.Feeds);
+      if (feedsResolution.Error is not null)
+      {
+        Terminal.WriteErrorLine($"Error: {feedsResolution.Error}");
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
 
       // --- Step 2: gh available/authed ------------------------------------
       CommandOutput ghAuthResult;
@@ -289,7 +303,6 @@ internal sealed class ReleaseCommand : ICommand<Unit>
       Terminal.WriteLine($"✓ tag {tag} available".Green());
 
       // --- Step 7: check-version 3-state gate ---------------------------------
-      RepoConfig config = await ConfigService.GetConfigAsync(cancellationToken).ConfigureAwait(false);
       string? packageInput = config.CheckVersionConfig?.Packages;
       IReadOnlyList<string> packages;
 
@@ -332,7 +345,7 @@ internal sealed class ReleaseCommand : ICommand<Unit>
         try
         {
           lookup = await NuGetVersionService
-            .LookupAsync(pkg, cancellationToken)
+            .LookupAsync(pkg, feedsResolution.Feeds, cancellationToken)
             .ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
@@ -349,8 +362,8 @@ internal sealed class ReleaseCommand : ICommand<Unit>
 
         if (verdict == PackagePublishVerdict.Unknown)
         {
-          // 536: not on nuget.org and GitHub Packages unreadable — refuse with
-          // the feed's own message, not the already-released one.
+          // 536: on no declared feed and GitHub Packages unreadable — refuse
+          // with the feed's own message, not the already-released one.
           foreach (string line in lookup.FormatUnknownRefusal(version))
           {
             Terminal.WriteErrorLine(line);

@@ -17,6 +17,7 @@ using global::DevCli;
 /// live on 2026-10-29 (see nuget-version-service.cs Design): the real service index,
 /// newest-first version lists, NAME_UNKNOWN 404s, and 401/403 for missing access.
 /// No test touches the network or the machine's tokens.
+/// These tests declare both feeds; the declared-feed tests (kanban task 564) follow them.
 /// </summary>
 [TestTag("DevCli")]
 public class TwoFeedLookupTests
@@ -29,7 +30,7 @@ public class TwoFeedLookupTests
     FeedStub feeds = new() { NuGetOrg = _ => FeedStub.Versions("1.0.0", "1.1.0") };
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Nuru", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Nuru", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.1.0").ShouldBe(PackagePublishVerdict.Published);
     lookup.GitHubPackagesVersions.Count.ShouldBe(0);
@@ -42,7 +43,7 @@ public class TwoFeedLookupTests
     FeedStub feeds = new() { GitHubPackages = _ => FeedStub.Versions("1.0.0-beta.16", "1.0.0-beta.15", "1.0.0-beta.9") };
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.0.0-beta.15").ShouldBe(PackagePublishVerdict.Published);
     lookup.NuGetOrgVersions.Count.ShouldBe(0);
@@ -58,7 +59,7 @@ public class TwoFeedLookupTests
     };
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Nuru", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Nuru", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("2.0.0").ShouldBe(PackagePublishVerdict.NotPublished);
     lookup.LatestVersion.ShouldBe("1.0.0");
@@ -70,7 +71,7 @@ public class TwoFeedLookupTests
     FeedStub feeds = new();
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Nuru", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Nuru", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.NotPublished);
     lookup.GitHubPackagesFailure.ShouldBeNull();
@@ -83,7 +84,7 @@ public class TwoFeedLookupTests
     FeedStub feeds = new() { GitHubIndex = () => FeedStub.Unauthorized() };
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.Unknown);
     lookup.GitHubPackagesFailure.ShouldNotBeNull();
@@ -103,7 +104,7 @@ public class TwoFeedLookupTests
     FeedStub feeds = new() { GitHubPackages = _ => new HttpResponseMessage(HttpStatusCode.Forbidden) };
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.Unknown);
     lookup.GitHubPackagesFailure!.StatusDisplay.ShouldBe("HTTP 403 Forbidden");
@@ -115,7 +116,7 @@ public class TwoFeedLookupTests
     FeedStub feeds = new();
     using NuGetVersionService service = feeds.CreateService(credential: null);
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.Unknown);
     lookup.GitHubPackagesFailure!.Message.ShouldContain("no GitHub token");
@@ -132,7 +133,7 @@ public class TwoFeedLookupTests
     };
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Nuru", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Nuru", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.Published);
     lookup.Check("2.0.0").ShouldBe(PackagePublishVerdict.Unknown);
@@ -144,7 +145,7 @@ public class TwoFeedLookupTests
     using NuGetVersionService service = feeds.CreateService();
 
     HttpRequestException exception = await Should.ThrowAsync<HttpRequestException>(async () =>
-      await service.LookupAsync("TimeWarp.Nuru", CancellationToken.None));
+      await service.LookupAsync("TimeWarp.Nuru", PackageFeeds.Both, CancellationToken.None));
 
     exception.ShouldNotBeOfType<PackageFeedUnreadableException>();
   }
@@ -155,7 +156,7 @@ public class TwoFeedLookupTests
     using NuGetVersionService service = feeds.CreateService();
 
     HttpRequestException exception = await Should.ThrowAsync<HttpRequestException>(async () =>
-      await service.LookupAsync("TimeWarp.Nuru", CancellationToken.None));
+      await service.LookupAsync("TimeWarp.Nuru", PackageFeeds.Both, CancellationToken.None));
 
     exception.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
   }
@@ -165,7 +166,7 @@ public class TwoFeedLookupTests
     FeedStub feeds = new() { GitHubPackages = _ => throw new HttpRequestException("Connection refused") };
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.Unknown);
     lookup.GitHubPackagesFailure!.Message.ShouldContain("unreachable");
@@ -185,7 +186,7 @@ public class TwoFeedLookupTests
       FeedStub feeds = new() { GitHubPackages = answer };
       using NuGetVersionService service = feeds.CreateService();
 
-      PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", CancellationToken.None);
+      PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.Both, CancellationToken.None);
 
       lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.Unknown);
     }
@@ -196,7 +197,7 @@ public class TwoFeedLookupTests
     FeedStub feeds = new() { GitHubIndex = () => FeedStub.Json("{\"version\":\"3.0.0-beta.1\",\"resources\":[]}") };
     using NuGetVersionService service = feeds.CreateService();
 
-    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", CancellationToken.None);
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.Both, CancellationToken.None);
 
     lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.Unknown);
     lookup.GitHubPackagesFailure!.Message.ShouldContain(NuGetVersionService.PackageBaseAddressResourceType);
@@ -207,8 +208,8 @@ public class TwoFeedLookupTests
     FeedStub feeds = new() { PackageBaseAddress = "https://feed.example.test/elsewhere/download" };
     using NuGetVersionService service = feeds.CreateService();
 
-    await service.LookupAsync("TimeWarp.Taratibu", CancellationToken.None);
-    await service.LookupAsync("TimeWarp.Taratibu.Routines", CancellationToken.None);
+    await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.Both, CancellationToken.None);
+    await service.LookupAsync("TimeWarp.Taratibu.Routines", PackageFeeds.Both, CancellationToken.None);
 
     feeds.GitHubUris.ShouldBe(
     [
@@ -235,7 +236,7 @@ public class TwoFeedLookupTests
     int published = 0;
     foreach (string pkg in new[] { "TimeWarp.Taratibu", "TimeWarp.Taratibu.Routines" })
     {
-      PackageFeedLookup lookup = await service.LookupAsync(pkg, CancellationToken.None);
+      PackageFeedLookup lookup = await service.LookupAsync(pkg, PackageFeeds.Both, CancellationToken.None);
       if (lookup.Check("1.0.0") == PackagePublishVerdict.Published)
       {
         published++;
@@ -259,6 +260,156 @@ public class TwoFeedLookupTests
     reason.ShouldNotContain("already released");
     CheckVersionAbort.FormatAbortReason(CheckVersionOutcome.AlreadyReleased, null).ShouldBe("version already released");
     CheckVersionAbort.FormatAbortReason(CheckVersionOutcome.NuGetOrgLookupFailed, null).ShouldNotContain("already released");
+    await Task.CompletedTask;
+  }
+
+  // --- Declared feeds (kanban task 564) ------------------------------------
+
+  public static async Task Nuget_org_only_never_touches_github_packages_or_a_credential()
+  {
+    int credentialCalls = 0;
+    FeedStub feeds = new() { NuGetOrg = _ => FeedStub.Versions("1.0.0") };
+    using NuGetVersionService service = new(feeds, _ =>
+    {
+      credentialCalls++;
+      return Task.FromResult<GitHubPackagesCredential?>(new GitHubPackagesCredential(FeedStub.Token, "GITHUB_TOKEN"));
+    });
+
+    PackageFeedLookup published = await service.LookupAsync("TimeWarp.Mediator", PackageFeeds.NuGetOrg, CancellationToken.None);
+    PackageFeedLookup unpublished = await service.LookupAsync("TimeWarp.Mediator.Generators", PackageFeeds.NuGetOrg, CancellationToken.None);
+
+    published.Check("1.0.0").ShouldBe(PackagePublishVerdict.Published);
+    unpublished.Check("15.0.0-beta.3").ShouldBe(PackagePublishVerdict.NotPublished);
+    unpublished.GitHubPackagesFailure.ShouldBeNull();
+    unpublished.Feeds.ShouldBe(PackageFeeds.NuGetOrg);
+    feeds.GitHubRequestCount.ShouldBe(0);
+    credentialCalls.ShouldBe(0);
+  }
+
+  public static async Task Nuget_org_only_without_a_token_is_not_unknown()
+  {
+    // The Mediator v15.0.0-beta.3 failure: no token anywhere, not on nuget.org.
+    FeedStub feeds = new();
+    using NuGetVersionService service = feeds.CreateService(credential: null);
+
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Mediator", PackageFeeds.NuGetOrg, CancellationToken.None);
+
+    lookup.Check("15.0.0-beta.3").ShouldBe(PackagePublishVerdict.NotPublished);
+    feeds.GitHubRequestCount.ShouldBe(0);
+    feeds.NuGetOrgAuthorizations.Count.ShouldBe(1);
+  }
+
+  public static async Task Github_packages_only_never_touches_nuget_org()
+  {
+    FeedStub feeds = new() { GitHubPackages = _ => FeedStub.Versions("1.0.0-beta.16", "1.0.0-beta.15") };
+    using NuGetVersionService service = feeds.CreateService();
+
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.GitHubPackages, CancellationToken.None);
+
+    lookup.Check("1.0.0-beta.15").ShouldBe(PackagePublishVerdict.Published);
+    lookup.LatestVersion.ShouldBe("1.0.0-beta.16");
+    feeds.NuGetOrgAuthorizations.Count.ShouldBe(0);
+  }
+
+  public static async Task Github_packages_only_refusal_does_not_claim_a_nuget_org_lookup()
+  {
+    FeedStub feeds = new() { GitHubIndex = () => FeedStub.Unauthorized() };
+    using NuGetVersionService service = feeds.CreateService();
+
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Taratibu", PackageFeeds.GitHubPackages, CancellationToken.None);
+
+    lookup.Check("1.0.0").ShouldBe(PackagePublishVerdict.Unknown);
+    string refusal = string.Join("\n", lookup.FormatUnknownRefusal("1.0.0"));
+    refusal.ShouldContain("HTTP 401 Unauthorized");
+    refusal.ShouldContain(NuGetVersionService.GitHubPackagesServiceIndexUrl);
+    refusal.ShouldContain("packages: read");
+    refusal.ShouldNotContain("nuget.org");
+    refusal.ShouldNotContain("already");
+  }
+
+  public static async Task Both_feeds_keep_the_536_refusal_text()
+  {
+    FeedStub feeds = new() { GitHubIndex = () => FeedStub.Unauthorized() };
+    using NuGetVersionService service = feeds.CreateService();
+
+    PackageFeedLookup lookup = await service.LookupAsync("TimeWarp.Ganda", PackageFeeds.Both, CancellationToken.None);
+
+    lookup.FormatUnknownRefusal("1.0.0").ShouldBe(
+    [
+      "Error: GitHub Packages lookup for 'TimeWarp.Ganda' failed (HTTP 401 Unauthorized): GitHub Packages answered HTTP 401 (Unauthorized) for its service index https://nuget.pkg.github.com/TimeWarpEngineering/index.json using the GITHUB_TOKEN token.",
+      "  TimeWarp.Ganda 1.0.0 is not on nuget.org, and the org GitHub Packages feed (https://nuget.pkg.github.com/TimeWarpEngineering/index.json) could not be read, so whether it is published is unknown. Refusing to continue.",
+      "  Fix (local): gh auth refresh -h github.com -s read:packages, or set GITHUB_TOKEN / GH_TOKEN to a token with read:packages.",
+      "  Fix (GitHub Actions): add 'packages: read' to the job's permissions."
+    ]);
+  }
+
+  public static async Task Empty_feed_set_throws_before_any_request()
+  {
+    int credentialCalls = 0;
+    FeedStub feeds = new();
+    using NuGetVersionService service = new(feeds, _ =>
+    {
+      credentialCalls++;
+      return Task.FromResult<GitHubPackagesCredential?>(null);
+    });
+
+    await Should.ThrowAsync<ArgumentException>(async () =>
+      await service.LookupAsync("TimeWarp.Nuru", PackageFeeds.None, CancellationToken.None));
+
+    feeds.NuGetOrgAuthorizations.Count.ShouldBe(0);
+    feeds.GitHubRequestCount.ShouldBe(0);
+    credentialCalls.ShouldBe(0);
+  }
+
+  public static async Task Absent_feeds_resolve_to_nuget_org()
+  {
+    PackageFeedsResolver.Resolve(null).ShouldBe(new PackageFeedsResolution(PackageFeeds.NuGetOrg, null));
+    PackageFeedsResolver.DefaultFeeds.ShouldBe(PackageFeeds.NuGetOrg);
+
+    // Absent key and absent section both give the default.
+    RepoConfig noKey = RepoConfigService.Parse("""{ "checkVersionConfig": { "packages": "TimeWarp.Mediator" } }""");
+    RepoConfig noSection = RepoConfigService.Parse("{}");
+    PackageFeedsResolver.Resolve(noKey.CheckVersionConfig?.Feeds).Feeds.ShouldBe(PackageFeeds.NuGetOrg);
+    PackageFeedsResolver.Resolve(noSection.CheckVersionConfig?.Feeds).Feeds.ShouldBe(PackageFeeds.NuGetOrg);
+    await Task.CompletedTask;
+  }
+
+  public static async Task Declared_feeds_parse_like_packages()
+  {
+    PackageFeedsResolver.Resolve("nuget.org").Feeds.ShouldBe(PackageFeeds.NuGetOrg);
+    PackageFeedsResolver.Resolve("github-packages").Feeds.ShouldBe(PackageFeeds.GitHubPackages);
+    PackageFeedsResolver.Resolve("nuget.org,github-packages").Feeds.ShouldBe(PackageFeeds.Both);
+    PackageFeedsResolver.Resolve(" GitHub-Packages , NuGet.org ,").ShouldBe(new PackageFeedsResolution(PackageFeeds.Both, null));
+
+    RepoConfig config = RepoConfigService.Parse(
+      """
+      {
+        "checkVersionConfig": {
+          // feeds: nuget.org | github-packages, comma-separated.
+          "feeds": "nuget.org,github-packages",
+        }
+      }
+      """);
+    PackageFeedsResolver.Resolve(config.CheckVersionConfig?.Feeds).Feeds.ShouldBe(PackageFeeds.Both);
+    await Task.CompletedTask;
+  }
+
+  public static async Task Unknown_or_empty_feeds_are_configuration_errors()
+  {
+    PackageFeedsResolution typo = PackageFeedsResolver.Resolve("nuget.org,github-package");
+    typo.Feeds.ShouldBe(PackageFeeds.None);
+    string typoError = typo.Error.ShouldNotBeNull();
+    typoError.ShouldContain("'github-package'");
+    typoError.ShouldContain("checkVersionConfig.feeds");
+    typoError.ShouldContain("nuget.org, github-packages");
+
+    foreach (string empty in new[] { "", " ", "," })
+    {
+      PackageFeedsResolution resolution = PackageFeedsResolver.Resolve(empty);
+      resolution.Feeds.ShouldBe(PackageFeeds.None);
+      resolution.Error.ShouldNotBeNull().ShouldContain("names no feed");
+    }
+
     await Task.CompletedTask;
   }
 

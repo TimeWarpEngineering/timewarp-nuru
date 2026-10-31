@@ -20,11 +20,12 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `IRepoConfigService` / `RepoConfigService` | Reads per-repo config from `.timewarp/dev.jsonc` |
 | `IPackableProjectService` / `PackableProjectService` | Derives the packable project set (`IsPackable=true`, via real MSBuild evaluation) under a repo's `source/` tree — no hand-maintained project/package-ID lists |
 | `TagAssertion` | Pure release-gate check: tag must equal `v` + `<Version>` from `source/Directory.Build.props` |
-| `CheckVersionConfig` | Config model for the check-version command |
+| `CheckVersionConfig` | Config model for the check-version command (`packages`, `feeds`) |
+| `PackageFeedsResolver` (`PackageFeeds`, `PackageFeedsResolution`) | Pure resolver for `checkVersionConfig.feeds`: absent → `nuget.org`; `nuget.org` / `github-packages`, comma-separated, case-insensitive → the flags; an unknown name or a value naming no feed → an error. `check-version` and `dev release` both use it |
 | `RepoConfig` | Top-level config model for `.timewarp/dev.jsonc` |
 | `CiMode` (enum) / `CiModeDetector` | Pure CI mode detection (`pr`/`merge`/`release`); `workflow_dispatch` auto-detects `merge`; unknown explicit mode throws |
-| `NuGetVersionService` | Reads a package's versions from both org feeds: nuget.org and the org GitHub Packages feed (`LookupAsync`). Both URLs are constants; there is no feed setting |
-| `PackageFeedLookup` / `PackagePublishVerdict` / `PackageFeedUnreadableException` | One package's versions on both feeds. `Check(version)` is Published (on either feed), NotPublished, or Unknown (not on nuget.org and GitHub Packages unreadable). `FormatUnknownRefusal` is the shared refusal text |
+| `NuGetVersionService` | Reads a package's versions from the feeds the repo declares (`LookupAsync(packageId, feeds, ct)`): nuget.org, the org GitHub Packages feed, or both. Both URLs are constants. An undeclared feed is never contacted, and without `github-packages` no GitHub token is resolved |
+| `PackageFeedLookup` / `PackagePublishVerdict` / `PackageFeedUnreadableException` | One package's versions on the declared feeds. `Check(version)` is Published (on any declared feed), NotPublished, or Unknown (on no declared feed while the declared GitHub Packages feed is unreadable). `FormatUnknownRefusal` is the shared refusal text |
 | `GitHubPackagesCredential` | The GitHub Packages token: `GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token` |
 | `CheckVersionOutcome` (enum) / `CheckVersionAbort` | How a check-version run ended (`CheckVersionCommand.Handler.Outcome`), and the pipeline abort line for it |
 | `PublishState` (enum) / `PublishStateClassifier` | Pure none/some/all classification of published packages for the `check-version` gate; throws on zero packages or an out-of-range published count |
@@ -50,15 +51,40 @@ Create a `.timewarp/dev.jsonc` file in your repository root only to override the
 ```jsonc
 {
   "checkVersionConfig": {
-    // packages: comma-separated NuGet package IDs to check against NuGet.org.
+    // packages: comma-separated NuGet package IDs to check.
     // Optional — omit to use the derived (IsPackable=true) set under source/.
-    "packages": "TimeWarp.Nuru,TimeWarp.Nuru.Analyzers"
+    "packages": "TimeWarp.Nuru,TimeWarp.Nuru.Analyzers",
+    // feeds: nuget.org | github-packages, comma-separated. Default: nuget.org.
+    "feeds": "nuget.org"
   }
 }
 ```
 
 If the file does not exist, `IRepoConfigService` returns defaults and the package set is fully
 derived.
+
+### Feeds (`checkVersionConfig.feeds`)
+
+`feeds` names the feeds the repo publishes to. `check-version` and `dev release` read only
+those feeds to decide whether a version is already published. Both commands resolve the key the
+same way, and there is no separate switch.
+
+| Value | Feeds read |
+|-------|------------|
+| absent | nuget.org (the default) |
+| `"nuget.org"` | nuget.org |
+| `"github-packages"` | the org GitHub Packages feed (`https://nuget.pkg.github.com/TimeWarpEngineering/index.json`) |
+| `"nuget.org,github-packages"` | both; a version on either is published |
+
+The grammar matches `packages`: comma-separated, entries trimmed, empty entries ignored. Names
+are case-insensitive. An unknown name, or a value that names no feed (`""`, `","`), is a
+configuration error. Both commands report it and exit 1 before any network call.
+
+A repo that does not publish to GitHub Packages never needs `packages: read` for check-version.
+Without `github-packages`, DevCli never contacts GitHub Packages and never looks for a token. A
+repo that publishes there declares it, and then its token needs `read:packages` (in GitHub
+Actions, `packages: read` on the job). See the 4.0.0-beta.8 migration note below for the
+refusal when that feed cannot be read.
 
 ## Prerelease distance (`check-version`)
 
@@ -132,6 +158,24 @@ await app.RunAsync(args);
 
 ## Migration Notes
 
+### Next release after 4.0.0-beta.10: publish gates read only the declared feeds (kanban task 564)
+
+4.0.0-beta.8 through 4.0.0-beta.10 read nuget.org and GitHub Packages for every repo, so a
+nuget.org-only repo needed a GitHub token with `read:packages` to release. The gates now read the
+feeds named in `checkVersionConfig.feeds`, and the default is `nuget.org`.
+
+**To adopt:**
+
+- A repo that publishes to GitHub Packages adds `"feeds": "nuget.org,github-packages"` (or
+  `"github-packages"` when nothing goes to nuget.org) under `checkVersionConfig`. Without it the
+  gates stop seeing its GitHub Packages versions.
+- A nuget.org-only repo needs no change, and can drop `packages: read` from jobs that held it
+  only for the gate.
+- A forked caller of `NuGetVersionService.LookupAsync(packageId, ct)` passes the resolved feed
+  set: `LookupAsync(packageId, PackageFeedsResolver.Resolve(config.CheckVersionConfig?.Feeds).Feeds, ct)`,
+  after reporting a non-null `Error`. `PackageFeedLookup`'s constructor takes the feed set as its
+  second argument.
+
 ### 4.0.0-beta.10+: every DevCli type is `internal` (kanban task 560)
 
 Every type in the content, top-level and nested, is `internal`. The files compile into your
@@ -152,7 +196,8 @@ Every type in the content, top-level and nested, is `internal`. The files compil
 `check-version` and `dev release` used to ask only nuget.org. A package on the org GitHub
 Packages feed (`https://nuget.pkg.github.com/TimeWarpEngineering/index.json`) always looked
 unpublished, so the gates let a version be released twice. Both gates now read both feeds and
-count a version on either as published. There is no setting.
+count a version on either as published. (Superseded by the next release after
+4.0.0-beta.10: the gates read only the feeds in `checkVersionConfig.feeds`, default nuget.org.)
 
 GitHub Packages needs a token with `read:packages` (`GITHUB_TOKEN`, then `GH_TOKEN`, then
 `gh auth token`). When a version is not on nuget.org and GitHub Packages cannot be read (no

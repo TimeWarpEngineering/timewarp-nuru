@@ -25,12 +25,15 @@
 // exit code 1 for CI. Every other shape (core change, different label, no
 // published version) keeps the two version lines and omits the distance.
 //
-// Both org feeds (kanban task 536): each package is read from nuget.org and
-// the org GitHub Packages feed (NuGetVersionService.LookupAsync), and a
-// version on either is published. "Latest NuGet version" is the highest
-// version on either feed. A version that is not on nuget.org while GitHub
-// Packages could not be read refuses with its own message (feed, HTTP status,
-// fix), never "already released". The handler records Outcome and
+// Declared feeds (kanban tasks 536, 564): each package is read from the feeds
+// the repo publishes to, checkVersionConfig.feeds resolved by
+// PackageFeedsResolver (default nuget.org; `dev release` uses the same
+// resolver), through NuGetVersionService.LookupAsync. A version on any
+// declared feed is published, and "Latest NuGet version" is the highest
+// version on any of them. An invalid feeds value fails before any lookup. A
+// version on no declared feed while a declared GitHub Packages feed could not
+// be read refuses with its own message (feed, HTTP status, fix), never
+// "already released". The handler records Outcome and
 // GitHubPackagesFailure so a pipeline running the gate can name the cause
 // (CheckVersionAbort.FormatAbortReason).
 #endregion
@@ -96,6 +99,15 @@ internal sealed class CheckVersionCommand : ICommand<Unit>
       RepoConfig config = await ConfigService
         .GetConfigAsync(cancellationToken)
         .ConfigureAwait(false);
+
+      // 564: the feeds this repo publishes to, shared with `dev release`.
+      PackageFeedsResolution feedsResolution = PackageFeedsResolver.Resolve(config.CheckVersionConfig?.Feeds);
+      if (feedsResolution.Error is not null)
+      {
+        Terminal.WriteErrorLine($"Error: {feedsResolution.Error}");
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
 
       bool usingConfigOverride = command.Package is null && config.CheckVersionConfig?.Packages is not null;
       string? packageInput = command.Package ?? config.CheckVersionConfig?.Packages;
@@ -164,7 +176,7 @@ internal sealed class CheckVersionCommand : ICommand<Unit>
         try
         {
           lookup = await NuGetVersionService
-            .LookupAsync(pkg, cancellationToken)
+            .LookupAsync(pkg, feedsResolution.Feeds, cancellationToken)
             .ConfigureAwait(false);
         }
         catch (HttpRequestException ex)
@@ -183,8 +195,8 @@ internal sealed class CheckVersionCommand : ICommand<Unit>
 
         if (verdict == PackagePublishVerdict.Unknown)
         {
-          // 536: not on nuget.org and GitHub Packages unreadable. Unknown, so
-          // refuse; never "not published", and never "already released".
+          // 536: on no declared feed and GitHub Packages unreadable. Unknown,
+          // so refuse; never "not published", and never "already released".
           foreach (string line in lookup.FormatUnknownRefusal(version))
           {
             Terminal.WriteErrorLine(line);

@@ -46,7 +46,7 @@ internal static class LoggerExpressions
 
     string name = normalized[LoggingNamespace.Length..];
     return name is "ILogger" or "ILoggerFactory"
-      || (name.StartsWith("ILogger<", StringComparison.Ordinal) && name.EndsWith('>'));
+      || (name.StartsWith("ILogger<", StringComparison.Ordinal) && name.EndsWith('>', StringComparison.Ordinal));
   }
 
   /// <summary>
@@ -69,7 +69,7 @@ internal static class LoggerExpressions
   public static string GetCategoryTypeName(string loggerTypeName)
   {
     int start = loggerTypeName.IndexOf('<', StringComparison.Ordinal);
-    int end = loggerTypeName.LastIndexOf('>');
+    int end = loggerTypeName.LastIndexOf('>', StringComparison.Ordinal);
 
     return start >= 0 && end > start ? loggerTypeName[(start + 1)..end] : "object";
   }

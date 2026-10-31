@@ -56,9 +56,9 @@ public class NupkgLayoutCsprojGateParityTests
   public static async Task ResolvePublishedEntry_directory_package_path_appends_file_name()
   {
     NupkgLayoutCheck.ResolvePublishedEntry(
-        "../timewarp-nuru-build/bin/$(Configuration)/net10.0/TimeWarp.Nuru.Build.dll",
-        "build/net10.0")
-      .ShouldBe("build/net10.0/TimeWarp.Nuru.Build.dll");
+        "../timewarp-nuru-build/bin/$(Configuration)/net11.0/TimeWarp.Nuru.Build.dll",
+        "build/net11.0")
+      .ShouldBe("build/net11.0/TimeWarp.Nuru.Build.dll");
 
     NupkgLayoutCheck.ResolvePublishedEntry(
         "../timewarp-nuru-analyzers/bin/$(Configuration)/$(TargetFramework)/TimeWarp.Nuru.Analyzers.dll",

@@ -245,7 +245,7 @@ internal sealed class GenerateHandlerTool
     for (int i = 0; i < Math.Min(2, parts.Length); i++)
     {
       string part = parts[i];
-      if (part.StartsWith('{') || part.StartsWith('-'))
+      if (part.StartsWith('{', StringComparison.Ordinal) || part.StartsWith('-', StringComparison.Ordinal))
         break;
 
       name.Append(ToPascalCase(part));

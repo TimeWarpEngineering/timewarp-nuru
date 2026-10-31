@@ -14,7 +14,7 @@ Understand when to use Direct, Mediator, or Mixed approaches:
 ### [Deployment](deployment.md)
 Deploy your CLI applications:
 - Native AOT compilation
-- .NET 10 runfiles (single-file executables)
+- .NET runfiles (single-file executables)
 - Cross-platform builds
 - Size optimization strategies
 - Distribution methods

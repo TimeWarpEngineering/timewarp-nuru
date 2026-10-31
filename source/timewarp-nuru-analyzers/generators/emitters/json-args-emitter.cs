@@ -1767,7 +1767,7 @@ internal static class JsonArgsEmitter
   {
     _ = route;
     string? constraint = StripQuestion(param.TypeConstraint);
-    bool nullable = (param.TypeConstraint?.EndsWith('?') ?? false);
+    bool nullable = (param.TypeConstraint?.EndsWith('?', StringComparison.Ordinal) ?? false);
     ValueShape shape = ShapeFor(constraint, isFlag: false, isList: param.IsCatchAll, isEnum: false, converters: converters);
     if (param.IsCatchAll && shape == ValueShape.Text)
       shape = ValueShape.TextList;
@@ -1822,7 +1822,7 @@ internal static class JsonArgsEmitter
     }
 
     string? constraint = StripQuestion(option.TypeConstraint);
-    bool nullable = (option.TypeConstraint?.EndsWith('?') ?? false) || option.ParameterIsOptional;
+    bool nullable = (option.TypeConstraint?.EndsWith('?', StringComparison.Ordinal) ?? false) || option.ParameterIsOptional;
     bool requiredFlag = option.IsFlag && !option.IsOptional && !option.IsFlagBound(route);
     bool isList = option.IsRepeated;
     ValueShape shape;
@@ -1915,7 +1915,7 @@ internal static class JsonArgsEmitter
         shape = slot.IsList ? ValueShape.EnumList : ValueShape.Enum;
       }
 
-      bool nullable = slot.IsNullable || (param.ParameterTypeName?.EndsWith('?') ?? false);
+      bool nullable = slot.IsNullable || (param.ParameterTypeName?.EndsWith('?', StringComparison.Ordinal) ?? false);
       string? declared = param.ParameterTypeName ?? slot.DeclaredType ?? "string";
       string? constraint = slot.BaseConstraint;
       if (isEnum)
@@ -2181,7 +2181,7 @@ internal static class JsonArgsEmitter
     if (typeName.StartsWith(GlobalPrefix, StringComparison.Ordinal))
       typeName = typeName[GlobalPrefix.Length..];
 
-    int dot = typeName.LastIndexOf('.');
+    int dot = typeName.LastIndexOf('.', StringComparison.Ordinal);
     return dot >= 0 ? typeName[(dot + 1)..] : typeName;
   }
 
@@ -2190,7 +2190,7 @@ internal static class JsonArgsEmitter
     if (typeName is null)
       return null;
 
-    return typeName.EndsWith('?') ? typeName[..^1] : typeName;
+    return typeName.EndsWith('?', StringComparison.Ordinal) ? typeName[..^1] : typeName;
   }
 
   private static string UnwrapElement(string typeName)
@@ -2200,7 +2200,7 @@ internal static class JsonArgsEmitter
       return name[..^2];
 
     int start = name.IndexOf('<', StringComparison.Ordinal);
-    int end = name.LastIndexOf('>');
+    int end = name.LastIndexOf('>', StringComparison.Ordinal);
     if (start >= 0 && end > start)
       return name[(start + 1)..end];
 

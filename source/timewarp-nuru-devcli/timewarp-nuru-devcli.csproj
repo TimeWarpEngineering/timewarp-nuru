@@ -4,7 +4,7 @@
     <PackageId>TimeWarp.Nuru.DevCli</PackageId>
     <AssemblyName>TimeWarp.Nuru.DevCli</AssemblyName>
     <RootNamespace>TimeWarp.Nuru.DevCli</RootNamespace>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <Description>Reusable dev-cli endpoints for TimeWarp repositories - clean, self-install, check-version</Description>
     <PackageTags>cli;nuru;devcli;endpoints;source-only</PackageTags>
     <IsPackable>true</IsPackable>

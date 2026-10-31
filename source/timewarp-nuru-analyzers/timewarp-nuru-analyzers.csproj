@@ -34,8 +34,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <!-- Required for parsing code that uses ILogger -->
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions">
+    <!-- Required for parsing code that uses ILogger. Shared framework on net11 (NU1510); kept for
+         GeneratePathProperty so the DLL is packed into analyzers/dotnet/cs (task 481). -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" NoWarn="NU1510">
       <PrivateAssets>all</PrivateAssets>
       <GeneratePathProperty>true</GeneratePathProperty>
     </PackageReference>

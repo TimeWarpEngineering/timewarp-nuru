@@ -1071,7 +1071,7 @@ internal static class InterceptorEmitter
       string paramName = app.LoggingConfiguration.LambdaParameterName;
 
       // Ensure lambda body ends with semicolon
-      if (lambdaBody.Length > 0 && !lambdaBody.EndsWith(';'))
+      if (lambdaBody.Length > 0 && !lambdaBody.EndsWith(';', StringComparison.Ordinal))
         lambdaBody += ";";
 
       sb.AppendLine($"  private static readonly global::Microsoft.Extensions.Logging.ILoggerFactory {fieldName} =");
@@ -1122,7 +1122,7 @@ internal static class InterceptorEmitter
           string lambdaBody = config.ConfigurationLambdaBody.TrimEnd();
 
           // Handle block body: { stmt1; stmt2; }
-          if (lambdaBody.StartsWith('{') && lambdaBody.EndsWith('}'))
+          if (lambdaBody.StartsWith('{', StringComparison.Ordinal) && lambdaBody.EndsWith('}', StringComparison.Ordinal))
           {
             string inner = lambdaBody[1..^1].Trim();
             inner = inner.Replace(config.LambdaParameterName + ".", "client.", StringComparison.Ordinal);
@@ -1132,7 +1132,7 @@ internal static class InterceptorEmitter
           {
             // Expression body: client.Timeout = TimeSpan.FromSeconds(30)
             string body = lambdaBody.Replace(config.LambdaParameterName + ".", "client.", StringComparison.Ordinal);
-            if (!body.EndsWith(';'))
+            if (!body.EndsWith(';', StringComparison.Ordinal))
               body += ";";
             sb.AppendLine($"    {body}");
           }
@@ -1156,7 +1156,7 @@ internal static class InterceptorEmitter
     string name = serviceTypeName.StartsWith("global::", StringComparison.Ordinal)
       ? serviceTypeName[8..]
       : serviceTypeName;
-    int lastDot = name.LastIndexOf('.');
+    int lastDot = name.LastIndexOf('.', StringComparison.Ordinal);
     if (lastDot >= 0)
       name = name[(lastDot + 1)..];
     return $"__httpClient_{name}";

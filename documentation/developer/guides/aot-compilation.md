@@ -130,8 +130,8 @@ Always test your AOT-compiled executable:
 dotnet publish -c Release -r linux-x64 -p:PublishAot=true
 
 # Test the executable
-./bin/Release/net10.0/linux-x64/publish/your-app --help
-./bin/Release/net10.0/linux-x64/publish/your-app greet World
+./bin/Release/net11.0/linux-x64/publish/your-app --help
+./bin/Release/net11.0/linux-x64/publish/your-app greet World
 ```
 
 ### 4. Use Source-Generated JSON Serialization

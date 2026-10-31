@@ -2003,7 +2003,7 @@ internal static partial class EndpointExtractor
   private static string? GetTypeConstraintFromClrType(string clrTypeName)
   {
     // Handle nullable value types (e.g., "int?", "long?")
-    if (clrTypeName.EndsWith('?'))
+    if (clrTypeName.EndsWith('?', StringComparison.Ordinal))
     {
       string baseType = clrTypeName[..^1];
       string? baseConstraint = GetTypeConstraintFromClrType(baseType);
@@ -2014,7 +2014,7 @@ internal static partial class EndpointExtractor
     if (clrTypeName.Contains("System.Nullable<", StringComparison.Ordinal))
     {
       int start = clrTypeName.IndexOf('<', StringComparison.Ordinal) + 1;
-      int end = clrTypeName.LastIndexOf('>');
+      int end = clrTypeName.LastIndexOf('>', StringComparison.Ordinal);
       if (start > 0 && end > start)
       {
         string innerType = clrTypeName[start..end];

@@ -26,7 +26,7 @@ class Program
     // Create a custom toolchain for .NET 10
     IToolchain net10Toolchain = CsProjCoreToolchain.From(
       new NetCoreAppSettings(
-        targetFrameworkMoniker: "net10.0",
+        targetFrameworkMoniker: "net11.0",
         runtimeFrameworkVersion: null,
         name: ".NET 10.0"
       )

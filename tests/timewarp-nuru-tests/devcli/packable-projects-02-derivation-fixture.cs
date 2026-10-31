@@ -59,7 +59,7 @@ public class PackableProjectDerivationFixtureTests
         """
         <Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
-            <TargetFramework>net10.0</TargetFramework>
+            <TargetFramework>net11.0</TargetFramework>
             <PackageId>Fake.A</PackageId>
           </PropertyGroup>
         </Project>
@@ -74,7 +74,7 @@ public class PackableProjectDerivationFixtureTests
         """
         <Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
-            <TargetFramework>net10.0</TargetFramework>
+            <TargetFramework>net11.0</TargetFramework>
             <IsPackable>false</IsPackable>
             <PackageId>Fake.B</PackageId>
           </PropertyGroup>
@@ -92,7 +92,7 @@ public class PackableProjectDerivationFixtureTests
         """
         <Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
-            <TargetFramework>net10.0</TargetFramework>
+            <TargetFramework>net11.0</TargetFramework>
             <AssemblyName>Fake.C</AssemblyName>
           </PropertyGroup>
         </Project>
@@ -153,7 +153,7 @@ public class PackableProjectDerivationFixtureTests
         <Project>
           <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)'))" />
           <PropertyGroup>
-            <TargetFramework>net10.0</TargetFramework>
+            <TargetFramework>net11.0</TargetFramework>
             <PackageId></PackageId>
           </PropertyGroup>
         </Project>

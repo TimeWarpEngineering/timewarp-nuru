@@ -286,7 +286,7 @@ internal static class HandlerInvokerEmitter
         return unwrapped;
 
       // For Task<T>, extract short name from fully qualified unwrapped type
-      int lastDot = unwrapped.LastIndexOf('.');
+      int lastDot = unwrapped.LastIndexOf('.', StringComparison.Ordinal);
       return lastDot >= 0 ? unwrapped[(lastDot + 1)..] : unwrapped;
     }
 

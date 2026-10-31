@@ -14,7 +14,6 @@
 //   - ValidateOnStart() for fail-fast behavior
 // ═══════════════════════════════════════════════════════════════════════════════════════
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
-#:package Microsoft.Extensions.Options
 #:package Microsoft.Extensions.Options.ConfigurationExtensions
 #:property EnableConfigurationBindingGenerator=true
 

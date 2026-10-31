@@ -78,7 +78,7 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     // Check if the constraint has a nullable suffix
     string actualConstraint = constraintName;
     bool isNullable = false;
-    if (constraintName.EndsWith('?'))
+    if (constraintName.EndsWith('?', StringComparison.Ordinal))
     {
       actualConstraint = constraintName[..^1];
       isNullable = true;

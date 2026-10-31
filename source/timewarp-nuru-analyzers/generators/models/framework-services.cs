@@ -78,7 +78,7 @@ internal static class FrameworkServices
         typeArg = typeArg[8..];
 
       // Get the simple name of the generic type (e.g., "ILogger" from "Microsoft.Extensions.Logging.ILogger")
-      int lastDot = genericTypeName.LastIndexOf('.');
+      int lastDot = genericTypeName.LastIndexOf('.', StringComparison.Ordinal);
       string simpleGenericName = lastDot >= 0 ? genericTypeName[(lastDot + 1)..] : genericTypeName;
 
       // Name the field by the fully qualified type argument, so A.Foo and B.Foo do not share a field
@@ -90,7 +90,7 @@ internal static class FrameworkServices
     }
 
     // Non-generic types: just use the simple type name
-    int simpleLastDot = normalized.LastIndexOf('.');
+    int simpleLastDot = normalized.LastIndexOf('.', StringComparison.Ordinal);
     string simpleName = simpleLastDot >= 0 ? normalized[(simpleLastDot + 1)..] : normalized;
 
     return $"__fw_{simpleName}";
@@ -140,7 +140,7 @@ internal static class FrameworkServices
     if (normalized.StartsWith("Microsoft.Extensions.Logging.ILogger", StringComparison.Ordinal))
     {
       int start = normalized.IndexOf('<', StringComparison.Ordinal);
-      int end = normalized.LastIndexOf('>');
+      int end = normalized.LastIndexOf('>', StringComparison.Ordinal);
       string typeArg = start >= 0 && end > start ? normalized[(start + 1)..end] : "object";
       return $"global::Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<{typeArg}>()";
     }

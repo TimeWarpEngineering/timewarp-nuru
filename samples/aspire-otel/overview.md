@@ -4,7 +4,7 @@ This sample demonstrates a Nuru CLI/REPL application sending telemetry (traces, 
 
 ## File-Based Apps (Runfiles)
 
-Both the AppHost and NuruClient are implemented as **.NET 10 file-based apps** (runfiles) - single `.cs` files that run directly without a `.csproj`:
+Both the AppHost and NuruClient are implemented as **.NET file-based apps** (runfiles) - single `.cs` files that run directly without a `.csproj`:
 
 ```bash
 cd samples/aspire-otel
@@ -66,7 +66,7 @@ This means any extension method targeting `IHostApplicationBuilder` (like Aspire
 
 ### Prerequisites
 
-- .NET 10 SDK
+- .NET 11 SDK
 - Aspire CLI (`dotnet tool install -g aspire`)
 - Aspire 13.5+ (SDK + hosting packages on the same train; do not mix 13.4)
 
@@ -134,7 +134,7 @@ The AppHost registers NuruClient as a managed C# file-based app:
 
 ```csharp
 #!/usr/bin/env -S dotnet --
-#:sdk Aspire.AppHost.Sdk@13.5.3
+#:sdk Aspire.AppHost.Sdk@13.6.4
 #:property NoWarn=ASPIRE004;ASPIRECSHARPAPPS001;ASPIRETERMINAL001
 
 #pragma warning disable ASPIRECSHARPAPPS001

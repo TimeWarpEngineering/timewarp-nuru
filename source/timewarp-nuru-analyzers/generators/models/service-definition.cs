@@ -28,11 +28,11 @@ public sealed record ConstructorParameter(
     if (genericIndex >= 0)
     {
       string beforeGeneric = typeName[..genericIndex];
-      int lastDot = beforeGeneric.LastIndexOf('.');
+      int lastDot = beforeGeneric.LastIndexOf('.', StringComparison.Ordinal);
       return lastDot >= 0 ? beforeGeneric[(lastDot + 1)..] + typeName[genericIndex..] : typeName;
     }
 
-    int lastDotIndex = typeName.LastIndexOf('.');
+    int lastDotIndex = typeName.LastIndexOf('.', StringComparison.Ordinal);
     return lastDotIndex >= 0 ? typeName[(lastDotIndex + 1)..] : typeName;
   }
 }
@@ -141,7 +141,7 @@ public sealed record ServiceDefinition(
     if (typeName.StartsWith("global::", StringComparison.Ordinal))
       typeName = typeName[8..];
 
-    int lastDot = typeName.LastIndexOf('.');
+    int lastDot = typeName.LastIndexOf('.', StringComparison.Ordinal);
     return lastDot >= 0 ? typeName[(lastDot + 1)..] : typeName;
   }
 }

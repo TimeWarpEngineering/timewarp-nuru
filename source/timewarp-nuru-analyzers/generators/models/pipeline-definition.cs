@@ -113,7 +113,7 @@ public sealed record MiddlewareDefinition(
       if (typeName.StartsWith("global::", StringComparison.Ordinal))
         typeName = typeName[8..];
 
-      int lastDot = typeName.LastIndexOf('.');
+      int lastDot = typeName.LastIndexOf('.', StringComparison.Ordinal);
       return lastDot >= 0 ? typeName[(lastDot + 1)..] : typeName;
     }
   }

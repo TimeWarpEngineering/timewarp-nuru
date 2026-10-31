@@ -239,7 +239,7 @@ internal static class OverheadBench
     return $"""
       <Project>
         <PropertyGroup>
-          <TargetFramework>net10.0</TargetFramework>
+          <TargetFramework>net11.0</TargetFramework>
           <ImplicitUsings>enable</ImplicitUsings>
           <Nullable>enable</Nullable>
           <InterceptorsNamespaces>TimeWarp.Nuru.Generated</InterceptorsNamespaces>

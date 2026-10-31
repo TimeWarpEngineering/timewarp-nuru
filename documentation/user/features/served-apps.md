@@ -150,7 +150,7 @@ When you rebuild, the new build uses a new socket. The old build's server stops 
 
 ```text
 myapp server is running: pid 4120, version 1.2.0 at /home/me/.dotnet/tools/myapp, written 2026-10-21T09:12:44Z, socket /run/user/1000/nuru/myapp-3f9a01c2.sock.
-Also serving myapp: pid 3988, version 1.2.0 at /home/me/.nuget/packages/myapp/1.2.0/tools/net10.0/any/myapp.dll, written 2026-10-20T17:03:10Z, socket /run/user/1000/nuru/myapp-a71e5b09.sock. Stop it with 'serve --stop' from that build, or with NURU_DAEMON_SOCKET=/run/user/1000/nuru/myapp-a71e5b09.sock set.
+Also serving myapp: pid 3988, version 1.2.0 at /home/me/.nuget/packages/myapp/1.2.0/tools/net11.0/any/myapp.dll, written 2026-10-20T17:03:10Z, socket /run/user/1000/nuru/myapp-a71e5b09.sock. Stop it with 'serve --stop' from that build, or with NURU_DAEMON_SOCKET=/run/user/1000/nuru/myapp-a71e5b09.sock set.
 ```
 
 To stop another build's server, run `serve --stop` from that build. Or point any build at its socket: `NURU_DAEMON_SOCKET=<socket> myapp serve --stop`. `serve --stop` cancels the calls that server is running, so stop it only when you mean to.

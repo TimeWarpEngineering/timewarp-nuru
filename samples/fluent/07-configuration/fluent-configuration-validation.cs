@@ -1,6 +1,5 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
-#:package Microsoft.Extensions.Options
 #:property EnableConfigurationBindingGenerator=true
 
 // ═══════════════════════════════════════════════════════════════════════════════

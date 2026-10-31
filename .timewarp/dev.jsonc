@@ -4,6 +4,10 @@
     // Package set is derived from projects with IsPackable=true under source/
     // (kanban task 458-004). Set "packages" (comma-separated NuGet package IDs)
     // here only to override the derived set.
+    //
+    // "feeds" (kanban task 564): nuget.org | github-packages, comma-separated.
+    // Absent means nuget.org, which is the only feed this repo publishes to, so
+    // the publish gates never contact GitHub Packages or need a token for it.
   }
 
   // Attestation verify step (kanban tasks 458-010, 458-011). Values:

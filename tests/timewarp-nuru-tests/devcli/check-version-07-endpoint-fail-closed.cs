@@ -141,7 +141,7 @@ public class CheckVersionEndpointFailClosedTests
         _ => new HttpResponseMessage(HttpStatusCode.Forbidden)
       );
 
-      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new RepoConfigService(), new PackableProjectService());
+      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig(BothFeeds), new PackableProjectService());
 
       await handler.Handle(new CheckVersionCommand { Package = "TimeWarp.Taratibu", SourceVersion = "1.0.0-beta.17" }, CancellationToken.None);
 
@@ -336,6 +336,96 @@ public class CheckVersionEndpointFailClosedTests
     return $"{noBuild[..(dash + 1)]}{prerelease[..(dot + 1)]}{number.ToString(CultureInfo.InvariantCulture)}";
   }
 
+  // --- Declared feeds (kanban task 564) ------------------------------------
+
+  public static async Task Nuget_org_only_config_never_contacts_github_packages()
+  {
+    // The Mediator v15.0.0-beta.3 shape: not on nuget.org, no token. With the
+    // default feed set (no feeds key, and no section at all) the gate says
+    // "safe to release" and never asks GitHub Packages or a credential source.
+    foreach (RepoConfig config in new[]
+    {
+      new RepoConfig(),
+      new RepoConfig { CheckVersionConfig = new CheckVersionConfig { Packages = "TimeWarp.Mediator" } },
+      new RepoConfig { CheckVersionConfig = new CheckVersionConfig { Feeds = "nuget.org" } }
+    })
+    {
+      int originalExitCode = Environment.ExitCode;
+
+      try
+      {
+        Environment.ExitCode = 0;
+
+        int credentialCalls = 0;
+        List<Uri> requests = [];
+        using TestTerminal terminal = new();
+        using NuGetVersionService nuGetVersionService = new
+        (
+          new StubHandler(request =>
+          {
+            requests.Add(request.RequestUri!);
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+          }),
+          _ =>
+          {
+            credentialCalls++;
+            return Task.FromResult<GitHubPackagesCredential?>(null);
+          }
+        );
+
+        CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig(config), new PackableProjectService());
+
+        await handler.Handle(new CheckVersionCommand { Package = "TimeWarp.Mediator", SourceVersion = "15.0.0-beta.3" }, CancellationToken.None);
+
+        terminal.OutputContains("safe to release").ShouldBeTrue();
+        handler.Outcome.ShouldBe(CheckVersionOutcome.NewVersion);
+        Environment.ExitCode.ShouldBe(0);
+        requests.ShouldAllBe(uri => uri.Host == "api.nuget.org");
+        requests.Count.ShouldBe(1);
+        credentialCalls.ShouldBe(0);
+      }
+      finally
+      {
+        Environment.ExitCode = originalExitCode;
+      }
+    }
+  }
+
+  public static async Task Unknown_feed_name_fails_before_any_request()
+  {
+    int originalExitCode = Environment.ExitCode;
+
+    try
+    {
+      Environment.ExitCode = 0;
+
+      int credentialCalls = 0;
+      using TestTerminal terminal = new();
+      StubHandler stubHandler = new(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+      using NuGetVersionService nuGetVersionService = new(stubHandler, _ =>
+      {
+        credentialCalls++;
+        return Task.FromResult<GitHubPackagesCredential?>(null);
+      });
+
+      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig("nuget.org,myget"), new PackableProjectService());
+
+      await handler.Handle(new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = "1.0.0" }, CancellationToken.None);
+
+      terminal.ErrorContains("checkVersionConfig.feeds").ShouldBeTrue();
+      terminal.ErrorContains("'myget'").ShouldBeTrue();
+      terminal.OutputContains("safe to release").ShouldBeFalse();
+      handler.Outcome.ShouldBe(CheckVersionOutcome.InvalidInput);
+      Environment.ExitCode.ShouldBe(1);
+      stubHandler.RequestCount.ShouldBe(0);
+      credentialCalls.ShouldBe(0);
+    }
+    finally
+    {
+      Environment.ExitCode = originalExitCode;
+    }
+  }
+
   private static (Func<HttpRequestMessage, HttpResponseMessage> NuGetOrg, Func<HttpRequestMessage, HttpResponseMessage>? GitHubPackages) Versions(string version) =>
     (_ => VersionsResponse(version), null);
 
@@ -396,7 +486,7 @@ public class CheckVersionEndpointFailClosedTests
       (
         terminal,
         nuGetVersionService,
-        new RepoConfigService(),
+        new FixedConfig(BothFeeds),
         new PackableProjectService()
       );
 
@@ -407,6 +497,29 @@ public class CheckVersionEndpointFailClosedTests
     {
       Environment.ExitCode = originalExitCode;
     }
+  }
+
+  private const string BothFeeds = "nuget.org,github-packages";
+
+  /// <summary>
+  /// A fixed .timewarp/dev.jsonc (kanban task 564), so a test chooses the declared
+  /// feeds instead of reading this repo's config (which declares nuget.org only).
+  /// </summary>
+  private sealed class FixedConfig : IRepoConfigService
+  {
+    private readonly RepoConfig Config;
+
+    public FixedConfig(string? feeds)
+    {
+      Config = new RepoConfig { CheckVersionConfig = new CheckVersionConfig { Feeds = feeds } };
+    }
+
+    public FixedConfig(RepoConfig config)
+    {
+      Config = config;
+    }
+
+    public ValueTask<RepoConfig> GetConfigAsync(CancellationToken cancellationToken = default) => ValueTask.FromResult(Config);
   }
 
   private sealed class StubHandler : HttpMessageHandler

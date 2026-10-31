@@ -336,7 +336,6 @@ jobs:
       contents: read
       id-token: write  # Required for NuGet Trusted Publishing (OIDC)
       actions: read    # locate-run lists runs and downloads the Packages-* artifact
-      packages: read   # check-version reads the org GitHub Packages feed as well as nuget.org; without it the gate refuses (task 536)
 
     steps:
       - name: Checkout repository

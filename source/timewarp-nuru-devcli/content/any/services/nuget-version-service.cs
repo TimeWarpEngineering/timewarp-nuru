@@ -2,8 +2,9 @@
 // HttpClient-based NuGet version checking — replaces TimeWarp.Amuru's NuGetPackageService
 // which depends on NuGet.Protocol/NuGet.Packaging (pulls in Newtonsoft.Json, incompatible with AOT).
 // Uses the NuGet V3 Flat Container API directly with System.Text.Json.
-// Reads both org feeds, nuget.org and the org GitHub Packages feed, so the
-// already-released gates see packages published to either (kanban task 536).
+// Reads the feeds the repo publishes to (checkVersionConfig.feeds, kanban
+// task 564): nuget.org, the org GitHub Packages feed, or both, so the
+// already-released gates see packages published to any of them (task 536).
 #endregion
 #region Design
 // Calls https://api.nuget.org/v3-flatcontainer/{id}/index.json
@@ -26,10 +27,24 @@
 // parameterless constructor creates. A field the service disposes is an
 // ownership the analyzer sees; it needs no suppression.
 //
-// Two feeds, no setting (kanban task 536). TimeWarp publishes to nuget.org
-// and to the org GitHub Packages feed only, so both are constants here and
-// LookupAsync always reads both. Repo visibility is no guide: Roslynk is
-// public and publishes to GitHub Packages. GitHub Packages shapes, observed
+// The feed set is a property of the repo, not of the tool (kanban task 564).
+// TimeWarp publishes to two feeds only, nuget.org and the org GitHub Packages
+// feed, so both URLs are constants here. Which of them a repo uses is not:
+// TimeWarp.Mediator and this repo publish to nuget.org only, TimeWarp.Taratibu
+// and TimeWarp.Zana to GitHub Packages only, TimeWarp.Ganda and
+// TimeWarp.Flexbox to both. Task 536 read both feeds for every repo, and the
+// Mediator v15.0.0-beta.3 release (2026-10-31) failed because its CI had no
+// packages: read token for a feed it never publishes to. Steven's direction
+// that day: a repo must not depend on a feed it does not publish to. So
+// LookupAsync takes the PackageFeeds the caller resolved from
+// checkVersionConfig.feeds (PackageFeedsResolver, default nuget.org) and reads
+// only those. When GitHub Packages is not declared, no request goes to it and
+// the credential provider is never called, so no token is resolved. No
+// attestation or ganda rule requires GitHub Packages everywhere; repo
+// visibility is no guide either (Roslynk is public and publishes to GitHub
+// Packages), so the repo declares it.
+//
+// GitHub Packages shapes (task 536), observed
 // live 2026-10-29 with a read:packages gh token:
 //   - The service index answers 200; its PackageBaseAddress/3.0.0 resource is
 //     https://nuget.pkg.github.com/TimeWarpEngineering/download (no trailing
@@ -49,7 +64,8 @@
 // failure (no token, 401/403, other non-404, timeout, malformed answer) is a
 // PackageFeedUnreadableException. LookupAsync keeps it on the result instead
 // of throwing, because a version found on nuget.org is published regardless;
-// the gates refuse only when the version is not on nuget.org. The service
+// the gates refuse only when the version is on no other declared feed. A
+// nuget.org failure still throws HttpRequestException (470-007). The service
 // index is read once per service instance, and its answer (base address or
 // failure) is reused for every package.
 #endregion
@@ -74,7 +90,7 @@ internal sealed class NuGetVersionService : IDisposable
 
   public const string NuGetOrgFlatContainerUrl = "https://api.nuget.org/v3-flatcontainer/";
 
-  /// <summary>The org's private GitHub Packages feed, the only other feed TimeWarp publishes to.</summary>
+  /// <summary>The org's GitHub Packages feed, the only other feed TimeWarp publishes to. Read only when a repo declares <c>github-packages</c>.</summary>
   public const string GitHubPackagesServiceIndexUrl = "https://nuget.pkg.github.com/TimeWarpEngineering/index.json";
 
   public const string PackageBaseAddressResourceType = "PackageBaseAddress/3.0.0";
@@ -277,22 +293,42 @@ internal sealed class NuGetVersionService : IDisposable
   }
 
   /// <summary>
-  /// Reads <paramref name="packageId"/> from both org feeds. A nuget.org failure
-  /// throws <see cref="HttpRequestException"/>, as <see cref="GetPackageVersionsAsync"/>
-  /// does. A GitHub Packages failure is returned on the result, never thrown.
+  /// Reads <paramref name="packageId"/> from the declared <paramref name="feeds"/> only.
+  /// A nuget.org failure throws <see cref="HttpRequestException"/>, as
+  /// <see cref="GetPackageVersionsAsync"/> does. A GitHub Packages failure is returned
+  /// on the result, never thrown. When <paramref name="feeds"/> lacks
+  /// <see cref="PackageFeeds.GitHubPackages"/>, GitHub Packages is not contacted and no
+  /// credential is resolved. Throws <see cref="ArgumentException"/> when
+  /// <paramref name="feeds"/> names no feed.
   /// </summary>
-  public async Task<PackageFeedLookup> LookupAsync(string packageId, CancellationToken cancellationToken)
+  public async Task<PackageFeedLookup> LookupAsync(string packageId, PackageFeeds feeds, CancellationToken cancellationToken)
   {
-    IReadOnlyList<string> nuGetOrgVersions = await GetPackageVersionsAsync(packageId, cancellationToken).ConfigureAwait(false);
+    ArgumentNullException.ThrowIfNull(packageId);
+
+    if ((feeds & PackageFeeds.Both) == PackageFeeds.None || (feeds & ~PackageFeeds.Both) != PackageFeeds.None)
+    {
+      throw new ArgumentException($"'{feeds}' is not a feed set; declare {PackageFeeds.NuGetOrg}, {PackageFeeds.GitHubPackages} or both.", nameof(feeds));
+    }
+
+    ThrowIfInvalidPackageId(packageId);
+
+    IReadOnlyList<string> nuGetOrgVersions = feeds.HasFlag(PackageFeeds.NuGetOrg)
+      ? await GetPackageVersionsAsync(packageId, cancellationToken).ConfigureAwait(false)
+      : [];
+
+    if (!feeds.HasFlag(PackageFeeds.GitHubPackages))
+    {
+      return new PackageFeedLookup(packageId, feeds, nuGetOrgVersions, [], gitHubPackagesFailure: null);
+    }
 
     try
     {
       IReadOnlyList<string> gitHubPackagesVersions = await GetGitHubPackagesVersionsAsync(packageId, cancellationToken).ConfigureAwait(false);
-      return new PackageFeedLookup(packageId, nuGetOrgVersions, gitHubPackagesVersions, gitHubPackagesFailure: null);
+      return new PackageFeedLookup(packageId, feeds, nuGetOrgVersions, gitHubPackagesVersions, gitHubPackagesFailure: null);
     }
     catch (PackageFeedUnreadableException ex)
     {
-      return new PackageFeedLookup(packageId, nuGetOrgVersions, [], ex);
+      return new PackageFeedLookup(packageId, feeds, nuGetOrgVersions, [], ex);
     }
   }
 

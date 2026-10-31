@@ -243,20 +243,28 @@ resuming.
 ## Feeds the publish gates read
 
 `check-version`, `dev release` guard 7 and the promotion pipeline's Step 2/6 ask
-both feeds TimeWarp publishes to. There is no setting:
+the feeds the repo publishes to, declared in `.timewarp/dev.jsonc` as
+`checkVersionConfig.feeds` (`nuget.org`, `github-packages`, comma-separated).
+When the key is absent, only nuget.org is read. An unknown name is a
+configuration error, reported before any network call. The two feeds:
 
 - nuget.org: `https://api.nuget.org/v3-flatcontainer/{id}/index.json`
 - the org GitHub Packages feed: `https://nuget.pkg.github.com/TimeWarpEngineering/index.json`.
   The flat container comes from that index's `PackageBaseAddress/3.0.0` resource.
 
-A version listed on either feed is published. That covers the **All** and the
-**Partial** verdicts.
+A version listed on any declared feed is published. That covers the **All** and
+the **Partial** verdicts.
 
-GitHub Packages needs a token, even to say a package does not exist. DevCli uses
-`GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token`. The token needs the
-`read:packages` scope. In GitHub Actions the job needs `packages: read`. A job that
-lists its `permissions` gets no packages access unless it names it. The `release`
-job in `workflow.yml` has `packages: read` for this reason.
+This repo publishes to nuget.org only and declares nothing, so the gates never
+contact GitHub Packages and the `release` job needs no `packages: read`. A repo
+that does not publish to GitHub Packages never needs `packages: read` for
+check-version.
+
+When a repo declares `github-packages`, the feed needs a token, even to say a
+package does not exist. DevCli uses `GITHUB_TOKEN`, then `GH_TOKEN`, then
+`gh auth token`. The token needs the `read:packages` scope. In GitHub Actions the
+job needs `packages: read`. A job that lists its `permissions` gets no packages
+access unless it names it.
 
 | GitHub Packages answer | Verdict |
 |---|---|
@@ -264,8 +272,8 @@ job in `workflow.yml` has `packages: read` for this reason.
 | 404 (`NAME_UNKNOWN`) | Not found on GitHub Packages |
 | No token, 401, 403, other status, timeout, malformed answer | Unreadable |
 
-When the version is not on nuget.org and GitHub Packages is unreadable, the gate
-refuses. It does not report the version as published or as new. The error names
+When the version is on no declared feed and a declared GitHub Packages feed is
+unreadable, the gate refuses. It does not report the version as published or as new. The error names
 the feed, the HTTP status and the fix:
 
 - Local: `gh auth refresh -h github.com -s read:packages`, or set `GITHUB_TOKEN` /

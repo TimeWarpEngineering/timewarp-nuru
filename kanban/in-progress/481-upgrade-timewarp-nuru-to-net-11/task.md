@@ -91,6 +91,11 @@ Acceptance criteria:
 - [x] Spot-check analyzer load in a sample (Logging.Abstractions TFM under `analyzers/dotnet/cs`)
 - [x] Record final SDK version, package versions, and any deferred upstream blockers in Results
 
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Fix pass 2: M1 and M2 fixed (benchmark toolchain name/comment/variable say .NET 11; changelog Neutral contracts reference says TimeWarp.Contracts 2.0.0-beta.29). Round 2 pending.
+
 ## Notes
 
 ### Impact analysis (master, 2026-10-02)
@@ -245,6 +250,20 @@ Expect:
 - The consumer check reports 0 warnings and 0 errors, and the audit prints "Repository passes all audit checks."
 - In CI, the `setup-dotnet` step installs an 11.0 preview/RC SDK.
 
+- Review oracle round 1: Grok 4.7 (tw-implementation-review, effort 3, roster general), session not reported, max-turns uncapped (review budget 200). Counts: bug 0, suggestion 0, nit 2 open (M1, M2). Blocked on the fix loop. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+### Review fix pass 2
+
+- M1: `benchmarks/timewarp-nuru-benchmarks/program.cs` toolchain `name` is `.NET 11.0`, the comment says .NET 11, and the variable is `net11Toolchain`. This benchmark project still fails to build for the pre-existing CliFx 3.0.1 reason listed above, so the rename was checked by reading the diff, not by a build.
+- M2: the changelog's Unreleased "Neutral contracts" bullet says the reference is `TimeWarp.Contracts` 2.0.0-beta.29, and its history adds "2.0.0-beta.24 before 481".
+
 ## Session
 
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 09166cef-c421-4fd1-810d-9ef28addd8d8, max-turns 500, Done — 2026-10-31T13:56:49Z
+- Review oracle: tw-implementation-review, effort 3, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 200), round 1, 2 nits open (M1, M2) — 2026-10-31
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-31T14:10:29Z
+- Fix oracle (implement-fix-2): implementer-claude (claude, vendor anthropic, model claude-opus-5-5), fixed M1 and M2 — 2026-10-31
+
+## Learnings
+
+Misread: the restatement says no `net10.0` remains in docs. Requirement 6 only updates `bin/Release/net10.0` path examples and `dotnet-conventions.md` (it said `net9.0`). `documentation/user/guides/migrating-to-3.0.md` and the 3.0 release post still say `net10.0`, which is what 3.0 shipped, and Results already keeps those historical mentions. The implementation followed requirement 6. The Mediator 15 acceptance line and the "anything held back has a reason" line match the task; the holdback is real (`TimeWarp.Contracts` 2.0.0-beta.29 still depends on `TimeWarp.Mediator.Contracts` 14.0.0, and Mediator 15 removes the handler interfaces).

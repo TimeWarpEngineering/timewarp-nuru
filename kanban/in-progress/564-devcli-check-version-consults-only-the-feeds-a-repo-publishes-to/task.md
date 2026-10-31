@@ -108,7 +108,7 @@ Acceptance:
 - [x] DevCli readme Configuration section updated
 - [x] Design region in `nuget-version-service.cs` and `package-feed-lookup.cs` updated
 ### Review
-- [ ] Code Review
+- [x] Code Review
 - [ ] PR with merge commit
 
 ## Notes
@@ -226,6 +226,13 @@ Expect:
   has unknown feed(s): 'github-package'. Valid feeds: nuget.org, github-packages
   (comma-separated).` and exits 1 without a NuGet line.
 
+### Review
+
+- Rounds: 1. Roster: general. Effort: 3 (by-diff, 1004 lines). Turn cap 200 (cursor uncapped).
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Implementation Notes
 
 -
@@ -235,3 +242,14 @@ Expect:
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-31)
 - 2026-10-31: implement oracle (implementer-claude, headless ganda task work). Feeds setting, both gates wired, tests, docs, workflow permission removed; gates green.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c4618c42-96d0-4fc0-9256-9fff24ecff93, max-turns 500, Done — 2026-10-31T11:04:41Z
+- Review oracle: tw-implementation-review, effort 3, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 200), round 1, disposition clean — 2026-10-31
+- Review oracle: review by reviewer-cursor (cursor, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-31
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-31T11:13:42Z
+
+## Learnings
+
+The restatement matches the task. Absent `feeds` is nuget.org, an unknown name or a value that names no feed is a config error before any network call, both gates share `PackageFeedsResolver`, and the 536 refusal text is unchanged when both feeds are declared. The GitHub-Packages-only second line drops "not on nuget.org"; that clause would be false when nuget.org was not read, and the restatement already says so. No misread.
+
+## Review
+
+- Round 1: Done

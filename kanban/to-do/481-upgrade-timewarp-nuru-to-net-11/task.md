@@ -9,7 +9,7 @@ As of 2026-10-02 analysis on master (`06e267f9`):
 - Repo TFM default is `net10.0` (root `Directory.Build.props`).
 - `global.json` pins SDK `10.0.100` (`rollForward: latestMinor`, `allowPrerelease: false`).
 - CI uses `actions/setup-dotnet@v4` with `dotnet-version: '10.0.x'`.
-- Machine already has .NET 11 preview SDKs installed (`11.0.100-preview.5`, `preview.6`); RC1 exists publicly (go-live); GA expected November 2026.
+- Machine has .NET 11 SDKs up to `11.0.100-rc.3.26522.148` (checked 2026-10-31); GA expected November 2026.
 
 This task covers the full product/CI/docs bump. Do **not** treat a preview-only pin as done unless the team explicitly accepts shipping on preview/RC until GA.
 
@@ -23,6 +23,10 @@ This task covers the full product/CI/docs bump. Do **not** treat a preview-only 
 6. Docs that show `bin/Release/net10.0/...` paths and developer conventions are updated; stale `net9.0` mentions in conventions docs are fixed.
 7. Upstream TimeWarp packages consumed by this repo (Amuru, SourceGenerators, Build.Tasks, Jaribu, Mediator.*, Terminal, Builder) either already support net11 or are upgraded/published first — record blockers.
 8. Full CI gate green: restore/build (warnings-as-errors where enforced), tests, verify-samples, package layout gate.
+9. **Update every Nuru dependency to its latest version** (Steve 2026-10-31: "update all of nuru deps roll it into task 481"). Cover every `PackageVersion` in `Directory.Packages.props` (61 entries), `.config/dotnet-tools.json`, and `#:package` / `#:sdk` directives in runfiles and samples. Prereleases are acceptable when that is the newest line we own or the net11-aligned line.
+   - **TimeWarp.Mediator 15.0.0-beta.4** (released 2026-10-31 on Nuru 4.0.0-beta.11). 15 publishes only `TimeWarp.Mediator` and `TimeWarp.Mediator.Generators`; `TimeWarp.Mediator.Contracts` and `.Analyzers` stop at 14.0.0. Replace `TimeWarp.Mediator.Contracts` 14.0.0 with `TimeWarp.Mediator` 15.0.0-beta.4, bump Generators, and record every API change 15 required.
+   - Other TimeWarp packages (Amuru, Jaribu, Terminal, SourceGenerators, Build.Tasks, Builder): latest published. Use the org feed `https://nuget.pkg.github.com/TimeWarpEngineering/index.json` as well as nuget.org when checking.
+   - Record a table of old to new versions in Results, and any package held back with the reason.
 9. No product API redesign in this task unless forced by a .NET 11 breaking change; record any breaking consumer impact in Results.
 
 ## Checklist
@@ -56,6 +60,8 @@ This task covers the full product/CI/docs bump. Do **not** treat a preview-only 
 - [ ] Serilog.Extensions.Logging / OpenTelemetry / MCP / benchmark CLI packages: bump only as needed for net11
 - [ ] Aspire sample (`samples/aspire-otel`, `#:sdk Aspire.AppHost.Sdk@13.5.3`): confirm Aspire line supports .NET 11; bump SDK directive if required
 - [ ] Upstream TimeWarp packages: confirm net11-ready versions exist; bump CPM entries
+- [ ] TimeWarp.Mediator 14.0.0 → 15.0.0-beta.4 (Contracts → TimeWarp.Mediator; Generators bumped); API changes recorded
+- [ ] Every other dependency (CPM, dotnet-tools, `#:package`/`#:sdk`) at latest; old→new table in Results
 
 ### CI / images
 - [ ] `.github/workflows/workflow.yml` `dotnet-version: '10.0.x'` → `11.0.x` (or pinned RC/GA)

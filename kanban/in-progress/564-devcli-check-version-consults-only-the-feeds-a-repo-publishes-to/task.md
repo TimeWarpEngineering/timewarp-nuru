@@ -234,3 +234,4 @@ Expect:
 
 - Created: 04be23b7-afaf-4196-b07d-39320558a224 (2026-10-31)
 - 2026-10-31: implement oracle (implementer-claude, headless ganda task work). Feeds setting, both gates wired, tests, docs, workflow permission removed; gates green.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c4618c42-96d0-4fc0-9256-9fff24ecff93, max-turns 500, Done — 2026-10-31T11:04:41Z

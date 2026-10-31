@@ -244,3 +244,7 @@ Expect:
 - Samples report 68/68 built. test-multi reports 0 failed (2170 passed, 6 skipped). Standalone reports 0 failed.
 - The consumer check reports 0 warnings and 0 errors, and the audit prints "Repository passes all audit checks."
 - In CI, the `setup-dotnet` step installs an 11.0 preview/RC SDK.
+
+## Session
+
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 09166cef-c421-4fd1-810d-9ef28addd8d8, max-turns 500, Done — 2026-10-31T13:56:49Z

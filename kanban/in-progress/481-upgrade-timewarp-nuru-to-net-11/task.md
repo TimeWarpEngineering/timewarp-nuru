@@ -94,8 +94,8 @@ Acceptance criteria:
 ## Review
 
 - Round 1: Blocked — open M1, M2
-- Fix pass 2: M1 and M2 fixed (benchmark toolchain name/comment/variable say .NET 11; changelog Neutral contracts reference says TimeWarp.Contracts 2.0.0-beta.29). Round 2 pending.
-
+- Fix pass 2: M1 and M2 fixed (benchmark toolchain name/comment/variable say .NET 11; changelog Neutral contracts reference says TimeWarp.Contracts 2.0.0-beta.29).
+- Round 2: Done
 ## Notes
 
 ### Impact analysis (master, 2026-10-02)
@@ -251,6 +251,7 @@ Expect:
 - In CI, the `setup-dotnet` step installs an 11.0 preview/RC SDK.
 
 - Review oracle round 1: Grok 4.7 (tw-implementation-review, effort 3, roster general), session not reported, max-turns uncapped (review budget 200). Counts: bug 0, suggestion 0, nit 2 open (M1, M2). Blocked on the fix loop. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Review oracle round 2: Grok 4.7 (tw-implementation-review, effort 1, roster general), session not reported, max-turns uncapped (review budget 80). Re-reviewed fix commit `b021b79a` since `12da89d2`. M1 and M2 confirmed fixed. Counts: bug 0, suggestion 0, nit 2 fixed, 0 open. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### Review fix pass 2
 
@@ -263,6 +264,7 @@ Expect:
 - Review oracle: tw-implementation-review, effort 3, roster general (Grok 4.7), session not reported, max-turns uncapped (review budget 200), round 1, 2 nits open (M1, M2) — 2026-10-31
 - Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-10-31T14:10:29Z
 - Fix oracle (implement-fix-2): implementer-claude (claude, vendor anthropic, model claude-opus-5-5), fixed M1 and M2 — 2026-10-31
+- Review oracle (round 2): tw-implementation-review, effort 1, roster general (Grok 4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 80), disposition clean, 0 open — 2026-10-31
 
 ## Learnings
 

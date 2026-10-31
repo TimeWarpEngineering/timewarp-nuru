@@ -23,12 +23,12 @@ class Program
     config = config.AddDiagnoser(MemoryDiagnoser.Default);
     config = config.AddDiagnoser(new ThreadingDiagnoser(new ThreadingDiagnoserConfig(displayLockContentionWhenZero: false, displayCompletedWorkItemCountWhenZero: false)));
 
-    // Create a custom toolchain for .NET 10
-    IToolchain net10Toolchain = CsProjCoreToolchain.From(
+    // Create a custom toolchain for .NET 11
+    IToolchain net11Toolchain = CsProjCoreToolchain.From(
       new NetCoreAppSettings(
         targetFrameworkMoniker: "net11.0",
         runtimeFrameworkVersion: null,
-        name: ".NET 10.0"
+        name: ".NET 11.0"
       )
     );
 
@@ -38,7 +38,7 @@ class Program
                      .WithWarmupCount(0)
                      .WithIterationCount(1)
                      .WithInvocationCount(1)
-                     .WithToolchain(net10Toolchain)
+                     .WithToolchain(net11Toolchain)
                      .DontEnforcePowerPlan());
 
     // Run CLI framework comparison benchmark

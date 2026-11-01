@@ -474,3 +474,10 @@ task-work.progress.log
 
 # Mission heartbeat in the claim worktree (local; not product)
 mission.heartbeat
+
+# AOT dev CLI (self-install output; local; not product)
+bin/dev
+# AOT dev CLI debug companion (self-install output; local; not product)
+bin/dev.dbg
+# AOT dev CLI on Windows (self-install output; local; not product)
+bin/dev.exe

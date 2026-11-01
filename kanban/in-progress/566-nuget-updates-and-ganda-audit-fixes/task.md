@@ -229,7 +229,7 @@ An org repo with Nuru endpoints must change:
 
 ### Review
 
-Round 1 (general, effort 3) is open. M1 (suggestion): the Unreleased .NET 11 changelog bullet still states Contracts 2.0.0-beta.29 and Mediator 14.0.0 as the current pins. Disposition waits on that finding. Paths: `review/review-framework.md`, `review/round-1/merged.md`.
+Round 1 (general, effort 3) raised M1 (suggestion): the Unreleased .NET 11 changelog bullet still stated Contracts 2.0.0-beta.29 and Mediator 14.0.0 as the current pins. Implement-fix-2 rewrote that bullet. Round 2 (general, effort 1) re-checked `bf4210f6...HEAD`. The bullet now names TimeWarp.Contracts 2.0.0-beta.31 and TimeWarp.Mediator 15.0.0-beta.4 as current and keeps the 481 hold as history. No new findings. Final counts: bug 0, suggestion 1 fixed, nit 0; open 0. Disposition: clean. No wontfix and no escalation. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -268,11 +268,12 @@ Expect:
 - Review oracle: reviewed by reviewer-grok (grok, vendor xAI, model grok-4.7), session not reported, max-turns 200 (cursor uncapped), round 1 open M1 — 2026-11-01
 - Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-11-01T06:01:36Z
 - Fix oracle (implement-fix-2): implementer-claude (claude-opus-5-5), 2026-11-01. Fixed round-1 M1 (changelog .NET 11 bullet now names Contracts 2.0.0-beta.31 and Mediator 15.0.0-beta.4; 481 hold kept as history).
+- Review oracle: reviewed by reviewer-cursor (cursor, vendor xAI, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 80), round 2 clean — 2026-11-01
 
 ## Review
 
 - Round 1: Blocked — open M1
-
+- Round 2: Done
 ## Notes
 
 - Follows 481 (#382, .NET 11 and dependency refresh). 481 Results hold the first Mediator 15 investigation.

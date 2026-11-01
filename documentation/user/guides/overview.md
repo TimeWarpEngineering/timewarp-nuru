@@ -25,6 +25,10 @@ Create specialized CLI editions from a shared command library:
 - Smaller, focused executables per use case
 - Publishing multiple editions from one codebase
 
+### [Migrating to TimeWarp.Mediator 15](migrating-to-timewarp-mediator-15.md)
+Nuru 4.0 endpoint handlers: `IRequestHandler<X, T>`, `ValueTask<T>`, `Unit.ValueTask`,
+package references, and a checklist for consumer repos.
+
 ### [Migrating to 3.0](migrating-to-3.0.md)
 Breaking changes from 2.x and early 3.0 betas: Mediator contracts, handler
 return types, and the `--capabilities` document.

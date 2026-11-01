@@ -17,12 +17,12 @@ public sealed class RunCommand : ICommand<Unit>
   [Parameter(IsCatchAll = true, Description = "Script parameters")]
   public string[] Params { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<RunCommand, Unit>
+  public sealed class Handler : IRequestHandler<RunCommand, Unit>
   {
-    public Task<Unit> Handle(RunCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(RunCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Running {command.Script} with params: {string.Join(" ", command.Params)}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

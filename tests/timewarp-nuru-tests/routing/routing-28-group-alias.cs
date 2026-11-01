@@ -195,9 +195,9 @@ public class GroupAliasTests
 [NuruRouteAlias("issue178-bye", "issue178-cya")]
 public sealed class Issue178GoodbyeCommand : ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue178GoodbyeCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue178GoodbyeCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue178GoodbyeCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue178GoodbyeCommand command, CancellationToken cancellationToken)
     {
       await terminal.WriteLineAsync("Goodbye!").ConfigureAwait(false);
       return default;
@@ -223,9 +223,9 @@ public abstract class Issue178WorkspaceGroup;
 [NuruRoute("info", Description = "Show workspace info")]
 public sealed class Issue178WorkspaceInfoCommand : Issue178WorkspaceGroup, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue178WorkspaceInfoCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue178WorkspaceInfoCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue178WorkspaceInfoCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue178WorkspaceInfoCommand command, CancellationToken cancellationToken)
     {
       await terminal.WriteLineAsync("Workspace info").ConfigureAwait(false);
       return default;
@@ -249,9 +249,9 @@ public abstract class Issue178RepoGroup : Issue178WorkspaceGroup;
 [NuruRoute("info", Description = "Show repo info")]
 public sealed class Issue178RepoInfoCommand : Issue178RepoGroup, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue178RepoInfoCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue178RepoInfoCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue178RepoInfoCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue178RepoInfoCommand command, CancellationToken cancellationToken)
     {
       await terminal.WriteLineAsync("Repo info").ConfigureAwait(false);
       return default;

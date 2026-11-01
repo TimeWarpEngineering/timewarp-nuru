@@ -220,13 +220,13 @@ public sealed class T511TextRenderer : IResponseRenderer<T511VerbatimValue>
 [Operation("t511verbatim")]
 public sealed class T511VerbatimQuery : IQuery<T511VerbatimValue>
 {
-  public sealed class Handler : IQueryHandler<T511VerbatimQuery, T511VerbatimValue>
+  public sealed class Handler : IRequestHandler<T511VerbatimQuery, T511VerbatimValue>
   {
-    public Task<T511VerbatimValue> Handle(T511VerbatimQuery query, CancellationToken cancellationToken)
+    public ValueTask<T511VerbatimValue> Handle(T511VerbatimQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult(new T511VerbatimValue { Text = T511TextRenderer.Text });
+      return ValueTask.FromResult(new T511VerbatimValue { Text = T511TextRenderer.Text });
     }
   }
 }
@@ -234,13 +234,13 @@ public sealed class T511VerbatimQuery : IQuery<T511VerbatimValue>
 [Operation("t511plain")]
 public sealed class T511PlainQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T511PlainQuery, string>
+  public sealed class Handler : IRequestHandler<T511PlainQuery, string>
   {
-    public Task<string> Handle(T511PlainQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T511PlainQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("plain");
+      return ValueTask.FromResult("plain");
     }
   }
 }
@@ -270,9 +270,9 @@ public sealed class T511ProblemRenderer : IResponseRenderer<SharedProblemDetails
 [Operation("t511problem")]
 public sealed class T511ProblemQuery : IQuery<OneOf<string, SharedProblemDetails>>
 {
-  public sealed class Handler : IQueryHandler<T511ProblemQuery, OneOf<string, SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<T511ProblemQuery, OneOf<string, SharedProblemDetails>>
   {
-    public Task<OneOf<string, SharedProblemDetails>> Handle(T511ProblemQuery query, CancellationToken cancellationToken)
+    public ValueTask<OneOf<string, SharedProblemDetails>> Handle(T511ProblemQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
@@ -283,7 +283,7 @@ public sealed class T511ProblemQuery : IQuery<OneOf<string, SharedProblemDetails
         Status = 17,
         Detail = "too small"
       };
-      return Task.FromResult(problem);
+      return ValueTask.FromResult(problem);
     }
   }
 }
@@ -291,9 +291,9 @@ public sealed class T511ProblemQuery : IQuery<OneOf<string, SharedProblemDetails
 [Operation("t511badstatus")]
 public sealed class T511BadStatusQuery : IQuery<OneOf<string, SharedProblemDetails>>
 {
-  public sealed class Handler : IQueryHandler<T511BadStatusQuery, OneOf<string, SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<T511BadStatusQuery, OneOf<string, SharedProblemDetails>>
   {
-    public Task<OneOf<string, SharedProblemDetails>> Handle(T511BadStatusQuery query, CancellationToken cancellationToken)
+    public ValueTask<OneOf<string, SharedProblemDetails>> Handle(T511BadStatusQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
@@ -303,7 +303,7 @@ public sealed class T511BadStatusQuery : IQuery<OneOf<string, SharedProblemDetai
         Title = "Too big",
         Status = 999
       };
-      return Task.FromResult(problem);
+      return ValueTask.FromResult(problem);
     }
   }
 }

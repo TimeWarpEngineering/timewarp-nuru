@@ -18,9 +18,9 @@ public sealed class FactorialCommand : ICommand<Unit>
   [Parameter(Description = "Number to calculate factorial for")]
   public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FactorialCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FactorialCommand, Unit>
   {
-    public Task<Unit> Handle(FactorialCommand command, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FactorialCommand command, CancellationToken cancellationToken)
     {
       try
       {
@@ -32,7 +32,7 @@ public sealed class FactorialCommand : ICommand<Unit>
         Console.WriteLine($"Error: {ex.Message}");
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

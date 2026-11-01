@@ -19,7 +19,7 @@ public sealed class SetConfigCommand : ConfigGroupBase, IIdempotentCommand<Unit>
   [Parameter(Order = 1, Description = "Configuration value")]
   public string Value { get; set; } = string.Empty;
 
-  public sealed class Handler : IIdempotentCommandHandler<SetConfigCommand, Unit>
+  public sealed class Handler : IRequestHandler<SetConfigCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -28,10 +28,10 @@ public sealed class SetConfigCommand : ConfigGroupBase, IIdempotentCommand<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(SetConfigCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(SetConfigCommand command, CancellationToken ct)
     {
       Terminal.WriteLine($"Setting config: {command.Key} = {command.Value}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

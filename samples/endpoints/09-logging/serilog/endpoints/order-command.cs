@@ -9,9 +9,9 @@ public sealed class OrderCommand : ICommand<Unit>
   [Parameter] public string OrderId { get; set; } = "";
   [Parameter] public decimal Amount { get; set; }
 
-  public sealed class Handler(ILogger<OrderCommand> Logger) : ICommandHandler<OrderCommand, Unit>
+  public sealed class Handler(ILogger<OrderCommand> Logger) : IRequestHandler<OrderCommand, Unit>
   {
-    public Task<Unit> Handle(OrderCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(OrderCommand c, CancellationToken ct)
     {
       using IDisposable? scope = Logger.BeginScope(new Dictionary<string, object>
       {
@@ -29,7 +29,7 @@ public sealed class OrderCommand : ICommand<Unit>
 
       Logger.LogInformation("Order {OrderId} completed successfully", c.OrderId);
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

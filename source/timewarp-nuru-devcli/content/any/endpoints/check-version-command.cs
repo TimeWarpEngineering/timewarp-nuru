@@ -60,7 +60,7 @@ internal sealed class CheckVersionCommand : ICommand<Unit>
   /// </summary>
   public string? SourceVersion { get; set; }
 
-  internal sealed class Handler : ICommandHandler<CheckVersionCommand, Unit>
+  internal sealed class Handler : IRequestHandler<CheckVersionCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly NuGetVersionService NuGetVersionService;
@@ -87,7 +87,7 @@ internal sealed class CheckVersionCommand : ICommand<Unit>
       PackableProjectService = packableProjectService;
     }
 
-    public async Task<Unit> Handle(CheckVersionCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(CheckVersionCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

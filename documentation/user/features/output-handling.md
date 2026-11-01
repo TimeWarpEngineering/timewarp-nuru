@@ -142,9 +142,9 @@ public sealed class AnalyzeQuery : IQuery<AnalysisResult>
   [Parameter] public string Path { get; set; } = "";
 
   public sealed class Handler(IAnalyzer analyzer, ILogger<AnalyzeQuery> logger)
-    : IQueryHandler<AnalyzeQuery, AnalysisResult>
+    : IRequestHandler<AnalyzeQuery, AnalysisResult>
   {
-    public async Task<AnalysisResult> Handle(AnalyzeQuery query, CancellationToken cancellationToken)
+    public async ValueTask<AnalysisResult> Handle(AnalyzeQuery query, CancellationToken cancellationToken)
     {
       // Structured logging → stderr
       logger.LogInformation("Starting analysis of {Path}", query.Path);

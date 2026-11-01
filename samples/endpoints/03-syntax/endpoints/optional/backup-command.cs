@@ -18,13 +18,13 @@ public sealed class BackupCommand : ICommand<Unit>
   [Parameter(Description = "Optional destination path")]
   public string? Destination { get; set; }
 
-  public sealed class Handler : ICommandHandler<BackupCommand, Unit>
+  public sealed class Handler : IRequestHandler<BackupCommand, Unit>
   {
-    public Task<Unit> Handle(BackupCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(BackupCommand command, CancellationToken ct)
     {
       string dest = command.Destination ?? "default location";
       Console.WriteLine($"Backing up {command.Source} to {dest}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

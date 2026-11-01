@@ -12,7 +12,7 @@ using TimeWarp.Terminal;
 [NuruRoute("ping", Description = "Simple health check")]
 public sealed class PingQuery : IQuery<Unit>
 {
-  public sealed class Handler : IQueryHandler<PingQuery, Unit>
+  public sealed class Handler : IRequestHandler<PingQuery, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -21,10 +21,10 @@ public sealed class PingQuery : IQuery<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(PingQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(PingQuery query, CancellationToken ct)
     {
       Terminal.WriteLine("pong");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

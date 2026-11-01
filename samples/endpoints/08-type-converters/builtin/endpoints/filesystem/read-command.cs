@@ -7,15 +7,15 @@ public sealed class ReadCommand : ICommand<Unit>
 {
   [Parameter] public string File { get; set; } = ".";
 
-  public sealed class Handler : ICommandHandler<ReadCommand, Unit>
+  public sealed class Handler : IRequestHandler<ReadCommand, Unit>
   {
-    public Task<Unit> Handle(ReadCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ReadCommand c, CancellationToken ct)
     {
       FileInfo file = new FileInfo(c.File);
       WriteLine($"Reading: {file.FullName}");
       WriteLine($"  Exists: {file.Exists}");
       WriteLine($"  Size: {file.Length} bytes");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

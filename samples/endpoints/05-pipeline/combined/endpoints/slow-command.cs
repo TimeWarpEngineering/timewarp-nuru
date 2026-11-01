@@ -13,9 +13,9 @@ public sealed class SlowCommand : ICommand<Unit>
 {
   [Parameter] public int Ms { get; set; } = 600;
 
-  public sealed class Handler : ICommandHandler<SlowCommand, Unit>
+  public sealed class Handler : IRequestHandler<SlowCommand, Unit>
   {
-    public async Task<Unit> Handle(SlowCommand c, CancellationToken ct)
+    public async ValueTask<Unit> Handle(SlowCommand c, CancellationToken ct)
     {
       await Task.Delay(c.Ms, ct);
       Console.WriteLine("Slow operation complete");

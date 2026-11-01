@@ -19,7 +19,7 @@ using TimeWarp.Terminal;
 [NuruRoute("clean", Description = "Clean solution and build artifacts")]
 internal sealed class CleanCommand : ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<CleanCommand, Unit>
+  internal sealed class Handler : IRequestHandler<CleanCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
@@ -30,7 +30,7 @@ internal sealed class CleanCommand : ICommand<Unit>
       RepoCleanService = repoCleanService;
     }
 
-    public async Task<Unit> Handle(CleanCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(CleanCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

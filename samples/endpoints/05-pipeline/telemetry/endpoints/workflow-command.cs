@@ -14,9 +14,9 @@ public sealed class WorkflowCommand : ICommand<Unit>
   [Parameter(Description = "Workflow name")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
+  public sealed class Handler : IRequestHandler<WorkflowCommand, Unit>
   {
-    public async Task<Unit> Handle(WorkflowCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Starting workflow: {command.Name}");
 

@@ -80,20 +80,20 @@ namespace ServedApp
     [Parameter(Description = "The word")]
     public string Word { get; set; } = "";
 
-    public sealed class Handler(WarmIndex index) : IQueryHandler<CountQuery, int>
+    public sealed class Handler(WarmIndex index) : IRequestHandler<CountQuery, int>
     {
-      public Task<int> Handle(CountQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult(index.Count(query.Word));
+      public ValueTask<int> Handle(CountQuery query, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(index.Count(query.Word));
     }
   }
 
   [NuruRoute("pid", Description = "Print the id of the process that runs the route")]
   public sealed class PidQuery : IQuery<int>
   {
-    public sealed class Handler : IQueryHandler<PidQuery, int>
+    public sealed class Handler : IRequestHandler<PidQuery, int>
     {
-      public Task<int> Handle(PidQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult(Environment.ProcessId);
+      public ValueTask<int> Handle(PidQuery query, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Environment.ProcessId);
     }
   }
 
@@ -101,10 +101,10 @@ namespace ServedApp
   [NuruRoute("local-pid", Description = "Print this process's id; never forwarded")]
   public sealed class LocalPidQuery : IQuery<int>
   {
-    public sealed class Handler : IQueryHandler<LocalPidQuery, int>
+    public sealed class Handler : IRequestHandler<LocalPidQuery, int>
     {
-      public Task<int> Handle(LocalPidQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult(Environment.ProcessId);
+      public ValueTask<int> Handle(LocalPidQuery query, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Environment.ProcessId);
     }
   }
 
@@ -114,14 +114,14 @@ namespace ServedApp
     [Parameter(Description = "Exit code")]
     public int Code { get; set; }
 
-    public sealed class Handler(ITerminal terminal) : ICommandHandler<FailCommand, Unit>
+    public sealed class Handler(ITerminal terminal) : IRequestHandler<FailCommand, Unit>
     {
-      public Task<Unit> Handle(FailCommand command, CancellationToken cancellationToken)
+      public ValueTask<Unit> Handle(FailCommand command, CancellationToken cancellationToken)
       {
         terminal.WriteErrorLine($"failing with {command.Code}");
         // The call's own exit code: Environment.ExitCode is process-wide, and a server runs calls concurrently.
         NuruCallContext.CurrentExitCode = command.Code;
-        return Task.FromResult(Unit.Value);
+        return ValueTask.FromResult(Unit.Value);
       }
     }
   }

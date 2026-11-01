@@ -1717,7 +1717,7 @@ internal static partial class EndpointExtractor
 
     // 4. Infer return type from interface
     HandlerReturnType returnType = InferReturnTypeFromInterfaces(classSymbol);
-    ResponseShape shape = DescribeResponse(compilation, classSymbol, InferMessageType(classSymbol));
+    ResponseShape shape = DescribeResponse(compilation, classSymbol);
     ImmutableArray<ParameterBinding> propertyBindings = BuildPropertyBindings(
       classSymbol,
       hasOperation,

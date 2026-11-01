@@ -4,12 +4,12 @@ using TimeWarp.Nuru;
 [NuruRoute("time", Description = "Show current time")]
 public sealed class TimeCommand : IQuery<Unit>
 {
-  public sealed class Handler : IQueryHandler<TimeCommand, Unit>
+  public sealed class Handler : IRequestHandler<TimeCommand, Unit>
   {
-    public Task<Unit> Handle(TimeCommand q, CancellationToken ct)
+    public ValueTask<Unit> Handle(TimeCommand q, CancellationToken ct)
     {
       Console.WriteLine($"Current time: {DateTime.Now:HH:mm:ss}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

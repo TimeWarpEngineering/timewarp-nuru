@@ -12,12 +12,12 @@ public sealed class SumQuery : IQuery<SumResult>
 {
   public int[] Values { get; set; } = [];
 
-  public sealed class Handler : IQueryHandler<SumQuery, SumResult>
+  public sealed class Handler : IRequestHandler<SumQuery, SumResult>
   {
-    public Task<SumResult> Handle(SumQuery query, CancellationToken cancellationToken)
+    public ValueTask<SumResult> Handle(SumQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult(new SumResult { Count = query.Values.Length, Total = query.Values.Sum() });
+      return ValueTask.FromResult(new SumResult { Count = query.Values.Length, Total = query.Values.Sum() });
     }
   }
 }

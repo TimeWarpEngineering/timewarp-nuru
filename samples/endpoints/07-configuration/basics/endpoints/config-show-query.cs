@@ -10,9 +10,9 @@ public sealed class ConfigShowQuery : IQuery<Unit>
   public sealed class Handler(
     IOptions<DatabaseOptions> dbOptions,
     IOptions<ApiSettings> apiOptions,
-    IConfiguration config) : IQueryHandler<ConfigShowQuery, Unit>
+    IConfiguration config) : IRequestHandler<ConfigShowQuery, Unit>
   {
-    public Task<Unit> Handle(ConfigShowQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(ConfigShowQuery query, CancellationToken ct)
     {
       WriteLine("\n=== Configuration Values ===");
       WriteLine($"App Name: {config["AppName"]}");
@@ -29,7 +29,7 @@ public sealed class ConfigShowQuery : IQuery<Unit>
       WriteLine($"  Timeout: {apiOptions.Value.TimeoutSeconds}s");
       WriteLine($"  Retry Count: {apiOptions.Value.RetryCount}");
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

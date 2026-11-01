@@ -12,12 +12,12 @@ using TimeWarp.Nuru;
 [NuruRoute("git-commit", Description = "Commit changes")]
 public sealed class GitCommitCommand : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<GitCommitCommand, Unit>
+  public sealed class Handler : IRequestHandler<GitCommitCommand, Unit>
   {
-    public Task<Unit> Handle(GitCommitCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(GitCommitCommand command, CancellationToken ct)
     {
       Console.WriteLine("Committing...");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

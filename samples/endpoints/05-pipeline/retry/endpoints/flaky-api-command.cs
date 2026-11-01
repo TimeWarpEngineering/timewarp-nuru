@@ -17,11 +17,11 @@ public sealed class FlakyApiCommand : ICommand<Unit>, IRetryable
 
   public int MaxRetries => 3;
 
-  public sealed class Handler : ICommandHandler<FlakyApiCommand, Unit>
+  public sealed class Handler : IRequestHandler<FlakyApiCommand, Unit>
   {
     private static int FailureCount = 0;
 
-    public Task<Unit> Handle(FlakyApiCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(FlakyApiCommand command, CancellationToken ct)
     {
       FailureCount++;
 
@@ -32,7 +32,7 @@ public sealed class FlakyApiCommand : ICommand<Unit>, IRetryable
 
       Console.WriteLine($"✓ API call to {command.Endpoint} succeeded after {FailureCount} attempts");
       FailureCount = 0;
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

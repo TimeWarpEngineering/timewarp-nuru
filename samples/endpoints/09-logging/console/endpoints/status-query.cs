@@ -7,9 +7,9 @@ using static System.Console;
 [NuruRoute("status", Description = "Check system status with structured logging")]
 public sealed class StatusQuery : IQuery<Unit>
 {
-  public sealed class Handler(ILogger<StatusQuery> Logger) : IQueryHandler<StatusQuery, Unit>
+  public sealed class Handler(ILogger<StatusQuery> Logger) : IRequestHandler<StatusQuery, Unit>
   {
-    public Task<Unit> Handle(StatusQuery q, CancellationToken ct)
+    public ValueTask<Unit> Handle(StatusQuery q, CancellationToken ct)
     {
       using IDisposable? scope = Logger.BeginScope(new Dictionary<string, object>
       {
@@ -28,7 +28,7 @@ public sealed class StatusQuery : IQuery<Unit>
 
       WriteLine("System status logged. Check console output.");
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

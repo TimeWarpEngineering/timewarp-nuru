@@ -37,9 +37,9 @@ public sealed class RemoteAddCommand : GitRemoteGroupBase, ICommand<Unit>
   [Option("tags", "t", Description = "Import tags from the remote repository")]
   public bool Tags { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<RemoteAddCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<RemoteAddCommand, Unit>
   {
-    public async Task<Unit> Handle(RemoteAddCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(RemoteAddCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 
@@ -85,9 +85,9 @@ public sealed class RemoteRemoveCommand : GitRemoteGroupBase, ICommand<Unit>
   [Parameter(Description = "Remote name to remove")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<RemoteRemoveCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<RemoteRemoveCommand, Unit>
   {
-    public async Task<Unit> Handle(RemoteRemoveCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(RemoteRemoveCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

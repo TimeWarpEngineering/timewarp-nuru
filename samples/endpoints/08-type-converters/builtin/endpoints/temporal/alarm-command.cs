@@ -7,13 +7,13 @@ public sealed class AlarmCommand : ICommand<Unit>
 {
   [Parameter] public string Time { get; set; } = "09:00";
 
-  public sealed class Handler : ICommandHandler<AlarmCommand, Unit>
+  public sealed class Handler : IRequestHandler<AlarmCommand, Unit>
   {
-    public Task<Unit> Handle(AlarmCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(AlarmCommand c, CancellationToken ct)
     {
       TimeOnly time = TimeOnly.Parse(c.Time);
       WriteLine($"Alarm set for: {time:HH:mm}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

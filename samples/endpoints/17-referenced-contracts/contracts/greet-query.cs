@@ -22,13 +22,13 @@ public sealed class GreetQuery : IQuery<string>
   [Description("Shout the greeting")]
   public bool Shout { get; set; }
 
-  public sealed class Handler : IQueryHandler<GreetQuery, string>
+  public sealed class Handler : IRequestHandler<GreetQuery, string>
   {
-    public Task<string> Handle(GreetQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(GreetQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       string text = $"{query.Greeting}, {query.Name}!";
-      return Task.FromResult(query.Shout ? text.ToUpperInvariant() : text);
+      return ValueTask.FromResult(query.Shout ? text.ToUpperInvariant() : text);
     }
   }
 }

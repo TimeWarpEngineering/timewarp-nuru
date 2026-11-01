@@ -11,11 +11,11 @@ using TimeWarp.Nuru;
 [NuruRoute("version", Description = "Show version information")]
 public sealed class VersionQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<VersionQuery, string>
+  public sealed class Handler : IRequestHandler<VersionQuery, string>
   {
-    public Task<string> Handle(VersionQuery query, CancellationToken ct)
+    public ValueTask<string> Handle(VersionQuery query, CancellationToken ct)
     {
-      return Task.FromResult<string>("1.0.0");
+      return ValueTask.FromResult<string>("1.0.0");
     }
   }
 }

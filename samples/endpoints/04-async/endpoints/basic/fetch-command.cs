@@ -14,9 +14,9 @@ public sealed class FetchCommand : ICommand<string>
   [Parameter(Description = "URL to fetch")]
   public string Url { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<FetchCommand, string>
+  public sealed class Handler : IRequestHandler<FetchCommand, string>
   {
-    public async Task<string> Handle(FetchCommand command, CancellationToken ct)
+    public async ValueTask<string> Handle(FetchCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Fetching {command.Url}...");
       await Task.Delay(100, ct); // Simulate network delay

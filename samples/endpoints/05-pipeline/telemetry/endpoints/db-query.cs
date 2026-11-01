@@ -17,9 +17,9 @@ public sealed class DbQuery : IQuery<string[]>
   [Option("limit", "l", Description = "Maximum rows")]
   public int Limit { get; set; } = 10;
 
-  public sealed class Handler : IQueryHandler<DbQuery, string[]>
+  public sealed class Handler : IRequestHandler<DbQuery, string[]>
   {
-    public async Task<string[]> Handle(DbQuery query, CancellationToken ct)
+    public async ValueTask<string[]> Handle(DbQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Querying {query.Table} (limit: {query.Limit})");
       await Task.Delay(50, ct);

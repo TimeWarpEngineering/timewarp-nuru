@@ -14,12 +14,12 @@ public sealed class ConfigCommand : ICommand<Unit>
   [Parameter(Description = "Configuration value (for set)")]
   public string? Value { get; set; }
 
-  public sealed class Handler : ICommandHandler<ConfigCommand, Unit>
+  public sealed class Handler : IRequestHandler<ConfigCommand, Unit>
   {
-    public Task<Unit> Handle(ConfigCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ConfigCommand c, CancellationToken ct)
     {
       WriteLine($"Config {c.Action}: {c.Key} = {c.Value ?? "(null)"}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -7,9 +7,9 @@ public sealed class ProcessCommand : ICommand<string>
 {
   [Parameter] public string Input { get; set; } = "";
 
-  public sealed class Handler(IProcessingService Processor) : ICommandHandler<ProcessCommand, string>
+  public sealed class Handler(IProcessingService Processor) : IRequestHandler<ProcessCommand, string>
   {
-    public async Task<string> Handle(ProcessCommand c, CancellationToken ct)
+    public async ValueTask<string> Handle(ProcessCommand c, CancellationToken ct)
     {
       WriteLine("=== Process Command ===");
       string result = await Processor.ProcessAsync(c.Input);

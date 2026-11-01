@@ -8,12 +8,12 @@ public sealed class GreetCommand : ICommand<Unit>
   [Parameter(Description = "Name to greet")]
   public string Name { get; set; } = "";
 
-  public sealed class Handler(ITerminal Terminal) : ICommandHandler<GreetCommand, Unit>
+  public sealed class Handler(ITerminal Terminal) : IRequestHandler<GreetCommand, Unit>
   {
-    public Task<Unit> Handle(GreetCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(GreetCommand c, CancellationToken ct)
     {
       Terminal.WriteLine($"Hello, {c.Name}!");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

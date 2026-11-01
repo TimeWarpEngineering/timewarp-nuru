@@ -7,9 +7,9 @@ public sealed class IndexListQuery : IndexGroup, IQuery<Unit>
 {
   public sealed class Handler(
     SearchIndex searchIndex,
-    ITerminal terminal) : IQueryHandler<IndexListQuery, Unit>
+    ITerminal terminal) : IRequestHandler<IndexListQuery, Unit>
   {
-    public async Task<Unit> Handle(IndexListQuery query, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(IndexListQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
 

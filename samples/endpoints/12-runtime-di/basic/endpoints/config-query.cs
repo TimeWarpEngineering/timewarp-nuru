@@ -7,13 +7,13 @@ public sealed class ConfigQuery : IQuery<string>
 {
   [Parameter] public string Key { get; set; } = "";
 
-  public sealed class Handler(IConfigService Config) : IQueryHandler<ConfigQuery, string>
+  public sealed class Handler(IConfigService Config) : IRequestHandler<ConfigQuery, string>
   {
-    public Task<string> Handle(ConfigQuery q, CancellationToken ct)
+    public ValueTask<string> Handle(ConfigQuery q, CancellationToken ct)
     {
       string value = Config.GetSetting(q.Key);
       WriteLine($"{q.Key} = {value}");
-      return Task.FromResult<string>(value);
+      return ValueTask.FromResult<string>(value);
     }
   }
 }

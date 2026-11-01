@@ -325,39 +325,39 @@ public sealed record RtReport(string Title, int Count);
 [NuruRoute("rt-endpoint-text", Description = "Text query")]
 public sealed class RtTextQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<RtTextQuery, string>
+  public sealed class Handler : IRequestHandler<RtTextQuery, string>
   {
-    public Task<string> Handle(RtTextQuery query, CancellationToken cancellationToken) => Task.FromResult("text");
+    public ValueTask<string> Handle(RtTextQuery query, CancellationToken cancellationToken) => ValueTask.FromResult("text");
   }
 }
 
 [NuruRoute("rt-endpoint-unit", Description = "Unit command")]
 public sealed class RtUnitCommand : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<RtUnitCommand, Unit>
+  public sealed class Handler : IRequestHandler<RtUnitCommand, Unit>
   {
-    public Task<Unit> Handle(RtUnitCommand command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(RtUnitCommand command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 
 [NuruRoute("rt-endpoint-report", Description = "Report query")]
 public sealed class RtReportQuery : IQuery<RtReport>
 {
-  public sealed class Handler : IQueryHandler<RtReportQuery, RtReport>
+  public sealed class Handler : IRequestHandler<RtReportQuery, RtReport>
   {
-    public Task<RtReport> Handle(RtReportQuery query, CancellationToken cancellationToken) => Task.FromResult(new RtReport("r", 2));
+    public ValueTask<RtReport> Handle(RtReportQuery query, CancellationToken cancellationToken) => ValueTask.FromResult(new RtReport("r", 2));
   }
 }
 
 [NuruRoute("rt-problem-text", Description = "Problem pair with a text success")]
 public sealed class RtProblemTextQuery : IQuery<OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails>>
 {
-  public sealed class Handler : IQueryHandler<RtProblemTextQuery, OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<RtProblemTextQuery, OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails>>
   {
-    public Task<OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails>> Handle(RtProblemTextQuery query, CancellationToken cancellationToken)
+    public ValueTask<OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails>> Handle(RtProblemTextQuery query, CancellationToken cancellationToken)
     {
       OneOf.OneOf<string, TimeWarp.Foundation.Types.SharedProblemDetails> ok = "text";
-      return Task.FromResult(ok);
+      return ValueTask.FromResult(ok);
     }
   }
 }
@@ -365,12 +365,12 @@ public sealed class RtProblemTextQuery : IQuery<OneOf.OneOf<string, TimeWarp.Fou
 [NuruRoute("rt-problem-report", Description = "Problem pair with a record success")]
 public sealed class RtProblemReportQuery : IQuery<OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails>>
 {
-  public sealed class Handler : IQueryHandler<RtProblemReportQuery, OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<RtProblemReportQuery, OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails>>
   {
-    public Task<OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails>> Handle(RtProblemReportQuery query, CancellationToken cancellationToken)
+    public ValueTask<OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails>> Handle(RtProblemReportQuery query, CancellationToken cancellationToken)
     {
       OneOf.OneOf<RtReport, TimeWarp.Foundation.Types.SharedProblemDetails> ok = new RtReport("r", 1);
-      return Task.FromResult(ok);
+      return ValueTask.FromResult(ok);
     }
   }
 }

@@ -9,9 +9,9 @@ public sealed class VersionCommand : ICommand<Unit>
   [Parameter] public string Current { get; set; } = "1.0.0";
   [Parameter] public string Required { get; set; } = "1.0.0";
 
-  public sealed class Handler : ICommandHandler<VersionCommand, Unit>
+  public sealed class Handler : IRequestHandler<VersionCommand, Unit>
   {
-    public Task<Unit> Handle(VersionCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(VersionCommand c, CancellationToken ct)
     {
       SemanticVersion current = new SemanticVersion(c.Current);
       SemanticVersion required = new SemanticVersion(c.Required);
@@ -30,7 +30,7 @@ public sealed class VersionCommand : ICommand<Unit>
         WriteLine("✗ Version too old - update required".Red());
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -30,7 +30,7 @@ Real-world scenarios and patterns:
 Practical implementation guides:
 - Architecture choices (Direct, Mediator, Mixed)
 - Deployment strategies (AOT, runfiles, cross-platform)
-- Migration from other frameworks, and [migrating to 3.0](guides/migrating-to-3.0.md)
+- Migration from other frameworks, [migrating to 3.0](guides/migrating-to-3.0.md), and [migrating to TimeWarp.Mediator 15](guides/migrating-to-timewarp-mediator-15.md)
 - Best practices
 
 ### [Features](features/)

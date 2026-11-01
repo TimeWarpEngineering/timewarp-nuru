@@ -6,9 +6,9 @@ using static System.Console;
 [NuruRoute("config-show", Description = "Show effective configuration after overrides")]
 public sealed class ConfigShowQuery : IQuery<Unit>
 {
-  public sealed class Handler(IConfiguration config) : IQueryHandler<ConfigShowQuery, Unit>
+  public sealed class Handler(IConfiguration config) : IRequestHandler<ConfigShowQuery, Unit>
   {
-    public Task<Unit> Handle(ConfigShowQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(ConfigShowQuery query, CancellationToken ct)
     {
       WriteLine("\n=== Effective Configuration ===");
       WriteLine("(Values may be overridden via command line)\n");
@@ -26,7 +26,7 @@ public sealed class ConfigShowQuery : IQuery<Unit>
       WriteLine("\nLogging Settings:");
       WriteLine($"  Level: {config["Logging:LogLevel:Default"] ?? "(not set)"}");
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

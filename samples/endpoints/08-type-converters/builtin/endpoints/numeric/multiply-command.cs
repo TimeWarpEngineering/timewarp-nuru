@@ -7,9 +7,9 @@ public sealed class MultiplyCommand : IQuery<double>
   [Parameter] public double X { get; set; }
   [Parameter] public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<MultiplyCommand, double>
+  public sealed class Handler : IRequestHandler<MultiplyCommand, double>
   {
-    public Task<double> Handle(MultiplyCommand c, CancellationToken ct) =>
-      Task.FromResult<double>(c.X * c.Y);
+    public ValueTask<double> Handle(MultiplyCommand c, CancellationToken ct) =>
+      ValueTask.FromResult<double>(c.X * c.Y);
   }
 }

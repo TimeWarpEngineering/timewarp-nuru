@@ -9,9 +9,9 @@ public sealed class ColorCommand : ICommand<Unit>
   [Parameter] public string Primary { get; set; } = "#FF5733";
   [Parameter] public string? Secondary { get; set; }
 
-  public sealed class Handler : ICommandHandler<ColorCommand, Unit>
+  public sealed class Handler : IRequestHandler<ColorCommand, Unit>
   {
-    public Task<Unit> Handle(ColorCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ColorCommand c, CancellationToken ct)
     {
       HexColor primary = new HexColor(c.Primary);
       WriteLine("Theme colors:");
@@ -25,7 +25,7 @@ public sealed class ColorCommand : ICommand<Unit>
         WriteLine($"    RGB: ({secondary.R}, {secondary.G}, {secondary.B})");
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

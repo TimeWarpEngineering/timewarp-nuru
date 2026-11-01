@@ -89,13 +89,13 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen44ReferencedTypeArguments
       [NuruRoute("m7-lib")]
       public sealed class M7Command : ICommand<Unit>
       {
-        public sealed class Handler : ICommandHandler<M7Command, Unit>
+        public sealed class Handler : IRequestHandler<M7Command, Unit>
         {
-          public Task<Unit> Handle(M7Command command, CancellationToken cancellationToken)
+          public ValueTask<Unit> Handle(M7Command command, CancellationToken cancellationToken)
           {
             _ = command;
             _ = cancellationToken;
-            return Task.FromResult<Unit>(default);
+            return ValueTask.FromResult<Unit>(default);
           }
         }
       }

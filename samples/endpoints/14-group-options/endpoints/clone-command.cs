@@ -19,9 +19,9 @@ public sealed class CloneCommand : GitGroupBase, ICommand<Unit>
   [Option("branch", "b", Description = "Branch to checkout after cloning")]
   public string? Branch { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<CloneCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<CloneCommand, Unit>
   {
-    public async Task<Unit> Handle(CloneCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(CloneCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

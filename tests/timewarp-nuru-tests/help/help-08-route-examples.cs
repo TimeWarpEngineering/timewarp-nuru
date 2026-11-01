@@ -201,9 +201,9 @@ public class RouteExamplesTests
 [NuruRouteExample("h08-deploy staging --dry-run")]
 public sealed class H08DeployEndpoint : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<H08DeployEndpoint, Unit>
+  public sealed class Handler : IRequestHandler<H08DeployEndpoint, Unit>
   {
-    public Task<Unit> Handle(H08DeployEndpoint command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(H08DeployEndpoint command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 
@@ -214,9 +214,9 @@ public sealed class H08BuildEndpoint : ICommand<Unit>
   [Option("verbose", "v", Description = "Verbose output")]
   public bool Verbose { get; set; }
 
-  public sealed class Handler : ICommandHandler<H08BuildEndpoint, Unit>
+  public sealed class Handler : IRequestHandler<H08BuildEndpoint, Unit>
   {
-    public Task<Unit> Handle(H08BuildEndpoint command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(H08BuildEndpoint command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 
@@ -224,9 +224,9 @@ public sealed class H08BuildEndpoint : ICommand<Unit>
 [NuruRouteExample("h08-tool \"quoted\" {arg}", Description = "Path: C:\\tools\\thing")]
 public sealed class H08SpecialCharsEndpoint : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<H08SpecialCharsEndpoint, Unit>
+  public sealed class Handler : IRequestHandler<H08SpecialCharsEndpoint, Unit>
   {
-    public Task<Unit> Handle(H08SpecialCharsEndpoint command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(H08SpecialCharsEndpoint command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 

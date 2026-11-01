@@ -12,12 +12,12 @@ using static System.Console;
 [NuruRoute("status", Description = "Check system status (public, no auth required)")]
 public sealed class StatusQuery : IQuery<Unit>
 {
-  public sealed class Handler : IQueryHandler<StatusQuery, Unit>
+  public sealed class Handler : IRequestHandler<StatusQuery, Unit>
   {
-    public Task<Unit> Handle(StatusQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(StatusQuery query, CancellationToken ct)
     {
       WriteLine("System status: ✓ OK");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

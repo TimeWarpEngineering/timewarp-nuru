@@ -44,10 +44,10 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen56ProblemRenderer
       [Operation("t511gen")]
       public sealed class T511GenQuery : IQuery<OneOf<string, SharedProblemDetails>>
       {
-        public sealed class Handler : IQueryHandler<T511GenQuery, OneOf<string, SharedProblemDetails>>
+        public sealed class Handler : IRequestHandler<T511GenQuery, OneOf<string, SharedProblemDetails>>
         {
-          public Task<OneOf<string, SharedProblemDetails>> Handle(T511GenQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult<OneOf<string, SharedProblemDetails>>("ok");
+          public ValueTask<OneOf<string, SharedProblemDetails>> Handle(T511GenQuery query, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<OneOf<string, SharedProblemDetails>>("ok");
         }
       }
       """;

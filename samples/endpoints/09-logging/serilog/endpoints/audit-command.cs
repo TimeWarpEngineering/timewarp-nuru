@@ -9,9 +9,9 @@ public sealed class AuditCommand : ICommand<Unit>
   [Parameter] public string Action { get; set; } = "";
   [Parameter] public string Resource { get; set; } = "";
 
-  public sealed class Handler(ILogger<AuditCommand> Logger) : ICommandHandler<AuditCommand, Unit>
+  public sealed class Handler(ILogger<AuditCommand> Logger) : IRequestHandler<AuditCommand, Unit>
   {
-    public Task<Unit> Handle(AuditCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(AuditCommand c, CancellationToken ct)
     {
       Logger.LogInformation(
         "Audit: User performed {Action} on {Resource} at {Timestamp}",
@@ -32,7 +32,7 @@ public sealed class AuditCommand : ICommand<Unit>
         }
       );
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

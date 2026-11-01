@@ -15,12 +15,12 @@ public sealed class EchoCommand : ICommand<Unit>
   [Parameter(Description = "Message to echo")]
   public string Message { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<EchoCommand, Unit>
+  public sealed class Handler : IRequestHandler<EchoCommand, Unit>
   {
-    public Task<Unit> Handle(EchoCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(EchoCommand command, CancellationToken ct)
     {
       WriteLine($"Echo: {command.Message}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

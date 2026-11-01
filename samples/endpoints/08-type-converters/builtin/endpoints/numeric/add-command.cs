@@ -10,9 +10,9 @@ public sealed class AddCommand : IQuery<int>
   [Parameter(Description = "Second number")]
   public int Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<AddCommand, int>
+  public sealed class Handler : IRequestHandler<AddCommand, int>
   {
-    public Task<int> Handle(AddCommand c, CancellationToken ct) =>
-      Task.FromResult<int>(c.X + c.Y);
+    public ValueTask<int> Handle(AddCommand c, CancellationToken ct) =>
+      ValueTask.FromResult<int>(c.X + c.Y);
   }
 }

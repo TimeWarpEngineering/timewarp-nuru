@@ -80,9 +80,9 @@ public sealed class Gen70WorkCommand : ICommand<Unit>
     ILogger<Gen70WorkCommand> logger,
     Gen70.Alpha.Worker alpha,
     Gen70.Beta.Worker beta,
-    ITerminal terminal) : ICommandHandler<Gen70WorkCommand, Unit>
+    ITerminal terminal) : IRequestHandler<Gen70WorkCommand, Unit>
   {
-    public async Task<Unit> Handle(Gen70WorkCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Gen70WorkCommand request, CancellationToken cancellationToken)
     {
       logger.LogInformation("gen70-endpoint-info");
       logger.LogWarning("gen70-endpoint-warning");

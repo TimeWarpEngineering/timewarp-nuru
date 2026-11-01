@@ -20,11 +20,11 @@ public sealed class SubtractCommand : IQuery<double>
   [Parameter(Description = "Second number")]
   public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<SubtractCommand, double>
+  public sealed class Handler : IRequestHandler<SubtractCommand, double>
   {
-    public Task<double> Handle(SubtractCommand command, CancellationToken ct)
+    public ValueTask<double> Handle(SubtractCommand command, CancellationToken ct)
     {
-      return Task.FromResult<double>(command.X - command.Y);
+      return ValueTask.FromResult<double>(command.X - command.Y);
     }
   }
 }

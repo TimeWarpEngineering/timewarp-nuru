@@ -15,9 +15,9 @@ public sealed class ProcessCommand : ICommand<Unit>
   [Parameter(Description = "Operation to perform")]
   public string Operation { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<ProcessCommand, Unit>
+  public sealed class Handler : IRequestHandler<ProcessCommand, Unit>
   {
-    public Task<Unit> Handle(ProcessCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(ProcessCommand command, CancellationToken ct)
     {
       if (command.Operation == "fail")
       {
@@ -30,7 +30,7 @@ public sealed class ProcessCommand : ICommand<Unit>
       }
 
       WriteLine($"✓ Processed: {command.Operation}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

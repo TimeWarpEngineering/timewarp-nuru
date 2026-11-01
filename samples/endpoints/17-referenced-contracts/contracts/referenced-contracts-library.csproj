@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="TimeWarp.Contracts" />
-    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator" />
   </ItemGroup>
 
 </Project>

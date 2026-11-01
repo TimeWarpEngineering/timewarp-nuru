@@ -7,9 +7,9 @@ public sealed class ListCommand : ICommand<Unit>
 {
   [Parameter] public string Dir { get; set; } = ".";
 
-  public sealed class Handler : ICommandHandler<ListCommand, Unit>
+  public sealed class Handler : IRequestHandler<ListCommand, Unit>
   {
-    public Task<Unit> Handle(ListCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ListCommand c, CancellationToken ct)
     {
       DirectoryInfo dir = new DirectoryInfo(c.Dir);
       WriteLine($"Listing: {dir.FullName}");
@@ -21,7 +21,7 @@ public sealed class ListCommand : ICommand<Unit>
         WriteLine($"  Subdirectories: {dir.GetDirectories().Length}");
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

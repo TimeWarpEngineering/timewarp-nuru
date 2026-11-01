@@ -76,11 +76,11 @@ public sealed class CurrentWeatherQuery : IQuery<string>
   [Parameter(Description = "City name")]
   public string City { get; set; } = string.Empty;
 
-  public sealed class Handler(IOpenMeteoService openMeteo) : IQueryHandler<CurrentWeatherQuery, string>
+  public sealed class Handler(IOpenMeteoService openMeteo) : IRequestHandler<CurrentWeatherQuery, string>
   {
     private readonly IOpenMeteoService OpenMeteo = openMeteo;
 
-    public async Task<string> Handle(CurrentWeatherQuery query, CancellationToken ct)
+    public async ValueTask<string> Handle(CurrentWeatherQuery query, CancellationToken ct)
     {
       var weather = await OpenMeteo.GetCurrentWeatherAsync(query.City, ct);
       // Format and return result

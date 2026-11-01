@@ -7,9 +7,9 @@ public sealed class ProcessCommand : ICommand<Unit>
 {
   [Parameter] public string Item { get; set; } = "";
 
-  public sealed class Handler(ILogger<ProcessCommand> Logger) : ICommandHandler<ProcessCommand, Unit>
+  public sealed class Handler(ILogger<ProcessCommand> Logger) : IRequestHandler<ProcessCommand, Unit>
   {
-    public Task<Unit> Handle(ProcessCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ProcessCommand c, CancellationToken ct)
     {
       Logger.LogInformation("Starting processing of {Item}", c.Item);
 
@@ -34,7 +34,7 @@ public sealed class ProcessCommand : ICommand<Unit>
         throw;
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

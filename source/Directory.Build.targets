@@ -5,4 +5,36 @@
     Source projects do not import the MSBuild task targets to avoid bootstrap issues.
     Only samples need the AOT JSON context generation.
   -->
+
+  <!-- NuruLibraryNoMediatorGenerator (task 566): set to true by a library that owns no mediator
+       handlers and references TimeWarp.Mediator.Generators directly or through TimeWarp.Nuru
+       (timewarp-nuru, timewarp-nuru-daemon, timewarp-nuru-mcphost). Mediator 15 emits a mediator
+       into every compilation that loads the generator, and TimeWarpMediatorAssembly=false does not
+       stop that. Apps and other hosts, such as the timewarp-nuru-mcp Exe, do not set it.
+
+       The settings live in this .targets file, after the project body. NuGet's buildTransitive
+       props from the generator package load before the project body and set
+       TimeWarpMediatorGenerator=true unconditionally. -->
+  <PropertyGroup Condition="'$(NuruLibraryNoMediatorGenerator)' == 'true'">
+    <!-- Not a mediator graph member. The generator props default this to true. In Mediator 15
+         it controls analyzer membership only. -->
+    <TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>
+    <!-- The generator does not run here (target below), so the TimeWarp.Mediator analyzer
+         reports TWM001-TWM003 itself instead of leaving them to the generator. -->
+    <TimeWarpMediatorGenerator>false</TimeWarpMediatorGenerator>
+  </PropertyGroup>
+
+  <!-- Drop the generator's Analyzer item from this library's compile. The PackageReference, the
+       packed nuspec dependency and the transitive flow to apps and ProjectReference consumers are
+       unchanged. Restore and pack do not see this target. Matched on NuGetPackageId metadata (set by
+       ResolvePackageAssets), not a path, so version bumps and other package roots still match. Runs
+       after ResolveLockFileAnalyzers, the target that adds package analyzers. Design-time builds
+       run that target too. -->
+  <Target Name="RemoveMediatorGeneratorFromLibrary"
+          AfterTargets="ResolveLockFileAnalyzers"
+          Condition="'$(NuruLibraryNoMediatorGenerator)' == 'true'">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(Analyzer.NuGetPackageId)' == 'TimeWarp.Mediator.Generators'" />
+    </ItemGroup>
+  </Target>
 </Project>

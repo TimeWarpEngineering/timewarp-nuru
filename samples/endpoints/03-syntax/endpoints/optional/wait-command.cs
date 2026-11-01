@@ -15,9 +15,9 @@ public sealed class WaitCommand : ICommand<Unit>
   [Parameter(Description = "Seconds to wait (optional)")]
   public int? Seconds { get; set; }
 
-  public sealed class Handler : ICommandHandler<WaitCommand, Unit>
+  public sealed class Handler : IRequestHandler<WaitCommand, Unit>
   {
-    public async Task<Unit> Handle(WaitCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(WaitCommand command, CancellationToken ct)
     {
       int seconds = command.Seconds ?? 5;
       Console.WriteLine($"Waiting {seconds} seconds");

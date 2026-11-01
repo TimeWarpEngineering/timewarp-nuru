@@ -5,9 +5,9 @@ using static System.Console;
 [NuruRoute("help-overrides", Description = "Show how to use command-line overrides")]
 public sealed class HelpOverridesQuery : IQuery<Unit>
 {
-  public sealed class Handler : IQueryHandler<HelpOverridesQuery, Unit>
+  public sealed class Handler : IRequestHandler<HelpOverridesQuery, Unit>
   {
-    public Task<Unit> Handle(HelpOverridesQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(HelpOverridesQuery query, CancellationToken ct)
     {
       WriteLine(@"Command-Line Configuration Overrides
  =====================================
@@ -27,7 +27,7 @@ public sealed class HelpOverridesQuery : IQuery<Unit>
    ./overrides.cs --Database:Host=prod-db config-show
  ");
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

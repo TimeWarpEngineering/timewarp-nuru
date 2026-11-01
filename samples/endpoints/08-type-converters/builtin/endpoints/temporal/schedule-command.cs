@@ -7,12 +7,12 @@ public sealed class ScheduleCommand : ICommand<Unit>
 {
   [Parameter] public DateTime Date { get; set; }
 
-  public sealed class Handler : ICommandHandler<ScheduleCommand, Unit>
+  public sealed class Handler : IRequestHandler<ScheduleCommand, Unit>
   {
-    public Task<Unit> Handle(ScheduleCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ScheduleCommand c, CancellationToken ct)
     {
       WriteLine($"Scheduled for: {c.Date:yyyy-MM-dd HH:mm:ss}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

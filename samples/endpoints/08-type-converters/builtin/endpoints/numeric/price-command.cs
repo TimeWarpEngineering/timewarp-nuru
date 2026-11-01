@@ -7,9 +7,9 @@ public sealed class PriceCommand : IQuery<decimal>
   [Parameter] public decimal Amount { get; set; }
   [Parameter] public decimal TaxRate { get; set; } = 0.08m;
 
-  public sealed class Handler : IQueryHandler<PriceCommand, decimal>
+  public sealed class Handler : IRequestHandler<PriceCommand, decimal>
   {
-    public Task<decimal> Handle(PriceCommand c, CancellationToken ct) =>
-      Task.FromResult<decimal>(c.Amount * (1 + c.TaxRate));
+    public ValueTask<decimal> Handle(PriceCommand c, CancellationToken ct) =>
+      ValueTask.FromResult<decimal>(c.Amount * (1 + c.TaxRate));
   }
 }

@@ -7,9 +7,9 @@ public sealed class QueryCommand : IQuery<string[]>
 {
   [Parameter] public string Search { get; set; } = "";
 
-  public sealed class Handler(IDataService Data) : IQueryHandler<QueryCommand, string[]>
+  public sealed class Handler(IDataService Data) : IRequestHandler<QueryCommand, string[]>
   {
-    public async Task<string[]> Handle(QueryCommand q, CancellationToken ct)
+    public async ValueTask<string[]> Handle(QueryCommand q, CancellationToken ct)
     {
       WriteLine("=== Query Command ===");
       return await Data.GetDataAsync(q.Search);

@@ -20,12 +20,12 @@ public sealed class DeployFullCommand : ICommand<Unit>
   [Option("force", "f", Description = "Force deployment without confirmation")]
   public bool Force { get; set; }
 
-  public sealed class Handler : ICommandHandler<DeployFullCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeployFullCommand, Unit>
   {
-    public Task<Unit> Handle(DeployFullCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployFullCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deploy to {command.Env} (dry-run: {command.DryRun}, force: {command.Force})");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

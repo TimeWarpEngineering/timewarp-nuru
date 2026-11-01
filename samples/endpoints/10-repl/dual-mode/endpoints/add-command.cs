@@ -7,9 +7,9 @@ public sealed class AddCommand : IQuery<double>
   [Parameter] public double X { get; set; }
   [Parameter] public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<AddCommand, double>
+  public sealed class Handler : IRequestHandler<AddCommand, double>
   {
-    public Task<double> Handle(AddCommand q, CancellationToken ct) =>
-      Task.FromResult<double>(q.X + q.Y);
+    public ValueTask<double> Handle(AddCommand q, CancellationToken ct) =>
+      ValueTask.FromResult<double>(q.X + q.Y);
   }
 }

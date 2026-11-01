@@ -14,9 +14,9 @@ public sealed class IndexRebuildCommand : IndexGroup, ICommand<Unit>
   public sealed class Handler(
     SearchIndex searchIndex,
     CapabilitiesClient capabilitiesClient,
-    ITerminal terminal) : ICommandHandler<IndexRebuildCommand, Unit>
+    ITerminal terminal) : IRequestHandler<IndexRebuildCommand, Unit>
   {
-    public async Task<Unit> Handle(IndexRebuildCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(IndexRebuildCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

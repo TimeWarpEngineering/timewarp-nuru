@@ -405,9 +405,9 @@ public sealed class JbiShipCommand : ICommand<Unit>
   [Option("retries", Description = "Retry count")]
   public int Retries { get; set; } = 3;
 
-  internal sealed class Handler(ITerminal terminal) : ICommandHandler<JbiShipCommand, Unit>
+  internal sealed class Handler(ITerminal terminal) : IRequestHandler<JbiShipCommand, Unit>
   {
-    public async Task<Unit> Handle(JbiShipCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(JbiShipCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       cancellationToken.ThrowIfCancellationRequested();
@@ -423,9 +423,9 @@ public sealed class JbiProblemQuery : IQuery<OneOf<string, SharedProblemDetails>
   [Option("fail", Description = "Return a problem")]
   public bool Fail { get; set; }
 
-  public sealed class Handler : IQueryHandler<JbiProblemQuery, OneOf<string, SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<JbiProblemQuery, OneOf<string, SharedProblemDetails>>
   {
-    public Task<OneOf<string, SharedProblemDetails>> Handle(JbiProblemQuery query, CancellationToken cancellationToken)
+    public ValueTask<OneOf<string, SharedProblemDetails>> Handle(JbiProblemQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       _ = cancellationToken;
@@ -438,11 +438,11 @@ public sealed class JbiProblemQuery : IQuery<OneOf<string, SharedProblemDetails>
           Status = 17,
           Detail = "too small"
         };
-        return Task.FromResult(problem);
+        return ValueTask.FromResult(problem);
       }
 
       OneOf<string, SharedProblemDetails> ok = "problem:ok";
-      return Task.FromResult(ok);
+      return ValueTask.FromResult(ok);
     }
   }
 }

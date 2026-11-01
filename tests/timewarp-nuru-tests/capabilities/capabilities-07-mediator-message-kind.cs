@@ -114,27 +114,27 @@ public class MediatorMessageKindTests
 [NuruRoute("mk-query", Description = "Query")]
 public sealed class MkQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<MkQuery, string>
+  public sealed class Handler : IRequestHandler<MkQuery, string>
   {
-    public Task<string> Handle(MkQuery query, CancellationToken cancellationToken) => Task.FromResult("query");
+    public ValueTask<string> Handle(MkQuery query, CancellationToken cancellationToken) => ValueTask.FromResult("query");
   }
 }
 
 [NuruRoute("mk-command", Description = "Command")]
 public sealed class MkCommand : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<MkCommand, Unit>
+  public sealed class Handler : IRequestHandler<MkCommand, Unit>
   {
-    public Task<Unit> Handle(MkCommand command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(MkCommand command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 
 [NuruRoute("mk-idempotent", Description = "Idempotent command")]
 public sealed class MkIdempotentCommand : IIdempotentCommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : IIdempotentCommandHandler<MkIdempotentCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<MkIdempotentCommand, Unit>
   {
-    public async Task<Unit> Handle(MkIdempotentCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(MkIdempotentCommand command, CancellationToken cancellationToken)
     {
       await terminal.WriteLineAsync("mk-idempotent handled");
       return Unit.Value;
@@ -145,27 +145,27 @@ public sealed class MkIdempotentCommand : IIdempotentCommand<Unit>
 [NuruRoute("mk-idempotent-after-command", Description = "Idempotent command listing ICommand first")]
 public sealed class MkIdempotentCommandListedAfterCommand : ICommand<Unit>, IIdempotentCommand<Unit>
 {
-  public sealed class Handler : IIdempotentCommandHandler<MkIdempotentCommandListedAfterCommand, Unit>
+  public sealed class Handler : IRequestHandler<MkIdempotentCommandListedAfterCommand, Unit>
   {
-    public Task<Unit> Handle(MkIdempotentCommandListedAfterCommand command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(MkIdempotentCommandListedAfterCommand command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 
 [NuruRoute("mk-idempotent-marker", Description = "Command with IIdempotent marker")]
 public sealed class MkIdempotentMarkerCommand : ICommand<Unit>, IIdempotent
 {
-  public sealed class Handler : ICommandHandler<MkIdempotentMarkerCommand, Unit>
+  public sealed class Handler : IRequestHandler<MkIdempotentMarkerCommand, Unit>
   {
-    public Task<Unit> Handle(MkIdempotentMarkerCommand command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(MkIdempotentMarkerCommand command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 
 [NuruRoute("mk-command-and-query", Description = "Query that also implements ICommand")]
 public sealed class MkCommandAndQuery : ICommand<string>, IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<MkCommandAndQuery, string>
+  public sealed class Handler : IRequestHandler<MkCommandAndQuery, string>
   {
-    public Task<string> Handle(MkCommandAndQuery query, CancellationToken cancellationToken) => Task.FromResult("both");
+    public ValueTask<string> Handle(MkCommandAndQuery query, CancellationToken cancellationToken) => ValueTask.FromResult("both");
   }
 }
 

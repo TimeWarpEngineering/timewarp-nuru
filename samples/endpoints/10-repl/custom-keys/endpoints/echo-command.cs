@@ -6,12 +6,12 @@ public sealed class EchoCommand : ICommand<Unit>
 {
   [Parameter] public string Text { get; set; } = "";
 
-  public sealed class Handler : ICommandHandler<EchoCommand, Unit>
+  public sealed class Handler : IRequestHandler<EchoCommand, Unit>
   {
-    public Task<Unit> Handle(EchoCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(EchoCommand c, CancellationToken ct)
     {
       Console.WriteLine(c.Text);
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

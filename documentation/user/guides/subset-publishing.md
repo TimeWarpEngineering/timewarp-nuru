@@ -70,12 +70,12 @@ public sealed class DeployCommand : AdminGroupBase, ICommand<Unit>
   [Parameter(Description = "Target environment")]
   public string Env { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeployCommand, Unit>
   {
-    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deploying to {command.Env}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -84,12 +84,12 @@ public sealed class DeployCommand : AdminGroupBase, ICommand<Unit>
 [NuruRoute("profile", Description = "View user profile")]
 public sealed class ProfileQuery : UserGroupBase, IQuery<Unit>
 {
-  public sealed class Handler : IQueryHandler<ProfileQuery, Unit>
+  public sealed class Handler : IRequestHandler<ProfileQuery, Unit>
   {
-    public Task<Unit> Handle(ProfileQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(ProfileQuery query, CancellationToken ct)
     {
       Console.WriteLine("User profile data");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -277,12 +277,12 @@ public sealed class KanbanAddCommand : KanbanGroupBase, ICommand<Unit>
   [Parameter(Description = "Task title")]
   public string Title { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<KanbanAddCommand, Unit>
+  public sealed class Handler : IRequestHandler<KanbanAddCommand, Unit>
   {
-    public Task<Unit> Handle(KanbanAddCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(KanbanAddCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Added task: {command.Title}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -364,12 +364,12 @@ public abstract class S3GroupBase : AwsGroupBase;
 [NuruRoute("list", Description = "List all cloud resources")]
 public sealed class CloudListQuery : CloudGroupBase, IQuery<Unit>
 {
-  public sealed class Handler : IQueryHandler<CloudListQuery, Unit>
+  public sealed class Handler : IRequestHandler<CloudListQuery, Unit>
   {
-    public Task<Unit> Handle(CloudListQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(CloudListQuery query, CancellationToken ct)
     {
       Console.WriteLine("All cloud resources");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -377,12 +377,12 @@ public sealed class CloudListQuery : CloudGroupBase, IQuery<Unit>
 [NuruRoute("status", Description = "EC2 instance status")]
 public sealed class Ec2StatusQuery : Ec2GroupBase, IQuery<Unit>
 {
-  public sealed class Handler : IQueryHandler<Ec2StatusQuery, Unit>
+  public sealed class Handler : IRequestHandler<Ec2StatusQuery, Unit>
   {
-    public Task<Unit> Handle(Ec2StatusQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(Ec2StatusQuery query, CancellationToken ct)
     {
       Console.WriteLine("EC2 instances: running");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -393,12 +393,12 @@ public sealed class S3UploadCommand : S3GroupBase, ICommand<Unit>
   [Parameter(Description = "File path")]
   public string File { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<S3UploadCommand, Unit>
+  public sealed class Handler : IRequestHandler<S3UploadCommand, Unit>
   {
-    public Task<Unit> Handle(S3UploadCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(S3UploadCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Uploading {command.File} to S3");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

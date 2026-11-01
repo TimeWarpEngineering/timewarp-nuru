@@ -29,11 +29,11 @@ return await app.RunAsync(args);
 [NuruRoute("", Description = "Say hello world")]
 public sealed class HelloWorldQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<HelloWorldQuery, string>
+  public sealed class Handler : IRequestHandler<HelloWorldQuery, string>
   {
-    public Task<string> Handle(HelloWorldQuery query, CancellationToken ct)
+    public ValueTask<string> Handle(HelloWorldQuery query, CancellationToken ct)
     {
-      return Task.FromResult<string>("Hello World");
+      return ValueTask.FromResult<string>("Hello World");
     }
   }
 }
@@ -47,12 +47,12 @@ public sealed class GreetQuery : IQuery<Unit>
   [Parameter(Description = "Name of the person to greet")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler : IQueryHandler<GreetQuery, Unit>
+  public sealed class Handler : IRequestHandler<GreetQuery, Unit>
   {
-    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Hello, {query.Name}!");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

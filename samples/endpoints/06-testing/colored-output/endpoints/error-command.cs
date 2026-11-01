@@ -7,9 +7,9 @@ public sealed class ErrorCommand : ICommand<Unit>
 {
   [Parameter] public string Message { get; set; } = "";
 
-  public sealed class Handler(ITerminal T) : ICommandHandler<ErrorCommand, Unit>
+  public sealed class Handler(ITerminal T) : IRequestHandler<ErrorCommand, Unit>
   {
-    public Task<Unit> Handle(ErrorCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ErrorCommand c, CancellationToken ct)
     {
       T.WriteErrorLine($"{"✗".Red()} Error: {c.Message}".Red());
       throw new InvalidOperationException(c.Message);

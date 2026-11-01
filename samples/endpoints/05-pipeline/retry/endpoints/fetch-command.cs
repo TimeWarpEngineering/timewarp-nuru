@@ -17,11 +17,11 @@ public sealed class FetchCommand : ICommand<string>, IRetryable
 
   public int MaxRetries => 2;
 
-  public sealed class Handler : ICommandHandler<FetchCommand, string>
+  public sealed class Handler : IRequestHandler<FetchCommand, string>
   {
     private static int FailureCount = 0;
 
-    public Task<string> Handle(FetchCommand command, CancellationToken ct)
+    public ValueTask<string> Handle(FetchCommand command, CancellationToken ct)
     {
       FailureCount++;
 
@@ -33,7 +33,7 @@ public sealed class FetchCommand : ICommand<string>, IRetryable
       string result = $"Data from {command.Url}";
       Console.WriteLine($"✓ Fetched successfully after {FailureCount} attempts");
       FailureCount = 0;
-      return Task.FromResult<string>(result);
+      return ValueTask.FromResult<string>(result);
     }
   }
 }

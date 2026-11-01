@@ -305,15 +305,15 @@ public sealed class MfBatchQuery : IQuery<string>
 
   public MfContext? Context { get; set; }
 
-  public sealed class Handler : IQueryHandler<MfBatchQuery, string>
+  public sealed class Handler : IRequestHandler<MfBatchQuery, string>
   {
-    public Task<string> Handle(MfBatchQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(MfBatchQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       _ = cancellationToken;
       string operations = string.Join(",", query.Operations.Select(o => $"{o.Tool}:{o.Weight.ToString(CultureInfo.InvariantCulture)}:{o.Mode}"));
       string max = query.Options.Limits.Max.ToString(CultureInfo.InvariantCulture);
-      return Task.FromResult($"{operations}|max:{max}|context:{query.Context?.Name ?? "none"}");
+      return ValueTask.FromResult($"{operations}|max:{max}|context:{query.Context?.Name ?? "none"}");
     }
   }
 }
@@ -323,12 +323,12 @@ public sealed class MfBatchQuery : IQuery<string>
 [OpenWorld]
 public sealed class MfPurgeCommand : ICommand<string>
 {
-  public sealed class Handler : ICommandHandler<MfPurgeCommand, string>
+  public sealed class Handler : IRequestHandler<MfPurgeCommand, string>
   {
-    public Task<string> Handle(MfPurgeCommand command, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(MfPurgeCommand command, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult("purged");
+      return ValueTask.FromResult("purged");
     }
   }
 }
@@ -339,12 +339,12 @@ public sealed class MfPurgeCommand : ICommand<string>
 [OpenWorld(false)]
 public sealed class MfAppendCommand : ICommand<string>
 {
-  public sealed class Handler : ICommandHandler<MfAppendCommand, string>
+  public sealed class Handler : IRequestHandler<MfAppendCommand, string>
   {
-    public Task<string> Handle(MfAppendCommand command, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(MfAppendCommand command, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult("appended");
+      return ValueTask.FromResult("appended");
     }
   }
 }
@@ -361,13 +361,13 @@ public sealed class MfPlainCommand : ICommand<string>
   [Description("Skip the prompt")]
   public bool Force { get; set; } = false;
 
-  public sealed class Handler : ICommandHandler<MfPlainCommand, string>
+  public sealed class Handler : IRequestHandler<MfPlainCommand, string>
   {
-    public Task<string> Handle(MfPlainCommand command, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(MfPlainCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       _ = cancellationToken;
-      return Task.FromResult($"{command.Label}:{command.Retries.ToString(CultureInfo.InvariantCulture)}");
+      return ValueTask.FromResult($"{command.Label}:{command.Retries.ToString(CultureInfo.InvariantCulture)}");
     }
   }
 }

@@ -20,11 +20,11 @@ public sealed class MultiplyCommand : IQuery<double>
   [Parameter(Description = "Second number")]
   public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<MultiplyCommand, double>
+  public sealed class Handler : IRequestHandler<MultiplyCommand, double>
   {
-    public Task<double> Handle(MultiplyCommand command, CancellationToken ct)
+    public ValueTask<double> Handle(MultiplyCommand command, CancellationToken ct)
     {
-      return Task.FromResult<double>(command.X * command.Y);
+      return ValueTask.FromResult<double>(command.X * command.Y);
     }
   }
 }

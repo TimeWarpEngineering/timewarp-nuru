@@ -115,11 +115,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen49NuruR004ReplDefaultRoute
         [NuruRoute("", Description = "Say hello")]
         public sealed class R004AttributedDefault : IQuery<string>
         {
-          public sealed class Handler : IQueryHandler<R004AttributedDefault, string>
+          public sealed class Handler : IRequestHandler<R004AttributedDefault, string>
           {
-            public Task<string> Handle(R004AttributedDefault query, CancellationToken cancellationToken)
+            public ValueTask<string> Handle(R004AttributedDefault query, CancellationToken cancellationToken)
             {
-              return Task.FromResult("attributed-default");
+              return ValueTask.FromResult("attributed-default");
             }
           }
         }
@@ -153,11 +153,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen49NuruR004ReplDefaultRoute
         [NuruRoute("")]
         public sealed class R004DiscoveredDefault : IQuery<string>
         {
-          public sealed class Handler : IQueryHandler<R004DiscoveredDefault, string>
+          public sealed class Handler : IRequestHandler<R004DiscoveredDefault, string>
           {
-            public Task<string> Handle(R004DiscoveredDefault query, CancellationToken cancellationToken)
+            public ValueTask<string> Handle(R004DiscoveredDefault query, CancellationToken cancellationToken)
             {
-              return Task.FromResult("discovered-default");
+              return ValueTask.FromResult("discovered-default");
             }
           }
         }
@@ -222,11 +222,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen49NuruR004ReplDefaultRoute
         [NuruRoute("")]
         public sealed class R004GroupedDefault : R004GitGroup, IQuery<string>
         {
-          public sealed class Handler : IQueryHandler<R004GroupedDefault, string>
+          public sealed class Handler : IRequestHandler<R004GroupedDefault, string>
           {
-            public Task<string> Handle(R004GroupedDefault query, CancellationToken cancellationToken)
+            public ValueTask<string> Handle(R004GroupedDefault query, CancellationToken cancellationToken)
             {
-              return Task.FromResult("grouped-attributed-default");
+              return ValueTask.FromResult("grouped-attributed-default");
             }
           }
         }
@@ -310,11 +310,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen49NuruR004ReplDefaultRoute
           [Parameter]
           public string Name { get; set; } = "";
 
-          public sealed class Handler : IQueryHandler<R004RequiredParamDefault, string>
+          public sealed class Handler : IRequestHandler<R004RequiredParamDefault, string>
           {
-            public Task<string> Handle(R004RequiredParamDefault query, CancellationToken cancellationToken)
+            public ValueTask<string> Handle(R004RequiredParamDefault query, CancellationToken cancellationToken)
             {
-              return Task.FromResult(query.Name);
+              return ValueTask.FromResult(query.Name);
             }
           }
         }
@@ -353,11 +353,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen49NuruR004ReplDefaultRoute
           [Parameter]
           public string? Name { get; set; }
 
-          public sealed class Handler : IQueryHandler<R004OptionalParamDefault, string>
+          public sealed class Handler : IRequestHandler<R004OptionalParamDefault, string>
           {
-            public Task<string> Handle(R004OptionalParamDefault query, CancellationToken cancellationToken)
+            public ValueTask<string> Handle(R004OptionalParamDefault query, CancellationToken cancellationToken)
             {
-              return Task.FromResult(query.Name ?? "");
+              return ValueTask.FromResult(query.Name ?? "");
             }
           }
         }
@@ -397,11 +397,11 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen49NuruR004ReplDefaultRoute
           [Parameter]
           public string? Name { get; set; }
 
-          public sealed class Handler : IQueryHandler<R004EndpointBesideFluentEmpty, string>
+          public sealed class Handler : IRequestHandler<R004EndpointBesideFluentEmpty, string>
           {
-            public Task<string> Handle(R004EndpointBesideFluentEmpty query, CancellationToken cancellationToken)
+            public ValueTask<string> Handle(R004EndpointBesideFluentEmpty query, CancellationToken cancellationToken)
             {
-              return Task.FromResult(query.Name ?? "");
+              return ValueTask.FromResult(query.Name ?? "");
             }
           }
         }

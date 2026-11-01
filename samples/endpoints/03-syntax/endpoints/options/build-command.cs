@@ -20,12 +20,12 @@ public sealed class BuildCommand : ICommand<Unit>
   [Option("verbose", "v", Description = "Verbose output")]
   public bool Verbose { get; set; }
 
-  public sealed class Handler : ICommandHandler<BuildCommand, Unit>
+  public sealed class Handler : IRequestHandler<BuildCommand, Unit>
   {
-    public Task<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Building {command.Project} ({command.Mode}, verbose: {command.Verbose})");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

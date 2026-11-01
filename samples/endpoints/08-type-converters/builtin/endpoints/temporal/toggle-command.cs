@@ -6,9 +6,9 @@ public sealed class ToggleCommand : IQuery<bool>
 {
   [Parameter] public bool State { get; set; }
 
-  public sealed class Handler : IQueryHandler<ToggleCommand, bool>
+  public sealed class Handler : IRequestHandler<ToggleCommand, bool>
   {
-    public Task<bool> Handle(ToggleCommand c, CancellationToken ct) =>
-      Task.FromResult<bool>(!c.State);
+    public ValueTask<bool> Handle(ToggleCommand c, CancellationToken ct) =>
+      ValueTask.FromResult<bool>(!c.State);
   }
 }

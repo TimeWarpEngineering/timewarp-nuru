@@ -26,12 +26,12 @@ return await RunAllTests();
 
 public sealed record Gm46GreetQuery(string Name) : global::TimeWarp.Mediator.IQuery<string>;
 
-public sealed class Gm46GreetQueryHandler : global::TimeWarp.Mediator.IQueryHandler<Gm46GreetQuery, string>
+public sealed class Gm46GreetQueryHandler : global::TimeWarp.Mediator.IRequestHandler<Gm46GreetQuery, string>
 {
-  public Task<string> Handle(Gm46GreetQuery query, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(Gm46GreetQuery query, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(query);
-    return Task.FromResult($"Mediated hello, {query.Name}!");
+    return ValueTask.FromResult($"Mediated hello, {query.Name}!");
   }
 }
 
@@ -41,11 +41,11 @@ public sealed class Gm46PingNotificationHandler : global::TimeWarp.Mediator.INot
 {
   public static string? LastMessage { get; set; }
 
-  public Task Handle(Gm46PingNotification notification, CancellationToken cancellationToken)
+  public ValueTask Handle(Gm46PingNotification notification, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(notification);
     LastMessage = notification.Message;
-    return Task.CompletedTask;
+    return ValueTask.CompletedTask;
   }
 }
 
@@ -54,9 +54,9 @@ public sealed class Gm46Marker;
 public sealed record Gm46EchoCommand(string Text) : global::TimeWarp.Mediator.ICommand<global::TimeWarp.Mediator.Unit>;
 
 public sealed class Gm46EchoCommandHandler(ITerminal terminal)
-  : global::TimeWarp.Mediator.ICommandHandler<Gm46EchoCommand, global::TimeWarp.Mediator.Unit>
+  : global::TimeWarp.Mediator.IRequestHandler<Gm46EchoCommand, global::TimeWarp.Mediator.Unit>
 {
-  public async Task<global::TimeWarp.Mediator.Unit> Handle(Gm46EchoCommand command, CancellationToken cancellationToken)
+  public async ValueTask<global::TimeWarp.Mediator.Unit> Handle(Gm46EchoCommand command, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(command);
     await terminal.WriteLineAsync($"echo: {command.Text}");
@@ -71,9 +71,9 @@ public sealed class Gm46SenderEndpoint : global::TimeWarp.Mediator.IQuery<string
   public string Name { get; set; } = string.Empty;
 
   public sealed class Handler(global::TimeWarp.Mediator.ISender sender)
-    : global::TimeWarp.Mediator.IQueryHandler<Gm46SenderEndpoint, string>
+    : global::TimeWarp.Mediator.IRequestHandler<Gm46SenderEndpoint, string>
   {
-    public Task<string> Handle(Gm46SenderEndpoint query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(Gm46SenderEndpoint query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       return sender.Send(new Gm46GreetQuery(query.Name), cancellationToken);

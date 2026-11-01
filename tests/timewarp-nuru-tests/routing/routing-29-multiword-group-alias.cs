@@ -92,9 +92,9 @@ public abstract class T028GitRemoteGroup;
 [NuruRoute("show", Description = "Show remote")]
 public sealed class T028ShowCommand : T028GitRemoteGroup, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<T028ShowCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<T028ShowCommand, Unit>
   {
-    public async Task<Unit> Handle(T028ShowCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(T028ShowCommand command, CancellationToken cancellationToken)
     {
       await terminal.WriteLineAsync("remote shown").ConfigureAwait(false);
       return default;

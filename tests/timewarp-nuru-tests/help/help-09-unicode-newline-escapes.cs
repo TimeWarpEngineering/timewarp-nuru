@@ -134,9 +134,9 @@ public class UnicodeNewlineEscapesTests
 [NuruRouteExample("h09-endpoint\u2028run", Description = "nel\u0085sep\u2029para")]
 public sealed class H09UnicodeEndpoint : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<H09UnicodeEndpoint, Unit>
+  public sealed class Handler : IRequestHandler<H09UnicodeEndpoint, Unit>
   {
-    public Task<Unit> Handle(H09UnicodeEndpoint command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(H09UnicodeEndpoint command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 

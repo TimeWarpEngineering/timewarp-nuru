@@ -28,12 +28,10 @@
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.15" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.11" />
-    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.29" />
-    <!-- Held at 14.0.0 (task 481): TimeWarp.Contracts (2.0.0-beta.29) still depends on
-         TimeWarp.Mediator.Contracts 14.0.0, whose types collide with TimeWarp.Mediator 15 (TWM008),
-         and 15 removes ICommandHandler/IQueryHandler, which are the Nuru endpoint API. -->
-    <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="14.0.0" />
-    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0" />
+    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />
+    <!-- TimeWarp.Contracts 2.0.0-beta.31 depends on TimeWarp.Mediator 15.0.0-beta.4, so the two move together (task 566). -->
+    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />
+    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.4" />
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="Shouldly" Version="5.0.0-preview.2" />

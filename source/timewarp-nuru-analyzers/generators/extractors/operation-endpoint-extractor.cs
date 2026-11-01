@@ -234,7 +234,7 @@ internal static partial class EndpointExtractor
     string commandTypeName = classSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     ImmutableArray<ParameterBinding> bindings = BuildPropertyBindings(classSymbol, hasOperation: true, compilation, cancellationToken);
     HandlerReturnType returnType = InferReturnTypeFromInterfaces(classSymbol);
-    ResponseShape shape = DescribeResponse(compilation, classSymbol, messageType);
+    ResponseShape shape = DescribeResponse(compilation, classSymbol);
 
     return HandlerDefinition.ForMediator(
       commandTypeName: commandTypeName,
@@ -466,7 +466,7 @@ internal static partial class EndpointExtractor
       isEnumType: HandlerExtractor.IsEnumBindableType(property.Type));
   }
 
-  private static ResponseShape DescribeResponse(Compilation compilation, INamedTypeSymbol requestType, string messageType)
+  private static ResponseShape DescribeResponse(Compilation compilation, INamedTypeSymbol requestType)
   {
     string commandTypeName = requestType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     ITypeSymbol? responseType = MediatorResponseType(requestType);
@@ -487,12 +487,9 @@ internal static partial class EndpointExtractor
       successTypeName = oneOf.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     }
 
-    string handlerInterface = messageType switch
-    {
-      "Query" => $"global::TimeWarp.Mediator.IQueryHandler<{commandTypeName}, {responseTypeName}>",
-      "IdempotentCommand" => $"global::TimeWarp.Mediator.IIdempotentCommandHandler<{commandTypeName}, {responseTypeName}>",
-      _ => $"global::TimeWarp.Mediator.ICommandHandler<{commandTypeName}, {responseTypeName}>"
-    };
+    // TimeWarp.Mediator 15 has one handler interface for every message kind. The kind comes from the
+    // message marker (IQuery<T>, ICommand<T>, IIdempotentCommand<T>), not from the handler.
+    string handlerInterface = $"global::TimeWarp.Mediator.IRequestHandler<{commandTypeName}, {responseTypeName}>";
 
     string? renderer = FindRenderer(compilation, successTypeName, requestType);
     string? problemRenderer = problem ? FindRenderer(compilation, ProblemDetailsMetadataTypeName, requestType) : null;
@@ -584,7 +581,7 @@ internal static partial class EndpointExtractor
         if (iface.ContainingNamespace?.ToDisplayString() != MediatorNamespace)
           continue;
 
-        if (iface.Name is not ("IQueryHandler" or "ICommandHandler" or "IIdempotentCommandHandler"))
+        if (!IsRequestHandlerInterface(iface))
           continue;
 
         if (iface.TypeArguments.Length > 0 && iface.TypeArguments[0] is INamedTypeSymbol request)
@@ -658,6 +655,13 @@ internal static partial class EndpointExtractor
     return type.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal;
   }
 
+  /// <summary>
+  /// True for <c>TimeWarp.Mediator.IRequestHandler&lt;TRequest, TResponse&gt;</c> and
+  /// <c>IRequestHandler&lt;TRequest&gt;</c>. The caller has already checked the namespace.
+  /// </summary>
+  private static bool IsRequestHandlerInterface(INamedTypeSymbol iface) =>
+    iface.Name == "IRequestHandler" && iface.TypeArguments.Length is 1 or 2;
+
   private static bool ImplementsRequestHandler(INamedTypeSymbol type, INamedTypeSymbol requestType)
   {
     foreach (INamedTypeSymbol iface in type.AllInterfaces)
@@ -665,7 +669,7 @@ internal static partial class EndpointExtractor
       if (iface.ContainingNamespace?.ToDisplayString() != MediatorNamespace)
         continue;
 
-      if (iface.Name is not ("IQueryHandler" or "ICommandHandler" or "IIdempotentCommandHandler"))
+      if (!IsRequestHandlerInterface(iface))
         continue;
 
       if (iface.TypeArguments.Length > 0

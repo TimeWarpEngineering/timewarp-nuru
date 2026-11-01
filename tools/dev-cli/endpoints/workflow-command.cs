@@ -53,7 +53,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
   [Option("attestation", Description = "Attestation mode override for this run: off, warn, or require (overrides .timewarp/dev.jsonc attestation.mode)")]
   public string? Attestation { get; set; }
 
-  internal sealed class Handler : ICommandHandler<WorkflowCommand, Unit>
+  internal sealed class Handler : IRequestHandler<WorkflowCommand, Unit>
   {
     private const string StageAll = "all";
     private const string StageBuild = "build";
@@ -83,7 +83,7 @@ public sealed class WorkflowCommand : ICommand<Unit>
       PackableProjectService = packableProjectService;
     }
 
-    public async Task<Unit> Handle(WorkflowCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       // Determine CI mode
       CiMode mode = DetermineMode(command.Mode);

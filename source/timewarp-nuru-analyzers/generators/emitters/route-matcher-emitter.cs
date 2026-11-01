@@ -283,7 +283,7 @@ internal static class RouteMatcherEmitter
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
     if (forward)
       EmitForward(sb, route, routeIndex);
-    InterceptorEmitter.EmitMissingHandlerOnDispatch(sb, route, useRuntimeDI, hasGeneratedMediator, runtimeDISuffix, "      ");
+    InterceptorEmitter.EmitMissingHandlerOnDispatch(sb, route, useRuntimeDI, hasGeneratedMediator, "      ");
     InterceptorEmitter.EmitExclusiveGate(sb, route, "      ", openBlock: true);
 
     // Emit handler invocation (wrapped with behaviors if any)
@@ -425,7 +425,7 @@ internal static class RouteMatcherEmitter
     EmitTypeConversions(sb, route, routeIndex, customConverters, indent: 6);
     if (forward)
       EmitForward(sb, route, routeIndex);
-    InterceptorEmitter.EmitMissingHandlerOnDispatch(sb, route, useRuntimeDI, hasGeneratedMediator, runtimeDISuffix, "      ");
+    InterceptorEmitter.EmitMissingHandlerOnDispatch(sb, route, useRuntimeDI, hasGeneratedMediator, "      ");
     InterceptorEmitter.EmitExclusiveGate(sb, route, "      ", openBlock: true);
 
     if (behaviors.Length > 0)

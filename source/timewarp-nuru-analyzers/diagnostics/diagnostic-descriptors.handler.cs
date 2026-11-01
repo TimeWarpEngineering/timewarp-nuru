@@ -105,11 +105,11 @@ internal static partial class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor MissingHandler = new(
     id: "NURU_H008",
     title: "No handler visible for operation",
-    messageFormat: "No IQueryHandler, ICommandHandler, or IIdempotentCommandHandler for '{0}' is visible to this compilation. Register one, or invoking this route exits 1.",
+    messageFormat: "No IRequestHandler for '{0}' is visible to this compilation. Add one, or invoking this route exits 1.",
     category: HandlerCategory,
     defaultSeverity: DiagnosticSeverity.Warning,
     isEnabledByDefault: true,
-    description: "An [Operation] endpoint needs a registered TimeWarp.Mediator handler. The generator warns when it can see that none is present, and the project still builds. Invoking that route returns exit code 1 when the handler is unregistered. A project that treats warnings as errors must suppress NURU_H008 when the handler is registered in a way this compilation cannot see.");
+    description: "An [Operation] endpoint needs a TimeWarp.Mediator IRequestHandler that this compilation can see: in this project, or public in a referenced assembly. The generator warns when none is visible, and the project still builds. Invoking that route returns exit code 1. TimeWarp.Mediator 15 dispatches only handlers in its compile-time graph, so a handler registered at run time is not used.");
 
   /// <summary>
   /// NURU_H009: The endpoint type has no constructor the generator can call.

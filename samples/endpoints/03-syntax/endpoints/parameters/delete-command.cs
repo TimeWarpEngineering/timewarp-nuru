@@ -14,12 +14,12 @@ public sealed class DeleteCommand : ICommand<Unit>
   [Parameter(Description = "File path to delete")]
   public string Path { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<DeleteCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeleteCommand, Unit>
   {
-    public Task<Unit> Handle(DeleteCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeleteCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deleting {command.Path}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

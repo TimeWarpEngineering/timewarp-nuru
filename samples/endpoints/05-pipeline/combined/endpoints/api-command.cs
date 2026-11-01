@@ -15,14 +15,14 @@ public sealed class ApiCommand : ICommand<string>, IRetryable
   [Parameter] public string Endpoint { get; set; } = "";
   public int MaxRetries => 2;
 
-  public sealed class Handler : ICommandHandler<ApiCommand, string>
+  public sealed class Handler : IRequestHandler<ApiCommand, string>
   {
     private static int Fails = 0;
-    public Task<string> Handle(ApiCommand c, CancellationToken ct)
+    public ValueTask<string> Handle(ApiCommand c, CancellationToken ct)
     {
       if (++Fails < 2) throw new TimeoutException("API timeout");
       Fails = 0;
-      return Task.FromResult<string>($"Response from {c.Endpoint}");
+      return ValueTask.FromResult<string>($"Response from {c.Endpoint}");
     }
   }
 }

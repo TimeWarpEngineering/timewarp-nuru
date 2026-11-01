@@ -7,9 +7,9 @@ using static System.Console;
 [NuruRoute("show", Description = "Show all application configuration")]
 public sealed class ShowConfigQuery : IQuery<Unit>
 {
-  public sealed class Handler(IOptions<AppConfiguration> config) : IQueryHandler<ShowConfigQuery, Unit>
+  public sealed class Handler(IOptions<AppConfiguration> config) : IRequestHandler<ShowConfigQuery, Unit>
   {
-    public Task<Unit> Handle(ShowConfigQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(ShowConfigQuery query, CancellationToken ct)
     {
       AppConfiguration app = config.Value;
 
@@ -38,7 +38,7 @@ public sealed class ShowConfigQuery : IQuery<Unit>
         WriteLine($"  {meta.Key}: {meta.Value}");
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

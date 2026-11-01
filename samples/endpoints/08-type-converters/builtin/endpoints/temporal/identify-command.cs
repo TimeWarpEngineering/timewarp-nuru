@@ -6,9 +6,9 @@ public sealed class IdentifyCommand : IQuery<string>
 {
   [Parameter] public Guid Id { get; set; }
 
-  public sealed class Handler : IQueryHandler<IdentifyCommand, string>
+  public sealed class Handler : IRequestHandler<IdentifyCommand, string>
   {
-    public Task<string> Handle(IdentifyCommand c, CancellationToken ct) =>
-      Task.FromResult<string>($"Processed ID: {c.Id}");
+    public ValueTask<string> Handle(IdentifyCommand c, CancellationToken ct) =>
+      ValueTask.FromResult<string>($"Processed ID: {c.Id}");
   }
 }

@@ -15,7 +15,7 @@ public sealed class DefaultQuery : IQuery<Unit>
   [Option("verbose", "v", Description = "Show verbose output")]
   public bool Verbose { get; set; }
 
-  public sealed class Handler : IQueryHandler<DefaultQuery, Unit>
+  public sealed class Handler : IRequestHandler<DefaultQuery, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -24,7 +24,7 @@ public sealed class DefaultQuery : IQuery<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(DefaultQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(DefaultQuery query, CancellationToken ct)
     {
       Terminal.WriteLine("Welcome to the Endpoints Sample!");
       Terminal.WriteLine();
@@ -39,7 +39,7 @@ public sealed class DefaultQuery : IQuery<Unit>
       {
         Terminal.WriteLine("Tip: Use --help for the complete auto-generated command list.");
       }
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -23,12 +23,12 @@ public sealed class DockerRunCommand : ICommand<Unit>
   [Parameter(IsCatchAll = true, Description = "Container command")]
   public string[] Cmd { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
+  public sealed class Handler : IRequestHandler<DockerRunCommand, Unit>
   {
-    public Task<Unit> Handle(DockerRunCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DockerRunCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Running {command.Image} with {command.E.Length} env vars, {command.Port.Length} ports");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

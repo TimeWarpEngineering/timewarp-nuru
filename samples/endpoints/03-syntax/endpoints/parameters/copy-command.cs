@@ -17,12 +17,12 @@ public sealed class CopyCommand : ICommand<Unit>
   [Parameter(Description = "Destination file path")]
   public string Destination { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<CopyCommand, Unit>
+  public sealed class Handler : IRequestHandler<CopyCommand, Unit>
   {
-    public Task<Unit> Handle(CopyCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(CopyCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Copying {command.Source} to {command.Destination}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

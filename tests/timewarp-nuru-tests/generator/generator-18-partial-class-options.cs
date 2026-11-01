@@ -149,15 +149,15 @@ public sealed partial class PartialTestCommand : ICommand<Unit>
   [Option("name", "n", Description = "Name to display")]
   public string? Name { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<PartialTestCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<PartialTestCommand, Unit>
   {
-    public Task<Unit> Handle(PartialTestCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(PartialTestCommand command, CancellationToken ct)
     {
       string displayName = command.Name ?? "Default";
       terminal.WriteLine($"Name: {displayName}");
       terminal.WriteLine($"Verbose: {command.Verbose}");
       terminal.WriteLine($"Count: {command.Count}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

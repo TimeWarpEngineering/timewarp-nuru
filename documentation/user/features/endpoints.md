@@ -37,12 +37,12 @@ public sealed class GreetQuery : IQuery<Unit>
   [Parameter(Description = "Name of the person to greet")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler : IQueryHandler<GreetQuery, Unit>
+  public sealed class Handler : IRequestHandler<GreetQuery, Unit>
   {
-    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Hello, {query.Name}!");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -197,7 +197,7 @@ The distinction enables semantic clarity and potential optimizations (caching, r
 
 ## Handler Pattern
 
-Handlers are nested classes implementing `ICommandHandler<T, TResult>` or `IQueryHandler<T, TResult>`:
+Handlers are nested classes implementing `IRequestHandler<T, TResult>` or `IRequestHandler<T, TResult>`:
 
 ```csharp
 [NuruRoute("deploy")]
@@ -207,9 +207,9 @@ public sealed class DeployCommand : ICommand<Unit>
   [Option("force", "f")] public bool Force { get; set; }
 
   public sealed class Handler(ILogger<DeployCommand> logger, IDeployService deploy)
-    : ICommandHandler<DeployCommand, Unit>
+    : IRequestHandler<DeployCommand, Unit>
   {
-    public async Task<Unit> Handle(DeployCommand cmd, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DeployCommand cmd, CancellationToken ct)
     {
       logger.LogInformation("Deploying to {Env}", cmd.Env);
       await deploy.DeployAsync(cmd.Env, cmd.Force, ct);

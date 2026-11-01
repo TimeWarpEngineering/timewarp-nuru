@@ -7,9 +7,9 @@ using static System.Console;
 [NuruRoute("features", Description = "List feature flags")]
 public sealed class ListFeaturesQuery : IQuery<Unit>
 {
-  public sealed class Handler(IOptions<AppConfiguration> config) : IQueryHandler<ListFeaturesQuery, Unit>
+  public sealed class Handler(IOptions<AppConfiguration> config) : IRequestHandler<ListFeaturesQuery, Unit>
   {
-    public Task<Unit> Handle(ListFeaturesQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(ListFeaturesQuery query, CancellationToken ct)
     {
       WriteLine("Feature Flags:");
       foreach (FeatureConfig f in config.Value.Features)
@@ -17,7 +17,7 @@ public sealed class ListFeaturesQuery : IQuery<Unit>
         string status = f.Enabled ? "ENABLED ".Green() : "DISABLED".Red();
         WriteLine($"  {f.Name,-15} {status}");
       }
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

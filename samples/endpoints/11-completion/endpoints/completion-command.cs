@@ -8,9 +8,9 @@ public sealed class CompletionCommand : ICommand<Unit>
   [Parameter(Description = "Shell: bash, zsh, ps, fish")]
   public string Shell { get; set; } = "";
 
-  public sealed class Handler : ICommandHandler<CompletionCommand, Unit>
+  public sealed class Handler : IRequestHandler<CompletionCommand, Unit>
   {
-    public Task<Unit> Handle(CompletionCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(CompletionCommand c, CancellationToken ct)
     {
       string script = c.Shell.ToLower() switch
       {
@@ -22,7 +22,7 @@ public sealed class CompletionCommand : ICommand<Unit>
       };
 
       WriteLine(script);
-      return Unit.Task;
+      return Unit.ValueTask;
     }
 
     private static string GenerateBashCompletion() => """

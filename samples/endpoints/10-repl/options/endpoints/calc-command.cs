@@ -8,9 +8,9 @@ public sealed class CalcCommand : ICommand<double>
   [Parameter] public string Op { get; set; } = "+";
   [Parameter] public double Y { get; set; }
 
-  public sealed class Handler : ICommandHandler<CalcCommand, double>
+  public sealed class Handler : IRequestHandler<CalcCommand, double>
   {
-    public Task<double> Handle(CalcCommand c, CancellationToken ct)
+    public ValueTask<double> Handle(CalcCommand c, CancellationToken ct)
     {
       double result = c.Op switch
       {
@@ -22,7 +22,7 @@ public sealed class CalcCommand : ICommand<double>
       };
 
       Console.WriteLine($"{c.X} {c.Op} {c.Y} = {result}");
-      return Task.FromResult<double>(result);
+      return ValueTask.FromResult<double>(result);
     }
   }
 }

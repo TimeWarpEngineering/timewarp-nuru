@@ -348,12 +348,18 @@ internal static class HandlerInvokerEmitter
       return;
     }
 
-    // No generated mediator: InterceptorEmitter.EmitMissingHandlerOnDispatch already
-    // returned 1 before the behavior pipeline. Emit nothing here, so a behavior lambda
+    // No generated mediator, or no handler visible at build time: InterceptorEmitter.EmitMissingHandlerOnDispatch
+    // already returned 1 before the behavior pipeline. Emit nothing here, so a behavior lambda
     // never holds a `return 1;` and __GetMediator() is never referenced.
     if (!useRuntimeDI && !hasGeneratedMediator)
     {
       sb.AppendLine($"{indent}// Unreachable: exited 1 before dispatch (no generated mediator).");
+      return;
+    }
+
+    if (InterceptorEmitter.IsMissingHandler(handler))
+    {
+      sb.AppendLine($"{indent}// Unreachable: exited 1 before dispatch (no visible handler).");
       return;
     }
 

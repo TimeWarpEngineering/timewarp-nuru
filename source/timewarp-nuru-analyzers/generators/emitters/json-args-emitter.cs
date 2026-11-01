@@ -410,7 +410,6 @@ internal static class JsonArgsEmitter
       route,
       app.UseMicrosoftDependencyInjection,
       hasGeneratedMediator,
-      methodSuffix,
       ind);
     InterceptorEmitter.EmitExclusiveGate(sb, route, ind);
     EmitInvoke(sb, route, routeIndex, app, methodSuffix, loggerFactoryFieldName, hasGeneratedMediator, indent, captureResultInto);

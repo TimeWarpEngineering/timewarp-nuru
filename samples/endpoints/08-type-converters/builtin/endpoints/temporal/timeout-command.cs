@@ -7,12 +7,12 @@ public sealed class TimeoutCommand : ICommand<Unit>
 {
   [Parameter] public TimeSpan Duration { get; set; }
 
-  public sealed class Handler : ICommandHandler<TimeoutCommand, Unit>
+  public sealed class Handler : IRequestHandler<TimeoutCommand, Unit>
   {
-    public Task<Unit> Handle(TimeoutCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(TimeoutCommand c, CancellationToken ct)
     {
       WriteLine($"Timeout set to: {c.Duration.TotalSeconds} seconds");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -63,30 +63,30 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen59ReferencedOperationEndpoints
 
         public string? Label { get; set; }
 
-        public sealed class Handler : IQueryHandler<RefAddQuery, int>
+        public sealed class Handler : IRequestHandler<RefAddQuery, int>
         {
-          public Task<int> Handle(RefAddQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(query.X + query.Y);
+          public ValueTask<int> Handle(RefAddQuery query, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(query.X + query.Y);
         }
       }
 
       [Operation("ref-hidden")]
       public sealed class RefHiddenHandlerQuery : IQuery<string>
       {
-        internal sealed class Handler : IQueryHandler<RefHiddenHandlerQuery, string>
+        internal sealed class Handler : IRequestHandler<RefHiddenHandlerQuery, string>
         {
-          public Task<string> Handle(RefHiddenHandlerQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult("hidden");
+          public ValueTask<string> Handle(RefHiddenHandlerQuery query, CancellationToken cancellationToken) =>
+            ValueTask.FromResult("hidden");
         }
       }
 
       [Operation("ref-record")]
       public sealed record RefRecordQuery(string Name, int Count = 7) : IQuery<string>;
 
-      public sealed class RefRecordHandler : IQueryHandler<RefRecordQuery, string>
+      public sealed class RefRecordHandler : IRequestHandler<RefRecordQuery, string>
       {
-        public Task<string> Handle(RefRecordQuery query, CancellationToken cancellationToken) =>
-          Task.FromResult(query.Name);
+        public ValueTask<string> Handle(RefRecordQuery query, CancellationToken cancellationToken) =>
+          ValueTask.FromResult(query.Name);
       }
 
       [Operation("ref-note")]
@@ -95,19 +95,19 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen59ReferencedOperationEndpoints
         public RefNoteQuery() : this("untitled") { }
       }
 
-      public sealed class RefNoteHandler : IQueryHandler<RefNoteQuery, string>
+      public sealed class RefNoteHandler : IRequestHandler<RefNoteQuery, string>
       {
-        public Task<string> Handle(RefNoteQuery query, CancellationToken cancellationToken) =>
-          Task.FromResult(query.Title);
+        public ValueTask<string> Handle(RefNoteQuery query, CancellationToken cancellationToken) =>
+          ValueTask.FromResult(query.Title);
       }
 
       [Operation("ref-internal")]
       internal sealed class RefInternalQuery : IQuery<string>
       {
-        public sealed class Handler : IQueryHandler<RefInternalQuery, string>
+        public sealed class Handler : IRequestHandler<RefInternalQuery, string>
         {
-          public Task<string> Handle(RefInternalQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult("internal");
+          public ValueTask<string> Handle(RefInternalQuery query, CancellationToken cancellationToken) =>
+            ValueTask.FromResult("internal");
         }
       }
 

@@ -14,9 +14,9 @@ public sealed class ReadFileCommand : ICommand<string>
   [Parameter(Description = "File path to read")]
   public string Path { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<ReadFileCommand, string>
+  public sealed class Handler : IRequestHandler<ReadFileCommand, string>
   {
-    public async Task<string> Handle(ReadFileCommand command, CancellationToken ct)
+    public async ValueTask<string> Handle(ReadFileCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Reading file: {command.Path}");
       await Task.Delay(50, ct); // Simulate I/O

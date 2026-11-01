@@ -54,21 +54,22 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <!-- Process execution -->
     <PackageReference Include="TimeWarp.Amuru" />
-    <!-- Source-generated mediator. Generators must flow to consuming apps
+    <!-- Source-generated mediator (TimeWarp.Mediator 15). TimeWarp.Mediator is the contracts package
+         (it was TimeWarp.Mediator.Contracts through 14). No PrivateAssets on it: consumers need its
+         runtime types (Unit, ISender, IRequestHandler). Generators must flow to consuming apps
          (analyzers + buildTransitive props), so PrivateAssets is cleared; the app compilation
-         is the mediator host and emits AddGeneratedMediator(). -->
+         is the mediator host and emits AddGeneratedMediator(). In Mediator 15 the generator emits a
+         mediator into every compilation that loads it, so NuruLibraryNoMediatorGenerator (below)
+         keeps it out of this library's own compile. The nuspec dependency is unchanged (task 566). -->
     <PackageReference Include="TimeWarp.Contracts" />
-    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="none" />
   </ItemGroup>
 
   <PropertyGroup>
-    <!-- TimeWarp.Nuru owns no mediator handlers; it is not a mediator graph member.
-         The generator package defaults this to true. Nuru's detector reads it and must
-         not emit AddGeneratedMediator() into the library. Host types the generator emits
-         into this compilation are internal (TimeWarp.Mediator 14.0.0), so apps
-         do not see a second AddGeneratedMediator(). -->
-    <TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>
+    <!-- Owns no mediator handlers. Keep the Mediator generator out of this compilation;
+         see source/Directory.Build.targets (task 566). -->
+    <NuruLibraryNoMediatorGenerator>true</NuruLibraryNoMediatorGenerator>
   </PropertyGroup>
 
   <ItemGroup>

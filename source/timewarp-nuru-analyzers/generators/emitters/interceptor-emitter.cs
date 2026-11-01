@@ -59,13 +59,13 @@ internal static class InterceptorEmitter
     string? currentAppLoggerFactory = model.Apps.Any(HasLoggerFactorySource) ? LoggerExpressions.CurrentAppFactory : null;
     ImmutableArray<BehaviorDefinition> allBehaviors = [.. model.AllBehaviors];
     ImmutableArray<ServiceDefinition> allServices = [.. model.AllServices];
-    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.HasGeneratedMediator, currentAppLoggerFactory, sourceGenHttpClients, allBehaviors, allServices);
+    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.GeneratedMediatorNamespace, currentAppLoggerFactory, sourceGenHttpClients, allBehaviors, allServices);
 
     // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     // Each app gets its own __ConfigureServices and GetServiceProvider methods
     if (model.UsesMicrosoftDependencyInjection)
     {
-      EmitRuntimeDIInfrastructure(sb, model.Apps, model.HasGeneratedMediator);
+      EmitRuntimeDIInfrastructure(sb, model.Apps, model.GeneratedMediatorNamespace);
     }
 
     EmitLoggingFactoryFields(sb, model);
@@ -486,7 +486,7 @@ internal static class InterceptorEmitter
   /// Each field is built on first read by its <c>__Resolve</c> accessor, so a call that never
   /// reaches a service (a built-in, a parse error, a forwarded route) never constructs it.
   /// </summary>
-  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, bool hasGeneratedMediator, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, ImmutableArray<BehaviorDefinition> behaviors, ImmutableArray<ServiceDefinition> behaviorServices)
+  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, ImmutableArray<BehaviorDefinition> behaviors, ImmutableArray<ServiceDefinition> behaviorServices)
   {
     // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
     ImmutableArray<ServiceDefinition> allServices = [.. services];
@@ -597,7 +597,7 @@ internal static class InterceptorEmitter
     EmitSourceGenScopeMethods(sb, allServices, cachedProcessServices);
 
     if (requiresMediator)
-      EmitSourceGenMediator(sb, allServices, hasGeneratedMediator, loggerFactoryFieldName, httpClientConfigurations);
+      EmitSourceGenMediator(sb, allServices, generatedMediatorNamespace, loggerFactoryFieldName, httpClientConfigurations);
   }
 
   /// <summary>
@@ -606,7 +606,7 @@ internal static class InterceptorEmitter
   /// <see cref="System.IServiceProvider"/>, so this builds a small container per app holding
   /// <c>AddGeneratedMediator()</c> plus Nuru's framework services and the statically registered services.
   /// </summary>
-  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, bool hasGeneratedMediator, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
+  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
   {
     const string Sce = "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions";
 
@@ -617,7 +617,7 @@ internal static class InterceptorEmitter
     sb.AppendLine("  private static global::TimeWarp.Mediator.IMediator __GetMediator()");
     sb.AppendLine("  {");
 
-    if (!hasGeneratedMediator)
+    if (generatedMediatorNamespace is null)
     {
       sb.AppendLine("    throw new global::System.InvalidOperationException(\"The TimeWarp.Mediator generated mediator is not available in this compilation.\");");
       sb.AppendLine("  }");
@@ -660,7 +660,7 @@ internal static class InterceptorEmitter
       }
     }
 
-    sb.AppendLine("      global::Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions.AddGeneratedMediator(services);");
+    sb.AppendLine($"      {GeneratedMediatorDetector.RegistrationMethod(generatedMediatorNamespace)}(services);");
     sb.AppendLine("      __mediatorServiceProvider = global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);");
     sb.AppendLine("    }");
     sb.AppendLine();
@@ -928,8 +928,8 @@ internal static class InterceptorEmitter
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="apps">All app models (will filter to those using runtime DI).</param>
-  /// <param name="hasGeneratedMediator">Whether to register the TimeWarp.Mediator generated mediator.</param>
-  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps, bool hasGeneratedMediator)
+  /// <param name="generatedMediatorNamespace">The TimeWarp.Mediator generated namespace to register, or null when there is none.</param>
+  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps, string? generatedMediatorNamespace)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE (UseMicrosoftDependencyInjection was called)");
@@ -988,10 +988,10 @@ internal static class InterceptorEmitter
       sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<NuruApp>(services, app);");
       sb.AppendLine();
 
-      if (hasGeneratedMediator)
+      if (generatedMediatorNamespace is not null)
       {
         sb.AppendLine("    // Register the TimeWarp.Mediator source-generated IMediator / ISender / IPublisher");
-        sb.AppendLine("    global::Microsoft.Extensions.DependencyInjection.GeneratedMediatorServiceCollectionExtensions.AddGeneratedMediator(services);");
+        sb.AppendLine($"    {GeneratedMediatorDetector.RegistrationMethod(generatedMediatorNamespace)}(services);");
         sb.AppendLine();
       }
 
@@ -1405,16 +1405,21 @@ internal static class InterceptorEmitter
   }
 
   /// <summary>
-  /// Fails the matched route when its handler was not visible at build time and is still unregistered,
-  /// or when a visible handler that is not nested has no generated mediator to send through.
+  /// Fails the matched route when its handler was not visible at build time, or when a visible
+  /// handler that is not nested has no generated mediator to send through.
   /// Built-ins and other routes run first; one missing handler does not exit the process.
   /// </summary>
+  /// <remarks>
+  /// TimeWarp.Mediator 15 dispatches only the handlers in its compile-time graph and registers
+  /// concrete handler types, not handler interfaces, so there is nothing to probe at run time.
+  /// Its graph is this compilation plus public types in referenced assemblies, which is what
+  /// Nuru's visibility scan covers, so a handler Nuru cannot see cannot be dispatched either.
+  /// </remarks>
   internal static void EmitMissingHandlerOnDispatch(
     StringBuilder sb,
     RouteDefinition route,
     bool useRuntimeDI,
     bool hasGeneratedMediator,
-    string runtimeDISuffix,
     string indent)
   {
     // A visible handler that is not nested has nowhere to send when this compilation
@@ -1430,34 +1435,21 @@ internal static class InterceptorEmitter
       return;
     }
 
-    if (route.Handler.HandlerVisible || string.IsNullOrEmpty(route.Handler.HandlerInterfaceName))
+    if (!IsMissingHandler(route.Handler))
       return;
 
     string typeName = route.Handler.FullTypeName ?? route.OriginalPattern;
-    string iface = route.Handler.HandlerInterfaceName;
     sb.AppendLine($"{indent}// {typeName} had no visible handler at build time.");
-    if (!useRuntimeDI && !hasGeneratedMediator)
-    {
-      sb.AppendLine($"{indent}app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
-      sb.AppendLine($"{indent}return 1;");
-      return;
-    }
-
-    if (useRuntimeDI)
-    {
-      sb.AppendLine($"{indent}if (global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{iface}>(GetResolutionProvider{runtimeDISuffix}(app)) is null)");
-    }
-    else
-    {
-      sb.AppendLine($"{indent}__GetMediator();");
-      sb.AppendLine($"{indent}if (global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<{iface}>(__mediatorServiceProvider!) is null)");
-    }
-
-    sb.AppendLine($"{indent}{{");
-    sb.AppendLine($"{indent}  app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
-    sb.AppendLine($"{indent}  return 1;");
-    sb.AppendLine($"{indent}}}");
+    sb.AppendLine($"{indent}app.Terminal.WriteErrorLine(\"No handler is registered for {typeName}.\");");
+    sb.AppendLine($"{indent}return 1;");
   }
+
+  /// <summary>
+  /// True when the route is a mediator message whose handler was not visible at build time.
+  /// <see cref="EmitMissingHandlerOnDispatch"/> has already exited 1 for it, so nothing dispatches.
+  /// </summary>
+  internal static bool IsMissingHandler(HandlerDefinition handler) =>
+    !handler.HandlerVisible && !string.IsNullOrEmpty(handler.HandlerInterfaceName);
 
   /// <summary>
   /// Filters endpoints based on the app's discovery mode.

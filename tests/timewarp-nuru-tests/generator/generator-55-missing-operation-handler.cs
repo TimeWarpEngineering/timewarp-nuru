@@ -192,10 +192,10 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
         {
         }
 
-        public sealed class T508PresentHandler : IQueryHandler<T508PresentQuery, string>
+        public sealed class T508PresentHandler : IRequestHandler<T508PresentQuery, string>
         {
-          public Task<string> Handle(T508PresentQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult("ok");
+          public ValueTask<string> Handle(T508PresentQuery query, CancellationToken cancellationToken) =>
+            ValueTask.FromResult("ok");
         }
 
         NuruApp app = NuruApp.CreateBuilder()
@@ -248,10 +248,10 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
         [Operation("t508off")]
         public sealed class T508OffQuery : IQuery<string>
         {
-          public sealed class Handler : IQueryHandler<T508OffQuery, string>
+          public sealed class Handler : IRequestHandler<T508OffQuery, string>
           {
-            public Task<string> Handle(T508OffQuery query, CancellationToken cancellationToken) =>
-              Task.FromResult("ok");
+            public ValueTask<string> Handle(T508OffQuery query, CancellationToken cancellationToken) =>
+              ValueTask.FromResult("ok");
           }
         }
 
@@ -264,7 +264,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
 
       GeneratorDriverRunResult result = RunNuruGenerator(
         Source,
-        new Dictionary<string, string> { ["build_property.TimeWarpMediatorAssembly"] = "false" });
+        new Dictionary<string, string> { ["build_property.TimeWarpMediatorGenerator"] = "false" });
       string generated = GeneratedText(result);
       generated.ShouldContain("T508OffQuery.Handler");
       generated.ShouldContain("__handler.Handle(");
@@ -287,10 +287,10 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
           public string Name { get; set; } = "ada";
         }
 
-        public sealed class T508DirectExternalHandler : ICommandHandler<T508DirectExternal, string>
+        public sealed class T508DirectExternalHandler : IRequestHandler<T508DirectExternal, string>
         {
-          public Task<string> Handle(T508DirectExternal command, CancellationToken cancellationToken) =>
-            Task.FromResult(command.Name);
+          public ValueTask<string> Handle(T508DirectExternal command, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(command.Name);
         }
 
         NuruApp app = NuruApp.CreateBuilder()
@@ -303,7 +303,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
 
       Dictionary<string, string> config = new()
       {
-        ["build_property.TimeWarpMediatorAssembly"] = "true"
+        ["build_property.TimeWarpMediatorGenerator"] = "true"
       };
       UpdateCompilation(Source, config, out string generated, out IEnumerable<Diagnostic> diagnostics);
       generated.ShouldContain("private static global::TimeWarp.Mediator.IMediator __GetMediator()");
@@ -311,6 +311,101 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
       diagnostics.Any(diagnostic =>
         diagnostic.Id == "CS0103" && diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("__GetMediator", StringComparison.Ordinal))
         .ShouldBeFalse();
+      await Task.CompletedTask;
+    }
+
+    private const string ExternalHandlerSource = """
+      using System.Threading;
+      using System.Threading.Tasks;
+      using TimeWarp.Contracts;
+      using TimeWarp.Mediator;
+      using TimeWarp.Nuru;
+
+      [Operation("t566external")]
+      public sealed class T566ExternalCommand : ICommand<string>
+      {
+        public string Name { get; set; } = "ada";
+      }
+
+      public sealed class T566ExternalHandler : IRequestHandler<T566ExternalCommand, string>
+      {
+        public ValueTask<string> Handle(T566ExternalCommand command, CancellationToken cancellationToken) =>
+          ValueTask.FromResult(command.Name);
+      }
+
+      NuruApp app = NuruApp.CreateBuilder()
+        .Map<T566ExternalCommand>()
+        .Build();
+
+      app.RunAsync([]);
+      """;
+
+    public static async Task Should_register_the_generated_mediator_from_the_default_namespace()
+    {
+      GeneratorDriverRunResult result = RunNuruGenerator(
+        ExternalHandlerSource,
+        new Dictionary<string, string> { ["build_property.TimeWarpMediatorGenerator"] = "true" });
+      GeneratedText(result).ShouldContain(
+        "global::TimeWarp.Mediator.Generated.TimeWarpMediatorGeneratedServiceCollectionExtensions.AddGeneratedMediator(services);");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_register_the_generated_mediator_from_a_configured_namespace()
+    {
+      GeneratorDriverRunResult result = RunNuruGenerator(
+        ExternalHandlerSource,
+        new Dictionary<string, string>
+        {
+          ["build_property.TimeWarpMediatorGenerator"] = "true",
+          ["build_property.TimeWarpMediatorNamespace"] = "Acme.Cli.Mediation"
+        });
+      string generated = GeneratedText(result);
+      generated.ShouldContain("global::Acme.Cli.Mediation.AcmeCliMediationServiceCollectionExtensions.AddGeneratedMediator(services);");
+      generated.ShouldNotContain("TimeWarpMediatorGeneratedServiceCollectionExtensions");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_not_detect_a_generated_mediator_from_the_assembly_property_alone()
+    {
+      // TimeWarp.Mediator 15: TimeWarpMediatorAssembly is analyzer membership only. Only the
+      // generator package sets TimeWarpMediatorGenerator, and only then is AddGeneratedMediator emitted.
+      GeneratorDriverRunResult result = RunNuruGenerator(
+        ExternalHandlerSource,
+        new Dictionary<string, string> { ["build_property.TimeWarpMediatorAssembly"] = "true" });
+      string generated = GeneratedText(result);
+      generated.ShouldContain("The TimeWarp.Mediator generated mediator is not available in this compilation.");
+      generated.ShouldNotContain("AddGeneratedMediator(services)");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_exit_1_without_a_send_when_the_generated_mediator_has_no_visible_handler()
+    {
+      // TimeWarp.Mediator 15 registers concrete handlers, not handler interfaces, so there is no
+      // run-time probe. A handler the generator cannot see is not in the mediator graph either.
+      const string Source = """
+        using TimeWarp.Contracts;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        [Operation("t566handlerless")]
+        public sealed class T566HandlerlessQuery : IQuery<string>
+        {
+        }
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map<T566HandlerlessQuery>()
+          .Build();
+
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(
+        Source,
+        new Dictionary<string, string> { ["build_property.TimeWarpMediatorGenerator"] = "true" });
+      string generated = GeneratedText(result);
+      generated.ShouldContain("No handler is registered for global::T566HandlerlessQuery.");
+      generated.ShouldNotContain("GetService<global::TimeWarp.Mediator.IRequestHandler");
+      generated.ShouldNotContain("await __mediator.Send(__command");
       await Task.CompletedTask;
     }
 
@@ -329,10 +424,10 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
           public string Name { get; set; } = "ada";
         }
 
-        public sealed class T508NoMediatorHandler : ICommandHandler<T508NoMediatorCommand, string>
+        public sealed class T508NoMediatorHandler : IRequestHandler<T508NoMediatorCommand, string>
         {
-          public Task<string> Handle(T508NoMediatorCommand command, CancellationToken cancellationToken) =>
-            Task.FromResult(command.Name);
+          public ValueTask<string> Handle(T508NoMediatorCommand command, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(command.Name);
         }
 
         NuruApp app = NuruApp.CreateBuilder()
@@ -344,7 +439,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
 
       GeneratorDriverRunResult result = RunNuruGenerator(
         Source,
-        new Dictionary<string, string> { ["build_property.TimeWarpMediatorAssembly"] = "false" });
+        new Dictionary<string, string> { ["build_property.TimeWarpMediatorGenerator"] = "false" });
       string generated = GeneratedText(result);
       generated.ShouldContain("The TimeWarp.Mediator generated mediator is not available in this compilation.");
       generated.ShouldContain("return 1;");
@@ -419,16 +514,16 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
           public string Name { get; set; } = "ada";
         }
 
-        public sealed class T508LambdaHandler : ICommandHandler<T508LambdaCommand, string>
+        public sealed class T508LambdaHandler : IRequestHandler<T508LambdaCommand, string>
         {
-          public Task<string> Handle(T508LambdaCommand command, CancellationToken cancellationToken) =>
-            Task.FromResult(command.Name);
+          public ValueTask<string> Handle(T508LambdaCommand command, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(command.Name);
         }
         """;
 
       Dictionary<string, string> config = new()
       {
-        ["build_property.TimeWarpMediatorAssembly"] = "false"
+        ["build_property.TimeWarpMediatorGenerator"] = "false"
       };
       UpdateCompilation(Source, config, out string generated, out IEnumerable<Diagnostic> diagnostics);
       generated.ShouldContain("The TimeWarp.Mediator generated mediator is not available in this compilation.");
@@ -488,10 +583,10 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen55MissingOperationHandler
           [Option("name")]
           public string Name { get; set; } = "a";
 
-          public sealed class Handler : IQueryHandler<T508OptionalCtorQuery, string>
+          public sealed class Handler : IRequestHandler<T508OptionalCtorQuery, string>
           {
-            public Task<string> Handle(T508OptionalCtorQuery query, CancellationToken cancellationToken) =>
-              Task.FromResult(query.Name);
+            public ValueTask<string> Handle(T508OptionalCtorQuery query, CancellationToken cancellationToken) =>
+              ValueTask.FromResult(query.Name);
           }
         }
 

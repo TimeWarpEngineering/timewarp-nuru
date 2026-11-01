@@ -190,13 +190,13 @@ public sealed class PeJsonRequiredQuery : IQuery<string>
 {
   public required PeBody Body { get; set; }
 
-  public sealed class Handler : IQueryHandler<PeJsonRequiredQuery, string>
+  public sealed class Handler : IRequestHandler<PeJsonRequiredQuery, string>
   {
-    public Task<string> Handle(PeJsonRequiredQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(PeJsonRequiredQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       _ = cancellationToken;
-      return Task.FromResult("body:" + query.Body.Name);
+      return ValueTask.FromResult("body:" + query.Body.Name);
     }
   }
 }

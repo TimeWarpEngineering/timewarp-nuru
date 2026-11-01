@@ -14,15 +14,15 @@ public sealed class DeployCommand : ICommand<Unit>
   [Option("force", "f", Description = "Force deployment")]
   public bool Force { get; set; }
 
-  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeployCommand, Unit>
   {
-    public Task<Unit> Handle(DeployCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployCommand c, CancellationToken ct)
     {
       WriteLine($"Deploying to {c.Env}");
       if (c.Version != null)
         WriteLine($"  Version: {c.Version}");
       WriteLine($"  Force: {c.Force}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

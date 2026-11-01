@@ -21,13 +21,13 @@ public sealed class UserCreateCommand : ICommand<Unit>, IRequireAuthorization
   [Option("admin", "a", Description = "Grant admin privileges")]
   public bool IsAdmin { get; set; }
 
-  public sealed class Handler : ICommandHandler<UserCreateCommand, Unit>
+  public sealed class Handler : IRequestHandler<UserCreateCommand, Unit>
   {
-    public Task<Unit> Handle(UserCreateCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(UserCreateCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Creating user: {command.Username} ({command.Email})");
       Console.WriteLine($"  Admin: {command.IsAdmin}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

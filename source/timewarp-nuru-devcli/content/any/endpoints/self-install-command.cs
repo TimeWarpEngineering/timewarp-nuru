@@ -23,7 +23,7 @@ using TimeWarp.Terminal;
 [NuruRoute("self-install", Description = "AOT compile dev CLI to ./bin")]
 internal sealed class SelfInstallCommand : ICommand<Unit>
 {
-  internal sealed class Handler : ICommandHandler<SelfInstallCommand, Unit>
+  internal sealed class Handler : IRequestHandler<SelfInstallCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -32,7 +32,7 @@ internal sealed class SelfInstallCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(SelfInstallCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(SelfInstallCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

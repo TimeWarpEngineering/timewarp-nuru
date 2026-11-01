@@ -71,9 +71,9 @@ public sealed class FactorialCommand : ICommand<Unit>
 {
   [Parameter] public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FactorialCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FactorialCommand, Unit>
   {
-    public Task<Unit> Handle(FactorialCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(FactorialCommand c, CancellationToken ct)
     {
       try
       {
@@ -84,7 +84,7 @@ public sealed class FactorialCommand : ICommand<Unit>
       {
         WriteLine($"Error: {ex.Message}");
       }
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -94,13 +94,13 @@ public sealed class PrimeCheckCommand : ICommand<Unit>
 {
   [Parameter] public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<PrimeCheckCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand, Unit>
   {
-    public Task<Unit> Handle(PrimeCheckCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(PrimeCheckCommand c, CancellationToken ct)
     {
       bool result = calc.IsPrime(c.N);
       WriteLine($"{c.N} is {(result ? "prime" : "not prime")}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -110,9 +110,9 @@ public sealed class FibonacciCommand : ICommand<Unit>
 {
   [Parameter] public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FibonacciCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand, Unit>
   {
-    public Task<Unit> Handle(FibonacciCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(FibonacciCommand c, CancellationToken ct)
     {
       try
       {
@@ -123,7 +123,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
       {
         WriteLine($"Error: {ex.Message}");
       }
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

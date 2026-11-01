@@ -607,9 +607,9 @@ public sealed class T515MakeCommand : ICommand<Unit>
   [Option("folder", Description = "Target folder")]
   public string Folder { get; set; } = null!;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<T515MakeCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<T515MakeCommand, Unit>
   {
-    public async Task<Unit> Handle(T515MakeCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(T515MakeCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"t515-make:{command.Folder}").ConfigureAwait(false);

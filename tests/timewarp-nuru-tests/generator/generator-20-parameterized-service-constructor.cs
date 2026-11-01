@@ -151,12 +151,12 @@ public class KanbanService : IKanbanService
 [NuruRoute("gen20-kanban", Description = "List kanban tasks")]
 public sealed class Gen20KanbanQuery : IQuery<Unit>
 {
-  public sealed class Handler(ITerminal terminal, IKanbanService kanbanService) : IQueryHandler<Gen20KanbanQuery, Unit>
+  public sealed class Handler(ITerminal terminal, IKanbanService kanbanService) : IRequestHandler<Gen20KanbanQuery, Unit>
   {
-    public Task<Unit> Handle(Gen20KanbanQuery query, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(Gen20KanbanQuery query, CancellationToken cancellationToken)
     {
       terminal.WriteLine(kanbanService.ListTasks());
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

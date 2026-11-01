@@ -14,9 +14,9 @@ public sealed class ApiCommand : ICommand<Unit>
   [Parameter(Description = "API endpoint")]
   public string Endpoint { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<ApiCommand, Unit>
+  public sealed class Handler : IRequestHandler<ApiCommand, Unit>
   {
-    public async Task<Unit> Handle(ApiCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(ApiCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Calling API: {command.Endpoint}");
       await Task.Delay(100, ct);

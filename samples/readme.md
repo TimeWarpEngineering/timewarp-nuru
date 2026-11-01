@@ -24,12 +24,12 @@ public sealed class GreetCommand : IQuery<Unit>
 {
   [Parameter] public string Name { get; set; } = "";
 
-  public sealed class Handler : IQueryHandler<GreetCommand, Unit>
+  public sealed class Handler : IRequestHandler<GreetCommand, Unit>
   {
-    public Task<Unit> Handle(GreetCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(GreetCommand c, CancellationToken ct)
     {
       Console.WriteLine($"Hello, {c.Name}!");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -23,9 +23,9 @@ public sealed class RoundQuery : CalcGroup, IQuery<double>
 
   public RoundingMode Mode { get; set; } = RoundingMode.Nearest;
 
-  public sealed class Handler : IQueryHandler<RoundQuery, double>
+  public sealed class Handler : IRequestHandler<RoundQuery, double>
   {
-    public Task<double> Handle(RoundQuery query, CancellationToken cancellationToken)
+    public ValueTask<double> Handle(RoundQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       double result = query.Mode switch
@@ -34,7 +34,7 @@ public sealed class RoundQuery : CalcGroup, IQuery<double>
         RoundingMode.Down => Math.Floor(query.Value),
         _ => Math.Round(query.Value)
       };
-      return Task.FromResult(result);
+      return ValueTask.FromResult(result);
     }
   }
 }

@@ -14,12 +14,12 @@ public sealed class DockerCommand : ICommand<Unit>
   [Parameter(IsCatchAll = true, Description = "Docker arguments")]
   public string[] Args { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<DockerCommand, Unit>
+  public sealed class Handler : IRequestHandler<DockerCommand, Unit>
   {
-    public Task<Unit> Handle(DockerCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DockerCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Docker args: {string.Join(" ", command.Args)}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

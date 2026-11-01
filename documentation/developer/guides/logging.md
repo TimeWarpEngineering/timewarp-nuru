@@ -24,12 +24,12 @@ return await app.RunAsync(args);
 [NuruRoute("work", Description = "Do some work")]
 public sealed class WorkCommand : ICommand<Unit>
 {
-    public sealed class Handler(ILogger<WorkCommand> logger) : ICommandHandler<WorkCommand, Unit>
+    public sealed class Handler(ILogger<WorkCommand> logger) : IRequestHandler<WorkCommand, Unit>
     {
-        public Task<Unit> Handle(WorkCommand command, CancellationToken cancellationToken)
+        public ValueTask<Unit> Handle(WorkCommand command, CancellationToken cancellationToken)
         {
             logger.LogInformation("Working");
-            return Unit.Task;
+            return Unit.ValueTask;
         }
     }
 }

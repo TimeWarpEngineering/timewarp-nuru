@@ -32,12 +32,12 @@ public sealed class DeployCommand : ICommand<Unit>
   [Parameter]
   public string Env { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeployCommand, Unit>
   {
-    public Task<Unit> Handle(DeployCommand command, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken cancellationToken)
     {
       Console.WriteLine($"Deploying to {command.Env}");
-      return Task.FromResult(default(Unit));
+      return ValueTask.FromResult(default(Unit));
     }
   }
 }
@@ -53,7 +53,7 @@ NuruApp app2 = NuruApp.CreateBuilder()
   .Build();
 ```
 
-The mediator contracts (`ICommand<T>`, `IQuery<T>`, `Unit`, handlers) come from `TimeWarp.Mediator`; handlers return `Task<T>`.
+The mediator contracts (`ICommand<T>`, `IQuery<T>`, `Unit`, `IRequestHandler<TRequest, TResponse>`) come from `TimeWarp.Mediator` 15; handlers return `ValueTask<T>`. The message marker, not the handler interface, sets the message kind.
 
 ## Attributes
 
@@ -178,10 +178,10 @@ public sealed class DeployCommand : ICommand<Unit>
   [Option("force", "f")]
   public bool Force { get; set; }
 
-  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeployCommand, Unit>
   {
-    public Task<Unit> Handle(DeployCommand command, CancellationToken cancellationToken) =>
-      Task.FromResult(default(Unit));
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken cancellationToken) =>
+      ValueTask.FromResult(default(Unit));
   }
 }
 ```
@@ -209,10 +209,10 @@ public sealed class DockerRunCommand : DockerRequestBase, ICommand<Unit>
   [Option("detach", "d")]
   public bool Detach { get; set; }
 
-  public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
+  public sealed class Handler : IRequestHandler<DockerRunCommand, Unit>
   {
-    public Task<Unit> Handle(DockerRunCommand command, CancellationToken cancellationToken) =>
-      Task.FromResult(default(Unit));
+    public ValueTask<Unit> Handle(DockerRunCommand command, CancellationToken cancellationToken) =>
+      ValueTask.FromResult(default(Unit));
   }
 }
 ```

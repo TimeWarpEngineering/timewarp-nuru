@@ -105,15 +105,15 @@ A blank `[Operation(Group)]` is ungrouped, so steps 2 to 4 apply. A `[NuruRouteG
 
 ## Handlers
 
-A nested `Handler` is a convenience, not a requirement. The endpoint handler is any registered `IQueryHandler<TQuery, T>`, `ICommandHandler<TCommand, T>`, or `IIdempotentCommandHandler<TCommand, T>` for that request. A CLI edition can register a forwarding handler and a daemon the real one for the same request type.
+A nested `Handler` is a convenience, not a requirement. The endpoint handler is any `IRequestHandler<TRequest, T>` (TimeWarp.Mediator 15) for that request that the mediator graph contains: one in this project, or a public one in a referenced assembly that carries `[assembly: TimeWarp.Mediator.MediatorAssembly]`. A CLI edition can carry a forwarding handler and a daemon the real one for the same request type, because each is its own compilation.
 
-When the compilation can see no handler, the generator reports NURU_H008 as a warning. The build is accepted. Invoking that route resolves the handler and returns exit code 1 when it is still unregistered. `--help` and `--capabilities` still run. A project that treats warnings as errors must suppress NURU_H008 for a handler this compilation cannot see.
+When the compilation can see no handler, the generator reports NURU_H008 as a warning. The build is accepted. Invoking that route writes `No handler is registered for <type>.` and returns exit code 1. `--help` and `--capabilities` still run. TimeWarp.Mediator 15 dispatches only the handlers in its compile-time graph, so a handler added to a service collection at run time is not used.
 
 ## Dispatch and rendering
 
 When this compilation has a generated mediator, endpoints dispatch through TimeWarp.Mediator, so mediator behaviors run. `INuruBehavior` stays CLI middleware around that dispatch.
 
-No generated mediator exists when `TimeWarpMediatorAssembly` is not true, or when the mediator profile is `Aot` or `Link`. A nested `Handler` is then called directly, and FluentValidation behaviors do not run. With source-generated DI, a visible handler that is not nested writes an error and exits 1 instead of throwing. With `UseMicrosoftDependencyInjection()`, Nuru resolves `IMediator` from the container instead, and that call throws unless the app registers a mediator.
+No generated mediator exists when the app does not run the TimeWarp.Mediator generator (Nuru reads the `TimeWarpMediatorGenerator` property that `TimeWarp.Mediator.Generators` sets). `TimeWarpMediatorAssembly=false` no longer turns it off; it only sets analyzer membership. A nested `Handler` is then called directly, and FluentValidation behaviors do not run. With source-generated DI, a visible handler that is not nested writes an error and exits 1 instead of throwing. With `UseMicrosoftDependencyInjection()`, Nuru resolves `IMediator` from the container instead, and that call throws unless the app registers a mediator.
 
 A nested `Handler` is also called directly when `UseDirectInvoke()` is set and a generated mediator does exist. An endpoint with no nested handler still goes through the mediator, including when `UseDirectInvoke()` is set. `UseDirectInvoke()` is the opt-out when the mediator cost matters for an AOT CLI.
 

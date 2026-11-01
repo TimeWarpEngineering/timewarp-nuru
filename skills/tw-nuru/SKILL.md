@@ -65,11 +65,11 @@ The generator intercepts each `RunAsync()` call on an app it can trace to a `Bui
 
 ### Commands, Queries, and Idempotent Commands
 
-These contracts live in `TimeWarp.Mediator`, not `TimeWarp.Nuru`. Add `using TimeWarp.Mediator;`. Handlers return `Task<T>`, not `ValueTask<T>`.
+These contracts live in `TimeWarp.Mediator` (15.x), not `TimeWarp.Nuru`. Add `using TimeWarp.Mediator;`. The endpoint's message marker sets the kind; every nested `Handler` implements `IRequestHandler<TEndpoint, T>` and returns `ValueTask<T>`. `ICommandHandler`, `IQueryHandler`, and `IIdempotentCommandHandler` were removed in TimeWarp.Mediator 15.
 
-- **ICommand<T>** / **ICommandHandler<TCommand, T>**: Actions with side effects, NOT safe to retry (deploy, build, delete)
-- **IQuery<T>** / **IQueryHandler<TQuery, T>**: Read-only operations, safe to retry (status, greet, version)
-- **IIdempotentCommand<T>** / **IIdempotentCommandHandler<TCommand, T>**: Mutating but safe to retry (set config, PUT/DELETE-style operations)
+- **ICommand<T>**: Actions with side effects, NOT safe to retry (deploy, build, delete)
+- **IQuery<T>**: Read-only operations, safe to retry (status, greet, version)
+- **IIdempotentCommand<T>**: Mutating but safe to retry (set config, PUT/DELETE-style operations)
 - Use `Unit` as return type when there's no meaningful return value
 
 ### Simple Endpoint
@@ -83,12 +83,12 @@ public sealed class GreetQuery : IQuery<Unit>
   [Parameter(Description = "Name of the person to greet")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler : IQueryHandler<GreetQuery, Unit>
+  public sealed class Handler : IRequestHandler<GreetQuery, Unit>
   {
-    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Hello {query.Name}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -120,12 +120,12 @@ public sealed class DeployCommand : ICommand<Unit>
   [Parameter(Order = 1, Description = "Optional tag to deploy")]
   public string? Tag { get; set; }
 
-  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeployCommand, Unit>
   {
-    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deploying to {command.Env}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -146,12 +146,12 @@ public sealed class BuildCommand : ICommand<Unit>
   [Option("verbose", "v", Description = "Verbose output")]
   public bool Verbose { get; set; }
 
-  public sealed class Handler : ICommandHandler<BuildCommand, Unit>
+  public sealed class Handler : IRequestHandler<BuildCommand, Unit>
   {
-    public Task<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Building {command.Project} ({command.Mode}, verbose: {command.Verbose})");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -168,12 +168,12 @@ public sealed class ExecCommand : ICommand<Unit>
   [Parameter(IsCatchAll = true, Description = "Arguments")]
   public string[] Args { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<ExecCommand, Unit>
+  public sealed class Handler : IRequestHandler<ExecCommand, Unit>
   {
-    public Task<Unit> Handle(ExecCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Args: {string.Join(" ", command.Args)}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -202,12 +202,12 @@ public sealed class DockerBuildCommand : DockerGroupBase, ICommand<Unit>
   [Option("no-cache", null, Description = "Do not use cache")]
   public bool NoCache { get; set; }
 
-  public sealed class Handler : ICommandHandler<DockerBuildCommand, Unit>
+  public sealed class Handler : IRequestHandler<DockerBuildCommand, Unit>
   {
-    public Task<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Building image from: {command.Path}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -232,12 +232,12 @@ public sealed class AzureStorageUploadCommand : AzureStorageGroupBase, ICommand<
   [Parameter(Description = "File to upload")]
   public string File { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<AzureStorageUploadCommand, Unit>
+  public sealed class Handler : IRequestHandler<AzureStorageUploadCommand, Unit>
   {
-    public Task<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Uploading: {command.File}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -310,7 +310,7 @@ See `samples/editions/01-group-filtering/` for a complete working example.
 - `[NuruRoute]` takes only a single literal or `""` - the analyzer rejects anything else
 - Use nullable types (`string?`) for optional parameters, NOT `IsOptional=true`
 - Return `Unit` when no meaningful return value
-- Handler methods return `Task<T>` (`return Unit.Task` from a non-async `Task<Unit>` handler). Do not use `ValueTask<T>`
+- Handler methods return `ValueTask<T>` (`return Unit.ValueTask;` from a non-async `ValueTask<Unit>` handler, `ValueTask.FromResult(x)` for a value). There is no implicit conversion from `Task<T>`
 
 ### Return Values vs Exit Codes
 
@@ -330,9 +330,9 @@ Handler return values and exit codes are **independent concerns**:
 **To signal failure**, set `Environment.ExitCode` explicitly:
 
 ```csharp
-public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+public sealed class Handler : IRequestHandler<DeployCommand, Unit>
 {
-  public async Task<Unit> Handle(DeployCommand command, CancellationToken ct)
+  public async ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
   {
     if (failed)
     {
@@ -454,9 +454,9 @@ Example of AddHttpClient with source-gen DI:
 
 Then in the handler:
 ```csharp
-public sealed class Handler(IWeatherService weatherService) : IQueryHandler<WeatherQuery, string>
+public sealed class Handler(IWeatherService weatherService) : IRequestHandler<WeatherQuery, string>
 {
-  public async Task<string> Handle(WeatherQuery query, CancellationToken ct)
+  public async ValueTask<string> Handle(WeatherQuery query, CancellationToken ct)
   {
     return await weatherService.GetWeatherAsync(query.City, ct);
   }

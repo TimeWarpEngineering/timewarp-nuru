@@ -182,12 +182,12 @@ branch differ only in the `version` git suffix. The capabilities, catalog, and M
 
 ### Decisions and deviations
 
-- **Nuru still references `TimeWarp.Mediator.Generators` and lets it flow** (`PrivateAssets="none"`).
-  Mediator's migration page says a library should not, because 15 emits an (internal, empty) mediator
-  into it and `TimeWarpMediatorAssembly=false` no longer stops that. Keeping the flow means consumers
-  need no new package reference; the internal copy in Nuru is unused and the CS0436 suppression in
-  the test props already covers the IVT collision. Moving the generator reference to consumers would
-  be a second breaking change, so it is not done here.
+- **Nuru still references `TimeWarp.Mediator.Generators` and lets it flow** (`PrivateAssets="none"`),
+  so consumers need no new package reference, but the generator no longer runs in Nuru's own
+  compilation. Mediator 15 emits a mediator into every compilation that loads the generator, and
+  `TimeWarpMediatorAssembly=false` no longer stops that. The `RemoveMediatorGeneratorFromNuru` target
+  drops that analyzer from Nuru's compile (see "Fix before merge" below). Moving the generator
+  reference to consumers would be a second breaking change, so it is not done here.
 - **`__GetMediator()` keeps its hidden `ServiceCollection`.** The migration page suggests a small
   `IServiceProvider` over Nuru's static graph instead. That is an optimization, not required for 15,
   and would be an internal redesign beyond this task.
@@ -198,6 +198,47 @@ branch differ only in the `version` git suffix. The capabilities, catalog, and M
 - **Not migrated:** `spikes/roslynk-cli` (already broken before this task, outside CI), and
   `.agent/workspace` reports and kanban history, which are historical.
 - No Nuru feature is impossible on 15. No blocker.
+
+### Fix before merge: Mediator generator not run in Nuru
+
+What changed:
+
+- `source/timewarp-nuru/timewarp-nuru.csproj`: the PackageReference is unchanged. The new target
+  `RemoveMediatorGeneratorFromNuru` (`AfterTargets="ResolveLockFileAnalyzers"`) removes the `Analyzer`
+  items whose `NuGetPackageId` is `TimeWarp.Mediator.Generators`. It matches on package-id metadata,
+  not a path, so version bumps and other package roots still match. It also runs in design-time builds.
+  Restore, `project.assets.json` and pack do not see it, so the nuspec and the transitive flow to apps
+  and ProjectReference consumers are unchanged.
+- `TimeWarpMediatorAssembly=false` stays. The generator's buildTransitive props still load in Nuru and
+  default it to true, and in 15 it controls analyzer membership. `TimeWarpMediatorGenerator=false` is
+  new. The same props set it to true, which tells the TimeWarp.Mediator analyzer that the generator
+  reports TWM001-TWM003. The generator no longer runs here, so the analyzer reports them itself.
+- CS0436: removed from `tests/Directory.Build.props`, moved to `tests/timewarp-nuru-mcp-tests/Directory.Build.props`.
+  It is kept in `tests/ci-tests/Directory.Build.props`. TimeWarp.Nuru.Mcp is an Exe, so it is a real
+  mediator host. It still contains the internal generated mediator and has InternalsVisibleTo to the
+  mcp tests and the CI assembly.
+
+Evidence:
+
+- Before: `ilspycmd -l c TimeWarp.Nuru.dll` listed `TimeWarp.Mediator.Generated.Mediator`,
+  `MediatorManifest`, `TimeWarpMediatorGeneratedServiceCollectionExtensions` (+ `<>c`). `strings` showed
+  `AddGeneratedMediator` and `TimeWarp.Mediator.Generated`. The DLL was 803328 bytes.
+- After: there are 0 `TimeWarp.Mediator.Generated` types, and `AddGeneratedMediator` and `MediatorManifest`
+  are not in the strings. The DLL is 796160 bytes.
+- Nuspec: the before and after `TimeWarp.Nuru.nuspec` files are byte-identical. They include `TimeWarp.Mediator`
+  15.0.0-beta.4 `exclude="Build,Analyzers"` and `TimeWarp.Mediator.Generators` 15.0.0-beta.4 `include="All"`.
+
+Gates (`ganda runfile cache --clear` first):
+
+- `--stage build`: Pipeline SUCCEEDED, 0 warnings, 18 payload entries, Release verified.
+- `--stage samples`: 68/68.
+- `--stage test-multi`: 2176 total, 2170 passed, 6 skipped, 0 failed. GeneratedMediator 3/3,
+  GeneratedMediatorSourceGenDI 4/4, AsyncExpressionBodyLambda 9/9.
+- `--stage test-standalone`: 15/15, Pipeline SUCCEEDED.
+- Standalone runs: generator-55 16/16 and mcp-03 19/19, with no CS0436.
+  generator-46/47 do not build as standalone single files (RCS1021). That error is unchanged without
+  this fix, and the files pass in multi.
+- `ganda repo audit`: passes all checks. `--fix` was not needed.
 
 ### Consumer change list (one task per org repo)
 
@@ -269,6 +310,7 @@ Expect:
 - Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-11-01T06:01:36Z
 - Fix oracle (implement-fix-2): implementer-claude (claude-opus-5-5), 2026-11-01. Fixed round-1 M1 (changelog .NET 11 bullet now names Contracts 2.0.0-beta.31 and Mediator 15.0.0-beta.4; 481 hold kept as history).
 - Review oracle: reviewed by reviewer-cursor (cursor, vendor xAI, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 80), round 2 clean — 2026-11-01
+- 2026-11-01: fix before merge per Steve: stop the Mediator generator running in the Nuru library.
 
 ## Review
 

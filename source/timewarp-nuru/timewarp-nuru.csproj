@@ -58,8 +58,9 @@
          (it was TimeWarp.Mediator.Contracts through 14). No PrivateAssets on it: consumers need its
          runtime types (Unit, ISender, IRequestHandler). Generators must flow to consuming apps
          (analyzers + buildTransitive props), so PrivateAssets is cleared; the app compilation
-         is the mediator host and emits AddGeneratedMediator(). The generator also emits an internal,
-         empty mediator into this library; nothing here calls it (task 566). -->
+         is the mediator host and emits AddGeneratedMediator(). In Mediator 15 the generator emits a
+         mediator into every compilation that loads it, so the RemoveMediatorGeneratorFromNuru target
+         below keeps it out of this library's own compile. The nuspec dependency is unchanged (task 566). -->
     <PackageReference Include="TimeWarp.Contracts" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="none" />
@@ -67,11 +68,29 @@
 
   <PropertyGroup>
     <!-- TimeWarp.Nuru owns no mediator handlers; it is not a mediator graph member.
-         The generator package defaults this to true. In TimeWarp.Mediator 15 this is analyzer
-         membership only and does not stop emission. Host types the generator emits into this
-         compilation are internal, so apps do not see a second AddGeneratedMediator(). -->
+         The generator package's buildTransitive props still load here (they must flow to apps)
+         and default TimeWarpMediatorAssembly to true. In TimeWarp.Mediator 15 that property is
+         analyzer membership only, so false keeps the TimeWarp.Mediator analyzer from treating this
+         library as a host. The same props set TimeWarpMediatorGenerator=true, which tells the
+         analyzer the generator reports TWM001-TWM003; the generator does not run here, so it is
+         false and the analyzer reports them itself. -->
     <TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>
+    <TimeWarpMediatorGenerator>false</TimeWarpMediatorGenerator>
   </PropertyGroup>
+
+  <!-- Keep the TimeWarp.Mediator generator out of this library's compilation (task 566).
+       The PackageReference stays as-is, so restore, the packed nuspec dependency (include="All")
+       and the transitive flow to apps and ProjectReference consumers are unchanged; only the
+       Analyzer item NuGet resolved from that package is dropped from this project's compile.
+       Matched on NuGetPackageId metadata (set by ResolvePackageAssets), not on a file path, so a
+       version bump or a different package root does not break it. Runs after
+       ResolveLockFileAnalyzers, the target that adds package analyzers, which also covers
+       design-time builds. -->
+  <Target Name="RemoveMediatorGeneratorFromNuru" AfterTargets="ResolveLockFileAnalyzers">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(Analyzer.NuGetPackageId)' == 'TimeWarp.Mediator.Generators'" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <!-- Include analyzers and source generators for AOT-compatible routing -->

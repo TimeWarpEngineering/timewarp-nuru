@@ -227,6 +227,10 @@ An org repo with Nuru endpoints must change:
 - `benchmarks/operation-dispatch/operation-dispatch-overhead.cs` and `tools/nuru-key-bindings` build.
 - `ganda repo audit`: passes all checks.
 
+### Review
+
+Round 1 (general, effort 3) is open. M1 (suggestion): the Unreleased .NET 11 changelog bullet still states Contracts 2.0.0-beta.29 and Mediator 14.0.0 as the current pins. Disposition waits on that finding. Paths: `review/review-framework.md`, `review/round-1/merged.md`.
+
 ### How to validate
 
 Smoke:
@@ -240,6 +244,7 @@ dotnet run --file tools/dev-cli/dev.cs -- workflow --stage test-standalone
 dotnet run tests/timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs
 unzip -p artifacts/packages/TimeWarp.Nuru.4.0.0-beta.11.nupkg TimeWarp.Nuru.nuspec | grep -i mediator
 git grep -nE "ICommandHandler|IQueryHandler|IIdempotentCommandHandler|Unit\.Task\b" -- source samples tests tools skills documentation/user readme.md
+grep -n "NET 11 (breaking)" changelog.md
 ganda repo audit
 ```
 
@@ -251,6 +256,8 @@ Expect:
   and no `TimeWarp.Mediator.Contracts`.
 - The `git grep` prints only historical or before/after text: `migrating-to-3.0.md` (3.0 as shipped), the new
   `migrating-to-timewarp-mediator-15.md` before/after rows, and the skill's removal note (`SKILL.md:68`).
+- The changelog `.NET 11 (breaking)` bullet names TimeWarp.Contracts 2.0.0-beta.31 and TimeWarp.Mediator
+  15.0.0-beta.4 as current, with beta.29 / Mediator 14.0.0 only as the 481 history (round-1 M1).
 - `ganda repo audit` prints "Repository passes all audit checks."
 
 ## Session
@@ -258,6 +265,13 @@ Expect:
 - Created: Nuru cockpit 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-11-01)
 - Implement oracle: implementer-claude (claude-opus-5-5), 2026-11-01. Audit fix (bin/dev gitignore entries), Mediator 15 + Contracts beta.31 adoption, docs, gates green.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-01T05:54:40Z
+- Review oracle: reviewed by reviewer-grok (grok, vendor xAI, model grok-4.7), session not reported, max-turns 200 (cursor uncapped), round 1 open M1 — 2026-11-01
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200) — 2026-11-01T06:01:36Z
+- Fix oracle (implement-fix-2): implementer-claude (claude-opus-5-5), 2026-11-01. Fixed round-1 M1 (changelog .NET 11 bullet now names Contracts 2.0.0-beta.31 and Mediator 15.0.0-beta.4; 481 hold kept as history).
+
+## Review
+
+- Round 1: Blocked — open M1
 
 ## Notes
 

@@ -17,16 +17,16 @@ public sealed class DivideCommand : ICommand<double>
   [Parameter(Description = "Divisor")]
   public double Y { get; set; }
 
-  public sealed class Handler : ICommandHandler<DivideCommand, double>
+  public sealed class Handler : IRequestHandler<DivideCommand, double>
   {
-    public Task<double> Handle(DivideCommand command, CancellationToken ct)
+    public ValueTask<double> Handle(DivideCommand command, CancellationToken ct)
     {
       if (command.Y == 0)
       {
         throw new DivideByZeroException("Cannot divide by zero");
       }
 
-      return Task.FromResult<double>(command.X / command.Y);
+      return ValueTask.FromResult<double>(command.X / command.Y);
     }
   }
 }

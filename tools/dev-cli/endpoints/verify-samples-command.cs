@@ -31,7 +31,7 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
   [Option("category", "c", Description = "Filter by category: fluent, endpoints, hybrid")]
   public string? Category { get; set; }
 
-  internal sealed class Handler : ICommandHandler<VerifySamplesCommand, Unit>
+  internal sealed class Handler : IRequestHandler<VerifySamplesCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -40,7 +40,7 @@ public sealed class VerifySamplesCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
     {
       // Get repo root using Git.FindRoot
       string? repoRoot = Git.FindRoot();

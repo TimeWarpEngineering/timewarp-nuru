@@ -17,12 +17,12 @@ public sealed class TailCommand : ICommand<Unit>
   [Parameter(IsCatchAll = true, Description = "Additional tail arguments")]
   public string[] Args { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<TailCommand, Unit>
+  public sealed class Handler : IRequestHandler<TailCommand, Unit>
   {
-    public Task<Unit> Handle(TailCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(TailCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Tailing {command.File} with {command.Args.Length} extra args");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

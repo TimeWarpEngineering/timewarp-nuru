@@ -18,9 +18,9 @@ public sealed class FibonacciCommand : ICommand<Unit>
   [Parameter(Description = "Index in Fibonacci sequence")]
   public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FibonacciCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand, Unit>
   {
-    public Task<Unit> Handle(FibonacciCommand command, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(FibonacciCommand command, CancellationToken cancellationToken)
     {
       try
       {
@@ -32,7 +32,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
         Console.WriteLine($"Error: {ex.Message}");
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

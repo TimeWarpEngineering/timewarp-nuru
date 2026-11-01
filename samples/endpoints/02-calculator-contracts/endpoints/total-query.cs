@@ -48,9 +48,9 @@ public sealed class TotalQuery : CalcGroup, IQuery<string>
   [Description("How to print the total")]
   public TotalFormat? Format { get; set; }
 
-  public sealed class Handler : IQueryHandler<TotalQuery, string>
+  public sealed class Handler : IRequestHandler<TotalQuery, string>
   {
-    public Task<string> Handle(TotalQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(TotalQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       double[] values = query.Values ?? [];
@@ -60,7 +60,7 @@ public sealed class TotalQuery : CalcGroup, IQuery<string>
       string average = query.IncludeAverage && values.Length > 0
         ? (values.Sum() / values.Length).ToString(CultureInfo.InvariantCulture)
         : "omitted";
-      return Task.FromResult(
+      return ValueTask.FromResult(
         $"total:{query.Format?.Prefix}{total.ToString(format, CultureInfo.InvariantCulture)}|average:{average}|notes:{notes.Length.ToString(CultureInfo.InvariantCulture)}");
     }
   }

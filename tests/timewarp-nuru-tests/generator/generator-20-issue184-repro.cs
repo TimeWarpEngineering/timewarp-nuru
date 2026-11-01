@@ -65,12 +65,12 @@ public abstract class RepoBaseGroupBase : RepoGroupBase;
 [NuruRoute("sync", Description = "Sync/update the base branch")]
 public sealed class RepoBaseSyncCommand : RepoBaseGroupBase, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<RepoBaseSyncCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<RepoBaseSyncCommand, Unit>
   {
-    public Task<Unit> Handle(RepoBaseSyncCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(RepoBaseSyncCommand command, CancellationToken ct)
     {
       terminal.WriteLine("Syncing base branch...");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

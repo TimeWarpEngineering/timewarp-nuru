@@ -6,9 +6,9 @@ public sealed class ListCommand : IQuery<string[]>
 {
   [Parameter] public int? Count { get; set; }
 
-  public sealed class Handler : IQueryHandler<ListCommand, string[]>
+  public sealed class Handler : IRequestHandler<ListCommand, string[]>
   {
-    public Task<string[]> Handle(ListCommand q, CancellationToken ct)
+    public ValueTask<string[]> Handle(ListCommand q, CancellationToken ct)
     {
       int count = q.Count ?? 5;
       string[] items = Enumerable.Range(1, count)
@@ -20,7 +20,7 @@ public sealed class ListCommand : IQuery<string[]>
         Console.WriteLine($"  {item}");
       }
 
-      return Task.FromResult<string[]>(items);
+      return ValueTask.FromResult<string[]>(items);
     }
   }
 }

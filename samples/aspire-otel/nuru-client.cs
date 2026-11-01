@@ -64,9 +64,9 @@ public sealed class GreetCommand : ICommand<Unit>
   [Parameter(Order = 0)]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler(ILogger<GreetCommand> logger) : ICommandHandler<GreetCommand,Unit>
+  public sealed class Handler(ILogger<GreetCommand> logger) : IRequestHandler<GreetCommand,Unit>
   {
-    public Task<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(GreetCommand request, CancellationToken cancellationToken)
     {
       // Console.WriteLine for user feedback (visible in terminal)
       Console.WriteLine($"Hello, {request.Name}!");
@@ -74,7 +74,7 @@ public sealed class GreetCommand : ICommand<Unit>
       // ILogger for telemetry (flows to Aspire Dashboard via OTLP)
       logger.LogInformation("Greeting {Name} at {Timestamp}", request.Name, DateTime.UtcNow);
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -85,9 +85,9 @@ public sealed class GreetCommand : ICommand<Unit>
 [NuruRoute("status", Description = "Show system status (structured log)")]
 public sealed class StatusCommand : IQuery<Unit>
 {
-  public sealed class Handler(ILogger<StatusCommand> logger) : IQueryHandler<StatusCommand, Unit>
+  public sealed class Handler(ILogger<StatusCommand> logger) : IRequestHandler<StatusCommand, Unit>
   {
-    public Task<Unit> Handle(StatusCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(StatusCommand request, CancellationToken cancellationToken)
     {
       // Console.WriteLine for user feedback (visible in terminal)
       Console.WriteLine($"Machine: {Environment.MachineName}");
@@ -103,7 +103,7 @@ public sealed class StatusCommand : IQuery<Unit>
         Environment.Version
       );
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -117,9 +117,9 @@ public sealed class WorkCommand : ICommand<Unit>
   [Parameter]
   public int Duration { get; set; }
 
-  public sealed class Handler(ILogger<WorkCommand> logger) : ICommandHandler<WorkCommand, Unit>
+  public sealed class Handler(ILogger<WorkCommand> logger) : IRequestHandler<WorkCommand, Unit>
   {
-    public async Task<Unit> Handle(WorkCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(WorkCommand request, CancellationToken cancellationToken)
     {
       // Console.WriteLine for user feedback (visible in terminal)
       Console.WriteLine($"Starting work for {request.Duration}ms...");
@@ -146,9 +146,9 @@ public sealed class WorkCommand : ICommand<Unit>
 [NuruRoute("config", Description = "Show current telemetry configuration")]
 public sealed class ConfigCommand : IQuery<Unit>
 {
-  public sealed class Handler(ILogger<ConfigCommand> logger) : IQueryHandler<ConfigCommand, Unit>
+  public sealed class Handler(ILogger<ConfigCommand> logger) : IRequestHandler<ConfigCommand, Unit>
   {
-    public Task<Unit> Handle(ConfigCommand request, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(ConfigCommand request, CancellationToken cancellationToken)
     {
       string? otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
       string serviceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "nuru-client";
@@ -168,7 +168,7 @@ public sealed class ConfigCommand : IQuery<Unit>
         serviceName
       );
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

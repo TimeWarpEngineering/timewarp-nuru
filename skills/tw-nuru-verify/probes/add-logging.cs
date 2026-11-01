@@ -28,14 +28,14 @@ return await app.RunAsync(args);
 [NuruRoute("work", Description = "Log through an injected ILogger<T>")]
 public sealed class WorkCommand : ICommand<Unit>
 {
-  public sealed class Handler(ILogger<WorkCommand> logger) : ICommandHandler<WorkCommand, Unit>
+  public sealed class Handler(ILogger<WorkCommand> logger) : IRequestHandler<WorkCommand, Unit>
   {
-    public Task<Unit> Handle(WorkCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(WorkCommand command, CancellationToken ct)
     {
       logger.LogDebug("probe-debug-entry");
       logger.LogInformation("probe-log-entry");
       Console.WriteLine("work done");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

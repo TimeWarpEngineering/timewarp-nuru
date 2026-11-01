@@ -7,9 +7,9 @@ public sealed class ErrorCommand : ICommand<Unit>
 {
   [Parameter] public string Scenario { get; set; } = "";
 
-  public sealed class Handler(ILogger<ErrorCommand> Logger) : ICommandHandler<ErrorCommand, Unit>
+  public sealed class Handler(ILogger<ErrorCommand> Logger) : IRequestHandler<ErrorCommand, Unit>
   {
-    public Task<Unit> Handle(ErrorCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ErrorCommand c, CancellationToken ct)
     {
       try
       {

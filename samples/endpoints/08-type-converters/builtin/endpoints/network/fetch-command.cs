@@ -7,16 +7,16 @@ public sealed class FetchCommand : ICommand<Unit>
 {
   [Parameter] public Uri Url { get; set; } = new Uri("http://localhost");
 
-  public sealed class Handler : ICommandHandler<FetchCommand, Unit>
+  public sealed class Handler : IRequestHandler<FetchCommand, Unit>
   {
-    public Task<Unit> Handle(FetchCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(FetchCommand c, CancellationToken ct)
     {
       WriteLine($"Fetching: {c.Url}");
       WriteLine($"  Scheme: {c.Url.Scheme}");
       WriteLine($"  Host: {c.Url.Host}");
       WriteLine($"  Port: {c.Url.Port}");
       WriteLine($"  Path: {c.Url.AbsolutePath}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

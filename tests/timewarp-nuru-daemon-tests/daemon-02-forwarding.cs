@@ -20,9 +20,9 @@ using TimeWarp.Nuru.Daemon;
 [NuruRoute("df-local-endpoint", Description = "Endpoint that never forwards")]
 public sealed class DfLocalEndpointQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<DfLocalEndpointQuery, string>
+  public sealed class Handler : IRequestHandler<DfLocalEndpointQuery, string>
   {
-    public Task<string> Handle(DfLocalEndpointQuery query, CancellationToken cancellationToken) => Task.FromResult("local endpoint");
+    public ValueTask<string> Handle(DfLocalEndpointQuery query, CancellationToken cancellationToken) => ValueTask.FromResult("local endpoint");
   }
 }
 
@@ -32,9 +32,9 @@ public sealed class DfRemoteEndpointQuery : IQuery<string>
   [Parameter(Description = "A value")]
   public string Value { get; set; } = "";
 
-  public sealed class Handler : IQueryHandler<DfRemoteEndpointQuery, string>
+  public sealed class Handler : IRequestHandler<DfRemoteEndpointQuery, string>
   {
-    public Task<string> Handle(DfRemoteEndpointQuery query, CancellationToken cancellationToken) => Task.FromResult($"local {query?.Value}");
+    public ValueTask<string> Handle(DfRemoteEndpointQuery query, CancellationToken cancellationToken) => ValueTask.FromResult($"local {query?.Value}");
   }
 }
 

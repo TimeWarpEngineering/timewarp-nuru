@@ -54,20 +54,22 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <!-- Process execution -->
     <PackageReference Include="TimeWarp.Amuru" />
-    <!-- Source-generated mediator. Generators must flow to consuming apps
+    <!-- Source-generated mediator (TimeWarp.Mediator 15). TimeWarp.Mediator is the contracts package
+         (it was TimeWarp.Mediator.Contracts through 14). No PrivateAssets on it: consumers need its
+         runtime types (Unit, ISender, IRequestHandler). Generators must flow to consuming apps
          (analyzers + buildTransitive props), so PrivateAssets is cleared; the app compilation
-         is the mediator host and emits AddGeneratedMediator(). -->
+         is the mediator host and emits AddGeneratedMediator(). The generator also emits an internal,
+         empty mediator into this library; nothing here calls it (task 566). -->
     <PackageReference Include="TimeWarp.Contracts" />
-    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="none" />
   </ItemGroup>
 
   <PropertyGroup>
     <!-- TimeWarp.Nuru owns no mediator handlers; it is not a mediator graph member.
-         The generator package defaults this to true. Nuru's detector reads it and must
-         not emit AddGeneratedMediator() into the library. Host types the generator emits
-         into this compilation are internal (TimeWarp.Mediator 14.0.0), so apps
-         do not see a second AddGeneratedMediator(). -->
+         The generator package defaults this to true. In TimeWarp.Mediator 15 this is analyzer
+         membership only and does not stop emission. Host types the generator emits into this
+         compilation are internal, so apps do not see a second AddGeneratedMediator(). -->
     <TimeWarpMediatorAssembly>false</TimeWarpMediatorAssembly>
   </PropertyGroup>
 

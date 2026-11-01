@@ -29,13 +29,13 @@ public sealed class StatsCommand : IQuery<StatsResponse>
   [Parameter(IsCatchAll = true, Description = "Numbers to analyze")]
   public string[] Values { get; set; } = [];
 
-  public sealed class Handler : IQueryHandler<StatsCommand, StatsResponse>
+  public sealed class Handler : IRequestHandler<StatsCommand, StatsResponse>
   {
-    public Task<StatsResponse> Handle(StatsCommand command, CancellationToken ct)
+    public ValueTask<StatsResponse> Handle(StatsCommand command, CancellationToken ct)
     {
       if (command.Values.Length == 0)
       {
-        return Task.FromResult<StatsResponse>(new StatsResponse());
+        return ValueTask.FromResult<StatsResponse>(new StatsResponse());
       }
 
       double[] values =
@@ -47,10 +47,10 @@ public sealed class StatsCommand : IQuery<StatsResponse>
 
       if (values.Length == 0)
       {
-        return Task.FromResult<StatsResponse>(new StatsResponse());
+        return ValueTask.FromResult<StatsResponse>(new StatsResponse());
       }
 
-      return Task.FromResult<StatsResponse>
+      return ValueTask.FromResult<StatsResponse>
       (
         new StatsResponse
         {

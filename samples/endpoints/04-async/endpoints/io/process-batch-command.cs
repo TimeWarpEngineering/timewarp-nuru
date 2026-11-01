@@ -18,9 +18,9 @@ public sealed class ProcessBatchCommand : ICommand<Unit>
   [Option("parallel", "p", Description = "Process in parallel")]
   public bool IsParallel { get; set; }
 
-  public sealed class Handler : ICommandHandler<ProcessBatchCommand, Unit>
+  public sealed class Handler : IRequestHandler<ProcessBatchCommand, Unit>
   {
-    public async Task<Unit> Handle(ProcessBatchCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(ProcessBatchCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Processing {command.Items.Length} items...");
 

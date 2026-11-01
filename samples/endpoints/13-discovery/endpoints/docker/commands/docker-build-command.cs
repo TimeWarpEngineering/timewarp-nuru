@@ -22,7 +22,7 @@ public sealed class DockerBuildCommand : DockerGroupBase, ICommand<Unit>
   [Option("no-cache", null, Description = "Do not use cache when building")]
   public bool NoCache { get; set; }
 
-  public sealed class Handler : ICommandHandler<DockerBuildCommand, Unit>
+  public sealed class Handler : IRequestHandler<DockerBuildCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -31,12 +31,12 @@ public sealed class DockerBuildCommand : DockerGroupBase, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DockerBuildCommand command, CancellationToken ct)
     {
       string tagInfo = command.Tag != null ? $" -t {command.Tag}" : "";
       string cacheInfo = command.NoCache ? " --no-cache" : "";
       Terminal.WriteLine($"Building image from: {command.Path}{tagInfo}{cacheInfo}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

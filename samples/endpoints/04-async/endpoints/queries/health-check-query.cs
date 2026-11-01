@@ -23,9 +23,9 @@ public sealed class HealthCheckQuery : IQuery<HealthStatus>
   [Parameter(IsCatchAll = true, Description = "Services to check")]
   public string[] Services { get; set; } = [];
 
-  public sealed class Handler : IQueryHandler<HealthCheckQuery, HealthStatus>
+  public sealed class Handler : IRequestHandler<HealthCheckQuery, HealthStatus>
   {
-    public async Task<HealthStatus> Handle(HealthCheckQuery query, CancellationToken ct)
+    public async ValueTask<HealthStatus> Handle(HealthCheckQuery query, CancellationToken ct)
     {
       Dictionary<string, bool> statuses = new Dictionary<string, bool>();
 

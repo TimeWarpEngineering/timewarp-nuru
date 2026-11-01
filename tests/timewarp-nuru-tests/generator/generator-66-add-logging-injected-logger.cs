@@ -52,9 +52,9 @@ public sealed class Gen66DelegateCategory;
 [NuruRoute("gen66-work", Description = "Logs through an injected ILogger<T>")]
 public sealed class Gen66WorkCommand : ICommand<Unit>
 {
-  public sealed class Handler(ILogger<Gen66WorkCommand> logger, ITerminal terminal) : ICommandHandler<Gen66WorkCommand, Unit>
+  public sealed class Handler(ILogger<Gen66WorkCommand> logger, ITerminal terminal) : IRequestHandler<Gen66WorkCommand, Unit>
   {
-    public async Task<Unit> Handle(Gen66WorkCommand request, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Gen66WorkCommand request, CancellationToken cancellationToken)
     {
 #pragma warning disable CA1848 // Use LoggerMessage delegates
       logger.LogDebug("gen66-debug-entry");

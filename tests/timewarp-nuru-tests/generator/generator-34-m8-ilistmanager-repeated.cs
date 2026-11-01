@@ -81,9 +81,9 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen34IListManagerRepeated
             [Option("tags", Description = "A real repeated option")]
             public string[] Tags { get; set; } = [];
 
-            public sealed class Handler : ICommandHandler<IListManagerCommand, Unit>
+            public sealed class Handler : IRequestHandler<IListManagerCommand, Unit>
             {
-              public Task<Unit> Handle(IListManagerCommand command, CancellationToken ct) => Unit.Task;
+              public ValueTask<Unit> Handle(IListManagerCommand command, CancellationToken ct) => Unit.ValueTask;
             }
           }
         }

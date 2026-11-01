@@ -146,12 +146,12 @@ public sealed class Gen51TransientBag(IGen51Transient inner) : IGen51TransientBa
 
 public sealed record Gen51Ping : IQuery<string>;
 
-public sealed class Gen51PingHandler : IQueryHandler<Gen51Ping, string>
+public sealed class Gen51PingHandler : IRequestHandler<Gen51Ping, string>
 {
-  public Task<string> Handle(Gen51Ping query, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(Gen51Ping query, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(query);
-    return Task.FromResult("pong");
+    return ValueTask.FromResult("pong");
   }
 }
 
@@ -390,7 +390,7 @@ namespace TimeWarp.Nuru.Tests.Generator.ReplServiceScopes
       return "ok";
     }
 
-    internal static Task<string> Ping(ISender sender) => sender.Send(new Gen51Ping());
+    internal static ValueTask<string> Ping(ISender sender) => sender.Send(new Gen51Ping());
 
     internal static async Task AssertAutoStartRepl(bool useRuntimeDi)
     {

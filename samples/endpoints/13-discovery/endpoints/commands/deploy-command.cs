@@ -24,7 +24,7 @@ public sealed class DeployCommand : ICommand<Unit>
   [Option("replicas", "r", Description = "Number of replicas")]
   public int Replicas { get; set; } = 1;
 
-  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeployCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -33,13 +33,13 @@ public sealed class DeployCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       Terminal.WriteLine($"Deploying to {command.Env}...");
       Terminal.WriteLine($"  Force: {command.Force}");
       Terminal.WriteLine($"  Config: {command.ConfigFile ?? "(default)"}");
       Terminal.WriteLine($"  Replicas: {command.Replicas}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

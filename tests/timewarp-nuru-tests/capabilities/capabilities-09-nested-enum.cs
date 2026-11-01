@@ -168,13 +168,13 @@ public sealed class NeEndpointCommand : ICommand<Unit>
   [Option("tier", Description = "Tier")]
   public NeOuter.NeInner.NeTier? Tier { get; set; }
 
-  public sealed class Handler : ICommandHandler<NeEndpointCommand, Unit>
+  public sealed class Handler : IRequestHandler<NeEndpointCommand, Unit>
   {
-    public Task<Unit> Handle(NeEndpointCommand command, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(NeEndpointCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       _ = cancellationToken;
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

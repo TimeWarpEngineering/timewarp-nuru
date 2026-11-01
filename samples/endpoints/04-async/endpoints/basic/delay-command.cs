@@ -14,9 +14,9 @@ public sealed class DelayCommand : ICommand<Unit>
   [Parameter(Description = "Milliseconds to delay")]
   public int Ms { get; set; }
 
-  public sealed class Handler : ICommandHandler<DelayCommand, Unit>
+  public sealed class Handler : IRequestHandler<DelayCommand, Unit>
   {
-    public async Task<Unit> Handle(DelayCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DelayCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Starting {command.Ms}ms delay...");
       await Task.Delay(command.Ms, ct);

@@ -150,9 +150,9 @@ public class CapabilitiesExamplesTests
 [NuruRouteExample("cap06-deploy staging --dry-run")]
 public sealed class Cap06DeployEndpoint : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<Cap06DeployEndpoint, Unit>
+  public sealed class Handler : IRequestHandler<Cap06DeployEndpoint, Unit>
   {
-    public Task<Unit> Handle(Cap06DeployEndpoint command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(Cap06DeployEndpoint command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 

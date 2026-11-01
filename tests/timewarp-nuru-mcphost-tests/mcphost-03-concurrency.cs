@@ -251,9 +251,9 @@ public sealed class MccCodeQuery : IQuery<CcPathResult>
   [Option("code", Description = "The exit code")]
   public int Code { get; set; }
 
-  public sealed class Handler : IQueryHandler<MccCodeQuery, CcPathResult>
+  public sealed class Handler : IRequestHandler<MccCodeQuery, CcPathResult>
   {
-    public async Task<CcPathResult> Handle(MccCodeQuery query, CancellationToken cancellationToken)
+    public async ValueTask<CcPathResult> Handle(MccCodeQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       await CcRendezvous.Current.EnterAsync(query.Name, cancellationToken);

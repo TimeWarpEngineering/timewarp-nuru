@@ -21,7 +21,7 @@ public sealed class TestCommand : ICommand<Unit>
   [Option("phase", "p", Description = "Test phase: all (default), multi, or standalone")]
   public string? Phase { get; set; }
 
-  internal sealed class Handler : ICommandHandler<TestCommand, Unit>
+  internal sealed class Handler : IRequestHandler<TestCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -30,7 +30,7 @@ public sealed class TestCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(TestCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TestCommand command, CancellationToken ct)
     {
       // Get repo root using Git.FindRoot
       string? repoRoot = Git.FindRoot();

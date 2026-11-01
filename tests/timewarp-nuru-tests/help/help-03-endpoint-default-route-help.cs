@@ -122,9 +122,9 @@ public sealed class DefaultEndpoint : ICommand<Unit>
   [Option("verbose", "v", Description = "Enable verbose output")]
   public bool Verbose { get; set; }
 
-  internal sealed class Handler(ITerminal terminal) : ICommandHandler<DefaultEndpoint, Unit>
+  internal sealed class Handler(ITerminal terminal) : IRequestHandler<DefaultEndpoint, Unit>
   {
-    public async Task<Unit> Handle(DefaultEndpoint command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(DefaultEndpoint command, CancellationToken ct)
     {
       string input = command.Input ?? "(none)";
       await terminal.WriteLineAsync($"default-handler-executed: Input: {input}, Verbose: {command.Verbose}").ConfigureAwait(false);

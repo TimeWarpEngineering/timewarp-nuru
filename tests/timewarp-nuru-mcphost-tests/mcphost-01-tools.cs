@@ -543,13 +543,13 @@ public sealed class MhWipeCommand : ICommand<Unit>
   [Option("retries", Description = "Retry count")]
   public int Retries { get; set; } = 3;
 
-  public sealed class Handler : ICommandHandler<MhWipeCommand, Unit>
+  public sealed class Handler : IRequestHandler<MhWipeCommand, Unit>
   {
-    public Task<Unit> Handle(MhWipeCommand command, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(MhWipeCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       _ = cancellationToken;
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -561,13 +561,13 @@ public sealed class MhSymbolQuery : IQuery<string>
 {
   public string Name { get; set; } = "";
 
-  public sealed class Handler : IQueryHandler<MhSymbolQuery, string>
+  public sealed class Handler : IRequestHandler<MhSymbolQuery, string>
   {
-    public Task<string> Handle(MhSymbolQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(MhSymbolQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       _ = cancellationToken;
-      return Task.FromResult($"symbol:{query.Name}");
+      return ValueTask.FromResult($"symbol:{query.Name}");
     }
   }
 }
@@ -578,13 +578,13 @@ public sealed class MhReportQuery : IQuery<MhReport>
   [Option("name", Description = "Report name")]
   public string Name { get; set; } = "";
 
-  public sealed class Handler : IQueryHandler<MhReportQuery, MhReport>
+  public sealed class Handler : IRequestHandler<MhReportQuery, MhReport>
   {
-    public Task<MhReport> Handle(MhReportQuery query, CancellationToken cancellationToken)
+    public ValueTask<MhReport> Handle(MhReportQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       _ = cancellationToken;
-      return Task.FromResult(new MhReport(query.Name, query.Name.Length));
+      return ValueTask.FromResult(new MhReport(query.Name, query.Name.Length));
     }
   }
 }
@@ -595,9 +595,9 @@ public sealed class MhLoggingReportQuery : IQuery<MhReport>
   [Option("name", Description = "Report name")]
   public string Name { get; set; } = "";
 
-  public sealed class Handler : IQueryHandler<MhLoggingReportQuery, MhReport>
+  public sealed class Handler : IRequestHandler<MhLoggingReportQuery, MhReport>
   {
-    public async Task<MhReport> Handle(MhLoggingReportQuery query, CancellationToken cancellationToken)
+    public async ValueTask<MhReport> Handle(MhLoggingReportQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       _ = cancellationToken;
@@ -615,16 +615,16 @@ public sealed class MhProblemQuery : IQuery<OneOf<string, SharedProblemDetails>>
   [Option("fail", Description = "Return a problem")]
   public bool Fail { get; set; }
 
-  public sealed class Handler : IQueryHandler<MhProblemQuery, OneOf<string, SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<MhProblemQuery, OneOf<string, SharedProblemDetails>>
   {
-    public Task<OneOf<string, SharedProblemDetails>> Handle(MhProblemQuery query, CancellationToken cancellationToken)
+    public ValueTask<OneOf<string, SharedProblemDetails>> Handle(MhProblemQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       _ = cancellationToken;
       OneOf<string, SharedProblemDetails> outcome = query.Fail
         ? new SharedProblemDetails { Type = "https://example.test/mh", Title = "Bad input", Status = 17, Detail = "too small" }
         : "ok";
-      return Task.FromResult(outcome);
+      return ValueTask.FromResult(outcome);
     }
   }
 }

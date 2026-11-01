@@ -28,12 +28,12 @@ return await RunAllTests();
 
 public sealed record Gm47GreetQuery(string Name) : global::TimeWarp.Mediator.IQuery<string>;
 
-public sealed class Gm47GreetQueryHandler : global::TimeWarp.Mediator.IQueryHandler<Gm47GreetQuery, string>
+public sealed class Gm47GreetQueryHandler : global::TimeWarp.Mediator.IRequestHandler<Gm47GreetQuery, string>
 {
-  public Task<string> Handle(Gm47GreetQuery query, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(Gm47GreetQuery query, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(query);
-    return Task.FromResult($"Gm47 hello, {query.Name}!");
+    return ValueTask.FromResult($"Gm47 hello, {query.Name}!");
   }
 }
 
@@ -43,11 +43,11 @@ public sealed class Gm47PingNotificationHandler : global::TimeWarp.Mediator.INot
 {
   public static string? LastMessage { get; set; }
 
-  public Task Handle(Gm47PingNotification notification, CancellationToken cancellationToken)
+  public ValueTask Handle(Gm47PingNotification notification, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(notification);
     LastMessage = notification.Message;
-    return Task.CompletedTask;
+    return ValueTask.CompletedTask;
   }
 }
 

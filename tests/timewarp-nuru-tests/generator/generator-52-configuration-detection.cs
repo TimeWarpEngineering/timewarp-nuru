@@ -318,14 +318,14 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
         [NuruRoute("show")]
         public sealed class ShowQuery : IQuery<Unit>
         {
-          public sealed class Handler(IConfiguration configuration) : IQueryHandler<ShowQuery, Unit>
+          public sealed class Handler(IConfiguration configuration) : IRequestHandler<ShowQuery, Unit>
           {
-            public Task<Unit> Handle(ShowQuery query, CancellationToken cancellationToken)
+            public ValueTask<Unit> Handle(ShowQuery query, CancellationToken cancellationToken)
             {
               _ = configuration;
               _ = query;
               _ = cancellationToken;
-              return Unit.Task;
+              return Unit.ValueTask;
             }
           }
         }
@@ -356,14 +356,14 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
         [NuruRoute("show")]
         public sealed class ShowQuery : IQuery<Unit>
         {
-          public sealed class Handler(IOptions<DatabaseOptions> options) : IQueryHandler<ShowQuery, Unit>
+          public sealed class Handler(IOptions<DatabaseOptions> options) : IRequestHandler<ShowQuery, Unit>
           {
-            public Task<Unit> Handle(ShowQuery query, CancellationToken cancellationToken)
+            public ValueTask<Unit> Handle(ShowQuery query, CancellationToken cancellationToken)
             {
               _ = options;
               _ = query;
               _ = cancellationToken;
-              return Unit.Task;
+              return Unit.ValueTask;
             }
           }
         }
@@ -389,18 +389,18 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
         [NuruRoute("show")]
         public sealed class ShowCommand : ICommand<Unit>
         {
-          public sealed class Handler : ICommandHandler<ShowCommand, Unit>
+          public sealed class Handler : IRequestHandler<ShowCommand, Unit>
           {
             public Handler(IConfigurationRoot root)
             {
               _ = root;
             }
 
-            public Task<Unit> Handle(ShowCommand command, CancellationToken cancellationToken)
+            public ValueTask<Unit> Handle(ShowCommand command, CancellationToken cancellationToken)
             {
               _ = command;
               _ = cancellationToken;
-              return Unit.Task;
+              return Unit.ValueTask;
             }
           }
         }

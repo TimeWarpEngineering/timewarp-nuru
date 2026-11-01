@@ -6,9 +6,9 @@ using static System.Console;
 [NuruRoute("db-connect", Description = "Connect to database using config")]
 public sealed class DbConnectCommand : ICommand<Unit>
 {
-  public sealed class Handler(IOptions<DatabaseOptions> dbOptions) : ICommandHandler<DbConnectCommand, Unit>
+  public sealed class Handler(IOptions<DatabaseOptions> dbOptions) : IRequestHandler<DbConnectCommand, Unit>
   {
-    public Task<Unit> Handle(DbConnectCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DbConnectCommand command, CancellationToken ct)
     {
       DatabaseOptions db = dbOptions.Value;
       WriteLine("Connecting to database...");
@@ -16,7 +16,7 @@ public sealed class DbConnectCommand : ICommand<Unit>
       WriteLine($"  Database: {db.DatabaseName}");
       WriteLine($"  Timeout: {db.Timeout}s");
       WriteLine("✓ Connected successfully (simulated)");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

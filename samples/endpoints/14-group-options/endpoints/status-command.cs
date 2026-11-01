@@ -10,9 +10,9 @@ using TimeWarp.Nuru;
 [NuruRoute("status", Description = "Show working tree status")]
 public sealed class StatusCommand : GitGroupBase, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<StatusCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<StatusCommand, Unit>
   {
-    public async Task<Unit> Handle(StatusCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(StatusCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

@@ -14,9 +14,9 @@ public sealed class LongRunningCommand : ICommand<Unit>
   [Parameter(Description = "Number of iterations")]
   public int Iterations { get; set; } = 10;
 
-  public sealed class Handler : ICommandHandler<LongRunningCommand, Unit>
+  public sealed class Handler : IRequestHandler<LongRunningCommand, Unit>
   {
-    public async Task<Unit> Handle(LongRunningCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(LongRunningCommand command, CancellationToken ct)
     {
       for (int i = 0; i < command.Iterations; i++)
       {

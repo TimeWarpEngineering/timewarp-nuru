@@ -7,9 +7,9 @@ using static System.Console;
 [NuruRoute("settings", Description = "Show all current settings")]
 public sealed class ShowSettingsQuery : IQuery<Unit>
 {
-  public sealed class Handler(IOptions<ValidatedSettings> settings) : IQueryHandler<ShowSettingsQuery, Unit>
+  public sealed class Handler(IOptions<ValidatedSettings> settings) : IRequestHandler<ShowSettingsQuery, Unit>
   {
-    public Task<Unit> Handle(ShowSettingsQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(ShowSettingsQuery query, CancellationToken ct)
     {
       ValidatedSettings s = settings.Value;
 
@@ -21,7 +21,7 @@ public sealed class ShowSettingsQuery : IQuery<Unit>
       WriteLine($"  Environment: {s.Environment}");
       WriteLine($"  Tags: [{string.Join(", ", s.Tags)}]");
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

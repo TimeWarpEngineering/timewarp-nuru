@@ -122,9 +122,9 @@ public sealed class Issue152WorkspaceCommitsCommand : Issue152WorkspaceGroupBase
   [Option("count", "n", Description = "Number of commits per repo")]
   public int Count { get; set; } = 3;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue152WorkspaceCommitsCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue152WorkspaceCommitsCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue152WorkspaceCommitsCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue152WorkspaceCommitsCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Showing commits from last {command.Days} days").ConfigureAwait(false);
@@ -150,9 +150,9 @@ public sealed class Issue152RepoSetupCommand : Issue152RepoGroupBase, ICommand<U
   [Option("dry-run", Description = "Preview changes")]
   public bool DryRun { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue152RepoSetupCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue152RepoSetupCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue152RepoSetupCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue152RepoSetupCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Setting up repo (dry-run: {command.DryRun})").ConfigureAwait(false);

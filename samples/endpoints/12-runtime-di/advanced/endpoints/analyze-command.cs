@@ -7,13 +7,13 @@ public sealed class AnalyzeCommand : ICommand<string>
 {
   [Parameter] public string Data { get; set; } = "";
 
-  public sealed class Handler(Func<string, IAnalyzer> AnalyzerFactory) : ICommandHandler<AnalyzeCommand, string>
+  public sealed class Handler(Func<string, IAnalyzer> AnalyzerFactory) : IRequestHandler<AnalyzeCommand, string>
   {
-    public Task<string> Handle(AnalyzeCommand c, CancellationToken ct)
+    public ValueTask<string> Handle(AnalyzeCommand c, CancellationToken ct)
     {
       IAnalyzer analyzer = AnalyzerFactory("Smart");
       string result = analyzer.Analyze(c.Data);
-      return Task.FromResult<string>(result);
+      return ValueTask.FromResult<string>(result);
     }
   }
 }

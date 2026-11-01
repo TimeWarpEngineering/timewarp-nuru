@@ -17,12 +17,12 @@ public sealed class ExecCommand : ICommand<Unit>
   [Parameter(IsCatchAll = true, Description = "Command arguments")]
   public string[] Args { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<ExecCommand, Unit>
+  public sealed class Handler : IRequestHandler<ExecCommand, Unit>
   {
-    public Task<Unit> Handle(ExecCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Executing {command.Command} {string.Join(" ", command.Args)}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

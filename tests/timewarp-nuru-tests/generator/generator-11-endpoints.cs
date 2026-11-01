@@ -190,12 +190,12 @@ public sealed class GreetCommand : ICommand<Unit>
   [Parameter(Description = "Name to greet")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<GreetCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<GreetCommand, Unit>
   {
-    public Task<Unit> Handle(GreetCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(GreetCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Hello, {command.Name}!");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -218,15 +218,15 @@ public sealed class DeployCommand : ICommand<Unit>
   [Option("replicas", "r", Description = "Number of replicas")]
   public int Replicas { get; set; } = 1;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<DeployCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<DeployCommand, Unit>
   {
-    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Deploying to {command.Env}...");
       terminal.WriteLine($"  Force: {command.Force}");
       terminal.WriteLine($"  Config: {command.ConfigFile ?? "(default)"}");
       terminal.WriteLine($"  Replicas: {command.Replicas}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -246,14 +246,14 @@ public sealed class BuildCommand : ICommand<Unit>
   [Option("no-cache", null, Description = "Disable cache")]
   public bool NoCache { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<BuildCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<BuildCommand, Unit>
   {
-    public Task<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       string tagInfo = command.Tag != null ? $" -t {command.Tag}" : "";
       string cacheInfo = command.NoCache ? " --no-cache" : "";
       terminal.WriteLine($"Building: {command.Path}{tagInfo}{cacheInfo}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -267,12 +267,12 @@ public sealed class ExecCommand : ICommand<Unit>
   [Parameter(IsCatchAll = true, Description = "Command and arguments")]
   public string[] Args { get; set; } = [];
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<ExecCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<ExecCommand, Unit>
   {
-    public Task<Unit> Handle(ExecCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Executing: exec {string.Join(" ", command.Args)}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

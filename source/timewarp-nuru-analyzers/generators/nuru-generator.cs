@@ -138,7 +138,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .Select(static (compilation, _) => AssemblyMetadataExtractor.Extract(compilation));
 
     // 6b. Detect whether the TimeWarp.Mediator generator emits AddGeneratedMediator() here
-    IncrementalValueProvider<bool> hasGeneratedMediator = context.CompilationProvider
+    IncrementalValueProvider<string?> generatedMediatorNamespace = context.CompilationProvider
       .Combine(context.AnalyzerConfigOptionsProvider)
       .Select(static (data, _) => GeneratedMediatorDetector.Detect(data.Left, data.Right));
 
@@ -160,7 +160,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       .Combine(routeLocations)
       .Combine(endpointDiagnostics)
       .Combine(assemblyMetadata)
-      .Combine(hasGeneratedMediator)
+      .Combine(generatedMediatorNamespace)
       .Combine(hasConfiguration)
       .Combine(context.CompilationProvider)
       .Select(static (data, ct) => CreateGeneratorModelWithValidation(
@@ -568,13 +568,14 @@ public sealed class NuruGenerator : IIncrementalGenerator
     ImmutableDictionary<string, Location> routeLocations,
     ImmutableArray<Diagnostic> endpointDiagnostics,
     AssemblyMetadata assemblyMetadata,
-    bool hasGeneratedMediator,
+    string? generatedMediatorNamespace,
     bool hasConfiguration,
     Compilation compilation,
     CancellationToken cancellationToken
   )
   {
     _ = cancellationToken;
+    bool hasGeneratedMediator = generatedMediatorNamespace is not null;
 
     List<Diagnostic> allDiagnostics = [];
 
@@ -669,7 +670,7 @@ public sealed class NuruGenerator : IIncrementalGenerator
       Version: assemblyMetadata.Version,
       CommitHash: assemblyMetadata.CommitHash,
       CommitDate: assemblyMetadata.CommitDate,
-      HasGeneratedMediator: hasGeneratedMediator,
+      GeneratedMediatorNamespace: generatedMediatorNamespace,
       ProblemRendererTypeName: EndpointExtractor.FindProblemRenderer(compilation));
 
     return new GeneratorModelWithDiagnostics(model, [.. allDiagnostics]);

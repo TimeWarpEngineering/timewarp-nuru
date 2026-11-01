@@ -18,13 +18,13 @@ public sealed class PrimeCheckCommand : ICommand<Unit>
   [Parameter(Description = "Number to check")]
   public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<PrimeCheckCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand, Unit>
   {
-    public Task<Unit> Handle(PrimeCheckCommand command, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(PrimeCheckCommand command, CancellationToken cancellationToken)
     {
       bool result = calc.IsPrime(command.N);
       Console.WriteLine($"{command.N} is {(result ? "prime" : "not prime")}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

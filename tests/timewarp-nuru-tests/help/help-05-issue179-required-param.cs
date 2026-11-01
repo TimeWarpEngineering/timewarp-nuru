@@ -62,9 +62,9 @@ public sealed class Issue179DefaultEndpoint : ICommand<Unit>
   [Option("verbose", "v", Description = "Verbose output")]
   public bool Verbose { get; set; }
 
-  internal sealed class Handler(ITerminal terminal) : ICommandHandler<Issue179DefaultEndpoint, Unit>
+  internal sealed class Handler(ITerminal terminal) : IRequestHandler<Issue179DefaultEndpoint, Unit>
   {
-    public async Task<Unit> Handle(Issue179DefaultEndpoint command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(Issue179DefaultEndpoint command, CancellationToken ct)
     {
       await terminal.WriteLineAsync($"handler-executed: Input={command.Input}").ConfigureAwait(false);
       return default;

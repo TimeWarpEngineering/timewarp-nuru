@@ -510,9 +510,9 @@ public static class StaticFlags
 [NuruRouteExample("h370-pack", Description = "Pack the default output")]
 public sealed class H370PackEndpoint : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<H370PackEndpoint, Unit>
+  public sealed class Handler : IRequestHandler<H370PackEndpoint, Unit>
   {
-    public Task<Unit> Handle(H370PackEndpoint command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(H370PackEndpoint command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 
@@ -525,9 +525,9 @@ public sealed class H370PackFeedEndpoint : ICommand<Unit>
   [Option("force", "f", Description = "Overwrite an existing package")]
   public bool Force { get; set; }
 
-  public sealed class Handler : ICommandHandler<H370PackFeedEndpoint, Unit>
+  public sealed class Handler : IRequestHandler<H370PackFeedEndpoint, Unit>
   {
-    public Task<Unit> Handle(H370PackFeedEndpoint command, CancellationToken cancellationToken) => Unit.Task;
+    public ValueTask<Unit> Handle(H370PackFeedEndpoint command, CancellationToken cancellationToken) => Unit.ValueTask;
   }
 }
 
@@ -538,9 +538,9 @@ public sealed class ForkEndpoint : ICommand<Unit>
   [Parameter(Description = "Source repository identifier")]
   public required string Source { get; set; }
 
-  internal sealed class Handler(ITerminal terminal) : ICommandHandler<ForkEndpoint, Unit>
+  internal sealed class Handler(ITerminal terminal) : IRequestHandler<ForkEndpoint, Unit>
   {
-    public async Task<Unit> Handle(ForkEndpoint command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(ForkEndpoint command, CancellationToken ct)
     {
       await terminal.WriteLineAsync($"forked {command.Source}").ConfigureAwait(false);
       return default;

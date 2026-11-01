@@ -338,14 +338,14 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen42ExtensionMethodLoweringDiagnostics
           [NuruRoute("em42-hidden-cmd")]
           public sealed class HiddenCommand : ICommand<Unit>
           {
-            public sealed class Handler : ICommandHandler<HiddenCommand, Unit>
+            public sealed class Handler : IRequestHandler<HiddenCommand, Unit>
             {
               public Handler(IEm42HiddenCmd hidden)
               {
                 _ = hidden;
               }
 
-              public Task<Unit> Handle(HiddenCommand command, CancellationToken ct) => Unit.Task;
+              public ValueTask<Unit> Handle(HiddenCommand command, CancellationToken ct) => Unit.ValueTask;
             }
           }
         }

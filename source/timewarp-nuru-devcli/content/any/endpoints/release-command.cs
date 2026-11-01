@@ -82,7 +82,7 @@ internal sealed class ReleaseCommand : ICommand<Unit>
   [Option("dry-run", Description = "Run every guard and print what would be created, without creating anything")]
   public bool DryRun { get; set; }
 
-  internal sealed class Handler : ICommandHandler<ReleaseCommand, Unit>
+  internal sealed class Handler : IRequestHandler<ReleaseCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly NuGetVersionService NuGetVersionService;
@@ -103,7 +103,7 @@ internal sealed class ReleaseCommand : ICommand<Unit>
       PackableProjectService = packableProjectService;
     }
 
-    public async Task<Unit> Handle(ReleaseCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(ReleaseCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

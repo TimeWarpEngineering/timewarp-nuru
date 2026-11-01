@@ -5,9 +5,9 @@ using TimeWarp.Terminal;
 [NuruRoute("demo", Description = "Demo command for testing output capture")]
 public sealed class DemoCommand : ICommand<Unit>
 {
-  public sealed class Handler(ITerminal Terminal) : ICommandHandler<DemoCommand, Unit>
+  public sealed class Handler(ITerminal Terminal) : IRequestHandler<DemoCommand, Unit>
   {
-    public Task<Unit> Handle(DemoCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DemoCommand command, CancellationToken ct)
     {
       // Demonstrate stdout
       Terminal.WriteLine("Hello from stdout!");
@@ -21,7 +21,7 @@ public sealed class DemoCommand : ICommand<Unit>
       // Demonstrate styled output
       Terminal.WriteLine("Success!".Green());
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -303,12 +303,12 @@ public sealed class KanbanAddCommand : TestKanbanGroup, ICommand<Unit>
   [Parameter(Description = "Task name")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<KanbanAddCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<KanbanAddCommand, Unit>
   {
-    public Task<Unit> Handle(KanbanAddCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(KanbanAddCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Added: {command.Name}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -320,12 +320,12 @@ public sealed class KanbanAddCommand : TestKanbanGroup, ICommand<Unit>
 [NuruRoute("list", Description = "List kanban tasks")]
 public sealed class KanbanListCommand : TestKanbanGroup, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<KanbanListCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<KanbanListCommand, Unit>
   {
-    public Task<Unit> Handle(KanbanListCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(KanbanListCommand command, CancellationToken ct)
     {
       terminal.WriteLine("Kanban list");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -344,12 +344,12 @@ public sealed class GitCommitCommand : TestGitGroup, ICommand<Unit>
   [Option("message", "m", Description = "Commit message")]
   public string Message { get; set; } = string.Empty;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<GitCommitCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<GitCommitCommand, Unit>
   {
-    public Task<Unit> Handle(GitCommitCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(GitCommitCommand command, CancellationToken ct)
     {
       terminal.WriteLine($"Committed: {command.Message}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -366,12 +366,12 @@ public sealed class GitCommitCommand : TestGitGroup, ICommand<Unit>
 [NuruRoute("ungrouped", Description = "Ungrouped test command")]
 public sealed class UngroupedCommand : ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<UngroupedCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<UngroupedCommand, Unit>
   {
-    public Task<Unit> Handle(UngroupedCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(UngroupedCommand command, CancellationToken ct)
     {
       terminal.WriteLine("Ungrouped command executed");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

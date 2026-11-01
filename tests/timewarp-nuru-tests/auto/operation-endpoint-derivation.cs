@@ -815,12 +815,12 @@ public sealed class T508QuoteQuery : IQuery<string>
 
   public int Count { get; set; } = 4;
 
-  public sealed class Handler : IQueryHandler<T508QuoteQuery, string>
+  public sealed class Handler : IRequestHandler<T508QuoteQuery, string>
   {
-    public Task<string> Handle(T508QuoteQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508QuoteQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"title:{query.Title}|label:{query.Label}|count:{query.Count.ToString(CultureInfo.InvariantCulture)}");
+      return ValueTask.FromResult($"title:{query.Title}|label:{query.Label}|count:{query.Count.ToString(CultureInfo.InvariantCulture)}");
     }
   }
 }
@@ -835,13 +835,13 @@ public sealed class T508BoolQuery : IQuery<string>
 
   public bool? Maybe { get; set; }
 
-  public sealed class Handler : IQueryHandler<T508BoolQuery, string>
+  public sealed class Handler : IRequestHandler<T508BoolQuery, string>
   {
-    public Task<string> Handle(T508BoolQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508BoolQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       string maybe = query.Maybe is null ? "null" : query.Maybe.Value ? "true" : "false";
-      return Task.FromResult(
+      return ValueTask.FromResult(
         $"analyzers:{(query.IncludeAnalyzers ? "true" : "false")}|verbose:{(query.Verbose ? "true" : "false")}|maybe:{maybe}");
     }
   }
@@ -852,12 +852,12 @@ public sealed class T508ForceQuery : IQuery<string>
 {
   public bool Force { get; set; }
 
-  public sealed class Handler : IQueryHandler<T508ForceQuery, string>
+  public sealed class Handler : IRequestHandler<T508ForceQuery, string>
   {
-    public Task<string> Handle(T508ForceQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508ForceQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult(query.Force ? "force:true" : "force:false");
+      return ValueTask.FromResult(query.Force ? "force:true" : "force:false");
     }
   }
 }
@@ -875,12 +875,12 @@ public sealed class T508EnumQuery : IQuery<string>
 
   public required T508Mode RequiredMode { get; set; }
 
-  public sealed class Handler : IQueryHandler<T508EnumQuery, string>
+  public sealed class Handler : IRequestHandler<T508EnumQuery, string>
   {
-    public Task<string> Handle(T508EnumQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508EnumQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"mode:{query.Mode}|required:{query.RequiredMode}");
+      return ValueTask.FromResult($"mode:{query.Mode}|required:{query.RequiredMode}");
     }
   }
 }
@@ -892,12 +892,12 @@ public sealed class T508RepeatQuery : IQuery<string>
 
   public int[] Numbers { get; set; } = [];
 
-  public sealed class Handler : IQueryHandler<T508RepeatQuery, string>
+  public sealed class Handler : IRequestHandler<T508RepeatQuery, string>
   {
-    public Task<string> Handle(T508RepeatQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508RepeatQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"tags:{string.Join(',', query.Tags)}|numbers:{string.Join(',', query.Numbers)}");
+      return ValueTask.FromResult($"tags:{string.Join(',', query.Tags)}|numbers:{string.Join(',', query.Numbers)}");
     }
   }
 }
@@ -916,16 +916,16 @@ public sealed class T508JsonQuery : IQuery<string>
 
   public List<T508Note> Bag { get; set; } = [];
 
-  public sealed class Handler : IQueryHandler<T508JsonQuery, string>
+  public sealed class Handler : IRequestHandler<T508JsonQuery, string>
   {
-    public Task<string> Handle(T508JsonQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508JsonQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       if (query.Notes is null || query.Notes.Length == 0)
-        return Task.FromResult("notes:0");
+        return ValueTask.FromResult("notes:0");
 
       T508Note first = query.Notes[0];
-      return Task.FromResult($"notes:{first.Path}:{first.Version.ToString(CultureInfo.InvariantCulture)}");
+      return ValueTask.FromResult($"notes:{first.Path}:{first.Version.ToString(CultureInfo.InvariantCulture)}");
     }
   }
 }
@@ -940,12 +940,12 @@ public sealed class T508GroupedAddQuery : T508CalcGroup, IQuery<string>
 
   public int Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<T508GroupedAddQuery, string>
+  public sealed class Handler : IRequestHandler<T508GroupedAddQuery, string>
   {
-    public Task<string> Handle(T508GroupedAddQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508GroupedAddQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"sum:{(query.X + query.Y).ToString(CultureInfo.InvariantCulture)}");
+      return ValueTask.FromResult($"sum:{(query.X + query.Y).ToString(CultureInfo.InvariantCulture)}");
     }
   }
 }
@@ -954,13 +954,13 @@ public sealed class T508GroupedAddQuery : T508CalcGroup, IQuery<string>
 [NuruCliBinding(Group = "t508tools")]
 public sealed class T508CliGroupQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508CliGroupQuery, string>
+  public sealed class Handler : IRequestHandler<T508CliGroupQuery, string>
   {
-    public Task<string> Handle(T508CliGroupQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508CliGroupQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("tools");
+      return ValueTask.FromResult("tools");
     }
   }
 }
@@ -972,13 +972,13 @@ public abstract class T508WinsGroup;
 [NuruCliBinding(Group = "t508loses")]
 public sealed class T508PrecedenceQuery : T508WinsGroup, IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508PrecedenceQuery, string>
+  public sealed class Handler : IRequestHandler<T508PrecedenceQuery, string>
   {
-    public Task<string> Handle(T508PrecedenceQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508PrecedenceQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("wins");
+      return ValueTask.FromResult("wins");
     }
   }
 }
@@ -986,13 +986,13 @@ public sealed class T508PrecedenceQuery : T508WinsGroup, IQuery<string>
 [Operation("t514dotted", Group = "t514ops.symbols")]
 public sealed class T514DottedGroupQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T514DottedGroupQuery, string>
+  public sealed class Handler : IRequestHandler<T514DottedGroupQuery, string>
   {
-    public Task<string> Handle(T514DottedGroupQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T514DottedGroupQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("dotted");
+      return ValueTask.FromResult("dotted");
     }
   }
 }
@@ -1000,13 +1000,13 @@ public sealed class T514DottedGroupQuery : IQuery<string>
 [Operation("t514spaced", Group = " t514ops  symbols ")]
 public sealed class T514SpacedGroupQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T514SpacedGroupQuery, string>
+  public sealed class Handler : IRequestHandler<T514SpacedGroupQuery, string>
   {
-    public Task<string> Handle(T514SpacedGroupQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T514SpacedGroupQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("spaced");
+      return ValueTask.FromResult("spaced");
     }
   }
 }
@@ -1018,13 +1018,13 @@ public abstract class T514RouteGroup;
 [NuruCliBinding(Group = "t514cligroup")]
 public sealed class T514ContractWinsQuery : T514RouteGroup, IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T514ContractWinsQuery, string>
+  public sealed class Handler : IRequestHandler<T514ContractWinsQuery, string>
   {
-    public Task<string> Handle(T514ContractWinsQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T514ContractWinsQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("contract");
+      return ValueTask.FromResult("contract");
     }
   }
 }
@@ -1033,13 +1033,13 @@ public sealed class T514ContractWinsQuery : T514RouteGroup, IQuery<string>
 [NuruCliBinding(Group = "t514blankcli")]
 public sealed class T514BlankGroupQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T514BlankGroupQuery, string>
+  public sealed class Handler : IRequestHandler<T514BlankGroupQuery, string>
   {
-    public Task<string> Handle(T514BlankGroupQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T514BlankGroupQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("blank");
+      return ValueTask.FromResult("blank");
     }
   }
 }
@@ -1048,13 +1048,13 @@ public sealed class T514BlankGroupQuery : IQuery<string>
 [Operation("t508canonical", Description = "Canonical name")]
 public sealed class T508BothQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508BothQuery, string>
+  public sealed class Handler : IRequestHandler<T508BothQuery, string>
   {
-    public Task<string> Handle(T508BothQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508BothQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("legacy");
+      return ValueTask.FromResult("legacy");
     }
   }
 }
@@ -1065,12 +1065,12 @@ public sealed class T508PosQuery : IQuery<string>
   [Parameter(Description = "Left operand")]
   public int Left { get; set; }
 
-  public sealed class Handler : IQueryHandler<T508PosQuery, string>
+  public sealed class Handler : IRequestHandler<T508PosQuery, string>
   {
-    public Task<string> Handle(T508PosQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508PosQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"left:{query.Left.ToString(CultureInfo.InvariantCulture)}");
+      return ValueTask.FromResult($"left:{query.Left.ToString(CultureInfo.InvariantCulture)}");
     }
   }
 }
@@ -1083,12 +1083,12 @@ public sealed class T508MixedQuery : IQuery<string>
 
   public int Count { get; set; } = 1;
 
-  public sealed class Handler : IQueryHandler<T508MixedQuery, string>
+  public sealed class Handler : IRequestHandler<T508MixedQuery, string>
   {
-    public Task<string> Handle(T508MixedQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508MixedQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"title:{query.Title}|count:{query.Count.ToString(CultureInfo.InvariantCulture)}");
+      return ValueTask.FromResult($"title:{query.Title}|count:{query.Count.ToString(CultureInfo.InvariantCulture)}");
     }
   }
 }
@@ -1099,12 +1099,12 @@ public sealed class T508ExternalCommand : ICommand<string>
   public string Name { get; set; } = "world";
 }
 
-public sealed class T508ExternalHandler : ICommandHandler<T508ExternalCommand, string>
+public sealed class T508ExternalHandler : IRequestHandler<T508ExternalCommand, string>
 {
-  public Task<string> Handle(T508ExternalCommand command, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(T508ExternalCommand command, CancellationToken cancellationToken)
   {
     _ = cancellationToken;
-    return Task.FromResult($"ext:{command.Name}");
+    return ValueTask.FromResult($"ext:{command.Name}");
   }
 }
 
@@ -1114,12 +1114,12 @@ public sealed class T508AttrQuery : IQuery<string>
   [Option("label", Description = "Label text")]
   public string Label { get; set; } = "plain";
 
-  public sealed class Handler : IQueryHandler<T508AttrQuery, string>
+  public sealed class Handler : IRequestHandler<T508AttrQuery, string>
   {
-    public Task<string> Handle(T508AttrQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508AttrQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult(query.Label);
+      return ValueTask.FromResult(query.Label);
     }
   }
 }
@@ -1143,12 +1143,12 @@ public sealed class T508ScalarQuery : IQuery<string>
 
   public ushort[] More { get; set; } = [];
 
-  public sealed class Handler : IQueryHandler<T508ScalarQuery, string>
+  public sealed class Handler : IRequestHandler<T508ScalarQuery, string>
   {
-    public Task<string> Handle(T508ScalarQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508ScalarQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult(
+      return ValueTask.FromResult(
         $"signed:{query.Narrow.ToString(CultureInfo.InvariantCulture)}"
         + $"|words:{query.Words.ToString(CultureInfo.InvariantCulture)}"
         + $"|ticks:{query.Ticks.ToString(CultureInfo.InvariantCulture)}"
@@ -1186,14 +1186,14 @@ public sealed class T508DefaultQuery : IQuery<string>
 
   public Guid Token { get; set; } = Guid.NewGuid();
 
-  public sealed class Handler : IQueryHandler<T508DefaultQuery, string>
+  public sealed class Handler : IRequestHandler<T508DefaultQuery, string>
   {
-    public Task<string> Handle(T508DefaultQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508DefaultQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       string items = query.Items is null ? "null" : "set";
       string token = query.Token == Guid.Empty ? "empty" : "set";
-      return Task.FromResult(
+      return ValueTask.FromResult(
         $"price:{query.Price.ToString(CultureInfo.InvariantCulture)}"
         + $"|ratio:{query.Ratio.ToString(CultureInfo.InvariantCulture)}"
         + $"|const:{(query.ConstFlag ? "true" : "false")}"
@@ -1209,12 +1209,12 @@ public sealed record class T508RecordQuery : IQuery<string>
 {
   public string Title { get; set; } = "rec";
 
-  public sealed class Handler : IQueryHandler<T508RecordQuery, string>
+  public sealed class Handler : IRequestHandler<T508RecordQuery, string>
   {
-    public Task<string> Handle(T508RecordQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508RecordQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult("record:" + query.Title);
+      return ValueTask.FromResult("record:" + query.Title);
     }
   }
 }
@@ -1227,12 +1227,12 @@ public abstract class T508InheritedBase
 [Operation("t508inherited")]
 public sealed class T508InheritedQuery : T508InheritedBase, IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508InheritedQuery, string>
+  public sealed class Handler : IRequestHandler<T508InheritedQuery, string>
   {
-    public Task<string> Handle(T508InheritedQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508InheritedQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult("owner:" + query.Owner);
+      return ValueTask.FromResult("owner:" + query.Owner);
     }
   }
 }
@@ -1241,13 +1241,13 @@ public sealed class T508InheritedQuery : T508InheritedBase, IQuery<string>
 [Operation("t508wiped", Description = "Kept from operation")]
 public sealed class T508KeepDescriptionQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508KeepDescriptionQuery, string>
+  public sealed class Handler : IRequestHandler<T508KeepDescriptionQuery, string>
   {
-    public Task<string> Handle(T508KeepDescriptionQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508KeepDescriptionQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("kept");
+      return ValueTask.FromResult("kept");
     }
   }
 }
@@ -1262,12 +1262,12 @@ public sealed class T508JsonRequiredQuery : IQuery<string>
 {
   public required T508Body Body { get; set; }
 
-  public sealed class Handler : IQueryHandler<T508JsonRequiredQuery, string>
+  public sealed class Handler : IRequestHandler<T508JsonRequiredQuery, string>
   {
-    public Task<string> Handle(T508JsonRequiredQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508JsonRequiredQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult("body:" + query.Body.Name);
+      return ValueTask.FromResult("body:" + query.Body.Name);
     }
   }
 }
@@ -1320,9 +1320,9 @@ public sealed class T508SpecialQuery : IQuery<string>
 
   public float Rise { get; set; } = float.PositiveInfinity;
 
-  public sealed class Handler : IQueryHandler<T508SpecialQuery, string>
+  public sealed class Handler : IRequestHandler<T508SpecialQuery, string>
   {
-    public Task<string> Handle(T508SpecialQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508SpecialQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       string quiet = double.IsNaN(query.Quiet) ? "nan" : "no";
@@ -1334,7 +1334,7 @@ public sealed class T508SpecialQuery : IQuery<string>
       string option = double.IsNaN(query.QuietOption) ? "nan" : "no";
       string soft = float.IsNaN(query.Soft) ? "nan" : "no";
       string rise = float.IsPositiveInfinity(query.Rise) ? "inf" : "no";
-      return Task.FromResult(
+      return ValueTask.FromResult(
         $"quiet:{quiet}|up:{up}|down:{down}|accent:{accent}|access:{access}|cast:{casted}|option:{option}|soft:{soft}|rise:{rise}");
     }
   }
@@ -1343,12 +1343,12 @@ public sealed class T508SpecialQuery : IQuery<string>
 [Operation("t508user")]
 public sealed record T508UserQuery(int Id) : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508UserQuery, string>
+  public sealed class Handler : IRequestHandler<T508UserQuery, string>
   {
-    public Task<string> Handle(T508UserQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508UserQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult("id:" + query.Id.ToString(CultureInfo.InvariantCulture));
+      return ValueTask.FromResult("id:" + query.Id.ToString(CultureInfo.InvariantCulture));
     }
   }
 }
@@ -1360,12 +1360,12 @@ public sealed class T508InitQuery : IQuery<string>
 
   public int Extra { get; init; } = 3;
 
-  public sealed class Handler : IQueryHandler<T508InitQuery, string>
+  public sealed class Handler : IRequestHandler<T508InitQuery, string>
   {
-    public Task<string> Handle(T508InitQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508InitQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"name:{query.Name}|extra:{query.Extra.ToString(CultureInfo.InvariantCulture)}");
+      return ValueTask.FromResult($"name:{query.Name}|extra:{query.Extra.ToString(CultureInfo.InvariantCulture)}");
     }
   }
 }
@@ -1375,13 +1375,13 @@ public sealed class T508ParamsQuery : IQuery<string>
 {
   public T508Note[] Params { get; set; } = [];
 
-  public sealed class Handler : IQueryHandler<T508ParamsQuery, string>
+  public sealed class Handler : IRequestHandler<T508ParamsQuery, string>
   {
-    public Task<string> Handle(T508ParamsQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508ParamsQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("params");
+      return ValueTask.FromResult("params");
     }
   }
 }
@@ -1397,12 +1397,12 @@ public sealed class T508HideQuery : T508HideBase, IQuery<string>
   [Option("title")]
   public new string Name { get; set; } = "child";
 
-  public sealed class Handler : IQueryHandler<T508HideQuery, string>
+  public sealed class Handler : IRequestHandler<T508HideQuery, string>
   {
-    public Task<string> Handle(T508HideQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508HideQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult("name:" + query.Name);
+      return ValueTask.FromResult("name:" + query.Name);
     }
   }
 }
@@ -1433,13 +1433,13 @@ public sealed class T508InitManyQuery : IQuery<string>
 
   public string Note { get; init; } = string.Concat("n", string.Empty);
 
-  public sealed class Handler : IQueryHandler<T508InitManyQuery, string>
+  public sealed class Handler : IRequestHandler<T508InitManyQuery, string>
   {
-    public Task<string> Handle(T508InitManyQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508InitManyQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       string token = query.Token == Guid.Empty ? "empty" : "set";
-      return Task.FromResult(
+      return ValueTask.FromResult(
         $"wait:{query.Wait.TotalSeconds.ToString(CultureInfo.InvariantCulture)}"
         + $"|seed:{query.Seed.ToString(CultureInfo.InvariantCulture)}"
         + $"|token:{token}"
@@ -1458,12 +1458,12 @@ public sealed class T508RequiredDefaultQuery : IQuery<string>
 
   public required T508Body Body { get; set; } = new();
 
-  public sealed class Handler : IQueryHandler<T508RequiredDefaultQuery, string>
+  public sealed class Handler : IRequestHandler<T508RequiredDefaultQuery, string>
   {
-    public Task<string> Handle(T508RequiredDefaultQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508RequiredDefaultQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult(
+      return ValueTask.FromResult(
         $"wait:{query.Wait.TotalSeconds.ToString(CultureInfo.InvariantCulture)}|tag:{query.Tag}|body:{query.Body.Name}");
     }
   }
@@ -1477,12 +1477,12 @@ public sealed class T508CaseQuery : IQuery<string>
 
   public bool Mute { get; set; } = false;
 
-  public sealed class Handler : IQueryHandler<T508CaseQuery, string>
+  public sealed class Handler : IRequestHandler<T508CaseQuery, string>
   {
-    public Task<string> Handle(T508CaseQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508CaseQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"level:{query.Level}|mute:{query.Mute}");
+      return ValueTask.FromResult($"level:{query.Level}|mute:{query.Mute}");
     }
   }
 }
@@ -1498,15 +1498,15 @@ public sealed class T508NullableEnumQuery : IQuery<string>
 
   public T508Mode Shared { get; set; } = T508Shared.Color;
 
-  public sealed class Handler : IQueryHandler<T508NullableEnumQuery, string>
+  public sealed class Handler : IRequestHandler<T508NullableEnumQuery, string>
   {
-    public Task<string> Handle(T508NullableEnumQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508NullableEnumQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       string unset = query.Unset?.ToString() ?? "null";
       string preset = query.Preset?.ToString() ?? "null";
       string combined = query.Combined?.ToString() ?? "null";
-      return Task.FromResult($"unset:{unset}|preset:{preset}|combined:{combined}|shared:{query.Shared}");
+      return ValueTask.FromResult($"unset:{unset}|preset:{preset}|combined:{combined}|shared:{query.Shared}");
     }
   }
 }
@@ -1514,12 +1514,12 @@ public sealed class T508NullableEnumQuery : IQuery<string>
 [Operation("t508posdefault")]
 public sealed record T508PositionalDefaultQuery(string Name, int Count = 5, T508Mode Mode = T508Mode.Slow) : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508PositionalDefaultQuery, string>
+  public sealed class Handler : IRequestHandler<T508PositionalDefaultQuery, string>
   {
-    public Task<string> Handle(T508PositionalDefaultQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508PositionalDefaultQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"name:{query.Name}|count:{query.Count.ToString(CultureInfo.InvariantCulture)}|mode:{query.Mode}");
+      return ValueTask.FromResult($"name:{query.Name}|count:{query.Count.ToString(CultureInfo.InvariantCulture)}|mode:{query.Mode}");
     }
   }
 }
@@ -1531,12 +1531,12 @@ public sealed record T508PositionalInitQuery(string Name, string Note = "n") : I
 
   public string Note { get; init; } = Note;
 
-  public sealed class Handler : IQueryHandler<T508PositionalInitQuery, string>
+  public sealed class Handler : IRequestHandler<T508PositionalInitQuery, string>
   {
-    public Task<string> Handle(T508PositionalInitQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508PositionalInitQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult($"name:{query.Name}|note:{query.Note}");
+      return ValueTask.FromResult($"name:{query.Name}|note:{query.Note}");
     }
   }
 }

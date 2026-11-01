@@ -6,9 +6,9 @@ using static System.Console;
 [NuruRoute("validate", Description = "Validate current configuration")]
 public sealed class ValidateConfigQuery : IQuery<Unit>
 {
-  public sealed class Handler(IOptions<ValidatedSettings> settings) : IQueryHandler<ValidateConfigQuery, Unit>
+  public sealed class Handler(IOptions<ValidatedSettings> settings) : IRequestHandler<ValidateConfigQuery, Unit>
   {
-    public Task<Unit> Handle(ValidateConfigQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(ValidateConfigQuery query, CancellationToken ct)
     {
       ValidatedSettings s = settings.Value;
 
@@ -21,7 +21,7 @@ public sealed class ValidateConfigQuery : IQuery<Unit>
       WriteLine($"  Endpoint: {s.EndpointUrl}");
       WriteLine($"  Tags: {string.Join(", ", s.Tags)}");
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
 
     private static string MaskApiKey(string apiKey)

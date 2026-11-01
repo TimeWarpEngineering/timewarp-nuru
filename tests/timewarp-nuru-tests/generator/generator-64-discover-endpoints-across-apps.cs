@@ -35,18 +35,18 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen63DiscoverEndpointsAcrossApps
       [NuruRoute("ping")]
       public sealed class PingQuery : IQuery<string>
       {
-        public sealed class Handler : IQueryHandler<PingQuery, string>
+        public sealed class Handler : IRequestHandler<PingQuery, string>
         {
-          public Task<string> Handle(PingQuery query, CancellationToken ct) => Task.FromResult("pong");
+          public ValueTask<string> Handle(PingQuery query, CancellationToken ct) => ValueTask.FromResult("pong");
         }
       }
 
       [NuruRoute("pong")]
       public sealed class PongQuery : IQuery<string>
       {
-        public sealed class Handler : IQueryHandler<PongQuery, string>
+        public sealed class Handler : IRequestHandler<PongQuery, string>
         {
-          public Task<string> Handle(PongQuery query, CancellationToken ct) => Task.FromResult("ping");
+          public ValueTask<string> Handle(PongQuery query, CancellationToken ct) => ValueTask.FromResult("ping");
         }
       }
       """;

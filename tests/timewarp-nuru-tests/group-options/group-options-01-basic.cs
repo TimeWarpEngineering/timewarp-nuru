@@ -354,9 +354,9 @@ public abstract class Task419BasicGroupBase
 [NuruRoute("status", Description = "Show basic status")]
 public sealed class Task419BasicStatusCommand : Task419BasicGroupBase, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419BasicStatusCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Task419BasicStatusCommand, Unit>
   {
-    public async Task<Unit> Handle(Task419BasicStatusCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Task419BasicStatusCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Status: verbose={command.Verbose}").ConfigureAwait(false);
@@ -382,9 +382,9 @@ public abstract class Task419MultiGroupBase
 [NuruRoute("deploy", Description = "Deploy application")]
 public sealed class Task419MultiDeployCommand : Task419MultiGroupBase, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419MultiDeployCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Task419MultiDeployCommand, Unit>
   {
-    public async Task<Unit> Handle(Task419MultiDeployCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Task419MultiDeployCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Deploy: verbose={command.Verbose}, dryRun={command.DryRun}").ConfigureAwait(false);
@@ -410,9 +410,9 @@ public sealed class Task419MixedCommitCommand : Task419MixedGroupBase, ICommand<
   [Option("message", "m", Description = "Commit message")]
   public string Message { get; set; } = string.Empty;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419MixedCommitCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Task419MixedCommitCommand, Unit>
   {
-    public async Task<Unit> Handle(Task419MixedCommitCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Task419MixedCommitCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Commit: verbose={command.Verbose}, message={command.Message}").ConfigureAwait(false);
@@ -442,9 +442,9 @@ public abstract class Task419ChildGroupBase : Task419ParentGroupBase
 [NuruRoute("action", Description = "Action in grandchild")]
 public sealed class Task419GrandchildCommand : Task419ChildGroupBase, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419GrandchildCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Task419GrandchildCommand, Unit>
   {
-    public async Task<Unit> Handle(Task419GrandchildCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Task419GrandchildCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Grandchild: verbose={command.Verbose}, dryRun={command.DryRun}").ConfigureAwait(false);
@@ -476,9 +476,9 @@ public abstract class Task419TypedGroupBase
 [NuruRoute("config", Description = "Show configuration")]
 public sealed class Task419TypedConfigCommand : Task419TypedGroupBase, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Task419TypedConfigCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Task419TypedConfigCommand, Unit>
   {
-    public async Task<Unit> Handle(Task419TypedConfigCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Task419TypedConfigCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       string countStr = command.Count?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "(null)";

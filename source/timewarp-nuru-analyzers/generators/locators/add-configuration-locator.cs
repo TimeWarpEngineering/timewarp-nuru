@@ -11,7 +11,7 @@
 // a handler. Constructors count on any type because registered services, behaviors, and
 // mediator-resolved types all receive the generated configuration root through them.
 // Handler forms are a WithHandler delegate (lambda, anonymous method, or method group)
-// and a nested Handler Handle method. IOptionsSnapshot<T> and IOptionsMonitor<T> are not configuration
+// and a nested Handler Handle method on a class that implements TimeWarp.Mediator IRequestHandler<,>. IOptionsSnapshot<T> and IOptionsMonitor<T> are not configuration
 // setup signals. An unresolved AddConfiguration() call still matches: dropping sources
 // while the call is unbound would hide appsettings and command-line overrides.
 #endregion
@@ -32,6 +32,7 @@ internal static class AddConfigurationLocator
   private const string HandleMethodName = "Handle";
   private const string ConfigurationNamespace = "Microsoft.Extensions.Configuration";
   private const string OptionsNamespace = "Microsoft.Extensions.Options";
+  private const string MediatorNamespace = "TimeWarp.Mediator";
   private const string BuilderTypeName = "NuruAppBuilder";
 
   public static bool IsPotentialMatch(RoslynSyntaxNode node)
@@ -279,7 +280,7 @@ internal static class AddConfigurationLocator
 
     foreach (INamedTypeSymbol iface in type.AllInterfaces)
     {
-      if (IsHandlerInterfaceName(iface.Name))
+      if (IsRequestHandlerInterface(iface))
         return true;
     }
 
@@ -309,8 +310,15 @@ internal static class AddConfigurationLocator
     return false;
   }
 
+  // Syntax-only pre-filter: TimeWarp.Mediator 15 has one handler interface, IRequestHandler<,>.
   private static bool IsHandlerInterfaceName(string? name) =>
-    name is "ICommandHandler" or "IQueryHandler" or "IIdempotentCommandHandler";
+    name is "IRequestHandler";
+
+  // Semantic check. An unresolved interface (error type) still matches by name so a broken
+  // reference does not hide configuration use.
+  private static bool IsRequestHandlerInterface(INamedTypeSymbol iface) =>
+    iface.Name == "IRequestHandler"
+    && (iface.TypeKind == TypeKind.Error || IsNamespace(iface, MediatorNamespace));
 
   private static bool IsConfigurationParameterType(ITypeSymbol type)
   {

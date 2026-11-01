@@ -57,7 +57,7 @@ public sealed class KeyBindingsQuery : IQuery<string>
   /// <summary>
   /// Handles <see cref="KeyBindingsQuery"/>.
   /// </summary>
-  public sealed class Handler : IQueryHandler<KeyBindingsQuery, string>
+  public sealed class Handler : IRequestHandler<KeyBindingsQuery, string>
   {
     /// <summary>
     /// Renders the listing.
@@ -65,14 +65,14 @@ public sealed class KeyBindingsQuery : IQuery<string>
     /// <param name="query">The invocation.</param>
     /// <param name="cancellationToken">Unused. The listing is synchronous.</param>
     /// <returns>The listing text, or the error message when the profile is unknown.</returns>
-    public Task<string> Handle(KeyBindingsQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(KeyBindingsQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       string? requested = string.IsNullOrWhiteSpace(query.Profile) ? query.ProfileName : query.Profile;
       string profile = string.IsNullOrWhiteSpace(requested) ? "Default" : requested;
       try
       {
-        return Task.FromResult
+        return ValueTask.FromResult
         (
           KeyBindingCatalog.Render(profile, query.Key, query.Function, query.Detailed)
         );
@@ -80,7 +80,7 @@ public sealed class KeyBindingsQuery : IQuery<string>
       catch (ArgumentException exception)
       {
         Environment.ExitCode = 1;
-        return Task.FromResult(exception.Message);
+        return ValueTask.FromResult(exception.Message);
       }
     }
   }

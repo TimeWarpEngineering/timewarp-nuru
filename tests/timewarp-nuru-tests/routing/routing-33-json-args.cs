@@ -530,9 +530,9 @@ public sealed class JsonArgs478ShipCommand : ICommand<Unit>
   [Option("retries", Description = "Retry count")]
   public int Retries { get; set; } = 3;
 
-  internal sealed class Handler(ITerminal terminal) : ICommandHandler<JsonArgs478ShipCommand, Unit>
+  internal sealed class Handler(ITerminal terminal) : IRequestHandler<JsonArgs478ShipCommand, Unit>
   {
-    public async Task<Unit> Handle(JsonArgs478ShipCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(JsonArgs478ShipCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       cancellationToken.ThrowIfCancellationRequested();

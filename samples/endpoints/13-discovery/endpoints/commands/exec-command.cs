@@ -15,7 +15,7 @@ public sealed class ExecCommand : ICommand<Unit>
   [Parameter(IsCatchAll = true, Description = "Command and arguments to execute")]
   public string[] Args { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<ExecCommand, Unit>
+  public sealed class Handler : IRequestHandler<ExecCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -24,10 +24,10 @@ public sealed class ExecCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(ExecCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(ExecCommand command, CancellationToken ct)
     {
       Terminal.WriteLine($"Executing: {string.Join(" ", command.Args)}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

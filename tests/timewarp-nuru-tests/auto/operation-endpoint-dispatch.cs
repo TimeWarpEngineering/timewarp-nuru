@@ -174,13 +174,13 @@ public sealed class T508TraceBehavior : INuruBehavior
 [Operation("t508trace")]
 public sealed class T508TraceQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508TraceQuery, string>
+  public sealed class Handler : IRequestHandler<T508TraceQuery, string>
   {
-    public Task<string> Handle(T508TraceQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508TraceQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("traced");
+      return ValueTask.FromResult("traced");
     }
   }
 }
@@ -188,13 +188,13 @@ public sealed class T508TraceQuery : IQuery<string>
 [NuruRoute("t508direct")]
 public sealed class T508DirectQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508DirectQuery, string>
+  public sealed class Handler : IRequestHandler<T508DirectQuery, string>
   {
-    public Task<string> Handle(T508DirectQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508DirectQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("direct:ok");
+      return ValueTask.FromResult("direct:ok");
     }
   }
 }
@@ -214,12 +214,12 @@ public sealed class T508RenderQuery : IQuery<T508RenderValue>
 {
   public string Text { get; set; } = "";
 
-  public sealed class Handler : IQueryHandler<T508RenderQuery, T508RenderValue>
+  public sealed class Handler : IRequestHandler<T508RenderQuery, T508RenderValue>
   {
-    public Task<T508RenderValue> Handle(T508RenderQuery query, CancellationToken cancellationToken)
+    public ValueTask<T508RenderValue> Handle(T508RenderQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult(new T508RenderValue { Text = query.Text });
+      return ValueTask.FromResult(new T508RenderValue { Text = query.Text });
     }
   }
 }
@@ -229,9 +229,9 @@ public sealed class T508ProblemQuery : IQuery<OneOf<string, SharedProblemDetails
 {
   public bool Fail { get; set; } = false;
 
-  public sealed class Handler : IQueryHandler<T508ProblemQuery, OneOf<string, SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<T508ProblemQuery, OneOf<string, SharedProblemDetails>>
   {
-    public Task<OneOf<string, SharedProblemDetails>> Handle(T508ProblemQuery query, CancellationToken cancellationToken)
+    public ValueTask<OneOf<string, SharedProblemDetails>> Handle(T508ProblemQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
       if (query.Fail)
@@ -243,11 +243,11 @@ public sealed class T508ProblemQuery : IQuery<OneOf<string, SharedProblemDetails
           Status = 17,
           Detail = "too small"
         };
-        return Task.FromResult(problem);
+        return ValueTask.FromResult(problem);
       }
 
       OneOf<string, SharedProblemDetails> ok = "problem:ok";
-      return Task.FromResult(ok);
+      return ValueTask.FromResult(ok);
     }
   }
 }
@@ -269,10 +269,10 @@ public static class T508DispatchCounts
 public sealed class T508DispatchProbe<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
   where TRequest : notnull
 {
-  public Task<TResponse> Handle
+  public ValueTask<TResponse> Handle
   (
     TRequest request,
-    RequestHandlerDelegate<TResponse> next,
+    MessageHandlerDelegate<TRequest, TResponse> next,
     CancellationToken cancellationToken
   )
   {
@@ -285,7 +285,7 @@ public sealed class T508DispatchProbe<TRequest, TResponse> : IPipelineBehavior<T
       T508DispatchCounts.External++;
     }
 
-    return next(cancellationToken);
+    return next(request, cancellationToken);
   }
 }
 
@@ -295,12 +295,12 @@ public sealed class T508DirectExternalCommand : ICommand<string>
   public string Name { get; set; } = "world";
 }
 
-public sealed class T508DirectExternalHandler : ICommandHandler<T508DirectExternalCommand, string>
+public sealed class T508DirectExternalHandler : IRequestHandler<T508DirectExternalCommand, string>
 {
-  public Task<string> Handle(T508DirectExternalCommand command, CancellationToken cancellationToken)
+  public ValueTask<string> Handle(T508DirectExternalCommand command, CancellationToken cancellationToken)
   {
     _ = cancellationToken;
-    return Task.FromResult("ext:" + command.Name);
+    return ValueTask.FromResult("ext:" + command.Name);
   }
 }
 
@@ -326,7 +326,7 @@ public sealed class T508HttpProbe : IT508HttpProbe
 [NuruRoute("t508http")]
 public sealed class T508HttpQuery : IQuery<string>
 {
-  public sealed class Handler : IQueryHandler<T508HttpQuery, string>
+  public sealed class Handler : IRequestHandler<T508HttpQuery, string>
   {
     private readonly IT508HttpProbe Probe;
 
@@ -335,11 +335,11 @@ public sealed class T508HttpQuery : IQuery<string>
       Probe = probe;
     }
 
-    public Task<string> Handle(T508HttpQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T508HttpQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult("http:" + Probe.Value);
+      return ValueTask.FromResult("http:" + Probe.Value);
     }
   }
 }

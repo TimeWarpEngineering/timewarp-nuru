@@ -54,12 +54,12 @@ public sealed class AddCommand : IQuery<double>
   [Parameter] public double X { get; set; }
   [Parameter] public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<AddCommand, double>
+  public sealed class Handler : IRequestHandler<AddCommand, double>
   {
-    public Task<double> Handle(AddCommand c, CancellationToken ct)
+    public ValueTask<double> Handle(AddCommand c, CancellationToken ct)
     {
       WriteLine($"{c.X} + {c.Y} = {c.X + c.Y}");
-      return Task.FromResult<double>(c.X + c.Y);
+      return ValueTask.FromResult<double>(c.X + c.Y);
     }
   }
 }
@@ -70,12 +70,12 @@ public sealed class SubtractCommand : IQuery<double>
   [Parameter] public double X { get; set; }
   [Parameter] public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<SubtractCommand, double>
+  public sealed class Handler : IRequestHandler<SubtractCommand, double>
   {
-    public Task<double> Handle(SubtractCommand c, CancellationToken ct)
+    public ValueTask<double> Handle(SubtractCommand c, CancellationToken ct)
     {
       WriteLine($"{c.X} - {c.Y} = {c.X - c.Y}");
-      return Task.FromResult<double>(c.X - c.Y);
+      return ValueTask.FromResult<double>(c.X - c.Y);
     }
   }
 }
@@ -86,12 +86,12 @@ public sealed class MultiplyCommand : IQuery<double>
   [Parameter] public double X { get; set; }
   [Parameter] public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<MultiplyCommand, double>
+  public sealed class Handler : IRequestHandler<MultiplyCommand, double>
   {
-    public Task<double> Handle(MultiplyCommand c, CancellationToken ct)
+    public ValueTask<double> Handle(MultiplyCommand c, CancellationToken ct)
     {
       WriteLine($"{c.X} × {c.Y} = {c.X * c.Y}");
-      return Task.FromResult<double>(c.X * c.Y);
+      return ValueTask.FromResult<double>(c.X * c.Y);
     }
   }
 }
@@ -102,13 +102,13 @@ public sealed class DivideCommand : IQuery<double>
   [Parameter] public double X { get; set; }
   [Parameter] public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<DivideCommand, double>
+  public sealed class Handler : IRequestHandler<DivideCommand, double>
   {
-    public Task<double> Handle(DivideCommand c, CancellationToken ct)
+    public ValueTask<double> Handle(DivideCommand c, CancellationToken ct)
     {
       if (c.Y == 0) throw new DivideByZeroException("Cannot divide by zero");
       WriteLine($"{c.X} ÷ {c.Y} = {c.X / c.Y}");
-      return Task.FromResult<double>(c.X / c.Y);
+      return ValueTask.FromResult<double>(c.X / c.Y);
     }
   }
 }
@@ -118,9 +118,9 @@ public sealed class FactorialCommand : ICommand<Unit>
 {
   [Parameter] public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FactorialCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FactorialCommand, Unit>
   {
-    public Task<Unit> Handle(FactorialCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(FactorialCommand c, CancellationToken ct)
     {
       try
       {
@@ -131,7 +131,7 @@ public sealed class FactorialCommand : ICommand<Unit>
       {
         WriteLine($"Error: {ex.Message}");
       }
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -141,13 +141,13 @@ public sealed class PrimeCheckCommand : ICommand<Unit>
 {
   [Parameter] public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<PrimeCheckCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<PrimeCheckCommand, Unit>
   {
-    public Task<Unit> Handle(PrimeCheckCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(PrimeCheckCommand c, CancellationToken ct)
     {
       bool result = calc.IsPrime(c.N);
       WriteLine($"{c.N} is {(result ? "prime" : "not prime")}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -157,9 +157,9 @@ public sealed class FibonacciCommand : ICommand<Unit>
 {
   [Parameter] public int N { get; set; }
 
-  public sealed class Handler(IScientificCalculator calc) : ICommandHandler<FibonacciCommand, Unit>
+  public sealed class Handler(IScientificCalculator calc) : IRequestHandler<FibonacciCommand, Unit>
   {
-    public Task<Unit> Handle(FibonacciCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(FibonacciCommand c, CancellationToken ct)
     {
       try
       {
@@ -170,7 +170,7 @@ public sealed class FibonacciCommand : ICommand<Unit>
       {
         WriteLine($"Error: {ex.Message}");
       }
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

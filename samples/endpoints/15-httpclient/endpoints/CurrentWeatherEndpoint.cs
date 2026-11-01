@@ -24,11 +24,11 @@ public sealed class CurrentWeatherCommand : ICommand<Unit>
   [Parameter(Description = "City name")]
   public string City { get; set; } = string.Empty;
 
-  public sealed class Handler(IOpenMeteoService openMeteo) : ICommandHandler<CurrentWeatherCommand, Unit>
+  public sealed class Handler(IOpenMeteoService openMeteo) : IRequestHandler<CurrentWeatherCommand, Unit>
   {
     private readonly IOpenMeteoService OpenMeteo = openMeteo;
 
-    public async Task<Unit> Handle(CurrentWeatherCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(CurrentWeatherCommand command, CancellationToken ct)
     {
       try
       {

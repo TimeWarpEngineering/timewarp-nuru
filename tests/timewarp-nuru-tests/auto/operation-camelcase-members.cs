@@ -137,12 +137,12 @@ public sealed class T5086CamelQuery : IQuery<string>
 
   public string? @class { get; set; }
 
-  public sealed class Handler : IQueryHandler<T5086CamelQuery, string>
+  public sealed class Handler : IRequestHandler<T5086CamelQuery, string>
   {
-    public Task<string> Handle(T5086CamelQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T5086CamelQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult(
+      return ValueTask.FromResult(
         $"solutionId:{query.solutionId}|symbolName:{query.symbolName}|maxDepth:{query.maxDepth.ToString(CultureInfo.InvariantCulture)}"
         + $"|checkOnly:{query.checkOnly}|class:{query.@class ?? "<null>"}");
     }
@@ -154,12 +154,12 @@ public sealed class T5086MultiQuery : IQuery<string>
 {
   public T5086Operation[] operations { get; set; } = [];
 
-  public sealed class Handler : IQueryHandler<T5086MultiQuery, string>
+  public sealed class Handler : IRequestHandler<T5086MultiQuery, string>
   {
-    public Task<string> Handle(T5086MultiQuery query, CancellationToken cancellationToken)
+    public ValueTask<string> Handle(T5086MultiQuery query, CancellationToken cancellationToken)
     {
       _ = cancellationToken;
-      return Task.FromResult(string.Join(";", query.operations.Select(operation => $"{operation.Tool}({operation.Arguments})")));
+      return ValueTask.FromResult(string.Join(";", query.operations.Select(operation => $"{operation.Tool}({operation.Arguments})")));
     }
   }
 }
@@ -178,13 +178,13 @@ public static class T5086GetSymbol
   {
     public required string symbolName { get; set; }
 
-    public sealed class Handler : IQueryHandler<Query, OneOf<Response, SharedProblemDetails>>
+    public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
     {
-      public Task<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
+      public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
       {
         _ = cancellationToken;
         OneOf<Response, SharedProblemDetails> response = new Response { Name = query.symbolName, Items = [new Item { Kind = "method" }] };
-        return Task.FromResult(response);
+        return ValueTask.FromResult(response);
       }
     }
   }
@@ -209,13 +209,13 @@ public static class T5086GetMembers
   {
     public required string typeName { get; set; }
 
-    public sealed class Handler : IQueryHandler<Query, OneOf<Response, SharedProblemDetails>>
+    public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
     {
-      public Task<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
+      public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
       {
         _ = cancellationToken;
         OneOf<Response, SharedProblemDetails> response = new Response { Type = query.typeName, Count = 2, Items = [new Item { Order = 5 }] };
-        return Task.FromResult(response);
+        return ValueTask.FromResult(response);
       }
     }
   }

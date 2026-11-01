@@ -16,7 +16,7 @@ public sealed class DockerPsQuery : DockerGroupBase, IQuery<Unit>
   [Option("all", "a", Description = "Show all containers (default shows just running)")]
   public bool All { get; set; }
 
-  public sealed class Handler : IQueryHandler<DockerPsQuery, Unit>
+  public sealed class Handler : IRequestHandler<DockerPsQuery, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -25,7 +25,7 @@ public sealed class DockerPsQuery : DockerGroupBase, IQuery<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(DockerPsQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(DockerPsQuery query, CancellationToken ct)
     {
       string scope = query.All ? "all" : "running";
       Terminal.WriteLine($"Listing {scope} containers...");
@@ -36,7 +36,7 @@ public sealed class DockerPsQuery : DockerGroupBase, IQuery<Unit>
         Terminal.WriteLine("def456         redis:7        Exited (0) 1 day ago");
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -15,9 +15,9 @@ public sealed class SlowCommand : ICommand<Unit>
   [Parameter(Description = "Milliseconds to delay")]
   public int Delay { get; set; }
 
-  public sealed class Handler : ICommandHandler<SlowCommand, Unit>
+  public sealed class Handler : IRequestHandler<SlowCommand, Unit>
   {
-    public async Task<Unit> Handle(SlowCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(SlowCommand command, CancellationToken ct)
     {
       WriteLine($"Starting slow operation ({command.Delay}ms)...");
       await Task.Delay(command.Delay, ct);

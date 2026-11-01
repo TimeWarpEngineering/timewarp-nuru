@@ -20,12 +20,12 @@ public sealed class KubectlQuery : IQuery<Unit>
   [Option("output", "o", Description = "Output format")]
   public string? Format { get; set; }
 
-  public sealed class Handler : IQueryHandler<KubectlQuery, Unit>
+  public sealed class Handler : IRequestHandler<KubectlQuery, Unit>
   {
-    public Task<Unit> Handle(KubectlQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(KubectlQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Get {query.Resource} in namespace {query.Ns ?? "default"}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

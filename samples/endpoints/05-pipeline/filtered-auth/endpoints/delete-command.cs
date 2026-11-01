@@ -18,12 +18,12 @@ public sealed class DeleteCommand : ICommand<Unit>, IRequireAuthorization
   [Option("force", "f", Description = "Force deletion without confirmation")]
   public bool Force { get; set; }
 
-  public sealed class Handler : ICommandHandler<DeleteCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeleteCommand, Unit>
   {
-    public Task<Unit> Handle(DeleteCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeleteCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Deleting item {command.Id} (force: {command.Force})");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

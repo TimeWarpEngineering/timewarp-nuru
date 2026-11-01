@@ -20,11 +20,11 @@ public sealed class AddCommand : IQuery<double>
   [Parameter(Description = "Second number")]
   public double Y { get; set; }
 
-  public sealed class Handler : IQueryHandler<AddCommand, double>
+  public sealed class Handler : IRequestHandler<AddCommand, double>
   {
-    public Task<double> Handle(AddCommand command, CancellationToken ct)
+    public ValueTask<double> Handle(AddCommand command, CancellationToken ct)
     {
-      return Task.FromResult<double>(command.X + command.Y);
+      return ValueTask.FromResult<double>(command.X + command.Y);
     }
   }
 }

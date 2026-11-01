@@ -19,7 +19,7 @@ public sealed class DockerTagCommand : DockerGroupBase, IIdempotentCommand<Unit>
   [Parameter(Order = 1, Description = "Target image name with optional tag")]
   public string Target { get; set; } = string.Empty;
 
-  public sealed class Handler : IIdempotentCommandHandler<DockerTagCommand, Unit>
+  public sealed class Handler : IRequestHandler<DockerTagCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -28,10 +28,10 @@ public sealed class DockerTagCommand : DockerGroupBase, IIdempotentCommand<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(DockerTagCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DockerTagCommand command, CancellationToken ct)
     {
       Terminal.WriteLine($"Tagging {command.Source} as {command.Target}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -133,9 +133,9 @@ public abstract class Issue160Level1Group;
 [NuruRoute("two-level-action", Description = "Two-level nested command")]
 public sealed class Issue160TwoLevelCommand : Issue160Level1Group, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue160TwoLevelCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue160TwoLevelCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue160TwoLevelCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue160TwoLevelCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync("Two-level action executed").ConfigureAwait(false);
@@ -160,9 +160,9 @@ public abstract class Issue160QueueGroup : Issue160Ccc1DemoGroup;
 [NuruRoute("peek", Description = "Peek at the queue")]
 public sealed class Issue160PeekCommand : Issue160QueueGroup, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue160PeekCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue160PeekCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue160PeekCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue160PeekCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync("Peeking at queue").ConfigureAwait(false);
@@ -194,9 +194,9 @@ public sealed class Issue160UploadCommand : Issue160StorageGroup, ICommand<Unit>
   [Parameter(Description = "File to upload")]
   public string File { get; set; } = string.Empty;
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue160UploadCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue160UploadCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue160UploadCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue160UploadCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync($"Uploading: {command.File}").ConfigureAwait(false);
@@ -220,9 +220,9 @@ public abstract class Issue160MiddleNoGroup : Issue160RootGroup;
 [NuruRoute("mixed-action", Description = "Mixed inheritance command")]
 public sealed class Issue160MixedCommand : Issue160MiddleNoGroup, ICommand<Unit>
 {
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<Issue160MixedCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<Issue160MixedCommand, Unit>
   {
-    public async Task<Unit> Handle(Issue160MixedCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(Issue160MixedCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await terminal.WriteLineAsync("Mixed inheritance action executed").ConfigureAwait(false);

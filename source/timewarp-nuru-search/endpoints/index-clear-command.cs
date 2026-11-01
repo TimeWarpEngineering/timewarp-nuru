@@ -13,9 +13,9 @@ public sealed class IndexClearCommand : IndexGroup, ICommand<Unit>
 
   public sealed class Handler(
     SearchIndex searchIndex,
-    ITerminal terminal) : ICommandHandler<IndexClearCommand, Unit>
+    ITerminal terminal) : IRequestHandler<IndexClearCommand, Unit>
   {
-    public async Task<Unit> Handle(IndexClearCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(IndexClearCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

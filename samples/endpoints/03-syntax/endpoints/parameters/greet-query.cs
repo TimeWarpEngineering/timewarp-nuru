@@ -14,12 +14,12 @@ public sealed class GreetQuery : IQuery<Unit>
   [Parameter(Description = "Name of the person to greet")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler : IQueryHandler<GreetQuery, Unit>
+  public sealed class Handler : IRequestHandler<GreetQuery, Unit>
   {
-    public Task<Unit> Handle(GreetQuery query, CancellationToken ct)
+    public ValueTask<Unit> Handle(GreetQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Hello {query.Name}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

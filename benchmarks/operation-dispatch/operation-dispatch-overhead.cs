@@ -274,7 +274,7 @@ internal static class OverheadBench
       [NuruRoute("overhead")]
       public sealed class OverheadQuery : IQuery<Unit>
       {
-        public sealed class Handler : IQueryHandler<OverheadQuery, Unit>
+        public sealed class Handler : IRequestHandler<OverheadQuery, Unit>
         {
           public System.Threading.Tasks.Task<Unit> Handle(OverheadQuery query, System.Threading.CancellationToken cancellationToken)
           {
@@ -291,13 +291,13 @@ internal static class OverheadBench
 [NuruRoute("overhead")]
 public sealed class OverheadQuery : IQuery<Unit>
 {
-  public sealed class Handler : IQueryHandler<OverheadQuery, Unit>
+  public sealed class Handler : IRequestHandler<OverheadQuery, Unit>
   {
-    public Task<Unit> Handle(OverheadQuery query, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(OverheadQuery query, CancellationToken cancellationToken)
     {
       _ = query;
       _ = cancellationToken;
-      return Task.FromResult(Unit.Value);
+      return ValueTask.FromResult(Unit.Value);
     }
   }
 }

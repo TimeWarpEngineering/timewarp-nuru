@@ -14,12 +14,12 @@ public sealed class DockerEnvCommand : ICommand<Unit>
   [Option("env", "e", Description = "Environment variables")]
   public string[] Var { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<DockerEnvCommand, Unit>
+  public sealed class Handler : IRequestHandler<DockerEnvCommand, Unit>
   {
-    public Task<Unit> Handle(DockerEnvCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DockerEnvCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Environment variables: {string.Join(", ", command.Var)}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -17,9 +17,9 @@ public sealed class CommitCommand : GitGroupBase, ICommand<Unit>
   [Option("all", "a", Description = "Stage all modified and deleted files")]
   public bool All { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<CommitCommand, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<CommitCommand, Unit>
   {
-    public async Task<Unit> Handle(CommitCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(CommitCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
 

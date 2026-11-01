@@ -9,12 +9,12 @@ public sealed class GitCommitCommand : GitGroup, ICommand<Unit>
   [Option("message", "m", Description = "Commit message")]
   public string Message { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<GitCommitCommand, Unit>
+  public sealed class Handler : IRequestHandler<GitCommitCommand, Unit>
   {
-    public Task<Unit> Handle(GitCommitCommand command, CancellationToken cancellationToken)
+    public ValueTask<Unit> Handle(GitCommitCommand command, CancellationToken cancellationToken)
     {
       Console.WriteLine($"[GIT] Committed: {command.Message}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

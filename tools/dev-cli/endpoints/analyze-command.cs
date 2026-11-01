@@ -23,7 +23,7 @@ public sealed class AnalyzeCommand : ICommand<Unit>
   [Option("verbose", "v", Description = "Verbose output")]
   public bool Verbose { get; set; }
 
-  internal sealed class Handler : ICommandHandler<AnalyzeCommand, Unit>
+  internal sealed class Handler : IRequestHandler<AnalyzeCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -32,7 +32,7 @@ public sealed class AnalyzeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async Task<Unit> Handle(AnalyzeCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(AnalyzeCommand command, CancellationToken ct)
     {
       // Get repo root using Git.FindRoot
       string? repoRoot = Git.FindRoot();

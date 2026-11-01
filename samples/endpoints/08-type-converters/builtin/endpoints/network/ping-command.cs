@@ -7,14 +7,14 @@ public sealed class PingCommand : ICommand<Unit>
 {
   [Parameter] public string Addr { get; set; } = "127.0.0.1";
 
-  public sealed class Handler : ICommandHandler<PingCommand, Unit>
+  public sealed class Handler : IRequestHandler<PingCommand, Unit>
   {
-    public Task<Unit> Handle(PingCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(PingCommand c, CancellationToken ct)
     {
       System.Net.IPAddress addr = System.Net.IPAddress.Parse(c.Addr);
       WriteLine($"Pinging: {addr}");
       WriteLine($"  AddressFamily: {addr.AddressFamily}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

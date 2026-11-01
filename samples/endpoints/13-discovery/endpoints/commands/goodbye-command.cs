@@ -15,7 +15,7 @@ using TimeWarp.Terminal;
 [NuruRouteAlias("bye", "cya")]
 public sealed class GoodbyeCommand : ICommand<Unit>
 {
-  public sealed class Handler : ICommandHandler<GoodbyeCommand, Unit>
+  public sealed class Handler : IRequestHandler<GoodbyeCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -24,11 +24,11 @@ public sealed class GoodbyeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(GoodbyeCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(GoodbyeCommand command, CancellationToken ct)
     {
       Terminal.WriteLine("Goodbye! Thanks for using endpoints.");
       Environment.Exit(0);
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

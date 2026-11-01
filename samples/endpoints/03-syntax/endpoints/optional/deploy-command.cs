@@ -18,9 +18,9 @@ public sealed class DeployCommand : ICommand<Unit>
   [Parameter(Description = "Optional tag to deploy")]
   public string? Tag { get; set; }
 
-  public sealed class Handler : ICommandHandler<DeployCommand, Unit>
+  public sealed class Handler : IRequestHandler<DeployCommand, Unit>
   {
-    public Task<Unit> Handle(DeployCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DeployCommand command, CancellationToken ct)
     {
       string message = $"Deploying to {command.Env}";
       if (!string.IsNullOrEmpty(command.Tag))
@@ -28,7 +28,7 @@ public sealed class DeployCommand : ICommand<Unit>
         message += $" with tag {command.Tag}";
       }
       Console.WriteLine(message);
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

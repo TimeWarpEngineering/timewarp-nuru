@@ -18,12 +18,12 @@ public sealed class ConfigSetCommand : ICommand<Unit>, IRequireAuthorization
   [Parameter(Description = "Configuration value")]
   public string Value { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<ConfigSetCommand, Unit>
+  public sealed class Handler : IRequestHandler<ConfigSetCommand, Unit>
   {
-    public Task<Unit> Handle(ConfigSetCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(ConfigSetCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Setting {command.Key} = {command.Value}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

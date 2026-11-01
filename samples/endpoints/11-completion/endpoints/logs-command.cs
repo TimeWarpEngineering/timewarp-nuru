@@ -14,14 +14,14 @@ public sealed class LogsCommand : ICommand<Unit>
   [Option("follow", "f", Description = "Follow log output")]
   public bool Follow { get; set; }
 
-  public sealed class Handler : ICommandHandler<LogsCommand, Unit>
+  public sealed class Handler : IRequestHandler<LogsCommand, Unit>
   {
-    public Task<Unit> Handle(LogsCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(LogsCommand c, CancellationToken ct)
     {
       WriteLine($"Logs {c.Action}");
       WriteLine($"  Lines: {c.Lines}");
       WriteLine($"  Follow: {c.Follow}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

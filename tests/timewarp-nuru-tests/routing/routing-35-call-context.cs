@@ -296,9 +296,9 @@ public sealed class RccExclusiveCommand : ICommand<Unit>
   [Parameter]
   public int N { get; set; }
 
-  public sealed class Handler : ICommandHandler<RccExclusiveCommand, Unit>
+  public sealed class Handler : IRequestHandler<RccExclusiveCommand, Unit>
   {
-    public async Task<Unit> Handle(RccExclusiveCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(RccExclusiveCommand command, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(command);
       await CcTracker.Current.RunAsync(command.N);
@@ -316,9 +316,9 @@ public sealed class RccCodeQuery : IQuery<CcPathResult>
   [Option("code", Description = "The exit code")]
   public int Code { get; set; }
 
-  public sealed class Handler : IQueryHandler<RccCodeQuery, CcPathResult>
+  public sealed class Handler : IRequestHandler<RccCodeQuery, CcPathResult>
   {
-    public async Task<CcPathResult> Handle(RccCodeQuery query, CancellationToken cancellationToken)
+    public async ValueTask<CcPathResult> Handle(RccCodeQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       await Task.Yield();

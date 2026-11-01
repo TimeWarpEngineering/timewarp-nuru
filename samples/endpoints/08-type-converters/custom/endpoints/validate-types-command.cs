@@ -8,9 +8,9 @@ public sealed class ValidateTypesCommand : ICommand<Unit>
 {
   [Parameter(IsCatchAll = true)] public string[] Values { get; set; } = [];
 
-  public sealed class Handler : ICommandHandler<ValidateTypesCommand, Unit>
+  public sealed class Handler : IRequestHandler<ValidateTypesCommand, Unit>
   {
-    public Task<Unit> Handle(ValidateTypesCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(ValidateTypesCommand c, CancellationToken ct)
     {
       WriteLine("Validating values...\n");
 
@@ -29,7 +29,7 @@ public sealed class ValidateTypesCommand : ICommand<Unit>
         WriteLine($"  {value,-30} -> {type}");
       }
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -19,7 +19,7 @@ public sealed class DockerRunCommand : DockerGroupBase, ICommand<Unit>
   [Option("detach", "d", Description = "Run container in background")]
   public bool Detach { get; set; }
 
-  public sealed class Handler : ICommandHandler<DockerRunCommand, Unit>
+  public sealed class Handler : IRequestHandler<DockerRunCommand, Unit>
   {
     private readonly ITerminal Terminal;
 
@@ -28,11 +28,11 @@ public sealed class DockerRunCommand : DockerGroupBase, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public Task<Unit> Handle(DockerRunCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DockerRunCommand command, CancellationToken ct)
     {
       string mode = command.Detach ? " (detached)" : "";
       Terminal.WriteLine($"Running container from image: {command.Image}{mode}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

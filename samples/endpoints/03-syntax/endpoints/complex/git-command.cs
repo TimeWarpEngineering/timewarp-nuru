@@ -20,12 +20,12 @@ public sealed class GitCommand : ICommand<Unit>
   [Option("no-verify", "n", Description = "Bypass pre-commit hooks")]
   public bool NoVerify { get; set; }
 
-  public sealed class Handler : ICommandHandler<GitCommand, Unit>
+  public sealed class Handler : IRequestHandler<GitCommand, Unit>
   {
-    public Task<Unit> Handle(GitCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(GitCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Commit: {command.Message} (amend: {command.Amend}, no-verify: {command.NoVerify})");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

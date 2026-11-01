@@ -58,10 +58,10 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen60JsonContextReferencedEndpoints
       {
         public RefJsonPayload? Payload { get; set; }
 
-        public sealed class Handler : IQueryHandler<RefJsonQuery, RefJsonResult>
+        public sealed class Handler : IRequestHandler<RefJsonQuery, RefJsonResult>
         {
-          public Task<RefJsonResult> Handle(RefJsonQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new RefJsonResult());
+          public ValueTask<RefJsonResult> Handle(RefJsonQuery query, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new RefJsonResult());
         }
       }
 

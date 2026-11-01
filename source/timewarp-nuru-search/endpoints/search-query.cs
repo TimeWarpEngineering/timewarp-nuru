@@ -29,9 +29,9 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<Unit>
     SearchIndex searchIndex,
     CapabilitiesClient capabilitiesClient,
     ITerminal terminal,
-    ILogger<Handler> logger) : IQueryHandler<SearchQuery, Unit>
+    ILogger<Handler> logger) : IRequestHandler<SearchQuery, Unit>
   {
-    public async Task<Unit> Handle(SearchQuery query, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(SearchQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
 

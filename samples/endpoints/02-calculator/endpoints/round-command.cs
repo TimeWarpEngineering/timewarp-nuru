@@ -20,9 +20,9 @@ public sealed class RoundCommand : IQuery<double>
   [Option("mode", "m", Description = "Rounding mode: up, down, nearest, banker")]
   public string Mode { get; set; } = "nearest";
 
-  public sealed class Handler : IQueryHandler<RoundCommand, double>
+  public sealed class Handler : IRequestHandler<RoundCommand, double>
   {
-    public Task<double> Handle(RoundCommand command, CancellationToken ct)
+    public ValueTask<double> Handle(RoundCommand command, CancellationToken ct)
     {
       double result = command.Mode.ToLower() switch
       {
@@ -33,7 +33,7 @@ public sealed class RoundCommand : IQuery<double>
         _ => throw new ArgumentException($"Unknown rounding mode: {command.Mode}")
       };
 
-      return Task.FromResult<double>(result);
+      return ValueTask.FromResult<double>(result);
     }
   }
 }

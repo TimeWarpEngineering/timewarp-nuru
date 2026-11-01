@@ -26,9 +26,9 @@ public sealed class SearchQuery : IQuery<SearchResult[]>
   [Option("limit", "l", Description = "Maximum results")]
   public int Limit { get; set; } = 10;
 
-  public sealed class Handler : IQueryHandler<SearchQuery, SearchResult[]>
+  public sealed class Handler : IRequestHandler<SearchQuery, SearchResult[]>
   {
-    public async Task<SearchResult[]> Handle(SearchQuery query, CancellationToken ct)
+    public async ValueTask<SearchResult[]> Handle(SearchQuery query, CancellationToken ct)
     {
       Console.WriteLine($"Searching for: {query.Query}");
       await Task.Delay(100, ct); // Simulate search

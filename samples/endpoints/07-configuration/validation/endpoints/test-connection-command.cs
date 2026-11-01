@@ -6,9 +6,9 @@ using static System.Console;
 [NuruRoute("test-connection", Description = "Test connection using validated settings")]
 public sealed class TestConnectionCommand : ICommand<Unit>
 {
-  public sealed class Handler(IOptions<ValidatedSettings> settings) : ICommandHandler<TestConnectionCommand, Unit>
+  public sealed class Handler(IOptions<ValidatedSettings> settings) : IRequestHandler<TestConnectionCommand, Unit>
   {
-    public async Task<Unit> Handle(TestConnectionCommand command, CancellationToken ct)
+    public async ValueTask<Unit> Handle(TestConnectionCommand command, CancellationToken ct)
     {
       ValidatedSettings s = settings.Value;
 

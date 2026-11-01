@@ -35,12 +35,12 @@ public sealed class AzureStorageUploadCommand : AzureStorageGroupBase, ICommand<
   [Parameter(Description = "File to upload")]
   public string File { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<AzureStorageUploadCommand, Unit>
+  public sealed class Handler : IRequestHandler<AzureStorageUploadCommand, Unit>
   {
-    public Task<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(AzureStorageUploadCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Uploading file to Azure storage: {command.File}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -62,12 +62,12 @@ public sealed class AzureVmStartCommand : AzureVmGroupBase, ICommand<Unit>
   [Parameter(Description = "VM name")]
   public string Name { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<AzureVmStartCommand, Unit>
+  public sealed class Handler : IRequestHandler<AzureVmStartCommand, Unit>
   {
-    public Task<Unit> Handle(AzureVmStartCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(AzureVmStartCommand command, CancellationToken ct)
     {
       Console.WriteLine($"Starting Azure VM: {command.Name}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

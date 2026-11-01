@@ -101,12 +101,12 @@ public sealed class EchoCommand : ICommand<Unit>
 {
   [Parameter] public string Message { get; set; } = "";
 
-  public sealed class Handler : ICommandHandler<EchoCommand, Unit>
+  public sealed class Handler : IRequestHandler<EchoCommand, Unit>
   {
-    public Task<Unit> Handle(EchoCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(EchoCommand c, CancellationToken ct)
     {
       WriteLine($"Echo: {c.Message}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }
@@ -116,9 +116,9 @@ public sealed class SlowCommand : ICommand<Unit>
 {
   [Parameter] public int Delay { get; set; } = 600;
 
-  public sealed class Handler : ICommandHandler<SlowCommand, Unit>
+  public sealed class Handler : IRequestHandler<SlowCommand, Unit>
   {
-    public async Task<Unit> Handle(SlowCommand c, CancellationToken ct)
+    public async ValueTask<Unit> Handle(SlowCommand c, CancellationToken ct)
     {
       WriteLine($"Starting {c.Delay}ms operation...");
       await Task.Delay(c.Delay, ct);

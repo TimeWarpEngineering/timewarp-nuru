@@ -166,9 +166,9 @@ public sealed class NullLongEndpoint : ICommand<Unit>
   [Option("exclude", "e", Description = "Exclude ID")]
   public long? ExcludeId { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<NullLongEndpoint, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<NullLongEndpoint, Unit>
   {
-    public async Task<Unit> Handle(NullLongEndpoint command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(NullLongEndpoint command, CancellationToken cancellationToken)
     {
       await terminal.WriteLineAsync($"Id:{command.Id}");
       await terminal.WriteLineAsync($"Exclude:{command.ExcludeId?.ToString(CultureInfo.InvariantCulture) ?? "null"}");
@@ -184,9 +184,9 @@ public sealed class NullIntEndpoint : ICommand<Unit>
   [Option("max", "m", Description = "Maximum count")]
   public int? Max { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<NullIntEndpoint, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<NullIntEndpoint, Unit>
   {
-    public async Task<Unit> Handle(NullIntEndpoint command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(NullIntEndpoint command, CancellationToken cancellationToken)
     {
       await terminal.WriteLineAsync($"Max:{command.Max?.ToString(CultureInfo.InvariantCulture) ?? "null"}");
       return default;
@@ -204,9 +204,9 @@ public sealed class NullMultiEndpoint : ICommand<Unit>
   [Option("count", "c", Description = "Optional count")]
   public int? Count { get; set; }
 
-  public sealed class Handler(ITerminal terminal) : ICommandHandler<NullMultiEndpoint, Unit>
+  public sealed class Handler(ITerminal terminal) : IRequestHandler<NullMultiEndpoint, Unit>
   {
-    public async Task<Unit> Handle(NullMultiEndpoint command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(NullMultiEndpoint command, CancellationToken cancellationToken)
     {
       await terminal.WriteLineAsync($"Id:{command.Id?.ToString(CultureInfo.InvariantCulture) ?? "null"}");
       await terminal.WriteLineAsync($"Count:{command.Count?.ToString(CultureInfo.InvariantCulture) ?? "null"}");

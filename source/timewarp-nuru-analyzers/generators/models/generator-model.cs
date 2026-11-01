@@ -10,8 +10,9 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="Version">Assembly version (from AssemblyInformationalVersionAttribute or AssemblyVersion)</param>
 /// <param name="CommitHash">Git commit hash (from TimeWarp.Build.Tasks, may be null)</param>
 /// <param name="CommitDate">Git commit date (from TimeWarp.Build.Tasks, may be null)</param>
-/// <param name="HasGeneratedMediator">
-/// True when the TimeWarp.Mediator generator emits <c>AddGeneratedMediator()</c> into this compilation.
+/// <param name="GeneratedMediatorNamespace">
+/// The namespace the TimeWarp.Mediator generator emits <c>AddGeneratedMediator()</c> into in this
+/// compilation, or null when no generated mediator exists.
 /// </param>
 /// <param name="ProblemRendererTypeName">
 /// The one visible <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c> in this compilation, or null. The app's
@@ -24,9 +25,14 @@ public sealed record GeneratorModel(
   string? Version,
   string? CommitHash,
   string? CommitDate,
-  bool HasGeneratedMediator = false,
+  string? GeneratedMediatorNamespace = null,
   string? ProblemRendererTypeName = null)
 {
+  /// <summary>
+  /// True when the TimeWarp.Mediator generator emits <c>AddGeneratedMediator()</c> into this compilation.
+  /// </summary>
+  public bool HasGeneratedMediator => GeneratedMediatorNamespace is not null;
+
   /// <summary>
   /// Gets whether any app has help enabled.
   /// </summary>

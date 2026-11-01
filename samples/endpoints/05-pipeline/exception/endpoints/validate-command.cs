@@ -15,9 +15,9 @@ public sealed class ValidateCommand : ICommand<Unit>
   [Parameter(Description = "Value to validate")]
   public string Value { get; set; } = string.Empty;
 
-  public sealed class Handler : ICommandHandler<ValidateCommand, Unit>
+  public sealed class Handler : IRequestHandler<ValidateCommand, Unit>
   {
-    public Task<Unit> Handle(ValidateCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(ValidateCommand command, CancellationToken ct)
     {
       if (string.IsNullOrWhiteSpace(command.Value))
       {
@@ -30,7 +30,7 @@ public sealed class ValidateCommand : ICommand<Unit>
       }
 
       WriteLine($"✓ Valid: {command.Value}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

@@ -7,9 +7,9 @@ public sealed class BatchCommand : ICommand<Unit>
 {
   [Parameter(IsCatchAll = true)] public string[] Items { get; set; } = [];
 
-  public sealed class Handler(ILogger<BatchCommand> Logger) : ICommandHandler<BatchCommand, Unit>
+  public sealed class Handler(ILogger<BatchCommand> Logger) : IRequestHandler<BatchCommand, Unit>
   {
-    public Task<Unit> Handle(BatchCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(BatchCommand c, CancellationToken ct)
     {
       Logger.LogInformation("Starting batch processing of {Count} items", c.Items.Length);
 
@@ -38,7 +38,7 @@ public sealed class BatchCommand : ICommand<Unit>
         failCount
       );
 
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

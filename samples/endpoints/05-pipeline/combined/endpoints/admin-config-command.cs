@@ -15,12 +15,12 @@ public sealed class AdminConfigCommand : ICommand<Unit>, IRequireAuthorization
   [Parameter] public string Key { get; set; } = "";
   [Parameter] public string Value { get; set; } = "";
 
-  public sealed class Handler : ICommandHandler<AdminConfigCommand, Unit>
+  public sealed class Handler : IRequestHandler<AdminConfigCommand, Unit>
   {
-    public Task<Unit> Handle(AdminConfigCommand c, CancellationToken ct)
+    public ValueTask<Unit> Handle(AdminConfigCommand c, CancellationToken ct)
     {
       Console.WriteLine($"Set {c.Key} = {c.Value}");
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

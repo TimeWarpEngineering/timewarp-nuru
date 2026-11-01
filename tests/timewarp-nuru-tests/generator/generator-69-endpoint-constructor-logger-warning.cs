@@ -43,12 +43,12 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen69EndpointConstructorLoggerWarning
       [NuruRoute("gen69-work")]
       public sealed class Gen69WorkCommand : ICommand<Unit>
       {
-        public sealed class Handler(ILogger<Gen69WorkCommand> logger) : ICommandHandler<Gen69WorkCommand, Unit>
+        public sealed class Handler(ILogger<Gen69WorkCommand> logger) : IRequestHandler<Gen69WorkCommand, Unit>
         {
-          public Task<Unit> Handle(Gen69WorkCommand request, CancellationToken cancellationToken)
+          public ValueTask<Unit> Handle(Gen69WorkCommand request, CancellationToken cancellationToken)
           {
             _ = logger;
-            return Task.FromResult(Unit.Value);
+            return ValueTask.FromResult(Unit.Value);
           }
         }
       }
@@ -153,12 +153,12 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen69EndpointConstructorLoggerWarning
       [NuruRoute("gen69-service")]
       public sealed class Gen69ServiceQuery : IQuery<Unit>
       {
-        public sealed class Handler(Gen69Service service) : IQueryHandler<Gen69ServiceQuery, Unit>
+        public sealed class Handler(Gen69Service service) : IRequestHandler<Gen69ServiceQuery, Unit>
         {
-          public Task<Unit> Handle(Gen69ServiceQuery request, CancellationToken cancellationToken)
+          public ValueTask<Unit> Handle(Gen69ServiceQuery request, CancellationToken cancellationToken)
           {
             _ = service;
-            return Task.FromResult(Unit.Value);
+            return ValueTask.FromResult(Unit.Value);
           }
         }
       }

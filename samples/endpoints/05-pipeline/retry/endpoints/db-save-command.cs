@@ -17,11 +17,11 @@ public sealed class DbSaveCommand : ICommand<Unit>, IRetryable
 
   public int MaxRetries => 5;
 
-  public sealed class Handler : ICommandHandler<DbSaveCommand, Unit>
+  public sealed class Handler : IRequestHandler<DbSaveCommand, Unit>
   {
     private static int FailureCount = 0;
 
-    public Task<Unit> Handle(DbSaveCommand command, CancellationToken ct)
+    public ValueTask<Unit> Handle(DbSaveCommand command, CancellationToken ct)
     {
       FailureCount++;
 
@@ -32,7 +32,7 @@ public sealed class DbSaveCommand : ICommand<Unit>, IRetryable
 
       Console.WriteLine($"✓ Saved '{command.Data}' to database after {FailureCount} attempts");
       FailureCount = 0;
-      return Unit.Task;
+      return Unit.ValueTask;
     }
   }
 }

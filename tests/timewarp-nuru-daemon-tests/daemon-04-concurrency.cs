@@ -370,9 +370,9 @@ public sealed class DccSoakQuery : IQuery<OneOf<string, SharedProblemDetails>>
 
   public static int StatusFor(int n) => 10 + (n % 7);
 
-  public sealed class Handler : IQueryHandler<DccSoakQuery, OneOf<string, SharedProblemDetails>>
+  public sealed class Handler : IRequestHandler<DccSoakQuery, OneOf<string, SharedProblemDetails>>
   {
-    public async Task<OneOf<string, SharedProblemDetails>> Handle(DccSoakQuery query, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<string, SharedProblemDetails>> Handle(DccSoakQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       await Task.Delay(query.N % 5, cancellationToken);
@@ -391,9 +391,9 @@ public sealed class DccCodeQuery : IQuery<CcPathResult>
   [Option("code", Description = "The exit code")]
   public int Code { get; set; }
 
-  public sealed class Handler : IQueryHandler<DccCodeQuery, CcPathResult>
+  public sealed class Handler : IRequestHandler<DccCodeQuery, CcPathResult>
   {
-    public async Task<CcPathResult> Handle(DccCodeQuery query, CancellationToken cancellationToken)
+    public async ValueTask<CcPathResult> Handle(DccCodeQuery query, CancellationToken cancellationToken)
     {
       ArgumentNullException.ThrowIfNull(query);
       await CcRendezvous.Current.EnterAsync(query.Name, cancellationToken);

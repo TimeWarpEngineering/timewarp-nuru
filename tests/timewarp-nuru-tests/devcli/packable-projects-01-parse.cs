@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+// Fixture constants are named stdout to match the MSBuild stream. The constant
+// naming rule wants PascalCase, and standalone `dotnet run` treats that warning
+// as an error. The multi-mode CI compile turns style enforcement off.
+#pragma warning disable IDE1006
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -65,6 +65,11 @@ testProjects.AddRange(benchmarkProjects);
 testFiles.AddRange(testProjects);
 testFiles = [.. testFiles.Distinct().Order()];
 
+// devcli-consumer-check compiles DevCli the way a NuGet consumer does and
+// ProjectReferences TimeWarp.Nuru. InternalsVisibleTo would hide a CS0122 a
+// real consumer still sees (kanban 528, 562).
+testFiles.RemoveAll(name => name == "devcli-consumer-check");
+
 Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Found {testFiles.Count} test assemblies"));
 
 // Generate the InternalsVisibleTo attributes

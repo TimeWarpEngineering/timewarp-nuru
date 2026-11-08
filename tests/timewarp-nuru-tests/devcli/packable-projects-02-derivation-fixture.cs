@@ -174,6 +174,40 @@ public class PackableProjectDerivationFixtureTests
     }
   }
 
+  public static async Task Project_that_fails_evaluation_throws_naming_the_project()
+  {
+    string root = CreateFixtureRoot();
+
+    try
+    {
+      string sourceDir = Path.Combine(root, "source");
+      string projectDir = Path.Combine(sourceDir, "fake-broken");
+      Directory.CreateDirectory(projectDir);
+      await File.WriteAllTextAsync
+      (
+        Path.Combine(projectDir, "fake-broken.csproj"),
+        """
+        <Project>
+          <Import Project="missing.targets" />
+        </Project>
+        """,
+        CancellationToken.None
+      ).ConfigureAwait(false);
+
+      PackableProjectService service = new();
+
+      InvalidOperationException exception = await Should.ThrowAsync<InvalidOperationException>(async () =>
+        await service.GetPackableProjectsAsync(root, CancellationToken.None).ConfigureAwait(false));
+
+      exception.Message.ShouldContain("fake-broken.csproj");
+      exception.Message.ShouldContain("exit code");
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+  }
+
   public static async Task Root_without_source_directory_returns_empty()
   {
     string root = CreateFixtureRoot();

@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 700
+- Lines changed: 343
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -24,3 +24,11 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+**Date:** 2026-11-09
+**Diff scope:** fix delta 93650965..9fff2abb (`fix(devcli): report packable-project progress on the injected terminal (569)`)
+**Plan / brief:** round-1 `merged.md` M1–M3
+**Effort:** 2 — roster: general
+**Session IDs:** review oracle round 2 (claude, claude-opus-5-5), headless ganda task work

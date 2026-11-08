@@ -72,6 +72,7 @@ carry their own `global.json` and are never packable). Only one project (`TimeWa
 - Review oracle round 1: claude (claude-opus-5-5), effort 2, roster general — 2026-11-09. 3 open findings (M1 bug, M2 suggestion, M3 nit); fix pass requested. Artifacts under `review/round-1/`.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 5854f69d-3a90-4f21-bd14-8706afdf17d7, max-turns 120, artifacts general.md, merged.md — 2026-11-08T19:41:30Z
 - Fix pass (implement-fix-2): 2026-11-09. M1 names the parse constants `Stdout` and drops the file-wide IDE1006 pragma. M2 gives `PackableProjectService` an `ITerminal`; generated DI passes `__fw_ITerminal`, and the derivation fixture reads the progress line on `TestTerminal`. M3 keeps the original exceptions on the multi-failure `InvalidOperationException` as an inner `AggregateException`.
+- Review oracle round 2: claude (claude-opus-5-5), effort 2, roster general — 2026-11-09. Reviewed fix delta 93650965..9fff2abb; M1–M3 fixed, no new findings. Disposition clean. Artifacts under `review/round-2/` and `review/disposition.md`.
 
 ## Results
 
@@ -102,8 +103,12 @@ task and the implementer restatement (no misread). Re-ran `packable-projects-01-
 `-02-derivation-fixture` 4/4, `-03-parallel` 8/8. Counts: bug 1 open, suggestion 1 open, nit 1 open.
 The fix pass implemented M1 (parse constants renamed to `Stdout`, IDE1006 pragma removed),
 M2 (progress goes through the injected `ITerminal`), and M3 (inner `AggregateException`).
-Round 2 has not reviewed that diff yet.
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 2 (effort 2, roster: general) reviewed the fix delta 93650965..9fff2abb. All three are fixed,
+and there are no new findings. Re-ran `packable-projects-01` 21/21, `-02` 4/4, `-03` 8/8,
+`check-version-04` 1/1, `check-version-07` 11/11, and `dotnet build tools/dev-cli/dev.cs` (generated
+resolver passes `__fw_ITerminal`). Final counts (open/fixed/wontfix): bug 0/1/0, suggestion 0/1/0,
+nit 0/1/0. **Disposition: clean** (2 rounds, 0 open, no wontfix, no escalations).
+Paths: `review/review-framework.md`, `review/round-1/`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -128,8 +133,8 @@ Expect: 21/21, 8/8, 4/4, 1/1, and 11/11 passed, and the consumer build reports 0
 
 ## Review
 
-- Round 1: open M1, M2, M3 — implemented in the fix pass; round 2 has not reviewed that diff
-
+- Round 1: open M1, M2, M3 — implemented in the fix pass (9fff2abb)
+- Round 2: Done
 ## Notes
 
 - Related: 525 (feed lookup for check-version), 458-004 (MSBuild-derived packable set).

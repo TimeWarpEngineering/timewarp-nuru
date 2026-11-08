@@ -21,8 +21,14 @@
 // MSBuild node. Each result is stored at the project's index in the
 // enumerated list, then ValidateDerivedSet sorts by PackageId, so finish
 // order never changes the derived set or which path a duplicate-PackageId
-// error names first. Before the first evaluation, stderr gets one line,
-// `Evaluating N projects for IsPackable…`; stdout stays the command result.
+// error names first. Before the first evaluation, the injected ITerminal
+// writes one error line, `Evaluating N projects for IsPackable…`, and only
+// when there is at least one project. Stdout stays the command result. A
+// test supplies its own ITerminal and reads the line there. The static
+// Terminal is not used, so the line is not stuck on the process stderr.
+// One evaluation failure is rethrown unchanged. More than one become a
+// single InvalidOperationException whose inner exception is an
+// AggregateException of the originals.
 // A generated multi-project traversal is not used. On Roslynk it failed in
 // 10s (MSB4057: the injected target does not exist in the project). Injecting
 // a target also depends on Microsoft.Common.targets, so a bare project that
@@ -62,6 +68,18 @@ using TimeWarp.Terminal;
 
 internal sealed class PackableProjectService : IPackableProjectService
 {
+  private readonly ITerminal Terminal;
+
+  /// <summary>
+  /// Creates the service. The progress line goes to <paramref name="terminal"/>
+  /// so a test terminal can observe it and stdout stays the command result.
+  /// </summary>
+  public PackableProjectService(ITerminal terminal)
+  {
+    ArgumentNullException.ThrowIfNull(terminal);
+    Terminal = terminal;
+  }
+
   /// <inheritdoc />
   public async ValueTask<IReadOnlyList<PackableProject>> GetPackableProjectsAsync
   (
@@ -90,7 +108,7 @@ internal sealed class PackableProjectService : IPackableProjectService
     (
       projectPaths,
       EvaluateWithMsBuildAsync,
-      Terminal.WriteErrorLine,
+      line => Terminal.WriteErrorLine(line),
       cancellationToken
     ).ConfigureAwait(false);
   }
@@ -98,12 +116,14 @@ internal sealed class PackableProjectService : IPackableProjectService
   /// <summary>
   /// Evaluates <paramref name="projectPaths"/> with bounded parallelism and
   /// returns the packable subset sorted by PackageId. <paramref name="evaluate"/>
-  /// is the per-project MSBuild call in production and a stub in tests. A
-  /// failure throws <see cref="InvalidOperationException"/> naming the project;
-  /// finish order does not change the list <see cref="ValidateDerivedSet"/> sees.
+  /// is the per-project MSBuild call in production and a stub in tests. One
+  /// failure is rethrown with its original message. More than one throw
+  /// <see cref="InvalidOperationException"/> naming every failure, with those
+  /// exceptions kept in an inner <see cref="AggregateException"/>. Finish order
+  /// does not change the list <see cref="ValidateDerivedSet"/> sees.
   /// <paramref name="reportProgress"/> receives one line before evaluation when
-  /// there is at least one project; production passes
-  /// <see cref="Terminal.WriteErrorLine(string)"/> so stdout stays the command result.
+  /// there is at least one project. Production passes the injected
+  /// <see cref="ITerminal"/> error writer so stdout stays the command result.
   /// </summary>
   internal static async ValueTask<IReadOnlyList<PackableProject>> EvaluateProjectsAsync
   (
@@ -179,7 +199,8 @@ internal sealed class PackableProjectService : IPackableProjectService
       throw new InvalidOperationException
       (
         "Failed to evaluate MSBuild properties for multiple projects: "
-        + string.Join("; ", failures.Select(failure => failure.Message))
+        + string.Join("; ", failures.Select(failure => failure.Message)),
+        new AggregateException(failures)
       );
     }
 

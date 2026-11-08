@@ -11,7 +11,7 @@ using global::DevCli;
 
 /// <summary>
 /// Parallel evaluation of packable projects (kanban task 569). The evaluator
-/// is a stub, so finish order, a named failure, and the stderr progress line
+/// is a stub, so finish order, a named failure, and the progress line
 /// are asserted without starting MSBuild. Real <c>dotnet msbuild</c> coverage
 /// stays in <c>packable-projects-02-derivation-fixture.cs</c>.
 /// </summary>
@@ -146,6 +146,10 @@ public class PackableProjectParallelTests
 
     exception.Message.ShouldContain("source/a/a.csproj");
     exception.Message.ShouldContain("source/b/b.csproj");
+    AggregateException aggregate = exception.InnerException.ShouldBeOfType<AggregateException>();
+    aggregate.InnerExceptions.Count.ShouldBe(2);
+    aggregate.InnerExceptions.ShouldContain(failure => failure.Message.Contains("source/a/a.csproj", StringComparison.Ordinal));
+    aggregate.InnerExceptions.ShouldContain(failure => failure.Message.Contains("source/b/b.csproj", StringComparison.Ordinal));
   }
 
   public static async Task Unparseable_output_throws_naming_the_project()

@@ -99,12 +99,14 @@ public class PackableProjectDerivationFixtureTests
         """
       ).ConfigureAwait(false);
 
-      PackableProjectService service = new();
+      using TestTerminal terminal = new();
+      PackableProjectService service = new(terminal);
       IReadOnlyList<PackableProject> result = await service
         .GetPackableProjectsAsync(root, CancellationToken.None)
         .ConfigureAwait(false);
 
       result.Select(p => p.PackageId).ShouldBe(["Fake.A", "Fake.C"]);
+      terminal.ErrorContains("Evaluating 3 projects for IsPackable…").ShouldBeTrue();
     }
     finally
     {
@@ -161,12 +163,14 @@ public class PackableProjectDerivationFixtureTests
         CancellationToken.None
       ).ConfigureAwait(false);
 
-      PackableProjectService service = new();
+      using TestTerminal terminal = new();
+      PackableProjectService service = new(terminal);
 
       InvalidOperationException exception = await Should.ThrowAsync<InvalidOperationException>(async () =>
         await service.GetPackableProjectsAsync(root, CancellationToken.None).ConfigureAwait(false));
 
       exception.Message.ShouldContain("fake-blank.csproj");
+      terminal.ErrorContains("Evaluating 1 project for IsPackable…").ShouldBeTrue();
     }
     finally
     {
@@ -194,13 +198,15 @@ public class PackableProjectDerivationFixtureTests
         CancellationToken.None
       ).ConfigureAwait(false);
 
-      PackableProjectService service = new();
+      using TestTerminal terminal = new();
+      PackableProjectService service = new(terminal);
 
       InvalidOperationException exception = await Should.ThrowAsync<InvalidOperationException>(async () =>
         await service.GetPackableProjectsAsync(root, CancellationToken.None).ConfigureAwait(false));
 
       exception.Message.ShouldContain("fake-broken.csproj");
       exception.Message.ShouldContain("exit code");
+      terminal.ErrorContains("Evaluating 1 project for IsPackable…").ShouldBeTrue();
     }
     finally
     {
@@ -215,12 +221,14 @@ public class PackableProjectDerivationFixtureTests
     try
     {
       // Deliberately do NOT create {root}/source.
-      PackableProjectService service = new();
+      using TestTerminal terminal = new();
+      PackableProjectService service = new(terminal);
       IReadOnlyList<PackableProject> result = await service
         .GetPackableProjectsAsync(root, CancellationToken.None)
         .ConfigureAwait(false);
 
       result.ShouldBeEmpty();
+      terminal.ErrorContains("Evaluating").ShouldBeFalse();
     }
     finally
     {

@@ -1,10 +1,5 @@
 #!/usr/bin/env -S dotnet --
 
-// Fixture constants are named stdout to match the MSBuild stream. The constant
-// naming rule wants PascalCase, and standalone `dotnet run` treats that warning
-// as an error. The multi-mode CI compile turns style enforcement off.
-#pragma warning disable IDE1006
-
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif
@@ -37,7 +32,7 @@ public class PackableProjectParseTests
 
   public static async Task Packable_true_with_package_id_parses()
   {
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "IsPackable": "true",
@@ -46,7 +41,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
 
     isPackable.ShouldBeTrue();
     packageId.ShouldBe("TimeWarp.Nuru");
@@ -56,7 +51,7 @@ public class PackableProjectParseTests
 
   public static async Task Packable_false_parses()
   {
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "IsPackable": "false",
@@ -65,7 +60,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
 
     isPackable.ShouldBeFalse();
     packageId.ShouldBe("TimeWarp.Nuru.Parsing");
@@ -75,7 +70,7 @@ public class PackableProjectParseTests
 
   public static async Task Capitalized_true_casing_parses_as_packable()
   {
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "IsPackable": "True",
@@ -84,7 +79,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, _) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, _) = PackableProjectService.ParseGetPropertyOutput(Stdout);
     isPackable.ShouldBeTrue();
 
     await Task.CompletedTask;
@@ -92,7 +87,7 @@ public class PackableProjectParseTests
 
   public static async Task Upper_true_casing_parses_as_packable()
   {
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "IsPackable": "TRUE",
@@ -101,7 +96,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, _) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, _) = PackableProjectService.ParseGetPropertyOutput(Stdout);
     isPackable.ShouldBeTrue();
 
     await Task.CompletedTask;
@@ -111,7 +106,7 @@ public class PackableProjectParseTests
   {
     // dotnet msbuild -nologo should suppress this, but tolerate it anyway —
     // a stray warning line landing on stdout must not break parsing.
-    const string stdout = """
+    const string Stdout = """
     MSBuild version 17.12.0 for .NET
     Some warning line unrelated to the JSON payload
     {
@@ -122,7 +117,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
 
     isPackable.ShouldBeTrue();
     packageId.ShouldBe("TimeWarp.Nuru");
@@ -136,9 +131,9 @@ public class PackableProjectParseTests
     // latch onto the '{123}' brace below and fail to parse the real payload
     // that follows. The anchor must instead find the '{' immediately (modulo
     // whitespace) preceding "Properties".
-    const string stdout = "warning XY{123}: something\n{\"Properties\":{\"IsPackable\":\"true\",\"PackageId\":\"A\"}}";
+    const string Stdout = "warning XY{123}: something\n{\"Properties\":{\"IsPackable\":\"true\",\"PackageId\":\"A\"}}";
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
 
     isPackable.ShouldBeTrue();
     packageId.ShouldBe("A");
@@ -150,9 +145,9 @@ public class PackableProjectParseTests
   {
     // msbuild's real output is pretty-printed (see other tests), but the
     // parser must not assume that shape.
-    const string stdout = "{\"Properties\":{\"IsPackable\":\"true\",\"PackageId\":\"TimeWarp.Nuru\"}}";
+    const string Stdout = "{\"Properties\":{\"IsPackable\":\"true\",\"PackageId\":\"TimeWarp.Nuru\"}}";
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
 
     isPackable.ShouldBeTrue();
     packageId.ShouldBe("TimeWarp.Nuru");
@@ -164,11 +159,11 @@ public class PackableProjectParseTests
   {
     // `{}` deserializes but Properties is null — same silent-drop class as
     // missing JSON (470 M23). TryParse must return false so derivation throws.
-    const string stdout = "{}";
+    const string Stdout = "{}";
 
-    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
+    PackableProjectService.TryParseGetPropertyOutput(Stdout, out _, out _).ShouldBeFalse();
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
 
@@ -177,7 +172,7 @@ public class PackableProjectParseTests
 
   public static async Task Missing_package_id_key_returns_null_id()
   {
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "IsPackable": "true"
@@ -185,7 +180,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
 
     isPackable.ShouldBeTrue();
     packageId.ShouldBeNull();
@@ -195,7 +190,7 @@ public class PackableProjectParseTests
 
   public static async Task Empty_package_id_value_parses_as_empty_string()
   {
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "IsPackable": "true",
@@ -204,7 +199,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
 
     isPackable.ShouldBeTrue();
     packageId.ShouldBe("");
@@ -214,7 +209,7 @@ public class PackableProjectParseTests
 
   public static async Task Missing_is_packable_key_defaults_to_false()
   {
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "PackageId": "TimeWarp.Nuru"
@@ -222,7 +217,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
 
     isPackable.ShouldBeFalse();
     packageId.ShouldBe("TimeWarp.Nuru");
@@ -232,7 +227,7 @@ public class PackableProjectParseTests
 
   public static async Task Non_boolean_is_packable_value_defaults_to_false()
   {
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "IsPackable": "not-a-bool",
@@ -241,7 +236,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    (bool isPackable, _) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, _) = PackableProjectService.ParseGetPropertyOutput(Stdout);
     isPackable.ShouldBeFalse();
 
     await Task.CompletedTask;
@@ -249,11 +244,11 @@ public class PackableProjectParseTests
 
   public static async Task No_properties_marker_is_unparseable()
   {
-    const string stdout = "MSBuild failed to run for an unrelated reason.";
+    const string Stdout = "MSBuild failed to run for an unrelated reason.";
 
-    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
+    PackableProjectService.TryParseGetPropertyOutput(Stdout, out _, out _).ShouldBeFalse();
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
 
@@ -264,11 +259,11 @@ public class PackableProjectParseTests
   {
     // "Properties" text present, but nothing but non-whitespace precedes it —
     // the backward scan must not find a '{' and must fail closed.
-    const string stdout = "not json at all \"Properties\": \"whatever\"";
+    const string Stdout = "not json at all \"Properties\": \"whatever\"";
 
-    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
+    PackableProjectService.TryParseGetPropertyOutput(Stdout, out _, out _).ShouldBeFalse();
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
 
@@ -277,11 +272,11 @@ public class PackableProjectParseTests
 
   public static async Task Invalid_json_after_opening_brace_is_unparseable()
   {
-    const string stdout = "{\"Properties\": this is not valid json ";
+    const string Stdout = "{\"Properties\": this is not valid json ";
 
-    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
+    PackableProjectService.TryParseGetPropertyOutput(Stdout, out _, out _).ShouldBeFalse();
 
-    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(stdout);
+    (bool isPackable, string? packageId) = PackableProjectService.ParseGetPropertyOutput(Stdout);
     isPackable.ShouldBeFalse();
     packageId.ShouldBeNull();
 
@@ -304,7 +299,7 @@ public class PackableProjectParseTests
     // IsPackable=false with a Properties object is a successful parse — TryParse
     // true — and must NOT be confused with the unparseable path that derivation
     // fails-loud on (470 M23).
-    const string stdout = """
+    const string Stdout = """
     {
       "Properties": {
         "IsPackable": "false",
@@ -313,7 +308,7 @@ public class PackableProjectParseTests
     }
     """;
 
-    PackableProjectService.TryParseGetPropertyOutput(stdout, out bool isPackable, out string? packageId)
+    PackableProjectService.TryParseGetPropertyOutput(Stdout, out bool isPackable, out string? packageId)
       .ShouldBeTrue();
     isPackable.ShouldBeFalse();
     packageId.ShouldBe("TimeWarp.Nuru.Parsing");
@@ -323,9 +318,9 @@ public class PackableProjectParseTests
 
   public static async Task Null_properties_object_json_is_unparseable()
   {
-    const string stdout = """{"Properties":null}""";
+    const string Stdout = """{"Properties":null}""";
 
-    PackableProjectService.TryParseGetPropertyOutput(stdout, out _, out _).ShouldBeFalse();
+    PackableProjectService.TryParseGetPropertyOutput(Stdout, out _, out _).ShouldBeFalse();
 
     await Task.CompletedTask;
   }

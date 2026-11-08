@@ -99,12 +99,14 @@ public class PackableProjectDerivationFixtureTests
         """
       ).ConfigureAwait(false);
 
-      PackableProjectService service = new();
+      using TestTerminal terminal = new();
+      PackableProjectService service = new(terminal);
       IReadOnlyList<PackableProject> result = await service
         .GetPackableProjectsAsync(root, CancellationToken.None)
         .ConfigureAwait(false);
 
       result.Select(p => p.PackageId).ShouldBe(["Fake.A", "Fake.C"]);
+      terminal.ErrorContains("Evaluating 3 projects for IsPackable…").ShouldBeTrue();
     }
     finally
     {
@@ -161,12 +163,50 @@ public class PackableProjectDerivationFixtureTests
         CancellationToken.None
       ).ConfigureAwait(false);
 
-      PackableProjectService service = new();
+      using TestTerminal terminal = new();
+      PackableProjectService service = new(terminal);
 
       InvalidOperationException exception = await Should.ThrowAsync<InvalidOperationException>(async () =>
         await service.GetPackableProjectsAsync(root, CancellationToken.None).ConfigureAwait(false));
 
       exception.Message.ShouldContain("fake-blank.csproj");
+      terminal.ErrorContains("Evaluating 1 project for IsPackable…").ShouldBeTrue();
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+  }
+
+  public static async Task Project_that_fails_evaluation_throws_naming_the_project()
+  {
+    string root = CreateFixtureRoot();
+
+    try
+    {
+      string sourceDir = Path.Combine(root, "source");
+      string projectDir = Path.Combine(sourceDir, "fake-broken");
+      Directory.CreateDirectory(projectDir);
+      await File.WriteAllTextAsync
+      (
+        Path.Combine(projectDir, "fake-broken.csproj"),
+        """
+        <Project>
+          <Import Project="missing.targets" />
+        </Project>
+        """,
+        CancellationToken.None
+      ).ConfigureAwait(false);
+
+      using TestTerminal terminal = new();
+      PackableProjectService service = new(terminal);
+
+      InvalidOperationException exception = await Should.ThrowAsync<InvalidOperationException>(async () =>
+        await service.GetPackableProjectsAsync(root, CancellationToken.None).ConfigureAwait(false));
+
+      exception.Message.ShouldContain("fake-broken.csproj");
+      exception.Message.ShouldContain("exit code");
+      terminal.ErrorContains("Evaluating 1 project for IsPackable…").ShouldBeTrue();
     }
     finally
     {
@@ -181,12 +221,14 @@ public class PackableProjectDerivationFixtureTests
     try
     {
       // Deliberately do NOT create {root}/source.
-      PackableProjectService service = new();
+      using TestTerminal terminal = new();
+      PackableProjectService service = new(terminal);
       IReadOnlyList<PackableProject> result = await service
         .GetPackableProjectsAsync(root, CancellationToken.None)
         .ConfigureAwait(false);
 
       result.ShouldBeEmpty();
+      terminal.ErrorContains("Evaluating").ShouldBeFalse();
     }
     finally
     {

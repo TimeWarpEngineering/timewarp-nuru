@@ -42,7 +42,7 @@ public class CheckVersionEndpointFailClosedTests
       using TestTerminal terminal = new();
       using NuGetVersionService nuGetVersionService = new(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)));
       RepoConfigService configService = new();
-      PackableProjectService packableProjectService = new();
+      PackableProjectService packableProjectService = new(terminal);
 
       CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, configService, packableProjectService);
 
@@ -76,7 +76,7 @@ public class CheckVersionEndpointFailClosedTests
       StubHandler stubHandler = new(_ => new HttpResponseMessage(HttpStatusCode.OK));
       using NuGetVersionService nuGetVersionService = new(stubHandler);
       RepoConfigService configService = new();
-      PackableProjectService packableProjectService = new();
+      PackableProjectService packableProjectService = new(terminal);
 
       CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, configService, packableProjectService);
 
@@ -105,7 +105,7 @@ public class CheckVersionEndpointFailClosedTests
       using TestTerminal terminal = new();
       using NuGetVersionService nuGetVersionService = TwoFeeds(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
       RepoConfigService configService = new();
-      PackableProjectService packableProjectService = new();
+      PackableProjectService packableProjectService = new(terminal);
 
       CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, configService, packableProjectService);
 
@@ -141,7 +141,7 @@ public class CheckVersionEndpointFailClosedTests
         _ => new HttpResponseMessage(HttpStatusCode.Forbidden)
       );
 
-      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig(BothFeeds), new PackableProjectService());
+      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig(BothFeeds), new PackableProjectService(terminal));
 
       await handler.Handle(new CheckVersionCommand { Package = "TimeWarp.Taratibu", SourceVersion = "1.0.0-beta.17" }, CancellationToken.None);
 
@@ -373,7 +373,7 @@ public class CheckVersionEndpointFailClosedTests
           }
         );
 
-        CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig(config), new PackableProjectService());
+        CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig(config), new PackableProjectService(terminal));
 
         await handler.Handle(new CheckVersionCommand { Package = "TimeWarp.Mediator", SourceVersion = "15.0.0-beta.3" }, CancellationToken.None);
 
@@ -408,7 +408,7 @@ public class CheckVersionEndpointFailClosedTests
         return Task.FromResult<GitHubPackagesCredential?>(null);
       });
 
-      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig("nuget.org,myget"), new PackableProjectService());
+      CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, new FixedConfig("nuget.org,myget"), new PackableProjectService(terminal));
 
       await handler.Handle(new CheckVersionCommand { Package = "TimeWarp.Nuru", SourceVersion = "1.0.0" }, CancellationToken.None);
 
@@ -487,7 +487,7 @@ public class CheckVersionEndpointFailClosedTests
         terminal,
         nuGetVersionService,
         new FixedConfig(BothFeeds),
-        new PackableProjectService()
+        new PackableProjectService(terminal)
       );
 
       await commandHandler.Handle(command, CancellationToken.None);

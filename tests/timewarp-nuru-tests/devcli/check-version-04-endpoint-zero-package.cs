@@ -52,7 +52,7 @@ public class CheckVersionEndpointZeroPackageTests
       using TestTerminal terminal = new();
       using NuGetVersionService nuGetVersionService = new();
       RepoConfigService configService = new();
-      PackableProjectService packableProjectService = new();
+      PackableProjectService packableProjectService = new(terminal);
 
       CheckVersionCommand.Handler handler = new(terminal, nuGetVersionService, configService, packableProjectService);
 

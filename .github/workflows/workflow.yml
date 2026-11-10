@@ -50,6 +50,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   changes:
     # Path gate for pull requests (task 537). Sets code=false only when every
@@ -80,46 +84,52 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
         run: |
-          set -euo pipefail
-          if [ "$EVENT_NAME" != "pull_request" ]; then
-            echo "Event ${EVENT_NAME} is never path-gated: full build."
-            echo "code=true" >> "$GITHUB_OUTPUT"
+          $ErrorActionPreference = 'Stop'
+          if ($env:EVENT_NAME -ne 'pull_request') {
+            Write-Output "Event $($env:EVENT_NAME) is never path-gated: full build."
+            Write-Output 'code=true' >> $env:GITHUB_OUTPUT
             exit 0
-          fi
+          }
 
-          mapfile -t patterns < <(yq -r '.on.push."paths-ignore"[]' .github/workflows/workflow.yml)
-          if [ "${#patterns[@]}" -eq 0 ]; then
-            echo "::warning::No push.paths-ignore patterns read from workflow.yml; building."
-            echo "code=true" >> "$GITHUB_OUTPUT"
+          $patterns = @(yq -r '.on.push."paths-ignore"[]' .github/workflows/workflow.yml | Where-Object { $_ })
+          if ($LASTEXITCODE -ne 0) { throw 'yq failed to read push.paths-ignore.' }
+          if ($patterns.Count -eq 0) {
+            Write-Output '::warning::No push.paths-ignore patterns read from workflow.yml; building.'
+            Write-Output 'code=true' >> $env:GITHUB_OUTPUT
             exit 0
-          fi
+          }
 
-          mapfile -t files < <(gh api --paginate \
-            "/repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" \
-            --jq '.[] | .filename, (.previous_filename // empty)')
+          $files = @(gh api --paginate "/repos/$($env:GITHUB_REPOSITORY)/pulls/$($env:PR_NUMBER)/files?per_page=100" `
+            --jq '.[] | .filename, (.previous_filename // empty)' | Where-Object { $_ })
+          if ($LASTEXITCODE -ne 0) { throw 'gh api failed to list the PR files.' }
           # The files API stops at 3000 entries. A short list could hide code.
-          if [ "${#files[@]}" -eq 0 ] || [ "${#files[@]}" -lt "$PR_CHANGED_FILES" ]; then
-            echo "Listed ${#files[@]} of ${PR_CHANGED_FILES} changed files; building."
-            echo "code=true" >> "$GITHUB_OUTPUT"
+          if ($files.Count -eq 0 -or $files.Count -lt [int]$env:PR_CHANGED_FILES) {
+            Write-Output "Listed $($files.Count) of $($env:PR_CHANGED_FILES) changed files; building."
+            Write-Output 'code=true' >> $env:GITHUB_OUTPUT
             exit 0
-          fi
+          }
 
-          for f in "${files[@]}"; do
-            matched=false
-            for p in "${patterns[@]}"; do
-              # Unquoted on purpose: glob match, and * crosses / in [[ ]].
-              # shellcheck disable=SC2053
-              if [[ "$f" == $p ]]; then matched=true; break; fi
-            done
-            if [ "$matched" = false ]; then
-              echo "Code path changed: ${f}. Full build."
-              echo "code=true" >> "$GITHUB_OUTPUT"
+          # Glob to regex with bash [[ == ]] unquoted semantics: * and ** cross /, ? is one char.
+          $regexes = foreach ($p in $patterns) {
+            $r = [regex]::Escape($p)
+            $r = $r.Replace('\*\*', '.*').Replace('\*', '.*').Replace('\?', '.')
+            "^$r$"
+          }
+
+          foreach ($f in $files) {
+            $matched = $false
+            foreach ($r in $regexes) {
+              if ($f -match $r) { $matched = $true; break }
+            }
+            if (-not $matched) {
+              Write-Output "Code path changed: $f. Full build."
+              Write-Output 'code=true' >> $env:GITHUB_OUTPUT
               exit 0
-            fi
-          done
+            }
+          }
 
-          echo "All ${#files[@]} changed paths are non-code (${patterns[*]}). Skipping the build."
-          echo "code=false" >> "$GITHUB_OUTPUT"
+          Write-Output "All $($files.Count) changed paths are non-code ($($patterns -join ' ')). Skipping the build."
+          Write-Output 'code=false' >> $env:GITHUB_OUTPUT
 
   stage:
     # The PR/merge pipeline as parallel jobs (task 538): build (pack plus the
@@ -161,8 +171,11 @@ jobs:
         if: matrix.stage == 'test-multi'
         id: os
         run: |
-          . /etc/os-release
-          echo "codename=${VERSION_CODENAME}" >> "$GITHUB_OUTPUT"
+          $ErrorActionPreference = 'Stop'
+          $line = Get-Content /etc/os-release | Where-Object { $_ -match '^VERSION_CODENAME=' } | Select-Object -First 1
+          $codename = ''
+          if ($line) { $codename = ($line -replace '^VERSION_CODENAME=', '').Trim('"', "'") }
+          Write-Output "codename=$codename" >> $env:GITHUB_OUTPUT
 
       - name: Cache zsh packages
         if: matrix.stage == 'test-multi'
@@ -176,21 +189,34 @@ jobs:
         env:
           DEBS: ${{ runner.temp }}/zsh-debs
         run: |
-          set -euo pipefail
-          if command -v zsh >/dev/null; then
-            echo "zsh is already installed."
+          $ErrorActionPreference = 'Stop'
+          if (Get-Command zsh -ErrorAction SilentlyContinue) {
+            Write-Output 'zsh is already installed.'
             exit 0
-          fi
-          if compgen -G "${DEBS}/*.deb" >/dev/null && sudo dpkg -i "${DEBS}"/*.deb; then
-            echo "Installed zsh from the cached packages."
-            exit 0
-          fi
-          echo "No usable cached zsh packages; installing from apt."
+          }
+          $debs = @(Get-ChildItem -Path $env:DEBS -Filter '*.deb' -ErrorAction SilentlyContinue)
+          if ($debs.Count -gt 0) {
+            sudo dpkg -i @($debs.FullName)
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output 'Installed zsh from the cached packages.'
+              exit 0
+            }
+          }
+          Write-Output 'No usable cached zsh packages; installing from apt.'
           sudo apt-get update
-          rm -rf "${DEBS}"
-          mkdir -p "${DEBS}"
-          (cd "${DEBS}" && apt-get download zsh zsh-common)
-          sudo apt-get install -y "${DEBS}"/*.deb
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item -Recurse -Force -Path $env:DEBS -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $env:DEBS | Out-Null
+          Push-Location $env:DEBS
+          try {
+            apt-get download zsh zsh-common
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } finally {
+            Pop-Location
+          }
+          $downloaded = @(Get-ChildItem -Path $env:DEBS -Filter '*.deb')
+          sudo apt-get install -y @($downloaded.FullName)
+          exit $LASTEXITCODE
 
       - name: Run CI stage
         env:
@@ -242,11 +268,11 @@ jobs:
         env:
           STAGE_RESULT: ${{ needs.stage.result }}
         run: |
-          echo "stage result: ${STAGE_RESULT}"
-          if [ "${STAGE_RESULT}" != "success" ]; then
-            echo "::error::A CI stage did not succeed (${STAGE_RESULT})."
+          Write-Output "stage result: $($env:STAGE_RESULT)"
+          if ($env:STAGE_RESULT -ne 'success') {
+            Write-Output "::error::A CI stage did not succeed ($($env:STAGE_RESULT))."
             exit 1
-          fi
+          }
 
       - name: Download staged packages
         if: github.ref == 'refs/heads/master'
@@ -275,30 +301,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_ARTIFACT: Packages-${{ github.run_number }}
         run: |
-          set -euo pipefail
-          tmp="$(mktemp)"
-          trap 'rm -f "$tmp"' EXIT
-          gh api --paginate \
-            -H "Accept: application/vnd.github+json" \
-            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
-            --jq '.artifacts[] | select((.name | startswith("Packages-")) and (.expired == false)) | [.created_at, (.id | tostring), .name] | @tsv' \
-            | LC_ALL=C sort -r > "$tmp"
-          if ! cut -f3 "$tmp" | grep -qxF "$EXPECTED_ARTIFACT"; then
-            echo "Just-uploaded artifact ${EXPECTED_ARTIFACT} is not listed yet; skipping prune (keep-last-2 runs on the next green master push)."
+          $ErrorActionPreference = 'Stop'
+          $query = '.artifacts[] | select((.name | startswith("Packages-")) and (.expired == false)) | {created_at, id, name} | tojson'
+          $listed = gh api --paginate -H 'Accept: application/vnd.github+json' "/repos/$($env:GITHUB_REPOSITORY)/actions/artifacts?per_page=100" --jq $query
+          if ($LASTEXITCODE -ne 0) { throw 'gh api failed to list the Actions artifacts.' }
+          $artifacts = @($listed | Where-Object { $_ } | ForEach-Object { $_ | ConvertFrom-Json })
+          if (-not ($artifacts | Where-Object { $_.name -eq $env:EXPECTED_ARTIFACT })) {
+            Write-Output "Just-uploaded artifact $($env:EXPECTED_ARTIFACT) is not listed yet; skipping prune (keep-last-2 runs on the next green master push)."
             exit 0
-          fi
-          keep=2
-          n=0
-          while IFS=$'\t' read -r created_at id name; do
-            [ -n "$id" ] || continue
-            n=$((n + 1))
-            if [ "$n" -le "$keep" ]; then
-              echo "Keeping ${name} (id=${id}, created=${created_at})"
+          }
+          $keep = 2
+          $sorted = @($artifacts | Sort-Object -Property @{ Expression = { [datetime]$_.created_at }; Descending = $true }, @{ Expression = { [long]$_.id }; Descending = $true })
+          for ($index = 0; $index -lt $sorted.Count; $index++) {
+            $artifact = $sorted[$index]
+            if ($index -lt $keep) {
+              Write-Output "Keeping $($artifact.name) (id=$($artifact.id), created=$($artifact.created_at))"
               continue
-            fi
-            echo "Deleting ${name} (id=${id}, created=${created_at})"
-            gh api --method DELETE "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}"
-          done < "$tmp"
+            }
+            Write-Output "Deleting $($artifact.name) (id=$($artifact.id), created=$($artifact.created_at))"
+            gh api --method DELETE "/repos/$($env:GITHUB_REPOSITORY)/actions/artifacts/$($artifact.id)" | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "Delete of $($artifact.name) (id=$($artifact.id)) failed." }
+          }
 
       - name: Delete staged packages
         # Storage only; a leftover expires with its retention.
@@ -308,12 +331,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          set -euo pipefail
-          for id in $(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100" \
-            --jq '.artifacts[] | select(.name == "staged-packages") | .id'); do
-            echo "Deleting staged-packages (id=${id})"
-            gh api --method DELETE "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}"
-          done
+          $ErrorActionPreference = 'Stop'
+          $ids = @(gh api "/repos/$($env:GITHUB_REPOSITORY)/actions/runs/$($env:RUN_ID)/artifacts?per_page=100" `
+            --jq '.artifacts[] | select(.name == "staged-packages") | .id' | Where-Object { $_ })
+          if ($LASTEXITCODE -ne 0) { throw 'gh api failed to list the run artifacts.' }
+          foreach ($id in $ids) {
+            Write-Output "Deleting staged-packages (id=$id)"
+            gh api --method DELETE "/repos/$($env:GITHUB_REPOSITORY)/actions/artifacts/$id"
+            if ($LASTEXITCODE -ne 0) { throw "Delete of staged-packages (id=$id) failed." }
+          }
 
   release:
     # Release event, break-glass dispatch (mode=release) and the trusted
@@ -358,8 +384,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
+          if ('${{ github.event_name }}' -eq 'release') {
             dotnet run --file tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          else
+          } else {
             dotnet run --file tools/dev-cli/dev.cs -- workflow --mode release --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          fi
+          }
+          exit $LASTEXITCODE

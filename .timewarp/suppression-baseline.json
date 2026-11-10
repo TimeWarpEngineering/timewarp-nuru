@@ -1,0 +1,497 @@
+{
+  "files": {
+    ".editorconfig": {
+      "CA1034": 1,
+      "IDE0290": 1,
+      "RCS0036": 1,
+      "RCS0051": 1,
+      "RCS0052": 1,
+      "RCS1045": 1,
+      "RCS1124": 1,
+      "RCS1139": 1,
+      "RCS1140": 1,
+      "RCS1141": 1,
+      "RCS1142": 1,
+      "RCS1181": 1,
+      "TWA002": 1,
+      "ca1308": 1
+    },
+    ".githooks/post-checkout.cs": {
+      "CA2007": 1
+    },
+    ".githooks/post-commit.cs": {
+      "CA2007": 1
+    },
+    ".githooks/post-merge.cs": {
+      "CA2007": 1
+    },
+    ".githooks/pre-commit.cs": {
+      "CA1849": 2,
+      "CA2007": 1,
+      "RS0030": 2
+    },
+    ".githooks/pre-push.cs": {
+      "CA1849": 3,
+      "CA2007": 1,
+      "RS0030": 3
+    },
+    "Directory.Build.props": {
+      "CA1014": 1,
+      "CA1724": 1,
+      "CA1812": 1,
+      "IDE0290": 1,
+      "IL2026": 1,
+      "IL2067": 1,
+      "IL2070": 1,
+      "IL2075": 1,
+      "IL2104": 1,
+      "IL3050": 1,
+      "IL3053": 1
+    },
+    "benchmarks/aot-benchmarks/Directory.Build.props": {
+      "IL2026": 1,
+      "IL2067": 1,
+      "IL2070": 1,
+      "IL2072": 1,
+      "IL2075": 1,
+      "IL2104": 1,
+      "IL3050": 1,
+      "IL3053": 1
+    },
+    "runfiles/Directory.Build.props": {
+      "CA1031": 1,
+      "CA1303": 1,
+      "CA2007": 1
+    },
+    "samples/aspire-otel/apphost.cs": {
+      "ASPIRE004": 1,
+      "ASPIRECSHARPAPPS001": 2,
+      "ASPIRETERMINAL001": 2
+    },
+    "samples/editions/01-group-filtering/ganda/ganda.cs": {
+      "CA2007": 1
+    },
+    "samples/editions/01-group-filtering/git/git.cs": {
+      "CA2007": 1
+    },
+    "samples/editions/01-group-filtering/kanban/kanban.cs": {
+      "CA2007": 1
+    },
+    "samples/endpoints/07-configuration/validation/models/validated-settings.cs": {
+      "IL2026": 1
+    },
+    "samples/fluent/04-async/fluent-async-examples.cs": {
+      "NURU_H002": 1
+    },
+    "samples/fluent/05-pipeline/fluent-pipeline-basic.cs": {
+      "NURU_H002": 1
+    },
+    "samples/fluent/05-pipeline/fluent-pipeline-combined.cs": {
+      "NURU_H002": 1
+    },
+    "samples/fluent/05-pipeline/fluent-pipeline-retry.cs": {
+      "NURU_H002": 1
+    },
+    "samples/fluent/05-pipeline/fluent-pipeline-telemetry.cs": {
+      "NURU_H002": 1
+    },
+    "samples/fluent/08-type-converters/fluent-type-converters-builtin.cs": {
+      "NURU_H002": 1
+    },
+    "source/timewarp-nuru-analyzers/generators/extractors/builders/handler-parameter-mismatch-exception.cs": {
+      "CA1064": 1
+    },
+    "source/timewarp-nuru-analyzers/generators/extractors/referenced-method-decompiler.cs": {
+      "CA1031": 1,
+      "RS1035": 1,
+      "RS1036": 1
+    },
+    "source/timewarp-nuru-analyzers/generators/interpreter/dsl-interpreter.cs": {
+      "CA1859": 1
+    },
+    "source/timewarp-nuru-analyzers/generators/models/equatable-array.cs": {
+      "CA2225": 1
+    },
+    "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj": {
+      "CA1305": 1,
+      "CA1802": 1,
+      "CA1805": 1,
+      "RCS1163": 1,
+      "RS1041": 1
+    },
+    "source/timewarp-nuru-build/timewarp-nuru-build.csproj": {
+      "CA1031": 1,
+      "CA1305": 1,
+      "CA1307": 1,
+      "CA1819": 1,
+      "NU5100": 1,
+      "NU5128": 1
+    },
+    "source/timewarp-nuru-daemon/console-redirect.cs": {
+      "RS0030": 1
+    },
+    "source/timewarp-nuru-daemon/nuru-daemon-launcher.cs": {
+      "RS0030": 1
+    },
+    "source/timewarp-nuru-daemon/nuru-daemon-server.cs": {
+      "CA1031": 2,
+      "CA2025": 1
+    },
+    "source/timewarp-nuru-mcp/timewarp-nuru-mcp.csproj": {
+      "CA2007": 1
+    },
+    "source/timewarp-nuru-mcphost/console-redirect.cs": {
+      "RS0030": 1
+    },
+    "source/timewarp-nuru-mcphost/nuru-mcp-tool-invoker.cs": {
+      "CA1031": 2
+    },
+    "source/timewarp-nuru-search/services/search-index.cs": {
+      "CA2100": 1
+    },
+    "source/timewarp-nuru-search/timewarp-nuru-search.csproj": {
+      "CA1303": 1,
+      "CA1515": 1,
+      "CA1819": 1,
+      "CA2007": 1
+    },
+    "source/timewarp-nuru/builders/endpoint-builder.cs": {
+      "CA1062": 1,
+      "CA2225": 1
+    },
+    "source/timewarp-nuru/builders/nuru-app-builder/nuru-app-builder.cs": {
+      "CA1822": 1
+    },
+    "source/timewarp-nuru/check-updates/check-updates-types.cs": {
+      "CA1054": 1,
+      "CA1056": 1
+    },
+    "source/timewarp-nuru/completion/completion/install-completion-handler.cs": {
+      "CA1303": 1
+    },
+    "source/timewarp-nuru/dependency-injection/nuru-command-lease.cs": {
+      "IL2075": 1
+    },
+    "source/timewarp-nuru/help/help-options.cs": {
+      "CA2227": 1
+    },
+    "source/timewarp-nuru/invocation/nuru-call-context.cs": {
+      "RCS1174": 1
+    },
+    "source/timewarp-nuru/io/nuru-console-router.cs": {
+      "CA2000": 1,
+      "CA2213": 1,
+      "RS0030": 1
+    },
+    "source/timewarp-nuru/nuru-app.cs": {
+      "CA1822": 2,
+      "CA2000": 1
+    },
+    "source/timewarp-nuru/repl/input/repl-console-reader.clipboard.cs": {
+      "CA1031": 1,
+      "RCS1075": 1
+    },
+    "source/timewarp-nuru/repl/key-bindings/key-binding-action-registry.cs": {
+      "CA1024": 1
+    },
+    "source/timewarp-nuru/repl/key-bindings/key-binding-config.cs": {
+      "CA1002": 1,
+      "CA2227": 1
+    },
+    "source/timewarp-nuru/repl/repl-session.cs": {
+      "CA1031": 1,
+      "CA2213": 1
+    },
+    "source/timewarp-nuru/serialization/nuru-json-serializer-context.cs": {
+      "IL2026": 1
+    },
+    "source/timewarp-nuru/serialization/safe-exception-converter.cs": {
+      "IL2026": 1,
+      "IL3050": 1
+    },
+    "source/timewarp-nuru/timewarp-nuru.csproj": {
+      "CA1303": 1,
+      "CS8785": 1
+    },
+    "source/timewarp-nuru/type-conversion/default-type-converters.cs": {
+      "IL2070": 1
+    },
+    "spikes/roslynk-cli/schema/Directory.Build.props": {
+      "IL2026": 1,
+      "IL2075": 1,
+      "IL3050": 1
+    },
+    "tests/Directory.Build.props": {
+      "CA1031": 1,
+      "CA1050": 1,
+      "CA1052": 1,
+      "CA1303": 1,
+      "CA1307": 1,
+      "CA1515": 1,
+      "CA1707": 1,
+      "CA2000": 1,
+      "CA2007": 1,
+      "CS0050": 1,
+      "CS8785": 1,
+      "NURU_H004": 1,
+      "RCS1046": 1,
+      "RCS1102": 1,
+      "RCS1110": 1
+    },
+    "tests/ci-standalone/run-standalone-tests.cs": {
+      "RS0030": 1
+    },
+    "tests/ci-tests/Directory.Build.props": {
+      "CA5399": 1,
+      "CS0436": 1,
+      "IDE0065": 1,
+      "IDE0161": 1,
+      "RCS1163": 1
+    },
+    "tests/ci-tests/run-ci-tests.cs": {
+      "RS0030": 1
+    },
+    "tests/devcli-consumer-check/devcli-consumer-check.csproj": {
+      "CA1031": 1,
+      "CA1303": 1,
+      "CA1508": 1,
+      "CA1515": 1,
+      "CA1849": 1,
+      "CA2007": 1,
+      "CA2016": 1,
+      "CA5399": 1,
+      "IDE0065": 1,
+      "IL2104": 1,
+      "IL3053": 1,
+      "RCS1046": 1
+    },
+    "tests/shared/call-probes.cs": {
+      "CA1050": 1,
+      "RS0030": 1
+    },
+    "tests/test-apps/Directory.Build.props": {
+      "CA1031": 1,
+      "CA1050": 1,
+      "CA1052": 1,
+      "CA1303": 1,
+      "CA1307": 1,
+      "CA1515": 1,
+      "CA1707": 1,
+      "CA2007": 1,
+      "CS8785": 1
+    },
+    "tests/timewarp-nuru-daemon-tests/daemon-01-server.cs": {
+      "RS0030": 1
+    },
+    "tests/timewarp-nuru-mcp-tests/Directory.Build.props": {
+      "CS0436": 1
+    },
+    "tests/timewarp-nuru-mcphost-tests/mcphost-01-tools.cs": {
+      "RS0030": 2
+    },
+    "tests/timewarp-nuru-tests/auto/endpoint-nullable-option-01.cs": {
+      "CA1062": 1
+    },
+    "tests/timewarp-nuru-tests/auto/operation-camelcase-members.cs": {
+      "CA1002": 1,
+      "CA1062": 1,
+      "CA1805": 1,
+      "CA1819": 1,
+      "CA2227": 1,
+      "IDE1006": 1
+    },
+    "tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs": {
+      "CA1002": 1,
+      "CA1062": 1,
+      "CA1805": 1,
+      "CA1819": 1,
+      "CA2227": 1,
+      "NURU_H008": 1,
+      "TWM001": 1
+    },
+    "tests/timewarp-nuru-tests/auto/operation-endpoint-dispatch.cs": {
+      "CA1062": 1,
+      "CA1805": 1
+    },
+    "tests/timewarp-nuru-tests/auto/operation-renderer-output.cs": {
+      "CA1062": 1
+    },
+    "tests/timewarp-nuru-tests/builder/builder-01-services-property.cs": {
+      "CS0618": 1
+    },
+    "tests/timewarp-nuru-tests/capabilities/capabilities-09-nested-enum.cs": {
+      "CA1724": 1
+    },
+    "tests/timewarp-nuru-tests/devcli/Directory.Build.props": {
+      "CA1849": 1,
+      "CA5399": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-11-endpoints.cs": {
+      "CA1062": 1,
+      "CA1725": 1,
+      "CA1819": 1,
+      "CA1849": 1,
+      "RCS1248": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-15-runtime-di.cs": {
+      "CA1848": 2
+    },
+    "tests/timewarp-nuru-tests/generator/generator-18-partial-class-options.cs": {
+      "CA1062": 1,
+      "CA1725": 1,
+      "CA1819": 1,
+      "CA1849": 1,
+      "RCS1248": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-19-group-filtering.cs": {
+      "CA1062": 1,
+      "CA1725": 1,
+      "CA1819": 1,
+      "CA1849": 1,
+      "RCS1248": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-20-issue184-repro.cs": {
+      "CA1062": 1,
+      "CA1725": 1,
+      "CA1819": 1,
+      "CA1849": 1,
+      "RCS1248": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-20-parameterized-service-constructor.cs": {
+      "CA1849": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-21-singleton-param-ctor.cs": {
+      "NURU056": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-22-nested-namespace-tests.cs": {
+      "NURU056": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-24-mixed-constructors.cs": {
+      "NURU056": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs": {
+      "CA1305": 1,
+      "CA1848": 1,
+      "CA1873": 1,
+      "NURU056": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs": {
+      "CS1717": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-47-async-expression-body-lambdas.cs": {
+      "RCS1174": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-51-repl-service-scopes.cs": {
+      "CA1000": 1,
+      "CA1002": 1,
+      "CA1063": 1,
+      "CA1816": 1,
+      "CA2211": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-57-singleton-over-per-run-scoped.cs": {
+      "CA1063": 1,
+      "CA1816": 1,
+      "NURU056": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-64-discover-endpoints-across-apps.cs": {
+      "NURU_A003": 1,
+      "RS1001": 1,
+      "RS1036": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-66-add-logging-injected-logger.cs": {
+      "CA1848": 2
+    },
+    "tests/timewarp-nuru-tests/generator/generator-70-per-app-logger-factory.cs": {
+      "CA1848": 2
+    },
+    "tests/timewarp-nuru-tests/help/help-01-per-route-help.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/help/help-02-default-route-help.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/help/help-02-table-formatting.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/help/help-03-endpoint-default-route-help.cs": {
+      "CA1849": 1,
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/help/help-04-group-level-help.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/help/help-05-issue179-required-param.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/help/help-06-parameter-only-route-help.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/help/help-10-configure-help-filtering.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-02-parameter-binding.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-03-optional-parameters.cs": {
+      "RCS1163": 2
+    },
+    "tests/timewarp-nuru-tests/routing/routing-05-boolean-mixed-typed-options.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-05-option-aliases.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-05-option-modifier-matrix.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-07-route-selection.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-10-error-cases.cs": {
+      "RCS1163": 6
+    },
+    "tests/timewarp-nuru-tests/routing/routing-15-help-route-priority.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-16-typed-catch-all.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-25-nullable-value-type-options.cs": {
+      "RCS1163": 1
+    },
+    "tests/timewarp-nuru-tests/routing/routing-35-call-context.cs": {
+      "CA1063": 1,
+      "CA1816": 1
+    },
+    "tools/dev-cli/Directory.Build.props": {
+      "CA1031": 1,
+      "CA1303": 1,
+      "CA1508": 1,
+      "CA1515": 1,
+      "CA1849": 1,
+      "CA2007": 1,
+      "CA2016": 1,
+      "CA5399": 1,
+      "IDE0065": 1,
+      "IL2104": 1,
+      "IL3053": 1,
+      "RCS1046": 1
+    },
+    "tools/dev-cli/telemetry-proof/Directory.Build.props": {
+      "CA1031": 1,
+      "CA1050": 1,
+      "CA1303": 1,
+      "CA1515": 1,
+      "CA1707": 1,
+      "CA1849": 1,
+      "CA2000": 1,
+      "CA2007": 1,
+      "CA2016": 1,
+      "CS0050": 1,
+      "IDE0065": 1,
+      "RCS1046": 1,
+      "RCS1102": 1,
+      "RCS1110": 1
+    }
+  }
+}

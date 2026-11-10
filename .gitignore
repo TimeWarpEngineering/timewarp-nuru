@@ -480,3 +480,6 @@ bin/dev
 bin/dev.dbg
 # AOT dev CLI on Windows (self-install output; local; not product)
 bin/dev.exe
+
+# ganda task work walk state (signal logs, walk locks, walk holders) in origin-home
+/.timewarp/signals/

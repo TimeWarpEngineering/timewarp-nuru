@@ -133,6 +133,9 @@ Follow-ups and risks:
 
 The first audit run failed `analyzer-suppressions` (27 entries from moved or copied pragmas). The
 baseline edits and fixes above came next, then build, test and audit were re-run with the results shown.
+The post-commit attest on the first commit then failed `runfile-executable`: the 23 new test
+runfiles were committed without the executable bit. A follow-up commit sets +x, and the attest
+after it passes.
 
 ### How to validate
 

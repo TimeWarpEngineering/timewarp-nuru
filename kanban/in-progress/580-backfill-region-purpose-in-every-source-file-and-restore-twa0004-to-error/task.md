@@ -64,6 +64,8 @@ Acceptance:
   is gitignored, so there is nothing to commit. `ci-code-coverage` stays an advisory warning
   (not auto-fixable, CI workflow change, out of scope).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-sonnet-5-5), session 7d5dfd0f-d8db-4b2f-a984-c3a86ec1bedc, max-turns 500, Done — 2026-11-13T10:53:55Z
+- Review oracle round 1: grok (grok-4.7), body tw-implementation-review, effort 3, roster general, turn cap 200 (cursor session uncapped; no --max-turns flag), session not reported, disposition clean — 2026-11-13. No findings. Misread recorded under Learnings. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md, disposition.md — 2026-11-13T10:58:16Z
 
 ## Results
 
@@ -97,6 +99,18 @@ ganda repo audit                             # exit 0, source-file-line-cap PASS
 
 Expect: no file listed by the grep; zero TWA0004 diagnostics on beta.15; audit exit 0 with
 `source-file-line-cap` passing (no file grew past its baseline).
+
+### Review
+
+Round 1 (2026-11-13): tw-implementation-review, effort 3, roster general, Grok 4.7, turn cap 200 (cursor uncapped; no `--max-turns` flag), session not reported. Disposition clean. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. The restatement does not match the task's "severity = none / restore to error" sentence; that mismatch is a misread under Learnings and is not a product defect. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- Misread: the task says 579 set `dotnet_diagnostic.TWA0004.severity = none` and this task removes that override so the package default (error) applies. The restatement says there is no such line, the package stays at `1.0.0-beta.11`, and the hold reason narrows to TWA0038 / task 581. That matches `.editorconfig` and `Directory.Packages.props` on this branch and on `master`. The hold already deferred the bump until 580 and 581. TWA0004 is not an error in this tree, because the analyzer is not in the pinned package. Not a product defect: there is no severity override to delete, and the bump is task 581.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

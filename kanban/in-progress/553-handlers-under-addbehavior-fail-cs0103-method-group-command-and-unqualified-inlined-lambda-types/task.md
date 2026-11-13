@@ -31,6 +31,10 @@ Acceptance:
 - [x] Check the same inlining without behaviors, and with delegate handlers that take services
 - [x] Regression test, runnable in multi-mode
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - 2026-11-14 groom: dropped the method-group item; 552 shipped that fix.
@@ -85,6 +89,10 @@ shows `__handler_0() => global::TimeWarp.Nuru.Tests.Generator.Gen74InlinedLambda
 | Test | `./bin/dev test` | pass: multi-mode 2195 total, 2189 passed, 6 skipped (generator-74 5/5 in it); standalone 46 files, 0 failed |
 | Audit | `ganda repo audit` | first run: pass with 1 advisory (`vscode-window-icon`, `.vscode/settings.json` missing); `ganda repo audit --fix` wrote the ignored local file; rerun: "Repository passes all audit checks." |
 
+### Review
+
+Round 1 (2026-11-14): tw-implementation-review, effort 2, roster general, Grok 4.7, turn cap 120 (cursor uncapped; no `--max-turns` flag), session not reported. Disposition clean. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. The restatement matches the groomed task (method-group stays with 552; the remaining failure is the unqualified inlined body, with or without `.AddBehavior(...)`). No misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
@@ -92,3 +100,5 @@ shows `__handler_0() => global::TimeWarp.Nuru.Tests.Generator.Gen74InlinedLambda
   added `LambdaBodyQualifier`, updated generator-48 expectations. Boy-scout: audit `--fix` for the
   `vscode-window-icon` advisory (ignored local file, nothing committed).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T21:21:38Z
+- Review oracle round 1: Grok 4.7 (grok, vendor xai), body tw-implementation-review, effort 2, roster general, turn cap 120 (cursor session uncapped; no --max-turns flag), session not reported, disposition clean — 2026-11-14. No findings. The restatement matches the groomed task; no misread. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-13T21:31:44Z

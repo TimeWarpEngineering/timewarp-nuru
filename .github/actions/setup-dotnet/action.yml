@@ -7,9 +7,8 @@ runs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v6
       with:
+        # 11.0 is GA (task 579): no dotnet-quality, so 11.0.x resolves to the released SDK that global.json pins.
         dotnet-version: '11.0.x'
-        # preview quality while .NET 11 is RC (task 481); drop it once 11.0 is GA.
-        dotnet-quality: preview
         # Global-packages cache. The key is package manifests, so a source-only
         # change restores packages and restore downloads anything new. The
         # parallel jobs share one key; the first job to finish on a new key

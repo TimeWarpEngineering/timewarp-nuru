@@ -1,11 +1,8 @@
 #region Purpose
 // IR builder that mirrors the NuruAppBuilder DSL for semantic interpretation.
 #endregion
-
 #region Design
-// This builder is used by the DslInterpreter to "execute" the DSL at design time,
-// accumulating state that will be converted to an AppModel.
-//
+// Used by the DslInterpreter to "execute" the DSL at design time, accumulating state for an AppModel.
 // Key design:
 // - CRTP pattern matches NuruAppBuilder<TSelf>
 // - Method names mirror DSL methods exactly
@@ -508,7 +505,6 @@ public class IrAppBuilder<TSelf> : IIrAppBuilder where TSelf : IrAppBuilder<TSel
   /// </summary>
   private void RegisterRoute(RouteDefinition route) => Routes.Add(route);
 
-  // ═══════════════════════════════════════════════════════════════════════════════
   // EXPLICIT INTERFACE IMPLEMENTATIONS
   // ═══════════════════════════════════════════════════════════════════════════════
   // These return interface types for polymorphic dispatch in DslInterpreter.

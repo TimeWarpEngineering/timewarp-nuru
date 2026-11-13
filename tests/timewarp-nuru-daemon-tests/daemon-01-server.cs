@@ -2,11 +2,9 @@
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 
 #region Purpose
-// Pins TimeWarp.Nuru.Daemon (task 508-005) over a real Unix domain socket in this process: ping, argv and
-// binder runs, exit codes, cancellation, stop, idle shutdown, one server per socket, and socket path
-// safety.
-// Also pins that a client from another build never stops a server and that the default socket is per build
-// (task 508-017).
+// Pins TimeWarp.Nuru.Daemon (task 508-005) over a real Unix domain socket in this process: ping, argv and binder
+// runs, exit codes, cancellation, stop, idle shutdown, one server per socket, and socket path safety; a client
+// from another build never stops a server and the default socket is per build (task 508-017).
 #endregion
 
 #if !JARIBU_MULTI

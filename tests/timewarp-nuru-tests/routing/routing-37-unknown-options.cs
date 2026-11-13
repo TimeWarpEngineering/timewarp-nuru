@@ -21,7 +21,6 @@ public class UnknownOptionTests
   // The ganda 439 case: a mutating command with options gets an option it does not declare
   public static async Task Should_reject_unknown_option_on_route_with_options()
   {
-    // Arrange
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)

@@ -1,16 +1,13 @@
 #region Purpose
-// Emits --json-args peel, parse, candidate selection, and reflection-free binding.
-// Calls without --json-args keep the existing matcher. This path runs only when a
-// JSON object was loaded. It does not use ComputedSpecificity to break ties.
+// Emits --json-args peel, parse, candidate selection, and reflection-free binding. The path runs only
+// when a JSON object was loaded and never uses ComputedSpecificity to break ties.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
 
-/// <summary>
-/// Generates the <c>--json-args</c> preamble and the JSON route-selection path.
-/// </summary>
+/// <summary>Generates the <c>--json-args</c> preamble and the JSON route-selection path.</summary>
 internal static class JsonArgsEmitter
 {
   private enum ValueShape

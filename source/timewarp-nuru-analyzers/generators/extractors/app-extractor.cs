@@ -1,16 +1,11 @@
 #region Purpose
 // Main orchestrator extractor that builds AppModel from all DSL sources.
 #endregion
-
 #region Design
-// This extractor:
-// 1. Receives GeneratorSyntaxContext from the generator
-// 2. Finds the containing block (method body) with the DSL code
-// 3. Uses DslInterpreter to semantically interpret the DSL
-// 4. Returns complete AppModel
-//
-// Phase 5: Uses DslInterpreter instead of FluentChainExtractor for robust
-// handling of nested groups and fragmented code styles.
+// Flow: take GeneratorSyntaxContext, find the containing block (method body) with the DSL code,
+// interpret it semantically with DslInterpreter, and return the complete AppModel.
+// Phase 5: DslInterpreter replaces FluentChainExtractor for robust handling of nested groups and
+// fragmented code styles.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;

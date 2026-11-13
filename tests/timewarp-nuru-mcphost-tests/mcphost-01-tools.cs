@@ -467,9 +467,6 @@ public class McpHostToolsTests
     string.Join("\n", result.GetProperty("content").EnumerateArray().Select(c => c.GetProperty("text").GetString()));
 }
 
-/// <summary>
-/// A minimal MCP client: newline-delimited JSON-RPC over in-memory pipes to <see cref="NuruMcpServer.RunAsync(NuruApp, Stream, Stream, NuruMcpHostOptions?, CancellationToken)"/>.
-/// </summary>
 /// <summary>Records forwarded requests and answers with a fixed result (null: run locally).</summary>
 internal sealed class McpRecordingForwarder(NuruForwardResult? result) : INuruRouteForwarder
 {

@@ -1,8 +1,7 @@
 #!/usr/bin/env -S dotnet --
 
 #region Purpose
-// Pins the two-feed publish lookup: a version published on nuget.org or the org GitHub Packages feed
-// counts as published (task 536).
+// Pins the two-feed publish lookup (task 536) across nuget.org and the org GitHub Packages feed.
 #endregion
 
 #if !JARIBU_MULTI
@@ -16,13 +15,11 @@ using System.Text;
 using global::DevCli;
 
 /// <summary>
-/// Two-feed publish lookup (kanban task 536): NuGetVersionService.LookupAsync reads
-/// nuget.org and the org GitHub Packages feed, and PackageFeedLookup.Check counts a
-/// version on either as published. The fake handler answers with the shapes observed
-/// live on 2026-10-29 (see nuget-version-service.cs Design): the real service index,
-/// newest-first version lists, NAME_UNKNOWN 404s, and 401/403 for missing access.
-/// No test touches the network or the machine's tokens.
-/// These tests declare both feeds; the declared-feed tests (kanban task 564) follow them.
+/// NuGetVersionService.LookupAsync reads both feeds and PackageFeedLookup.Check counts a version
+/// on either as published. The fake handler answers with the shapes observed live on 2026-10-29
+/// (see nuget-version-service.cs Design): the real service index, newest-first version lists,
+/// NAME_UNKNOWN 404s, and 401/403 for missing access. No test touches the network or the machine's
+/// tokens. These tests declare both feeds; the declared-feed tests (kanban task 564) follow them.
 /// </summary>
 [TestTag("DevCli")]
 public class TwoFeedLookupTests
@@ -230,8 +227,7 @@ public class TwoFeedLookupTests
 
   public static async Task Release_gate_partial_state_counts_both_feeds()
   {
-    // `dev release` step 7: one package only on GitHub Packages, one on neither,
-    // is Partial ("partially published but was never tagged"), not None.
+    // `dev release` step 7: one package only on GitHub Packages, one on neither, is Partial, not None.
     FeedStub feeds = new()
     {
       GitHubPackages = id => id == "timewarp.taratibu" ? FeedStub.Versions("1.0.0") : FeedStub.GitHubNotFound(id)
@@ -442,10 +438,8 @@ public class TwoFeedLookupTests
     }
   }
 
-  /// <summary>
-  /// Routes requests by feed, answering like the live feeds. Defaults: nuget.org 404,
-  /// the real GitHub Packages service index, and a NAME_UNKNOWN 404 for every id.
-  /// </summary>
+  /// <summary>Routes requests by feed, answering like the live feeds. Defaults: nuget.org 404, the real
+  /// GitHub Packages service index, and a NAME_UNKNOWN 404 for every id.</summary>
   private sealed class FeedStub : HttpMessageHandler
   {
     public const string Token = "ghs_fake_token_for_tests";

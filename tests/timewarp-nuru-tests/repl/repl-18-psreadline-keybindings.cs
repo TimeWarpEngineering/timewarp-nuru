@@ -77,7 +77,6 @@ public class PSReadLineKeybindingsTests
 
   public static async Task Should_move_backward_char_with_left_arrow()
   {
-    // Arrange
     Terminal!.QueueKeys("ab");
     Terminal.QueueKey(ConsoleKey.LeftArrow);  // Move back one
     Terminal.QueueKeys("X");                   // Insert X between a and b

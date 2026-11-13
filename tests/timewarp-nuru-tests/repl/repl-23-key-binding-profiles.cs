@@ -86,7 +86,6 @@ public class KeyBindingProfileTests
   [Skip("Help output format not yet finalized - see task 069")]
   public static async Task Default_profile_should_execute_commands()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("help");
     terminal.QueueKey(ConsoleKey.Enter);
@@ -111,7 +110,6 @@ public class KeyBindingProfileTests
 
   public static async Task Default_profile_should_support_ctrl_a_for_line_start()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("world");
     terminal.QueueKey(ConsoleKey.A, ctrl: true); // Ctrl+A to go to start
@@ -142,7 +140,6 @@ public class KeyBindingProfileTests
 
   public static async Task Default_profile_should_support_arrow_keys()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("test");
     terminal.QueueKey(ConsoleKey.LeftArrow);
@@ -178,7 +175,6 @@ public class KeyBindingProfileTests
   [Skip("Help output format not yet finalized - see task 069")]
   public static async Task Emacs_profile_should_execute_commands()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("help");
     terminal.QueueKey(ConsoleKey.Enter);

@@ -41,7 +41,6 @@ public class MultilineBufferTests
 
   public static async Task Should_return_empty_string_for_full_text_when_empty()
   {
-    // Arrange
     MultilineBuffer buffer = new();
 
     // Act
@@ -59,7 +58,6 @@ public class MultilineBufferTests
 
   public static async Task Should_set_single_line_text()
   {
-    // Arrange
     MultilineBuffer buffer = new();
 
     // Act

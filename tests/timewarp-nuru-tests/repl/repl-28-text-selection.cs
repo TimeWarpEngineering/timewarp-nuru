@@ -26,7 +26,6 @@ public class TextSelectionTests
 
   public static async Task Selection_should_track_anchor_and_cursor()
   {
-    // Arrange
     Selection selection = new();
 
     // Act
@@ -46,7 +45,6 @@ public class TextSelectionTests
 
   public static async Task Selection_should_handle_backward_selection()
   {
-    // Arrange
     Selection selection = new();
 
     // Act - select backward (cursor before anchor)

@@ -22,7 +22,6 @@ public class WordOperationTests
 
   public static async Task Should_upcase_word_from_cursor_to_end()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("hello world");
     terminal.QueueKey(ConsoleKey.Home);        // Go to start
@@ -51,7 +50,6 @@ public class WordOperationTests
 
   public static async Task Should_upcase_from_middle_of_word()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("hello");
     terminal.QueueKey(ConsoleKey.Home);        // Go to start

@@ -1,15 +1,10 @@
 #region Purpose
 // Extracts service registration information from ConfigureServices() calls.
 #endregion
-
 #region Design
-// Handles:
-// - .ConfigureServices(services => { ... })           - inline lambda
-// - .ConfigureServices(ConfigureServices)             - method group reference
-// - Services registered via AddTransient, AddScoped, AddSingleton, AddSessionScoped, AddCommandScoped, TryAdd*
-// - In-project AddX via syntax and referenced AddX via decompile (task 395)
-//
-// Also detects:
+// Handles .ConfigureServices(services => { ... }) and .ConfigureServices(ConfigureServices) (method group),
+// services registered via AddTransient, AddScoped, AddSingleton, AddSessionScoped, AddCommandScoped, TryAdd*,
+// in-project AddX via syntax and referenced AddX via decompile (task 395). Also detects:
 // - Factory delegate registrations (NURU053)
 // - Constructor dependencies of implementation types (NURU051)
 // - Internal types (NURU054)

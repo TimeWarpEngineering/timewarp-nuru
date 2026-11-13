@@ -1,10 +1,7 @@
 #region Purpose
 // MSBuild task that generates a JsonSerializerContext for user-defined return types before CoreCompile.
-#endregion
-
-#region Design
-// Uses the same IR infrastructure as the source generator (DslInterpreter, EndpointExtractor)
-// to extract return types from BOTH delegate routes AND endpoints.
+// Uses the same IR infrastructure as the source generator (DslInterpreter, EndpointExtractor) to extract
+// return types from BOTH delegate routes AND endpoints.
 #endregion
 
 namespace TimeWarp.Nuru.Build;

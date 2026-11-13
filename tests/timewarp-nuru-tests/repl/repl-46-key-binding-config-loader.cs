@@ -11,10 +11,6 @@ return await RunAllTests();
 
 namespace TimeWarp.Nuru.Tests.ReplTests.KeyBindingConfigLoaderTests
 {
-
-/// <summary>
-/// Tests for JSON key binding profiles: parsing, the action registry, inheritance, and search order.
-/// </summary>
 [TestTag("REPL")]
 public class KeyBindingConfigLoaderTests
 {

@@ -41,9 +41,7 @@ public partial class NuruApp
   /// </summary>
   internal Action<CompletionSourceRegistry>? CompletionRegistryConfiguration { get; set; }
 
-  /// <summary>
-  /// Whether the completion registry has been configured.
-  /// </summary>
+  /// <summary>Whether the completion registry has been configured.</summary>
   private bool CompletionRegistryConfigured;
 
   /// <summary>
@@ -418,9 +416,7 @@ public partial class NuruApp
       "No generated binder is attached to this NuruApp. " +
       "The source generator attaches it to apps whose Build() or RunAsync() call it intercepts.");
 
-  /// <summary>
-  /// Tracer provider for distributed tracing. Set by generated telemetry code.
-  /// </summary>
+  /// <summary>Tracer provider for distributed tracing. Set by generated telemetry code.</summary>
   public TracerProvider? TracerProvider { get; set; }
 
   /// <summary>

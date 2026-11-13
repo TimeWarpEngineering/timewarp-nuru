@@ -21,7 +21,6 @@ public class AdvancedFeaturesTests
     /// </summary>
     public static async Task Should_tokenize_parameter_with_description()
     {
-        // Arrange
         string pattern = "deploy {env|Environment}";
         Lexer lexer = CreateLexer(pattern);
         IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -49,7 +48,6 @@ public class AdvancedFeaturesTests
     /// </summary>
     public static async Task Should_tokenize_option_with_description()
     {
-        // Arrange
         string pattern = "--dry-run,-d|Preview";
         Lexer lexer = CreateLexer(pattern);
         IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -81,7 +79,6 @@ public class AdvancedFeaturesTests
     /// </summary>
     public static async Task Should_tokenize_complex_pattern_with_descriptions()
     {
-        // Arrange
         string pattern = "deploy {env|Environment} --dry-run,-d|Preview";
         Lexer lexer = CreateLexer(pattern);
         IReadOnlyList<Token> tokens = lexer.Tokenize();
@@ -123,7 +120,6 @@ public class AdvancedFeaturesTests
     /// </summary>
     public static async Task Should_tokenize_optional_verbose_flag()
     {
-        // Arrange
         string pattern = "--verbose?";
         Lexer lexer = CreateLexer(pattern);
         IReadOnlyList<Token> tokens = lexer.Tokenize();

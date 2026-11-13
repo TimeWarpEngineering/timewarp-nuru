@@ -150,7 +150,6 @@ public class YankArgumentTests
 
   public static async Task Should_yank_last_argument_with_alt_period()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueLine("greet Alice");  // History entry
     terminal.QueueLine("greet Bob");    // History entry

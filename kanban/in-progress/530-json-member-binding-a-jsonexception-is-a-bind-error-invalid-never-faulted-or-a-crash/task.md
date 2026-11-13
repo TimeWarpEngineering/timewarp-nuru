@@ -81,6 +81,9 @@ Acceptance:
   --fix` created the gitignored `.vscode/settings.json` for the advisory `vscode-window-icon` warning (no
   tracked change). One audit run showed a transient `kanban-landed` failure (another live claim kitchen
   out of sync with origin-home); the rerun passed with no change on this branch.
+- The post-commit attest then failed `runfile-executable`: the new test runfile (untracked when the audit
+  ran) lacked the executable bit. Fixed with `chmod +x` + `git update-index --chmod=+x`; the audit rerun
+  passed (44 passed, 0 failed).
 
 ## Notes
 

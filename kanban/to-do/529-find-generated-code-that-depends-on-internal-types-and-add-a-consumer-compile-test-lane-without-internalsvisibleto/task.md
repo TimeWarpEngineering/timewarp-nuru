@@ -18,7 +18,7 @@ Generated code is part of the consumer's assembly, so the public API surface of 
 
 ## Notes
 
-- Depends on / relates to the `AddCheckUpdatesRoute` CS0122 task; do that fix first or together.
+- The `AddCheckUpdatesRoute` CS0122 defect was fixed by 528 (done); this task adds the lane that would have caught it.
 - Use `.Map<T>()` in tests, not `DiscoverEndpoints()`.
 
 ## Session

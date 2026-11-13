@@ -13,7 +13,7 @@ internal static partial class InterceptorEmitter
   /// Each field is built on first read by its <c>__Resolve</c> accessor, so a call that never
   /// reaches a service (a built-in, a parse error, a forwarded route) never constructs it.
   /// </summary>
-  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, ImmutableArray<BehaviorDefinition> behaviors, ImmutableArray<ServiceDefinition> behaviorServices)
+  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, ImmutableArray<BehaviorDefinition> behaviors, ImmutableArray<ServiceDefinition> behaviorServices, ImmutableArray<HandlerDefinition> handlerFactories)
   {
     // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
     ImmutableArray<ServiceDefinition> allServices = [.. services];
@@ -124,7 +124,7 @@ internal static partial class InterceptorEmitter
     EmitSourceGenScopeMethods(sb, allServices, cachedProcessServices);
 
     if (requiresMediator)
-      EmitSourceGenMediator(sb, allServices, generatedMediatorNamespace, loggerFactoryFieldName, httpClientConfigurations);
+      EmitSourceGenMediator(sb, allServices, generatedMediatorNamespace, loggerFactoryFieldName, httpClientConfigurations, handlerFactories);
   }
 
   /// <summary>
@@ -133,7 +133,7 @@ internal static partial class InterceptorEmitter
   /// <see cref="System.IServiceProvider"/>, so this builds a small container per app holding
   /// <c>AddGeneratedMediator()</c> plus Nuru's framework services and the statically registered services.
   /// </summary>
-  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default)
+  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, ImmutableArray<HandlerDefinition> handlerFactories = default)
   {
     const string Sce = "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions";
 
@@ -188,6 +188,8 @@ internal static partial class InterceptorEmitter
     }
 
     sb.AppendLine($"      {GeneratedMediatorDetector.RegistrationMethod(generatedMediatorNamespace)}(services);");
+    if (!handlerFactories.IsDefaultOrEmpty)
+      EmitHandlerFactoryRegistrations(sb, handlerFactories, "      ");
     sb.AppendLine("      __mediatorServiceProvider = global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);");
     sb.AppendLine("    }");
     sb.AppendLine();

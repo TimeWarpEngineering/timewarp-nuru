@@ -2,5 +2,12 @@
   <!-- Import the repo root props directly. tests/Directory.Build.props is skipped on
        purpose: it adds Jaribu, Shouldly, and test-only NoWarn entries that a consumer's
        dev CLI does not have. -->
+  <PropertyGroup>
+    <!-- Set before the import: the root props leaves CA1812 out of NoWarn for this check. A consumer
+         does not suppress CA1812, and mediator-activated internal handlers broke consumer builds on
+         it (task 573). -->
+    <NuruConsumerCheck>true</NuruConsumerCheck>
+  </PropertyGroup>
+
   <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
 </Project>

@@ -37,6 +37,8 @@ myapp apply_patch --json-args @./apply-patch.json
 
 `parameters[]` and `options[]` remain the schema. The one exception is a member that binds as one JSON value (`type` `json` plus the CLR type name): it also carries `schema`, the JSON Schema of that type exported from the source-generated metadata the `--json-args` binder deserializes with. Its property names, required members (`required` and constructor parameters), nullability and string-enum values are therefore what binds. A nested property's `[Description]` becomes its `description`. The root type includes `"null"` only when the member is nullable.
 
+A type with its own `[JsonConverter]` (other than the string-enum converter) that implements `IParsable<TSelf>`, such as a typed ID, is published as `{"type":"string"}`. The exporter cannot see what a custom converter writes, so the generator finds these types at build time. The rule applies at the member root, inside an object, as array items, and as dictionary values. A type with a public `Guid Value` property also gets `"format":"uuid"`. A nullable value type or a nullable property publishes `["string","null"]`, and a `[Description]` is kept. When the member's own type is such a type, `--json-args` and MCP arguments take a JSON string for it, for example `{"Owner":"6f1c1c2e-3b7a-4d38-9c1e-0a7b9f6d2e11"}`. Any other custom converter still publishes an untyped node.
+
 ```json
 {
   "name": "Notes",

@@ -21,7 +21,7 @@ Nuru builds the request with `new()` when an accessible constructor takes no arg
 | `System.ComponentModel.Description` | Option description. |
 | Enum | Allowed values are the enum names. A non-nullable enum with an initializer keeps that value when omitted. A non-nullable enum with no initializer is required. |
 | Array or list of a scalar (`string[]`, `int[]`, and the same for other scalars) | Repeated option. Pass the option once per value. |
-| Anything else, including an array of objects | One JSON value. `--capabilities` reports the type as `json` plus the CLR type name, without a `global::` prefix, and a `schema`: the JSON Schema of that type, as the binder deserializes it. An MCP tool publishes that schema. A required JSON member cannot be passed on argv; the call fails and tells you to use `--json-args`. |
+| Anything else, including an array of objects | One JSON value. `--capabilities` reports the type as `json` plus the CLR type name, without a `global::` prefix, and a `schema`: the JSON Schema of that type, as the binder deserializes it. An MCP tool publishes that schema. A typed ID (its own `[JsonConverter]` plus `IParsable<TSelf>`) is a JSON string in that schema and in `--json-args`; see [agent invocation](agent-invocation.md). A required JSON member cannot be passed on argv; the call fails and tells you to use `--json-args`. |
 
 Scalars are primitives, `string`, `decimal`, the date and time types, `Guid`, `Uri`, `Version`, `BigInteger`, enums, and nullable forms of those.
 

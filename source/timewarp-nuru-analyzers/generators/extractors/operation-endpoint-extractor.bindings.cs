@@ -185,7 +185,8 @@ internal static partial class EndpointExtractor
         CapabilityType: JsonCapabilityType(property.Type),
         IsInitOnly: initOnly,
         CapabilityDefaultValue: propertyDefault.Display,
-        IsRequiredMember: property.IsRequired);
+        IsRequiredMember: property.IsRequired,
+        JsonStringTypes: FindJsonStringTypes(property.Type));
     }
 
     if (isBool && defaultLiteral == "true")

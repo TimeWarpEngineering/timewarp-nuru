@@ -130,6 +130,7 @@ public sealed record ParameterDefinition(
 /// <param name="IsInitOnly">Whether the property has an <c>init</c> accessor</param>
 /// <param name="CapabilityDefaultValue">The default <c>--capabilities</c> shows, or null to omit it</param>
 /// <param name="IsRequiredMember">Whether the property has the C# <c>required</c> modifier</param>
+/// <param name="JsonStringTypes">Types inside a JSON member that its catalog schema publishes as strings</param>
 public sealed record OptionDefinition(
   int Position,
   string? LongForm,
@@ -148,7 +149,8 @@ public sealed record OptionDefinition(
   string? CapabilityType = null,
   bool IsInitOnly = false,
   string? CapabilityDefaultValue = null,
-  bool IsRequiredMember = false)
+  bool IsRequiredMember = false,
+  EquatableArray<JsonStringType> JsonStringTypes = default)
   : SegmentDefinition(Position)
 {
   /// <summary>
@@ -162,6 +164,15 @@ public sealed record OptionDefinition(
   /// Gets whether this option is a boolean flag (no value).
   /// </summary>
   public bool IsFlag => !ExpectsValue;
+
+  /// <summary>
+  /// Gets whether this JSON member's own type is written as a JSON string by its converter (a typed ID),
+  /// so the binder takes a JSON string for it rather than an object or array.
+  /// </summary>
+  public bool IsJsonStringValue =>
+    IsJsonValue
+    && ResolvedClrTypeName is string typeName
+    && JsonStringTypes.Any(type => type.TypeName == typeName.TrimEnd('?'));
 
   /// <summary>
   /// Gets whether this boolean flag is bound to a handler parameter or endpoint

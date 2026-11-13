@@ -89,7 +89,7 @@ executable name of an indexed CLI.
 |------|---------|--------|
 | Build | `./bin/dev build` | PASS (first run failed CA1305 on an interpolated `StringBuilder.AppendLine`; fixed with `AppendJoin`, rerun green) |
 | Test | `ganda runfile cache --clear` then `./bin/dev test` | PASS — multi-mode 2205 total, 2199 passed, 6 skipped, 0 failed (`CliKey` 8/8, `IndexRebuildPath` 3/3); standalone 0 failed |
-| Audit | `ganda repo audit` | PASS with 1 advisory (`vscode-window-icon`); after `ganda repo audit --fix`: passes all checks |
+| Audit | `ganda repo audit` | PASS with 1 advisory (`vscode-window-icon`); after `ganda repo audit --fix`: passes all checks. Commit-hook attest then failed `runfile-executable` (new `search-07-cli-key.cs` lacked the executable bit); set it, rerun audit: passes all checks |
 
 ### How to validate
 

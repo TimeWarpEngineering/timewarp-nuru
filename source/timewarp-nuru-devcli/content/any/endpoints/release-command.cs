@@ -67,22 +67,24 @@
 // on no declared feed while a declared GitHub Packages feed is unreadable
 // refuses with PackageFeedLookup.FormatUnknownRefusal (feed, status, fix).
 // The feed set is resolved in step 1, before any network call.
+//
+// D7 (kanban task 581, 500-line cap): steps 6, 7 and 10 and the step 8 walk
+// live in release-command.guards.cs; Handle keeps the step order and exit codes.
 #endregion
 
 namespace DevCli;
 
-using System.Text.Json;
 using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 using TimeWarp.Terminal;
 
 [NuruRoute("release", Description = "Cut a release: tag + GitHub Release from source/Directory.Build.props")]
-internal sealed class ReleaseCommand : ICommand<Unit>
+internal sealed partial class ReleaseCommand : ICommand<Unit>
 {
   [Option("dry-run", Description = "Run every guard and print what would be created, without creating anything")]
   public bool DryRun { get; set; }
 
-  internal sealed class Handler : IRequestHandler<ReleaseCommand, Unit>
+  internal sealed partial class Handler : IRequestHandler<ReleaseCommand, Unit>
   {
     private readonly ITerminal Terminal;
     private readonly NuGetVersionService NuGetVersionService;
@@ -255,141 +257,18 @@ internal sealed class ReleaseCommand : ICommand<Unit>
       string headSha = headShaResult.Stdout.Trim();
 
       // --- Step 6: tag v{Version} absent local AND remote --------------------
-      CommandOutput localTagResult = await Shell.Builder("git")
-        .WithArguments("rev-parse", "-q", "--verify", $"refs/tags/{tag}")
-        .WithNoValidation()
-        .CaptureAsync(cancellationToken)
-        .ConfigureAwait(false);
-
-      bool existsLocally;
-      if (localTagResult.ExitCode == 0)
+      if (!await CheckTagAvailableAsync(tag, cancellationToken).ConfigureAwait(false))
       {
-        existsLocally = true;
-      }
-      else if (string.IsNullOrWhiteSpace(localTagResult.Stderr))
-      {
-        existsLocally = false;
-      }
-      else
-      {
-        Terminal.WriteErrorLine($"Error: could not check for local tag {tag}.\n{localTagResult.Stderr.Trim()}");
         Environment.ExitCode = 1;
         return Unit.Value;
       }
-
-      CommandOutput remoteTagResult = await Shell.Builder("git")
-        .WithArguments("ls-remote", "--tags", "origin", $"refs/tags/{tag}")
-        .WithNoValidation()
-        .CaptureAsync(cancellationToken)
-        .ConfigureAwait(false);
-
-      if (remoteTagResult.ExitCode != 0)
-      {
-        Terminal.WriteErrorLine($"Error: could not check for remote tag {tag}.\n{remoteTagResult.Stderr.Trim()}");
-        Environment.ExitCode = 1;
-        return Unit.Value;
-      }
-
-      bool existsOnRemote = !string.IsNullOrWhiteSpace(remoteTagResult.Stdout);
-
-      GuardVerdict tagVerdict = ReleaseGuard.CheckTagAvailability(tag, existsLocally, existsOnRemote);
-      if (!tagVerdict.Ok)
-      {
-        Terminal.WriteErrorLine($"Error: {tagVerdict.Reason}");
-        Environment.ExitCode = 1;
-        return Unit.Value;
-      }
-
-      Terminal.WriteLine($"✓ tag {tag} available".Green());
 
       // --- Step 7: check-version 3-state gate ---------------------------------
-      string? packageInput = config.CheckVersionConfig?.Packages;
-      IReadOnlyList<string> packages;
-
-      if (packageInput is not null)
+      if (!await CheckNotYetPublishedAsync(config, repoRoot, version, feedsResolution, cancellationToken).ConfigureAwait(false))
       {
-        packages = PublishStateClassifier.ParsePackageList(packageInput);
-      }
-      else if (repoRoot is not null)
-      {
-        IReadOnlyList<PackableProject> packableProjects = await PackableProjectService
-          .GetPackableProjectsAsync(repoRoot, cancellationToken)
-          .ConfigureAwait(false);
-
-        packages = [.. packableProjects.Select(p => p.PackageId)];
-      }
-      else
-      {
-        packages = [];
-      }
-
-      if (packages.Count == 0)
-      {
-        Terminal.WriteErrorLine("Error: no packable projects found under source/ and no packages configured. Use checkVersionConfig.packages in .timewarp/dev.jsonc.");
         Environment.ExitCode = 1;
         return Unit.Value;
       }
-
-      List<string> invalidPackages = [.. packages.Where(p => !NuGetVersionService.IsValidPackageId(p))];
-      if (invalidPackages.Count > 0)
-      {
-        Terminal.WriteErrorLine($"Error: invalid NuGet package id(s): {string.Join(", ", invalidPackages)}");
-        Environment.ExitCode = 1;
-        return Unit.Value;
-      }
-
-      List<string> alreadyPublished = [];
-      foreach (string pkg in packages)
-      {
-        PackageFeedLookup lookup;
-        try
-        {
-          lookup = await NuGetVersionService
-            .LookupAsync(pkg, feedsResolution.Feeds, cancellationToken)
-            .ConfigureAwait(false);
-        }
-        catch (HttpRequestException ex)
-        {
-          // Fail closed (470-007 M9): an unreachable/erroring NuGet must not
-          // be read as "not yet published".
-          Terminal.WriteErrorLine($"Error: NuGet lookup for '{pkg}' failed: {ex.Message}");
-          Terminal.WriteErrorLine("  Cannot determine whether this version is already published; refusing to release. Retry when NuGet is reachable.");
-          Environment.ExitCode = 1;
-          return Unit.Value;
-        }
-
-        PackagePublishVerdict verdict = lookup.Check(version);
-
-        if (verdict == PackagePublishVerdict.Unknown)
-        {
-          // 536: on no declared feed and GitHub Packages unreadable — refuse
-          // with the feed's own message, not the already-released one.
-          foreach (string line in lookup.FormatUnknownRefusal(version))
-          {
-            Terminal.WriteErrorLine(line);
-          }
-
-          Environment.ExitCode = 1;
-          return Unit.Value;
-        }
-
-        if (verdict == PackagePublishVerdict.Published)
-        {
-          alreadyPublished.Add(pkg);
-        }
-      }
-
-      PublishState publishState = PublishStateClassifier.Classify(packages.Count, alreadyPublished.Count);
-
-      GuardVerdict publishVerdict = ReleaseGuard.CheckPublishState(publishState, version);
-      if (!publishVerdict.Ok)
-      {
-        Terminal.WriteErrorLine($"Error: {publishVerdict.Reason}");
-        Environment.ExitCode = 1;
-        return Unit.Value;
-      }
-
-      Terminal.WriteLine($"✓ version {version} not yet published".Green());
 
       // --- Step 8: release target — newest green commit, kanban-only after it --
       ReleaseTargetVerdict? targetVerdict = await LocateReleaseTargetAsync(headSha, cancellationToken).ConfigureAwait(false);
@@ -470,140 +349,8 @@ internal sealed class ReleaseCommand : ICommand<Unit>
       }
 
       // --- Step 10: execute — tag, push, gh release create --------------------
-      CommandOutput tagCreateResult = await Shell.Builder("git")
-        .WithArguments("tag", "-a", tag, "-m", $"Release {tag}", targetSha)
-        .WithNoValidation()
-        .CaptureAsync(cancellationToken)
-        .ConfigureAwait(false);
-
-      if (tagCreateResult.ExitCode != 0)
-      {
-        Terminal.WriteErrorLine($"Error: failed to create tag {tag}.\n{tagCreateResult.Stderr.Trim()}");
-        Environment.ExitCode = 1;
-        return Unit.Value;
-      }
-
-      Terminal.WriteLine($"Created tag {tag} at {ShortSha(targetSha)}.");
-
-      CommandOutput pushResult = await Shell.Builder("git")
-        .WithArguments("push", "origin", tag)
-        .WithNoValidation()
-        .CaptureAsync(cancellationToken)
-        .ConfigureAwait(false);
-
-      if (pushResult.ExitCode != 0)
-      {
-        CommandOutput deleteResult = await Shell.Builder("git")
-          .WithArguments("tag", "-d", tag)
-          .WithNoValidation()
-          .CaptureAsync(cancellationToken)
-          .ConfigureAwait(false);
-
-        string cleanupNote = deleteResult.ExitCode == 0
-          ? "local tag deleted."
-          : $"WARNING: could not delete local tag {tag} — remove it manually with 'git tag -d {tag}' before retrying. ({deleteResult.Stderr.Trim()})";
-
-        Terminal.WriteErrorLine($"Error: failed to push tag {tag} to origin — {cleanupNote}\n{pushResult.Stderr.Trim()}");
-        Environment.ExitCode = 1;
-        return Unit.Value;
-      }
-
-      Terminal.WriteLine($"Pushed tag {tag} to origin.");
-
-      CommandOutput releaseCreateResult = await Shell.Builder("gh")
-        .WithArguments([.. releaseCreateArguments])
-        .WithNoValidation()
-        .CaptureAsync(cancellationToken)
-        .ConfigureAwait(false);
-
-      if (releaseCreateResult.ExitCode != 0)
-      {
-        Terminal.WriteErrorLine($"Error: failed to create GitHub Release for {tag}.\n{releaseCreateResult.Stderr.Trim()}");
-        Terminal.WriteErrorLine($"Recover with: {releaseCommand}");
-        Terminal.WriteErrorLine("Re-running 'dev release' will refuse at the tag-availability guard by design — the tag now exists.");
-        Environment.ExitCode = 1;
-        return Unit.Value;
-      }
-
-      Terminal.WriteLine(releaseCreateResult.Stdout.Trim());
-      Terminal.WriteLine($"✓ Released {tag}".Green());
-
+      await ExecuteReleaseAsync(tag, targetSha, releaseCreateArguments, releaseCommand, cancellationToken).ConfigureAwait(false);
       return Unit.Value;
     }
-
-    /// <summary>
-    /// Walks first-parent history back from <paramref name="headSha"/> (at most
-    /// <see cref="ReleaseGuard.ReleaseTargetWalkLimit"/> commits) and returns
-    /// <see cref="ReleaseGuard.SelectReleaseTarget"/>'s verdict over what it found. The walk
-    /// stops at the first commit with a successful run or a path outside kanban/. Returns
-    /// <see langword="null"/> after printing the error when git or gh fails.
-    /// </summary>
-    private async Task<ReleaseTargetVerdict?> LocateReleaseTargetAsync(string headSha, CancellationToken cancellationToken)
-    {
-      CommandOutput revListResult = await Shell.Builder("git")
-        .WithArguments("rev-list", "--first-parent", $"--max-count={ReleaseGuard.ReleaseTargetWalkLimit}", headSha)
-        .WithNoValidation()
-        .CaptureAsync(cancellationToken)
-        .ConfigureAwait(false);
-
-      if (revListResult.ExitCode != 0)
-      {
-        Terminal.WriteErrorLine($"Error: git rev-list failed.\n{revListResult.Stderr.Trim()}");
-        return null;
-      }
-
-      string[] shas = revListResult.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-      List<ReleaseTargetCommit> commits = [];
-
-      foreach (string sha in shas)
-      {
-        CommandOutput runListResult = await Shell.Builder("gh")
-          .WithArguments("run", "list", "--workflow", "workflow.yml", "--commit", sha, "--status", "success", "--json", "databaseId,event,headSha,createdAt")
-          .WithNoValidation()
-          .CaptureAsync(cancellationToken)
-          .ConfigureAwait(false);
-
-        if (runListResult.ExitCode != 0)
-        {
-          Terminal.WriteErrorLine($"Error: gh run list failed.\n{runListResult.Stderr.Trim()}");
-          return null;
-        }
-
-        List<CiRunSummary>? runs = JsonSerializer.Deserialize(runListResult.Stdout, DevCliJsonContext.Default.ListCiRunSummary);
-        IReadOnlyList<CiRunSummary> candidateRuns = CiRunPromotion.OrderCandidateRuns(runs ?? [], sha);
-
-        if (candidateRuns.Count > 0)
-        {
-          commits.Add(new ReleaseTargetCommit(sha, [], candidateRuns[0].DatabaseId));
-          break;
-        }
-
-        // --no-renames lists both sides of a rename, so a move from source/ into
-        // kanban/ still shows the source/ path, whatever diff.renames is set to.
-        CommandOutput diffResult = await Shell.Builder("git")
-          .WithArguments("diff", "--name-only", "--no-renames", $"{sha}^1", sha)
-          .WithNoValidation()
-          .CaptureAsync(cancellationToken)
-          .ConfigureAwait(false);
-
-        if (diffResult.ExitCode != 0)
-        {
-          Terminal.WriteErrorLine($"Error: could not list the paths changed by {sha}.\n{diffResult.Stderr.Trim()}");
-          return null;
-        }
-
-        string[] changedPaths = diffResult.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        commits.Add(new ReleaseTargetCommit(sha, changedPaths, null));
-
-        if (ReleaseGuard.FindShippingPath(changedPaths) is not null)
-        {
-          break;
-        }
-      }
-
-      return ReleaseGuard.SelectReleaseTarget(headSha, commits);
-    }
-
-    private static string ShortSha(string sha) => sha.Length > 7 ? sha[..7] : sha;
   }
 }

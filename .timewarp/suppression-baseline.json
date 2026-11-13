@@ -133,7 +133,7 @@
     "source/timewarp-nuru-daemon/nuru-daemon-launcher.cs": {
       "RS0030": 1
     },
-    "source/timewarp-nuru-daemon/nuru-daemon-server.cs": {
+    "source/timewarp-nuru-daemon/nuru-daemon-server.session.cs": {
       "CA1031": 2,
       "CA2025": 1
     },
@@ -146,7 +146,7 @@
     "source/timewarp-nuru-mcphost/nuru-mcp-tool-invoker.cs": {
       "CA1031": 2
     },
-    "source/timewarp-nuru-search/services/search-index.cs": {
+    "source/timewarp-nuru-search/services/search-index.query.cs": {
       "CA2100": 1
     },
     "source/timewarp-nuru-search/timewarp-nuru-search.csproj": {
@@ -300,14 +300,20 @@
       "CA2227": 1,
       "IDE1006": 1
     },
+    "tests/timewarp-nuru-tests/auto/operation-endpoint-derivation-initializers.cs": {
+      "CA1805": 1
+    },
+    "tests/timewarp-nuru-tests/auto/operation-endpoint-derivation-shapes.cs": {
+      "CA1805": 1,
+      "NURU_H008": 1,
+      "TWM001": 1
+    },
     "tests/timewarp-nuru-tests/auto/operation-endpoint-derivation.cs": {
       "CA1002": 1,
       "CA1062": 1,
       "CA1805": 1,
       "CA1819": 1,
-      "CA2227": 1,
-      "NURU_H008": 1,
-      "TWM001": 1
+      "CA2227": 1
     },
     "tests/timewarp-nuru-tests/auto/operation-endpoint-dispatch.cs": {
       "CA1062": 1,
@@ -372,7 +378,9 @@
     "tests/timewarp-nuru-tests/generator/generator-26-constructor-dependency-resolution.cs": {
       "CA1305": 1,
       "CA1848": 1,
-      "CA1873": 1,
+      "CA1873": 1
+    },
+    "tests/timewarp-nuru-tests/generator/generator-26b-constructor-dependency-graphs.cs": {
       "NURU056": 1
     },
     "tests/timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs": {

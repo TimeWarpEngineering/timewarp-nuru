@@ -16,6 +16,8 @@
          NuGetVersionService.CompareVersions / IsVersionPublished / TagAssertion.Validate /
          RepoConfigService.Parse are testable. -->
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.github-packages.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.version-comparison.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/package-feed-lookup.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/github-packages-credential.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-outcome.cs" />

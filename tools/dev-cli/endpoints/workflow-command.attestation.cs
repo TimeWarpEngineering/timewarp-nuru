@@ -1,0 +1,438 @@
+#region Purpose
+// Workflow handler: attestation verification, tag pin, ancestor check, CI run location and artifact download.
+#endregion
+
+namespace DevCli;
+
+public sealed partial class WorkflowCommand
+{
+  internal sealed partial class Handler
+  {
+    // Orchestrates the ganda-audit attestation verify step (kanban task
+    // 458-010): fetch notes (best-effort), resolve HEAD's tree, read the
+    // note, run the pure AttestationVerifier.Evaluate, and — only when it
+    // says ReadyToVerify — shell out to `openssl pkeyutl -verify -rawin`
+    // (no pure-.NET Ed25519 verify exists in the BCL; see
+    // attestation-verifier.cs's Design region for why that check lives here
+    // and not in the pure verifier). Never throws for any attestation-shaped
+    // failure — every branch below returns a distinct AttestationVerifyOutcome
+    // status; only a genuinely broken git repo (HEAD^{tree} unresolvable)
+    // throws, matching LocateCiRunAsync's precedent for "this should never
+    // happen in a real checkout".
+    //
+    // RefMissing/NoNote classification (round-1 review Fix 2): the fetch and
+    // notes-show calls below match specific ENGLISH substrings ("couldn't
+    // find remote ref", "no note found") against git's stderr. Amuru's
+    // Shell.Builder DOES expose per-invocation environment injection
+    // (WithEnvironmentVariable — confirmed via its existing use in
+    // tests/scripts/run-nuru-tests.cs), so both calls pin LC_ALL=C and
+    // LANG=C to make that stderr locale-stable rather than just documenting
+    // the English-locale assumption. Either outcome (RefMissing vs NoNote)
+    // is fail-closed either way — this only sharpens which operator-facing
+    // message is shown, never lets an unattested tree read as attested.
+    private static async Task<AttestationVerifyOutcome> VerifyAttestationAsync(string repoRoot)
+    {
+      // (a) Best-effort forced fetch of the notes ref. A repo that has never
+      // been attested has no such ref on origin at all — `git fetch` exits
+      // 128 with "couldn't find remote ref ..." on stderr in that case; that
+      // is expected and not a fetch failure, just a signal that RefMissing
+      // (rather than plain NoNote) is the more accurate verdict below.
+      // LC_ALL/LANG=C pins git's stderr to English so the substring match
+      // below is locale-stable (round-1 review Fix 2) — Amuru's
+      // WithEnvironmentVariable injects into the child process only, never
+      // mutates this process's own environment.
+      CommandOutput fetchResult = await Shell.Builder("git")
+        .WithArguments("fetch", "origin", $"+{AttestationVerifier.NotesRef}:{AttestationVerifier.NotesRef}")
+        .WithWorkingDirectory(repoRoot)
+        .WithEnvironmentVariable("LC_ALL", "C")
+        .WithEnvironmentVariable("LANG", "C")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None)
+        .ConfigureAwait(false);
+
+      bool remoteNotesRefMissing = fetchResult.ExitCode == 128
+        && fetchResult.Stderr.Contains("couldn't find remote ref", StringComparison.OrdinalIgnoreCase);
+
+      // (b) Resolve HEAD's tree — the note is keyed by tree, not commit.
+      CommandOutput treeResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "HEAD^{tree}")
+        .WithWorkingDirectory(repoRoot)
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None)
+        .ConfigureAwait(false);
+
+      if (treeResult.ExitCode != 0)
+      {
+        throw new InvalidOperationException($"Could not resolve HEAD tree for attestation verify: {treeResult.Stderr.Trim()}");
+      }
+
+      string treeSha = treeResult.Stdout.Trim();
+
+      // (c) Read the note for this tree. Same LC_ALL/LANG=C pinning as the
+      // fetch above — "no note found" is matched as English stderr text.
+      CommandOutput noteResult = await Shell.Builder("git")
+        .WithArguments("notes", $"--ref={AttestationVerifier.NotesRefShort}", "show", treeSha)
+        .WithWorkingDirectory(repoRoot)
+        .WithEnvironmentVariable("LC_ALL", "C")
+        .WithEnvironmentVariable("LANG", "C")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None)
+        .ConfigureAwait(false);
+
+      string? noteJson = noteResult.ExitCode == 0 ? noteResult.Stdout.Trim() : null;
+
+      if (string.IsNullOrWhiteSpace(noteJson))
+      {
+        bool noLocalNote = noteResult.ExitCode == 1
+          && noteResult.Stderr.Contains("no note found", StringComparison.OrdinalIgnoreCase);
+
+        // RefMissing (never attested anywhere, ever) is a more actionable
+        // verdict than plain NoNote (ref exists, just not for this tree) —
+        // only claim it when BOTH the remote ref and a local note are absent.
+        AttestationVerificationStatus status = remoteNotesRefMissing && noLocalNote
+          ? AttestationVerificationStatus.RefMissing
+          : AttestationVerificationStatus.NoNote;
+
+        return new AttestationVerifyOutcome(status, treeSha, null, null, null);
+      }
+
+      // (d) Pure evaluation — parse, schema/field checks, key lookup, tree match.
+      AttestationEvaluation evaluation = AttestationVerifier.Evaluate(noteJson, treeSha);
+
+      if (evaluation.Status != AttestationVerificationStatus.ReadyToVerify)
+      {
+        return new AttestationVerifyOutcome(evaluation.Status, treeSha, evaluation.Note?.CheckSet, evaluation.Note?.Ts, evaluation.Detail);
+      }
+
+      // (e) Ed25519 verify via openssl — the one step that is genuinely a
+      // process launch, isolated here so everything above stays unit-testable.
+      DirectoryInfo tempDir = Directory.CreateTempSubdirectory("dev-attest-");
+      try
+      {
+        string payloadPath = Path.Combine(tempDir.FullName, "payload.bin");
+        string sigPath = Path.Combine(tempDir.FullName, "sig.bin");
+        string pemPath = Path.Combine(tempDir.FullName, "pub.pem");
+
+        await File.WriteAllBytesAsync(payloadPath, evaluation.CanonicalBytes!).ConfigureAwait(false);
+        await File.WriteAllBytesAsync(sigPath, evaluation.SignatureBytes!).ConfigureAwait(false);
+        await File.WriteAllTextAsync(pemPath, evaluation.PublicKeyPem).ConfigureAwait(false);
+
+        CommandOutput verifyResult;
+        try
+        {
+          verifyResult = await Shell.Builder("openssl")
+            .WithArguments("pkeyutl", "-verify", "-pubin", "-inkey", pemPath, "-rawin", "-in", payloadPath, "-sigfile", sigPath)
+            .WithNoValidation()
+            .CaptureAsync(CancellationToken.None)
+            .ConfigureAwait(false);
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+          return new AttestationVerifyOutcome(
+            AttestationVerificationStatus.VerifierUnavailable,
+            treeSha,
+            evaluation.Note!.CheckSet,
+            evaluation.Note.Ts,
+            "openssl could not be launched");
+        }
+
+        AttestationVerificationStatus finalStatus = verifyResult.ExitCode == 0
+          ? AttestationVerificationStatus.Valid
+          : AttestationVerificationStatus.BadSignature;
+
+        return new AttestationVerifyOutcome(
+          finalStatus,
+          treeSha,
+          evaluation.Note!.CheckSet,
+          evaluation.Note.Ts,
+          finalStatus == AttestationVerificationStatus.BadSignature ? verifyResult.Stderr.Trim() : null);
+      }
+      finally
+      {
+        tempDir.Delete(recursive: true);
+      }
+    }
+
+    // Single source of truth for the operator-facing message per outcome —
+    // shared by PR/merge and release policy steps (advisory or
+    // required-failure text). Messages match kanban task 458-010's frozen
+    // guidance verbatim ("pull master locally so ganda can attest" /
+    // "update TimeWarp.Nuru.DevCli" / "install openssl" / "re-attest via
+    // ganda").
+    private static string DescribeAttestationOutcome(AttestationVerifyOutcome outcome)
+    {
+      string shortTree = ShortSha(outcome.Tree);
+
+      return outcome.Status switch
+      {
+        AttestationVerificationStatus.Valid =>
+          $"Attestation valid: check_set {ShortSha(outcome.CheckSet)} ts {outcome.Ts}",
+
+        AttestationVerificationStatus.NoNote or AttestationVerificationStatus.RefMissing =>
+          $"tree {shortTree} is unattested — pull master locally so ganda can attest (ganda repo attest)",
+
+        AttestationVerificationStatus.UnknownKey =>
+          $"tree {shortTree} attestation uses an unrecognized key_id — update TimeWarp.Nuru.DevCli ({outcome.Detail})",
+
+        AttestationVerificationStatus.VerifierUnavailable =>
+          "openssl not found — install openssl",
+
+        AttestationVerificationStatus.TreeMismatch or AttestationVerificationStatus.BadSignature =>
+          $"tree {shortTree} attestation invalid (possible tampering) — re-attest via ganda",
+
+        AttestationVerificationStatus.ParseFailure =>
+          $"tree {shortTree} attestation note could not be parsed ({outcome.Detail})",
+
+        _ => $"tree {shortTree} attestation verification returned unexpected status '{outcome.Status}'"
+      };
+    }
+
+    // Verifies that if tag v{version} already exists locally, HEAD is at that
+    // tag's commit. This is what stops a break-glass resume from mixing
+    // packages built from two different commits under one version: the tag
+    // is created by the release pipeline itself (or by a prior release-event
+    // run), so if it exists and HEAD has moved on, this run is not the same
+    // source that produced the earlier (partial) push.
+    // `git rev-parse -q --verify` suppresses the "not a valid ref" message on
+    // a missing tag and just fails silently — nonzero exit with empty stderr
+    // means NoTag; nonzero exit with stderr means a real git error.
+    private static async Task<TagPinOutcome> CheckTagPinAsync(string version)
+    {
+      string tag = $"v{version}";
+
+      CommandOutput verifyResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "-q", "--verify", $"refs/tags/{tag}")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (verifyResult.ExitCode != 0)
+      {
+        if (!string.IsNullOrWhiteSpace(verifyResult.Stderr))
+        {
+          return new TagPinOutcome(TagPinStatus.GitError, null, null, verifyResult.Stderr.Trim());
+        }
+
+        return new TagPinOutcome(TagPinStatus.NoTag, null, null, null);
+      }
+
+      CommandOutput tagCommitResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", $"{tag}^{{commit}}")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (tagCommitResult.ExitCode != 0)
+      {
+        return new TagPinOutcome(TagPinStatus.GitError, null, null, tagCommitResult.Stderr.Trim());
+      }
+
+      CommandOutput headResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "HEAD")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (headResult.ExitCode != 0)
+      {
+        return new TagPinOutcome(TagPinStatus.GitError, null, null, headResult.Stderr.Trim());
+      }
+
+      string tagCommit = tagCommitResult.Stdout.Trim();
+      string headCommit = headResult.Stdout.Trim();
+
+      return string.Equals(tagCommit, headCommit, StringComparison.Ordinal)
+        ? new TagPinOutcome(TagPinStatus.Match, tagCommit, headCommit, null)
+        : new TagPinOutcome(TagPinStatus.Mismatch, tagCommit, headCommit, null);
+    }
+
+    private static string ShortSha(string? sha)
+    {
+      if (string.IsNullOrEmpty(sha))
+        return "(unknown)";
+
+      return sha.Length > 7 ? sha[..7] : sha;
+    }
+
+    private static string? ReadPropsVersion(string repoRoot)
+    {
+      string propsPath = Path.Combine(repoRoot, "source", "Directory.Build.props");
+
+      if (!File.Exists(propsPath))
+      {
+        return null;
+      }
+
+      XDocument doc = XDocument.Load(propsPath);
+      return doc.Descendants("Version").FirstOrDefault()?.Value.Trim();
+    }
+
+    // git merge-base --is-ancestor exit codes: 0 = ancestor, 1 = NOT ancestor,
+    // >1 = git error (e.g. bad ref, corrupt repo) — must not be reported as
+    // "not an ancestor", which is a specific, different verdict.
+    private async Task<AncestorCheckOutcome> CheckHeadAncestorOfMasterAsync()
+    {
+      string masterRef = "origin/master";
+
+      CommandOutput verifyResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "--verify", "origin/master")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (verifyResult.ExitCode != 0)
+      {
+        masterRef = "master";
+
+        CommandOutput fallbackVerifyResult = await Shell.Builder("git")
+          .WithArguments("rev-parse", "--verify", "master")
+          .WithNoValidation()
+          .CaptureAsync(CancellationToken.None);
+
+        if (fallbackVerifyResult.ExitCode != 0)
+        {
+          return new AncestorCheckOutcome(AncestorCheckStatus.MasterUnresolvable, null);
+        }
+
+        Terminal.WriteLine("origin/master not found; using local master.");
+      }
+
+      CommandOutput ancestorResult = await Shell.Builder("git")
+        .WithArguments("merge-base", "--is-ancestor", "HEAD", masterRef)
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (ancestorResult.ExitCode == 0)
+      {
+        return new AncestorCheckOutcome(AncestorCheckStatus.Ancestor, null);
+      }
+
+      if (ancestorResult.ExitCode == 1)
+      {
+        return new AncestorCheckOutcome(AncestorCheckStatus.NotAncestor, null);
+      }
+
+      return new AncestorCheckOutcome(AncestorCheckStatus.GitError, ancestorResult.Stderr.Trim());
+    }
+
+    // Resolves the commit to release (HEAD) and asks gh for every successful
+    // workflow.yml run at that commit, ordered by CiRunPromotion.OrderCandidateRuns
+    // (push-event preferred, then newest). `gh run list` exits 0 with an empty
+    // JSON array `[]` when nothing matches — that is NoMatchingRun, a distinct
+    // outcome from gh itself being unusable. Two DIFFERENT unusable-gh outcomes
+    // are distinguished (round-1 review finding #2), matching the
+    // TagPinOutcome/AncestorCheckOutcome GitError precedent of surfacing the
+    // real detail rather than a single generic message:
+    // - GhUnavailable: gh could not even be launched — a missing binary throws
+    //   Win32Exception from Process.Start, caught here so the release gate
+    //   reports "install gh / gh auth login" instead of a raw exception.
+    // - GhFailed: gh launched and ran, but exited nonzero (bad/expired token,
+    //   network failure, API rate limit, ...) — its stderr is real diagnostic
+    //   information and must not be discarded behind the same "install gh"
+    //   message, which would be actively misleading on a runner where gh is
+    //   already installed and normally authenticated via GH_TOKEN.
+    private static async Task<LocateRunOutcome> LocateCiRunAsync()
+    {
+      CommandOutput headResult = await Shell.Builder("git")
+        .WithArguments("rev-parse", "HEAD")
+        .WithNoValidation()
+        .CaptureAsync(CancellationToken.None);
+
+      if (headResult.ExitCode != 0)
+      {
+        throw new InvalidOperationException($"Could not determine HEAD commit: {headResult.Stderr.Trim()}");
+      }
+
+      string headSha = headResult.Stdout.Trim();
+
+      CommandOutput runListResult;
+      try
+      {
+        runListResult = await Shell.Builder("gh")
+          .WithArguments("run", "list", "--workflow", "workflow.yml", "--commit", headSha, "--status", "success", "--json", "databaseId,event,headSha,createdAt")
+          .WithNoValidation()
+          .CaptureAsync(CancellationToken.None);
+      }
+      catch (System.ComponentModel.Win32Exception)
+      {
+        return new LocateRunOutcome(LocateRunStatus.GhUnavailable, headSha, [], null);
+      }
+
+      if (runListResult.ExitCode != 0)
+      {
+        return new LocateRunOutcome(LocateRunStatus.GhFailed, headSha, [], runListResult.Stderr.Trim());
+      }
+
+      List<CiRunSummary>? runs = JsonSerializer.Deserialize(runListResult.Stdout, DevCliJsonContext.Default.ListCiRunSummary);
+      IReadOnlyList<CiRunSummary> candidateRuns = CiRunPromotion.OrderCandidateRuns(runs ?? [], headSha);
+
+      return candidateRuns.Count == 0
+        ? new LocateRunOutcome(LocateRunStatus.NoMatchingRun, headSha, [], null)
+        : new LocateRunOutcome(LocateRunStatus.Found, headSha, candidateRuns, null);
+    }
+
+    // Walks candidateRuns (already ordered push-first/newest-first) until one
+    // has a non-expired Packages-* artifact. A run with NO matching artifact
+    // (NoneMatching — pre-458-002 release-event runs won't have one) is skipped
+    // silently; a run whose ONLY matches are expired is recorded so the final
+    // abort message (if every candidate is exhausted) can tell an operator
+    // "these artifacts expired" apart from "CI never uploaded one at all".
+    // On the winning run: the artifacts directory is cleared and recreated
+    // first — Clean no longer runs in release mode, so a leftover file from a
+    // prior local/break-glass attempt must not silently survive into the
+    // verified set.
+    private async Task<DownloadArtifactOutcome> DownloadPackagesArtifactAsync(string repoRoot, IReadOnlyList<CiRunSummary> candidateRuns)
+    {
+      string artifactsDir = Path.Combine(repoRoot, "artifacts", "packages");
+      List<ExpiredArtifactEncounter> expiredEncounters = [];
+
+      foreach (CiRunSummary run in candidateRuns)
+      {
+        CommandOutput artifactsResult = await Shell.Builder("gh")
+          .WithArguments("api", $"repos/{{owner}}/{{repo}}/actions/runs/{run.DatabaseId}/artifacts")
+          .WithNoValidation()
+          .CaptureAsync(CancellationToken.None);
+
+        if (artifactsResult.ExitCode != 0)
+        {
+          throw new InvalidOperationException($"Failed to list artifacts for run {run.DatabaseId}: {artifactsResult.Stderr.Trim()}");
+        }
+
+        RunArtifactListResponse? artifactList = JsonSerializer.Deserialize(artifactsResult.Stdout, DevCliJsonContext.Default.RunArtifactListResponse);
+        PackagesArtifactOutcome selectOutcome = CiRunPromotion.SelectPackagesArtifact(artifactList?.Artifacts ?? []);
+
+        if (selectOutcome.Status == PackagesArtifactStatus.Expired)
+        {
+          expiredEncounters.Add(new ExpiredArtifactEncounter(run.DatabaseId, run.Event, selectOutcome.ExpiredNames));
+          continue;
+        }
+
+        if (selectOutcome.Status == PackagesArtifactStatus.NoneMatching)
+        {
+          continue;
+        }
+
+        RunArtifact artifact = selectOutcome.Artifact!;
+
+        if (Directory.Exists(artifactsDir))
+        {
+          Directory.Delete(artifactsDir, recursive: true);
+        }
+
+        Directory.CreateDirectory(artifactsDir);
+
+        Terminal.WriteLine($"Downloading artifact '{artifact.Name}' from run {run.DatabaseId} ({run.Event})...");
+
+        int exitCode = await Shell.Builder("gh")
+          .WithArguments("run", "download", run.DatabaseId.ToString(System.Globalization.CultureInfo.InvariantCulture), "--name", artifact.Name, "--dir", artifactsDir)
+          .WithWorkingDirectory(repoRoot)
+          .RunAsync();
+
+        if (exitCode != 0)
+        {
+          throw new InvalidOperationException($"Failed to download artifact '{artifact.Name}' from run {run.DatabaseId}!");
+        }
+
+        return new DownloadArtifactOutcome(DownloadArtifactStatus.Downloaded, run, artifact.Name, expiredEncounters);
+      }
+
+      return new DownloadArtifactOutcome(DownloadArtifactStatus.Exhausted, null, null, expiredEncounters);
+    }
+  }
+}

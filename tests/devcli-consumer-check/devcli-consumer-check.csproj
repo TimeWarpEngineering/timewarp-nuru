@@ -29,10 +29,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Same CLI-tool suppressions as tools/dev-cli/Directory.Build.props, the reference consumer. -->
     <NoWarn>$(NoWarn);CA1031;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;RCS1046;IDE0065;IL2104;IL3053;CA5399</NoWarn>
-    <!-- The repo root props puts CA1812 in NoWarn. A consumer does not, and mediator-activated
-         internal handlers broke consumer builds on CA1812 (kanban 573). Take it back out so this
-         check sees the rule a consumer sees. -->
-    <NoWarn>$([System.String]::Copy(';$(NoWarn);').Replace(';CA1812;', ';').Trim(';'))</NoWarn>
     <!-- Dev CLIs publish AOT with invariant globalization (tools/dev-cli and timewarp-architecture
          both do). PublishAot turns on the trim/AOT analyzers; InvariantGlobalization turns off the
          CA1307-family culture rules. Match both so the check sees what those consumers see. -->

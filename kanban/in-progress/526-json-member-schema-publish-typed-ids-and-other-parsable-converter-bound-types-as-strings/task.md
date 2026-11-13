@@ -80,6 +80,7 @@ Acceptance:
   implemented generator-side detection + runtime transform, fixed the top-level `--json-args` kind gate,
   added mcphost-08 tests, docs and changelog. Audit boy-scout: `ganda repo audit --fix` set the VS Code
   `window.title` (`vscode-window-icon` advisory; `.vscode/settings.json` is gitignored, so no committed change).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T23:37:27Z
 
 ## Notes
 

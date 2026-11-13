@@ -38,6 +38,10 @@ Acceptance:
 - The commands `dev build` issues after the first restore include `--no-restore`.
 - `dev build --clean` still works.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Related incrementality work (other repos): timewarp-terminal 040 and timewarp-flexbox 157 (`ContinuousIntegrationBuild` only in CI). Umbrella: timewarp-jenzi 011.
@@ -60,6 +64,15 @@ Smoke: `./bin/dev build --verbose 2>&1 | grep '^dotnet build'`
 
 Expect: 8 `dotnet build <project> --configuration Release --verbosity normal --no-restore` lines, in this order: analyzers, build, nuru, mcphost, daemon, mcp, search, devcli. Only one restore happens: the "Restoring packages..." step on `timewarp-nuru.slnx`. `./bin/dev build --clean` exits 0.
 
+### Review
+
+- Rounds: 1. Roster: general. Effort: 1.
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T19:55:29Z
+- Review oracle: general (grok, vendor xai, model grok-4.7), session not reported, review budget max-turns 80 (cursor harness uncapped), effort 1, clean — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 80), artifacts general.md, merged.md, disposition.md — 2026-11-13T19:58:41Z

@@ -124,7 +124,8 @@ Expect cases to fail with CS0117 (or CS0122 for a type) pointing at the generate
 - `ganda repo audit`: passed with 1 advisory warning, `vscode-window-icon` (`.vscode/settings.json` missing in
   this worktree). Boy-scout fix: `ganda repo audit --fix --checks vscode-window-icon` set `window.title` in the
   git-ignored `.vscode/settings.json`, with no tracked change. Result: "Repository passes all audit checks",
-  44 passed, 0 failed, 1 skipped.
+  44 passed, 0 failed, 1 skipped. The first commit's attest hook then failed `runfile-executable` because the new
+  generator-75 shebang file lacked +x. Fixed with `chmod +x` and committed; the commit hook re-attested.
 
 ## Session
 

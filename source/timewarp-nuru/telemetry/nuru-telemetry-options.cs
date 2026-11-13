@@ -56,6 +56,11 @@ public sealed class NuruTelemetryOptions
   /// When it is not set, OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT override the base
   /// variable for their signal and are used as-is.
   /// <para>
+  /// The source generator reads this value at compile time, so in a <c>UseTelemetry</c> lambda it
+  /// must be a string literal or a <c>const</c>. Any other value is ignored with warning
+  /// NURU_T001, and OTEL_EXPORTER_OTLP_ENDPOINT applies instead.
+  /// </para>
+  /// <para>
   /// OTLP sinks receive process telemetry and must be treated as a trust boundary.
   /// Point this only at collectors you control or otherwise trust.
   /// </para>
@@ -70,7 +75,7 @@ public sealed class NuruTelemetryOptions
   /// Use this for spans a library creates on its own source, for example
   /// <c>options.ActivitySources.Add("TimeWarp.Taratibu")</c> for Taratibu walk spans.
   /// The source generator reads each <c>Add</c> call at compile time, so the name must be a
-  /// string literal or a <c>const</c>; other calls are ignored. OpenTelemetry wildcards such as
+  /// string literal or a <c>const</c>; any other argument is ignored with warning NURU_T001. OpenTelemetry wildcards such as
   /// <c>"MyCompany.*"</c> are passed through unchanged.
   /// </remarks>
   public IList<string> ActivitySources { get; } = [];

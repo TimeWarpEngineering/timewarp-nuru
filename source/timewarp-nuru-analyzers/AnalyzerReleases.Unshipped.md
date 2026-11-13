@@ -37,6 +37,8 @@ NURU_H007 | Handler.Validation | Warning | ILogger<T> injected without logging c
 NURU_H008 | Handler.Validation | Warning | No handler visible for operation
 NURU_H009 | Handler.Validation | Error | Endpoint type has no callable constructor
 NURU_I001 | Interception | Warning | RunAsync() call is not intercepted
+NURU_T001 | Telemetry | Warning | UseTelemetry option value is not a compile-time constant
+NURU_T002 | Telemetry | Warning | UseTelemetry configure argument is not a lambda
 NURU_R001 | RoutePattern.Overlap | Error | Overlapping routes with different type constraints
 NURU_R002 | RoutePattern.Overlap | Error | Duplicate route pattern
 NURU_R003 | RoutePattern.Overlap | Error | Unreachable route

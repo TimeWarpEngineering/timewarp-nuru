@@ -2,6 +2,12 @@
 // Behavior, terminal, telemetry, and type converter dispatch handlers for the DSL interpreter.
 #endregion
 
+#region Design
+// Dispatchers turn a builder call into an IIrAppBuilder call. UseTelemetry hands its lambda to
+// TelemetryOptionsExtractor with CollectedDiagnostics, so an option the generator cannot read
+// reports NURU_T001 / NURU_T002 instead of being dropped in silence (task 533).
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 public sealed partial class DslInterpreter
@@ -176,7 +182,7 @@ public sealed partial class DslInterpreter
     ArgumentListSyntax? args = invocation.ArgumentList;
     if (args?.Arguments.Count > 0)
     {
-      TelemetryModel? customOptions = TelemetryOptionsExtractor.Extract(invocation, SemanticModel, CancellationToken);
+      TelemetryModel? customOptions = TelemetryOptionsExtractor.Extract(invocation, SemanticModel, CollectedDiagnostics, CancellationToken);
       if (customOptions is not null)
       {
         return appBuilder.UseTelemetry(customOptions);

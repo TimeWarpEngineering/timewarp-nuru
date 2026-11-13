@@ -63,10 +63,30 @@ NuruApp app = NuruApp.CreateBuilder()
 
 Each name becomes an `AddSource` (or `AddMeter`) call in the generated provider setup, after
 Nuru's own. The source generator reads the names at compile time, so each `Add` argument must
-be a string literal or a `const`; any other call is skipped. Nothing is resolved by reflection,
+be a string literal or a `const`; any other argument is skipped with warning NURU_T001. Nothing is resolved by reflection,
 so this stays AOT and trim safe. OpenTelemetry wildcards such as `"MyCompany.*"` pass through.
 Names only take effect for an enabled signal: `ActivitySources` needs `EnableTracing`, and
 `Meters` needs `EnableMetrics`.
+
+## Options are read at compile time
+
+The source generator reads the `UseTelemetry` lambda at compile time and writes each option
+into the generated setup as a literal, so nothing is resolved by reflection. Every value,
+including `OtlpEndpoint`, must be a string or bool literal or a `const`:
+
+```csharp
+const string Collector = "http://localhost:4318";
+
+NuruApp app = NuruApp.CreateBuilder()
+  .UseTelemetry(options => options.OtlpEndpoint = Collector)
+  .Build();
+```
+
+A value the generator cannot read, such as a local variable, a property, or a method call, is
+ignored and reported as warning **NURU_T001** at the value. For `OtlpEndpoint` the app then reads
+`OTEL_EXPORTER_OTLP_ENDPOINT`, so choose an endpoint at run time with that variable. A configure
+argument that is not an inline lambda (a method group or an `Action<NuruTelemetryOptions>`
+variable) is never run; warning **NURU_T002** reports it, and the default options apply.
 
 ## Environment Variables
 

@@ -24,6 +24,9 @@ namespace TimeWarp.Nuru.Generators;
 /// meaning an expression body already contains its own awaits and must be emitted verbatim</param>
 /// <param name="ProblemRendererTypeName">For a problem pair: the one visible <c>IResponseRenderer&lt;SharedProblemDetails&gt;</c>,
 /// used when no renderer is registered</param>
+/// <param name="NestedHandlerFactoryConstructible">For Command handlers: true when the nested Handler is declared in this
+/// compilation and has exactly one public constructor whose parameters are all required services, so generated code can
+/// register it with an explicit <c>new</c> factory (kanban 573: CA1812 sees that instantiation)</param>
 public sealed record HandlerDefinition(
   HandlerKind HandlerKind,
   string? FullTypeName,
@@ -44,7 +47,8 @@ public sealed record HandlerDefinition(
   string? SuccessTypeName = null,
   string? RendererTypeName = null,
   EquatableArray<string> ConstructorArguments = default,
-  string? ProblemRendererTypeName = null)
+  string? ProblemRendererTypeName = null,
+  bool NestedHandlerFactoryConstructible = false)
 {
   /// <summary>
   /// Creates a handler definition for a delegate-based handler.

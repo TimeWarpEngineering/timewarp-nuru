@@ -105,6 +105,9 @@ Telemetry respects environment variables:
 - `OTEL_EXPORTER_OTLP_ENDPOINT` - Fallback if `OtlpEndpoint` is not set
 - `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT` - Per-signal URL, used as-is when `OtlpEndpoint` is not set
 
+Option values are read at compile time and must be literals or `const`s. A value the generator
+cannot read is ignored with warning NURU_T001 (see [Telemetry](../features/telemetry.md#options-are-read-at-compile-time)).
+
 ## EnableCompletion
 
 Registers custom completion sources for shell tab-completion.

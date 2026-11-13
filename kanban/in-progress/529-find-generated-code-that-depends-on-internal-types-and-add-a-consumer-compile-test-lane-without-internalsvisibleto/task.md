@@ -131,3 +131,4 @@ Expect cases to fail with CS0117 (or CS0122 for a type) pointing at the generate
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - 2026-11-14 implement (ganda task work): merged origin/master, ran the audit, added the generator-75 lane, filed 583 and 584, recorded the IVT decision.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T22:05:35Z

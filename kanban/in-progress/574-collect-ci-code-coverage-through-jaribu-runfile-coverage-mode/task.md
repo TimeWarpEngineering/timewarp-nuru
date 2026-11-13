@@ -109,6 +109,10 @@ Expect:
 - `ganda repo audit` reports `ci-code-coverage` PASS.
 - On the PR, the `test-multi` and `test-standalone` jobs each upload an artifact named `coverage-test-multi` / `coverage-test-standalone`.
 
+### Review
+
+Round 1, effort 2, roster general. Counts: bug 0, suggestion 0, nit 0 (all open/fixed/wontfix zero). Disposition: clean. The implementer restatement matches the task; no misread. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Depends on
 
 - timewarp-jaribu 060
@@ -122,6 +126,12 @@ Expect:
   nuget.org beta.16. CI runners start with an empty cache and do not hit this. A machine with the same
   stale entry needs the same step: remove `~/.nuget/packages/timewarp.jaribu/1.0.0-beta.16`.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e7e486b1-a125-4563-bb00-7475aa2d9223, max-turns 500, Done — 2026-11-13T18:15:40Z
+- Review oracle round 1: Grok 4.7 (grok, vendor xai), body tw-implementation-review, reviewer-cursor, effort 2, roster general, turn cap 120 (cursor session uncapped; no --max-turns flag), session not reported, disposition clean — 2026-11-14. No findings. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-13T18:21:44Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

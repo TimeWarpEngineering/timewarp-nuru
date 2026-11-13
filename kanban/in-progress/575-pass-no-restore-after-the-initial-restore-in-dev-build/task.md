@@ -60,3 +60,6 @@ Smoke: `./bin/dev build --verbose 2>&1 | grep '^dotnet build'`
 
 Expect: 8 `dotnet build <project> --configuration Release --verbosity normal --no-restore` lines, in this order: analyzers, build, nuru, mcphost, daemon, mcp, search, devcli. Only one restore happens: the "Restoring packages..." step on `timewarp-nuru.slnx`. `./bin/dev build --clean` exits 0.
 
+## Session
+
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T19:55:29Z

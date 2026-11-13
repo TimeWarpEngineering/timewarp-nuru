@@ -34,6 +34,10 @@ section.)
 - [x] Add `#region Design` note on the consumer-surface rule to the emitter base or generator entry file
 - [x] `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs` green (through `./bin/dev test`)
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - The `AddCheckUpdatesRoute` CS0122 defect was fixed by 528 (done); this task adds the lane that would have caught it.
@@ -127,8 +131,16 @@ Expect cases to fail with CS0117 (or CS0122 for a type) pointing at the generate
   44 passed, 0 failed, 1 skipped. The first commit's attest hook then failed `runfile-executable` because the new
   generator-75 shebang file lacked +x. Fixed with `chmod +x` and committed; the commit hook re-attested.
 
+### Review
+
+- Round 1, effort 2, roster general. Disposition: clean. Final counts: bug 0, suggestion 0, nit 0 (open 0, fixed 0, wontfix 0).
+- The implementer restatement matches the original task. No misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - 2026-11-14 implement (ganda task work): merged origin/master, ran the audit, added the generator-75 lane, filed 583 and 584, recorded the IVT decision.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T22:05:35Z
+- Reviewer (general, round 1): effort 2, roster general, session not reported, turn cap 120 (cursor uncapped), disposition clean — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-13T22:17:50Z

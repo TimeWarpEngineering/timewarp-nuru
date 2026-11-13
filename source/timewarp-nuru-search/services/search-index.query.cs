@@ -1,5 +1,15 @@
 #region Purpose
-// Query side of SearchIndex: SearchAsync, FTS query sanitizing and group filter helpers.
+// Query side of SearchIndex: SearchAsync, the `--cli` key resolver, FTS query sanitizing and group filter
+// helpers.
+#endregion
+
+#region Design
+// The `--cli` key. Rows are stored under the capabilities name (the app's WithName, or its assembly
+// name), and clis.cli_path holds the executable that was run. A user types either: the app name they
+// see in results, or the executable name they run (search auto-index resolves that name on PATH). So
+// ResolveCliNamesAsync accepts both. An exact capabilities name wins. Otherwise every row whose
+// executable file name matches is used, with or without its extension, case-insensitive on Windows
+// only (task 534).
 #endregion
 
 namespace TimeWarp.Nuru.Search.Services;
@@ -41,8 +51,22 @@ public sealed partial class SearchIndex
 
     if (!string.IsNullOrEmpty(cliName))
     {
-      sqlBuilder.AppendLine("  AND e.cli_name = $cliName");
-      cmd.Parameters.AddWithValue("$cliName", cliName);
+      IReadOnlyList<string> cliNames = await ResolveCliNamesAsync(cliName, cancellationToken).ConfigureAwait(false);
+
+      if (cliNames.Count == 0)
+      {
+        return results;
+      }
+
+      List<string> parameterNames = [];
+      for (int i = 0; i < cliNames.Count; i++)
+      {
+        string parameterName = $"$cliName{i}";
+        parameterNames.Add(parameterName);
+        cmd.Parameters.AddWithValue(parameterName, cliNames[i]);
+      }
+
+      sqlBuilder.Append("  AND e.cli_name IN (").AppendJoin(", ", parameterNames).AppendLine(")");
     }
 
     string normalizedGroupPath = NormalizeGroupFilter(groupPath);
@@ -94,6 +118,48 @@ public sealed partial class SearchIndex
     }
 
     return results;
+  }
+
+  /// <summary>
+  /// Resolves a <c>--cli</c> value to the capabilities names it selects: the value itself when a
+  /// CLI is indexed under that name, otherwise every indexed CLI whose executable file name is the
+  /// value. Empty when nothing matches. See the Design region.
+  /// </summary>
+  public async Task<IReadOnlyList<string>> ResolveCliNamesAsync(string cli, CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(cli);
+
+    IReadOnlyList<CliInfo> clis = await ListClisAsync(cancellationToken).ConfigureAwait(false);
+
+    if (clis.Any(c => string.Equals(c.Name, cli, StringComparison.Ordinal)))
+    {
+      return [cli];
+    }
+
+    return
+    [
+      .. clis
+        .Where(c => IsExecutableName(c.CliPath, cli))
+        .Select(c => c.Name)
+    ];
+  }
+
+  /// <summary>
+  /// True when <paramref name="cli"/> names the file at <paramref name="cliPath"/>, with or without
+  /// its extension (<c>tool</c> matches <c>tool.exe</c>). File names compare case-insensitively on
+  /// Windows only.
+  /// </summary>
+  internal static bool IsExecutableName(string? cliPath, string cli)
+  {
+    if (string.IsNullOrEmpty(cliPath) || string.IsNullOrEmpty(cli))
+    {
+      return false;
+    }
+
+    StringComparison comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+    return string.Equals(Path.GetFileName(cliPath), cli, comparison)
+      || string.Equals(Path.GetFileNameWithoutExtension(cliPath), cli, comparison);
   }
 
   [LoggerMessage(LogLevel.Warning, "Search query could not be executed: {Query}")]

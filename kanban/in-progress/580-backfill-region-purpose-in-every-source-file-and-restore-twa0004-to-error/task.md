@@ -63,6 +63,7 @@ Acceptance:
 - Audit boy-scout: `ganda repo audit --fix` set `window.title` in `.vscode/settings.json`, which
   is gitignored, so there is nothing to commit. `ci-code-coverage` stays an advisory warning
   (not auto-fixable, CI workflow change, out of scope).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-sonnet-5-5), session 7d5dfd0f-d8db-4b2f-a984-c3a86ec1bedc, max-turns 500, Done — 2026-11-13T10:53:55Z
 
 ## Results
 

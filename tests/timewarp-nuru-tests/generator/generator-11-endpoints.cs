@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins generator handling of [NuruRoute] endpoint classes with [Parameter] and [Option] attributes.
+#endregion
+
 #pragma warning disable CA1819 // Properties should not return arrays
 #pragma warning disable CA1725 // Parameter names should match base declaration
 #pragma warning disable CA1849 // Call async methods when in async method

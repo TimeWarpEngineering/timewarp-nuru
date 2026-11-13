@@ -1,3 +1,8 @@
+#region Purpose
+// Contract a REPL editing style (Default, Emacs, Vi, VSCode) implements to supply its key bindings and
+// exit keys.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

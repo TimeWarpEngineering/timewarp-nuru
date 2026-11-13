@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-search/timewarp-nuru-search.csproj
 
+#region Purpose
+// Pins SearchIndex.SearchAsync end to end against the real schema, using in-memory SQLite (task 470-008).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

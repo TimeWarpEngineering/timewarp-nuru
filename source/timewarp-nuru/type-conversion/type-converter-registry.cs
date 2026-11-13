@@ -1,3 +1,8 @@
+#region Purpose
+// Default ITypeConverterRegistry that holds custom route type converters, indexed by constraint name and
+// target type.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

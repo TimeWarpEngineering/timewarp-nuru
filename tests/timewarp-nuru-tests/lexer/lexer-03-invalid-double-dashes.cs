@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lexer rejection of invalid double-dash option syntax.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

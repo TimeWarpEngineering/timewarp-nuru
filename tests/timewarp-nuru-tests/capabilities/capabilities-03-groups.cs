@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for group path information in --capabilities output
+#region Purpose
+// Pins the group path information in --capabilities output.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

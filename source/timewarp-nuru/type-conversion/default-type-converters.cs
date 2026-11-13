@@ -1,3 +1,7 @@
+#region Purpose
+// Allocation-free runtime conversion of route parameter strings to the built-in types.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

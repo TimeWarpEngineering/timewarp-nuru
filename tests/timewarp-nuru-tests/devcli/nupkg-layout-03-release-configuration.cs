@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that packed assemblies are Release builds, via assembly metadata inspection of the nupkg contents.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

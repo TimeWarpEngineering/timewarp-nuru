@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins long and short option aliases, including optional flags and optional values.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

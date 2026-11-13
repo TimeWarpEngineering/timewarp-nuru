@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for [Parameter] attributed properties.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

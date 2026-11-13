@@ -1,3 +1,7 @@
+#region Purpose
+// Extension members exposing the entry-point file path that `dotnet run file.cs` sets in AppContext.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

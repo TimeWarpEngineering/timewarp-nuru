@@ -1,12 +1,12 @@
 #!/usr/bin/env -S dotnet --
 #:package TimeWarp.Amuru
 
-// Standalone CI test phase (task 538). These files cannot run inside the
-// JARIBU_MULTI assembly, so each one runs as its own `dotnet run`.
-// tests/ci-tests/run-ci-tests.cs runs this file after the multi-mode phase.
-// CI runs it as its own job. It lives outside tests/ci-tests so that
-// directory's Directory.Build.props does not pull every test file into this
-// compile, which would cost the multi-mode compile (about 140s) for nothing.
+#region Purpose
+// Standalone CI test phase: runs each test file that cannot be compiled into the JARIBU_MULTI assembly as
+// its own dotnet run.
+// Run by tests/ci-tests/run-ci-tests.cs after the multi-mode phase, and as its own CI job; kept outside
+// tests/ci-tests so that directory's props do not pull every test file into this compile (task 538).
+#endregion
 
 using TimeWarp.Amuru;
 

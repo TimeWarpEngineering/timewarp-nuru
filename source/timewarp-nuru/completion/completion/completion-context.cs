@@ -1,3 +1,7 @@
+#region Purpose
+// Record describing what the user has typed so far when a completion request arrives.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

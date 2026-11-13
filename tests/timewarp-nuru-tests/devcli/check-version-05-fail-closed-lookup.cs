@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that NuGetVersionService fails closed: only HTTP 404 means not published, and invalid package ids
+// are rejected before any HTTP call (task 470-007).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

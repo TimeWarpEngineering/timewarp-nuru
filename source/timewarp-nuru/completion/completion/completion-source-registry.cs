@@ -1,3 +1,7 @@
+#region Purpose
+// Registry that maps parameter names and types to custom completion sources.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

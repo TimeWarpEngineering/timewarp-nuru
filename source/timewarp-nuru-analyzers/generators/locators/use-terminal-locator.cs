@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .UseTerminal(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

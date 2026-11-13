@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins nullable value-type option parameters in routes and their absent-value behavior.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

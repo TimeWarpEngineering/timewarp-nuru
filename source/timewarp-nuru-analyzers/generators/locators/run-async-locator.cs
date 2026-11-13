@@ -1,5 +1,7 @@
+#region Purpose
 // Locator for app.RunAsync(...) call sites.
 // This is the entry point for the V2 generator - we intercept this method.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

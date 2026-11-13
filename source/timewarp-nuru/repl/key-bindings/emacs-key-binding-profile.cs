@@ -1,3 +1,7 @@
+#region Purpose
+// Emacs/GNU Readline-style key binding profile built on Ctrl-based navigation.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins PackableProjectService.GetPackableProjectsAsync against throwaway repo-shaped temp directories.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,10 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Two apps in one file, both with behaviors on delegate routes (task 508-008).
-// The generated command class for a delegate route was named from the route's index across
-// all apps, but the behavior code used the index within the app. The second app's behavior
-// then built the first app's command class, which does not compile when the routes differ.
+#region Purpose
+// Pins that two apps in one file with behaviors on delegate routes generate correctly named command classes.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

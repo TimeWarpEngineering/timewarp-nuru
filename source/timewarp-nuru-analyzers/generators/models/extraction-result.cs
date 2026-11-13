@@ -1,3 +1,7 @@
+#region Purpose
+// Result of extracting an AppModel from source, carrying the model (if any) and diagnostics.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

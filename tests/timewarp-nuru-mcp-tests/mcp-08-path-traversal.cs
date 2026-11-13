@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj
 
+#region Purpose
+// Pins that the MCP server's path traversal guard rejects paths that escape the allowed directory.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

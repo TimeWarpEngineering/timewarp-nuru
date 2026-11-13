@@ -1,3 +1,7 @@
+#region Purpose
+// Contract for runtime sources that supply completion candidates for a parameter.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

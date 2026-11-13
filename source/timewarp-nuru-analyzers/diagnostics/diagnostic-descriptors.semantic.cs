@@ -1,3 +1,7 @@
+#region Purpose
+// Descriptors for NURU_S semantic diagnostics: validation issues in an otherwise parseable route pattern.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

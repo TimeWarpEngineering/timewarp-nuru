@@ -1,3 +1,7 @@
+#region Purpose
+// Base class for parsing errors, carrying position and length.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

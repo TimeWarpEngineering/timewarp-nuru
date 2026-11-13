@@ -1,6 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-search/timewarp-nuru-search.csproj
 
+#region Purpose
+// Pins that the `nuru search --version` header prints the CLI version from clis.version (task 470-008,
+// M11).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj
 
+#region Purpose
+// Pins the handler code GenerateHandlerTool produces for route patterns.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

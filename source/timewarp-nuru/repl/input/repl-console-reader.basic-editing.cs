@@ -1,3 +1,8 @@
+#region Purpose
+// ReplConsoleReader partial for basic editing handlers: delete-or-exit, clear screen, insert/overwrite
+// toggle.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

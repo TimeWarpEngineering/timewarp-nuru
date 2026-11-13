@@ -1,3 +1,7 @@
+#region Purpose
+// Generic route type converter that parses any enum case-insensitively and reports valid names on failure.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

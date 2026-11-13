@@ -1,11 +1,15 @@
+#region Purpose
 // Extracts ReplOptions configuration from AddRepl() lambda expressions.
-//
+#endregion
+
+#region Design
 // Handles:
 // - .AddRepl(options => { options.AutoStartWhenEmpty = true; })  - inline lambda with block
 // - .AddRepl(options => options.AutoStartWhenEmpty = true)       - inline lambda with expression
 //
 // Extracts:
 // - AutoStartWhenEmpty (bool)
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

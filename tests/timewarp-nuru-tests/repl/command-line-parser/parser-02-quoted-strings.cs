@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test CommandLineParser quote handling
+#region Purpose
+// Pins how CommandLineParser handles quoted strings and escapes when splitting REPL input.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

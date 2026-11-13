@@ -1,3 +1,8 @@
+#region Purpose
+// Immutable array wrapper with sequence equality so generator models cache correctly in the incremental
+// pipeline.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 using System.Collections;

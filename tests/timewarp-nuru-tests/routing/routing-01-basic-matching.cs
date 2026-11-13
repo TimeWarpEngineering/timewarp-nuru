@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins basic route matching: literal routes and exact segment comparison.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

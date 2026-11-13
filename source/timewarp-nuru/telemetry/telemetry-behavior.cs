@@ -1,3 +1,7 @@
+#region Purpose
+// Pipeline behavior that wraps every command in an OpenTelemetry span and records metrics.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using System.Diagnostics;

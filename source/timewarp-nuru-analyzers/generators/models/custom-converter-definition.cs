@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for a custom type converter captured from an AddTypeConverter() call.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

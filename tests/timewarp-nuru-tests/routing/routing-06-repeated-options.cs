@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins options that may be repeated and collect into arrays or lists.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

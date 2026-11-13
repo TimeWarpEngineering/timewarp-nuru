@@ -1,5 +1,11 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Regression test for GitHub issue #152: an unmatched optional int option must skip to the next route, not
+// error.
+#endregion
+
+#region Design
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGRESSION TEST: GitHub Issue #152
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -18,6 +24,7 @@
 // which fails, causing an error instead of a route skip.
 //
 // ═══════════════════════════════════════════════════════════════════════════════
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

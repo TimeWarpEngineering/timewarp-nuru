@@ -1,3 +1,7 @@
+#region Purpose
+// Descriptors for NURU_R route overlap diagnostics produced by cross-route analysis.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

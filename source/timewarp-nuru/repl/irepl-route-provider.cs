@@ -1,3 +1,7 @@
+#region Purpose
+// Contract for generator-emitted route data used by REPL tab completion and syntax highlighting.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

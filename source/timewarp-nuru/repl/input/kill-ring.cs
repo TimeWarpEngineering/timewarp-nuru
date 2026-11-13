@@ -1,3 +1,7 @@
+#region Purpose
+// Emacs-style kill ring: a circular buffer of killed text for yank and yank-pop.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

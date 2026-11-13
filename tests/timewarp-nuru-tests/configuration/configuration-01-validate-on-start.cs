@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lazy IOptions binding on handler access, convention-based section keys, and defaults for missing
+// sections; ValidateOnStart is unsupported without a DI container.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

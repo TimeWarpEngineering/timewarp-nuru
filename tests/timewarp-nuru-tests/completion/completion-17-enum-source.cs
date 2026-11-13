@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins EnumCompletionSource, which supplies completion candidates from an enum's values.
+#endregion
+
 using System.ComponentModel;
 
 #if !JARIBU_MULTI

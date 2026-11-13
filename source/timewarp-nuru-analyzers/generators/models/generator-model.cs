@@ -1,3 +1,7 @@
+#region Purpose
+// Top-level model handed to the emitter: all apps plus shared metadata, with per-app interceptors.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

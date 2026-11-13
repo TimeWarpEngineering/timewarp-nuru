@@ -2,10 +2,11 @@
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 #:project $(SourceDirectory)timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj
 
-// TimeWarp.Nuru.Daemon (task 508-005): the served-app sample as real processes. --daemon starts a
-// detached server; later calls forward to it (same pid, the caller's directory, stderr and exit code,
-// --json-args from stdin); local-only routes and --no-daemon run in the CLI process; `served-app mcp`
-// forwards tools/call to the same server; serve --status / --stop manage it.
+#region Purpose
+// Pins the served-app sample as real processes (task 508-005): --daemon starts a detached server, later
+// calls forward to it, local-only routes and --no-daemon run in the CLI process, `served-app mcp` forwards
+// tools/call, and serve --status and --stop manage the server.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

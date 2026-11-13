@@ -1,3 +1,7 @@
+#region Purpose
+// Marks session-scoped services so command construction resolves them from the root provider.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

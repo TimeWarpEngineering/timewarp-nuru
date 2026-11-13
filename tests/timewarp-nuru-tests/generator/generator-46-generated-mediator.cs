@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that a UseMicrosoftDependencyInjection() app registers the source-generated TimeWarp.Mediator.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: TimeWarp.Mediator generated mediator registration
 // ═══════════════════════════════════════════════════════════════════════════════

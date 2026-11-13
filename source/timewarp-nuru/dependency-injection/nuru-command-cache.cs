@@ -1,3 +1,7 @@
+#region Purpose
+// Holds AddCommandScoped instances for the command currently executing and disposes them when it ends.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,3 +1,8 @@
+#region Purpose
+// Command history for REPL sessions: in-memory list, owner-only persistence, ignore patterns, and
+// deduplication.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

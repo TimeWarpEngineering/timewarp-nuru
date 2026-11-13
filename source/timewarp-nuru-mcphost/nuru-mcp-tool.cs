@@ -1,3 +1,7 @@
+#region Purpose
+// MCP server tool that invokes one Nuru route, created by NuruMcpServer.CreateTools.
+#endregion
+
 namespace TimeWarp.Nuru.McpHost;
 
 /// <summary>

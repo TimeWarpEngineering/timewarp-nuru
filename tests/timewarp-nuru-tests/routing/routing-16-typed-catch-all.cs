@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins typed catch-all parameters such as int[] and their conversion errors.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

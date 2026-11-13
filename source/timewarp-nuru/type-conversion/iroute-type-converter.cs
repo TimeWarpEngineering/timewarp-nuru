@@ -1,3 +1,7 @@
+#region Purpose
+// Contract for a converter that turns a route parameter string into a strongly typed value.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

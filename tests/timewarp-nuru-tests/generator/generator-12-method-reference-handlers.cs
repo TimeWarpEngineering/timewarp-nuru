@@ -1,8 +1,8 @@
 #!/usr/bin/env -S dotnet --
 
-// Generator: Method Reference Handler Tests
-// Tests that .WithHandler(MethodName) works with method references, not just lambdas
-// Reference: kanban/in-progress/320-generator-does-not-support-method-reference-handlers.md
+#region Purpose
+// Pins that .WithHandler(MethodName) works with method references, not just lambdas.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

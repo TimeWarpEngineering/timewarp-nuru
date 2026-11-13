@@ -1,5 +1,7 @@
+#region Purpose
 // Emits configuration loading code for AddConfiguration() DSL method.
 // Generates code that builds IConfigurationRoot at runtime startup.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

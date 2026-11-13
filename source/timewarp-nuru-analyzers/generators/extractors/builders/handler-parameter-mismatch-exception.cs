@@ -1,3 +1,8 @@
+#region Purpose
+// Recoverable exception for a handler-parameter / route-segment mismatch, caught by the DSL interpreter to report
+// NURU_H005 without dropping sibling routes.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

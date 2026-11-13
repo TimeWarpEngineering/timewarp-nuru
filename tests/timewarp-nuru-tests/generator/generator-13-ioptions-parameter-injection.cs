@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins generator injection of IOptions<T> handler parameters via configuration binding.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: IOptions<T> Parameter Injection (#314)
 // ═══════════════════════════════════════════════════════════════════════════════

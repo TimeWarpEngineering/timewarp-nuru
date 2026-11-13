@@ -1,3 +1,8 @@
+#region Purpose
+// Runs the interactive REPL loop, routing each entered line through the generated matcher via
+// ReplCommandExecutor.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

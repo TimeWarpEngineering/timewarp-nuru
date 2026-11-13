@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Pins REPL performance expectations (Section 14 of the REPL test plan).
+#endregion
+
 using System.Diagnostics;
 
 // Test performance (Section 14 of REPL Test Plan)

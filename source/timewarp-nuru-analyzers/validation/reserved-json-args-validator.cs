@@ -1,3 +1,7 @@
+#region Purpose
+// Reports NURU_R005 when a user option's long form is json-args, which is reserved.
+#endregion
+
 namespace TimeWarp.Nuru.Validation;
 
 using TimeWarp.Nuru.Generators;

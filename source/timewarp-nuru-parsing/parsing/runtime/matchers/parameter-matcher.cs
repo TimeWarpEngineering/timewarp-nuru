@@ -1,3 +1,7 @@
+#region Purpose
+// Route matcher for a parameter segment that extracts a value.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

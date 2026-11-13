@@ -1,6 +1,8 @@
+#region Purpose
 // Emits service resolution code for handler parameters.
 // Generates instantiation code for registered services (static DI).
 // Supports constructor parameters with optional default values.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

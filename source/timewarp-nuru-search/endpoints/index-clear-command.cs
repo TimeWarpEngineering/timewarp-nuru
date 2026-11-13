@@ -1,3 +1,8 @@
+#region Purpose
+// Implements the `index clear` command: removes one CLI's entries, or the whole search index, from the local
+// database.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;

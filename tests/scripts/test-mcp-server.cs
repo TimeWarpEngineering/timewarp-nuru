@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
-// NOTE: This is a standalone integration test that spawns the MCP server as a process.
-// It does not use RunTests framework or reference the MCP project directly.
+#region Purpose
+// Standalone integration test that spawns the MCP server as a process and exercises it over stdio, without
+// the Jaribu runner or a reference to the MCP project.
+#endregion
 
 using System.Diagnostics;
 using System.Text.Json;

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lexer tokenization of parameter and option descriptions.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Pins custom key binding support through KeyBindingBuilder and CustomKeyBindingProfile.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

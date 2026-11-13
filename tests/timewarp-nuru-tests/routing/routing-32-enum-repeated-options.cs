@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins enum element types in repeated options (--env Dev --env Staging) and the invalid-value messages.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

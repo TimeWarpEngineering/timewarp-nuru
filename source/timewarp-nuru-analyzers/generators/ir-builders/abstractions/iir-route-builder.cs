@@ -1,7 +1,11 @@
+#region Purpose
 // Marker interface for route configuration builders.
-//
+#endregion
+
+#region Design
 // Routes are configured with handler, description, message type, etc.
 // and return to their parent (app or group) via Done().
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

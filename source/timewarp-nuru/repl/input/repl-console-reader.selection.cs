@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for text selection handlers.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

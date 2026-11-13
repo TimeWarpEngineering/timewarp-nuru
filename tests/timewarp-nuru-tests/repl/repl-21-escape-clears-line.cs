@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test that Escape key clears the current line (PSReadLine RevertLine behavior)
+#region Purpose
+// Pins that the Escape key clears the current REPL line (PSReadLine RevertLine behavior).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

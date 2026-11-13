@@ -2,6 +2,10 @@
 #:package TimeWarp.Amuru
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Benchmark script that measures AOT executable invocation time over a configurable number of runs.
+#endregion
+
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;

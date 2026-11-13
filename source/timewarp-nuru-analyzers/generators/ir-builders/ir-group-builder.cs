@@ -1,8 +1,12 @@
+#region Purpose
 // IR builder for nested route groups with prefix accumulation.
-//
+#endregion
+
+#region Design
 // Mirrors runtime GroupBuilder<TParent> for semantic interpretation.
 // Groups accumulate prefixes: "admin" + "config" = "admin config".
 // Routes within a group have the accumulated prefix prepended.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that declares an option on a route-group base class, inherited by every route in the group.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

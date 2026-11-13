@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that keeps an endpoint in the CLI process so a served app never forwards it to a server.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

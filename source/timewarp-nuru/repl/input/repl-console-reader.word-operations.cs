@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for word case conversion and character transposition.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

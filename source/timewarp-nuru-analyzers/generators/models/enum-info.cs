@@ -1,3 +1,7 @@
+#region Purpose
+// Value-equatable precomputed enum information so the emit stage can handle enum parameters.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

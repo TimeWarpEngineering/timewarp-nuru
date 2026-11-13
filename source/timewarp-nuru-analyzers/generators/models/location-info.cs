@@ -1,3 +1,7 @@
+#region Purpose
+// Value-equatable source location for generator models, since Roslyn's Location is tied to a live SyntaxTree.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 using Microsoft.CodeAnalysis.Text;

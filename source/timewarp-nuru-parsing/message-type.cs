@@ -1,3 +1,7 @@
+#region Purpose
+// Message type of a route (CQRS terminology) so AI agents can judge execution safety.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

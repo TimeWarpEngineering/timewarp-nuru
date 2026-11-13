@@ -1,3 +1,7 @@
+#region Purpose
+// MCP tool that serves route pattern syntax examples from an embedded resource.
+#endregion
+
 namespace TimeWarp.Nuru.Mcp.Tools;
 
 using System.ComponentModel;

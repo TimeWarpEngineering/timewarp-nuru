@@ -1,3 +1,7 @@
+#region Purpose
+// Allocation-free LoggerMessage definitions for REPL operations.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using Microsoft.Extensions.Logging;

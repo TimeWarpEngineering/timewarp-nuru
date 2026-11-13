@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lowering of in-project AddX extension methods into source-gen DI with TryAdd order preserved.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Lower in-project AddX into source-gen DI (task 395)
 // ═══════════════════════════════════════════════════════════════════════════════

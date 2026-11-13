@@ -1,13 +1,14 @@
 #!/usr/bin/env -S dotnet --
 
-// This file is guarded ENTIRELY by #if !JARIBU_MULTI (not just the runner entry
-// point like sibling devcli test files): it references CheckVersionCommand, whose
-// endpoint file is compiled here (tests/timewarp-nuru-tests/devcli/Directory.Build.props)
-// but deliberately NOT compiled into the tests/ci-tests multi-mode assembly (endpoints
-// are collected GLOBALLY by .DiscoverEndpoints() there — task 454-022 decision A2). Without
-// this guard, the multi-mode compile would fail with CS0246 (CheckVersionCommand not found).
-// Listed in CiTestExcludes and run by run-ci-tests.cs second phase (task 456).
-// Manual: dotnet run tests/timewarp-nuru-tests/devcli/check-version-07-endpoint-fail-closed.cs
+#region Purpose
+// Pins that CheckVersionCommand fails closed on a NuGet outage and rejects an invalid --package id (470-007).
+#endregion
+
+#region Design
+// Guarded ENTIRELY by #if !JARIBU_MULTI: CheckVersionCommand's endpoint file compiles here but not into the
+// ci-tests multi-mode assembly, which collects endpoints globally (task 454-022 A2), so multi-mode would fail
+// with CS0246. CiTestExcludes lists this file; run-ci-tests.cs runs it in its second phase (task 456).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -19,11 +20,10 @@ using System.Text;
 using global::DevCli;
 
 /// <summary>
-/// Endpoint-level fail-closed coverage for CheckVersionCommand.Handler (kanban
-/// task 470-007, parent-470 findings M9/M31): a NuGet outage must abort with
-/// exit code 1 and never report "safe to release", and an invalid --package id
-/// must be rejected before any HTTP lookup is attempted. This drives the real
-/// Handler (not just NuGetVersionService in isolation) so the wiring is covered.
+/// Endpoint-level fail-closed coverage for CheckVersionCommand.Handler (kanban task 470-007,
+/// parent-470 findings M9/M31): a NuGet outage must abort with exit code 1 and never report
+/// "safe to release", and an invalid --package id must be rejected before any HTTP lookup. This
+/// drives the real Handler (not just NuGetVersionService in isolation) so the wiring is covered.
 /// </summary>
 [TestTag("DevCli")]
 public class CheckVersionEndpointFailClosedTests

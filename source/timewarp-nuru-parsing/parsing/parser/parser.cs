@@ -1,3 +1,7 @@
+#region Purpose
+// Recursive descent parser for route patterns.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,7 +1,11 @@
+#region Purpose
 // Marker interface for nested group builders.
-//
+#endregion
+
+#region Design
 // Groups accumulate prefixes and return to their parent via Done().
 // Unlike IIrAppBuilder, groups have a parent to return to.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

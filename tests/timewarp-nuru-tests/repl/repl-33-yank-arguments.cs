@@ -1,8 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for PSReadLine-compatible yank argument functionality (Task 043-010)
-// Verifies YankLastArg (Alt+.) and YankNthArg (Alt+Ctrl+Y) functionality
+#region Purpose
+// Pins PSReadLine-compatible YankLastArg (Alt+.) and YankNthArg (Alt+Ctrl+Y) in the REPL (task 043-010).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -149,7 +150,6 @@ public class YankArgumentTests
 
   public static async Task Should_yank_last_argument_with_alt_period()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueLine("greet Alice");  // History entry
     terminal.QueueLine("greet Bob");    // History entry

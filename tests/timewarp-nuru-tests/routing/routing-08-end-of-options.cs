@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the end-of-options separator (--) handling in route matching.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

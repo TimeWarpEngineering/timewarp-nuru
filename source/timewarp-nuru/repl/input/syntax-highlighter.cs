@@ -1,3 +1,7 @@
+#region Purpose
+// Colors REPL input as the user types, using the route patterns the generator supplied.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

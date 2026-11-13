@@ -1,12 +1,18 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Regression tests for REPL clipboard paste with CRLF text (task 470-003).
+#endregion
+
+#region Design
 // Regression tests for REPL clipboard paste (Task 470-003 / parent 470 M5).
 // HandlePasteAsync used to splice raw clipboard text into UserInput and advance
 // CursorPosition by clipboardText.Length. Windows Get-Clipboard returns CRLF, so
 // UserInput kept \r while the multiline linear domain counts one char per break.
 // CRLF splitting itself is covered in repl-31 InsertText tests; these TestTerminal
 // cases exercise the paste command path (clipboard or kill-ring fallback).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

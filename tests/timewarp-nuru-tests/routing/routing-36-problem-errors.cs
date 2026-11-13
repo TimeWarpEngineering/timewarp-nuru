@@ -1,9 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// CLI binding errors through the app's problem renderer after UseProblemRendererForErrors() (task 508-018).
-// The CI multi-mode compilation must not contain a visible IResponseRenderer<SharedProblemDetails> (it would
-// change every problem pair there), so these tests attach the renderer the generator would attach.
+#region Purpose
+// Pins CLI binding errors rendered through the problem renderer after UseProblemRendererForErrors() (task
+// 508-018).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

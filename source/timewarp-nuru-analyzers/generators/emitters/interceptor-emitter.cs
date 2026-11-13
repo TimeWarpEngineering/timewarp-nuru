@@ -1,8 +1,10 @@
-// Main emitter that generates the RunAsync interceptor methods.
-// This is the entry point for code emission, coordinating all other emitters.
-//
+#region Purpose
+// Main emitter that generates the RunAsync interceptor methods; the entry point coordinating all other emitters.
+#endregion
+#region Design
 // Key design: Each app instance gets its own interceptor method with isolated routes.
 // This ensures route patterns don't leak between different NuruApp instances.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -1174,7 +1176,6 @@ internal static class InterceptorEmitter
     return totalApps > 1 ? $"__loggerFactory_{appIndex}" : "__loggerFactory";
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
   // LOGGER FACTORY RESOLUTION - TWO PATHS FOR AOT OPTIMIZATION, ONE SOURCE PER APP
   // ═══════════════════════════════════════════════════════════════════════════════
   //
@@ -1196,7 +1197,6 @@ internal static class InterceptorEmitter
   // with neither path gets NullLogger. Code emitted once for every app (service framework fields,
   // behavior instances, the mediator container) reads __nuruLoggerFactory, which
   // EnsureServicesInitialized sets from the running app's source.
-  // ═══════════════════════════════════════════════════════════════════════════════
 
   /// <summary>
   /// True when the app has a logger factory: explicit AddLogging(), or telemetry logging.

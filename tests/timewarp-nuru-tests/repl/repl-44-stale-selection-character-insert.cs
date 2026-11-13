@@ -1,10 +1,17 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Regression tests for HandleCharacter with a stale selection after a non-selection buffer mutation (task
+// 470-002).
+#endregion
+
+#region Design
 // Regression tests for HandleCharacter with a stale selection after a non-selection
 // buffer mutation (Task 470-002 / parent 470 M4).
 // Shift+Left then Ctrl+K (or select-all then Up to a shorter history entry) left
 // SelectionState.End past UserInput.Length; typing then threw ArgumentOutOfRangeException.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

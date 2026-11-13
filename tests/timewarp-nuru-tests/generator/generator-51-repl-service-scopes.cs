@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
-// REPL and single-run lifetimes for Singleton, SessionScoped, CommandScoped, Scoped, and Transient.
-// Covers source-generated DI and UseMicrosoftDependencyInjection().
+#region Purpose
+// Pins REPL and single-run lifetimes for Singleton, SessionScoped, CommandScoped, Scoped, and Transient services,
+// covering source-generated DI and UseMicrosoftDependencyInjection().
+#endregion
 
 using Microsoft.Extensions.DependencyInjection;
 

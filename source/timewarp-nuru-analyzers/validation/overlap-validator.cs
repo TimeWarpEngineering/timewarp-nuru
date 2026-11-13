@@ -1,10 +1,11 @@
-// Overlap validator that detects:
-// 1. Routes with same structure but different type constraints (NURU_R001)
-// 2. Duplicate route patterns (NURU_R002)
-// 3. Unreachable routes - where one route shadows another (NURU_R003)
-//
+#region Purpose
+// Detects overlapping, duplicate, and unreachable routes (NURU_R001-R003).
+#endregion
+
+#region Design
 // Structure signature: Normalized form ignoring parameter names and types
 // Required signature: Only literals and required parameters (no options, no optional params)
+#endregion
 
 namespace TimeWarp.Nuru.Validation;
 

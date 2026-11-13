@@ -1,5 +1,7 @@
+#region Purpose
 // Emits version output generation code.
 // Generates the PrintVersion method for --version flag handling.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

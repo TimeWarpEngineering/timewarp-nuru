@@ -1,3 +1,7 @@
+#region Purpose
+// Compiles the route pattern syntax tree into the runtime CompiledRoute structure.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

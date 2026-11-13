@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Roundtrip tests: serialize then deserialize CapabilitiesResponse
+#region Purpose
+// Pins that CapabilitiesResponse survives a serialize then deserialize roundtrip.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

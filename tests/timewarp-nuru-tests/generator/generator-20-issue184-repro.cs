@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Regression test reproducing the exact scenario from GitHub issue 184.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Issue #184 Reproduction
 // ═══════════════════════════════════════════════════════════════════════════════

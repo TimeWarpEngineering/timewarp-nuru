@@ -1,3 +1,7 @@
+#region Purpose
+// Resolves a key binding profile instance from its name (Default, Emacs, Vi, VSCode).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

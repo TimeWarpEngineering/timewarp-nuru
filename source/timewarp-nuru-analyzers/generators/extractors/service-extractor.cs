@@ -1,12 +1,10 @@
+#region Purpose
 // Extracts service registration information from ConfigureServices() calls.
-//
-// Handles:
-// - .ConfigureServices(services => { ... })           - inline lambda
-// - .ConfigureServices(ConfigureServices)             - method group reference
-// - Services registered via AddTransient, AddScoped, AddSingleton, AddSessionScoped, AddCommandScoped, TryAdd*
-// - In-project AddX via syntax and referenced AddX via decompile (task 395)
-//
-// Also detects:
+#endregion
+#region Design
+// Handles .ConfigureServices(services => { ... }) and .ConfigureServices(ConfigureServices) (method group),
+// services registered via AddTransient, AddScoped, AddSingleton, AddSessionScoped, AddCommandScoped, TryAdd*,
+// in-project AddX via syntax and referenced AddX via decompile (task 395). Also detects:
 // - Factory delegate registrations (NURU053)
 // - Constructor dependencies of implementation types (NURU051)
 // - Internal types (NURU054)
@@ -17,6 +15,7 @@
 //   SymbolDisplay.FormatLiteral so quotes, backslashes, and newlines compile.
 //   Other primitives use SymbolDisplay.FormatPrimitive plus the C# type suffix
 //   FormatPrimitive omits. Enum defaults are fully-qualified members.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins CiRunPromotion.VerifyPackageSet, which checks a downloaded artifact holds the expected packages.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

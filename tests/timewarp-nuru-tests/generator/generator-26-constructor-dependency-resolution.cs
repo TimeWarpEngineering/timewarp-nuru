@@ -1,27 +1,18 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins compile-time constructor dependency resolution, including complex graphs and error conditions.
+#endregion
+
 #pragma warning disable CA1848 // Use LoggerMessage delegates
 #pragma warning disable CA1873 // Evaluation of this argument may be expensive
 #pragma warning disable CA1305 // Specify IFormatProvider
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// GENERATOR TEST: Constructor Dependency Resolution (#394)
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// PURPOSE: Verify the source generator correctly resolves constructor dependencies
-// at compile time, including complex dependency graphs and error conditions.
-//
-// WHAT THIS TESTS:
-// - Single dependency resolution
-// - Multiple dependencies resolution
-// - Multi-level dependency chains
-// - Diamond dependency patterns
-// - Circular dependency detection (NURU055)
-// - Optional parameters with default values
-// - Multiple constructor selection
-// - Lifetime mismatch warnings (NURU056)
-// - Mixed built-in and custom types
-// - Transient services with dependencies
-// ═══════════════════════════════════════════════════════════════════════════════
+#region Design
+// Covers #394: single, multiple, multi-level, diamond, and mixed built-in/custom dependencies; optional
+// parameters; constructor selection; transient services; circular detection (NURU055); lifetime
+// mismatch warnings (NURU056).
+#endregion
 
 using Microsoft.Extensions.Logging;
 

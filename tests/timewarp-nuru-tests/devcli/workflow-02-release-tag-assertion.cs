@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the release-gate tag assertion of the dev CLI workflow command on a release event.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

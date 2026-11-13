@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .Done() calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

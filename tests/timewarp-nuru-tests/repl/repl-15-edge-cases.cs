@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test edge cases (Section 15 of REPL Test Plan)
+#region Purpose
+// Pins REPL edge cases such as empty and unusual input (Section 15 of the REPL test plan).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

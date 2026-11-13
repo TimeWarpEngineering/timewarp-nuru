@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for cursor movement handlers.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

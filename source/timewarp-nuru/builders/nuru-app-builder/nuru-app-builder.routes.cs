@@ -1,3 +1,7 @@
+#region Purpose
+// Partial of NuruAppBuilder holding the route-registration and REPL/feature-enabling methods.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

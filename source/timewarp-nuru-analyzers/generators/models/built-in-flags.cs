@@ -1,3 +1,7 @@
+#region Purpose
+// Constants for the built-in CLI flags (--help, -h, --version, --capabilities) shared by emitters.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

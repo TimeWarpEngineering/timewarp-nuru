@@ -1,10 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test: Required options should only match when present
-// Route 1 has REQUIRED --mode option (higher specificity)
-// Route 2 has no options (lower specificity)
-// Input "round 2.5" should match Route 2, NOT Route 1
+#region Purpose
+// Pins that a route with a required option only matches when the option is present,
+// and that the lower-specificity no-option route wins otherwise.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins boolean flags, mixed required and optional options, and typed option values in route matching.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

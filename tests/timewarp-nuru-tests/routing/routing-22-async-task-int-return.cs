@@ -1,7 +1,8 @@
 #!/usr/bin/env -S dotnet --
 
-// Issue #120: Verify async Task<int> return type delegates work with CreateBuilder
-// https://github.com/TimeWarpEngineering/timewarp-nuru/issues/120
+#region Purpose
+// Regression test for issue #120: async Task<int> delegate handlers must work with CreateBuilder.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

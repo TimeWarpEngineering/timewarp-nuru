@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .AddRepl(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj
 
-// TimeWarp.Nuru.McpHost (task 508-004): the calculator sample's `mcp` route, driven by a real MCP
-// client over stdio, publishes the same contract its `--capabilities` prints: one tool per endpoint,
-// same names, descriptions, members, types, required set, and allowed values.
+#region Purpose
+// Pins that the calculator sample's `mcp` route, driven by a real MCP client over stdio, publishes the
+// same contract its `--capabilities` prints (task 508-004): names, descriptions, members, types, required
+// set, and allowed values.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

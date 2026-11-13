@@ -1,5 +1,7 @@
+#region Purpose
 // Shared helper for building route pattern display strings.
 // Extracted to avoid duplication between help-emitter.cs and route-help-emitter.cs
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

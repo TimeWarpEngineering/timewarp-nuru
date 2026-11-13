@@ -1,9 +1,13 @@
+#region Purpose
 // Detects NURU_R004: REPL AutoStartWhenEmpty makes a top-level default route unreachable.
-//
+#endregion
+
+#region Design
 // EmitInteractiveFlag checks routeArgs.Length == 0 and starts the REPL before user routes
 // are matched. A top-level "" route that matches that empty list is unreachable.
 // A "" route inside a group still requires its prefix, so it does not conflict.
 // A required parameter or required option does not match length 0, so it does not conflict.
+#endregion
 
 namespace TimeWarp.Nuru.Validation;
 

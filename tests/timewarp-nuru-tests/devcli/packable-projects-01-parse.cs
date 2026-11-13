@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the pure parsing of dotnet msbuild -getProperty output in PackableProjectService.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

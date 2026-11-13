@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the position information the lexer records on each token.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

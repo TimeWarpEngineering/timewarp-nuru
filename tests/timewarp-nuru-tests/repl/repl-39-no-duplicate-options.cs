@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test that completion suggestions don't have duplicates
+#region Purpose
+// Pins that REPL completion suggestions contain no duplicate options.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

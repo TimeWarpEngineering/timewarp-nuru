@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lexer error reporting for malformed route patterns.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

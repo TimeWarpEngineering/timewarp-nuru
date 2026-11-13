@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins CI mode detection for the dev CLI workflow command, including workflow_dispatch resolving to Merge.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

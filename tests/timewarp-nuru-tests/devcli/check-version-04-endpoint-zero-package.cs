@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that CheckVersionCommand rejects a delimiter-only --package value instead of classifying zero
+// packages (task 458-005).
+#endregion
+
 // This file is guarded ENTIRELY by #if !JARIBU_MULTI (not just the runner entry
 // point like sibling devcli test files): it references CheckVersionCommand, whose
 // endpoint file is compiled here (tests/timewarp-nuru-tests/devcli/Directory.Build.props)

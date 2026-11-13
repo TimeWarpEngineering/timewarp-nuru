@@ -2,6 +2,10 @@
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package TimeWarp.Amuru
 
+#region Purpose
+// Pins --json-args: argv peel, route selection, and reflection-free binding of handler arguments from JSON.
+#endregion
+
 using TimeWarp.Amuru;
 
 #if !JARIBU_MULTI
@@ -10,10 +14,6 @@ return await RunAllTests();
 
 namespace TimeWarp.Nuru.Tests.Routing
 {
-
-/// <summary>
-/// --json-args peel, route selection, and reflection-free binding.
-/// </summary>
 [TestTag("Routing")]
 public class JsonArgsTests
 {

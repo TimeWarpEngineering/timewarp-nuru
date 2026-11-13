@@ -1,3 +1,7 @@
+#region Purpose
+// Key binding profile following Visual Studio Code and modern IDE editing conventions.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

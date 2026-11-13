@@ -2,6 +2,11 @@
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package TimeWarp.Amuru
 
+#region Purpose
+// Pins that the generated zsh completion script works when compinit autoloads it from fpath and when
+// sourced (task 509).
+#endregion
+
 using TimeWarp.Amuru;
 
 #if !JARIBU_MULTI

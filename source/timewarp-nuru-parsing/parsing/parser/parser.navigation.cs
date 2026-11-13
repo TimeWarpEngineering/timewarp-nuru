@@ -1,3 +1,7 @@
+#region Purpose
+// Token navigation helpers for the parser (partial class).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

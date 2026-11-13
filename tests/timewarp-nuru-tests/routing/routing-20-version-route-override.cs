@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins consumer override of the built-in --version route (task 129).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

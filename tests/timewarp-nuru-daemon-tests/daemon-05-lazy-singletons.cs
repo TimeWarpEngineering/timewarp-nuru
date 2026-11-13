@@ -1,10 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 
-// Source-generated DI builds a singleton on first read (task 508-007). A forwarded call, a built-in
-// and a parse error construct no user singleton, so warm state loaded in a constructor costs the CLI
-// nothing when the daemon runs the route. A local route builds only what its handler and behaviors
-// read, once, and the behavior and handler share the instance.
+#region Purpose
+// Pins that source-generated DI builds a singleton on first read (task 508-007): forwarded calls, built-
+// ins, and parse errors construct no user singleton, and a local route builds only what its handler and
+// behaviors read.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins realistic multi-feature route sets that combine parameters, options and catch-alls.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

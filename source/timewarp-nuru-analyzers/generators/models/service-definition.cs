@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for constructor parameters used by source-generated dependency resolution.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

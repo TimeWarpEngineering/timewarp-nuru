@@ -1,5 +1,7 @@
+#region Purpose
 // Emits help text generation code from route definitions.
 // Generates the PrintHelp method for --help flag handling.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

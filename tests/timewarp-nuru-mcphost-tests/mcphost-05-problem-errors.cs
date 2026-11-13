@@ -2,9 +2,12 @@
 #:project $(SourceDirectory)timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 
-// tools/call bind failures and escaped exceptions go through the app's problem renderer (task 508-018), in
-// process and forwarded to a served app's server. The CI multi-mode compilation must not contain a visible
-// IResponseRenderer<SharedProblemDetails>, so these tests attach the renderer the generator would attach.
+#region Purpose
+// Pins that tools/call bind failures and escaped exceptions go through the app's problem renderer (task
+// 508-018), in process and forwarded to a served app's server.
+// The CI multi-mode compilation must not contain a visible IResponseRenderer<SharedProblemDetails>, so the
+// tests attach the renderer the generator would attach.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

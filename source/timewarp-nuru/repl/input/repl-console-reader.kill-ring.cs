@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for Emacs-style kill and yank handlers.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

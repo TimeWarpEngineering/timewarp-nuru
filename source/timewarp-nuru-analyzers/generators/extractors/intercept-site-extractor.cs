@@ -1,10 +1,14 @@
-// Extracts intercept site information for the interceptor attribute.
-//
+#region Purpose
+// Extracts the InterceptableLocation data used to emit [InterceptsLocation] attributes for intercepted calls.
+#endregion
+
+#region Design
 // In .NET 10 / C# 14, interceptors use the new InterceptableLocation API
 // which provides a versioned, opaque data encoding. This is more portable
 // across machines and more evolvable than the old file/line/column approach.
 //
 // See: https://github.com/dotnet/roslyn/issues/72133
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

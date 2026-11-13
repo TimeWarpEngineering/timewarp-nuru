@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins parallel evaluation of packable projects: ordering, named failures, and the progress line.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

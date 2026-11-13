@@ -1,11 +1,11 @@
+#region Purpose
 // Emits pattern matching code for individual routes.
 // Generates C# pattern matching expressions for each route definition.
-
+#endregion
 #region Design
 // UNIFIED MATCHING: All routes use EmitMatch (formerly EmitComplexMatch).
 // A dual simple/complex code path existed previously and caused 5+ bugs (#179, #301, #302, #303, #403)
 // due to behavioral concerns being added to one path but forgotten in the other.
-//
 // BUILT-IN FLAG SKIP GUARD: Routes with no literals (empty pattern) must skip built-in flags
 // like --help REGARDLESS of whether they have required parameters. The check is `hasNoLiterals`
 // not `minPositionalArgs == 0`. Without this, --help gets consumed as a parameter value.

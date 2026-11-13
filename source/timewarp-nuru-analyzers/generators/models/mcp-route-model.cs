@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for an AddMcpRoute() call, which emits the built-in mcp route serving routes as MCP tools.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for --capabilities --group-filter functionality
+#region Purpose
+// Pins the --capabilities --group-filter option.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

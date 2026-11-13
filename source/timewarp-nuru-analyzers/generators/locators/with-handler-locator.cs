@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .WithHandler(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

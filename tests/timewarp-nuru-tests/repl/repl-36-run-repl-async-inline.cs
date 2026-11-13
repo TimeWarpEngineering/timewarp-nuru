@@ -1,9 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test if RunReplAsync() is intercepted when called inline (no Setup method)
-// This verifies whether bug #363 is about cross-method tracking or if
-// RunReplAsync is not intercepted at all.
+#region Purpose
+// Pins whether RunReplAsync() is intercepted when called inline, isolating bug #363 from cross-method
+// tracking.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

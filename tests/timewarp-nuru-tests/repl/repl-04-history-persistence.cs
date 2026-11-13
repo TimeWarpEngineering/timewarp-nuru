@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Pins REPL history persistence: saving to and loading from the history file (Section 4 of the test plan).
+#endregion
+
 using System.Runtime.InteropServices;
 
 // Test history persistence (Section 4 of REPL Test Plan)

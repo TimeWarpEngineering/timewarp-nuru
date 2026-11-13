@@ -1,9 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
-// Shell Completion Parameter Detection Tests
-// Tests that TryGetParameterInfo finds the parameter at the cursor (not only the first),
-// matches command prefixes on a token boundary, and resolves user and keyword types
-// for CompletionSourceRegistry.RegisterForType.
+#region Purpose
+// Pins that TryGetParameterInfo finds the parameter at the cursor rather than only the first, matches
+// command prefixes on a token boundary, and resolves user and keyword types for RegisterForType.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

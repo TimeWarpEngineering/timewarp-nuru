@@ -1,3 +1,7 @@
+#region Purpose
+// Serves a Nuru app's routes as MCP tools.
+#endregion
+
 namespace TimeWarp.Nuru.McpHost;
 
 /// <summary>

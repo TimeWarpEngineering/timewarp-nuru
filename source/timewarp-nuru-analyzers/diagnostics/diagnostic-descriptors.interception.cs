@@ -1,3 +1,7 @@
+#region Purpose
+// Descriptors for NURU_I interception diagnostics, reported when an entry point call cannot be intercepted.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that negative numbers bind as values rather than being read as options.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

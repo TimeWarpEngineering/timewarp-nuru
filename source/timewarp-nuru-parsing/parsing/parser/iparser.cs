@@ -1,3 +1,7 @@
+#region Purpose
+// Contract for parsing route patterns into abstract syntax trees.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using TimeWarp.Nuru;

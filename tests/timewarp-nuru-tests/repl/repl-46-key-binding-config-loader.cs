@@ -1,16 +1,16 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Pins the JSON key binding profile loader: parsing, action registry, inheritance and search order.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif
 
 namespace TimeWarp.Nuru.Tests.ReplTests.KeyBindingConfigLoaderTests
 {
-
-/// <summary>
-/// Tests for JSON key binding profiles: parsing, the action registry, inheritance, and search order.
-/// </summary>
 [TestTag("REPL")]
 public class KeyBindingConfigLoaderTests
 {

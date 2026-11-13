@@ -1,3 +1,8 @@
+#region Purpose
+// Result container returned by KeyBindingBuilder, holding the bindings and exit keys and supporting tuple
+// deconstruction.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

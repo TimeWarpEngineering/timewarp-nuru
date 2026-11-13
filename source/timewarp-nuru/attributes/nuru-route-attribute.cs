@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that registers a request class as a route endpoint with a single-literal pattern.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

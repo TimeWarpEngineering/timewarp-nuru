@@ -1,9 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
-// Completion Directive Tests
-// File/Directory candidates must enable shell path completion, candidate directive flags
-// (NoSpace, KeepOrder) must reach the directive line, and spaced suggestions must stay one
-// candidate in every dynamic shell template (482-003 / R-4).
+#region Purpose
+// Pins completion directives: File and Directory candidates enable shell path completion, NoSpace and
+// KeepOrder reach the directive line, and spaced suggestions stay one candidate in every shell template
+// (482-003, R-4).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

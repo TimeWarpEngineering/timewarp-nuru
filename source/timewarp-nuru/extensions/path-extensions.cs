@@ -1,3 +1,8 @@
+#region Purpose
+// Path extension members that capture the entry-point file via CallerFilePath when AppContext data is
+// absent.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

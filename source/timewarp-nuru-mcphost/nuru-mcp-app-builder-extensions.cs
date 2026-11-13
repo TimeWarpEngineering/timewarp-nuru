@@ -1,3 +1,7 @@
+#region Purpose
+// Builder extension that adds the built-in mcp route serving the app's routes as MCP tools.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using TimeWarp.Nuru.McpHost;

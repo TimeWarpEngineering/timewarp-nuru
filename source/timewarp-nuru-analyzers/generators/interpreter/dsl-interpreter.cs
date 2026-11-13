@@ -1,14 +1,10 @@
+#region Purpose
 // Semantic DSL interpreter that walks blocks statement-by-statement.
-//
-// Instead of pattern-matching syntax, this interpreter "executes" the DSL
-// by dispatching method calls to corresponding IR builder methods.
-//
-// Phase 1a: Block-based processing with variable tracking.
-// - Takes BlockSyntax (a method body) as input
-// - Returns IReadOnlyList<AppModel> (supports multiple apps per block)
-// - Tracks variable assignments in VariableState dictionary
-// - Processes statements one by one
-//
+#endregion
+#region Design
+// This interpreter "executes" the DSL by dispatching method calls to corresponding IR builder methods.
+// Phase 1a: Block-based processing: takes a BlockSyntax (method body), returns IReadOnlyList<AppModel>
+// (multiple apps per block), tracks variable assignments in VariableState, processes statements one by one.
 // Key design:
 // - Uses SemanticModel for accurate type resolution
 // - Evaluates expressions recursively with variable resolution
@@ -16,6 +12,7 @@
 // - Uses marker interfaces (IIrRouteSource, IIrAppBuilder, IIrGroupBuilder, IIrRouteBuilder)
 //   for polymorphic dispatch without explicit type enumeration
 // - Fails fast on unrecognized DSL methods
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -525,7 +522,6 @@ public sealed class DslInterpreter
   public ExtractionResult ExtractFromRunAsyncCall(InvocationExpressionSyntax runAsyncInvocation) =>
     ExtractFromEntryPointCall(runAsyncInvocation, isReplCall: false);
 
-  // ═══════════════════════════════════════════════════════════════════════════════
   // BLOCK AND STATEMENT PROCESSING
   // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -708,7 +704,6 @@ public sealed class DslInterpreter
     EvaluateExpression(exprStmt.Expression);
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
   // EXPRESSION EVALUATION
   // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -889,7 +884,6 @@ public sealed class DslInterpreter
     return SymbolEqualityComparer.Default.Equals(leftSymbol, field);
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
   // METHOD DISPATCH
   // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1133,7 +1127,6 @@ public sealed class DslInterpreter
     return typeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
   // DISPATCH METHODS - Using marker interfaces for polymorphic dispatch
   // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -2326,7 +2319,6 @@ public sealed class DslInterpreter
     return null; // RunReplAsync returns void/Task
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
   // HELPER METHODS
   // ═══════════════════════════════════════════════════════════════════════════════
 

@@ -1,5 +1,8 @@
-// Emitter that generates OpenTelemetry infrastructure when UseTelemetry() is called.
-//
+#region Purpose
+// Emits OpenTelemetry setup (ActivitySource, Meter, TracerProvider, MeterProvider) when UseTelemetry() is called.
+#endregion
+
+#region Design
 // When telemetry is enabled, this emitter generates:
 // - ActivitySource and Meter static fields
 // - TracerProvider and MeterProvider setup code
@@ -11,6 +14,7 @@
 // Extra sources and meters an app names through NuruTelemetryOptions.ActivitySources / Meters
 // (task 561, e.g. "TimeWarp.Taratibu" walk spans) are added after Nuru's own, one literal
 // AddSource / AddMeter call per name. With none configured the output is unchanged.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

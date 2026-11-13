@@ -1,7 +1,10 @@
+#region Purpose
 // Helpers for the concurrency tests (task 508-016): hold handlers inside a call, count how many run at
-// once, and write to the console directly. Compiled into the routing, daemon and McpHost test runfiles
-// (their Directory.Build.props) and once into the CI multi-mode assembly. Global namespace: handler
-// lambdas are copied into generated code, which sees only file-level usings.
+// once, and write to the console directly.
+// Compiled into the routing, daemon, and McpHost test runfiles and once into the CI multi-mode assembly.
+// Global namespace, because handler lambdas are copied into generated code that sees only file-level
+// usings.
+#endregion
 
 #pragma warning disable CA1050 // Global on purpose; see above.
 

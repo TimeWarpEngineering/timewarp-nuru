@@ -1,3 +1,7 @@
+#region Purpose
+// Vi-inspired key binding profile that stays in insert mode, with Vi-style navigation keys.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

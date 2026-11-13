@@ -1,5 +1,8 @@
+#region Purpose
 // IR builder that mirrors the route builder DSL for semantic interpretation.
-//
+#endregion
+
+#region Design
 // This builder is used by the DslInterpreter to configure a single route,
 // accumulating state via the internal RouteDefinitionBuilder.
 //
@@ -8,6 +11,7 @@
 // - Uses existing RouteDefinitionBuilder for state accumulation
 // - Done() registers the route with parent and returns parent for chaining
 // - Implements IIrRouteBuilder for polymorphic dispatch in interpreter
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

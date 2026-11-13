@@ -1,8 +1,8 @@
-// MSBuild task that generates a JsonSerializerContext for user-defined return types.
-// Runs before CoreCompile so System.Text.Json source generator can process the output.
-//
-// Uses the same IR infrastructure as the source generator (DslInterpreter, EndpointExtractor)
-// to extract return types from BOTH delegate routes AND endpoints.
+#region Purpose
+// MSBuild task that generates a JsonSerializerContext for user-defined return types before CoreCompile.
+// Uses the same IR infrastructure as the source generator (DslInterpreter, EndpointExtractor) to extract
+// return types from BOTH delegate routes AND endpoints.
+#endregion
 
 namespace TimeWarp.Nuru.Build;
 

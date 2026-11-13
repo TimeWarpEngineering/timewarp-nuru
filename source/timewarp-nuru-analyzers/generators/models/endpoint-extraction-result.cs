@@ -1,3 +1,7 @@
+#region Purpose
+// Result of extracting a RouteDefinition from a [NuruRoute] endpoint class, with any diagnostics.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

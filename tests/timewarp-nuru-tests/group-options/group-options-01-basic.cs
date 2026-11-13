@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the GroupOption feature: options shared across route groups via base class properties.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GROUP OPTION TESTS - Task 419
 // ═══════════════════════════════════════════════════════════════════════════════

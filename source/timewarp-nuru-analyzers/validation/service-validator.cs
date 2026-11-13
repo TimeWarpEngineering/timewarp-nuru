@@ -1,13 +1,10 @@
-// Service validator that detects:
-// NURU050: Handler requires unregistered service
-// NURU051: Service has constructor dependencies
-// NURU052: Extension method registration (warning)
-// NURU053: Factory delegate registration
-// NURU054: Internal type not accessible
-// NURU055: Circular dependency detected
-// NURU056: Lifetime mismatch (Singleton/Scoped depends on Transient)
-//
+#region Purpose
+// Validates service registrations for source-generated DI compatibility (NURU050-NURU056).
+#endregion
+
+#region Design
 // All validation is skipped when UseMicrosoftDependencyInjection = true.
+#endregion
 
 namespace TimeWarp.Nuru.Validation;
 

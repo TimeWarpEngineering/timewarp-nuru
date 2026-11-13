@@ -1,5 +1,7 @@
+#region Purpose
 // Extracts completion data from route definitions.
 // Shared between ReplEmitter and CompletionEmitter.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

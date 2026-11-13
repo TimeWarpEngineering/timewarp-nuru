@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins that auto-generated --help routes do not match ahead of user routes with optional flags (task 356).
+#endregion
+
 #pragma warning disable RCS1163 // Unused parameter - parameters must match route pattern names for binding
 
 // Task #356: Auto-generated --help routes should not match before user-defined routes with optional flags

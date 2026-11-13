@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:package Microsoft.Extensions.Http
+
+#region Purpose
+// Pins mediator dispatch for [Operation] endpoints: direct-invoke opt-out, renderers, and problem details.
+#endregion
+
 #pragma warning disable CA1062 // Handlers trust the mediator request instance
 #pragma warning disable CA1805 // `= false` is the flag initializer this task derives
 

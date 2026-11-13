@@ -1,3 +1,7 @@
+#region Purpose
+// Fetches content from GitHub with multi-tier caching for the MCP tools.
+#endregion
+
 namespace TimeWarp.Nuru.Mcp.Services;
 
 using System.Collections.Concurrent;

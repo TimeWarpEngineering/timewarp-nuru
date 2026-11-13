@@ -1,3 +1,7 @@
+#region Purpose
+// Visitor interface for processing route pattern syntax nodes.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,3 +1,8 @@
+#region Purpose
+// JSON converter that serializes exceptions without touching reflection-based properties such as
+// TargetSite.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

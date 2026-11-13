@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that marks a request property as a positional route parameter.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

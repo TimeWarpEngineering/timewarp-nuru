@@ -1,3 +1,8 @@
+#region Purpose
+// Core of ReplConsoleReader: fields, constructor, and the main ReadLine loop; other handlers live in
+// partials.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .WithAlias(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:package TimeWarp.Amuru
 
-// Multi-mode Test Runner
-// Test classes are auto-registered via [ModuleInitializer] when compiled with JARIBU_MULTI.
-// After the multi-mode phase it runs tests/ci-standalone/run-standalone-tests.cs,
-// the files that cannot run in this assembly. NURU_CI_PHASE=multi skips that
-// second phase; CI runs it as a job of its own (task 538).
+#region Purpose
+// Multi-mode CI test runner: runs every test class auto-registered into the JARIBU_MULTI assembly, then
+// the standalone phase.
+// NURU_CI_PHASE=multi skips the standalone phase, which CI runs as a job of its own (task 538).
+#endregion
 
 using TimeWarp.Amuru;
 

@@ -1,8 +1,13 @@
+#region Purpose
 // Expressions that read or construct a source-generated service for its lifetime.
+#endregion
+
+#region Design
 // A read calls the field's __Resolve accessor, which builds the instance on first use (task 508-007).
 // Command resolution reads the REPL ternary for Scoped. A Scoped service that injects a session or
 // command service always reads the run's command slot, and a process-lifetime constructor builds
 // its own copy of a per-run service instead of keeping the run's (508-007 review M1).
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

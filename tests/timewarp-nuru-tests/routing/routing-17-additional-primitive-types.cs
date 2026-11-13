@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins route parameter binding for additional primitive types beyond string and int.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

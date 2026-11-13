@@ -1,25 +1,15 @@
 #!/usr/bin/env -S dotnet --
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// GENERATOR TEST: IEnumerable<T> Dependency Resolution
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// PURPOSE: Document and test IEnumerable<T> dependency injection patterns.
-// These tests use runtime DI to demonstrate expected behavior that source-gen
-// DI should eventually support.
-//
-// WHAT THIS TESTS:
-// - Single IEnumerable<IService> dependency in constructor
-// - Multiple implementations of same interface resolved as IEnumerable
-// - Empty IEnumerable when no implementations registered
-// - IEnumerable with mixed lifetimes (Singleton + Transient implementations)
-//
-// SOURCE-GEN DI TODO:
-// - Generator should detect IEnumerable<T> constructor parameters
-// - Generator should emit code to resolve all registered implementations
-// - Generator should handle empty IEnumerable case (return empty collection)
-// - Generator should respect individual implementation lifetimes
-// ═══════════════════════════════════════════════════════════════════════════════
+#region Purpose
+// Pins IEnumerable<T> constructor injection through runtime DI: single and multiple implementations,
+// the empty case, and mixed lifetimes.
+#endregion
+
+#region Design
+// Source-gen DI does not resolve IEnumerable<T> parameters; these tests record the runtime behavior
+// the generator should match: detect the parameter, resolve every registration, return an empty
+// collection when none exist, and respect each implementation's lifetime.
+#endregion
 
 using System.Globalization;
 

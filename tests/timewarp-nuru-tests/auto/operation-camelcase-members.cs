@@ -1,4 +1,10 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins that [Operation] requests with camelCase members bind as declared on the argv, --json-args, and
+// TryBind paths (task 508-006).
+#endregion
+
 #pragma warning disable CA1062 // Handlers trust the mediator request instance
 #pragma warning disable IDE1006 // camelCase members are the MCP parameter names on purpose
 #pragma warning disable CA1805 // `= false` is the flag initializer under test

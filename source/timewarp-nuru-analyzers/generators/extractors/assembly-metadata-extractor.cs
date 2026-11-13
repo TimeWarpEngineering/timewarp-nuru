@@ -1,5 +1,7 @@
+#region Purpose
 // Extracts assembly metadata (version, commit info) from compilation at compile time.
 // This enables --capabilities to include version info without runtime reflection.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,3 +1,7 @@
+#region Purpose
+// Runtime NuruApp partial: terminal, exclusivity gate, and the state a built app carries.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using OpenTelemetry.Metrics;
@@ -37,9 +41,7 @@ public partial class NuruApp
   /// </summary>
   internal Action<CompletionSourceRegistry>? CompletionRegistryConfiguration { get; set; }
 
-  /// <summary>
-  /// Whether the completion registry has been configured.
-  /// </summary>
+  /// <summary>Whether the completion registry has been configured.</summary>
   private bool CompletionRegistryConfigured;
 
   /// <summary>
@@ -414,9 +416,7 @@ public partial class NuruApp
       "No generated binder is attached to this NuruApp. " +
       "The source generator attaches it to apps whose Build() or RunAsync() call it intercepts.");
 
-  /// <summary>
-  /// Tracer provider for distributed tracing. Set by generated telemetry code.
-  /// </summary>
+  /// <summary>Tracer provider for distributed tracing. Set by generated telemetry code.</summary>
   public TracerProvider? TracerProvider { get; set; }
 
   /// <summary>
@@ -477,7 +477,7 @@ public partial class NuruApp
   /// code. In a daemon or MCP host call only <see cref="NuruCallContext.CurrentExitCode"/> is per call.
   /// </para>
   /// </returns>
-#pragma warning disable CA1822 // Member does not access instance data 
+#pragma warning disable CA1822 // Member does not access instance data
   public Task<int> RunAsync(string[] args)
   {
     // This should never execute - interceptor replaces this call

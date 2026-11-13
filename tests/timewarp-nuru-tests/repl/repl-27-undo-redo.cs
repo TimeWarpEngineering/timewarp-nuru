@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for PSReadLine-compatible undo/redo functionality (Task 043-005)
+#region Purpose
+// Pins PSReadLine-compatible undo and redo in the REPL line editor (task 043-005).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

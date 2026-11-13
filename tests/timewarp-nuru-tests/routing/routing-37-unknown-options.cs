@@ -1,8 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Unknown options fail closed (task 515). An option-shaped token that no route declares must not
-// reach a handler: the call exits 1 and names the option, with a suggestion when one is close.
+#region Purpose
+// Pins that unknown options fail closed: exit 1, name the option, and suggest a close match (task 515).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -20,7 +21,6 @@ public class UnknownOptionTests
   // The ganda 439 case: a mutating command with options gets an option it does not declare
   public static async Task Should_reject_unknown_option_on_route_with_options()
   {
-    // Arrange
     using TestTerminal terminal = new();
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)

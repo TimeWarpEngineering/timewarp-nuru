@@ -1,3 +1,7 @@
+#region Purpose
+// Splits a REPL input line into argument arrays, honoring quotes and escapes.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

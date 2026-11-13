@@ -1,3 +1,7 @@
+#region Purpose
+// Validates semantic correctness of route patterns that are syntactically valid.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

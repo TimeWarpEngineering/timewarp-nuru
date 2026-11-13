@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for MultilineBuffer data model (Task 043-009)
+#region Purpose
+// Pins the MultilineBuffer data model used by the REPL line editor (task 043-009).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -39,7 +41,6 @@ public class MultilineBufferTests
 
   public static async Task Should_return_empty_string_for_full_text_when_empty()
   {
-    // Arrange
     MultilineBuffer buffer = new();
 
     // Act
@@ -57,7 +58,6 @@ public class MultilineBufferTests
 
   public static async Task Should_set_single_line_text()
   {
-    // Arrange
     MultilineBuffer buffer = new();
 
     // Act

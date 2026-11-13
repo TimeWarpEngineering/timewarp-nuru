@@ -1,4 +1,10 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins verbatim renderer output (UseVerbatimRendererOutput) and IResponseRenderer<SharedProblemDetails>
+// (task 508-011).
+#endregion
+
 #pragma warning disable CA1062 // Handlers trust the mediator request instance
 
 // Verbatim renderer output (UseVerbatimRendererOutput) and IResponseRenderer<SharedProblemDetails> (task 508-011).

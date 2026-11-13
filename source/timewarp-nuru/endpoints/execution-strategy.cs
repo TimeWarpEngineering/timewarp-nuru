@@ -1,3 +1,7 @@
+#region Purpose
+// Enum naming how an endpoint executes (command/handler pattern versus delegate).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

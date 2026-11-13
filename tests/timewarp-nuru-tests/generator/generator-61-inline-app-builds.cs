@@ -1,9 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Every Build() call gets its own capabilities catalog, whatever statement it sits in (task 508-008).
-// Before the fix, the generator gave every Build() in a method the first app of that method,
-// and it skipped loop, if, using and lock bodies, expression lambdas and expression-bodied members.
+#region Purpose
+// Pins that every Build() call gets its own capabilities catalog, whatever statement or member it sits in.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

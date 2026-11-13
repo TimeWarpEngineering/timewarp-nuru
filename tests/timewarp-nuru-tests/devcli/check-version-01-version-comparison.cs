@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins SemVer 2.0 pre-release ordering and published-version membership for the check-version release gate
+// (task 454-022).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

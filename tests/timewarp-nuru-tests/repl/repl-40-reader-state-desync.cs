@@ -1,8 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Regression tests for REPL console-reader state/screen desync bugs (Task 454-020).
-// M18 yank-arg silent loss, M19 incremental-search over-advance, M20 stale-selection crash.
+#region Purpose
+// Regression tests for REPL console-reader state and screen desync: yank-arg loss, search over-advance, stale
+// selection (454-020).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Wrap-aware single-line redraw and cursor mapping (Task 454-019 / M17).
+#region Purpose
+// Pins wrap-aware single-line redraw and cursor mapping in the REPL (task 454-019, M17).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

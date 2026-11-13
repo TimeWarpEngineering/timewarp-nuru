@@ -1,5 +1,7 @@
+#region Purpose
 // Emits REPL (Read-Eval-Print Loop) support code.
 // Generates the GeneratedReplRouteProvider class and RunReplAsync method.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

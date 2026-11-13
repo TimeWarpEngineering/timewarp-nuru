@@ -1,3 +1,7 @@
+#region Purpose
+// Base class for route matchers (literals, parameters, and so on).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

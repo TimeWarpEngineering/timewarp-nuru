@@ -1,3 +1,7 @@
+#region Purpose
+// Options for the MCP host, including the format a tools/call result carries.
+#endregion
+
 namespace TimeWarp.Nuru.McpHost;
 
 /// <summary>

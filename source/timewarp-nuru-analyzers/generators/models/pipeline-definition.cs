@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for the middleware pipeline that wraps a route's handler.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

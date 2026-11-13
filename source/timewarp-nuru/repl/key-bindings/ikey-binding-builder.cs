@@ -1,3 +1,7 @@
+#region Purpose
+// Interface for the fluent key-binding operations shared by standalone and nested builders.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

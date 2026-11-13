@@ -1,8 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj
 
-// TimeWarp.Nuru.McpHost (task 508-004): catalog to MCP tools (names, schema, annotations, filter,
-// instructions) and tools/call through the public binder, over the real JSON-RPC protocol.
+#region Purpose
+// Pins TimeWarp.Nuru.McpHost (task 508-004): the catalog becomes MCP tools (names, schema, annotations,
+// filter, instructions) and tools/call runs through the public binder, over the real JSON-RPC protocol.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -465,9 +467,6 @@ public class McpHostToolsTests
     string.Join("\n", result.GetProperty("content").EnumerateArray().Select(c => c.GetProperty("text").GetString()));
 }
 
-/// <summary>
-/// A minimal MCP client: newline-delimited JSON-RPC over in-memory pipes to <see cref="NuruMcpServer.RunAsync(NuruApp, Stream, Stream, NuruMcpHostOptions?, CancellationToken)"/>.
-/// </summary>
 /// <summary>Records forwarded requests and answers with a fixed result (null: run locally).</summary>
 internal sealed class McpRecordingForwarder(NuruForwardResult? result) : INuruRouteForwarder
 {

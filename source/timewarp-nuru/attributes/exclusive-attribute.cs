@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that marks an endpoint exclusive so served-app calls to it run one at a time.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

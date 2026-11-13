@@ -1,3 +1,8 @@
+#region Purpose
+// Assembly attribute that stops the invoker generator from emitting GeneratedRouteInvokers for library
+// assemblies.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

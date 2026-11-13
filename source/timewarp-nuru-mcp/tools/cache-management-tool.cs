@@ -1,3 +1,7 @@
+#region Purpose
+// MCP tool for inspecting and clearing the caches used by the Nuru MCP server.
+#endregion
+
 namespace TimeWarp.Nuru.Mcp.Tools;
 
 /// <summary>

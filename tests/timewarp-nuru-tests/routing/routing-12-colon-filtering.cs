@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins how colon-containing arguments are treated by route matching.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

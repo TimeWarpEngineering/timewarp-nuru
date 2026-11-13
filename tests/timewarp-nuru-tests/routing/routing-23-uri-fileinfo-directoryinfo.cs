@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins source-generated binding of Uri, FileInfo and DirectoryInfo parameters, which have no TryParse.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,3 +1,7 @@
+#region Purpose
+// Tracks the state of tab-completion cycling in the REPL.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .AsIdempotentCommand() calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

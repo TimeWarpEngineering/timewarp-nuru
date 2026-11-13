@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins how [Operation] plus a mediator kind derives a Nuru endpoint: routes, parameters, options, capabilities.
+#endregion
+
 #pragma warning disable CA1062 // Handlers trust the mediator request instance
 #pragma warning disable CA1819 // Repeated and JSON members are arrays on purpose
 #pragma warning disable CA1002 // Bag is List<T> so the capability type has a type argument
@@ -16,17 +21,13 @@ using System.Numerics;
 using System.Text.Json;
 using TimeWarp.Contracts;
 
-/// <summary>
-/// Derives a Nuru endpoint from [Operation] plus a mediator kind.
-/// </summary>
 [TestTag("Auto")]
 public class OperationEndpointDerivationTests
 {
   [ModuleInitializer]
   internal static void Register() => RegisterTests<OperationEndpointDerivationTests>();
 
-  // Build() and RunAsync must share a field. The generator records intercept sites from the
-  // method that contains Build(), or from later calls on the field that Build() assigns.
+  // Build() and RunAsync share a field: intercept sites come from Build()'s method or later calls on it.
   private static NuruApp App = null!;
 
   private static void CreateApp(TestTerminal terminal)
@@ -1540,5 +1541,4 @@ public sealed record T508PositionalInitQuery(string Name, string Note = "n") : I
     }
   }
 }
-
 } // namespace TimeWarp.Nuru.Tests.Auto

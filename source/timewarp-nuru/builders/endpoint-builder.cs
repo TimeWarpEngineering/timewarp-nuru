@@ -1,3 +1,7 @@
+#region Purpose
+// Fluent configuration surface returned after registering a route (description, handler, metadata).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

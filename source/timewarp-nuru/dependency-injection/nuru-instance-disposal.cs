@@ -1,3 +1,7 @@
+#region Purpose
+// Shared helper that disposes scope-owned instances once, in reverse order, preferring async disposal.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

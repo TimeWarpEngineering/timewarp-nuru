@@ -1,3 +1,7 @@
+#region Purpose
+// Fluent builder for nested route groups that share a prefix, e.g. `admin config get {key}`.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

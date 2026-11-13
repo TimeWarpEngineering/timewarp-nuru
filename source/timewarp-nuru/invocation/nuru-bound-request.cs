@@ -1,3 +1,7 @@
+#region Purpose
+// Base type for requests bound from JSON by TryBind, ready to pass to InvokeAsync.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

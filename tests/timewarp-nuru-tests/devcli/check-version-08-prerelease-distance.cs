@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the prerelease-increment distance calculation and the warning check-version raises above 1 (task
+// 456).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

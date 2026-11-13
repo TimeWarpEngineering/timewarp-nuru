@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial with cross-platform clipboard access via native OS tools.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 #pragma warning disable CA1031 // Do not catch general exception types - clipboard access can fail for many OS-specific reasons

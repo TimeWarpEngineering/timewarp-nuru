@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test PSReadLine word operations (case conversion, character transposition)
+#region Purpose
+// Pins PSReadLine word operations in the REPL: case conversion and character transposition.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();
@@ -20,7 +22,6 @@ public class WordOperationTests
 
   public static async Task Should_upcase_word_from_cursor_to_end()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("hello world");
     terminal.QueueKey(ConsoleKey.Home);        // Go to start
@@ -49,7 +50,6 @@ public class WordOperationTests
 
   public static async Task Should_upcase_from_middle_of_word()
   {
-    // Arrange
     using TestTerminal terminal = new();
     terminal.QueueKeys("hello");
     terminal.QueueKey(ConsoleKey.Home);        // Go to start

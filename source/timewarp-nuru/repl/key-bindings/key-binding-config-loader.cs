@@ -1,3 +1,7 @@
+#region Purpose
+// Locates and loads keybindings.json (env var, project, user) and turns it into a key binding profile.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that marks a request property as a command-line option (flag or valued).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

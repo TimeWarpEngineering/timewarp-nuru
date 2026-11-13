@@ -1,3 +1,7 @@
+#region Purpose
+// Holds AddSessionScoped instances for a REPL session or one CLI invocation and disposes them on reset.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

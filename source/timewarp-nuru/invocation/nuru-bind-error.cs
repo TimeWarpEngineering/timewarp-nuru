@@ -1,3 +1,7 @@
+#region Purpose
+// Error kinds and details reported when TryBind cannot bind a JSON object to a route.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

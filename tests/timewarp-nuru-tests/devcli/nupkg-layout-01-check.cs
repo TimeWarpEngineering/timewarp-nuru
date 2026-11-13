@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the NupkgLayoutCheck matrix: the package layout gate that rejects malformed .nupkg contents.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

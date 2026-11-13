@@ -1,3 +1,7 @@
+#region Purpose
+// Extension that adds a Nuru app's routes to an MCP server registered with AddMcpServer().
+#endregion
+
 namespace TimeWarp.Nuru.McpHost;
 
 /// <summary>

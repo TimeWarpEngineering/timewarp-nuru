@@ -1,3 +1,7 @@
+#region Purpose
+// Assembly attribute that opts a referenced assembly's endpoint types into discovery in this compilation.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

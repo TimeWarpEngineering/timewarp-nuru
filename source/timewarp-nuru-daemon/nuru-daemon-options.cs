@@ -1,3 +1,7 @@
+#region Purpose
+// Options shared by the serve route and the forwarding client of a served Nuru app.
+#endregion
+
 namespace TimeWarp.Nuru.Daemon;
 
 /// <summary>

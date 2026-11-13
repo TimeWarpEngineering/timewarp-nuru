@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lexer behavior on edge-case route pattern inputs.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

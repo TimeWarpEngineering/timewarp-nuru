@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins WindowsExeReplace.TryDeleteOldExecutable, which removes the renamed previous binary after self-install.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

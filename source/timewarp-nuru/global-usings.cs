@@ -1,3 +1,7 @@
+#region Purpose
+// Global usings shared by every file in timewarp-nuru.
+#endregion
+
 // System namespaces
 // Microsoft namespaces
 global using Microsoft.Extensions.Configuration;

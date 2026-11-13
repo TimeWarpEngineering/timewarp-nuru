@@ -1,15 +1,14 @@
-// Emits handler invocation code based on handler kind.
-// Supports delegate, command, and method-based handlers.
-// For delegate handlers, transforms lambda bodies into local functions.
-// For command handlers, instantiates nested Handler class and calls Handle().
+#region Purpose
+// Emits handler invocation code based on handler kind (delegate, command, and method-based handlers).
+// Delegate lambda bodies become local functions; command handlers instantiate the nested Handler
+// class and call Handle().
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
 
-/// <summary>
-/// Determines how handler results should be output to the terminal.
-/// </summary>
+/// <summary>Determines how handler results should be output to the terminal.</summary>
 internal enum OutputStrategy
 {
   /// <summary>No output (Unit, void, null).</summary>

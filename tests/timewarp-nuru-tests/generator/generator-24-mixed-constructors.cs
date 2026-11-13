@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins source-gen DI of services with both parameterless and parameterized constructors.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

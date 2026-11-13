@@ -1,3 +1,7 @@
+#region Purpose
+// Route matcher for a literal segment that must match exactly.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

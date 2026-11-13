@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that a legacy dev.jsonc with the removed checkVersionStrategy key still parses and keeps Packages
+// (task 458-003).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

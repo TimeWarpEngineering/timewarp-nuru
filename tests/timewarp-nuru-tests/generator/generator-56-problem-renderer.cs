@@ -3,11 +3,10 @@
 #:project $(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj
 #:package Microsoft.CodeAnalysis.CSharp
 
-// A visible IResponseRenderer<SharedProblemDetails> replaces the default problem lines, and
-// UseVerbatimRendererOutput() writes renderer text with no added newline (task 508-011). The same renderer
-// is attached as NuruApp.ProblemRenderer for bind failures and escaped exceptions (task 508-018).
-// Roslyn-hosted: a visible problem renderer in the CI multi-mode compilation would change every
-// problem pair there, so this case runs in its own compilation.
+#region Purpose
+// Pins that a visible IResponseRenderer<SharedProblemDetails> replaces the default problem lines,
+// and is attached as NuruApp.ProblemRenderer; Roslyn-hosted so it stays out of the CI multi-mode compilation.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,8 +1,12 @@
-// Emits capabilities DTO construction code for AI agent discovery.
-// Generates a lazily built, cached CapabilitiesResponse per app (GetCapabilities), which
-// NuruApp.Capabilities exposes in process, and the PrintCapabilities method for --capabilities
-// that serializes that same instance.
-// Outputs a flat list of EndpointCapability objects with GroupPath arrays.
+#region Purpose
+// Emits the cached GetCapabilities builder and the PrintCapabilities method that serialize the app's
+// capabilities DTO for AI agent discovery (--capabilities).
+#endregion
+
+#region Design
+// NuruApp.Capabilities exposes the same instance in process. The output is a flat list of
+// EndpointCapability objects with GroupPath arrays.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

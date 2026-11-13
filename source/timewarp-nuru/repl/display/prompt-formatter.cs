@@ -1,3 +1,7 @@
+#region Purpose
+// Formats REPL prompts and related display elements according to ReplOptions.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

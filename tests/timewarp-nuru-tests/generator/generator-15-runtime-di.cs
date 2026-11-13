@@ -1,19 +1,13 @@
 #!/usr/bin/env -S dotnet --
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// GENERATOR TEST: Runtime DI with UseMicrosoftDependencyInjection (#392, #396)
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// PURPOSE: Verify UseMicrosoftDependencyInjection() enables full MS DI container
-// at runtime, allowing services with constructor dependencies to be resolved.
-//
-// WHAT THIS TESTS:
-// - Services with constructor dependencies (MS DI resolves the chain)
-// - Singleton/Transient lifetime behavior with runtime DI
-// - Multiple services with dependency chains
-// - Method group references for ConfigureServices (#396)
-// - Transitive ILogger<T> dependencies (#396)
-// ═══════════════════════════════════════════════════════════════════════════════
+#region Purpose
+// Pins that UseMicrosoftDependencyInjection() resolves services with constructor dependencies at runtime.
+#endregion
+
+#region Design
+// Covers #392 and #396: constructor-dependency chains, singleton/transient lifetimes, method group
+// ConfigureServices references, and transitive ILogger<T> dependencies.
+#endregion
 
 using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;

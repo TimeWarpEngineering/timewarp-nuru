@@ -1,18 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
-// ===============================================================================
-// CONFIGURATION TEST: CLI Configuration Overrides (#353)
-// ===============================================================================
-//
-// PURPOSE: Verify CLI configuration overrides work correctly with IConfiguration
-// and IOptions<T> injection.
-//
-// WHAT THIS TESTS:
-// - Flat key overrides: Key=value format
-// - Hierarchical key overrides: --Section:Key=value format
-// - IConfiguration injection with CLI overrides
-// - CLI args take precedence over settings file values
-// ===============================================================================
+#region Purpose
+// Pins that CLI configuration overrides (#353) work with IConfiguration and IOptions<T>: flat Key=value
+// and hierarchical --Section:Key=value overrides take precedence over settings file values.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

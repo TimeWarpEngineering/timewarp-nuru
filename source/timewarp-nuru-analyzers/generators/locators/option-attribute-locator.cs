@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for [Option] attributed properties.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

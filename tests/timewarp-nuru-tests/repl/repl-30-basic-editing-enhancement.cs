@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for PSReadLine basic editing enhancements (Task 043-008)
+#region Purpose
+// Pins PSReadLine basic editing enhancements in the REPL line editor (task 043-008).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

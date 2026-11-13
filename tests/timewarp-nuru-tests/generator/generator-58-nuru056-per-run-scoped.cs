@@ -3,9 +3,9 @@
 #:project $(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj
 #:package Microsoft.CodeAnalysis.CSharp
 
-// NURU056: a singleton that injects a Scoped service which injects a session- or command-scoped
-// service outlives that Scoped instance, the same as a singleton injecting the session or command
-// service directly (508-007 review M1). A Scoped service with no per-run dependency stays allowed.
+#region Purpose
+// Pins NURU056 for a singleton injecting a Scoped service that depends on a session- or command-scoped service.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

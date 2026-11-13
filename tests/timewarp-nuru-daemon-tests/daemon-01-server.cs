@@ -1,11 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 
-// TimeWarp.Nuru.Daemon (task 508-005): the server over a real Unix domain socket, in this process.
-// Ping, argv runs, binder invokes, exit codes and stderr, cancellation on disconnect, stop, idle
-// shutdown, one server per socket (lock), build checks, socket path resolution and directory safety, and
-// the forwarder declining for the app it serves. Task 508-017: a client from another build never stops a
-// server (a call in flight finishes), the default socket is per build, and status names the build.
+#region Purpose
+// Pins TimeWarp.Nuru.Daemon (task 508-005) over a real Unix domain socket in this process: ping, argv and binder
+// runs, exit codes, cancellation, stop, idle shutdown, one server per socket, and socket path safety; a client
+// from another build never stops a server and the default socket is per build (task 508-017).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

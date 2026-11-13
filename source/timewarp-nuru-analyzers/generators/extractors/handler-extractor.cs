@@ -1,9 +1,7 @@
-// Extracts handler information from lambda expressions and method references.
-//
-// Handles:
-// - Lambda expressions: (string env, bool force) => Deploy(env, force)
-// - Method group expressions: HandleDeploy
-// - Returns HandlerDefinition with parameters, return type, async info
+#region Purpose
+// Extracts handler information from lambda expressions and method groups (e.g. HandleDeploy) into a
+// HandlerDefinition with parameters, return type, and async info.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

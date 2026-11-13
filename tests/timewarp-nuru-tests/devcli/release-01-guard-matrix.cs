@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the pure classifiers of ReleaseGuard that gate the dev release command.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

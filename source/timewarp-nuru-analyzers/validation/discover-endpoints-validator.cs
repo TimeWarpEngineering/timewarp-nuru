@@ -1,6 +1,8 @@
-// Detects NURU_A003: unfiltered DiscoverEndpoints() in a compilation that builds apps in more
-// than one source file.
-//
+#region Purpose
+// Detects NURU_A003: unfiltered DiscoverEndpoints() in a compilation that builds apps in more than one file.
+#endregion
+
+#region Design
 // DiscoverEndpoints() adds every endpoint in the compilation to the app. In the Jaribu
 // JARIBU_MULTI assembly every test file is one compilation, so each discovering app gets the
 // endpoints of every other file and the emitted code grows with apps x endpoints (task 522).
@@ -9,6 +11,7 @@
 // builds many apps that share the endpoints declared in that file, which is intended, and a
 // normal CLI builds one app. DiscoverEndpoints(typeof(Group)) is scoped and is not reported.
 // An app that also calls Map<T>() takes only the mapped endpoints, so its discovery adds nothing.
+#endregion
 
 namespace TimeWarp.Nuru.Validation;
 

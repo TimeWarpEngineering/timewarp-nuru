@@ -1,4 +1,10 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins that [NuruRoute] endpoints generate TryParse handling for nullable value type options (GitHub issue
+// #149).
+#endregion
+
 #pragma warning disable CA1062 // Validate arguments of public methods
 
 #if !JARIBU_MULTI

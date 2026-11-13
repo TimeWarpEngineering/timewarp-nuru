@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for text editing handlers such as deletes.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

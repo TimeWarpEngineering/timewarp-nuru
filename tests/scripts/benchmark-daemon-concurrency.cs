@@ -1,8 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 
-// Forwarded call latency through an in-process TimeWarp.Nuru.Daemon server (task 508-016):
+#region Purpose
+// Benchmark of forwarded call latency through an in-process TimeWarp.Nuru.Daemon server (task 508-016):
 // one call at a time versus 8 at once, for a no-op route and a route that waits 50 ms.
+#endregion
 
 using TimeWarp.Nuru.Daemon;
 

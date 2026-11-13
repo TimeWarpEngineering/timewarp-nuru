@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins emission of expression-bodied async lambda handlers; the file fails to build if the emitted code is invalid.
+#endregion
+
 // async/await in the handlers below is the emission scenario this file tests.
 #pragma warning disable RCS1174
 

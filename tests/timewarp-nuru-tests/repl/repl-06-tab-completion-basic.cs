@@ -1,11 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test basic tab completion (Section 6 of REPL Test Plan)
-// Note: Tab completion tests require interactive key simulation which
-// doesn't work reliably with TestTerminal's key queuing mechanism.
-// The REPL enters a state waiting for more input after showing completions.
-// These tests should be run manually in an interactive terminal.
+#region Purpose
+// Pins basic REPL tab completion (Section 6 of the REPL test plan); some cases need an interactive terminal.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

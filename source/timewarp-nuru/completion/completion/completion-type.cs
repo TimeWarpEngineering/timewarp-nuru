@@ -1,3 +1,7 @@
+#region Purpose
+// Enum classifying completion candidates (command, option, parameter, file, and so on).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

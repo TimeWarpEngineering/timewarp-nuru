@@ -1,3 +1,7 @@
+#region Purpose
+// Detects the effective application name so REPL history and shell completion name things consistently.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

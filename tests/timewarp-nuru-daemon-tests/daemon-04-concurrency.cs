@@ -1,10 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 
-// TimeWarp.Nuru.Daemon concurrency (task 508-016): forwarded calls run at once, each with its own output,
-// exit code and working directory; exclusive routes and ExclusiveCalls serialize; cancelling one call
-// cancels only it; ping answers and the idle timer waits while calls run; a soak of mixed argv and binder
-// calls returns every caller its own result.
+#region Purpose
+// Pins TimeWarp.Nuru.Daemon concurrency (task 508-016): forwarded calls run at once with their own output,
+// exit code, and working directory; exclusive routes serialize; cancelling one call cancels only it; a
+// mixed soak returns every caller its own result.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

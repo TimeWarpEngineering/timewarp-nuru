@@ -2,9 +2,11 @@
 #:project $(SourceDirectory)timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 
-// TimeWarp.Nuru.McpHost concurrency (task 508-016): tools/call requests run at once over one MCP session,
-// in-process and forwarded to a served app's server, each with its own text; notifications/cancelled
-// cancels only that call; ExclusiveCalls serializes in-process calls.
+#region Purpose
+// Pins McpHost concurrency (task 508-016): tools/call requests run at once over one MCP session, in-
+// process and forwarded to a served app's server; notifications/cancelled cancels only that call;
+// ExclusiveCalls serializes in-process calls.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

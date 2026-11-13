@@ -1,3 +1,7 @@
+#region Purpose
+// Implements the built-in REPL commands that operate on the session, terminal, and history.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,3 +1,7 @@
+#region Purpose
+// Descriptors for NURU05x service diagnostics, reported when source-generated DI cannot handle a registration.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for undo and redo handlers.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

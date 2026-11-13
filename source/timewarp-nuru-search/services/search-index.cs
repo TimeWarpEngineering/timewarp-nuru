@@ -1,3 +1,7 @@
+#region Purpose
+// SQLite-backed store for indexed CLI endpoints: persists capability catalogs and answers search queries.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 public sealed partial class SearchIndex : IAsyncDisposable
@@ -500,9 +504,7 @@ public sealed partial class SearchIndex : IAsyncDisposable
   [LoggerMessage(LogLevel.Information, "Cleared index for CLI {CliName}")]
   private static partial void LogClearedCli(ILogger logger, string cliName);
 
-  /// <summary>
-  /// Gets the indexed version of a CLI, or null if not indexed.
-  /// </summary>
+  /// <summary>Gets the indexed version of a CLI, or null if not indexed.</summary>
   public async Task<string?> GetCliVersionAsync(string cliName, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(cliName);
@@ -550,8 +552,6 @@ public sealed class CliInfo
   public required DateTime IndexedAt { get; init; }
   public required int EndpointCount { get; init; }
 
-  /// <summary>
-  /// Executable that was run to index this CLI. Null for rows indexed before the path was stored.
-  /// </summary>
+  /// <summary>Executable that was run to index this CLI. Null for rows indexed before the path was stored.</summary>
   public string? CliPath { get; init; }
 }

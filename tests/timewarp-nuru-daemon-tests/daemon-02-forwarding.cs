@@ -1,12 +1,12 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-daemon/timewarp-nuru-daemon.csproj
 
-// TimeWarp.Nuru.Daemon (task 508-005): what AddServeRoute() generates. A matched route is offered to
-// NuruApp.RouteForwarder after parsing and before behaviors and the handler; local-only routes and
-// built-ins never are; --daemon / --no-daemon set the mode and are removed; --json-args forwards the
-// resolved object; the catalog carries localOnly; help lists the serve routes. The tests call
-// NuruApp.ExecuteAsync, the entry point for apps built in another method (RunAsync interception
-// needs the builder chain at the call site).
+#region Purpose
+// Pins what AddServeRoute() generates (task 508-005): matched routes are offered to NuruApp.RouteForwarder
+// before behaviors and the handler, local-only routes and built-ins never are, and --daemon, --no-daemon,
+// and --json-args behave as documented.
+// Tests call NuruApp.ExecuteAsync because RunAsync interception needs the builder chain at the call site.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,3 +1,7 @@
+#region Purpose
+// Machine-readable catalog of a CLI's endpoints returned by `--capabilities` for AI agent discovery.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

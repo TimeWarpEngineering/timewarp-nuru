@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Pins that the runtime TypeConverterRegistry fallback behaves like the source-generated conversion.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

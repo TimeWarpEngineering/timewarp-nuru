@@ -1,3 +1,7 @@
+#region Purpose
+// Extension methods that register session-scoped and command-scoped services.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

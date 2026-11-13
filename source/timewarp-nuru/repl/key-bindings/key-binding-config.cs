@@ -1,3 +1,7 @@
+#region Purpose
+// Exception type reported when a key binding JSON config is missing, unreadable, or invalid.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

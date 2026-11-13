@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test NuruApp integration (Section 13 of REPL Test Plan)
+#region Purpose
+// Pins integration of the REPL with NuruApp routes and the app builder (Section 13 of the REPL test plan).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

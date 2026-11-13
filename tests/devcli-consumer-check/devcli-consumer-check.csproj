@@ -4,16 +4,18 @@
     DevCli consumer check (kanban 562).
 
     TimeWarp.Nuru.DevCli ships C# source that consumers compile under their own TFM and
-    analyzer settings. Nuru's own build compiles that source two ways a consumer does not:
+    analyzer settings. Nuru's own build compiles that source three ways a consumer does not:
     - on net10.0 only (until task 481 moved the repo to net11.0). CA2263 on
       JsonSerializerOptions.GetTypeInfo(typeof(T)) needs the net11-only GetTypeInfo<T>()
       overload, so it stayed silent here (4.0.0-beta.9);
-    - under the repo .editorconfig. RCS1194 was set to `none` there (4.0.0-beta.8, task 558).
-    Both broke timewarp-architecture (net11, warnings as errors) before Nuru saw them.
+    - under the repo .editorconfig. RCS1194 was set to `none` there (4.0.0-beta.8, task 558);
+    - with CA1812 in NoWarn (repo root props). The mediator-activated internal endpoint
+      handlers tripped it in consumers (4.0.0-beta.12, task 573).
+    Each broke a consumer (net11, warnings as errors) before Nuru saw it.
 
     This project compiles the content the way a net11 consumer does: through the package's own
     build props, with warnings as errors, no .editorconfig, and the same NoWarn as
-    tools/dev-cli. Run from this folder:
+    tools/dev-cli minus CA1812. Run from this folder:
 
       dotnet build
 

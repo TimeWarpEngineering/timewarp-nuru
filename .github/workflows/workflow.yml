@@ -246,7 +246,8 @@ jobs:
         # DevCli ships C# source that consumers compile with their own analyzers.
         # Nuru builds it under its own .editorconfig, so RCS1194 (hidden there)
         # reached consumers first (tasks 558, 562). The check compiles the
-        # content as a consumer would, without the repo .editorconfig.
+        # content as a consumer would, without the repo .editorconfig and with
+        # CA1812 on (task 573).
         if: matrix.stage == 'samples'
         working-directory: tests/devcli-consumer-check
         run: dotnet build

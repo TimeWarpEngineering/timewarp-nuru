@@ -56,8 +56,41 @@ internal static partial class EndpointExtractor
       SuccessTypeName = shape.SuccessTypeName,
       RendererTypeName = shape.RendererTypeName,
       ConstructorArguments = constructorArguments,
-      ProblemRendererTypeName = shape.ProblemRendererTypeName
+      ProblemRendererTypeName = shape.ProblemRendererTypeName,
+      NestedHandlerFactoryConstructible = IsFactoryConstructible(compilation, classSymbol, handlerClass)
     };
+  }
+
+  /// <summary>
+  /// True when generated code can construct <paramref name="handlerClass"/> exactly as the
+  /// Microsoft DI container would: the handler is declared in this compilation, is not abstract
+  /// or generic, and has one public constructor whose parameters are all plain required services
+  /// (no defaults, no <c>params</c>, no <c>ref</c>). The generator then swaps the mediator's
+  /// reflection-activated registration for an explicit <c>new</c> factory, so CA1812 in a
+  /// consumer sees the handler instantiated (kanban 573).
+  /// </summary>
+  private static bool IsFactoryConstructible(Compilation compilation, INamedTypeSymbol commandClass, INamedTypeSymbol handlerClass)
+  {
+    if (!IsDeclaredIn(compilation, handlerClass)
+        || handlerClass.IsAbstract
+        || handlerClass.IsGenericType
+        || commandClass.IsGenericType)
+    {
+      return false;
+    }
+
+    IMethodSymbol[] publicConstructors =
+    [
+      .. handlerClass.InstanceConstructors.Where(c => c.DeclaredAccessibility == Accessibility.Public)
+    ];
+
+    if (publicConstructors.Length != 1)
+      return false;
+
+    return publicConstructors[0].Parameters.All
+    (
+      p => p.RefKind == RefKind.None && !p.IsOptional && !p.IsParams && !p.HasExplicitDefaultValue
+    );
   }
 
   /// <summary>

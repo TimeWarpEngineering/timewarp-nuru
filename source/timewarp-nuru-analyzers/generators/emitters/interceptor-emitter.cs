@@ -61,13 +61,22 @@ internal static partial class InterceptorEmitter
     string? currentAppLoggerFactory = model.Apps.Any(HasLoggerFactorySource) ? LoggerExpressions.CurrentAppFactory : null;
     ImmutableArray<BehaviorDefinition> allBehaviors = [.. model.AllBehaviors];
     ImmutableArray<ServiceDefinition> allServices = [.. model.AllServices];
-    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.GeneratedMediatorNamespace, currentAppLoggerFactory, sourceGenHttpClients, allBehaviors, allServices);
+    // Kanban 573: nested handlers get explicit constructor factories in every container that
+    // holds the generated mediator, so CA1812 sees them instantiated.
+    ImmutableArray<HandlerDefinition> handlerFactories = model.GeneratedMediatorNamespace is null
+      ? []
+      : CollectHandlerFactories(model);
+    bool emitsMediatorContainer = model.SourceGenDIRequiresMediator || model.UsesMicrosoftDependencyInjection;
+    if (handlerFactories.Length > 0 && emitsMediatorContainer)
+      EmitHandlerFactoryHelper(sb);
+
+    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.GeneratedMediatorNamespace, currentAppLoggerFactory, sourceGenHttpClients, allBehaviors, allServices, handlerFactories);
 
     // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     // Each app gets its own __ConfigureServices and GetServiceProvider methods
     if (model.UsesMicrosoftDependencyInjection)
     {
-      EmitRuntimeDIInfrastructure(sb, model.Apps, model.GeneratedMediatorNamespace);
+      EmitRuntimeDIInfrastructure(sb, model.Apps, model.GeneratedMediatorNamespace, handlerFactories);
     }
 
     EmitLoggingFactoryFields(sb, model);

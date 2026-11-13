@@ -9,7 +9,8 @@ using System.Text;
 internal static partial class JsonArgsEmitter
 {
 
-  private static void EmitAssignFromJson(StringBuilder sb, Slot slot, string element, Fail fail, int indent)
+  /// <param name="patternLiteral">The route pattern, already escaped for a regular string literal.</param>
+  private static void EmitAssignFromJson(StringBuilder sb, Slot slot, string element, Fail fail, string patternLiteral, int indent)
   {
     string ind = new(' ', indent);
     if (slot.IsNullable)
@@ -20,16 +21,16 @@ internal static partial class JsonArgsEmitter
       sb.AppendLine($"{ind}}}");
       sb.AppendLine($"{ind}else");
       sb.AppendLine($"{ind}{{");
-      EmitAssignFromJsonCore(sb, slot, element, fail, indent + 2);
+      EmitAssignFromJsonCore(sb, slot, element, fail, patternLiteral, indent + 2);
       sb.AppendLine($"{ind}}}");
     }
     else
     {
-      EmitAssignFromJsonCore(sb, slot, element, fail, indent);
+      EmitAssignFromJsonCore(sb, slot, element, fail, patternLiteral, indent);
     }
   }
 
-  private static void EmitAssignFromJsonCore(StringBuilder sb, Slot slot, string element, Fail fail, int indent)
+  private static void EmitAssignFromJsonCore(StringBuilder sb, Slot slot, string element, Fail fail, string patternLiteral, int indent)
   {
     string ind = new(' ', indent);
     switch (slot.Shape)
@@ -97,8 +98,18 @@ internal static partial class JsonArgsEmitter
         break;
 
       case ValueShape.Json:
+        // A value that fails inside the member (an unknown enum name, a nested type mismatch, an ID
+        // that does not parse) is a bind error for that member, never a crash or a handler fault.
         string jsonType = slot.DeclaredType ?? "object";
-        sb.AppendLine($"{ind}{slot.VariableName} = ({jsonType})global::System.Text.Json.JsonSerializer.Deserialize({element}, typeof({jsonType}), global::TimeWarp.Nuru.Generated.NuruJsonMemberContext.Default)!;");
+        sb.AppendLine($"{ind}try");
+        sb.AppendLine($"{ind}{{");
+        sb.AppendLine($"{ind}  {slot.VariableName} = ({jsonType})global::System.Text.Json.JsonSerializer.Deserialize({element}, typeof({jsonType}), global::TimeWarp.Nuru.Generated.NuruJsonMemberContext.Default)!;");
+        sb.AppendLine($"{ind}}}");
+        sb.AppendLine($"{ind}catch (global::System.Exception __jx_{slot.Id}) when (global::TimeWarp.Nuru.NuruBindError.IsJsonMemberFailure(__jx_{slot.Id}))");
+        sb.AppendLine($"{ind}{{");
+        sb.AppendLine($"{ind}  __ok = false;");
+        sb.AppendLine($"{ind}  __fail ??= global::TimeWarp.Nuru.NuruBindError.ForJsonMember({fail.KeyExpression}, \"{patternLiteral}\", __jx_{slot.Id});");
+        sb.AppendLine($"{ind}}}");
         break;
     }
   }

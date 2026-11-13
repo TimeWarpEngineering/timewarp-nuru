@@ -396,11 +396,27 @@ internal static class CapabilitiesEmitter
     if (option.IsJsonValue && option.ResolvedClrTypeName is string jsonType)
     {
       string nullable = option.ParameterIsOptional ? "true" : "false";
-      sb.AppendLine($"              Schema = global::TimeWarp.Nuru.NuruJsonMemberSchema.Create(global::TimeWarp.Nuru.Generated.NuruJsonMemberContext.Default, typeof({jsonType.TrimEnd('?')}), {nullable}),");
+      sb.AppendLine($"              Schema = global::TimeWarp.Nuru.NuruJsonMemberSchema.Create(global::TimeWarp.Nuru.Generated.NuruJsonMemberContext.Default, typeof({jsonType.TrimEnd('?')}), {nullable}{JsonStringTypeArguments(option.JsonStringTypes)}),");
     }
 
     string comma = isLast ? "" : ",";
     sb.AppendLine($"            }}{comma}");
+  }
+
+  /// <summary>
+  /// The stringTypes and uuidTypes arguments of NuruJsonMemberSchema.Create: types whose own converter
+  /// writes a string, which the exporter would otherwise publish untyped. Empty when there are none.
+  /// </summary>
+  private static string JsonStringTypeArguments(EquatableArray<JsonStringType> types)
+  {
+    if (types.Length == 0)
+      return "";
+
+    string stringTypes = string.Join(", ", types.Select(type => $"typeof({type.TypeName})"));
+    string uuidTypes = string.Join(", ", types.Where(type => type.IsUuid).Select(type => $"typeof({type.TypeName})"));
+    return uuidTypes.Length == 0
+      ? $", stringTypes: [{stringTypes}]"
+      : $", stringTypes: [{stringTypes}], uuidTypes: [{uuidTypes}]";
   }
 
   /// <summary>

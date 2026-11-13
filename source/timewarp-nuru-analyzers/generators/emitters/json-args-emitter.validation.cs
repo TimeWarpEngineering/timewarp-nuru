@@ -188,7 +188,11 @@ internal static partial class JsonArgsEmitter
         break;
 
       case ValueShape.Json:
-        sb.AppendLine($"{ind}if ({element}.ValueKind is not (global::System.Text.Json.JsonValueKind.Object or global::System.Text.Json.JsonValueKind.Array))");
+        // A typed ID member is written as a JSON string by its own converter.
+        string accepted = slot.Option?.IsJsonStringValue == true
+          ? "global::System.Text.Json.JsonValueKind.String"
+          : "(global::System.Text.Json.JsonValueKind.Object or global::System.Text.Json.JsonValueKind.Array)";
+        sb.AppendLine($"{ind}if ({element}.ValueKind is not {accepted})");
         sb.AppendLine($"{ind}{{");
         sb.AppendLine($"{ind}  __ok = false;");
         sb.AppendLine($"{ind}  {fail.Assign()}");

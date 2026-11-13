@@ -88,7 +88,7 @@ internal static partial class JsonArgsEmitter
         DeclaredType = option.ResolvedClrTypeName,
         Option = option,
         Shape = ValueShape.Json,
-        ExpectedType = "json"
+        ExpectedType = option.IsJsonStringValue ? "string" : "json"
       };
     }
 

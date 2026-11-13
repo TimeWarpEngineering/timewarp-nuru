@@ -160,7 +160,7 @@ internal static partial class InterceptorEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="apps">All app models (will filter to those using runtime DI).</param>
   /// <param name="generatedMediatorNamespace">The TimeWarp.Mediator generated namespace to register, or null when there is none.</param>
-  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps, string? generatedMediatorNamespace)
+  private static void EmitRuntimeDIInfrastructure(StringBuilder sb, ImmutableArray<AppModel> apps, string? generatedMediatorNamespace, ImmutableArray<HandlerDefinition> handlerFactories)
   {
     sb.AppendLine("  // ═══════════════════════════════════════════════════════════════════════════════");
     sb.AppendLine("  // RUNTIME DI INFRASTRUCTURE (UseMicrosoftDependencyInjection was called)");
@@ -223,6 +223,7 @@ internal static partial class InterceptorEmitter
       {
         sb.AppendLine("    // Register the TimeWarp.Mediator source-generated IMediator / ISender / IPublisher");
         sb.AppendLine($"    {GeneratedMediatorDetector.RegistrationMethod(generatedMediatorNamespace)}(services);");
+        EmitHandlerFactoryRegistrations(sb, handlerFactories, "    ");
         sb.AppendLine();
       }
 

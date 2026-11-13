@@ -84,6 +84,7 @@ Acceptance:
 - The post-commit attest then failed `runfile-executable`: the new test runfile (untracked when the audit
   ran) lacked the executable bit. Fixed with `chmod +x` + `git update-index --chmod=+x`; the audit rerun
   passed (44 passed, 0 failed).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T20:20:29Z
 
 ## Notes
 

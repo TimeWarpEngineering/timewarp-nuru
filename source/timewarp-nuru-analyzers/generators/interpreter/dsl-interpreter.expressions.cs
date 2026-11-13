@@ -2,6 +2,14 @@
 // Expression evaluation and dispatch core for the DSL interpreter.
 #endregion
 
+#region Design
+// Dispatch is by method name, so a name the DSL shares with other APIs must also be checked
+// semantically. CreateBuilder is the entry point: only TimeWarp.Nuru.NuruApp.CreateBuilder starts
+// an IR app. WebApplication.CreateBuilder and other CreateBuilder calls in the same method body are
+// not Nuru, so their chains (builder.Services.AddMcpServer()...) and Build() are ignored instead of
+// failing with NURU_S999 (task 531).
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 using RoslynSyntaxNode = Microsoft.CodeAnalysis.SyntaxNode;
@@ -198,7 +206,7 @@ public sealed partial class DslInterpreter
   {
     return methodName switch
     {
-      "CreateBuilder" => CreateNewAppBuilder(),
+      "CreateBuilder" when IsNuruAppCreateBuilder(invocation) => CreateNewAppBuilder(),
 
       "Map" when IsGenericMapCall(invocation) => DispatchMapEndpoint(invocation, receiver),
 
@@ -280,6 +288,25 @@ public sealed partial class DslInterpreter
   /// Creates a new IR app builder.
   /// </summary>
   private static IrAppBuilder CreateNewAppBuilder() => new();
+
+  /// <summary>
+  /// Checks that a <c>CreateBuilder</c> call is <c>NuruApp.CreateBuilder</c>, not another API's
+  /// <c>CreateBuilder</c> (for example <c>WebApplication.CreateBuilder</c>) in the same method body.
+  /// When the call does not bind, falls back to the syntax <c>NuruApp.CreateBuilder(...)</c>.
+  /// </summary>
+  private bool IsNuruAppCreateBuilder(InvocationExpressionSyntax invocation)
+  {
+    SymbolInfo symbolInfo = SemanticModel.GetSymbolInfo(invocation, CancellationToken);
+    IMethodSymbol? methodSymbol = symbolInfo.Symbol as IMethodSymbol
+      ?? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+
+    if (methodSymbol is null)
+      return CreateBuilderLocator.IsPotentialMatch(invocation);
+
+    INamedTypeSymbol? containingType = methodSymbol.ContainingType;
+    return containingType is { Name: "NuruApp" }
+      && containingType.ContainingNamespace?.ToDisplayString() == "TimeWarp.Nuru";
+  }
 
   /// <summary>
   /// Handles method calls that are not part of the DSL.

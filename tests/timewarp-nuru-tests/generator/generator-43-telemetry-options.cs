@@ -9,6 +9,10 @@
 // the generated code never sets o.Endpoint to the base URL (which broke /v1/{signal} for HTTP).
 // Kanban 561: ActivitySources.Add / Meters.Add (literal or const) emit one AddSource / AddMeter
 // each after Nuru's own; with none configured only Nuru's two of each are emitted.
+// Kanban 533: a non-constant OtlpEndpoint (variable, property, method call) used to be dropped in
+// silence; it now reports NURU_T001 at the value and the env var fallback is emitted. A literal or
+// a const (local or member) emits the endpoint with no diagnostic. A configure argument that is
+// not a lambda reports NURU_T002.
 #endregion
 
 #if !JARIBU_MULTI
@@ -50,6 +54,9 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen43TelemetryOptions
       return ran.GetRunResult();
     }
 
+    private static Diagnostic[] TelemetryDiagnostics(GeneratorDriverRunResult result) =>
+      [.. result.Diagnostics.Where(static d => d.Id.StartsWith("NURU_T", StringComparison.Ordinal))];
+
     private static string GeneratedSource(GeneratorDriverRunResult result)
     {
       result.Results.Length.ShouldBe(1);
@@ -74,7 +81,9 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen43TelemetryOptions
         return await app.RunAsync([]);
         """;
 
-      string generated = GeneratedSource(RunNuruGenerator(Source));
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      string generated = GeneratedSource(result);
+      TelemetryDiagnostics(result).ShouldBeEmpty();
 
       generated.ShouldContain("tel43-cli");
       generated.ShouldContain("http://127.0.0.1:4318");
@@ -118,11 +127,148 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen43TelemetryOptions
         return await app.RunAsync([]);
         """;
 
-      string generated = GeneratedSource(RunNuruGenerator(Source));
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      string generated = GeneratedSource(result);
+      TelemetryDiagnostics(result).ShouldBeEmpty();
 
       generated.ShouldContain("GetEnvironmentVariable(\"OTEL_EXPORTER_OTLP_ENDPOINT\")");
       generated.ShouldContain("string? __otlpCodeEndpoint = null;");
       AssertConfigurePerSignal(generated);
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_emit_const_otlp_endpoint_without_diagnostic()
+    {
+      const string Source = """
+        using TimeWarp.Nuru;
+
+        const string LocalEndpoint = "http://127.0.0.1:4318";
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry(options => options.OtlpEndpoint = LocalEndpoint)
+          .Map("tel43-const-local").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        NuruApp app2 = NuruApp.CreateBuilder()
+          .UseTelemetry(options => options.OtlpEndpoint = Tel43Endpoints.Collector)
+          .Map("tel43-const-member").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        await app2.RunAsync([]);
+        return await app.RunAsync([]);
+
+        static class Tel43Endpoints
+        {
+          public const string Collector = "https://collector.example.test:4318/";
+        }
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      string generated = GeneratedSource(result);
+
+      TelemetryDiagnostics(result).ShouldBeEmpty();
+      generated.ShouldContain("string? __otlpEndpoint = \"http://127.0.0.1:4318\";");
+      generated.ShouldContain("string? __otlpEndpoint = \"https://collector.example.test:4318/\";");
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_report_nuru_t001_for_otlp_endpoint_variable()
+    {
+      const string Source = """
+        using TimeWarp.Nuru;
+
+        string endpoint = System.Environment.GetCommandLineArgs()[0];
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry(options => options.OtlpEndpoint = endpoint)
+          .Map("tel43-var").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      string generated = GeneratedSource(result);
+      Diagnostic[] diagnostics = TelemetryDiagnostics(result);
+
+      diagnostics.Length.ShouldBe(1);
+      diagnostics[0].Id.ShouldBe("NURU_T001");
+      diagnostics[0].Severity.ShouldBe(DiagnosticSeverity.Warning);
+      string message = diagnostics[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture);
+      message.ShouldContain("'OtlpEndpoint'");
+      message.ShouldContain("OTEL_EXPORTER_OTLP_ENDPOINT");
+      diagnostics[0].Location.SourceSpan.Start.ShouldBe(Source.IndexOf("= endpoint)", StringComparison.Ordinal) + 2);
+      diagnostics[0].Location.SourceSpan.Length.ShouldBe("endpoint".Length);
+
+      // The value is ignored: the env var fallback is emitted.
+      generated.ShouldContain("string? __otlpEndpoint = global::System.Environment.GetEnvironmentVariable(\"OTEL_EXPORTER_OTLP_ENDPOINT\");");
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_report_nuru_t001_for_otlp_endpoint_property_and_call()
+    {
+      const string Source = """
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry(options =>
+          {
+            options.OtlpEndpoint = Tel43Settings.Endpoint;
+            options.ServiceName = Tel43Settings.Name();
+            options.EnableMetrics = Tel43Settings.Metrics;
+            options.ActivitySources.Add(Tel43Settings.Endpoint);
+            options.ServiceVersion = "1.2.3";
+          })
+          .Map("tel43-prop").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+
+        static class Tel43Settings
+        {
+          public static string Endpoint { get; } = "http://127.0.0.1:4318";
+          public static bool Metrics => true;
+          public static string Name() => "tel43";
+        }
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      string generated = GeneratedSource(result);
+      Diagnostic[] diagnostics = TelemetryDiagnostics(result);
+
+      diagnostics.Select(static d => d.Id).Distinct().ShouldBe(["NURU_T001"]);
+      string[] messages = [.. diagnostics.Select(static d => d.GetMessage(System.Globalization.CultureInfo.InvariantCulture))];
+      messages.Length.ShouldBe(4);
+      messages.ShouldContain(static m => m.Contains("'OtlpEndpoint'"));
+      messages.ShouldContain(static m => m.Contains("'ServiceName'"));
+      messages.ShouldContain(static m => m.Contains("'EnableMetrics'"));
+      messages.ShouldContain(static m => m.Contains("'ActivitySources.Add'"));
+
+      // The constant in the same lambda still applies.
+      generated.ShouldContain("1.2.3");
+      generated.Contains("http://127.0.0.1:4318").ShouldBeFalse();
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_report_nuru_t002_for_non_lambda_configure()
+    {
+      const string Source = """
+        using System;
+        using TimeWarp.Nuru;
+
+        Action<NuruTelemetryOptions> configure = static options => options.OtlpEndpoint = "http://127.0.0.1:4318";
+        NuruApp app = NuruApp.CreateBuilder()
+          .UseTelemetry(configure)
+          .Map("tel43-delegate").WithHandler(() => "ok").AsQuery().Done()
+          .Build();
+        return await app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = RunNuruGenerator(Source);
+      _ = GeneratedSource(result);
+      Diagnostic[] diagnostics = TelemetryDiagnostics(result);
+
+      diagnostics.Length.ShouldBe(1);
+      diagnostics[0].Id.ShouldBe("NURU_T002");
+      diagnostics[0].Severity.ShouldBe(DiagnosticSeverity.Warning);
 
       await Task.CompletedTask;
     }

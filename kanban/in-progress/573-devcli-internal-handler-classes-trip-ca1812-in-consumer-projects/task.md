@@ -68,6 +68,7 @@ Acceptance:
   generator, gate added. Boy-scout: the first commit tripped `runfile-executable` (new
   generator-73 lacked +x) and `analyzer-suppressions` (a NoWarn `.Replace(...)` property function
   whose tokens the scanner counted); both fixed on this branch.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3a16c70d-30c5-45db-b5a9-0061e951ce93, max-turns 500, Done — 2026-11-13T19:59:03Z
 
 ## Results
 

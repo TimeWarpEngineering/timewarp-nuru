@@ -23,9 +23,25 @@ Make Nuru measurably faster than its peers wherever framework work (not process 
 - Check the builder label. commands/nuru-direct-command.cs calls CreateBuilder, but the results report it as "Direct (CreateEmptyBuilder)".
 - Add a native-compiled lightweight-builder app; bench-nuru/Program.cs uses only the full CreateBuilder.
 
+## Depends on
+
+- 578
+
+## Checklist
+
+- [ ] Benchmark suite fixes listed above (same argv per framework, builder label, native lightweight-builder app, warm steady-state job), measured through the 578 `dev benchmark` contract
+- [ ] Baseline numbers recorded in Results before any change to the emitters
+- [ ] Skip config and DI setup when no route needs them
+- [ ] Synchronous path when no handler awaits
+- [ ] Compile-time route table
+- [ ] Full-builder regression since July 2025 explained and fixed or filed
+- [ ] After numbers per the 567 measurement bar (paired or interleaved runs, N and median stated)
+- [ ] `ganda runfile cache --clear`, then CI tests green
+
 ## Related
 - TimeWarpEngineering/timewarp-mediator: "Improve Mediator send performance" task 020: https://github.com/TimeWarpEngineering/timewarp-mediator/blob/master/kanban/to-do/020-improve-mediator-send-performance/task.md
 
 ## Session
 
 - Created: 1508201 (2026-10-13)
+- 2026-11-14 groom: added Checklist and Depends on 578 so the speedups are measured through the shared benchmark contract.

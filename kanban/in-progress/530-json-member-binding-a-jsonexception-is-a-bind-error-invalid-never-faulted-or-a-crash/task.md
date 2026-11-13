@@ -85,6 +85,12 @@ Acceptance:
   ran) lacked the executable bit. Fixed with `chmod +x` + `git update-index --chmod=+x`; the audit rerun
   passed (44 passed, 0 failed).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T20:20:29Z
+- Review oracle: reviewer-cursor (cursor, vendor xai, model grok-4.7), body tw-implementation-review, effort 2, roster general, turn cap 120 recorded by the host budget, this cursor session uncapped (no --max-turns flag), session id not exposed, round 1, disposition clean — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-13T20:28:33Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -144,3 +150,9 @@ Expect: 5 tests pass. Before this change the in-process `--json-args` cases cras
 - Roslynk, when bumping to that beta: tighten
   `McpSurfaceTests.WhenAMultiQueryOperationNamesAToolOutsideTheEnum_ThenTheWholeCallFails` to
   `error=Invalid`, and add a `--no-daemon` CLI test for the same input (exit 1, no crash).
+
+### Review
+
+Round 1, roster general, effort 2, turn cap 120. Session id not exposed. Counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix). Disposition `clean`. No wontfix and no escalation. The restatement matches the task: `FormatException` is an extra filter for a typed-ID converter, and the beta cut stays a later step.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

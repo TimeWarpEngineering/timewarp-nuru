@@ -35,6 +35,10 @@ Acceptance:
 - [x] Verify with the `tw-nuru-verify` probe in a real Web SDK project (installed package, clean cache)
 - [x] `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs` green (run through `./bin/dev test`)
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Use `.Map<T>()` in tests, not `DiscoverEndpoints()`.
@@ -89,7 +93,16 @@ the Nuru app beside the host builder still dispatches). Reverting the one-line `
 when IsNuruAppCreateBuilder(...)` guard makes the file fail to build with
 `NURU_S999: Unrecognized DSL method: AddMcpServer`.
 
+### Review
+
+Round 1, effort 2, roster general. Counts: bug 0, suggestion 0, nit 0; open 0. Disposition: clean.
+No wontfix and no escalation. The implementer restatement matches the task. Paths:
+`review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+`review/disposition.md`.
+
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T22:36:41Z
+- Review oracle: reviewed by reviewer-grok (grok, model Grok 4.7), session not reported, max-turns uncapped (budget ladder 120), effort 2, roster general, round 1, disposition clean — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-13T22:43:46Z

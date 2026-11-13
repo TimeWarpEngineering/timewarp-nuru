@@ -168,7 +168,9 @@ public sealed partial class SearchIndex : IAsyncDisposable
   }
 
   /// <summary>
-  /// Indexes a CLI under its capabilities <paramref name="cliName"/>. <paramref name="cliPath"/> is
+  /// Indexes a CLI under its capabilities <paramref name="cliName"/> (the app's WithName). A
+  /// <c>--cli</c> filter matches that name or the file name of <paramref name="cliPath"/>; see
+  /// <see cref="ResolveCliNamesAsync"/>. <paramref name="cliPath"/> is
   /// the executable that was actually run; <c>index rebuild --all</c> runs it again. The name and
   /// the path differ when the executable file name is not the capabilities name.
   /// </summary>
@@ -345,24 +347,6 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
   [LoggerMessage(LogLevel.Information, "Cleared index for CLI {CliName}")]
   private static partial void LogClearedCli(ILogger logger, string cliName);
-
-  /// <summary>Gets the indexed version of a CLI, or null if not indexed.</summary>
-  public async Task<string?> GetCliVersionAsync(string cliName, CancellationToken cancellationToken = default)
-  {
-    ArgumentNullException.ThrowIfNull(cliName);
-
-    if (!Initialized)
-    {
-      await InitializeAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    await using SqliteCommand cmd = Connection.CreateCommand();
-    cmd.CommandText = "SELECT version FROM clis WHERE name = $name";
-    cmd.Parameters.AddWithValue("$name", cliName);
-
-    object? result = await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-    return result as string;
-  }
 
   public async ValueTask DisposeAsync()
   {

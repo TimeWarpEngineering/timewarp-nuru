@@ -3,6 +3,13 @@
 // them.
 #endregion
 
+#region Design
+// `--cli` takes the app name (WithName / capabilities name) or the executable name; both select the same
+// indexed CLI (SearchIndex.ResolveCliNamesAsync). Auto-index runs only when neither matches, and it
+// resolves the value on PATH, so it needs the executable name. The CLI is stored under its capabilities
+// name with the resolved path, so the same value finds it on the next search without re-indexing (534).
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;
@@ -12,7 +19,7 @@ using TimeWarp.Mediator;
 [NuruRoute("", Description = "Search indexed CLI endpoints")]
 public sealed partial class SearchQuery : SearchGroup, IQuery<Unit>
 {
-  [Option("--cli", Description = "Filter results to a specific CLI (will auto-index if not found)")]
+  [Option("--cli", Description = "Filter results to one CLI, by app name or executable name (auto-indexes a PATH executable not yet indexed)")]
   public string? Cli { get; set; }
 
   [Option("--version", Description = "Show CLI version in results")]
@@ -85,12 +92,12 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<Unit>
 
     private async Task EnsureCliIndexedAsync(string cliName, CancellationToken cancellationToken)
     {
-      // Check if already indexed
-      string? indexedVersion = await searchIndex.GetCliVersionAsync(cliName, cancellationToken).ConfigureAwait(false);
+      // Already indexed under this app name or executable name?
+      IReadOnlyList<string> indexedNames = await searchIndex.ResolveCliNamesAsync(cliName, cancellationToken).ConfigureAwait(false);
 
-      if (indexedVersion is not null)
+      if (indexedNames.Count > 0)
       {
-        LogCliAlreadyIndexed(logger, cliName, indexedVersion);
+        LogCliAlreadyIndexed(logger, cliName, string.Join(", ", indexedNames));
         return;
       }
 
@@ -157,8 +164,8 @@ public sealed partial class SearchQuery : SearchGroup, IQuery<Unit>
       return string.Empty;
     }
 
-    [LoggerMessage(LogLevel.Debug, "CLI {CliName} already indexed at version {Version}")]
-    private static partial void LogCliAlreadyIndexed(ILogger logger, string cliName, string version);
+    [LoggerMessage(LogLevel.Debug, "CLI {CliName} already indexed as {IndexedNames}")]
+    private static partial void LogCliAlreadyIndexed(ILogger logger, string cliName, string indexedNames);
 
     [LoggerMessage(LogLevel.Information, "Auto-indexing CLI {CliName} from {CliPath}")]
     private static partial void LogAutoIndexingCli(ILogger logger, string cliName, string cliPath);

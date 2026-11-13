@@ -1,3 +1,7 @@
+#region Purpose
+// Generates the per-shell completion scripts that call back into the app through `__complete`.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins parser rejection of duplicate parameter names.
+#endregion
+
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
 
 #if !JARIBU_MULTI

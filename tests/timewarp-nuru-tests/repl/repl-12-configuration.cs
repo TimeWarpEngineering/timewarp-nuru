@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test configuration options (Section 12 of REPL Test Plan)
+#region Purpose
+// Pins REPL configuration options and their effect on session behavior (Section 12 of the REPL test plan).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

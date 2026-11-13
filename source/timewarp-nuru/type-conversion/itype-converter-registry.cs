@@ -1,3 +1,8 @@
+#region Purpose
+// Contract for a registry that stores route type converters and looks them up by constraint name or target
+// type.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

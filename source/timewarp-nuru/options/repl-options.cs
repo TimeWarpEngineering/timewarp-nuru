@@ -1,3 +1,7 @@
+#region Purpose
+// Configuration options for REPL mode: prompt, history, key bindings, and display behavior.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

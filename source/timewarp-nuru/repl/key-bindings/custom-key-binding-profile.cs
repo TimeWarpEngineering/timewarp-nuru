@@ -1,3 +1,7 @@
+#region Purpose
+// Customizable key binding profile that extends an existing profile or starts from scratch.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

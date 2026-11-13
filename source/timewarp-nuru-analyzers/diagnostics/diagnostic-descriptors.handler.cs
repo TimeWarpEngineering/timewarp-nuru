@@ -1,3 +1,7 @@
+#region Purpose
+// Descriptors for NURU_H handler diagnostics, reported when a handler shape cannot be compiled into generated code.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

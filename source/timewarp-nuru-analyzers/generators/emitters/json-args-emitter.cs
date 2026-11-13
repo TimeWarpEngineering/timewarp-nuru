@@ -1,6 +1,8 @@
+#region Purpose
 // Emits --json-args peel, parse, candidate selection, and reflection-free binding.
 // Calls without --json-args keep the existing matcher. This path runs only when a
 // JSON object was loaded. It does not use ComputedSpecificity to break ties.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

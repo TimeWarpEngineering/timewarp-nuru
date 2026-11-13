@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that declares a usage example shown in per-route help and in the capabilities JSON.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

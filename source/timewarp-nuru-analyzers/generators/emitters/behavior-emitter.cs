@@ -1,5 +1,7 @@
+#region Purpose
 // Emits pipeline behavior code for cross-cutting concerns.
 // Generates behavior instance fields and nested lambda pipeline.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

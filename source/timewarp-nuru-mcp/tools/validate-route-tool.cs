@@ -1,3 +1,7 @@
+#region Purpose
+// MCP tool that validates fluent-API route pattern syntax used with Map() calls.
+#endregion
+
 namespace TimeWarp.Nuru.Mcp.Tools;
 
 using TimeWarp.Nuru;

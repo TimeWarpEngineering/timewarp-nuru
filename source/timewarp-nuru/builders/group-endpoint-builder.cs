@@ -1,3 +1,7 @@
+#region Purpose
+// Endpoint builder for routes declared inside a group; Done() returns to the parent GroupBuilder.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

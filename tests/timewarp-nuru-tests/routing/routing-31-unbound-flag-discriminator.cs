@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that unbound boolean flags act as route discriminators, so overlapping routes coexist without
+// NURU_R003.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

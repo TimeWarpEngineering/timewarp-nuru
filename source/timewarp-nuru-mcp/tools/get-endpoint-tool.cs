@@ -1,3 +1,7 @@
+#region Purpose
+// MCP tool that explains endpoints in TimeWarp.Nuru, fetching documentation from GitHub.
+#endregion
+
 namespace TimeWarp.Nuru.Mcp.Tools;
 
 using System.ComponentModel;

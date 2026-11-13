@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test CommandLineParser basic parsing functionality
+#region Purpose
+// Pins basic CommandLineParser tokenizing of plain command lines into argument arrays.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

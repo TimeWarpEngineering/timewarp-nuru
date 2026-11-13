@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins which route wins when several routes could match the same arguments.
+#endregion
+
 #pragma warning disable RCS1163 // Unused parameter - parameters must match route pattern names for binding
 
 #if !JARIBU_MULTI

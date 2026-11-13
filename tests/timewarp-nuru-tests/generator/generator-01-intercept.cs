@@ -1,8 +1,8 @@
 #!/usr/bin/env -S dotnet --
 
-// Generator Phase 6: Minimal Intercept Tests
-// Tests the source generator end-to-end with minimal test cases
-// Reference: kanban/in-progress/272-v2-generator-phase-6-testing.md
+#region Purpose
+// Minimal end-to-end tests of the source generator interceptor (generator phase 6).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,3 +1,7 @@
+#region Purpose
+// Base class for route pattern segments (literals, parameters, options).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

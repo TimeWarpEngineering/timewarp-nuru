@@ -1,5 +1,11 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Regression test for GitHub issue #178: [NuruRouteAlias] on a group base class must propagate to derived
+// commands.
+#endregion
+
+#region Design
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGRESSION TEST: GitHub Issue #178
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -23,6 +29,7 @@
 // Actual (bug): only "workspace info" works, "ws info" returns "Unknown command"
 //
 // ═══════════════════════════════════════════════════════════════════════════════
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

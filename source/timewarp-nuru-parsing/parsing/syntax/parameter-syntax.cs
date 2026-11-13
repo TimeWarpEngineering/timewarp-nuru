@@ -1,3 +1,7 @@
+#region Purpose
+// Syntax node for a parameter segment that captures a value from arguments.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using System.Text;

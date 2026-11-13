@@ -1,5 +1,6 @@
-// Design-time representation of hierarchical group structure for capabilities emission.
-// Separates grouped vs ungrouped routes and builds a tree from GroupPrefix values.
+#region Purpose
+// Group tree model for capabilities emission: separates grouped from ungrouped routes by GroupPrefix.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

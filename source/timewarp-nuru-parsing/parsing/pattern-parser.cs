@@ -1,3 +1,7 @@
+#region Purpose
+// Public entry point that parses route pattern strings into CompiledRoute objects.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

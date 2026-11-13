@@ -1,5 +1,7 @@
+#region Purpose
 // Builds and analyzes dependency graphs for service resolution.
 // Implements topological sorting (Kahn's algorithm) and circular dependency detection (DFS).
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

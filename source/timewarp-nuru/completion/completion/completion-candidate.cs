@@ -1,3 +1,7 @@
+#region Purpose
+// Record for a single shell-completion suggestion: value, description, and kind.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

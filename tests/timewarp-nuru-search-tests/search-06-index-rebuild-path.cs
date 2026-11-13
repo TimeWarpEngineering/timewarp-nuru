@@ -1,6 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-search/timewarp-nuru-search.csproj
 
+#region Purpose
+// Pins that the search index stores the executed path beside the capabilities name, so `index rebuild
+// --all` runs the path (task 482-011).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,8 +1,14 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Reproduces the double-tab bug where git commit<Tab><Tab> completes to "git --help" instead of commit
+// options.
+#endregion
+
+#region Design
 // BUG: git commit<Tab><Tab> completes to "git --help" instead of showing "git commit" options
-// 
+//
 // Steps to reproduce:
 // 1. Type: git commit (no space, no tab yet)
 // 2. Press Tab → Should complete to "git commit " (with space)
@@ -16,6 +22,7 @@
 // - Second tab somehow reverts to "git" context and shows "git --help"
 //
 // This test captures the bug. Once fixed, uncomment the assertion.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

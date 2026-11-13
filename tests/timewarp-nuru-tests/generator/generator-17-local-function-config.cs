@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that an unqualified method group naming a local function works as the ConfigureServices argument.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Local Function ConfigureServices
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins AttestationConfigResolver mode resolution: ResolveMode and the context-sensitive defaults of
+// EffectiveMode (task 458-011).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

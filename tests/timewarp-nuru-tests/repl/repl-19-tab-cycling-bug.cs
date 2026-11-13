@@ -1,8 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test to demonstrate tab completion cycling bug
-// After first cycle completion, subsequent tabs are interpreted as text input
+#region Purpose
+// Reproduces the tab completion cycling bug where tabs after the first cycle are read as text input.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

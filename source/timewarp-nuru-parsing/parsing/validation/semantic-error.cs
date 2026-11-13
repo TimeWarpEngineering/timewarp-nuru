@@ -1,3 +1,7 @@
+#region Purpose
+// Base class for semantic validation errors: valid syntax with incorrect meaning.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

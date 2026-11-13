@@ -1,3 +1,7 @@
+#region Purpose
+// Completion source that suggests every value of an enum type.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

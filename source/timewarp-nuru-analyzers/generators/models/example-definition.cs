@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for one usage example declared via [NuruRouteExample] or .WithExample().
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

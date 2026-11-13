@@ -1,3 +1,7 @@
+#region Purpose
+// Descriptors for NURU_A endpoint diagnostics, reported for invalid [NuruRoute] endpoint declarations.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

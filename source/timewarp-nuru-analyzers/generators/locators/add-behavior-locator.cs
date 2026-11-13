@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .AddBehavior(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

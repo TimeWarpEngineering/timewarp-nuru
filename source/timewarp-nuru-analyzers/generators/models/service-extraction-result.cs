@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for extension-method calls that register services opaquely to source-generated DI.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

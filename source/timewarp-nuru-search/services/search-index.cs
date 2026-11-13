@@ -1,3 +1,7 @@
+#region Purpose
+// SQLite-backed store for indexed CLI endpoints: persists capability catalogs and answers search queries.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 public sealed partial class SearchIndex : IAsyncDisposable

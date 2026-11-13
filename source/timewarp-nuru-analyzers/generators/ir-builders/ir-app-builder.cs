@@ -1,5 +1,8 @@
+#region Purpose
 // IR builder that mirrors the NuruAppBuilder DSL for semantic interpretation.
-//
+#endregion
+
+#region Design
 // This builder is used by the DslInterpreter to "execute" the DSL at design time,
 // accumulating state that will be converted to an AppModel.
 //
@@ -10,6 +13,7 @@
 // - FinalizeModel() creates the actual AppModel
 // - UseTelemetry() registers TelemetryBehavior as the outermost behavior, once (task 552)
 // - Implements IIrAppBuilder for polymorphic dispatch in interpreter
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .Map("pattern") calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

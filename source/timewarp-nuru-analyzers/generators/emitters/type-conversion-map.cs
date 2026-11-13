@@ -1,3 +1,8 @@
+#region Purpose
+// Compile-time map from built-in type names to their conversion code, kept in parity with the runtime
+// DefaultTypeConverters.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

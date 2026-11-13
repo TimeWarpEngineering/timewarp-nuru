@@ -1,8 +1,12 @@
+#region Purpose
 // Main emitter that generates the RunAsync interceptor methods.
 // This is the entry point for code emission, coordinating all other emitters.
-//
+#endregion
+
+#region Design
 // Key design: Each app instance gets its own interceptor method with isolated routes.
 // This ensures route patterns don't leak between different NuruApp instances.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

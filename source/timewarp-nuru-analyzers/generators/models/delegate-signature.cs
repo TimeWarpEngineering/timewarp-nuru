@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for the delegate signature extracted from a Map() call, used to emit typed invokers.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

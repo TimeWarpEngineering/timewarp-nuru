@@ -1,5 +1,11 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Regression test for kanban 454-028 item 5: multi-word group alias index math must replace the whole group
+// prefix.
+#endregion
+
+#region Design
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGRESSION TEST: kanban 454-028 item #5 — multi-word group alias index math
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -13,6 +19,7 @@
 // FIX: replace at the GROUP level via GroupInfo.GroupPrefixes, so the alias swaps the
 // group's entire (possibly multi-word) prefix.
 // ═══════════════════════════════════════════════════════════════════════════════
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -2,6 +2,11 @@
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package TimeWarp.Amuru
 
+#region Purpose
+// Pins that the generated bash completion script works under plain bash without the bash-completion
+// package (task 492).
+#endregion
+
 using TimeWarp.Amuru;
 
 #if !JARIBU_MULTI

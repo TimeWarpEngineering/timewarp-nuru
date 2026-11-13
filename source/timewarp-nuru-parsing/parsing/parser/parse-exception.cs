@@ -1,3 +1,7 @@
+#region Purpose
+// Exception thrown when parsing fails and cannot continue.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

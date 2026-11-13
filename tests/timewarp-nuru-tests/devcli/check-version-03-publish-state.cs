@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins PublishStateClassifier, which maps none, some, and all published packages to None, Partial, and All
+// (task 458-005).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,3 +1,7 @@
+#region Purpose
+// Global usings shared by every file in the parsing project.
+#endregion
+
 #if !ANALYZER_BUILD
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Logging.Abstractions;

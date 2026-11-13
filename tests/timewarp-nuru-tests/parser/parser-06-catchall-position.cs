@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins parser rules on where a catch-all parameter may appear.
+#endregion
+
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
 
 #if !JARIBU_MULTI

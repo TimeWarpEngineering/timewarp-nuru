@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for an AddServeRoute() call, which emits the built-in serve route and route forwarding.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

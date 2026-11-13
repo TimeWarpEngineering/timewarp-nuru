@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the two-feed publish lookup: a version published on nuget.org or the org GitHub Packages feed
+// counts as published (task 536).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

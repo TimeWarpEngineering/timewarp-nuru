@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .AsCommand() calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

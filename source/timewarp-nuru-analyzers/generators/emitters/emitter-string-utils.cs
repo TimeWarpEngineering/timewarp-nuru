@@ -1,3 +1,7 @@
+#region Purpose
+// String helpers shared by the emitters, chiefly escaping text for embedding in generated string literals.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

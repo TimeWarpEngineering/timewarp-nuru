@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for the in-process capabilities catalog (NuruApp.Capabilities) and the returnType descriptor.
+#region Purpose
+// Pins the in-process capabilities catalog (NuruApp.Capabilities) and the returnType descriptor.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

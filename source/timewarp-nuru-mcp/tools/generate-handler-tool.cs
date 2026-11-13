@@ -1,3 +1,7 @@
+#region Purpose
+// MCP tool that generates a handler function from a route pattern.
+#endregion
+
 namespace TimeWarp.Nuru.Mcp.Tools;
 
 using System.ComponentModel;

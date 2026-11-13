@@ -1,3 +1,7 @@
+#region Purpose
+// Fluent builder that assembles custom key bindings from scratch or from an existing profile.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

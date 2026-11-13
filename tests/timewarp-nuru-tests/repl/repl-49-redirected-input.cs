@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test REPL line-mode fallback when stdin is redirected (kanban 493)
+#region Purpose
+// Pins the REPL line-mode fallback when stdin is redirected (kanban 493).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

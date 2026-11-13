@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins DiscoverEndpoints(typeof(...)) group filtering, which enables subset publishing of a CLI.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Group Filtering (#421)
 // ═══════════════════════════════════════════════════════════════════════════════

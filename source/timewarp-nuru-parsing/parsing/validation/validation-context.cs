@@ -1,3 +1,7 @@
+#region Purpose
+// Metadata collected during semantic validation of a route pattern.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,3 +1,7 @@
+#region Purpose
+// Maps key binding action names, as written in keybindings.json, to ReplConsoleReader handlers.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

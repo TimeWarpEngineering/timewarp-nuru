@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for PSReadLine-compatible text selection functionality (Task 043-006)
+#region Purpose
+// Pins PSReadLine-compatible text selection in the REPL line editor (task 043-006).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,3 +1,7 @@
+#region Purpose
+// Shared helper for lexer tests: builds a Lexer with optional trace logging.
+#endregion
+
 namespace TimeWarp.Nuru.Tests.LexerTests;
 
 using Microsoft.Extensions.Logging;

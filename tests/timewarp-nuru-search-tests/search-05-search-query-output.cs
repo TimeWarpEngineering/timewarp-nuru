@@ -1,6 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-search/timewarp-nuru-search.csproj
 
+#region Purpose
+// Pins that `nuru search` writes only the human listing and does not append a serialized JSON array to
+// stdout (task 482-009).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

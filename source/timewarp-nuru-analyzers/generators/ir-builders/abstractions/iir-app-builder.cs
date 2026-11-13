@@ -1,7 +1,11 @@
+#region Purpose
 // Marker interface for app-level IR builder with finalization capabilities.
-//
+#endregion
+
+#region Design
 // Only implemented by IrAppBuilder. Provides access to app-level operations
 // that don't exist on group builders (Build, FinalizeModel, AddInterceptSite).
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

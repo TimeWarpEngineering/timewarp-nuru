@@ -1,10 +1,11 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj
 
-// TimeWarp.Nuru.McpHost (task 508-015): schema fidelity. A JSON member publishes the schema of the type
-// its binder deserializes into; a contract carries title, destructive and open-world hints, and a host
-// override wins; defaults are in both the default keyword and the description; nullable members keep
-// "null" because the binder accepts an explicit null.
+#region Purpose
+// Pins McpHost schema fidelity (task 508-015): a JSON member publishes the schema of the type its binder
+// deserializes into, contracts carry title and hints, defaults appear in the schema, and nullable members
+// keep "null".
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

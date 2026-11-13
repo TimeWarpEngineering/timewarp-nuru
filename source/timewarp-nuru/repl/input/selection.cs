@@ -1,3 +1,7 @@
+#region Purpose
+// Text selection model for the REPL reader: an anchor plus a moving cursor.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

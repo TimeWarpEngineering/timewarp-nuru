@@ -1,3 +1,7 @@
+#region Purpose
+// Tab-completion logic for REPL input, including cycling and candidate display.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

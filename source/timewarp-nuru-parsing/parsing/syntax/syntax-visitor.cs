@@ -1,3 +1,7 @@
+#region Purpose
+// Base visitor class with default implementations for route pattern syntax nodes.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

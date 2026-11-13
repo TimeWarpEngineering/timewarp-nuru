@@ -1,6 +1,8 @@
+#region Purpose
 // Emits generated command classes for delegate routes.
 // These classes hold route parameters and implement interfaces from .Implements<T>().
 // See kanban task #316 for design.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,3 +1,8 @@
+#region Purpose
+// Implements the default search query: finds indexed CLI endpoints that match the user's terms and lists
+// them.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;

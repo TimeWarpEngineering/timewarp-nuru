@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins parsing of real gh CLI and REST payload shapes through the AOT source-generated JSON context.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

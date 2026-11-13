@@ -1,3 +1,7 @@
+#region Purpose
+// Default PSReadLine-compatible key binding profile shipped with Nuru.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

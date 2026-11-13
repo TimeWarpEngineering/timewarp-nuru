@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test prompt display when EnableArrowHistory is false (Bug Fix Verification)
+#region Purpose
+// Pins the REPL prompt display when EnableArrowHistory is false (bug fix verification).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

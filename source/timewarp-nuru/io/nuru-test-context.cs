@@ -1,3 +1,7 @@
+#region Purpose
+// Ambient context that lets a test harness take over NuruApp execution for runfile tests.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

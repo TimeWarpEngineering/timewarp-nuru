@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for how a handler parameter binds from route data or services.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

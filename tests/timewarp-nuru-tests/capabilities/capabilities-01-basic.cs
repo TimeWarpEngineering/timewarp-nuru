@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test CapabilitiesResponse serialization
+#region Purpose
+// Pins CapabilitiesResponse serialization.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

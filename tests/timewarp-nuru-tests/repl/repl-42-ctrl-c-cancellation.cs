@@ -1,12 +1,18 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Pins Ctrl+C cancellation of in-flight REPL commands (task 454-017, M15).
+#endregion
+
+#region Design
 // Tests for Ctrl+C cancellation of in-flight REPL commands (Task 454-017, M15).
 // Semantics: Ctrl+C cancels the RUNNING command (REPL survives, re-prompts); Ctrl+C never
 // exits the REPL (use `exit` / Ctrl+D); external-token cancellation still unwinds the loop.
 //
 // Handlers reference static fields (not captured locals) because the source generator
 // lifts delegate bodies into generated code (H002).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

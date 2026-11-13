@@ -1,6 +1,8 @@
 #!/usr/bin/env -S dotnet --
 
-// Validate duplicate option alias detection (short and long forms).
+#region Purpose
+// Pins parser detection of duplicate option aliases in short and long forms.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

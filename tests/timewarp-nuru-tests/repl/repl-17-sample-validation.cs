@@ -1,8 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests that validate REPL behavior using the same routes as repl-basic-demo.cs
-// This test file mirrors the exact route configuration from samples/repl-demo/repl-basic-demo.cs
+#region Purpose
+// Pins REPL behavior using the same routes as samples/repl-demo/repl-basic-demo.cs, so the sample stays
+// valid.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

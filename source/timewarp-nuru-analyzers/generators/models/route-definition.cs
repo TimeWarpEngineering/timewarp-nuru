@@ -1,3 +1,7 @@
+#region Purpose
+// Compile-time model of a complete route definition, consumed only by the source generator.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;

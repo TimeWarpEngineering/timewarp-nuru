@@ -1,9 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Regression tests for the REPL/completion low-severity sweep (Task 454-030).
-// Item 2 (history clear-on-load + merge-on-save), item 3 (completion template filters),
-// item 5 (REPL survives an unexpected handler exception).
+#region Purpose
+// Regression tests for the REPL and completion low-severity sweep: history load and save, template filters,
+// handler exceptions (454-030).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

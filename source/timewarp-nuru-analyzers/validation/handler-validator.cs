@@ -1,5 +1,8 @@
-// Handler validator that detects unsupported handler patterns.
-//
+#region Purpose
+// Detects unsupported handler patterns (NURU_H001-H006) on the generator model.
+#endregion
+
+#region Design
 // This validator checks for:
 // - NURU_H001: Instance methods (not supported for code generation)
 // - NURU_H002: Lambdas with closures (captured variables)
@@ -9,6 +12,7 @@
 //
 // This replaces the syntax-level NuruHandlerAnalyzer with model-level validation
 // that integrates with the unified NuruAnalyzer.
+#endregion
 
 namespace TimeWarp.Nuru.Validation;
 

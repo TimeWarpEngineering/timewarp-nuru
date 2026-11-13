@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .AsQuery() calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

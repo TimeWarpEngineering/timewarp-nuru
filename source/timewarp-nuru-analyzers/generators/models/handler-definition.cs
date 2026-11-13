@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for a route handler, holding everything needed to emit its invocation code.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

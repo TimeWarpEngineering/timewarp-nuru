@@ -1,3 +1,7 @@
+#region Purpose
+// Implements the `index list` query: prints the CLIs currently held in the local search index.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;

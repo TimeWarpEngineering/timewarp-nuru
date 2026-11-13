@@ -1,11 +1,15 @@
+#region Purpose
 // Fluent builder for assembling RouteDefinition from pieces.
-//
+#endregion
+
+#region Design
 // The builder collects data from different analysis phases:
 // - Pattern parsing -> segments, specificity
 // - Fluent chain analysis -> description, aliases
 // - Delegate analysis -> handler definition
 // - Middleware analysis -> pipeline definition
 // - Route registration context -> group prefix, order
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

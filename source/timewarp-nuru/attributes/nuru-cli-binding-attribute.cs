@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute carrying Nuru's CLI binding overrides (such as the group path) for an `[Operation]` request.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

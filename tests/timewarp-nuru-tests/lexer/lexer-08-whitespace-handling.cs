@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lexer whitespace handling between route pattern tokens.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

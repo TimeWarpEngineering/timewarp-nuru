@@ -1,4 +1,10 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins how the generator derives endpoints from [Operation] requests: routes, parameters, options, and
+// capability types.
+#endregion
+
 #pragma warning disable CA1062 // Handlers trust the mediator request instance
 #pragma warning disable CA1819 // Repeated and JSON members are arrays on purpose
 #pragma warning disable CA1002 // Bag is List<T> so the capability type has a type argument

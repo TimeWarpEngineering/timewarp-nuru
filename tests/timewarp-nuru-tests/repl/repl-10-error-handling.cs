@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test error handling (Section 10 of REPL Test Plan)
+#region Purpose
+// Pins REPL error handling for bad input and failing handlers (Section 10 of the REPL test plan).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

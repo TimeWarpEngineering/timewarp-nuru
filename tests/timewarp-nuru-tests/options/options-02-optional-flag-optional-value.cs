@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins routes with an optional flag that takes an optional value (--flag? {value?}).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

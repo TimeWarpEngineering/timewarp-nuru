@@ -3,9 +3,9 @@
 #:project $(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj
 #:package Microsoft.CodeAnalysis.CSharp
 
-// NURU_H008: an [Operation] with no visible handler is a warning. The build is
-// accepted. Invoking that route returns exit code 1 when the handler is still
-// unregistered. An [Operation] with no mediator kind is not an endpoint.
+#region Purpose
+// Pins NURU_H008: an [Operation] with no visible handler warns, builds, and exits 1 when invoked.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

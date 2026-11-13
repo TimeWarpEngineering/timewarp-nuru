@@ -1,5 +1,7 @@
+#region Purpose
 // Extracts interface implementation information from .Implements<T>(x => ...) expressions.
 // See kanban task #316 for design.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:package TimeWarp.Amuru
 
+#region Purpose
+// Legacy entry point that delegates to the official CI runner, tests/ci-tests/run-ci-tests.cs.
+#endregion
+
 using TimeWarp.Amuru;
 
 // Legacy entry point — delegates to the official CI runner (task 470-012 / M27).

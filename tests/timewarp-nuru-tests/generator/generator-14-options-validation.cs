@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:property EnableConfigurationBindingGenerator=true
 
+#region Purpose
+// Pins that the generator runs IValidateOptions<T> automatically when IOptions<T> is bound.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TEST: IValidateOptions<T> automatic validation
 // ═══════════════════════════════════════════════════════════════════════════════

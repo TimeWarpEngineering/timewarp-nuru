@@ -1,5 +1,7 @@
+#region Purpose
 // Locator for app.RunReplAsync(...) call sites.
 // This is used by the V2 generator to intercept RunReplAsync method calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

@@ -1,3 +1,7 @@
+#region Purpose
+// Syntax node for the end-of-options separator (--) in a route pattern.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

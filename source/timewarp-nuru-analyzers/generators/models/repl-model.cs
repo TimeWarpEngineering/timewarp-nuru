@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for the REPL (Read-Eval-Print Loop) mode configuration options.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

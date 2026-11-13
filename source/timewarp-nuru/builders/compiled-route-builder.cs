@@ -1,3 +1,7 @@
+#region Purpose
+// Standalone fluent builder that produces CompiledRoute instances without parsing a pattern string.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

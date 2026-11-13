@@ -1,3 +1,7 @@
+#region Purpose
+// Resolves enum member names up front into an equatable set so the emit stage does not need the live Compilation.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for YankLastArg and YankNthArg, which insert arguments from history.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

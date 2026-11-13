@@ -1,3 +1,8 @@
+#region Purpose
+// Options class configuring Nuru's OpenTelemetry integration: service identity, OTLP endpoint, and related
+// settings.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

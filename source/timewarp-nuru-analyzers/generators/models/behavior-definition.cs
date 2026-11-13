@@ -1,3 +1,7 @@
+#region Purpose
+// IR record for a pipeline behavior (middleware) registration: type, order, scope, and constructor dependencies.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

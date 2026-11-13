@@ -1,3 +1,7 @@
+#region Purpose
+// Global usings shared by every file in the analyzers project.
+#endregion
+
 global using Microsoft.CodeAnalysis;
 global using Microsoft.CodeAnalysis.CSharp;
 global using Microsoft.CodeAnalysis.CSharp.Syntax;

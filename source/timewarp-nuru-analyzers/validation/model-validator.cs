@@ -1,5 +1,6 @@
-// Model-level validation orchestrator.
-// Runs all validators on an AppModel and collects diagnostics.
+#region Purpose
+// Orchestrates validation of an AppModel: runs all validators and collects their diagnostics.
+#endregion
 
 namespace TimeWarp.Nuru.Validation;
 

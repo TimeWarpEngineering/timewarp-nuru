@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .WithAiPrompt(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

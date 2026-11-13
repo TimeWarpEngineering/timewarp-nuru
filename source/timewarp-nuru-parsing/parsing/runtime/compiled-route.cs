@@ -1,3 +1,7 @@
+#region Purpose
+// Compiled route pattern broken into components for efficient matching against arguments.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

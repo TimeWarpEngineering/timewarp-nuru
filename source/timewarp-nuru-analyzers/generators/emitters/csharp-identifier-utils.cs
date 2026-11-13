@@ -1,3 +1,7 @@
+#region Purpose
+// Escapes C# keywords as @-prefixed identifiers so generated code compiles with user-chosen names.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

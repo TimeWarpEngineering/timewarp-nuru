@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that defines a route group prefix on a base class that request classes inherit from.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

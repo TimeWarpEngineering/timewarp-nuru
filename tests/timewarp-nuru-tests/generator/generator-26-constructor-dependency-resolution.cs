@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins compile-time constructor dependency resolution, including complex graphs and error conditions.
+#endregion
+
 #pragma warning disable CA1848 // Use LoggerMessage delegates
 #pragma warning disable CA1873 // Evaluation of this argument may be expensive
 #pragma warning disable CA1305 // Specify IFormatProvider

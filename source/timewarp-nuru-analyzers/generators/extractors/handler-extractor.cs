@@ -1,9 +1,13 @@
+#region Purpose
 // Extracts handler information from lambda expressions and method references.
-//
+#endregion
+
+#region Design
 // Handles:
 // - Lambda expressions: (string env, bool force) => Deploy(env, force)
 // - Method group expressions: HandleDeploy
 // - Returns HandlerDefinition with parameters, return type, async info
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

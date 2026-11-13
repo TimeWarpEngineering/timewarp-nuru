@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins matching and binding of optional route parameters.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the pure AttestationVerifier evaluation matrix, with no git, openssl, or filesystem (task 458-010).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

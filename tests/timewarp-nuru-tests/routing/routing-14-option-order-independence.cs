@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that options match regardless of the order they appear in the arguments.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

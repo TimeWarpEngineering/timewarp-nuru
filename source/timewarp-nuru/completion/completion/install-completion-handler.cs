@@ -1,3 +1,7 @@
+#region Purpose
+// Installs the generated completion script into each shell's standard location and profile.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

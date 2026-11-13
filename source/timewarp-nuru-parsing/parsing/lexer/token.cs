@@ -1,3 +1,7 @@
+#region Purpose
+// Token types produced by the route pattern lexer.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

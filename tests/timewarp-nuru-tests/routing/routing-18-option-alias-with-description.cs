@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Regression test for task 013: an option with both a short alias and a description must still match its long
+// form.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

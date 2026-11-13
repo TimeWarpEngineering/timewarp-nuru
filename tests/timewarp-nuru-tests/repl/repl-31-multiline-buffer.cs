@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for MultilineBuffer data model (Task 043-009)
+#region Purpose
+// Pins the MultilineBuffer data model used by the REPL line editor (task 043-009).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

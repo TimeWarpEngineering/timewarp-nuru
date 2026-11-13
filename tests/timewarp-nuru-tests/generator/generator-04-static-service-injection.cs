@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins generator injection of singleton, transient, and ITerminal services configured via ConfigureServices().
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Static Service Injection (#292)
 // ═══════════════════════════════════════════════════════════════════════════════

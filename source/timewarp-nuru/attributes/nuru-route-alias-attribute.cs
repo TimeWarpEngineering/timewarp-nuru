@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that adds extra route patterns invoking the same request as its primary route.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

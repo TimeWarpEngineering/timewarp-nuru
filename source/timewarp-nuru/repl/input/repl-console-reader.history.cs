@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for history navigation handlers.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

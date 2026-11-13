@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins binding of route parameters to handler arguments.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

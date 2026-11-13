@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins source-gen DI of a parameterized-constructor service declared in a nested namespace (ganda pattern).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

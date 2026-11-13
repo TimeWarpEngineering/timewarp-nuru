@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the dynamic shell completion scripts that DynamicCompletionScriptGenerator emits for each shell.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

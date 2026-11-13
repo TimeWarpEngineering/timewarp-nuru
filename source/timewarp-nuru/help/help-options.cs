@@ -1,3 +1,7 @@
+#region Purpose
+// Options that control which routes appear in help listings and how they are shown.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

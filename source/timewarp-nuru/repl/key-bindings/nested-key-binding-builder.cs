@@ -1,3 +1,7 @@
+#region Purpose
+// Key binding builder nested inside a parent builder (such as REPL options) that returns to it via Done.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

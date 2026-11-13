@@ -1,3 +1,7 @@
+#region Purpose
+// Delegate and supporting types for the generated TryBind entry point that binds JSON to a route.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

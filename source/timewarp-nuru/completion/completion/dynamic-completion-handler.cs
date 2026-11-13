@@ -1,3 +1,7 @@
+#region Purpose
+// Handles the `__complete` callback route that shells call to get dynamic completion candidates.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

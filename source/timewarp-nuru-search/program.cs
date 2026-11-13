@@ -1,3 +1,8 @@
+#region Purpose
+// Entry point of the search tool: wires logging, the search index and capabilities client, and discovers
+// endpoints.
+#endregion
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Nuru.Search.Endpoints;

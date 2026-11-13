@@ -1,5 +1,7 @@
+#region Purpose
 // Emits shell completion support code.
 // Generates the GeneratedShellCompletionProvider class for __complete callback.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

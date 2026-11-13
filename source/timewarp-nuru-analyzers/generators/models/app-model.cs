@@ -1,3 +1,7 @@
+#region Purpose
+// Top-level design-time IR of a CLI application, passed from the extractors to the emitters.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

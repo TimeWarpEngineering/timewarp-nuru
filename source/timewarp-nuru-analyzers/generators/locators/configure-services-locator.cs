@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .ConfigureServices(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

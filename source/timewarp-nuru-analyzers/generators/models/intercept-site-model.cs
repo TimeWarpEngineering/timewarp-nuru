@@ -1,3 +1,7 @@
+#region Purpose
+// Source location of a RunAsync() call site, used to emit the [InterceptsLocation] attribute.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

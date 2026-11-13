@@ -2,6 +2,10 @@
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package TimeWarp.Amuru
 
+#region Purpose
+// Pins the --json-args route binding path that supplies handler arguments as JSON.
+#endregion
+
 using TimeWarp.Amuru;
 
 #if !JARIBU_MULTI

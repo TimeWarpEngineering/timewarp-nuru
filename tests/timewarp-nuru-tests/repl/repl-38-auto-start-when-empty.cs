@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test AutoStartWhenEmpty feature for REPL (Task 373)
+#region Purpose
+// Pins the AutoStartWhenEmpty REPL feature: start the REPL when no arguments are given (task 373).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

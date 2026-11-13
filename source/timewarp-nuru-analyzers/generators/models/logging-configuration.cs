@@ -1,3 +1,7 @@
+#region Purpose
+// Generator model for logging configuration extracted from AddLogging(...) calls.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

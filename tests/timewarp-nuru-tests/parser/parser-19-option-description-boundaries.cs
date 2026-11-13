@@ -1,6 +1,8 @@
 #!/usr/bin/env -S dotnet --
 
-// Option-description boundaries, parameter-name shape, and built-in type error text.
+#region Purpose
+// Pins option-description boundaries, parameter-name shape, and built-in type error text.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,3 +1,7 @@
+#region Purpose
+// Enum of the REPL reader's editing modes, which decide how key presses are interpreted.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

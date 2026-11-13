@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lexer handling of multi-character short options.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

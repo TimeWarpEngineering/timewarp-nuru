@@ -1,3 +1,8 @@
+#region Purpose
+// Source-generated System.Text.Json context for Nuru's own types, so serialization is AOT and trimming
+// safe.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

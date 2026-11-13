@@ -1,8 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for PSReadLine-compatible interactive history search (Task 043-002a)
-// Verifies Ctrl+R (reverse search) and Ctrl+S (forward search) functionality
+#region Purpose
+// Pins PSReadLine-compatible interactive history search: Ctrl+R reverse and Ctrl+S forward (task 043-002a).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

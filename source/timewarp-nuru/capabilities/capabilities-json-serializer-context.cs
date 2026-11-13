@@ -1,3 +1,7 @@
+#region Purpose
+// Source-generated JSON context for the capabilities response, keeping serialization AOT-compatible.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

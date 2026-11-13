@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that UseMicrosoftDependencyInjection() resolves services with constructor dependencies at runtime.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: Runtime DI with UseMicrosoftDependencyInjection (#392, #396)
 // ═══════════════════════════════════════════════════════════════════════════════

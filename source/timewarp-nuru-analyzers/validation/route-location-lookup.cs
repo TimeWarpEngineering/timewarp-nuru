@@ -1,3 +1,7 @@
+#region Purpose
+// Resolves the source location of a route's pattern string so diagnostics point at the right place.
+#endregion
+
 namespace TimeWarp.Nuru.Validation;
 
 using TimeWarp.Nuru.Generators;

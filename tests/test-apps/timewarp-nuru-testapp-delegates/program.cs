@@ -1,3 +1,8 @@
+#region Purpose
+// Test app that registers routes through the delegate API (basic, sub-command, and option routes) for
+// integration runs.
+#endregion
+
 global using static System.Console;
 using TimeWarp.Nuru;
 

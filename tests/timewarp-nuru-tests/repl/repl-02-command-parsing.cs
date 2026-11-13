@@ -1,8 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test command line parsing with quotes and escapes (Section 2 of REPL Test Plan)
-// Migrated from tests/timewarp-nuru-repl-tests-reference-only/
+#region Purpose
+// Pins REPL command-line parsing with quotes and escapes (Section 2 of the REPL test plan).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

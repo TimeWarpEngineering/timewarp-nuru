@@ -1,9 +1,12 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Task 508-009: enums declared inside a class (nested types) must produce the same allowedValues
-// as namespace-level enums — in app.Capabilities, --capabilities, and generated completion.
-// The app is built in a helper, so runs go through ExecuteAsync (RunAsync is intercepted per call site).
+#region Purpose
+// Pins that enums declared inside a class produce the same allowedValues as namespace-level enums in
+// app.Capabilities, --capabilities, and generated completion (task 508-009).
+// The app is built in a helper, so runs go through ExecuteAsync because RunAsync is intercepted per call
+// site.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

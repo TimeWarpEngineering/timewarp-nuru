@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins routing error cases: unmatched input, missing values and invalid arguments.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

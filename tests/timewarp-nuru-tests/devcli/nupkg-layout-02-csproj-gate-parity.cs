@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that NupkgLayoutCheck.NuruRequiredPackageEntries stays in sync with the csproj pack gates.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

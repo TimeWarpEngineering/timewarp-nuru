@@ -1,6 +1,9 @@
-// Main incremental source generator that wires together locators, extractors, and emitters
-// to produce the RunAsync interceptor.
-//
+#region Purpose
+// Incremental source generator that wires locators, extractors, and emitters to produce the RunAsync
+// interceptor.
+#endregion
+
+#region Design
 // Pipeline:
 //   1. Locate Build() call sites → each Build() is one unique app
 //   2. For each Build(), extract AppModel with all entry points (RunAsync, RunReplAsync)
@@ -12,6 +15,7 @@
 //
 // This generator also performs all model validation (previously in NuruAnalyzer),
 // ensuring that validation happens on the exact model being emitted.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

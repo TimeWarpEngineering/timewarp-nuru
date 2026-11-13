@@ -1,3 +1,7 @@
+#region Purpose
+// Redirects the process console writers; the only place the daemon package touches Console.
+#endregion
+
 namespace TimeWarp.Nuru.Daemon;
 
 /// <summary>

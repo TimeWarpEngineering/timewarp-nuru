@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Pins REPL session lifecycle: start, prompt loop, exit commands and clean shutdown.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,3 +1,7 @@
+#region Purpose
+// Extension methods that enable shell completion on NuruAppBuilder and its endpoint builders.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

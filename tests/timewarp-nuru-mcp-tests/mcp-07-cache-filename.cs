@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-mcp/timewarp-nuru-mcp.csproj
 
+#region Purpose
+// Pins how the MCP server derives cache file names.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

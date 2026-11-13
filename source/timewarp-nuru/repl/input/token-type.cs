@@ -1,3 +1,7 @@
+#region Purpose
+// Enum of the token kinds REPL input is classified into.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins CompletionSourceRegistry registration and lookup of completion sources by parameter name and type.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

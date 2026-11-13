@@ -1,3 +1,7 @@
+#region Purpose
+// A positioned token of REPL input produced for syntax highlighting.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

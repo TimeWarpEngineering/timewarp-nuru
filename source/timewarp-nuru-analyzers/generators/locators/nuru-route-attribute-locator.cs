@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for [NuruRoute] endpoint classes.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

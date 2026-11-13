@@ -1,3 +1,7 @@
+#region Purpose
+// Exception thrown when a route pattern cannot be parsed or validated.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

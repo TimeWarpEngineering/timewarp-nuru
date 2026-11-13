@@ -1,3 +1,7 @@
+#region Purpose
+// Global usings shared by every file in timewarp-nuru-search.
+#endregion
+
 global using Microsoft.Data.Sqlite;
 global using Microsoft.Extensions.Logging;
 global using System;

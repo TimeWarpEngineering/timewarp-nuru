@@ -1,3 +1,7 @@
+#region Purpose
+// Registry of framework service types the NuruApp runtime always provides, so they need no registration.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

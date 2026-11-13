@@ -1,3 +1,7 @@
+#region Purpose
+// Parses key combination strings such as Ctrl+Shift+Left into a ConsoleKey and ConsoleModifiers pair.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

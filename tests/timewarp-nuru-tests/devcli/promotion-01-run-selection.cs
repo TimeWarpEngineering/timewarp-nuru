@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins CiRunPromotion.OrderCandidateRuns, the candidate CI run ordering used by build-once/promote.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

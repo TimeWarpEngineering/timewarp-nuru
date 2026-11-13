@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru-search/timewarp-nuru-search.csproj
 
+#region Purpose
+// Pins the full-text search query sanitizer used before queries reach the SQLite FTS index.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

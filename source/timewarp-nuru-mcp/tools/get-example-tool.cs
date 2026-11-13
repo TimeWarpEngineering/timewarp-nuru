@@ -1,3 +1,7 @@
+#region Purpose
+// MCP tool that serves TimeWarp.Nuru code examples from GitHub with caching.
+#endregion
+
 namespace TimeWarp.Nuru.Mcp.Tools;
 
 using TimeWarp.Nuru.Mcp.Services;

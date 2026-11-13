@@ -1,3 +1,7 @@
+#region Purpose
+// Attribute that overrides the configuration section key an options class binds to.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

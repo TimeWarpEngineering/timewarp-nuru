@@ -1,3 +1,7 @@
+#region Purpose
+// Nested variant of CompiledRouteBuilder that returns to its parent builder inside a fluent chain.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,3 +1,7 @@
+#region Purpose
+// Entry point of the Nuru MCP server: configures stderr logging, stdio transport, and registers the tools.
+#endregion
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

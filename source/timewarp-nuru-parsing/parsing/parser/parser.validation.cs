@@ -1,3 +1,7 @@
+#region Purpose
+// Type and identifier validation methods for the parser (partial class).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

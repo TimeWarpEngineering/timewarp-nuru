@@ -1,3 +1,7 @@
+#region Purpose
+// Runs a CLI executable with `--capabilities` and parses the JSON catalog it returns for indexing.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 public sealed partial class CapabilitiesClient

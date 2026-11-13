@@ -1,5 +1,7 @@
+#region Purpose
 // Emits pattern matching code for individual routes.
 // Generates C# pattern matching expressions for each route definition.
+#endregion
 
 #region Design
 // UNIFIED MATCHING: All routes use EmitMatch (formerly EmitComplexMatch).

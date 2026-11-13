@@ -1,3 +1,7 @@
+#region Purpose
+// Root syntax node representing a complete route pattern.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

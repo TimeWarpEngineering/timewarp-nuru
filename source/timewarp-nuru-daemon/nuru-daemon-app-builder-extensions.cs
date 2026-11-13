@@ -1,3 +1,7 @@
+#region Purpose
+// Builder extension that makes an app a served app: a built-in serve route plus route forwarding.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using TimeWarp.Nuru.Daemon;

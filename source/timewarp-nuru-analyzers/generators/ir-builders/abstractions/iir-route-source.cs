@@ -1,7 +1,11 @@
+#region Purpose
 // Marker interface for IR builders that can create routes and nested groups.
-//
+#endregion
+
+#region Design
 // Implemented by both IrAppBuilder (top-level) and IrGroupBuilder (nested).
 // Enables unified dispatch in DslInterpreter for Map() and WithGroupPrefix() calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

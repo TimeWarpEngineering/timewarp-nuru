@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins catch-all route parameters that capture the remaining arguments.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

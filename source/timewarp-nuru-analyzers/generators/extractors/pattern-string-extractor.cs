@@ -1,9 +1,13 @@
+#region Purpose
 // Extracts route segments from pattern strings using the existing PatternParser.
-//
+#endregion
+
+#region Design
 // Integrates with timewarp-nuru-parsing project:
 // - Parses mini-language pattern strings like "deploy {env|Target} --force,-f|Skip"
 // - Converts Syntax nodes (LiteralSyntax, ParameterSyntax, OptionSyntax) to SegmentDefinitions
 // - Handles both simple patterns ("status") and complex patterns with parameters/options
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

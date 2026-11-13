@@ -1,3 +1,7 @@
+#region Purpose
+// MCP tool that reports TimeWarp.Nuru version, git commit hash, and build date from assembly metadata.
+#endregion
+
 namespace TimeWarp.Nuru.Mcp.Tools;
 
 using System.Globalization;

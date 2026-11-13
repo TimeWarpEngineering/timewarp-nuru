@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins PropsVersionReader.Read: trims the Version element and treats a missing or blank element, file, or
+// directory as no version (task 470-007).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

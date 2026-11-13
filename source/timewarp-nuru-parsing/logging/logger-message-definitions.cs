@@ -1,3 +1,7 @@
+#region Purpose
+// LoggerMessage.Define definitions for parsing logs, avoiding allocations when logging is disabled.
+#endregion
+
 #if !ANALYZER_BUILD
 namespace TimeWarp.Nuru;
 

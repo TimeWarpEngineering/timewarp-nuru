@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test PSReadLine word operations (case conversion, character transposition)
+#region Purpose
+// Pins PSReadLine word operations in the REPL: case conversion and character transposition.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

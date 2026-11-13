@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for interactive history search (Ctrl+R and Ctrl+S).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that generated route binding parses numbers and dates with invariant culture.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins CiRunPromotion.SelectPackagesArtifact, which picks the packages artifact from a CI run.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

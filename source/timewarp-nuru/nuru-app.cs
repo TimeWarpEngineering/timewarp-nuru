@@ -1,3 +1,7 @@
+#region Purpose
+// Runtime NuruApp partial: terminal, exclusivity gate, and the state a built app carries.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using OpenTelemetry.Metrics;
@@ -477,7 +481,7 @@ public partial class NuruApp
   /// code. In a daemon or MCP host call only <see cref="NuruCallContext.CurrentExitCode"/> is per call.
   /// </para>
   /// </returns>
-#pragma warning disable CA1822 // Member does not access instance data 
+#pragma warning disable CA1822 // Member does not access instance data
   public Task<int> RunAsync(string[] args)
   {
     // This should never execute - interceptor replaces this call

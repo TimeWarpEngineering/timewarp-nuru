@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for NuruApp.CreateBuilder(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

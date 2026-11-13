@@ -1,3 +1,8 @@
+#region Purpose
+// Shared category constants for the DiagnosticDescriptors partial class; the descriptors themselves live in the
+// per-category partial files.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 internal static partial class DiagnosticDescriptors

@@ -1,9 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// NuruApp.TryBind / InvokeAsync / RenderAsync: the public JSON binder and invoke (task 508-003).
-// Parity cases run the same JSON through --json-args and through the public API and compare
-// the text each produces.
+#region Purpose
+// Pins the public JSON binder and invoke API (NuruApp.TryBind, InvokeAsync, RenderAsync), with parity against
+// --json-args (task 508-003).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

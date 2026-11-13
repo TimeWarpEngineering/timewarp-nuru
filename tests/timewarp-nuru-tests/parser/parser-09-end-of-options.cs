@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins parsing of the end-of-options separator.
+#endregion
+
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
 
 #if !JARIBU_MULTI

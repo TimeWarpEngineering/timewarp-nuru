@@ -1,9 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Verifies the non-intercepted RunReplAsync stub tells the caller to ENABLE the
-// source generator (482-004 / review R-6). The stub is reached through a method
-// group, which interceptors do not replace, so the fallback body actually runs.
+#region Purpose
+// Pins that the non-intercepted RunReplAsync stub tells the caller to enable the source generator (482-004).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .WithOption(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

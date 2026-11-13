@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the ConfigureServices argument forms the generator accepts: lambda, qualified method, anonymous method.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR TEST: ConfigureServices Patterns
 // ═══════════════════════════════════════════════════════════════════════════════

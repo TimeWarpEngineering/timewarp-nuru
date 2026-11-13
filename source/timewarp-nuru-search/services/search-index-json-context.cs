@@ -1,3 +1,7 @@
+#region Purpose
+// Source-generated JSON context so the search tool stays AOT-compatible when storing endpoint JSON.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 /// <summary>

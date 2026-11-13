@@ -1,3 +1,8 @@
+#region Purpose
+// Single source of truth for parsing CLI-friendly boolean spellings (yes/no, on/off, 1/0,
+// enabled/disabled).
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

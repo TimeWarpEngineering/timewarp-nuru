@@ -1,5 +1,6 @@
-// Model for interface implementations declared via .Implements<T>() on delegate routes.
-// See kanban task #316 for design.
+#region Purpose
+// Generator model for an interface declared via .Implements<T>() on a delegate route (kanban task #316).
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

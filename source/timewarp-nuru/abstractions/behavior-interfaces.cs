@@ -1,6 +1,11 @@
-// Pipeline behavior interface for cross-cutting concerns.
+#region Purpose
+// Pipeline behavior interfaces for cross-cutting concerns that wrap handler execution.
+#endregion
+
+#region Design
 // See kanban task #315 for design decisions.
 // See kanban task #316 for filtered behavior design (INuruBehavior<TFilter>).
+#endregion
 
 namespace TimeWarp.Nuru;
 

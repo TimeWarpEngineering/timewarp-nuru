@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins lexer tokenization of advanced route pattern features.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

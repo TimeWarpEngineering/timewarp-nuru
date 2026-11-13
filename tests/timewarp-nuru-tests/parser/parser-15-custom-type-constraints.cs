@@ -1,6 +1,8 @@
 #!/usr/bin/env -S dotnet --
 
-// Test custom type constraints after parser fix for issue #62
+#region Purpose
+// Pins parsing of custom type constraints, after the parser fix for issue 62.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

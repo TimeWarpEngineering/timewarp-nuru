@@ -1,3 +1,8 @@
+#region Purpose
+// Implements the `index rebuild` command: re-reads the capabilities of one or all CLIs and refreshes the
+// index.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;

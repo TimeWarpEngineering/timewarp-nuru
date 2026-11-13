@@ -1,3 +1,7 @@
+#region Purpose
+// Interned strings for common values used across the framework, to reduce allocations.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

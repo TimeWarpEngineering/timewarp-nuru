@@ -1,3 +1,7 @@
+#region Purpose
+// Descriptors for NURU_P parse diagnostics: syntax errors in route pattern strings.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

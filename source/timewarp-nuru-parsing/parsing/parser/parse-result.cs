@@ -1,3 +1,7 @@
+#region Purpose
+// Result of a parsing operation: the value or the parse errors.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

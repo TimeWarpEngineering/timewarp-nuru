@@ -1,10 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// NuruCallContext (task 508-016): calls in their own context run concurrently, each with its own terminal,
-// console capture, exit code, working directory and service scope (source-generated DI and
-// UseMicrosoftDependencyInjection()). [Exclusive] / .Exclusive() routes serialize; cancelling one call
-// cancels only it; a plain RunAsync still sets Environment.ExitCode.
+#region Purpose
+// Pins NuruCallContext isolation: concurrent calls each get their own terminal, exit code, directory and DI
+// scope (task 508-016).
+#endregion
 
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;

@@ -1,4 +1,9 @@
 #!/usr/bin/env -S dotnet --
+
+#region Purpose
+// Pins that services with constructor dependencies are resolved at compile time as new T(deps), not by runtime DI.
+#endregion
+
 #pragma warning disable CA1849 // Call async methods when in async method
 
 // ═══════════════════════════════════════════════════════════════════════════════

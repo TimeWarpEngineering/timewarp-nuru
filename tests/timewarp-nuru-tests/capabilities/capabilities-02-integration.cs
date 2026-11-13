@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Integration tests for --capabilities route
+#region Purpose
+// Pins the --capabilities route end to end, including that its output is valid JSON.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

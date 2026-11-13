@@ -1,6 +1,11 @@
-// Base context for pipeline behaviors.
+#region Purpose
+// Base context handed to pipeline behaviors, carrying request metadata and the command instance.
+#endregion
+
+#region Design
 // See kanban task #315 for design decisions.
 // See kanban task #316 for typed context design (BehaviorContext<TFilter>).
+#endregion
 
 namespace TimeWarp.Nuru;
 

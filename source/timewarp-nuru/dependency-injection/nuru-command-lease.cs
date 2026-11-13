@@ -1,3 +1,7 @@
+#region Purpose
+// Lease types that run generator-emitted scope cleanup when a command method returns.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

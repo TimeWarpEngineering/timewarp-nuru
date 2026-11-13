@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins registration of the --check-updates route through AddCheckUpdatesRoute() (task 132).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

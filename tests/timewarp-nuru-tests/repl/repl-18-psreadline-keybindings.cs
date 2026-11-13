@@ -1,8 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Tests for PSReadLine-compatible keybindings (Task 043_001)
-// Verifies both primary and alternative keybindings work correctly
+#region Purpose
+// Pins PSReadLine-compatible REPL keybindings, both primary and alternative (task 043_001).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

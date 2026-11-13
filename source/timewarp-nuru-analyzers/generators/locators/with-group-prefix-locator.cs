@@ -1,4 +1,6 @@
+#region Purpose
 // Locator for .WithGroupPrefix(...) calls.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

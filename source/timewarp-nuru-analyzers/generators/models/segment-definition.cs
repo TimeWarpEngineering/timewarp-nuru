@@ -1,3 +1,7 @@
+#region Purpose
+// Abstract base and concrete types for the parsed segments of a route pattern in the generator model.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 /// <summary>

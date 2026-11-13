@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that the runtime type converter rejects undefined enum values, for plain and [Flags] enums.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

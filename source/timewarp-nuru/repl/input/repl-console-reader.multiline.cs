@@ -1,3 +1,7 @@
+#region Purpose
+// ReplConsoleReader partial for multiline editing and rendering with a continuation prompt.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

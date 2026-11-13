@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Regression test for #387: enum parameters in option positions (--option {enumValue}) must bind.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

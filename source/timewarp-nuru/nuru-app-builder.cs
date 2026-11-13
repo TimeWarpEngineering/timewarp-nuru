@@ -1,3 +1,7 @@
+#region Purpose
+// Core of NuruAppBuilder, the builder used to configure Nuru applications.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

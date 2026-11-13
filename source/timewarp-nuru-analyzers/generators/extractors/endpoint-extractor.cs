@@ -1,11 +1,7 @@
-// Extracts route definitions from classes decorated with [NuruRoute] attribute.
-//
-// Handles endpoints pattern:
-// - Read pattern from [NuruRoute("pattern")]
-// - Check base class for [NuruRouteGroup] for prefix
-// - Infer message type from interface (IQuery<T>, ICommand<T>)
-// - Find [Parameter] and [Option] properties
-// - Find nested Handler class
+#region Purpose
+// Extracts route definitions from [NuruRoute] endpoint classes: pattern, group prefix, message type,
+// [Parameter]/[Option] properties, and the nested Handler class.
+#endregion
 
 #region Design
 // ENDPOINT SCOPING: All [NuruRoute] classes in a compilation are collected globally by the

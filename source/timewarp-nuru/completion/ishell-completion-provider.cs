@@ -1,3 +1,7 @@
+#region Purpose
+// Contract for generator-emitted static completion data consumed by the `__complete` protocol.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

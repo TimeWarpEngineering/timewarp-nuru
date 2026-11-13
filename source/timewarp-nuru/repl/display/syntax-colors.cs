@@ -1,3 +1,7 @@
+#region Purpose
+// Color constants for REPL syntax highlighting, based on PSReadLine's scheme.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -1,8 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
-// A singleton that injects a Scoped service which injects a command-scoped service (508-007 review M1).
-// The Scoped service lives for one run, in the run's command slot. The singleton (NURU056) gets its own
-// copy, so it never keeps an instance the run disposes, and the next call's handler gets new, live instances.
+#region Purpose
+// Pins that a singleton injecting a Scoped service that injects a command-scoped service gets its own copy,
+// so it never keeps an instance the run disposes.
+#endregion
 
 #pragma warning disable CA1063 // Probes only record Dispose calls.
 #pragma warning disable CA1816

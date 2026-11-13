@@ -1,5 +1,8 @@
+#region Purpose
 // Extracts service registration information from ConfigureServices() calls.
-//
+#endregion
+
+#region Design
 // Handles:
 // - .ConfigureServices(services => { ... })           - inline lambda
 // - .ConfigureServices(ConfigureServices)             - method group reference
@@ -17,6 +20,7 @@
 //   SymbolDisplay.FormatLiteral so quotes, backslashes, and newlines compile.
 //   Other primitives use SymbolDisplay.FormatPrimitive plus the C# type suffix
 //   FormatPrimitive omits. Enum defaults are fully-qualified members.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

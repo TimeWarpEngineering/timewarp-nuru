@@ -1,7 +1,9 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
-// Test advanced tab completion scenarios (Section 7 of REPL Test Plan)
+#region Purpose
+// Pins advanced REPL tab completion scenarios (Section 7 of the REPL test plan).
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

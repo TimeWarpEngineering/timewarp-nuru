@@ -1,6 +1,10 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
+#region Purpose
+// Pins that sensitive commands are excluded from REPL history via the ignore-command rules.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

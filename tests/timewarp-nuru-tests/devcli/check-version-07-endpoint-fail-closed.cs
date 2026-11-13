@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that CheckVersionCommand fails closed on a NuGet outage and rejects an invalid --package id (task
+// 470-007).
+#endregion
+
 // This file is guarded ENTIRELY by #if !JARIBU_MULTI (not just the runner entry
 // point like sibling devcli test files): it references CheckVersionCommand, whose
 // endpoint file is compiled here (tests/timewarp-nuru-tests/devcli/Directory.Build.props)

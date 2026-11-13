@@ -1,5 +1,11 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Regression test for GitHub issue #160: nested [NuruRouteGroup] inheritance must concatenate every prefix in
+// the chain.
+#endregion
+
+#region Design
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGRESSION TEST: GitHub Issue #160
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -24,6 +30,7 @@
 // BaseType for [NuruRouteGroup], not the full inheritance chain.
 //
 // ═══════════════════════════════════════════════════════════════════════════════
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

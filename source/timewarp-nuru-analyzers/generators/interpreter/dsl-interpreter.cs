@@ -1,5 +1,8 @@
+#region Purpose
 // Semantic DSL interpreter that walks blocks statement-by-statement.
-//
+#endregion
+
+#region Design
 // Instead of pattern-matching syntax, this interpreter "executes" the DSL
 // by dispatching method calls to corresponding IR builder methods.
 //
@@ -16,6 +19,7 @@
 // - Uses marker interfaces (IIrRouteSource, IIrAppBuilder, IIrGroupBuilder, IIrRouteBuilder)
 //   for polymorphic dispatch without explicit type enumeration
 // - Fails fast on unrecognized DSL methods
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 

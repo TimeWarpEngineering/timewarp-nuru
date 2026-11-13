@@ -1,3 +1,7 @@
+#region Purpose
+// Global usings shared by the completion files of timewarp-nuru.
+#endregion
+
 global using Microsoft.Extensions.Logging;
 global using System.Collections.ObjectModel;
 global using System.Diagnostics.CodeAnalysis;

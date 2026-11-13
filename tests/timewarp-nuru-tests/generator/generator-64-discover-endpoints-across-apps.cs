@@ -3,9 +3,9 @@
 #:project $(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj
 #:package Microsoft.CodeAnalysis.CSharp
 
-// NURU_A003 (task 522): unfiltered DiscoverEndpoints() in a compilation that builds Nuru apps in
-// more than one source file pulls the endpoints of every other file into the app. One file with
-// many apps (a standalone test run) and a one-app CLI stay silent. #pragma suppresses it.
+#region Purpose
+// Pins NURU_A003: unfiltered DiscoverEndpoints() warns when the compilation builds apps in more than one source file.
+#endregion
 
 #if !JARIBU_MULTI
 return await RunAllTests();

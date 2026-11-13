@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Regression test that generated code fully qualifies the Unit type so async Unit handlers compile.
+#endregion
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GENERATOR REGRESSION TEST: Unit type fully-qualified in generated code (#442)
 // ═══════════════════════════════════════════════════════════════════════════════

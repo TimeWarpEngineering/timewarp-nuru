@@ -1,3 +1,7 @@
+#region Purpose
+// Syntax node for an option segment of a route pattern.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using System.Text;

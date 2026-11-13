@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins that dev release marks the GitHub Release prerelease exactly when the props version has a suffix.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

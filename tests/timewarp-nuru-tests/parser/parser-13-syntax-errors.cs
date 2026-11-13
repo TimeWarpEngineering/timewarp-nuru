@@ -1,5 +1,9 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins parser diagnostics for route pattern syntax errors.
+#endregion
+
 // Clear cache to ensure parser changes are picked up (parsing is source-compiled)
 
 #if !JARIBU_MULTI

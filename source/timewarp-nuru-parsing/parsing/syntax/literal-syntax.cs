@@ -1,3 +1,7 @@
+#region Purpose
+// Syntax node for a literal segment that must match exactly.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

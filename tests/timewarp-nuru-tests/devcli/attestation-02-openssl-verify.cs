@@ -1,5 +1,10 @@
 #!/usr/bin/env -S dotnet --
 
+#region Purpose
+// Pins the openssl verify loop end to end using a throwaway Ed25519 keypair generated in the test (task
+// 458-010).
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

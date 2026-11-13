@@ -1,3 +1,7 @@
+#region Purpose
+// Resolves the location of the search index database under `~/.nuru` and secures it to the owner.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 public static class DatabasePath

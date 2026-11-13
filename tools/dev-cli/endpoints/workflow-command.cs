@@ -296,7 +296,10 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
         {
           string label = BeginStep(++stepNumber, stepNames);
           TestCommand.Handler testHandler = new(Terminal);
-          await testHandler.Handle(new TestCommand { Phase = testPhase }, CancellationToken.None);
+          // GitHub Actions legs collect coverage (task 574); the workflow
+          // installs dotnet-coverage and uploads artifacts/coverage.
+          bool coverage = Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true";
+          await testHandler.Handle(new TestCommand { Phase = testPhase, Coverage = coverage }, CancellationToken.None);
           WriteStepDuration(step, label);
           return WorkflowStageSpan.Result.Done;
         }).ConfigureAwait(false);

@@ -218,10 +218,29 @@ jobs:
           sudo apt-get install -y @($downloaded.FullName)
           exit $LASTEXITCODE
 
+      - name: Install dotnet-coverage
+        # The test legs collect Cobertura through Jaribu runfile coverage
+        # (task 574): `dev workflow` sets JARIBU_COVERAGE=1 under GitHub Actions
+        # and RunAllTests relaunches the runner under dotnet-coverage.
+        if: startsWith(matrix.stage, 'test-')
+        run: |
+          dotnet tool install --global dotnet-coverage
+          exit $LASTEXITCODE
+
       - name: Run CI stage
         env:
           GH_TOKEN: ${{ github.token }}
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage ${{ matrix.stage }}
+
+      - name: Upload coverage
+        # One artifact per test leg so the two legs do not collide.
+        # Line-rate gate (ci-code-coverage.min-line) is not set yet (task 574).
+        if: success() && startsWith(matrix.stage, 'test-')
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ matrix.stage }}
+          path: artifacts/coverage
+          if-no-files-found: warn
 
       - name: DevCli consumer check
         # DevCli ships C# source that consumers compile with their own analyzers.

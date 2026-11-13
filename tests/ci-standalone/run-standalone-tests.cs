@@ -6,6 +6,7 @@
 // its own dotnet run.
 // Run by tests/ci-tests/run-ci-tests.cs after the multi-mode phase, and as its own CI job; kept outside
 // tests/ci-tests so that directory's props do not pull every test file into this compile (task 538).
+// JARIBU_COVERAGE=1 runs it inside one dotnet-coverage collection (task 574).
 #endregion
 
 using TimeWarp.Amuru;
@@ -23,6 +24,20 @@ using TimeWarp.Amuru;
 //   (NoFilter_IncludesAll, Gen20KanbanQuery) only run in this standalone phase (M29)
 // - operation-endpoint-dispatch: the typed HttpClient case is #if !JARIBU_MULTI (NURU050)
 // - generator-28..65: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
+// JARIBU_COVERAGE=1 (dev test --coverage, task 574): relaunch this runner under
+// dotnet-coverage before any child starts, so every per-file `dotnet run` below is
+// profiled by that one collection. This runner registers no test classes, hence
+// allowEmpty. The relaunched child has JARIBU_COVERAGE_ACTIVE=1 and skips this.
+string? coverageRequested = Environment.GetEnvironmentVariable(RunfileCoverageOptions.VariableName);
+if
+(
+  (coverageRequested == "1" || string.Equals(coverageRequested, "true", StringComparison.OrdinalIgnoreCase)) &&
+  Environment.GetEnvironmentVariable(RunfileCoverageOptions.ActiveVariableName) != "1"
+)
+{
+  return await RunAllTests(allowEmpty: true);
+}
+
 string ciDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? ".";
 string[] standaloneTests =
 [

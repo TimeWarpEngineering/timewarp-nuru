@@ -25,7 +25,7 @@
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Builder" Version="1.1.0" />
     <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.15" />
+    <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.16" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.0" />
     <!-- Held at beta.11: beta.13+ ships TWA0038 (500-line cap); task 581 splits the long files, then bumps. TWA0004 (#region Purpose) is clean since task 580. -->
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.15" />

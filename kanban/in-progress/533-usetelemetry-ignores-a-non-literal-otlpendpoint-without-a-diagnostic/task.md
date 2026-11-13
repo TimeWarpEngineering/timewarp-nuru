@@ -37,6 +37,10 @@ Acceptance:
 - [x] `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs` green (via `./bin/dev test`)
 - [ ] Verify with the `tw-nuru-verify` telemetry probe (installed package, clean cache) — deferred: needs a published package carrying this change (next 4.0.0 beta)
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Related: the telemetry doc fix in the docs-alignment task.
@@ -92,7 +96,16 @@ Expect: 11 tests pass, including `Should_report_nuru_t001_for_otlp_endpoint_vari
 `warning NURU_T001: UseTelemetry ignores this value for 'OtlpEndpoint' ... The app reads
 OTEL_EXPORTER_OTLP_ENDPOINT instead.`
 
+### Review
+
+- Round 1. Roster: general. Effort 3 (by-diff). Turn cap 200.
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. No findings.
+- Disposition: clean. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T20:47:31Z
+- Review oracle: reviewed by general (grok, vendor cursor, model grok-4.7), session not reported, max-turns 200, clean — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md, disposition.md — 2026-11-13T20:53:40Z

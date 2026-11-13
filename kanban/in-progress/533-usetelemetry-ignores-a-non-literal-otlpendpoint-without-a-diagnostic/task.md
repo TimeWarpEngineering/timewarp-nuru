@@ -95,3 +95,4 @@ OTEL_EXPORTER_OTLP_ENDPOINT instead.`
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T20:47:31Z

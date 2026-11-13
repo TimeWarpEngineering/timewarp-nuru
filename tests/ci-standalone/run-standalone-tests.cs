@@ -29,6 +29,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-17-local-function-config.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-04-endpoint-zero-package.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-07-endpoint-fail-closed.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-07b-endpoint-declared-feeds.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-19-group-filtering.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-20-parameterized-service-constructor.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-28-interpreter-cycle-guard.cs"),
@@ -55,6 +56,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-53-invalid-route-patterns.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-54-h002-nested-lambda-parameter.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-55-missing-operation-handler.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-55b-missing-operation-handler-constructors.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-56-problem-renderer.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-58-nuru056-per-run-scoped.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-59-referenced-operation-endpoints.cs"),
@@ -66,6 +68,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-68-add-logging-call-shapes.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-69-endpoint-constructor-logger-warning.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-72-run-async-not-intercepted-diagnostic.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-72b-run-async-not-intercepted-closures.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "auto", "operation-endpoint-dispatch.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "telemetry", "telemetry-04-otlp-endpoint-paths.cs"),
 ];

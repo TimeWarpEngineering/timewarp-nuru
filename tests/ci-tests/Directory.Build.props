@@ -56,6 +56,7 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-17-local-function-config.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-07-endpoint-fail-closed.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-07b-endpoint-declared-feeds.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs" />
@@ -109,6 +110,7 @@
          (task 508-001 NURU_H008 missing operation handler); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-55-missing-operation-handler.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-55b-missing-operation-handler-constructors.cs" />
     <!-- generator-56: same Roslyn-hosted generator test pattern as generator-28
          (task 508-011 problem renderer); a visible IResponseRenderer<SharedProblemDetails>
          would also change every problem pair in the multi-mode compilation. Run standalone instead. -->
@@ -152,6 +154,7 @@
          (task 547 NURU_I001 for RunAsync calls no app intercepts); CS0433 collision applies.
          Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-72-run-async-not-intercepted-diagnostic.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-72b-run-async-not-intercepted-closures.cs" />
     <!-- telemetry-04: end-to-end OTLP/HTTP export to a local sink (task 551). OpenTelemetry log
          export never reaches the sink inside this shared assembly, even from a plain
          LoggerFactory with no Nuru code; traces and metrics do. It passes as its own app, which
@@ -195,6 +198,8 @@
          test app an endpoint with an unregistered service -> NURU050 build
          errors across CI (task 454-022 decision A2). -->
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.github-packages.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/nuget-version-service.version-comparison.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/package-feed-lookup.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/github-packages-credential.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/check-version-outcome.cs" />

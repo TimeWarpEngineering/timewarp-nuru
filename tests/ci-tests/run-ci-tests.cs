@@ -5,6 +5,7 @@
 // Multi-mode CI test runner: runs every test class auto-registered into the JARIBU_MULTI assembly, then
 // the standalone phase.
 // NURU_CI_PHASE=multi skips the standalone phase, which CI runs as a job of its own (task 538).
+// JARIBU_COVERAGE=1 runs both phases inside one dotnet-coverage collection (task 574).
 #endregion
 
 using TimeWarp.Amuru;
@@ -23,6 +24,14 @@ WriteLine
   $"Multi-mode execute finished in {multiExecute.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}s"
 );
 
+// JARIBU_COVERAGE=1 (dev test --coverage, task 574): RunAllTests relaunched this
+// script under dotnet-coverage and returned the child's exit code. The child ran
+// every phase, so the parent stops here.
+if (CoverageRelaunchedParent())
+{
+  return multiResult;
+}
+
 string ciDir = AppContext.GetData("EntryPointFileDirectoryPath") as string ?? ".";
 string phase = Environment.GetEnvironmentVariable("NURU_CI_PHASE") ?? "";
 if (phase == "multi")
@@ -39,3 +48,10 @@ int standaloneResult = await Shell.Builder("dotnet")
   .RunAsync();
 
 return multiResult != 0 ? multiResult : standaloneResult;
+
+static bool CoverageRelaunchedParent()
+{
+  string? requested = Environment.GetEnvironmentVariable(RunfileCoverageOptions.VariableName);
+  bool coverage = requested == "1" || string.Equals(requested, "true", StringComparison.OrdinalIgnoreCase);
+  return coverage && Environment.GetEnvironmentVariable(RunfileCoverageOptions.ActiveVariableName) != "1";
+}

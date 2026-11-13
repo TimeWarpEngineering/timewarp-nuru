@@ -443,6 +443,9 @@ dotnet_diagnostic.TW0007.filename = global-usings.cs
 [ganda.audit]
 # This IS the TimeWarp.Nuru repo, so it cannot reference TimeWarp.Nuru as a package.
 nuru.severity = off
+# TimeWarp.SourceGenerators beta.13+ ships TWA0004 (#region Purpose) and TWA0038 (500-line cap).
+# 290 files lack a Purpose region and 44 are over the cap. Tasks 580 and 581 fix the code, then bump.
+package-pin-currency.hold = TimeWarp.SourceGenerators=1.0.0-beta.11 | TWA0004 and TWA0038 fire across the generator until 580 and 581 land | timewarp-nuru 580
 # kebab-path-names prune (additive, basename match):
 # workspace/presentations — ISO-timestamped report files (tw-analysis-report convention);
 # generated/.generated — generator-emitted dirs mirror namespaces, recreated on build;

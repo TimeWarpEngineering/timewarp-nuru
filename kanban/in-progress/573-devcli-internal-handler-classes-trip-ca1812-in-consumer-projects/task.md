@@ -69,6 +69,8 @@ Acceptance:
   generator-73 lacked +x) and `analyzer-suppressions` (a NoWarn `.Replace(...)` property function
   whose tokens the scanner counted); both fixed on this branch.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3a16c70d-30c5-45db-b5a9-0061e951ce93, max-turns 500, Done — 2026-11-13T19:59:03Z
+- Review oracle round 1: Grok 4.7 (grok, vendor xai), body tw-implementation-review, effort 2, roster general, turn cap 120 (cursor session uncapped; no --max-turns flag), session not reported, disposition clean — 2026-11-14. No findings. The restatement matches the task; no misread. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-13T20:08:28Z
 
 ## Results
 
@@ -147,12 +149,20 @@ after `AddGeneratedMediator(services);`; generator-73 passes 4/4; the check-vers
 dispatches through the factory-built handler and prints the version report (currently
 "4.0.0-beta.13 was already released").
 
+### Review
+
+Round 1 (2026-11-14): tw-implementation-review, effort 2, roster general, Grok 4.7, turn cap 120 (cursor uncapped; no `--max-turns` flag), session not reported. Disposition clean. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. The restatement matches the task; no misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### Follow-ups
 
 - Ships in the next DevCli beta (checklist item left open). Then multiavatar can drop
   `tools/dev-cli/endpoints/suppressions.cs` and amuru its CA1812 baseline entries.
 - Mediator handlers that are not nested in a `[NuruRoute]` class (`Map<T>` with an external
   handler) still use reflection registration. No DevCli content uses that shape.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

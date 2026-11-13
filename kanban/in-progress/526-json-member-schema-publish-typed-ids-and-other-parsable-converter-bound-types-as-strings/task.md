@@ -81,6 +81,12 @@ Acceptance:
   added mcphost-08 tests, docs and changelog. Audit boy-scout: `ganda repo audit --fix` set the VS Code
   `window.title` (`vscode-window-icon` advisory; `.vscode/settings.json` is gitignored, so no committed change).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T23:37:27Z
+- Review oracle round 1: Grok 4.7 (grok, vendor xai), body tw-implementation-review, effort 2, roster general, turn cap 120 (cursor session uncapped; no --max-turns flag), session not reported, disposition clean — 2026-11-14. No findings. The restatement matches the task; no misread. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-13T23:43:34Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -147,3 +153,7 @@ Expect: `Passed: 3` (`Should_publish_a_top_level_typed_id_as_a_uuid_string`,
 `Should_bind_typed_ids_through_json_args_and_mcp_arguments`). The `Owner` schema is
 `{"type":"string","format":"uuid"}`, `Members.items` is the same, `Details.properties.Backup` is
 `["string","null"]`, and `tid-assign --json-args '{"Owner":"<guid>",...}'` exits 0.
+
+### Review
+
+Round 1 (2026-11-14): tw-implementation-review, effort 2, roster general, Grok 4.7, turn cap 120 (cursor uncapped; no `--max-turns` flag), session not reported. Disposition clean. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. The restatement matches the task; no misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

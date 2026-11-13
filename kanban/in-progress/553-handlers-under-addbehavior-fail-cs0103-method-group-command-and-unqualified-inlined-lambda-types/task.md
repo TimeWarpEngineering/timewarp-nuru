@@ -91,3 +91,4 @@ shows `__handler_0() => global::TimeWarp.Nuru.Tests.Generator.Gen74InlinedLambda
 - 2026-11-14 implement (claude, ganda task work): merged origin/master, reproduced in generator-74,
   added `LambdaBodyQualifier`, updated generator-48 expectations. Boy-scout: audit `--fix` for the
   `vscode-window-icon` advisory (ignored local file, nothing committed).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T21:21:38Z

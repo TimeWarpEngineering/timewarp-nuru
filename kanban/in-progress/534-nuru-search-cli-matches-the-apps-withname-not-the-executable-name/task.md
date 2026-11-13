@@ -33,6 +33,10 @@ Acceptance:
 - [x] `ganda runfile cache --clear`, then `dotnet run tests/ci-tests/run-ci-tests.cs` green
 - [x] Verify with the `tw-nuru-verify` search probe
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Use `.Map<T>()` in tests, not `DiscoverEndpoints()`.
@@ -60,6 +64,8 @@ Acceptance:
 - 2026-11-14 implement oracle (ganda task work, implementer-claude): merged origin/master (kanban 531
   land), implemented the either-name key, tests, docs; gates green.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-13T23:03:28Z
+- Review oracle: general, effort 2, session not reported, max-turns uncapped (bound cap 120), round 1 disposition clean — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-13T23:11:20Z
 
 ## Results
 
@@ -115,3 +121,7 @@ nuru index list
 
 Observed exactly that on 2026-11-14. Automated equivalent:
 `Should_auto_index_by_executable_name_then_search_by_either_name` in `search-07-cli-key.cs`.
+
+### Review
+
+Round 1 (general, effort 2) raised no findings. Counts: bug 0, suggestion 0, nit 0; open 0. Disposition: clean. No wontfix and no escalation. The implementer restatement matches the task; no misread. Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.

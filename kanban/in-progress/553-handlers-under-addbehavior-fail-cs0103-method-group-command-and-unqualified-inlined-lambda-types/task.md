@@ -50,6 +50,44 @@ Acceptance:
 - Seen, not fixed here: NURU_H002 reports `nameof(SomeType)` inside a handler lambda as a captured
   variable named `nameof`. The test uses `typeof(...).Name` instead.
 
+## Results
+
+- `source/timewarp-nuru-analyzers/generators/extractors/lambda-body-qualifier.cs` (new): rewrites an
+  inlined handler body from the SemanticModel so every caller-scoped name is fully qualified.
+- `handler-extractor.cs`: parenthesized lambdas, simple lambdas, and anonymous methods store the
+  qualified body in `LambdaBodySource` instead of `ToFullString()`.
+- `tests/timewarp-nuru-tests/generator/generator-74-inlined-lambda-qualified-names.cs` (new, runs in
+  CI multi-mode): a namespace type in an expression body with and without a behavior; a block body
+  with types, an enum, a nested record, a generic `List<T>`, a const, `typeof`, and an extension
+  call inside interpolation holes; a handler that takes a DI service; an unqualified static call
+  from inside the enclosing class.
+- `generator-48`: expectations now carry `global::System.Threading.Tasks.Task` and `global::Q`.
+
+### How to validate
+
+Smoke:
+
+```bash
+ganda runfile cache --clear
+dotnet run tests/timewarp-nuru-tests/generator/generator-74-inlined-lambda-qualified-names.cs
+```
+
+Expect: `Total: 5`, `Passed: 5`. Before the fix the file did not compile (CS0103 `Gen74Format`,
+CS0246 `Gen74Kind`, CS1061 `Gen74Twice`). The generated file
+`artifacts/generated/generator-74-inlined-lambda-qualified-names.cs/.../NuruGenerated.g.cs`
+shows `__handler_0() => global::TimeWarp.Nuru.Tests.Generator.Gen74InlinedLambdaQualifiedNames.Gen74Probe.Ping();`.
+
+### Gates
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Build | `./bin/dev build` | pass, 0 errors |
+| Test | `./bin/dev test` | pass: multi-mode 2195 total, 2189 passed, 6 skipped (generator-74 5/5 in it); standalone 46 files, 0 failed |
+| Audit | `ganda repo audit` | first run: pass with 1 advisory (`vscode-window-icon`, `.vscode/settings.json` missing); `ganda repo audit --fix` wrote the ignored local file; rerun: "Repository passes all audit checks." |
+
 ## Session
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
+- 2026-11-14 implement (claude, ganda task work): merged origin/master, reproduced in generator-74,
+  added `LambdaBodyQualifier`, updated generator-48 expectations. Boy-scout: audit `--fix` for the
+  `vscode-window-icon` advisory (ignored local file, nothing committed).

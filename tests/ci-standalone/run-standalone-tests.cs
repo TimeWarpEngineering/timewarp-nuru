@@ -23,7 +23,7 @@ using TimeWarp.Amuru;
 // - generator-19/20: multi-included for filtered cases, but #if !JARIBU_MULTI methods
 //   (NoFilter_IncludesAll, Gen20KanbanQuery) only run in this standalone phase (M29)
 // - operation-endpoint-dispatch: the typed HttpClient case is #if !JARIBU_MULTI (NURU050)
-// - generator-28..65: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
+// - generator-28..75: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
 // JARIBU_COVERAGE=1 (dev test --coverage, task 574): relaunch this runner under
 // dotnet-coverage before any child starts, so every per-file `dotnet run` below is
 // profiled by that one collection. This runner registers no test classes, hence
@@ -85,6 +85,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-72-run-async-not-intercepted-diagnostic.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-72b-run-async-not-intercepted-closures.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-73-nested-handler-factories.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-75-consumer-surface-no-ivt.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "auto", "operation-endpoint-dispatch.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "telemetry", "telemetry-04-otlp-endpoint-paths.cs"),
 ];
@@ -100,7 +101,10 @@ string[] sharedProjects =
 [
   "source/timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj",
   "source/timewarp-nuru-build/timewarp-nuru-build.csproj",
-  "source/timewarp-nuru/timewarp-nuru.csproj"
+  "source/timewarp-nuru/timewarp-nuru.csproj",
+  // generator-75 references the daemon and MCP host packages (task 529).
+  "source/timewarp-nuru-daemon/timewarp-nuru-daemon.csproj",
+  "source/timewarp-nuru-mcphost/timewarp-nuru-mcphost.csproj"
 ];
 
 foreach (string sharedProject in sharedProjects)

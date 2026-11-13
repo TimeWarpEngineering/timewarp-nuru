@@ -11,6 +11,17 @@
 //   5. Validate the combined model (fluent + endpoints)
 //   6. Report diagnostics and emit generated interceptor code
 // This generator also performs all model validation, so it runs on the exact model being emitted.
+//
+// Consumer surface: generated code compiles into the consumer's assembly, so an emitter may name
+// only public types and members of the TimeWarp.Nuru* runtime assemblies (TimeWarp.Nuru,
+// TimeWarp.Nuru.Daemon, TimeWarp.Nuru.McpHost) plus what the consumer itself declares or the
+// TimeWarp.Nuru.Build task writes into it (TimeWarp.Nuru.Generated.NuruUserTypesJsonContext,
+// NuruJsonMemberContext). Anything the generated code calls into the runtime must be public, even
+// when it is plumbing; keep it in the runtime and expose a narrow public entry point rather than
+// emitting an internal name. Repo tests cannot catch a breach: internals-visible-to.g.cs grants
+// InternalsVisibleTo to every test assembly. generator-75-consumer-surface-no-ivt compiles every
+// emitter's output under an ungranted assembly name, so a new emitter path that can name a
+// runtime type adds a case there (kanban 528, 529).
 #endregion
 
 namespace TimeWarp.Nuru.Generators;

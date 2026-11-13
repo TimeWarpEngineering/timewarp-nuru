@@ -233,6 +233,7 @@ internal static partial class JsonArgsEmitter
     if (slot.VariableName is null)
       return;
 
+    string patternLiteral = pattern;
     pattern = ForInterpolation(pattern);
     string ind = new(' ', indent);
     string expected = Escape(slot.ExpectedType);
@@ -263,7 +264,7 @@ internal static partial class JsonArgsEmitter
     sb.AppendLine($"{ind}}}");
     sb.AppendLine($"{ind}else if (__jsonMap.TryGetValue(\"{Escape(slot.Key)}\", out global::System.Text.Json.JsonElement __fill_{slot.Id}))");
     sb.AppendLine($"{ind}{{");
-    EmitAssignFromJson(sb, slot, $"__fill_{slot.Id}", jsonFail, indent + 2);
+    EmitAssignFromJson(sb, slot, $"__fill_{slot.Id}", jsonFail, patternLiteral, indent + 2);
     sb.AppendLine($"{ind}}}");
   }
 

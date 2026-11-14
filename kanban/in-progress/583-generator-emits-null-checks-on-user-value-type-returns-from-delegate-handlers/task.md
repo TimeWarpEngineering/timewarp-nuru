@@ -50,8 +50,8 @@ Acceptance criteria:
 ## Review
 
 - Round 1: Blocked — open M1
-- Fix pass 1 (round 2): M1 wontfix. The finding used the wrong base, `master`; this task stacks on `feature/generator-fixes-2026-11-14`
-
+- Fix pass 1: M1 wontfix. The finding used the wrong base, `master`; this task stacks on `feature/generator-fixes-2026-11-14`
+- Round 2: Done
 ## Notes
 
 - Workaround in 529's lane: the handler returns `shade.ToString()`.
@@ -69,6 +69,8 @@ Acceptance criteria:
   `ganda task work-set --ids 586,583,584,585 --into feature/generator-fixes-2026-11-14`. This branch was cut
   from that branch's tip `75b4475f` (PR #405, task 586, merged there, not into `master`), so 586's files are base, not
   this task's delta. Disposition wontfix is in `review/round-1/merged.md`. No product edit; gates rerun.
+- Review round 2 (2026-11-14): general, effort 1, roster general, turn cap 80 (cursor uncapped). Reviewer Grok 4.7. Re-checked M1 against `origin/feature/generator-fixes-2026-11-14` (`75b4475f`) ... `HEAD`. M1 stays wontfix. No new findings. Disposition `accepted-exceptions` in `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 80), artifacts `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md` — 2026-11-14
 
 ## Results
 
@@ -129,10 +131,18 @@ the struct writes both members, the null `VtrShade?` writes nothing); generator-
 
 ### Review
 
-Round 1 (general, effort 2) is in `review/round-1/merged.md`. It had one bug (M1): the diff against `master`
-contained task 586's string-constraint change. Fix pass 1 marked it wontfix because `master` is the wrong
-base. This task is in the work-set into `feature/generator-fixes-2026-11-14`, and its PR targets that branch. The
-branch was cut from that branch's tip `75b4475f`, which already has 586 (PR #405). The task's own delta is
-`git diff --stat origin/feature/generator-fixes-2026-11-14...HEAD`. That diff has only the 583 files listed under
-What changed, and no 586 file (`type-conversion-map.cs`, `routing-38`, and the others). Review a later round
-against that base. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Rounds: 2. Roster: general. Effort: round 1 was 2; round 2 was 1.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 1 |
+| suggestion | 0 | 0 | 0 |
+| nit | 0 | 0 | 0 |
+
+Disposition: `accepted-exceptions`. Final open count: 0.
+
+M1 (bug, wontfix): round 1 saw task 586's string-constraint change in the diff against `master`. The task stacks on `feature/generator-fixes-2026-11-14` (`75b4475f`, PR #405). Round 2 confirmed `git diff --name-only origin/feature/generator-fixes-2026-11-14...HEAD` has no 586 product file. 586 reaches `master` through the work-set, under task 586. No escalation.
+
+The implementer restatement matches the original task. No misread.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.

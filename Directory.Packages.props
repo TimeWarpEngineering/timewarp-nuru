@@ -23,16 +23,16 @@
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Builder" Version="1.1.0" />
-    <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Builder" Version="2.1.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.16" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.1-beta.1" />
     <!-- Held at beta.11: beta.13+ ships TWA0038 (500-line cap); task 581 splits the long files, then bumps. TWA0004 (#region Purpose) is clean since task 580. -->
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.32" />
     <!-- TimeWarp.Contracts 2.0.0-beta.31 depends on TimeWarp.Mediator 15.0.0-beta.4, so the two move together (task 566). -->
-    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.6" />
-    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.8" />
+    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.8" />
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="Shouldly" Version="5.0.0-preview.2" />

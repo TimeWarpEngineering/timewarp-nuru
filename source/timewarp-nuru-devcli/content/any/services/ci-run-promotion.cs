@@ -54,6 +54,19 @@
 // predates the version bump) all count; the caller does not need to
 // distinguish which, since all of them mean "these exact bytes must not ship
 // under this version."
+//
+// DescribeUnreleasableRun (kanban task 568): `dev release` step 8 used to
+// accept the first OrderCandidateRuns match at a commit as "green". A
+// workflow_dispatch probe run (OIDC login only, no build, no pack) passes that
+// filter, so the guard targeted a commit the release event could not promote
+// (locate-run finds the run, download-artifact finds no Packages-*). A run now
+// counts for the release target only when SelectPackagesArtifact returns Found
+// on its artifact list: the same rule the Actions-side download step applies,
+// so the local guard and the release pipeline agree on what "green" means. The
+// check is on the artifact, not the event or dispatch inputs: it also covers a
+// run cancelled after test but before upload, a pruned artifact, and an
+// expired one. The return value is the operator-facing skip line (run id,
+// event, reason) or null when the run is usable.
 #endregion
 
 namespace DevCli;
@@ -185,6 +198,29 @@ internal static class CiRunPromotion
     }
 
     return new PackagesArtifactOutcome(PackagesArtifactStatus.Expired, null, [.. matching.Select(artifact => artifact.Name)]);
+  }
+
+  /// <summary>
+  /// Returns <see langword="null"/> when <paramref name="run"/> has a live
+  /// "Packages-*" artifact in <paramref name="artifacts"/> (the release event can
+  /// promote it); otherwise the skip line
+  /// <c>skipped run {id} ({event}, {reason})</c> naming why it cannot.
+  /// </summary>
+  public static string? DescribeUnreleasableRun(CiRunSummary run, IReadOnlyList<RunArtifact> artifacts)
+  {
+    ArgumentNullException.ThrowIfNull(run);
+    ArgumentNullException.ThrowIfNull(artifacts);
+
+    PackagesArtifactOutcome outcome = SelectPackagesArtifact(artifacts);
+
+    string? reason = outcome.Status switch
+    {
+      PackagesArtifactStatus.Found => null,
+      PackagesArtifactStatus.Expired => $"Packages-* artifact expired: {string.Join(", ", outcome.ExpiredNames)}",
+      _ => "no Packages-* artifact"
+    };
+
+    return reason is null ? null : $"skipped run {run.DatabaseId} ({run.Event}, {reason})";
   }
 
   /// <summary>

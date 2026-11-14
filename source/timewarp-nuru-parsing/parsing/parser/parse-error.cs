@@ -2,6 +2,14 @@
 // Base class for parsing errors, carrying position and length.
 #endregion
 
+#region Design
+// Parse errors are records with a position and length, and ToString is abstract so every error
+// renders its own message. They are split from SemanticError on purpose: a parse error means the
+// pattern could not be read, a semantic error means it was read but means something invalid. Concrete
+// errors are registered in NuruJsonSerializerContext, so a new one needs a registration there to
+// serialize under AOT.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

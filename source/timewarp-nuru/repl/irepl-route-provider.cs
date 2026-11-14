@@ -2,6 +2,12 @@
 // Contract for generator-emitted route data used by REPL tab completion and syntax highlighting.
 #endregion
 
+#region Design
+// Same idea as IShellCompletionProvider for the REPL: the generator emits the route knowledge so tab
+// completion and highlighting work without reflection. The internal empty implementation lets a REPL
+// run in an app that has no generated provider. IsKnownCommand drives highlighting of the first token.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

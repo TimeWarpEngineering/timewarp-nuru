@@ -2,6 +2,18 @@
 // Holds AddCommandScoped instances for the command currently executing and disposes them when it ends.
 #endregion
 
+#region Design
+// Command scope is a cache, not an IServiceScope: the generator resolves services itself and
+// calls Begin/EndAsync around each command (via NuruCommandLease), so AddCommandScoped works in
+// a single CLI run where Microsoft DI has no per-command scope.
+// A NuruCallContext (daemon or MCP host call) swaps in per-call state, so concurrent calls never
+// share instances; otherwise one shared state serves the process.
+// EndAsync takes disposeInstances because in the REPL the command's IServiceScope owns disposal
+// (it captured the instances as transients), while a single CLI run owns it here.
+// Instances are built through NuruConstructionProvider, which forwards session-scoped services to
+// the session root and everything else to the command's provider.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

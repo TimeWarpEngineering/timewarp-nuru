@@ -2,6 +2,19 @@
 // Ambient context that lets a test harness take over NuruApp execution for runfile tests.
 #endregion
 
+#region Design
+// State is AsyncLocal so it flows with the async execution context instead of being
+// process-global. The re-entry flag exists so a runner that calls app.RunAsync per scenario executes
+// normally rather than re-invoking the runner recursively.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): TryExecuteTestRunner (internal) and Reset have no caller anywhere in
+//     source, tests or the generator, yet the docs say NuruApp.RunAsync hands control to the
+//     TestRunner. Is the hook dead after the interceptor-based RunAsync, or wired by something
+//     not found by grep?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

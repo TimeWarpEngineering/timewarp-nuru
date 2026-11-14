@@ -2,6 +2,13 @@
 // Attribute that adds extra route patterns invoking the same request as its primary route.
 #endregion
 
+#region Design
+// Aliases are collected by EndpointExtractor, from the class and from its [NuruRouteGroup]
+// bases, and expand into additional routes that dispatch to the same request. Attribute name
+// matching is by simple name, so the attribute has no compile-time link to the generator.
+// Aliases share the primary route's description rather than carrying their own.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

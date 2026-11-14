@@ -3,6 +3,14 @@
 // enabled/disabled).
 #endregion
 
+#region Design
+// Public and static because two paths must agree: the generator emits direct calls to
+// BooleanConverter.TryParse in generated code, and the runtime DefaultTypeConverters fallback
+// uses the same set. Generated code may reference only public Nuru types, which is why it is
+// not internal. Matching is case-insensitive and the accepted spellings are fixed, not
+// culture-dependent.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

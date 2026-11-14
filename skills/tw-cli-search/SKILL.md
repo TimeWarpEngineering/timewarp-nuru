@@ -29,7 +29,8 @@ nuru search --query "build" --cli ganda
 **Options:**
 - `--query` / `-q` - Search terms (keyword matching)
 - `--group` / `-g` - Filter by group path prefix
-- `--cli` / `-c` - Limit results to a specific CLI
+- `--cli` - Limit results to one CLI, by app name (`WithName`, shown in brackets in results) or
+  executable name; an executable on PATH that is not indexed yet is indexed first
 - `--limit` / `-l` - Maximum results (default: 50)
 
 ### Index Management
@@ -39,6 +40,7 @@ nuru index list                    # Show indexed CLIs
 nuru index rebuild --cli /path/to/cli  # Index a specific CLI
 nuru index rebuild --all           # Rebuild all indexes
 nuru index clear                   # Clear the entire index
+nuru index clear --cli my-cli      # Clear one CLI (app name or executable name)
 ```
 
 ## How It Works
@@ -53,7 +55,7 @@ nuru index clear                   # Clear the entire index
 - **Keyword matching** - Searches across pattern, description, and group path
 - **Case-insensitive** - "Commit" and "commit" return same results
 - **Group filtering** - Use `--group` to narrow to a specific command group
-- **CLI filtering** - Use `--cli` to search within a specific application
+- **CLI filtering** - Use `--cli <app-name|executable-name>` to search within a specific application
 
 ## Output Format
 

@@ -2,6 +2,13 @@
 // Attribute that declares a usage example shown in per-route help and in the capabilities JSON.
 #endregion
 
+#region Design
+// Declared per example and repeatable, mirroring the fluent .WithExample(). EndpointExtractor
+// reads each attribute into an ExampleDefinition in declaration order, skipping empty commands.
+// Examples are captured at compile time, so per-route help and the capabilities JSON need no
+// reflection at runtime.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

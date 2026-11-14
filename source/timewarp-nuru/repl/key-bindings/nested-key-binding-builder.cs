@@ -2,6 +2,13 @@
 // Key binding builder nested inside a parent builder (such as REPL options) that returns to it via Done.
 #endregion
 
+#region Design
+// Composition over duplication: every operation forwards to an inner KeyBindingBuilder, and Done
+// builds that result, hands it to the parent through the callback, then returns the parent so the
+// outer fluent chain continues. The constructor is internal so only the owning options builder can
+// create one with a meaningful callback.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

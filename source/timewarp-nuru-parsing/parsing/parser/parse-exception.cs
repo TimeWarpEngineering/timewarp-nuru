@@ -2,6 +2,13 @@
 // Exception thrown when parsing fails and cannot continue.
 #endregion
 
+#region Design
+// Control flow inside the pattern parser: segment parsing throws it and the parser catches it to
+// resynchronize and keep reading, so one bad segment does not hide later errors. It is sealed and
+// has a [JsonConstructor] constructor because NuruJsonSerializerContext registers it for AOT-safe
+// serialization.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

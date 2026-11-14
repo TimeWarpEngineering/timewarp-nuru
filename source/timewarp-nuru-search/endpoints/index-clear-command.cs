@@ -3,6 +3,13 @@
 // database.
 #endregion
 
+#region Design
+// --cli accepts the app name or the executable name, resolved by SearchIndex.ResolveCliNamesAsync, the
+// same key search --cli takes, so one value works across commands and may match more than one indexed
+// CLI. Both paths confirm before deleting unless --force is given; the prompt is skipped for scripts
+// and agents with --force rather than detected from the terminal.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;
@@ -10,7 +17,7 @@ using TimeWarp.Mediator;
 [NuruRoute("clear", Description = "Clear the search index")]
 public sealed class IndexClearCommand : IndexGroup, ICommand<Unit>
 {
-  [Option("--cli", Description = "Clear index for a specific CLI only")]
+  [Option("--cli", Description = "Clear index for one CLI only, by app name or executable name")]
   public string? Cli { get; set; }
 
   [Option("--force", Description = "Skip confirmation prompt")]
@@ -50,8 +57,20 @@ public sealed class IndexClearCommand : IndexGroup, ICommand<Unit>
         }
       }
 
-      await searchIndex.ClearCliAsync(command.Cli!, cancellationToken).ConfigureAwait(false);
-      await terminal.WriteLineAsync($"Cleared index for CLI: {command.Cli}").ConfigureAwait(false);
+      // --cli is the app name or the executable name, the same key search --cli takes (534).
+      IReadOnlyList<string> cliNames = await searchIndex.ResolveCliNamesAsync(command.Cli!, cancellationToken).ConfigureAwait(false);
+
+      if (cliNames.Count == 0)
+      {
+        await terminal.WriteLineAsync($"No indexed CLI matches: {command.Cli}").ConfigureAwait(false);
+        return;
+      }
+
+      foreach (string cliName in cliNames)
+      {
+        await searchIndex.ClearCliAsync(cliName, cancellationToken).ConfigureAwait(false);
+        await terminal.WriteLineAsync($"Cleared index for CLI: {cliName}").ConfigureAwait(false);
+      }
     }
 
     private async Task ClearAllAsync(IndexClearCommand command, CancellationToken cancellationToken)

@@ -3,6 +3,15 @@
 // safe.
 #endregion
 
+#region Design
+// AOT and trimming constraint: Nuru's own types must serialize without reflection. Exceptions
+// are the hazard, because default exception metadata reaches TargetSite. The context registers
+// them for type info but always routes them through SafeExceptionConverter, and the IL2026
+// suppression is justified only by that guarantee. The generated JSON output path falls back to
+// this context for built-in types after the user-types context; user types belong in the
+// app's own JsonSerializerContext.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

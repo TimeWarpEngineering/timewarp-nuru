@@ -2,6 +2,17 @@
 // Extension methods that register session-scoped and command-scoped services.
 #endregion
 
+#region Design
+// Both lifetimes register the service as a Microsoft DI transient whose factory delegates to
+// NuruSessionCache or NuruCommandCache, so lifetime is enforced by the cache and not by
+// IServiceScope.
+// NuruGenerator recognizes AddSessionScoped, AddCommandScoped and the TryAdd forms by name in
+// ConfigureServices and resolves them itself, so the generated resolver and the Microsoft
+// provider path (UseMicrosoftDependencyInjection) honor the same lifetimes.
+// Implementation types carry DynamicallyAccessedMembers(PublicConstructors) because activation
+// uses ActivatorUtilities, which keeps the registrations trim and AOT friendly.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

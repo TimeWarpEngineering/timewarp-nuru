@@ -2,6 +2,13 @@
 // Contract for generator-emitted static completion data consumed by the `__complete` protocol.
 #endregion
 
+#region Design
+// The generator emits an implementation of this interface from the compiled routes, so completion
+// data is static and needs no reflection at run time. EmptyShellCompletionProvider is the fallback
+// when an app has no generated provider. TryGetParameterInfo lets the handler offer a registered
+// ICompletionSource for the parameter under the cursor before the static candidates are used.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

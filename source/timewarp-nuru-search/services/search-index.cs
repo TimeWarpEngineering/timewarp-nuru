@@ -2,6 +2,23 @@
 // SQLite-backed store for indexed CLI endpoints: persists capability catalogs and answers search queries.
 #endregion
 
+#region Design
+// Search is SQLite FTS5 over pattern, description and CLI name, kept in step with the endpoints table
+// by insert, update and delete triggers, so writers touch only endpoints. Indexing a CLI replaces all
+// of its rows in one transaction, so a failed rebuild leaves the previous index intact. Schema
+// creation is idempotent and lazy (InitializeAsync runs on first use), and a column added after the
+// first release (clis.cli_path) is migrated in place; old rows keep a null path and rebuild falls
+// back to the CLI name. The data source is injectable (":memory:") so tests never open the real
+// ~/.nuru database. The class owns its connection and is disposed by its container.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): ClearIndexAsync deletes from endpoints and clis as two separate commands
+//     with no transaction, while ClearCliAsync and IndexCliAsync use one. Is the lack of a
+//     transaction in the clear-all path intended, or should a failure between the two deletes be
+//     unable to leave clis rows without endpoints?
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 public sealed partial class SearchIndex : IAsyncDisposable
@@ -168,7 +185,9 @@ public sealed partial class SearchIndex : IAsyncDisposable
   }
 
   /// <summary>
-  /// Indexes a CLI under its capabilities <paramref name="cliName"/>. <paramref name="cliPath"/> is
+  /// Indexes a CLI under its capabilities <paramref name="cliName"/> (the app's WithName). A
+  /// <c>--cli</c> filter matches that name or the file name of <paramref name="cliPath"/>; see
+  /// <see cref="ResolveCliNamesAsync"/>. <paramref name="cliPath"/> is
   /// the executable that was actually run; <c>index rebuild --all</c> runs it again. The name and
   /// the path differ when the executable file name is not the capabilities name.
   /// </summary>
@@ -345,24 +364,6 @@ public sealed partial class SearchIndex : IAsyncDisposable
 
   [LoggerMessage(LogLevel.Information, "Cleared index for CLI {CliName}")]
   private static partial void LogClearedCli(ILogger logger, string cliName);
-
-  /// <summary>Gets the indexed version of a CLI, or null if not indexed.</summary>
-  public async Task<string?> GetCliVersionAsync(string cliName, CancellationToken cancellationToken = default)
-  {
-    ArgumentNullException.ThrowIfNull(cliName);
-
-    if (!Initialized)
-    {
-      await InitializeAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    await using SqliteCommand cmd = Connection.CreateCommand();
-    cmd.CommandText = "SELECT version FROM clis WHERE name = $name";
-    cmd.Parameters.AddWithValue("$name", cliName);
-
-    object? result = await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-    return result as string;
-  }
 
   public async ValueTask DisposeAsync()
   {

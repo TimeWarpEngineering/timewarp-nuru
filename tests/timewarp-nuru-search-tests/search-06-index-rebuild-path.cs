@@ -23,8 +23,8 @@ using TimeWarp.Terminal;
 // 482-011 (S-3): the index stored only capabilities.Name, and `index rebuild --all` then ran that
 // name as a process. A CLI indexed by full path whose file name differs from its capabilities
 // name could never be rebuilt. The executed path is now stored beside the name; --all runs the
-// path, and `search --cli` still filters on the name. Uses an in-memory index and a fake
-// executable in a temp directory, so ~/.nuru is never touched.
+// path, and `search --cli` takes the name or the executable name (534). Uses an in-memory index
+// and a fake executable in a temp directory, so ~/.nuru is never touched.
 [TestTag("Search")]
 public class IndexRebuildPathTests
 {
@@ -86,9 +86,9 @@ public class IndexRebuildPathTests
       clis[0].Version.ShouldBe("2.0.0");
       clis[0].CliPath.ShouldBe(Path.GetFullPath(cliPath));
 
-      // search --cli filters on the capabilities name, not the file name.
+      // search --cli takes the capabilities name or the executable file name (534).
       (await index.SearchAsync("deploy", CapabilitiesName)).Count.ShouldBe(1);
-      (await index.SearchAsync("deploy", Path.GetFileName(cliPath))).Count.ShouldBe(0);
+      (await index.SearchAsync("deploy", Path.GetFileName(cliPath))).Count.ShouldBe(1);
     }
     finally
     {

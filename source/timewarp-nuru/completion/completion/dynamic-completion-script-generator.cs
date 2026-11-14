@@ -2,6 +2,13 @@
 // Generates the per-shell completion scripts that call back into the app through `__complete`.
 #endregion
 
+#region Design
+// Scripts are embedded templates with {{APP_NAME}} substituted, so the shell side stays plain shell
+// code and is editable without touching C#. Every shell script calls back into the app through
+// __complete rather than baking a command list in, so installed scripts do not go stale when routes
+// change. The PowerShell template also embeds the process path, escaped for single quotes.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

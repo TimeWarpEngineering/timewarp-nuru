@@ -157,6 +157,9 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-72b-run-async-not-intercepted-closures.cs" />
     <!-- generator-73: same Roslyn-hosted pattern (task 573 nested handler factories); CS0433 applies. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-73-nested-handler-factories.cs" />
+    <!-- generator-75: the consumer-compile lane (task 529). Roslyn-hosted, so CS0433 applies; it also
+         compiles under an assembly name with no InternalsVisibleTo grant. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-75-consumer-surface-no-ivt.cs" />
     <!-- telemetry-04: end-to-end OTLP/HTTP export to a local sink (task 551). OpenTelemetry log
          export never reaches the sink inside this shared assembly, even from a plain
          LoggerFactory with no Nuru code; traces and metrics do. It passes as its own app, which

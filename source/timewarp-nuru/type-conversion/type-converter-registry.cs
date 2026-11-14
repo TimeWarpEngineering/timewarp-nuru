@@ -3,6 +3,21 @@
 // target type.
 #endregion
 
+#region Design
+// Holds custom converters only: built-in types are handled by DefaultTypeConverters, which is
+// consulted first and allocates nothing. The two dictionaries are created lazily on first
+// registration, so an app without custom converters pays nothing. A converter registers under
+// its target type name and its alias, case-insensitively, and later registrations replace
+// earlier ones.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): No source in the library or generators constructs or consumes
+//     TypeConverterRegistry or ITypeConverterRegistry; only tests use them. Custom converters
+//     reach routes through compile-time AddTypeConverter. Is this registry public API a
+//     consumer is meant to call, or a runtime remnant that can be internalized or removed?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

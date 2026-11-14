@@ -2,6 +2,13 @@
 // Compiled route pattern broken into components for efficient matching against arguments.
 #endregion
 
+#region Design
+// Segments keep the pattern's positional order, since matching is sequential; the positional and
+// option views are derived from it and cached with the field keyword rather than stored separately,
+// so there is one source of truth. MessageType defaults to Command, the safest assumption for agents
+// (see MessageType). Specificity orders competing routes: higher is tried first.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

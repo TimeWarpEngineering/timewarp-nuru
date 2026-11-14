@@ -21,8 +21,13 @@ namespace TimeWarp.Nuru.Generators;
 #region Design
 // Values must be compile-time constants (a literal or a const), read through
 // SemanticModel.GetConstantValue. The generated code carries them as literals, so nothing is
-// resolved at run time (AOT and trim safe). A statement the extractor cannot read is skipped.
-// ActivitySources / Meters ignore empty names and repeats.
+// resolved at run time (AOT and trim safe). Emitting a non-constant expression is not an option:
+// it can name locals and members the generated code cannot reach.
+// A value the extractor cannot read is skipped, but never in silence (task 533): an assignment to
+// a known option, or an Add argument, that is not a constant reports NURU_T001 at the value, and a
+// configure argument that is not a lambda reports NURU_T002. Statements of other shapes (an if,
+// a local declaration) are still skipped without a diagnostic. ActivitySources / Meters ignore
+// empty names and repeats.
 #endregion
 
 /// <summary>
@@ -33,11 +38,16 @@ internal static class TelemetryOptionsExtractor
   /// <summary>
   /// Extracts telemetry configuration from a UseTelemetry() invocation.
   /// </summary>
+  /// <param name="invocation">The UseTelemetry(...) invocation.</param>
+  /// <param name="semanticModel">Semantic model of the invocation's tree.</param>
+  /// <param name="diagnostics">Receives NURU_T001 / NURU_T002 for values the extractor cannot read.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
   /// <returns>Configured TelemetryModel, or null if extraction fails.</returns>
   public static TelemetryModel? Extract
   (
     InvocationExpressionSyntax invocation,
     SemanticModel semanticModel,
+    ICollection<Diagnostic> diagnostics,
     CancellationToken cancellationToken
   )
   {
@@ -49,9 +59,10 @@ internal static class TelemetryOptionsExtractor
 
     if (configureExpression is LambdaExpressionSyntax lambda)
     {
-      return ExtractFromLambda(lambda, TelemetryModel.Default, semanticModel, cancellationToken);
+      return ExtractFromLambda(lambda, TelemetryModel.Default, semanticModel, diagnostics, cancellationToken);
     }
 
+    diagnostics.Add(Diagnostic.Create(DiagnosticDescriptors.TelemetryConfigureNotLambda, configureExpression.GetLocation()));
     return null;
   }
 
@@ -60,6 +71,7 @@ internal static class TelemetryOptionsExtractor
     LambdaExpressionSyntax lambda,
     TelemetryModel baseOptions,
     SemanticModel semanticModel,
+    ICollection<Diagnostic> diagnostics,
     CancellationToken cancellationToken
   )
   {
@@ -81,12 +93,12 @@ internal static class TelemetryOptionsExtractor
         foreach (StatementSyntax statement in block.Statements)
         {
           if (statement is ExpressionStatementSyntax exprStmt)
-            options = Apply(exprStmt.Expression, options, parameterName, semanticModel, cancellationToken);
+            options = Apply(exprStmt.Expression, options, parameterName, semanticModel, diagnostics, cancellationToken);
         }
 
         break;
       case ExpressionSyntax expression:
-        options = Apply(expression, options, parameterName, semanticModel, cancellationToken);
+        options = Apply(expression, options, parameterName, semanticModel, diagnostics, cancellationToken);
         break;
     }
 
@@ -99,15 +111,16 @@ internal static class TelemetryOptionsExtractor
     TelemetryModel options,
     string parameterName,
     SemanticModel semanticModel,
+    ICollection<Diagnostic> diagnostics,
     CancellationToken cancellationToken
   )
   {
     return expression switch
     {
       AssignmentExpressionSyntax assignment
-        => ApplyAssignment(assignment, options, parameterName, semanticModel, cancellationToken),
+        => ApplyAssignment(assignment, options, parameterName, semanticModel, diagnostics, cancellationToken),
       InvocationExpressionSyntax invocation
-        => ApplyAdd(invocation, options, parameterName, semanticModel, cancellationToken),
+        => ApplyAdd(invocation, options, parameterName, semanticModel, diagnostics, cancellationToken),
       _ => options
     };
   }
@@ -118,17 +131,25 @@ internal static class TelemetryOptionsExtractor
     TelemetryModel options,
     string parameterName,
     SemanticModel semanticModel,
+    ICollection<Diagnostic> diagnostics,
     CancellationToken cancellationToken
   )
   {
     if (!IsParameterProperty(assignment.Left, parameterName, out string? propertyName))
       return options;
 
-    object? value = semanticModel.GetConstantValue(assignment.Right, cancellationToken) is { HasValue: true } constant
-      ? constant.Value
-      : null;
+    string? fallback = AssignmentFallback(propertyName);
+    if (fallback is null)
+      return options;
 
-    return (propertyName, value) switch
+    Optional<object?> constant = semanticModel.GetConstantValue(assignment.Right, cancellationToken);
+    if (!constant.HasValue)
+    {
+      ReportNotConstant(diagnostics, assignment.Right, propertyName!, fallback);
+      return options;
+    }
+
+    return (propertyName, constant.Value) switch
     {
       ("ServiceName", string name) => options with { ServiceName = name },
       ("ServiceVersion", string version) => options with { ServiceVersion = version },
@@ -141,6 +162,28 @@ internal static class TelemetryOptionsExtractor
   }
 
   /// <summary>
+  /// What applies when the generator cannot read an option, for the NURU_T001 message; null for a
+  /// property the generator does not read at all.
+  /// </summary>
+  private static string? AssignmentFallback(string? propertyName) => propertyName switch
+  {
+    "OtlpEndpoint" => "The app reads OTEL_EXPORTER_OTLP_ENDPOINT instead",
+    "ServiceName" => "The default service name (OTEL_SERVICE_NAME, then the assembly name) applies",
+    "ServiceVersion" => "The default service version (OTEL_SERVICE_VERSION, then the assembly version) applies",
+    "EnableTracing" or "EnableMetrics" or "EnableLogging" => "The default (true) applies",
+    _ => null
+  };
+
+  private static void ReportNotConstant
+  (
+    ICollection<Diagnostic> diagnostics,
+    ExpressionSyntax value,
+    string optionName,
+    string fallback
+  ) =>
+    diagnostics.Add(Diagnostic.Create(DiagnosticDescriptors.TelemetryOptionNotConstant, value.GetLocation(), optionName, fallback));
+
+  /// <summary>
   /// Applies <c>options.ActivitySources.Add("name")</c> or <c>options.Meters.Add("name")</c>.
   /// </summary>
   private static TelemetryModel ApplyAdd
@@ -149,6 +192,7 @@ internal static class TelemetryOptionsExtractor
     TelemetryModel options,
     string parameterName,
     SemanticModel semanticModel,
+    ICollection<Diagnostic> diagnostics,
     CancellationToken cancellationToken
   )
   {
@@ -158,14 +202,22 @@ internal static class TelemetryOptionsExtractor
     if (!IsParameterProperty(addAccess.Expression, parameterName, out string? propertyName))
       return options;
 
+    if (propertyName is not ("ActivitySources" or "Meters"))
+      return options;
+
     if (invocation.ArgumentList.Arguments.Count != 1)
       return options;
 
-    if (semanticModel.GetConstantValue(invocation.ArgumentList.Arguments[0].Expression, cancellationToken)
-      is not { HasValue: true, Value: string name } || string.IsNullOrWhiteSpace(name))
+    ExpressionSyntax argument = invocation.ArgumentList.Arguments[0].Expression;
+    Optional<object?> constant = semanticModel.GetConstantValue(argument, cancellationToken);
+    if (!constant.HasValue)
     {
+      ReportNotConstant(diagnostics, argument, $"{propertyName}.Add", "The name is not added");
       return options;
     }
+
+    if (constant.Value is not string name || string.IsNullOrWhiteSpace(name))
+      return options;
 
     return propertyName switch
     {

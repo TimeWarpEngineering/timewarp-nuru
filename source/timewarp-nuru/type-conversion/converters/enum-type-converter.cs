@@ -2,6 +2,14 @@
 // Generic route type converter that parses any enum case-insensitively and reports valid names on failure.
 #endregion
 
+#region Design
+// Generated code instantiates EnumTypeConverter<T> directly for enum parameters and options, and
+// the interpreter recognizes AddTypeConverter(new EnumTypeConverter<T>()) at compile time, so
+// the class is public. Enum.IsDefined and the named-parts check reject numeric strings that do
+// not map to a member, keeping input predictable. Name sets are cached per closed generic
+// type rather than rebuilt per call.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

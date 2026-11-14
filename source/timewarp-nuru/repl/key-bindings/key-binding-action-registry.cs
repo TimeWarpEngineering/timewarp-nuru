@@ -2,6 +2,14 @@
 // Maps key binding action names, as written in keybindings.json, to ReplConsoleReader handlers.
 #endregion
 
+#region Design
+// Config files can only name actions, so this registry is the bridge from the JSON string vocabulary
+// to the reader's handler methods. Lookup is case-insensitive and static, so no reflection is needed
+// and the vocabulary is trimming-safe. GetAvailableActions lists names for config authors and
+// omits aliases such as TabComplete:reverse. Handlers are resolved through a factory per reader
+// because they are instance methods; DigitArgument:N covers digits 0 to 9 with one registration loop.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

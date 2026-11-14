@@ -9,6 +9,8 @@
 // An async lambda's expression body must be emitted verbatim; only a non-async
 // Task-returning expression body is awaited by the generated local function.
 // generator-47 proves the same shapes compile and run end to end.
+// Kanban 553: the body keeps its shape but every type name in it is written fully qualified
+// (`Task` becomes `global::System.Threading.Tasks.Task`), so the expectations carry that form.
 #endregion
 
 #if !JARIBU_MULTI
@@ -76,7 +78,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen48AsyncExpressionBodyEmission
       string generated = GenerateForHandler(
         "async (string name, global::TimeWarp.Mediator.ISender s) => await s.Send(new Q(name))");
 
-      generated.ShouldContain(") => await s.Send(new Q(name));");
+      generated.ShouldContain(") => await s.Send(new global::Q(name));");
       generated.ShouldNotContain("await await");
 
       await Task.CompletedTask;
@@ -87,7 +89,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen48AsyncExpressionBodyEmission
       string generated = GenerateForHandler(
         "async (string name) => await Task.FromResult(name).ConfigureAwait(false)");
 
-      generated.ShouldContain(") => await Task.FromResult(name).ConfigureAwait(false);");
+      generated.ShouldContain(") => await global::System.Threading.Tasks.Task.FromResult(name).ConfigureAwait(false);");
       generated.ShouldNotContain("await await");
 
       await Task.CompletedTask;
@@ -98,7 +100,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen48AsyncExpressionBodyEmission
       string generated = GenerateForHandler(
         "async (string name) => (await Task.FromResult(name)).ToUpperInvariant()");
 
-      generated.ShouldContain(") => (await Task.FromResult(name)).ToUpperInvariant();");
+      generated.ShouldContain(") => (await global::System.Threading.Tasks.Task.FromResult(name)).ToUpperInvariant();");
       generated.ShouldNotContain("await (await");
 
       await Task.CompletedTask;
@@ -109,7 +111,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen48AsyncExpressionBodyEmission
       string generated = GenerateForHandler(
         "async (string name) => await (await Task.FromResult(Task.FromResult(name)))");
 
-      generated.ShouldContain(") => await (await Task.FromResult(Task.FromResult(name)));");
+      generated.ShouldContain(") => await (await global::System.Threading.Tasks.Task.FromResult(global::System.Threading.Tasks.Task.FromResult(name)));");
       generated.ShouldNotContain("await await");
 
       await Task.CompletedTask;
@@ -132,7 +134,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen48AsyncExpressionBodyEmission
         "async (string name) => await Task.Delay(name.Length)",
         ".AsCommand()");
 
-      generated.ShouldContain(") => await Task.Delay(name.Length);");
+      generated.ShouldContain(") => await global::System.Threading.Tasks.Task.Delay(name.Length);");
       generated.ShouldNotContain("await await");
 
       await Task.CompletedTask;
@@ -143,7 +145,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen48AsyncExpressionBodyEmission
       string generated = GenerateForHandler(
         "(string name) => Task.FromResult(name)");
 
-      generated.ShouldContain(") => await Task.FromResult(name);");
+      generated.ShouldContain(") => await global::System.Threading.Tasks.Task.FromResult(name);");
 
       await Task.CompletedTask;
     }
@@ -154,7 +156,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen48AsyncExpressionBodyEmission
         "(string name) => Task.Delay(name.Length)",
         ".AsCommand()");
 
-      generated.ShouldContain(") => await Task.Delay(name.Length);");
+      generated.ShouldContain(") => await global::System.Threading.Tasks.Task.Delay(name.Length);");
 
       await Task.CompletedTask;
     }
@@ -164,7 +166,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen48AsyncExpressionBodyEmission
       string generated = GenerateForHandler(
         "async (string name) => { return await Task.FromResult(name); }");
 
-      generated.ShouldContain("return await Task.FromResult(name);");
+      generated.ShouldContain("return await global::System.Threading.Tasks.Task.FromResult(name);");
       generated.ShouldNotContain("await await");
 
       await Task.CompletedTask;

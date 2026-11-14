@@ -2,6 +2,14 @@
 // Pipeline behavior that wraps every command in an OpenTelemetry span and records metrics.
 #endregion
 
+#region Design
+// One shared ActivitySource and Meter named TimeWarp.Nuru.Behavior, which the generated OTLP
+// setup subscribes to. UseTelemetry registers it as the outermost behavior exactly once, so
+// every command span encloses the other behaviors. Failures record error.type only, never the
+// message: exception text can embed argv or secrets and must not leave the process over OTLP.
+// Static instruments keep the behavior allocation-free per call and AOT-friendly.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using System.Diagnostics;

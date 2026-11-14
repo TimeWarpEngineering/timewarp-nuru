@@ -3,6 +3,20 @@
 // assemblies.
 #endregion
 
+#region Design
+// Opt-out for a library assembly that contains Map() calls but must not emit its own generated
+// invokers: a consuming app's generated code serves them at runtime. Without it, both assemblies
+// would define a type with the same fully qualified name (CS0436). The assembly attribute is
+// public so other library assemblies can use the same opt-out.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): Nothing under timewarp-nuru-analyzers reads this attribute, and no
+//     generator named NuruInvokerGenerator exists in source. The only use is
+//     [assembly: SuppressNuruInvokerGeneration] in global-usings.cs. Is it a leftover from the
+//     retired invoker generator that can be deleted, or does a current generator still honor it?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

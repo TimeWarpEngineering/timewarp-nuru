@@ -2,6 +2,10 @@
 // Route matcher for a literal segment that must match exactly.
 #endregion
 
+#region Design
+// Matching is ordinal and case-sensitive, like the source-generated matcher path.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,15 @@
 // Configuration options for REPL mode: prompt, history, key bindings, and display behavior.
 #endregion
 
+#region Design
+// The AddRepl lambda runs at run time and populates this object, which the generated REPL uses
+// directly. The one exception is AutoStartWhenEmpty: ReplOptionsExtractor reads it at compile
+// time because it decides whether the generated default route starts the REPL, so it must be a
+// constant assignment. History is persisted owner-only and HistoryIgnorePatterns is best-effort,
+// so secrets are never promised to stay out of history. KeyBindingProfile is typed object because
+// the profile interface lives in the REPL layer that this options type does not reference.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

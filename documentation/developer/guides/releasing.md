@@ -91,6 +91,22 @@ failure aborts with an operator-facing reason and a nonzero exit code:
    `release: published` event's own pipeline would fail later at its "locate CI run"
    step. This guard catches that up front.
 
+   A run counts only when it has a live (non-expired) `Packages-*` artifact, the
+   artifact the promotion pipeline downloads. A trusted-publishing probe
+   (`gh workflow run workflow.yml -f mode=probe`) succeeds without building
+   anything, so it does not count. Each run passed over prints one line, and the
+   walk then treats that commit like a commit with no run:
+
+   ```text
+     skipped run 42448431673 (workflow_dispatch, no Packages-* artifact) at 64f9d13
+     skipped run 42001234567 (push, Packages-* artifact expired: Packages-12) at 0d899d7
+   ```
+
+   Refusal: **"no successful CI run of workflow.yml with a Packages-\* artifact
+   exists for `<sha>`"**, plus the commit and path when a commit outside `kanban/`
+   ended the walk. The fix is to wait for the merge run on that commit, or
+   `gh run rerun <id>` a run whose artifact expired. A probe run never fixes it.
+
 Run `dev release --dry-run` first to see every guard evaluated (all read-only, even
 the `git fetch origin master` step) plus the exact tag/push/`gh release create`
 commands it would run, without creating anything.

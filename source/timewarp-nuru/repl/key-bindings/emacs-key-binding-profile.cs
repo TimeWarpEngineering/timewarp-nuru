@@ -2,6 +2,13 @@
 // Emacs/GNU Readline-style key binding profile built on Ctrl-based navigation.
 #endregion
 
+#region Design
+// Follows GNU Readline conventions: Ctrl+A/E/B/F navigation, Ctrl+K/U/W kill operations. Ctrl+D
+// deletes a character or, on an empty line, signals EOF through the reader's exit flag rather than
+// through exit-key membership. Ctrl+M and Ctrl+J are exit keys because terminals deliver them as
+// Enter and newline.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

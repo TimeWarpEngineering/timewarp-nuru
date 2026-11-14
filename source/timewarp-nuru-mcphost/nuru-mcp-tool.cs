@@ -2,6 +2,12 @@
 // MCP server tool that invokes one Nuru route, created by NuruMcpServer.CreateTools.
 #endregion
 
+#region Design
+// A McpServerTool subclass: the tool list is derived from the
+// Nuru catalog at runtime, so there is no method to reflect over. The tool carries no logic of its own;
+// every call goes to the shared invoker so all tools use one bind and render path.
+#endregion
+
 namespace TimeWarp.Nuru.McpHost;
 
 /// <summary>

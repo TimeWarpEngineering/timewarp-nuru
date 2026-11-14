@@ -2,6 +2,14 @@
 // Attribute that keeps an endpoint in the CLI process so a served app never forwards it to a server.
 #endregion
 
+#region Design
+// Read from the endpoint class by EndpointExtractor into RouteDefinition.IsLocalOnly. The
+// capabilities emitter publishes it as `localOnly` and the JSON-args emitter keeps the route out
+// of server forwarding. Not inherited, so each endpoint states its own locality. Locality is
+// declared per route because only the author knows whether a handler needs the caller's
+// terminal, stdin, or environment.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,21 @@
 // Nested variant of CompiledRouteBuilder that returns to its parent builder inside a fluent chain.
 #endregion
 
+#region Design
+// Wraps a CompiledRouteBuilder so a route can be configured inline in a fluent chain: Done()
+// builds the CompiledRoute, hands it to the parent-supplied OnBuild callback, and returns the
+// parent. The constructor is internal: only the parent builder creates it, supplying OnBuild.
+// NuruGenerator lists this type among its DSL receivers, but its WithLiteral, WithParameter,
+// WithOption, WithCatchAll and WithMessageType methods have no dispatch case in the interpreter.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): NuruAppBuilder.Map(Func<NestedCompiledRouteBuilder<...>, ...>) is a
+//     stub "extracted at compile time", but DispatchMap requires a string pattern and throws
+//     otherwise, and the interpreter has no case for WithLiteral/WithParameter/WithOption. Does
+//     this nested-builder route configuration work with the generator at all, or is it dead API?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

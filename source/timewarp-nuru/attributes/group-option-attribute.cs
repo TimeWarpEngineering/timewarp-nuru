@@ -2,6 +2,14 @@
 // Attribute that declares an option on a route-group base class, inherited by every route in the group.
 #endregion
 
+#region Design
+// Read by the endpoint extractor, which walks the whole base-class chain of a request class and
+// adds each [GroupOption] property to the route as an option, so a group's shared options are
+// declared once on the [NuruRouteGroup] base. A leading dash on either form is trimmed. Kept
+// separate from [Option] so an option belonging to the group is distinguishable from one
+// belonging to a single route.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

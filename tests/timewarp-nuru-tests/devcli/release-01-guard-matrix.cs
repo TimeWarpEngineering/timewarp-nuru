@@ -294,7 +294,7 @@ public class ReleaseGuardTests
     verdict.Ok.ShouldBeFalse();
     verdict.TargetSha.ShouldBeNull();
     verdict.Reason.ShouldNotBeNull();
-    verdict.Reason.ShouldContain("no successful CI run of workflow.yml exists for head");
+    verdict.Reason.ShouldContain("no successful CI run of workflow.yml with a Packages-* artifact exists for head");
     verdict.Reason.ShouldContain("Commit code changes source/x.cs (and 1 more)");
     verdict.Reason.ShouldContain("outside kanban/");
 
@@ -322,7 +322,7 @@ public class ReleaseGuardTests
       ]
     );
     verdict.Ok.ShouldBeFalse();
-    verdict.Reason.ShouldBe("no successful CI run of workflow.yml exists for head. The Release event would fail at locate-run — wait for CI on this commit or rerun it (gh run rerun <id>).");
+    verdict.Reason.ShouldBe("no successful CI run of workflow.yml with a Packages-* artifact exists for head. The Release event would fail at locate-run or download-artifact — wait for CI on this commit or rerun it (gh run rerun <id>).");
 
     await Task.CompletedTask;
   }
@@ -344,6 +344,112 @@ public class ReleaseGuardTests
     ReleaseGuard.FindShippingPath(["kanban/x.md"]).ShouldBeNull();
 
     await Task.CompletedTask;
+  }
+
+  // --- Releasable runs (kanban task 568) ---
+
+  public static async Task Probe_dispatch_run_at_head_is_skipped_for_the_push_run_one_kanban_commit_back()
+  {
+    // timewarp-ramani v1.0.0-beta.23: the push run at 0d899d7 built Packages-43; HEAD
+    // 64f9d13 is a kanban-only commit whose only green run is a probe dispatch (OIDC
+    // login, no artifact). Step 8 used to stop at HEAD on the probe run.
+    CiRunSummary probe = new() { DatabaseId = 42448431673, Event = "workflow_dispatch", HeadSha = "64f9d13", CreatedAt = "2026-11-08T18:05:00Z" };
+    CiRunSummary push = new() { DatabaseId = 42448301249, Event = "push", HeadSha = "0d899d7", CreatedAt = "2026-11-08T17:40:00Z" };
+    Dictionary<long, IReadOnlyList<RunArtifact>> artifactsByRun = new()
+    {
+      [probe.DatabaseId] = [],
+      [push.DatabaseId] = [new RunArtifact { Id = 9001, Name = "Packages-43", Expired = false }]
+    };
+
+    List<string> skipLines = [];
+    ReleaseTargetVerdict verdict = ReleaseGuard.SelectReleaseTarget
+    (
+      "64f9d13",
+      [
+        new ReleaseTargetCommit("64f9d13", ["kanban/done/017-x/task.md"], ReleasableRunId([probe], "64f9d13", artifactsByRun, skipLines)),
+        new ReleaseTargetCommit("0d899d7", [], ReleasableRunId([push], "0d899d7", artifactsByRun, skipLines))
+      ]
+    );
+
+    verdict.Ok.ShouldBeTrue();
+    verdict.TargetSha.ShouldBe("0d899d7");
+    verdict.RunId.ShouldBe(42448301249);
+    verdict.SkippedCommitCount.ShouldBe(1);
+    skipLines.ShouldBe(["skipped run 42448431673 (workflow_dispatch, no Packages-* artifact)"]);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Probe_dispatch_run_on_a_code_commit_refuses()
+  {
+    CiRunSummary probe = new() { DatabaseId = 7, Event = "workflow_dispatch", HeadSha = "head", CreatedAt = "2026-11-08T18:05:00Z" };
+    List<string> skipLines = [];
+
+    ReleaseTargetVerdict verdict = ReleaseGuard.SelectReleaseTarget
+    (
+      "head",
+      [new ReleaseTargetCommit("head", ["source/x.cs"], ReleasableRunId([probe], "head", new() { [7] = [] }, skipLines))]
+    );
+
+    verdict.Ok.ShouldBeFalse();
+    verdict.Reason.ShouldNotBeNull();
+    verdict.Reason.ShouldContain("with a Packages-* artifact");
+    verdict.Reason.ShouldContain("Commit head changes source/x.cs,");
+    skipLines.Count.ShouldBe(1);
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Push_run_with_live_packages_artifact_is_releasable()
+  {
+    CiRunSummary run = new() { DatabaseId = 5, Event = "push", HeadSha = "a" };
+    CiRunPromotion.DescribeUnreleasableRun(run, [new RunArtifact { Id = 1, Name = "Packages-43" }]).ShouldBeNull();
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Run_without_packages_artifact_names_run_and_event()
+  {
+    CiRunSummary run = new() { DatabaseId = 6, Event = "workflow_dispatch", HeadSha = "a" };
+    CiRunPromotion.DescribeUnreleasableRun(run, [new RunArtifact { Id = 1, Name = "test-results" }])
+      .ShouldBe("skipped run 6 (workflow_dispatch, no Packages-* artifact)");
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Run_with_only_expired_packages_artifact_names_the_artifact()
+  {
+    CiRunSummary run = new() { DatabaseId = 8, Event = "push", HeadSha = "a" };
+    CiRunPromotion.DescribeUnreleasableRun(run, [new RunArtifact { Id = 1, Name = "Packages-12", Expired = true }])
+      .ShouldBe("skipped run 8 (push, Packages-* artifact expired: Packages-12)");
+
+    await Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Mirrors one commit of ReleaseCommand's step 8 walk: order the commit's runs, take the
+  /// first with a live Packages-* artifact, and collect a skip line for each run before it.
+  /// </summary>
+  private static long? ReleasableRunId
+  (
+    IReadOnlyList<CiRunSummary> runs,
+    string sha,
+    Dictionary<long, IReadOnlyList<RunArtifact>> artifactsByRun,
+    List<string> skipLines
+  )
+  {
+    foreach (CiRunSummary run in CiRunPromotion.OrderCandidateRuns(runs, sha))
+    {
+      string? skipLine = CiRunPromotion.DescribeUnreleasableRun(run, artifactsByRun[run.DatabaseId]);
+      if (skipLine is null)
+      {
+        return run.DatabaseId;
+      }
+
+      skipLines.Add(skipLine);
+    }
+
+    return null;
   }
 
   // --- CheckTargetVersion ---

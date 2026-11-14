@@ -3,6 +3,19 @@
 // partials.
 #endregion
 
+#region Design
+// The reader is public, but handlers are internal: key-binding profiles receive the reader in
+// IKeyBindingProfile.GetBindings(this) and bind Func<Task> delegates to those handlers, so the
+// binding table is data (profile or JSON config) rather than a switch in the read loop.
+// UserInput is the single source of truth for the line; the multiline buffer and the single-line
+// wrap layout are projections synced to it before each redraw.
+// Cursor and edit math index UserInput by UTF-16 code unit (see word-operations partial).
+// Keys with no binding that are not control characters insert as text; key lookup normalizes
+// modifiers to Ctrl/Alt/Shift only. Search mode is a separate EditMode that bypasses the table.
+// Any command that is not a kill clears kill/yank tracking so consecutive-kill appending and
+// YankPop only apply to directly adjacent commands.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

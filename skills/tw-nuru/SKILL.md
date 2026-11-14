@@ -61,6 +61,7 @@ return await app.RunAsync(args);
 When one compilation builds apps in several source files (a multi-file test assembly), analyzer NURU_A003 warns on unfiltered `DiscoverEndpoints()`: each app would get every file's endpoints. Use `Map<TEndpoint>()` there.
 Endpoints in a referenced contracts assembly are discovered only after an opt-in: `[assembly: NuruEndpointAssembly(typeof(AnyTypeInIt))]`, or `Map<T>()` for one type. Do not link contract files into the CLI as sources. See `documentation/user/features/neutral-contracts.md`.
 The generator intercepts each `RunAsync()` call on an app it can trace to a `Build()` call (a local, a field, or the `Build()` chain itself), in any expression. NURU_I001 warns when it cannot, such as `RunAsync()` on a `NuruApp` parameter, because that call would throw at runtime.
+`UseTelemetry(options => ...)` options are read at compile time: every value (including `OtlpEndpoint`) must be a literal or a `const`. NURU_T001 warns on any other value, which is ignored (`OtlpEndpoint` then falls back to `OTEL_EXPORTER_OTLP_ENDPOINT`); NURU_T002 warns when the argument is not an inline lambda.
 `.AddRepl()` enables interactive REPL mode. `AutoStartWhenEmpty = true` starts REPL when no args provided.
 
 ### Commands, Queries, and Idempotent Commands

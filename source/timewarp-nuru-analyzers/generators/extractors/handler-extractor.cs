@@ -63,12 +63,12 @@ internal static partial class HandlerExtractor
 
     if (lambda.Body is ExpressionSyntax expr)
     {
-      lambdaBodySource = expr.ToFullString().Trim();
+      lambdaBodySource = LambdaBodyQualifier.Qualify(expr, semanticModel, cancellationToken).Trim();
       isExpressionBody = true;
     }
     else if (lambda.Body is BlockSyntax block)
     {
-      lambdaBodySource = block.ToFullString();
+      lambdaBodySource = LambdaBodyQualifier.Qualify(block, semanticModel, cancellationToken);
       isExpressionBody = false;
     }
 
@@ -160,12 +160,12 @@ internal static partial class HandlerExtractor
 
     if (lambda.Body is ExpressionSyntax expr)
     {
-      lambdaBodySource = expr.ToFullString().Trim();
+      lambdaBodySource = LambdaBodyQualifier.Qualify(expr, semanticModel, cancellationToken).Trim();
       isExpressionBody = true;
     }
     else if (lambda.Body is BlockSyntax block)
     {
-      lambdaBodySource = block.ToFullString();
+      lambdaBodySource = LambdaBodyQualifier.Qualify(block, semanticModel, cancellationToken);
       isExpressionBody = false;
     }
 
@@ -233,7 +233,9 @@ internal static partial class HandlerExtractor
     bool requiresServiceProvider = false;
 
     // Anonymous methods always have block bodies (no expression bodies)
-    string? lambdaBodySource = anonymousMethod.Block?.ToFullString();
+    string? lambdaBodySource = anonymousMethod.Block is null
+      ? null
+      : LambdaBodyQualifier.Qualify(anonymousMethod.Block, semanticModel, cancellationToken);
     const bool IsExpressionBody = false;
 
     // Try to get symbol info for accurate type resolution

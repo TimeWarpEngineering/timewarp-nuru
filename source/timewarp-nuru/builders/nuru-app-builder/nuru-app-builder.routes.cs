@@ -2,6 +2,22 @@
 // Partial of NuruAppBuilder holding the route-registration and REPL/feature-enabling methods.
 #endregion
 
+#region Design
+// Map, Map<TEndpoint>, DiscoverEndpoints, WithGroupPrefix and AddTypeConverter are no-op stubs:
+// NuruGenerator (DslInterpreter) reads their call sites at compile time and emits the matching
+// code, so no routes are registered at runtime. That is what keeps routing AOT-compatible.
+// Map<TEndpoint> is the explicit form; unfiltered DiscoverEndpoints() takes every [NuruRoute]
+// endpoint in the compilation (see NURU_A003 for why that matters when several apps share one).
+// AddRepl is both: the generator also extracts its options lambda, while the runtime stores the
+// ReplOptions the built app carries.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): Map(Func<NestedCompiledRouteBuilder<...>, ...>) is documented as
+//     extracted at compile time, but the interpreter's "Map" case requires a string pattern
+//     (DispatchMap throws without one). Is the lambda overload supported by the generator?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

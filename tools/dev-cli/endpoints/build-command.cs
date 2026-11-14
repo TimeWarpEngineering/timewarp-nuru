@@ -109,9 +109,12 @@ public sealed class BuildCommand : ICommand<Unit>
         string fullPath = Path.Combine(repoRoot, projectPath);
         Terminal.WriteLine($"\nBuilding {projectPath}...");
 
+        // The solution restore above already covers every project; restoring
+        // again per project only costs time (kanban 575).
         CommandResult buildCommandResult = DotNet.Build()
           .WithProject(fullPath)
           .WithConfiguration("Release")
+          .WithNoRestore()
           .WithVerbosity(verbosityLevel)
           .Build();
 

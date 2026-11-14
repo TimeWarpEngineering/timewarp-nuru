@@ -69,6 +69,9 @@ testFiles = [.. testFiles.Distinct().Order()];
 // ProjectReferences TimeWarp.Nuru. InternalsVisibleTo would hide a CS0122 a
 // real consumer still sees (kanban 528, 562).
 testFiles.RemoveAll(name => name == "devcli-consumer-check");
+// Every other test assembly keeps the grant: white-box tests need internals, and the consumer
+// surface of generated code is checked by generator-75-consumer-surface-no-ivt, which compiles under an
+// assembly name no grant lists (kanban 529).
 
 Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Found {testFiles.Count} test assemblies"));
 

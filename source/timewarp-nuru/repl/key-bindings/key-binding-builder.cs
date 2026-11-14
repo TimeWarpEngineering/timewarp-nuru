@@ -2,6 +2,15 @@
 // Fluent builder that assembles custom key bindings from scratch or from an existing profile.
 #endregion
 
+#region Design
+// Bindings and exit keys live in two collections: an exit key is a chord whose action runs and then
+// ends the read loop (accept line). Remove and Clear drop the exit mark with the binding so the
+// two sets cannot disagree; MarkAsExit throws for an unbound chord for the same reason.
+// LoadFrom clears first, so starting from a profile replaces any earlier state instead of merging.
+// Build copies both collections; later changes to the builder do not reach an already built result.
+// Profile actions are bound to a ReplConsoleReader, which is why LoadFrom takes the reader.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -185,7 +185,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen75ConsumerSurfaceNoIvt
     }
 
     // Interceptor scaffold, route matcher, handler invoker, help, route help, version, capabilities,
-    // --json-args, unknown options, custom type converters.
+    // --json-args, unknown options, custom type converters, user enum and struct results (kanban 583).
     public static async Task Should_compile_fluent_routes_with_public_surface_only()
     {
       const string Source = """
@@ -202,7 +202,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen75ConsumerSurfaceNoIvt
             .WithHandler((int ms, double factor, DateTime at, Guid id, bool on) => ms * factor)
             .AsCommand().Done()
           .Map("color {shade:Gen75Shade}")
-            .WithHandler((Gen75Shade shade) => shade.ToString())
+            .WithHandler((Gen75Shade shade) => shade)
             .AsIdempotentCommand().Done()
           .Map("docker {*args}").WithHandler((string[] args) => args.Length).AsCommand().Done()
           .Map("sum {*values:int}").WithHandler((int[] values) => values.Sum()).AsQuery().Done()
@@ -212,7 +212,8 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen75ConsumerSurfaceNoIvt
           .Map("deploy {env} --shade {shade:Gen75Shade?}")
             .WithHandler((string env, Gen75Shade? shade) => $"{env}{shade}")
             .AsCommand().Done()
-          .Map("point {at:Gen75Point}").WithHandler((Gen75Point at) => at.X + at.Y).AsQuery().Done()
+          .Map("point {at:Gen75Point}").WithHandler((Gen75Point at) => at).AsQuery().Done()
+          .Map("shade-async").WithHandler(async () => { await Task.Yield(); return Gen75Shade.Dark; }).AsQuery().Done()
           .Map("async-run {count:int}")
             .WithHandler(async (int count, CancellationToken cancellationToken) =>
             {
@@ -221,6 +222,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen75ConsumerSurfaceNoIvt
             })
             .AsCommand().Done()
           .Map("method {value}").WithHandler(Gen75Handlers.Echo).AsQuery().Done()
+          .Map("pick").WithHandler(Gen75Handlers.Pick).AsQuery().Done()
           .Map("term").WithHandler((ITerminal terminal) => terminal.WriteLine("t")).AsCommand().Done()
           .Map("exit-code").WithHandler(() => 3).AsCommand().Done()
           .Map("void-task").WithHandler(async () => await Task.Yield()).AsCommand().Done()
@@ -244,7 +246,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen75ConsumerSurfaceNoIvt
             (result = new Gen75Point(int.Parse(value.Split(',')[0]), int.Parse(value.Split(',')[1]))) is not null;
         }
 
-        public static class Gen75Handlers { public static string Echo(string value) => value; }
+        public static class Gen75Handlers { public static string Echo(string value) => value; public static Gen75Shade Pick() => Gen75Shade.Dark; }
         """;
 
       ShouldCompileAsConsumer(Source, ["global::Gen75Point"], [],
@@ -252,7 +254,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen75ConsumerSurfaceNoIvt
           "global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike",
           "global::TimeWarp.Nuru.CapabilitiesJsonSerializerContext.Default.CapabilitiesResponse",
           "global::TimeWarp.Nuru.NuruBindError", "Gen75PointConverter", "global::Gen75Shade",
-          "global::Gen75Handlers.Echo"
+          "global::Gen75Handlers.Echo", "global::Gen75Handlers.Pick"
         ]);
       await Task.CompletedTask;
     }
@@ -383,7 +385,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen75ConsumerSurfaceNoIvt
           .AddRepl(options => options.Prompt = "gen75> ")
           .EnableCompletion()
           .AddCheckUpdatesRoute()
-          .Map("mode {shade:Gen75ReplShade}").WithHandler((Gen75ReplShade shade) => shade.ToString()).AsQuery().Done()
+          .Map("mode {shade:Gen75ReplShade}").WithHandler((Gen75ReplShade shade) => shade).AsQuery().Done()
           .Map("tag --name {name} --on").WithHandler((string name, bool on) => name).AsCommand().Done()
           .Build();
 

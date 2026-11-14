@@ -145,6 +145,7 @@ internal static partial class HandlerInvokerEmitter
     string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
     string valueName = "result";
     string valueType = resultTypeName;
+    ResultValueKind valueKind = handler.ReturnType.ValueKind;
     RendererLookup lookup = new(services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
 
     // Problem details set ExitCode and skip success rendering. The branch must not
@@ -183,6 +184,7 @@ internal static partial class HandlerInvokerEmitter
       sb.AppendLine($"{bodyIndent}{successType} __success = result.AsT0;");
       valueName = "__success";
       valueType = successType;
+      valueKind = handler.SuccessValueKind;
     }
 
     string writeSuccess = verbatimRendererOutput ? $"{terminal}.Write" : $"{terminal}.WriteLine";
@@ -195,7 +197,7 @@ internal static partial class HandlerInvokerEmitter
       valueName,
       "__renderer",
       writeSuccess,
-      fallbackIndent => EmitResultOutput(sb, fallbackIndent, valueType, valueName, terminal));
+      fallbackIndent => EmitResultOutput(sb, fallbackIndent, valueType, valueKind, valueName, terminal));
 
     if (problemPair)
       sb.AppendLine($"{indent}}}");
@@ -401,7 +403,7 @@ internal static partial class HandlerInvokerEmitter
 
       sb.AppendLine(
         $"{indent}{resultType} result = {awaitKeyword}{typeName}.{methodName}({args});");
-      EmitResultOrCapture(sb, indent, resultTypeName, captureResultInto);
+      EmitResultOrCapture(sb, indent, resultTypeName, handler.ReturnType.ValueKind, captureResultInto);
     }
     else
     {
@@ -413,7 +415,7 @@ internal static partial class HandlerInvokerEmitter
   /// <summary>
   /// Writes <c>result</c> to the terminal, or assigns it to <paramref name="captureResultInto"/> when set.
   /// </summary>
-  private static void EmitResultOrCapture(StringBuilder sb, string indent, string? resultTypeName, string? captureResultInto)
+  private static void EmitResultOrCapture(StringBuilder sb, string indent, string? resultTypeName, ResultValueKind valueKind, string? captureResultInto)
   {
     if (captureResultInto is not null)
     {
@@ -421,7 +423,7 @@ internal static partial class HandlerInvokerEmitter
       return;
     }
 
-    EmitResultOutput(sb, indent, resultTypeName);
+    EmitResultOutput(sb, indent, resultTypeName, valueKind);
   }
 
   /// <summary>

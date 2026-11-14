@@ -144,13 +144,13 @@ internal static partial class HandlerExtractor
       {
         string innerType = namedType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         string innerShort = namedType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        return HandlerReturnType.TaskOf(innerType, innerShort);
+        return HandlerReturnType.TaskOf(innerType, innerShort, ResultValueKinds.Of(namedType.TypeArguments[0]));
       }
 
       return HandlerReturnType.Task;
     }
 
-    return HandlerReturnType.Of(fullTypeName, shortTypeName);
+    return HandlerReturnType.Of(fullTypeName, shortTypeName, ResultValueKinds.Of(returnType));
   }
 
   /// <summary>
@@ -173,10 +173,11 @@ internal static partial class HandlerExtractor
         string fullTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         string shortTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
+        ResultValueKind valueKind = ResultValueKinds.Of(typeInfo.Type);
         if (isAsync)
-          return HandlerReturnType.TaskOf(fullTypeName, shortTypeName);
+          return HandlerReturnType.TaskOf(fullTypeName, shortTypeName, valueKind);
 
-        return HandlerReturnType.Of(fullTypeName, shortTypeName);
+        return HandlerReturnType.Of(fullTypeName, shortTypeName, valueKind);
       }
     }
 
@@ -197,10 +198,11 @@ internal static partial class HandlerExtractor
           string fullTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
           string shortTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
+          ResultValueKind valueKind = ResultValueKinds.Of(typeInfo.Type);
           if (isAsync)
-            return HandlerReturnType.TaskOf(fullTypeName, shortTypeName);
+            return HandlerReturnType.TaskOf(fullTypeName, shortTypeName, valueKind);
 
-          return HandlerReturnType.Of(fullTypeName, shortTypeName);
+          return HandlerReturnType.Of(fullTypeName, shortTypeName, valueKind);
         }
       }
     }

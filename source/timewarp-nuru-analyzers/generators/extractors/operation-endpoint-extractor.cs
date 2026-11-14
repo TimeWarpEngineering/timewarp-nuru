@@ -55,7 +55,8 @@ internal static partial class EndpointExtractor
     string? SuccessTypeName,
     string? RendererTypeName,
     string? HandlerInterfaceName,
-    string? ProblemRendererTypeName);
+    string? ProblemRendererTypeName,
+    ResultValueKind SuccessValueKind);
 
   private static bool IsMetadataAttribute(AttributeData attribute, string metadataName) =>
     attribute.AttributeClass?.ToDisplayString() == metadataName;

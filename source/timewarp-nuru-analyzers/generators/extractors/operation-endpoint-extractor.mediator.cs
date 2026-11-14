@@ -15,6 +15,7 @@ internal static partial class EndpointExtractor
 
     bool problem = false;
     string successTypeName = responseTypeName;
+    ResultValueKind successValueKind = ResultValueKinds.Of(responseType);
     if (responseType is INamedTypeSymbol oneOf
         && oneOf.Name == "OneOf"
         && oneOf.ContainingNamespace?.ToDisplayString() == "OneOf"
@@ -25,6 +26,7 @@ internal static partial class EndpointExtractor
     {
       problem = true;
       successTypeName = oneOf.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+      successValueKind = ResultValueKinds.Of(oneOf.TypeArguments[0]);
     }
 
     // TimeWarp.Mediator 15 has one handler interface for every message kind. The kind comes from the
@@ -33,7 +35,7 @@ internal static partial class EndpointExtractor
 
     string? renderer = FindRenderer(compilation, successTypeName, requestType);
     string? problemRenderer = problem ? FindRenderer(compilation, ProblemDetailsMetadataTypeName, requestType) : null;
-    return new ResponseShape(problem, successTypeName, renderer, handlerInterface, problemRenderer);
+    return new ResponseShape(problem, successTypeName, renderer, handlerInterface, problemRenderer, successValueKind);
   }
 
   private static ITypeSymbol? MediatorResponseType(INamedTypeSymbol requestType)

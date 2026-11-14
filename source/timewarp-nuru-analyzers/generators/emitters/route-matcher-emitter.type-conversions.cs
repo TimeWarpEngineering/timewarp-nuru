@@ -5,6 +5,7 @@
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
+using TimeWarp.Nuru.Validation;
 
 internal static partial class RouteMatcherEmitter
 {
@@ -36,6 +37,13 @@ internal static partial class RouteMatcherEmitter
       string typeConstraint = param.TypeConstraint ?? "";
       string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal) ? typeConstraint[..^1] : typeConstraint;
 
+      // NURU_S010 reports a constraint with no conversion; declare the value so the output still compiles
+      if (UnknownTypeConstraintValidator.IsUnresolved(route, param, customConverters))
+      {
+        EmitUnresolvedParameter(sb, route, param, escapedVarName, uniqueVarName, indentStr);
+        continue;
+      }
+
       // Handle catchall parameters differently - they're string[] not string
       if (param.IsCatchAll)
       {
@@ -44,6 +52,15 @@ internal static partial class RouteMatcherEmitter
           continue;
 
         EmitCatchAllTypeConversion(sb, param, escapedVarName, uniqueVarName, baseType, indentStr);
+        continue;
+      }
+
+      // {name:string} / {name:string?}: no conversion, bind the captured value as an untyped {name} does.
+      // The capture is string? when the parameter is optional and string otherwise.
+      if (TypeConversionMap.IsStringConstraint(baseType))
+      {
+        string stringType = param.IsOptional ? "string?" : "string";
+        sb.AppendLine($"{indentStr}{stringType} {escapedVarName} = {uniqueVarName};");
         continue;
       }
 
@@ -193,11 +210,7 @@ internal static partial class RouteMatcherEmitter
         // 2. Simple target type name (e.g., "MyApp.Types.EmailAddress" -> "EmailAddress")
         // 3. Constraint alias (e.g., "email")
         // 4. Convention: ConverterTypeName minus "Converter" suffix (e.g., "EmailAddressConverter" -> "EmailAddress")
-        CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
-          string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
-          string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||
-          string.Equals(c.ConstraintAlias, baseType, StringComparison.OrdinalIgnoreCase) ||
-          string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.OrdinalIgnoreCase));
+        CustomConverterDefinition? converter = CustomConverterMatcher.Find(baseType, customConverters);
 
         if (converter is not null)
         {

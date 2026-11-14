@@ -171,6 +171,26 @@ builder.Map("copy {source?} {dest}").WithHandler(handler).AsCommand().Done();
 builder.Map("copy {source} {dest?}").WithHandler(handler).AsCommand().Done();
 ```
 
+### NURU_S010: Unknown Type Constraint
+
+**Problem**: A typed parameter or option names no conversion the generator knows. A constraint must be a built-in type, an enum handler parameter, or a converter registered with `AddTypeConverter()` (its target type name or its `ConstraintAlias`).
+
+```csharp
+// ❌ Error: no converter for "point"
+builder.Map("move {to:point}").WithHandler((Point to) => to.X).AsCommand().Done();
+
+// ✅ Correct: register the converter whose ConstraintAlias => "point"
+builder
+  .AddTypeConverter(new PointConverter())
+  .Map("move {to:point}").WithHandler((Point to) => to.X).AsCommand().Done();
+```
+
+The generator reads `ConstraintAlias` from the converter source, so it must return a constant string (`=> "point"` or a `const`).
+
+A typed catch-all (`{*points:T}`) converts built-in element types only (every built-in type, `Uri`, `FileInfo`, and `DirectoryInfo` included), and a repeated option (`--at {at:T}*`) converts built-in and enum elements. A custom converter constraint on either reports NURU_S010.
+
+NURU_S010 is the only error such a route produces: the generated code still compiles, so the build does not also report CS0103 or CS0029 inside generated files.
+
 ### Typed endpoints
 
 `.Map<TEndpoint>()` takes no pattern argument. Put the route on `[NuruRoute]`. There is no `NURU_D001` diagnostic.
@@ -319,6 +339,8 @@ There is no `NURU_DEBUG` diagnostic id.
 | NURU_S006 | Optional before required |
 | NURU_S007 | Invalid end-of-options separator |
 | NURU_S008 | Options after end-of-options separator |
+| NURU_S009 | Unresolved type converter type |
+| NURU_S010 | Unknown type constraint |
 
 ## Related Documentation
 

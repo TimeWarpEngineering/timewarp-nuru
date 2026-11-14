@@ -135,7 +135,7 @@ internal static partial class HandlerInvokerEmitter
       sb.AppendLine(
         $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}({argList});");
 
-      EmitResultOrCapture(sb, indent, resultTypeName, captureResultInto);
+      EmitResultOrCapture(sb, indent, resultTypeName, handler.ReturnType.ValueKind, captureResultInto);
     }
     else
     {
@@ -186,7 +186,7 @@ internal static partial class HandlerInvokerEmitter
       sb.AppendLine(
         $"{indent}{GetUnwrappedReturnTypeName(handler)} result = {awaitKeyword}{handlerName}({argList});");
 
-      EmitResultOrCapture(sb, indent, resultTypeName, captureResultInto);
+      EmitResultOrCapture(sb, indent, resultTypeName, handler.ReturnType.ValueKind, captureResultInto);
     }
     else
     {

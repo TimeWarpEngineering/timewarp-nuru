@@ -459,7 +459,7 @@ internal static class CapabilitiesEmitter
     string typeName = handler.ReturnsProblemPair && handler.SuccessTypeName is string successType
       ? successType
       : returnType.UnwrappedTypeName ?? returnType.FullTypeName;
-    string kind = HandlerInvokerEmitter.GetOutputStrategy(typeName) switch
+    string kind = HandlerInvokerEmitter.GetOutputStrategy(typeName, handler.RenderedValueKind) switch
     {
       OutputStrategy.None => "Unit",
       OutputStrategy.Json => "Json",

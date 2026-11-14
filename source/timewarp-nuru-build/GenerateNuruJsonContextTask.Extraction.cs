@@ -209,10 +209,15 @@ public partial class GenerateNuruJsonContextTask
   /// <summary>
   /// Gets the actual return type name from a HandlerReturnType.
   /// For Task&lt;T&gt;, returns T. For non-async, returns the full type name.
+  /// An anonymous result returns null, because a JSON context cannot register it.
   /// </summary>
   private static string? GetReturnTypeName(HandlerReturnType returnType)
   {
     if (returnType.IsVoid)
+      return null;
+
+    // An anonymous result has no name typeof can use; the invoker prints it through ToString() (kanban 585).
+    if (returnType.ValueKind == ResultValueKind.Anonymous)
       return null;
 
     // For Task<T>, use the unwrapped type

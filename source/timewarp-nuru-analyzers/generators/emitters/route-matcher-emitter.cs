@@ -42,10 +42,11 @@
 // UnauthorizedAccessException, and SecurityException. Catch Exception so any of
 // those stay on the invalid-value exit instead of escaping the route.
 //
-// TYPED ARRAY CONVERSION: Catch-all parameters and repeated options call
-// GetBuiltInTryConversion once per element. A failed TryParse, including
-// overflow, writes the invalid-value line and returns 1. DateTimeOffset and
-// Version use that same TryParse map as scalar parameters.
+// TYPED ARRAY CONVERSION: Catch-all parameters and repeated options convert each
+// element through BuiltInElementParse: GetBuiltInTryConversion, or Uri.TryCreate and
+// the FileInfo / DirectoryInfo constructor for the built-ins with no TryParse. A failed
+// conversion, including overflow, writes the invalid-value line and returns 1.
+// DateTimeOffset and Version use that same TryParse map as scalar parameters.
 //
 // SHARED PREFIX HELP: Routes that share leading literals are printed together by
 // EmitSharedPrefixHelpChecks. EmitPerRouteHelpCheck skips those routes. A prefix

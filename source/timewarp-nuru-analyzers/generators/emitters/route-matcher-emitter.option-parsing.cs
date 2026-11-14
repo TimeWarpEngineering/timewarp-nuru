@@ -78,7 +78,9 @@ internal static partial class RouteMatcherEmitter
     string optionName = option.LongForm ?? option.ShortForm!;
     bool isEnumType = route.Handler.Parameters
       .Any(p => string.Equals(p.SourceName, optionName, StringComparison.OrdinalIgnoreCase) && p.IsEnumType);
-    bool needsConversion = option.TypeConstraint is not null || isEnumType;
+    // A string constraint ({value:string}) needs no conversion: it takes the untyped path,
+    // which keeps a property default as the raw initializer.
+    bool needsConversion = (option.TypeConstraint is not null && !TypeConversionMap.IsStringConstraint(option.TypeConstraint)) || isEnumType;
     string rawVarName = needsConversion ? $"__{varName}_raw" : escapedVarName;
 
     sb.AppendLine($"      bool {flagFoundVar} = false;");

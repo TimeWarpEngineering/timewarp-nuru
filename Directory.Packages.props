@@ -23,16 +23,16 @@
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Builder" Version="1.1.0" />
-    <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Builder" Version="2.1.0-beta.1" />
+    <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.16" />
-    <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.0" />
+    <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.1-beta.1" />
     <!-- Held at beta.11: beta.13+ ships TWA0038 (500-line cap); task 581 splits the long files, then bumps. TWA0004 (#region Purpose) is clean since task 580. -->
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.15" />
-    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.32" />
     <!-- TimeWarp.Contracts 2.0.0-beta.31 depends on TimeWarp.Mediator 15.0.0-beta.4, so the two move together (task 566). -->
-    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.6" />
-    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.8" />
+    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.8" />
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="Shouldly" Version="5.0.0-preview.2" />
@@ -86,12 +86,12 @@
   <ItemGroup Label="Roslyn Analyzer Dependencies">
     <!-- Pinned: TimeWarp.Nuru.Analyzers compiles against this and does not pack it
          (SuppressDependenciesWhenPacking). The consumer's compiler supplies Microsoft.CodeAnalysis.
-         Raising this raises the minimum Roslyn that can load the analyzer. 5.9 ships in SDK 10.0.400+
+         Raising this raises the minimum Roslyn that can load the analyzer. 5.12 is required by TimeWarp.SourceGenerators 1.0.0-beta.16; 5.9 ships in SDK 10.0.400+
          and every .NET 11 SDK (11.0.100-rc.3 ships Roslyn 5.12), so a net11.0 consumer always has it
          (task 481). Do not go past the Roslyn in the oldest .NET 11 SDK we support. CodeStyle and
          Microsoft.CodeAnalysis.Analyzers are repo-local / analyzer-authoring packages and may move. -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.12.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.12.0" />
     <!-- ILSpy engine: decompile referenced AddX method bodies for source-gen DI lowering (task 395). -->
     <PackageVersion Include="ICSharpCode.Decompiler" Version="11.2.0.10050" />
   </ItemGroup>

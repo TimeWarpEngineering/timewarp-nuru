@@ -102,7 +102,8 @@ internal static partial class EndpointExtractor
       successTypeName: shape.SuccessTypeName,
       rendererTypeName: shape.RendererTypeName,
       constructorArguments: constructorArguments,
-      problemRendererTypeName: shape.ProblemRendererTypeName);
+      problemRendererTypeName: shape.ProblemRendererTypeName,
+      successValueKind: shape.SuccessValueKind);
   }
 
   private static void AddDerivedPropertyBindings(

@@ -89,4 +89,17 @@ internal static partial class DiagnosticDescriptors
       defaultSeverity: DiagnosticSeverity.Error,
       isEnabledByDefault: true,
       description: "AddTypeConverter() requires the converter's type to be resolvable via the semantic model so its fully qualified name can be emitted into generated code.");
+
+  public static readonly DiagnosticDescriptor UnknownTypeConstraint = new(
+      id: "NURU_S010",
+      title: "Unknown type constraint",
+      messageFormat: "{0} uses type constraint '{1}' in route '{2}', which {3}",
+      category: SemanticCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "The generator converts a typed route value with a built-in parser, EnumTypeConverter<T> for an enum handler parameter, " +
+                   "or a custom converter registered with AddTypeConverter(). A constraint that names none of them has no conversion. " +
+                   "Register a converter, use its target type name or its ConstraintAlias, or fix the constraint. " +
+                   "ConstraintAlias is read from the converter source and must be a constant string. " +
+                   "A typed catch-all converts built-in element types only; a repeated option converts built-in and enum elements.");
 }

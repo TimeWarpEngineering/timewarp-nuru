@@ -46,6 +46,11 @@ internal static class ModelValidator
       ReservedJsonArgsValidator.Validate(model, routeLocations);
     diagnostics.AddRange(reservedJsonArgsDiagnostics);
 
+    // NURU_S010: a fluent route type constraint with no built-in, enum, or custom converter
+    ImmutableArray<Diagnostic> unknownConstraintDiagnostics =
+      UnknownTypeConstraintValidator.Validate(model, routeLocations);
+    diagnostics.AddRange(unknownConstraintDiagnostics);
+
     // Run service validator (NURU050, NURU051, NURU053, NURU054)
     ImmutableArray<Diagnostic> serviceDiagnostics = ServiceValidator.Validate(
       model,

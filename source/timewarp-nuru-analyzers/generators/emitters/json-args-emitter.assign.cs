@@ -117,6 +117,12 @@ internal static partial class JsonArgsEmitter
   private static void EmitAssignScalarFromString(StringBuilder sb, Slot slot, string raw, Fail fail, int indent)
   {
     string ind = new(' ', indent);
+    if (slot.Unresolved)
+    {
+      EmitAssignUnresolved(sb, slot, ind);
+      return;
+    }
+
     if (slot.Shape == ValueShape.Enum && slot.EnumTypeName is not null)
     {
       sb.AppendLine($"{ind}global::TimeWarp.Nuru.EnumTypeConverter<{slot.EnumTypeName}> __enum_{slot.Id} = new();");
@@ -195,6 +201,12 @@ internal static partial class JsonArgsEmitter
   private static void EmitAssignListFromStrings(StringBuilder sb, Slot slot, string list, Fail fail, int indent)
   {
     string ind = new(' ', indent);
+    if (slot.Unresolved)
+    {
+      EmitAssignUnresolved(sb, slot, ind);
+      return;
+    }
+
     if (slot.Shape == ValueShape.TextList && IsPlainString(slot))
     {
       sb.AppendLine($"{ind}{slot.VariableName} = [.. {list}];");
@@ -220,29 +232,24 @@ internal static partial class JsonArgsEmitter
       return;
     }
 
-    if (slot.BaseConstraint is not null)
+    // Built-in element types, Uri, FileInfo, and DirectoryInfo included (task 584 review M2)
+    string? elementClr = slot.BaseConstraint is null ? null : BuiltInElementParse.GetClrType(slot.BaseConstraint);
+    if (elementClr is not null)
     {
-      (string ClrType, string TryParseCondition)? typed = TypeConversionMap.GetBuiltInTryConversion(
-        slot.BaseConstraint,
+      sb.AppendLine($"{ind}{elementClr}[] __typed_{slot.Id} = new {elementClr}[{list}.Count];");
+      sb.AppendLine($"{ind}for (int __ni = 0; __ni < {list}.Count; __ni++)");
+      sb.AppendLine($"{ind}{{");
+      BuiltInElementParse.TryEmit(
+        sb,
+        ind + "  ",
+        slot.BaseConstraint!,
         $"{list}[__ni]",
-        $"__parsed_{slot.Id}");
-      if (typed is var (clr, condition))
-      {
-        sb.AppendLine($"{ind}{clr}[] __typed_{slot.Id} = new {clr}[{list}.Count];");
-        sb.AppendLine($"{ind}for (int __ni = 0; __ni < {list}.Count; __ni++)");
-        sb.AppendLine($"{ind}{{");
-        sb.AppendLine($"{ind}  {clr} __parsed_{slot.Id};");
-        sb.AppendLine($"{ind}  if (!({condition}))");
-        sb.AppendLine($"{ind}  {{");
-        sb.AppendLine($"{ind}    __ok = false;");
-        sb.AppendLine($"{ind}    {fail.Assign()}");
-        sb.AppendLine($"{ind}    break;");
-        sb.AppendLine($"{ind}  }}");
-        sb.AppendLine($"{ind}  __typed_{slot.Id}[__ni] = __parsed_{slot.Id};");
-        sb.AppendLine($"{ind}}}");
-        sb.AppendLine($"{ind}if (__ok) {slot.VariableName} = __typed_{slot.Id};");
-        return;
-      }
+        $"__parsed_{slot.Id}",
+        ["__ok = false;", fail.Assign(), "break;"]);
+      sb.AppendLine($"{ind}  __typed_{slot.Id}[__ni] = __parsed_{slot.Id};");
+      sb.AppendLine($"{ind}}}");
+      sb.AppendLine($"{ind}if (__ok) {slot.VariableName} = __typed_{slot.Id};");
+      return;
     }
 
     if (slot.Shape == ValueShape.NumberList && slot.BaseConstraint is not null && slot.NumberClr is not null)
@@ -266,6 +273,14 @@ internal static partial class JsonArgsEmitter
     }
 
     sb.AppendLine($"{ind}{slot.VariableName} = [.. {list}];");
+  }
+
+  // NURU_S010 reports this constraint and stops the build. Assign default rather than a string so the
+  // field (the handler's type) still compiles and NURU_S010 is the only error (review M1, task 584).
+  private static void EmitAssignUnresolved(StringBuilder sb, Slot slot, string ind)
+  {
+    sb.AppendLine($"{ind}// NURU_S010: no conversion for type constraint '{slot.BaseConstraint}'.");
+    sb.AppendLine($"{ind}{slot.VariableName} = default!;");
   }
 
   private static void EmitSpecialParse(StringBuilder sb, Slot slot, string raw, Fail fail, int indent)

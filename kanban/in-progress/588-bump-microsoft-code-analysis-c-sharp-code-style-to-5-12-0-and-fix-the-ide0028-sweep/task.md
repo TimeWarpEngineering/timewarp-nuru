@@ -95,11 +95,23 @@ ends with "Tests completed successfully!" (standalone 0 failed); 61 `[with(` lin
 and no `#pragma warning disable IDE0028` / `NoWarn` added (`git diff origin/master -- . | grep -E "IDE0028|NoWarn"`
 shows nothing).
 
+### Review
+
+Round 1, effort 2, roster general. Counts: bug 0 open / 0 fixed / 0 wontfix, suggestion 0, nit 0. Disposition: clean (no findings). The goal restatement matches the task.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-15)
 - 2026-11-15 implementer-claude: merged origin/master, re-folderized the kitchen, bumped CodeStyle, swept IDE0028 (see Results).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-14T18:26:35Z
+- Review oracle: round 1 by general (cursor, model grok-4.7), session not reported, max-turns uncapped (review budget 120), clean — 2026-11-15
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-14T18:36:17Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

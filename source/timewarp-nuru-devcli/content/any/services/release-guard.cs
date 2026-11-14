@@ -69,7 +69,10 @@
 // path filters list more paths (documentation/, skills/, ...), but kanban/
 // is the only observed case and reading the filters is out of scope (543).
 // A commit with no changed paths (empty commit) changes nothing outside
-// kanban/, so it is skipped too.
+// kanban/, so it is skipped too. SuccessfulRunId is set only for a run with a
+// live Packages-* artifact (kanban task 568, CiRunPromotion
+// .DescribeUnreleasableRun): a probe dispatch run or an expired artifact leaves
+// it null, and the refusal says the run needs that artifact.
 //
 // CheckTargetVersion: the tag and publish-state guards check the version
 // read from the working tree (HEAD). When the target is behind HEAD, the
@@ -312,5 +315,5 @@ internal static class ReleaseGuard
   }
 
   private static string FormatNoSuccessfulRun(string headSha) =>
-    $"no successful CI run of workflow.yml exists for {headSha}. The Release event would fail at locate-run — wait for CI on this commit or rerun it (gh run rerun <id>).";
+    $"no successful CI run of workflow.yml with a Packages-* artifact exists for {headSha}. The Release event would fail at locate-run or download-artifact — wait for CI on this commit or rerun it (gh run rerun <id>).";
 }

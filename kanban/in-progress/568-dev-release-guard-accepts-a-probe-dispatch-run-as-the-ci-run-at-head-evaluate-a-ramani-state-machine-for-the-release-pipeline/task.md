@@ -39,19 +39,102 @@ Write a short evaluation under this task's kitchen (`rfc/` or `report/` subfolde
 
 Do not rewrite the pipeline on this task. If the recommendation is to adopt, file a child task with the plan.
 
+## Goal (implementer restatement)
+
+`dev release` step 8 picks the release target by walking first-parent history from
+HEAD and stopping at the first commit that has *any* successful non-`pull_request`
+run of `workflow.yml`. A `workflow_dispatch` probe run (OIDC login only, no build, no
+artifact) satisfies that, so the guard targets a commit the `release: published`
+pipeline cannot promote. Fix: a candidate run only counts when its artifact list has
+a live (non-expired) `Packages-*` artifact, the same selection the Actions-side
+download step uses. Runs without one are skipped with a printed line naming the run,
+its event, and why; a commit whose runs are all skipped is treated as a commit with no
+run, so the kanban-only walk continues past it.
+
+Acceptance:
+
+- A guard-matrix unit test reproduces the observed case (HEAD kanban-only with only a
+  no-artifact dispatch run, a green push run with `Packages-*` one commit back) and
+  the push run's commit is the target.
+- Per-run classification is a pure function with tests: no artifact, expired artifact,
+  live artifact.
+- The walk prints `skipped run <id> (<event>, <reason>)` for each skipped run, in
+  dry-run and real runs; the refusal wording says the run needs a `Packages-*` artifact.
+- The releasing guide (guard 8 and its refusal wording) matches the new behaviour.
+- A Ramani evaluation sits under `report/` in this kitchen with a recommendation; a
+  child task is filed only if the recommendation is to adopt.
+- `./bin/dev build`, `./bin/dev test`, `ganda repo audit` pass.
+
 ## Checklist
 
-- [ ] Reproduce with a unit test in `tests/timewarp-nuru-tests/devcli/` (guard matrix style): a HEAD with only a no-artifact dispatch run and a green push run one kanban-only commit back selects the push run
-- [ ] Candidate runs without a usable `Packages-*` artifact are skipped, and the dry-run output says so
-- [ ] Releasing guide refusal table updated for the new wording
-- [ ] Ramani evaluation written under the kitchen with a clear recommendation
-- [ ] Child task filed if the recommendation is to adopt
-- [ ] `./bin/dev build` and `./bin/dev test` pass
-- [ ] `ganda repo audit` clean
+- [x] Reproduce with a unit test in `tests/timewarp-nuru-tests/devcli/` (guard matrix style): a HEAD with only a no-artifact dispatch run and a green push run one kanban-only commit back selects the push run
+- [x] Candidate runs without a usable `Packages-*` artifact are skipped, and the dry-run output says so
+- [x] Releasing guide refusal table updated for the new wording
+- [x] Ramani evaluation written under the kitchen with a clear recommendation
+- [x] Child task filed if the recommendation is to adopt (not filed: recommendation is not now)
+- [x] `./bin/dev build` and `./bin/dev test` pass
+- [x] `ganda repo audit` clean
 
 ## Session
 
 - Created: 4791cf15-d6b7-4af4-98f6-e16d3874da55 (2026-11-08)
+- 2026-11-14 implementer (ganda task work, implement oracle): merged origin/master (land kanban 526),
+  fixed the step 8 walk, wrote `report/analysis.md`. Audit boy-scout: `vscode-window-icon` warning
+  fixed by `ganda repo audit --fix` (writes the git-ignored `.vscode/settings.json`, nothing to commit).
+
+## Results
+
+### What changed
+
+- `CiRunPromotion.DescribeUnreleasableRun` (`source/timewarp-nuru-devcli/content/any/services/ci-run-promotion.cs`):
+  pure per-run check. Returns `null` when `SelectPackagesArtifact` finds a live `Packages-*`
+  artifact, else `skipped run {id} ({event}, no Packages-* artifact)` or
+  `skipped run {id} ({event}, Packages-* artifact expired: <names>)`.
+- `ReleaseCommand.Handler.LocateReleaseTargetAsync` (`release-command.guards.cs`): for each
+  candidate run at a commit, lists its artifacts (`gh api repos/{owner}/{repo}/actions/runs/{id}/artifacts`,
+  the same call the Actions-side download step makes) and takes the first releasable run. Each
+  skipped run prints `  skipped run … at <short sha>` (yellow) in dry-run and real runs. A commit
+  whose runs are all skipped is walked like a commit with no run, so the kanban-only walk continues.
+- Refusal wording (`ReleaseGuard.FormatNoSuccessfulRun`): "no successful CI run of workflow.yml with a
+  Packages-* artifact exists for <sha>. The Release event would fail at locate-run or download-artifact …".
+- Design regions updated in `release-command.cs`, `release-guard.cs`, `ci-run-promotion.cs`.
+- Releasing guide guard 8: the artifact rule, the skip lines, and the refusal wording and fix.
+- Tests (`tests/timewarp-nuru-tests/devcli/release-01-guard-matrix.cs`): the timewarp-ramani
+  beta.23 history replayed (probe dispatch at kanban-only HEAD, push run with `Packages-43` one
+  commit back, targets the push run and reports one skip line); probe-only code commit refuses;
+  live, missing and expired artifact classification; two existing refusal-text assertions updated.
+- Ramani evaluation: `report/analysis.md`. Recommendation **not now** (pair coverage would not
+  have caught a weak predicate; release state lives outside the process; every DevCli consumer
+  would need a new package). No child task filed.
+- Follow-up outside this repo: the `tw-release` skill's guard table (timewarp-flow) still quotes
+  the old "no successful CI run" wording; it can pick up "with a Packages-* artifact" and the
+  note that a probe run does not count.
+
+### Gates
+
+| Gate | Command | Result |
+|---|---|---|
+| build | `./bin/dev build` | pass, 0 warnings, 0 errors |
+| dev CLI compile (DevCli content changed) | `dotnet run --file tools/dev-cli/dev.cs -- self-install` | pass |
+| test | `./bin/dev test` | pass, exit 0, 4660 tests, 0 failed (includes the 5 new task 568 cases) |
+| audit | `ganda repo audit` | first run: passes with 1 advisory `vscode-window-icon` warning; `ganda repo audit --fix` fixed it and re-ran: 44 passed, 0 failed |
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run tests/timewarp-nuru-tests/devcli/release-01-guard-matrix.cs
+```
+
+Expect: 37 passed, including `Probe_dispatch_run_at_head_is_skipped_for_the_push_run_one_kanban_commit_back`
+(target `0d899d7`, run 42448301249, one skip line
+`skipped run 42448431673 (workflow_dispatch, no Packages-* artifact)`).
+
+Live check (optional, read-only): in a repo whose HEAD has a probe run
+(`gh workflow run workflow.yml --ref master -f mode=probe`) and a green push run one kanban-only
+commit back, `dev release --dry-run` prints `skipped run <probe id> (workflow_dispatch, no Packages-* artifact) at <head>`
+and then `✓ HEAD is 1 kanban-only commit(s) past <push sha> (CI run <push id>)`.
 
 ## Notes
 

@@ -195,11 +195,7 @@ internal static partial class RouteMatcherEmitter
       }
 
       // Try to find a custom type converter for this constraint
-      CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
-        string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(c.ConstraintAlias, baseType, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.OrdinalIgnoreCase));
+      CustomConverterDefinition? converter = CustomConverterMatcher.Find(baseType, customConverters);
 
       if (converter is not null)
       {

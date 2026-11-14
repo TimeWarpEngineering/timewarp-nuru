@@ -15,36 +15,16 @@ internal static partial class RouteMatcherEmitter
   /// E.g., "global::EmailAddress" -> "EmailAddress"
   /// E.g., "global::MyApp.Types.EmailAddress" -> "EmailAddress"
   /// </summary>
-  private static string GetSimpleTypeName(string fullyQualifiedName)
-  {
-    // First strip global:: prefix if present
-    const string GlobalPrefix = "global::";
-    if (fullyQualifiedName.StartsWith(GlobalPrefix, StringComparison.Ordinal))
-    {
-      fullyQualifiedName = fullyQualifiedName[GlobalPrefix.Length..];
-    }
-
-    // Then get the part after the last dot
-    int lastDot = fullyQualifiedName.LastIndexOf('.', StringComparison.Ordinal);
-    return lastDot >= 0 ? fullyQualifiedName[(lastDot + 1)..] : fullyQualifiedName;
-  }
+  private static string GetSimpleTypeName(string fullyQualifiedName) =>
+    CustomConverterMatcher.SimpleTypeName(fullyQualifiedName);
 
   /// <summary>
   /// Extracts the target type name from a converter type name by convention.
   /// E.g., "EmailAddressConverter" -> "EmailAddress"
   /// E.g., "MyApp.Converters.HexColorConverter" -> "HexColor"
   /// </summary>
-  private static string GetTargetTypeFromConverterName(string converterTypeName)
-  {
-    string simpleName = GetSimpleTypeName(converterTypeName);
-    const string Suffix = "Converter";
-    if (simpleName.EndsWith(Suffix, StringComparison.Ordinal) && simpleName.Length > Suffix.Length)
-    {
-      return simpleName[..^Suffix.Length];
-    }
-
-    return simpleName;
-  }
+  private static string GetTargetTypeFromConverterName(string converterTypeName) =>
+    CustomConverterMatcher.TargetTypeFromConverterName(converterTypeName);
 
   /// <summary>
   /// Emits type conversion code for a repeated option.

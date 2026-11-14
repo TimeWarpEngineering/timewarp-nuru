@@ -278,6 +278,8 @@ public interface IRouteTypeConverter
 }
 ```
 
+A route names a converter by its target type name (`{to:EmailAddress}`) or by its `ConstraintAlias` (`{to:email}`). The source generator reads both properties from the converter source at compile time, so write `TargetType => typeof(...)` and return a constant string (a literal or a `const`) from `ConstraintAlias`. A constraint that names no built-in type, enum handler parameter, or registered converter is a build error (`NURU_S010`).
+
 ### Example: Email Address Converter
 
 ```csharp

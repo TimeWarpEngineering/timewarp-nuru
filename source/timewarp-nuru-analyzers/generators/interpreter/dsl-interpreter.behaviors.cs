@@ -6,6 +6,8 @@
 // Dispatchers turn a builder call into an IIrAppBuilder call. UseTelemetry hands its lambda to
 // TelemetryOptionsExtractor with CollectedDiagnostics, so an option the generator cannot read
 // reports NURU_T001 / NURU_T002 instead of being dropped in silence (task 533).
+// AddTypeConverter reads ConstraintAlias and TargetType from the converter source
+// (dsl-interpreter.converters.cs, task 584).
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -276,6 +278,7 @@ public sealed partial class DslInterpreter
       // Fully qualified name: GetSymbolInfo, then GetTypeInfo; TypeKind.Error is unresolved.
       string converterTypeName;
       string targetTypeName = "";
+      string? constraintAlias;
 
       INamedTypeSymbol? resolvedType =
         TypeSyntaxResolver.ResolveType(SemanticModel, objectCreation.Type, CancellationToken) as INamedTypeSymbol;
@@ -292,6 +295,15 @@ public sealed partial class DslInterpreter
           ITypeSymbol targetType = resolvedType.TypeArguments[0];
           targetTypeName = targetType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
+        else
+        {
+          // Non-generic converter: read TargetType => typeof(X) so a namespaced target type is
+          // emitted fully qualified instead of guessed from the converter name (task 584).
+          targetTypeName = ReadConverterTargetTypeName(resolvedType) ?? "";
+        }
+
+        // {at:point} matches the converter whose ConstraintAlias => "point" (task 584).
+        constraintAlias = ReadConverterConstraintAlias(resolvedType);
       }
       else
       {
@@ -306,7 +318,7 @@ public sealed partial class DslInterpreter
       CustomConverterDefinition converter = new(
         ConverterTypeName: converterTypeName,
         TargetTypeName: targetTypeName,
-        ConstraintAlias: null);
+        ConstraintAlias: constraintAlias);
 
       return appBuilder.AddTypeConverter(converter);
     }

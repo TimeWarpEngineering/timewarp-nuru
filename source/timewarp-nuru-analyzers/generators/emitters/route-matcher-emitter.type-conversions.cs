@@ -202,11 +202,7 @@ internal static partial class RouteMatcherEmitter
         // 2. Simple target type name (e.g., "MyApp.Types.EmailAddress" -> "EmailAddress")
         // 3. Constraint alias (e.g., "email")
         // 4. Convention: ConverterTypeName minus "Converter" suffix (e.g., "EmailAddressConverter" -> "EmailAddress")
-        CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
-          string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
-          string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||
-          string.Equals(c.ConstraintAlias, baseType, StringComparison.OrdinalIgnoreCase) ||
-          string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.OrdinalIgnoreCase));
+        CustomConverterDefinition? converter = CustomConverterMatcher.Find(baseType, customConverters);
 
         if (converter is not null)
         {

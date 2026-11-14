@@ -83,7 +83,8 @@ binding an untyped `{x}` gets.
   and standalone finished with 0 failed.
 - `ganda repo audit`: passed with 1 advisory warning, `vscode-window-icon` (.vscode/settings.json missing,
   ignored file). After `ganda repo audit --fix`, `ganda repo audit` reported "Repository passes all audit
-  checks." The fix touched no tracked files.
+  checks." The fix touched no tracked files. The commit hook then flagged `runfile-executable`
+  because the new test runfile had no executable bit. Fixed with chmod +x and a re-attest.
 
 ### How to validate
 

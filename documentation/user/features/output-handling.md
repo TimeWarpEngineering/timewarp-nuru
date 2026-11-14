@@ -62,7 +62,7 @@ This separation enables powerful scripting patterns:
 
 ## Automatic JSON Serialization
 
-Return objects from handlers for automatic JSON output. Return a named type (a record or class); the generated JSON context cannot name an anonymous type, so `new { ... }` does not build:
+Return objects from handlers for automatic JSON output. Return a named type (a record or class) to get JSON. An anonymous type (`new { ... }`) builds, but the generated JSON context cannot name it, so the result prints through `ToString()` instead (`{ Name = MyApp, Version = 1.0.0 }`):
 
 ```csharp
 builder.Map("analyze {file}")

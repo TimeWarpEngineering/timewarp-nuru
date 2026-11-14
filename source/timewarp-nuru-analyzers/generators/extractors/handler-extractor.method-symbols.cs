@@ -141,16 +141,30 @@ internal static partial class HandlerExtractor
         fullTypeName.StartsWith("global::System.Threading.Tasks.ValueTask<", StringComparison.Ordinal))
     {
       if (returnType is INamedTypeSymbol namedType && namedType.TypeArguments.Length == 1)
-      {
-        string innerType = namedType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        string innerShort = namedType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        return HandlerReturnType.TaskOf(innerType, innerShort, ResultValueKinds.Of(namedType.TypeArguments[0]));
-      }
+        return ValueReturnType(namedType.TypeArguments[0], isTask: true);
 
       return HandlerReturnType.Task;
     }
 
-    return HandlerReturnType.Of(fullTypeName, shortTypeName, ResultValueKinds.Of(returnType));
+    return ValueReturnType(returnType, isTask: false);
+  }
+
+  /// <summary>
+  /// Builds the return type for a result value (<paramref name="valueType"/> is T for Task&lt;T&gt;).
+  /// A type that is or contains an anonymous type is named <c>object</c>, because generated code
+  /// cannot name it (kanban 585); its <see cref="ResultValueKind.Anonymous"/> kind prints it through ToString().
+  /// </summary>
+  private static HandlerReturnType ValueReturnType(ITypeSymbol valueType, bool isTask)
+  {
+    ResultValueKind valueKind = ResultValueKinds.Of(valueType);
+    (string fullTypeName, string shortTypeName) = valueKind == ResultValueKind.Anonymous
+      ? ("global::System.Object", "object")
+      : (valueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+         valueType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
+
+    return isTask
+      ? HandlerReturnType.TaskOf(fullTypeName, shortTypeName, valueKind)
+      : HandlerReturnType.Of(fullTypeName, shortTypeName, valueKind);
   }
 
   /// <summary>
@@ -169,16 +183,7 @@ internal static partial class HandlerExtractor
     {
       TypeInfo typeInfo = semanticModel.GetTypeInfo(expression, cancellationToken);
       if (typeInfo.Type is not null && typeInfo.Type.SpecialType != SpecialType.System_Void)
-      {
-        string fullTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        string shortTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-
-        ResultValueKind valueKind = ResultValueKinds.Of(typeInfo.Type);
-        if (isAsync)
-          return HandlerReturnType.TaskOf(fullTypeName, shortTypeName, valueKind);
-
-        return HandlerReturnType.Of(fullTypeName, shortTypeName, valueKind);
-      }
+        return ValueReturnType(typeInfo.Type, isAsync);
     }
 
     // For block bodies, find return statements and infer type from the returned expression
@@ -194,16 +199,7 @@ internal static partial class HandlerExtractor
       {
         TypeInfo typeInfo = semanticModel.GetTypeInfo(returnStatement.Expression, cancellationToken);
         if (typeInfo.Type is not null && typeInfo.Type.SpecialType != SpecialType.System_Void)
-        {
-          string fullTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-          string shortTypeName = typeInfo.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-
-          ResultValueKind valueKind = ResultValueKinds.Of(typeInfo.Type);
-          if (isAsync)
-            return HandlerReturnType.TaskOf(fullTypeName, shortTypeName, valueKind);
-
-          return HandlerReturnType.Of(fullTypeName, shortTypeName, valueKind);
-        }
+          return ValueReturnType(typeInfo.Type, isAsync);
       }
     }
 

@@ -6,8 +6,9 @@
 // The values follow CQRS so a tool that cannot read a handler can still decide whether to confirm and
 // whether to retry. The safe reading of an unclassified route is Command (confirm, never auto-retry),
 // but surfaces carry that in different ways: CompiledRoute.MessageType defaults to Command; help
-// shows Unspecified as ( ); the capabilities catalog keeps Unspecified as its own EndpointKind so it
-// reports "not yet classified" instead of claiming a classification the author never made; and MCP
+// lists the command and its description and renders no message-type marker for any value; the
+// capabilities catalog keeps Unspecified as its own EndpointKind so it reports "not yet classified"
+// instead of claiming a classification the author never made; and MCP
 // tool annotations (NuruMcpToolCatalog.CreateAnnotations) set no readOnly / idempotent hints for it,
 // which MCP clients read as their spec defaults (not read-only, not idempotent), the same as Command.
 #endregion

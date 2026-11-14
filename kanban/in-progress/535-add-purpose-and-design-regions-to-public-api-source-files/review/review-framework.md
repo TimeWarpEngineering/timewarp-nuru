@@ -10,11 +10,21 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1097
-- Effort: 3
+Round 2 re-review budget. Round 1 was 1097 lines, effort 3, turn cap 200.
+
+- Lines changed: 139
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
+
+## Round 2 scope
+
+**Date:** 2026-11-14
+**Diff scope:** `e95f5752..0d3c82e3`. Product delta is the Design regions in `source/timewarp-nuru/telemetry/nuru-telemetry-options.cs` and `source/timewarp-nuru-parsing/message-type.cs` (commit `0d3c82e3`). Round 1 base is `review/round-1/base.sha`.
+**Effort:** 1 (general)
+**Reviewer roster:** general
+**Session IDs:** review oracle session not reported (cursor, grok 4.7). Turn cap 80; cursor session uncapped (no `--max-turns` flag).
 
 ## Ground rules
 

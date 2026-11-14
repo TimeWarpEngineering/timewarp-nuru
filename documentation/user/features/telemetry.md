@@ -140,8 +140,10 @@ The Aspire Dashboard provides:
 ## Custom telemetry behavior
 
 `UseTelemetry()` already traces every command. To add your own tags (here a correlation id) on
-your own ActivitySource, write a behavior and register it. Add your source to the host's tracer
-provider if you export it yourself.
+your own ActivitySource, write a behavior and register it. The generated tracer provider exports
+only Nuru's own sources, so name your source in `options.ActivitySources` (see
+[Exporting other ActivitySources and Meters](#exporting-other-activitysources-and-meters));
+without that, the behavior's spans are created but never exported.
 
 ```csharp
 public sealed class CorrelationTelemetryBehavior : INuruBehavior
@@ -173,7 +175,7 @@ Register with:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
-  .UseTelemetry()
+  .UseTelemetry(options => options.ActivitySources.Add("MyApp.Commands"))
   .AddBehavior(typeof(CorrelationTelemetryBehavior))
   .Build();
 ```

@@ -117,27 +117,32 @@ NuruApp app = NuruApp.CreateBuilder()
 
 ### Map("") vs Catch-All `{*args}`
 
-While both can handle "fallback" scenarios, they serve different purposes:
+Both handle "fallback" scenarios, but they serve different purposes:
 
 | Feature | `Map("")` | Catch-all `{*args}` |
 |---------|--------------|---------------------|
-| **Matches** | Empty input only (no arguments) | Any unmatched input |
+| **Matches** | Empty input only (no arguments) | Any unmatched input, including empty input |
 | **Use case** | Show usage/help when CLI invoked alone | Forward unknown commands elsewhere |
-| **Handler receives** | Nothing | All arguments as `string[]` |
-| **Specificity** | Most specific (exact empty match) | Least specific (matches anything) |
+| **Handler receives** | Nothing | All arguments as `string[]` (empty when there are none) |
+
+A top-level `{*args}` also matches empty input, and it scores higher than `Map("")`, so
+`Map("")` beside a top-level `{*args}` never runs. The analyzer reports that as `NURU_R003`
+(unreachable route). When you have a top-level catch-all, handle empty input inside it:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
-  .Map("")
-    .WithHandler(() => Console.WriteLine("No command provided. Try 'help'."))
-    .AsCommand()
-    .Done()
   .Map("help")
     .WithHandler(() => Console.WriteLine("Available: greet, version"))
-    .AsCommand()
+    .AsQuery()
     .Done()
   .Map("{*args}")
-    .WithHandler((string[] args) => Console.WriteLine($"Unknown: {string.Join(" ", args)}"))
+    .WithHandler((string[] args) =>
+    {
+      if (args.Length == 0)
+        Console.WriteLine("No command provided. Try 'help'.");
+      else
+        Console.WriteLine($"Unknown: {string.Join(" ", args)}");
+    })
     .AsCommand()
     .Done()
   .Build();

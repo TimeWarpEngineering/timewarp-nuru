@@ -32,7 +32,7 @@ NuruApp app = NuruApp.CreateBuilder()
     .AsCommand()
     .Done()
   .Map("echo {message:string}")
-    .WithHandler((string msg) => Console.WriteLine(msg))
+    .WithHandler((string message) => Console.WriteLine(message))
     .AsCommand()
     .Done()
   .Build();
@@ -48,7 +48,7 @@ NuruApp app = NuruApp.CreateBuilder()
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
   .Map("wait {seconds:int}")
-    .WithHandler((int sec) => Thread.Sleep(sec * 1000))
+    .WithHandler((int seconds) => Thread.Sleep(seconds * 1000))
     .AsCommand()
     .Done()
   .Map("repeat {times:int} {text}")
@@ -76,7 +76,7 @@ NuruApp app = NuruApp.CreateBuilder()
     .AsCommand()
     .Done()
   .Map("scale {factor:double}")
-    .WithHandler((double f) => Scale(f))
+    .WithHandler((double factor) => Scale(factor))
     .AsCommand()
     .Done()
   .Build();
@@ -108,7 +108,7 @@ NuruApp app = NuruApp.CreateBuilder()
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
   .Map("schedule {when:DateTime}")
-    .WithHandler((DateTime dt) => Console.WriteLine($"Scheduled for {dt}"))
+    .WithHandler((DateTime when) => Console.WriteLine($"Scheduled for {when}"))
     .AsCommand()
     .Done()
   .Build();
@@ -158,7 +158,7 @@ NuruApp app = NuruApp.CreateBuilder()
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
   .Map("pay {amount:decimal}")
-    .WithHandler((decimal amt) => ProcessPayment(amt))
+    .WithHandler((decimal amount) => ProcessPayment(amount))
     .AsCommand()
     .Done()
   .Build();
@@ -173,7 +173,7 @@ NuruApp app = NuruApp.CreateBuilder()
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
   .Map("timeout {duration:TimeSpan}")
-    .WithHandler((TimeSpan ts) => SetTimeout(ts))
+    .WithHandler((TimeSpan duration) => SetTimeout(duration))
     .AsCommand()
     .Done()
   .Build();
@@ -383,16 +383,16 @@ See [Analyzer Documentation](../features/analyzer.md) for more details.
 ```csharp
 // ✅ Specific type for validation
 .Map("wait {seconds:int}")
-  .WithHandler((int sec) => ...)
+  .WithHandler((int seconds) => ...)
   .AsCommand()
   .Done()
 
 // ❌ String requires manual validation
 NuruApp badApp = NuruApp.CreateBuilder()
   .Map("wait {seconds}")
-    .WithHandler((string sec) =>
+    .WithHandler((string seconds) =>
     {
-      if (!int.TryParse(sec, out int value))
+      if (!int.TryParse(seconds, out int value))
         throw new ArgumentException("Invalid number");
       // ...
     })

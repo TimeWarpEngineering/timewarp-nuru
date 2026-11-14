@@ -5,6 +5,7 @@
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
+using TimeWarp.Nuru.Validation;
 
 internal static partial class RouteMatcherEmitter
 {
@@ -35,6 +36,13 @@ internal static partial class RouteMatcherEmitter
       // Normalize type constraint: strip '?' suffix to get base type
       string typeConstraint = param.TypeConstraint ?? "";
       string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal) ? typeConstraint[..^1] : typeConstraint;
+
+      // NURU_S010 reports a constraint with no conversion; declare the value so the output still compiles
+      if (UnknownTypeConstraintValidator.IsUnresolved(route, param, customConverters))
+      {
+        EmitUnresolvedParameter(sb, route, param, escapedVarName, uniqueVarName, indentStr);
+        continue;
+      }
 
       // Handle catchall parameters differently - they're string[] not string
       if (param.IsCatchAll)

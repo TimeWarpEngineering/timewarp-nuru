@@ -13,8 +13,11 @@
 #region Design
 // Each case compiles an app in memory with Roslyn and runs the Nuru generator on it. The alias case
 // requires zero errors from the generator and from the compile of its output. The unknown-constraint
-// cases require NURU_S010 and name the subject (parameter or option) it reports. A converter whose
-// ConstraintAlias is not a compile-time constant cannot be read, so its alias reports NURU_S010 too.
+// cases require NURU_S010, name the subject (parameter or option) it reports, and require the compile
+// of the generated output to have no errors: NURU_S010 is the only error, never CS0103 / CS0029 in
+// generated code (review M1). A converter whose ConstraintAlias is not a compile-time constant cannot be
+// read, so its alias reports NURU_S010 too. A typed catch-all and a repeated option have no custom
+// converter path, so a converter constraint there reports NURU_S010.
 // Roslyn-hosted (the analyzers library collides with timewarp-nuru's parsing types, CS0433), so it
 // runs in the standalone phase.
 #endregion
@@ -113,6 +116,13 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen76ConverterConstraintAlias
     private static Diagnostic[] S010(CompileResult result) =>
       [.. result.GeneratorDiagnostics.Where(static d => d.Id == "NURU_S010")];
 
+    // The generated output must compile even when NURU_S010 reports a route.
+    private static void ShouldCompileGeneratedCode(CompileResult result)
+    {
+      Diagnostic[] compileErrors = [.. result.CompileDiagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error)];
+      compileErrors.ShouldBeEmpty(Describe(compileErrors));
+    }
+
     /// <summary>
     /// {at:point} binds through the converter whose ConstraintAlias is "point" on the positional,
     /// optional positional, and option paths. SpotParser covers a getter-block alias read from a
@@ -159,8 +169,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen76ConverterConstraintAlias
       Diagnostic[] generatorErrors = [.. result.GeneratorDiagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error)];
       generatorErrors.ShouldBeEmpty(Describe(generatorErrors));
 
-      Diagnostic[] compileErrors = [.. result.CompileDiagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error)];
-      compileErrors.ShouldBeEmpty(Describe(compileErrors));
+      ShouldCompileGeneratedCode(result);
 
       result.Generated.ShouldContain("new global::Gen76PointConverter()");
       result.Generated.ShouldContain("new global::Gen76Geo.SpotParser()");
@@ -170,8 +179,8 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen76ConverterConstraintAlias
     }
 
     /// <summary>
-    /// A positional constraint and an option constraint that name no built-in type, enum handler
-    /// parameter, or registered converter each report NURU_S010 at the route.
+    /// Positional, optional positional, option, catch-all, and repeated-option constraints with no
+    /// conversion each report NURU_S010 at the route, and the generated code still compiles.
     /// </summary>
     public static async Task Should_report_unknown_constraint_on_parameter_and_option()
     {
@@ -179,22 +188,32 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen76ConverterConstraintAlias
         NuruApp app = NuruApp.CreateBuilder()
           .AddTypeConverter(new Gen76PointConverter())
           .Map("where {at:nowhere}").WithHandler((Gen76Point at) => at.X).AsQuery().Done()
+          .Map("where-maybe {at:nowhere?}").WithHandler((Gen76Point? at) => at?.X ?? 0).AsQuery().Done()
           .Map("where-option --at {at:elsewhere}").WithHandler((Gen76Point at) => at.Y).AsQuery().Done()
+          .Map("where-all {*points:point}").WithHandler((Gen76Point[] points) => points.Length).AsQuery().Done()
+          .Map("where-many --to {to:point}*").WithHandler((Gen76Point[] to) => to.Length).AsQuery().Done()
           .Build();
 
         return await app.RunAsync(args);
 
         """ + PointTypes;
 
-      Diagnostic[] s010 = S010(Compile(Source));
+      CompileResult result = Compile(Source);
+      Diagnostic[] s010 = S010(result);
 
-      s010.Length.ShouldBe(2, Describe(s010));
+      s010.Length.ShouldBe(5, Describe(s010));
       s010.ShouldAllBe(static d => d.Severity == DiagnosticSeverity.Error);
-      s010.ShouldContain(static d => d.GetMessage(null).Contains("Parameter 'at'", StringComparison.Ordinal)
-        && d.GetMessage(null).Contains("'nowhere'", StringComparison.Ordinal));
+      s010.Count(static d => d.GetMessage(null).Contains("Parameter 'at'", StringComparison.Ordinal)
+        && d.GetMessage(null).Contains("'nowhere'", StringComparison.Ordinal)).ShouldBe(2, Describe(s010));
       s010.ShouldContain(static d => d.GetMessage(null).Contains("Option '--at'", StringComparison.Ordinal)
         && d.GetMessage(null).Contains("'elsewhere'", StringComparison.Ordinal));
+      s010.ShouldContain(static d => d.GetMessage(null).Contains("Catch-all parameter 'points'", StringComparison.Ordinal)
+        && d.GetMessage(null).Contains("'point'", StringComparison.Ordinal));
+      s010.ShouldContain(static d => d.GetMessage(null).Contains("Option '--to'", StringComparison.Ordinal)
+        && d.GetMessage(null).Contains("repeated option", StringComparison.Ordinal));
       s010.ShouldAllBe(static d => d.Location.IsInSource);
+
+      ShouldCompileGeneratedCode(result);
 
       await Task.CompletedTask;
     }
@@ -255,10 +274,13 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen76ConverterConstraintAlias
         public readonly record struct Gen76Point(int X, int Y);
         """;
 
-      Diagnostic[] s010 = S010(Compile(Source));
+      CompileResult result = Compile(Source);
+      Diagnostic[] s010 = S010(result);
 
       s010.Length.ShouldBe(1, Describe(s010));
       s010[0].GetMessage(null).ShouldContain("'computedalias'");
+
+      ShouldCompileGeneratedCode(result);
 
       await Task.CompletedTask;
     }

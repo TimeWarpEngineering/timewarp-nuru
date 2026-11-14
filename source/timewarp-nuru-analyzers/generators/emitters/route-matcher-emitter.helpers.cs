@@ -5,6 +5,7 @@
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
+using TimeWarp.Nuru.Validation;
 
 internal static partial class RouteMatcherEmitter
 {
@@ -39,7 +40,12 @@ internal static partial class RouteMatcherEmitter
     ImmutableArray<CustomConverterDefinition> customConverters,
     RouteDefinition route)
   {
-    _ = customConverters; // Custom converters for arrays are not yet supported
+    // NURU_S010 reports a constraint with no array conversion (custom converters have none yet)
+    if (UnknownTypeConstraintValidator.IsUnresolved(route, option, customConverters))
+    {
+      EmitUnresolvedOption(sb, route, option, varName, "string[]", $"{listVarName}.ToArray()");
+      return;
+    }
 
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal) ? typeConstraint[..^1] : typeConstraint;

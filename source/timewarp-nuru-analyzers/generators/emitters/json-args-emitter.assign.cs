@@ -117,6 +117,12 @@ internal static partial class JsonArgsEmitter
   private static void EmitAssignScalarFromString(StringBuilder sb, Slot slot, string raw, Fail fail, int indent)
   {
     string ind = new(' ', indent);
+    if (slot.Unresolved)
+    {
+      EmitAssignUnresolved(sb, slot, ind);
+      return;
+    }
+
     if (slot.Shape == ValueShape.Enum && slot.EnumTypeName is not null)
     {
       sb.AppendLine($"{ind}global::TimeWarp.Nuru.EnumTypeConverter<{slot.EnumTypeName}> __enum_{slot.Id} = new();");
@@ -195,6 +201,12 @@ internal static partial class JsonArgsEmitter
   private static void EmitAssignListFromStrings(StringBuilder sb, Slot slot, string list, Fail fail, int indent)
   {
     string ind = new(' ', indent);
+    if (slot.Unresolved)
+    {
+      EmitAssignUnresolved(sb, slot, ind);
+      return;
+    }
+
     if (slot.Shape == ValueShape.TextList && IsPlainString(slot))
     {
       sb.AppendLine($"{ind}{slot.VariableName} = [.. {list}];");
@@ -266,6 +278,14 @@ internal static partial class JsonArgsEmitter
     }
 
     sb.AppendLine($"{ind}{slot.VariableName} = [.. {list}];");
+  }
+
+  // NURU_S010 reports this constraint and stops the build. Assign default rather than a string so the
+  // field (the handler's type) still compiles and NURU_S010 is the only error (review M1, task 584).
+  private static void EmitAssignUnresolved(StringBuilder sb, Slot slot, string ind)
+  {
+    sb.AppendLine($"{ind}// NURU_S010: no conversion for type constraint '{slot.BaseConstraint}'.");
+    sb.AppendLine($"{ind}{slot.VariableName} = default!;");
   }
 
   private static void EmitSpecialParse(StringBuilder sb, Slot slot, string raw, Fail fail, int indent)

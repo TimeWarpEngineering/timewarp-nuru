@@ -8,6 +8,12 @@
 // `is not null` guard (CS0037) and a `?.ToString()` fallback (CS0023). The extractors classify the result
 // type once from its ITypeSymbol and carry the kind as a plain enum, which keeps the model equatable for
 // the incremental pipeline. Nullable<T> is a value type at the CLR level but can be null, so it is MaybeNull.
+//
+// Kanban 585: C# cannot name an anonymous type, so generated code that declares `<anonymous type: ...> result`
+// or registers it in [JsonSerializable(typeof(...))] does not compile, and System.Text.Json source generation
+// cannot serialize it. A result whose type is or contains an anonymous type (new { ... }, List<anon>, anon[])
+// is Anonymous: the extractor erases its type name to object, the invoker prints it through ToString(), and the
+// JSON context task skips it. Anonymous types are reference types, so Anonymous results get the null guard.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -24,7 +30,13 @@ public enum ResultValueKind
   ValueType,
 
   /// <summary>A non-nullable enum.</summary>
-  Enum
+  Enum,
+
+  /// <summary>
+  /// A type that is or contains an anonymous type. Generated code holds the value as <c>object</c> and prints
+  /// it through <c>ToString()</c>, because no code, and no JSON context, can name the type (kanban 585).
+  /// </summary>
+  Anonymous
 }
 
 /// <summary>
@@ -37,6 +49,9 @@ internal static class ResultValueKinds
   /// </summary>
   public static ResultValueKind Of(ITypeSymbol? type)
   {
+    if (type is not null && ContainsAnonymousType(type))
+      return ResultValueKind.Anonymous;
+
     if (type?.IsValueType != true)
       return ResultValueKind.MaybeNull;
 
@@ -45,4 +60,23 @@ internal static class ResultValueKinds
 
     return type.TypeKind == TypeKind.Enum ? ResultValueKind.Enum : ResultValueKind.ValueType;
   }
+
+  /// <summary>
+  /// Whether a result of this kind can be null in generated code, so output needs a null guard.
+  /// </summary>
+  public static bool CanBeNull(ResultValueKind kind) =>
+    kind is ResultValueKind.MaybeNull or ResultValueKind.Anonymous;
+
+  /// <summary>
+  /// Returns true when <paramref name="type"/> is an anonymous type or has one as a type argument
+  /// or array element, at any depth.
+  /// </summary>
+  public static bool ContainsAnonymousType(ITypeSymbol type) => type switch
+  {
+    { IsAnonymousType: true } => true,
+    IArrayTypeSymbol array => ContainsAnonymousType(array.ElementType),
+    INamedTypeSymbol named => named.TypeArguments.Any(ContainsAnonymousType)
+      || (named.ContainingType is INamedTypeSymbol container && ContainsAnonymousType(container)),
+    _ => false
+  };
 }

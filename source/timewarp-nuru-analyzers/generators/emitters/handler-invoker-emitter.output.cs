@@ -72,7 +72,7 @@ internal static partial class HandlerInvokerEmitter
 
     // A non-nullable value type (kanban 583: including a user enum or struct) can never be null,
     // and `is not null` / `?.` on one does not compile (CS0037 / CS0023).
-    bool isValueType = valueKind != ResultValueKind.MaybeNull || IsKnownValueType(resultTypeName);
+    bool isValueType = !ResultValueKinds.CanBeNull(valueKind) || IsKnownValueType(resultTypeName);
 
     if (isValueType)
     {
@@ -162,14 +162,17 @@ internal static partial class HandlerInvokerEmitter
   /// <summary>
   /// Determines the output strategy based on the result type.
   /// <c>CapabilitiesEmitter.DescribeReturnType</c> uses it for the <c>returnType</c> kind.
-  /// A non-nullable enum (<paramref name="valueKind"/>) prints its member name raw, as a primitive does.
+  /// A non-nullable enum (<paramref name="valueKind"/>) prints its member name raw, as a primitive does,
+  /// and an anonymous result prints raw through ToString().
   /// </summary>
   internal static OutputStrategy GetOutputStrategy(string? typeName, ResultValueKind valueKind = ResultValueKind.MaybeNull)
   {
     if (string.IsNullOrEmpty(typeName))
       return OutputStrategy.None;
 
-    if (valueKind == ResultValueKind.Enum)
+    // An enum prints its member name. An anonymous type, held as object, prints through ToString()
+    // ("{ Name = MyApp, Version = 1.0.0 }"), because no JSON context can name it (kanban 585).
+    if (valueKind is ResultValueKind.Enum or ResultValueKind.Anonymous)
       return OutputStrategy.Raw;
 
     return typeName switch

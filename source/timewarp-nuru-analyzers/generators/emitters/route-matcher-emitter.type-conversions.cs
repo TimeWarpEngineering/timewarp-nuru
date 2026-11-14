@@ -47,6 +47,15 @@ internal static partial class RouteMatcherEmitter
         continue;
       }
 
+      // {name:string} / {name:string?}: no conversion, bind the captured value as an untyped {name} does.
+      // The capture is string? when the parameter is optional and string otherwise.
+      if (TypeConversionMap.IsStringConstraint(baseType))
+      {
+        string stringType = param.IsOptional ? "string?" : "string";
+        sb.AppendLine($"{indentStr}{stringType} {escapedVarName} = {uniqueVarName};");
+        continue;
+      }
+
       // Use shared type conversion mapping with TryParse for graceful error handling
       (string ClrType, string TryParseCondition)? conversion = TypeConversionMap.GetBuiltInTryConversion(baseType, uniqueVarName, escapedVarName);
 

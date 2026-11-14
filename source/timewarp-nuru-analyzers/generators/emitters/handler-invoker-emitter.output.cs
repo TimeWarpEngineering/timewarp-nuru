@@ -269,8 +269,7 @@ internal static partial class HandlerInvokerEmitter
             // - Typed parameters (HasTypeConstraint): escaped original name (type conversion creates this variable)
             // - Simple parameters: just the escaped camelCase name
             bool isStringTypedCatchAll = routeParam.IsCatchAll &&
-              routeParam.HasTypeConstraint &&
-              routeParam.TypeConstraint?.Equals("string", StringComparison.OrdinalIgnoreCase) == true;
+              TypeConversionMap.IsStringConstraint(routeParam.TypeConstraint);
             string varName = routeParam.IsCatchAll && (!routeParam.HasTypeConstraint || isStringTypedCatchAll)
               ? $"__{routeParam.CamelCaseName}_{routeIndex}"
               : CSharpIdentifierUtils.EscapeIfKeyword(routeParam.CamelCaseName);

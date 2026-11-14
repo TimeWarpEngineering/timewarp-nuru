@@ -43,6 +43,13 @@ NURU_S010, never CS0103 (an undeclared positional) or CS0029 (a string assigned 
 positional, option, repeated-option, catch-all, or `--json-args` paths. generator-76 must assert that the
 unknown-constraint and non-constant-alias compilations have no compile errors.
 
+Fix pass for review round 2 (M2): "built-in type" means the whole `TypeConversionMap` set, including `Uri`,
+`FileInfo`, and `DirectoryInfo` (no `TryParse`). A typed catch-all or repeated option of those three must not
+report NURU_S010, and must bind each element: `Uri.TryCreate` and the `FileInfo`/`DirectoryInfo` constructor,
+the same as the scalar path, on the route matcher and the `--json-args` list path. generator-76 locks
+`{*files:FileInfo}`, `{*urls:uri}`, and `--dir {dir:DirectoryInfo}*` (no NURU_S010, generated code compiles).
+`glossary.md` defines built-in type.
+
 ## Checklist
 
 - [x] Decide: read `ConstraintAlias` at compile time (a literal-returning property body), or report a diagnostic for an unknown constraint instead of emitting broken code (both)
@@ -53,7 +60,7 @@ unknown-constraint and non-constant-alias compilations have no compile errors.
 ## Review
 
 - Round 1: Blocked — open M1 (fix pass implemented; see Results › Fix pass)
-
+- Round 2: Blocked — open M2
 ## Notes
 
 - The samples define aliases (`email`, `semver`) but route only by type name, so nothing exercised the alias form.
@@ -66,7 +73,10 @@ unknown-constraint and non-constant-alias compilations have no compile errors.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 639e1b10-5a47-443f-8400-c7679b5f13e6, max-turns 500, Done — 2026-11-14T06:07:31Z
 - Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 200), round 1, open finding M1 — 2026-11-14
 - Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md — 2026-11-14T06:21:23Z
+- Implement-fix-3 (implementer-claude, claude-opus-5-5, 2026-11-14): fixed round-2 M2. Uri, FileInfo, and
+  DirectoryInfo convert per element on the catch-all, repeated-option, and `--json-args` list paths.
 - Implement-fix-2 (implementer-claude, claude-opus-5-5, 2026-11-14): fixed round-1 M1. Unresolved constraints now emit compilable fallback declarations, and list converters report NURU_S010. The audit flagged a new TimeWarp.Build.Tasks beta; I fixed it with audit --fix.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 120), round 2, M1 fixed, open finding M2 — 2026-11-14
 
 ## Results
 
@@ -128,14 +138,44 @@ Both options from the checklist, together:
   `compileErrors`.
 - Docs: `analyzer.md` NURU_S010 section notes the list-value limits, and that NURU_S010 is the only error.
 
+### Fix pass (review round 2, M2)
+
+- New `generators/emitters/built-in-element-parse.cs` (`BuiltInElementParse`): one per-element conversion for
+  every built-in type. TryParse types use `GetBuiltInTryConversion`; `Uri` uses `Uri.TryCreate`
+  (RelativeOrAbsolute, non-null); `FileInfo` and `DirectoryInfo` use their constructor in a `try/catch
+  (Exception)`, the same as the scalar emitters. The caller passes the failure statements (route matcher:
+  error line and `return 1;`; `--json-args`: `__ok = false;`, the bind error, `break;`).
+- `EmitBuiltInArrayConversion` (catch-all and repeated option) and the `--json-args` list path
+  (`EmitAssignListFromStrings`) use it. Before, they fell through to `string[]` for those three.
+- `UnknownTypeConstraintValidator.IsKnownListElement` now accepts any `TypeConversionMap.IsBuiltInType`
+  constraint. The catch-all reason no longer calls a constraint "not a built-in type" while meaning
+  TryParse-only: it says a typed catch-all does not convert through an enum or a custom converter.
+- Tests: generator-76 has a fifth case, `Should_convert_uri_fileinfo_and_directoryinfo_lists`
+  (`{*files:FileInfo}`, `{*urls:uri}`, `--dir {dir:DirectoryInfo}*`, `--link {link:Uri}*`): no NURU_S010 and
+  the generated compilation has no errors. With the old validator it fails with 4× NURU_S010 (checked).
+  routing-16 has `Should_bind_uri_fileinfo_and_directoryinfo_lists`, which runs those routes and checks the
+  bound values.
+- Docs: `glossary.md` defines built-in type as the `TypeConversionMap` set (Uri, FileInfo, DirectoryInfo
+  included; not TryParse-only). `analyzer.md` names those three in the typed catch-all sentence. The
+  `route-matcher-emitter.cs` design note on typed arrays names `BuiltInElementParse`.
+
 ### How to validate
 
-- Smoke: `ganda runfile cache --clear && dotnet run tests/timewarp-nuru-tests/generator/generator-76-converter-constraint-alias.cs`
-- Expect: 4/4 pass. The alias routes compile with zero errors. Unknown, list-converter, and non-constant
-  constraints report `NURU_S010` at the `Map(...)` pattern, and the generated code still compiles with no
-  CS0103 or CS0029.
+- Smoke: `ganda runfile cache --clear && dotnet run tests/timewarp-nuru-tests/generator/generator-76-converter-constraint-alias.cs`,
+  then `dotnet run tests/timewarp-nuru-tests/routing/routing-16-typed-catch-all.cs`
+- Expect: generator-76 5/5 pass and routing-16 21/21 pass. The alias routes compile with zero errors. Unknown,
+  list-converter, and non-constant constraints report `NURU_S010` at the `Map(...)` pattern, and the generated
+  code still compiles with no CS0103 or CS0029. `{*files:FileInfo}`, `{*urls:uri}`, and
+  `--dir {dir:DirectoryInfo}*` report no NURU_S010 and bind each element.
 
 ### Gates
+
+Fix pass (round 2 M2):
+
+- `./bin/dev build`: passed (0 warnings, 0 errors).
+- `ganda runfile cache --clear` then `./bin/dev test`: passed. CI multi-mode: 2228 total, 2222 passed, 6 skipped,
+  0 failed. Standalone: 48 files, 0 failed (generator-76 5/5).
+- `ganda repo audit`: passed (Repository passes all audit checks).
 
 Fix pass (round 1 M1):
 
@@ -159,7 +199,9 @@ Implement pass:
 
 ### Review
 
-Round 1 (general, effort 3): M1 says an unknown constraint still emits CS0103/CS0029 next to `NURU_S010`. This pass fixes it (see Fix pass above). The round-2 review writes the disposition. See `review/round-1/merged.md`.
+Round 1 (general, effort 3): M1 open. See `review/round-1/merged.md`.
+
+Round 2 (general, effort 2, turn cap 120, uncapped): M1 is fixed in `d3a444e1`. An unresolved positional, option, repeated option, catch-all, or `--json-args` value is declared or assigned as the handler type (`default!`), and generator-76 requires that generated compilation to have no errors. M2 is open: a typed catch-all or repeated option of `uri`, `FileInfo`, or `DirectoryInfo` reports `NURU_S010`, and the message says the constraint is not a built-in. No disposition. See `review/round-2/merged.md`.
 
 ## Learnings
 

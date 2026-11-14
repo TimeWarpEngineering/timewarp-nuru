@@ -10,11 +10,18 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 825
-- Effort: 3
+- Lines changed: 459
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
+
+## Round 2
+
+**Date:** 2026-11-14
+**Diff scope:** Product delta since round-1 base `2d49ff0f` (`review/round-1/base.sha`): `d3a444e1` (NURU_S010 fallback) and `558ab9d6` (TimeWarp.Build.Tasks pin). HEAD `fc349ead`. Not the whole task diff.
+**Effort:** 2 (general only)
+**Session IDs:** cursor reviewer (Grok 4.7); session not reported; turn cap 120 (no `--max-turns` flag; bound 120)
 
 ## Ground rules
 

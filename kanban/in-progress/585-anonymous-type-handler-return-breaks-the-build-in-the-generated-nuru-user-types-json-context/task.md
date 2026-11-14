@@ -61,6 +61,12 @@ Acceptance criteria:
 - Boy-scout: `ganda repo audit` reported the advisory `vscode-window-icon` warning; `ganda repo audit --fix`
   wrote the git-ignored `.vscode/settings.json` (no tracked change).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session dcef3df4-f714-42b8-8077-c159d876e8c2, max-turns 500, Done — 2026-11-14T07:27:39Z
+- Review oracle round 1: Grok 4.7 (grok, vendor xai), body tw-implementation-review, effort 2, roster general, turn cap 120 (cursor session uncapped; no --max-turns flag), cursor conversation f8e3068c-dd7f-46c7-96ef-048e50412be4, disposition clean — 2026-11-14. No findings. The restatement matches the task; no misread. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-14T07:32:54Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -112,3 +118,7 @@ ganda runfile cache --clear
 Expect: the file builds (no CS1001/CS1525 from `NuruUserTypesJsonContext.g.cs` or `NuruGenerated.g.cs`), and
 all 5 tests pass; `atr-info` prints `{ Name = MyApp, Version = 1.0.0 }`, `atr-async 2` prints `{ Count = 2 }`,
 `atr-cmd` prints `{ Ok = True }`, and `atr-none` prints nothing.
+
+### Review
+
+Round 1 (2026-11-14): tw-implementation-review, effort 2, roster general, Grok 4.7, turn cap 120 (cursor uncapped; no `--max-turns` flag), cursor conversation `f8e3068c-dd7f-46c7-96ef-048e50412be4`. Disposition clean. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. The restatement matches the task; no misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

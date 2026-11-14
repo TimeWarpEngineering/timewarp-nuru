@@ -122,29 +122,8 @@ internal static partial class JsonArgsEmitter
     return $"{element}.{method}(out _)";
   }
 
-  private static CustomConverterDefinition? FindConverter(string? constraint, ImmutableArray<CustomConverterDefinition> converters)
-  {
-    if (constraint is null || converters.IsDefaultOrEmpty)
-      return null;
-
-    return converters.FirstOrDefault(c =>
-      string.Equals(c.TargetTypeName, constraint, StringComparison.OrdinalIgnoreCase) ||
-      string.Equals(SimpleName(c.TargetTypeName), constraint, StringComparison.OrdinalIgnoreCase) ||
-      string.Equals(c.ConstraintAlias, constraint, StringComparison.OrdinalIgnoreCase) ||
-      string.Equals(SimpleName(c.ConverterTypeName).EndsWith("Converter", StringComparison.Ordinal)
-        ? SimpleName(c.ConverterTypeName)[..^"Converter".Length]
-        : SimpleName(c.ConverterTypeName), constraint, StringComparison.OrdinalIgnoreCase));
-  }
-
-  private static string SimpleName(string typeName)
-  {
-    const string GlobalPrefix = "global::";
-    if (typeName.StartsWith(GlobalPrefix, StringComparison.Ordinal))
-      typeName = typeName[GlobalPrefix.Length..];
-
-    int dot = typeName.LastIndexOf('.', StringComparison.Ordinal);
-    return dot >= 0 ? typeName[(dot + 1)..] : typeName;
-  }
+  private static CustomConverterDefinition? FindConverter(string? constraint, ImmutableArray<CustomConverterDefinition> converters) =>
+    converters.IsDefaultOrEmpty ? null : CustomConverterMatcher.Find(constraint, converters);
 
   private static string? StripQuestion(string? typeName)
   {

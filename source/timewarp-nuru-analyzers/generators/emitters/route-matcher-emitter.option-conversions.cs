@@ -5,6 +5,7 @@
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
+using TimeWarp.Nuru.Validation;
 
 internal static partial class RouteMatcherEmitter
 {
@@ -21,6 +22,13 @@ internal static partial class RouteMatcherEmitter
     ImmutableArray<CustomConverterDefinition> customConverters,
     RouteDefinition route)
   {
+    // NURU_S010 reports a constraint with no conversion; declare the value so the output still compiles
+    if (UnknownTypeConstraintValidator.IsUnresolved(route, option, customConverters))
+    {
+      EmitUnresolvedOption(sb, route, option, varName, "string?", rawVarName);
+      return;
+    }
+
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal) ? typeConstraint[..^1] : typeConstraint;
     string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
@@ -195,11 +203,7 @@ internal static partial class RouteMatcherEmitter
       }
 
       // Try to find a custom type converter for this constraint
-      CustomConverterDefinition? converter = customConverters.FirstOrDefault(c =>
-        string.Equals(c.TargetTypeName, baseType, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(GetSimpleTypeName(c.TargetTypeName), baseType, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(c.ConstraintAlias, baseType, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(GetTargetTypeFromConverterName(c.ConverterTypeName), baseType, StringComparison.OrdinalIgnoreCase));
+      CustomConverterDefinition? converter = CustomConverterMatcher.Find(baseType, customConverters);
 
       if (converter is not null)
       {

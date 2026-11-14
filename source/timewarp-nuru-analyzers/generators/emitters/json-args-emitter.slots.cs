@@ -4,6 +4,8 @@
 
 namespace TimeWarp.Nuru.Generators;
 
+using TimeWarp.Nuru.Validation;
+
 internal static partial class JsonArgsEmitter
 {
   private static List<Slot> BuildSlots(
@@ -36,7 +38,6 @@ internal static partial class JsonArgsEmitter
     ImmutableArray<CustomConverterDefinition> converters,
     HashSet<string> ids)
   {
-    _ = route;
     string? constraint = StripQuestion(param.TypeConstraint);
     bool nullable = (param.TypeConstraint?.EndsWith('?', StringComparison.Ordinal) ?? false);
     ValueShape shape = ShapeFor(constraint, isFlag: false, isList: param.IsCatchAll, isEnum: false, converters: converters);
@@ -61,7 +62,8 @@ internal static partial class JsonArgsEmitter
       Converter = converter,
       Shape = shape,
       ExpectedType = Expected(constraint, shape, null),
-      Parameter = param
+      Parameter = param,
+      Unresolved = UnknownTypeConstraintValidator.IsUnresolved(route, param, converters)
     };
   }
 
@@ -127,7 +129,8 @@ internal static partial class JsonArgsEmitter
       Converter = FindConverter(constraint, converters),
       Option = option,
       Shape = shape,
-      ExpectedType = option.IsFlag ? "bool" : Expected(constraint, shape, null)
+      ExpectedType = option.IsFlag ? "bool" : Expected(constraint, shape, null),
+      Unresolved = UnknownTypeConstraintValidator.IsUnresolved(route, option, converters)
     };
   }
 
@@ -213,7 +216,8 @@ internal static partial class JsonArgsEmitter
         Option = slot.Option,
         Shape = shape,
         ExpectedType = isEnum ? (enumType ?? "enum") : slot.ExpectedType,
-        Parameter = slot.Parameter
+        Parameter = slot.Parameter,
+        Unresolved = slot.Unresolved
       };
     }
   }

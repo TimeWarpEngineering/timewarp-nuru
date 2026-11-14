@@ -44,6 +44,9 @@ internal static partial class JsonArgsEmitter
     public ParameterDefinition? Parameter { get; init; }
     public ValueShape Shape { get; init; }
     public string ExpectedType { get; init; } = "string";
+
+    /// <summary>NURU_S010 reports this value's constraint; the binder assigns default instead of converting.</summary>
+    public bool Unresolved { get; init; }
   }
 
   /// <summary>

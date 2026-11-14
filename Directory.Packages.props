@@ -86,12 +86,12 @@
   <ItemGroup Label="Roslyn Analyzer Dependencies">
     <!-- Pinned: TimeWarp.Nuru.Analyzers compiles against this and does not pack it
          (SuppressDependenciesWhenPacking). The consumer's compiler supplies Microsoft.CodeAnalysis.
-         Raising this raises the minimum Roslyn that can load the analyzer. 5.9 ships in SDK 10.0.400+
+         Raising this raises the minimum Roslyn that can load the analyzer. 5.12 is required by TimeWarp.SourceGenerators 1.0.0-beta.16; 5.9 ships in SDK 10.0.400+
          and every .NET 11 SDK (11.0.100-rc.3 ships Roslyn 5.12), so a net11.0 consumer always has it
          (task 481). Do not go past the Roslyn in the oldest .NET 11 SDK we support. CodeStyle and
          Microsoft.CodeAnalysis.Analyzers are repo-local / analyzer-authoring packages and may move. -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.12.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.12.0" />
     <!-- ILSpy engine: decompile referenced AddX method bodies for source-gen DI lowering (task 395). -->
     <PackageVersion Include="ICSharpCode.Decompiler" Version="11.2.0.10050" />
   </ItemGroup>

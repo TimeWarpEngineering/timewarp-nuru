@@ -57,6 +57,7 @@ Acceptance criteria:
 - Created: 1411579 (2026-11-13)
 - Implement (2026-11-14): merged origin/master (land kanban 586) before the first commit; model, extractors,
   emitter and tests per ## Results.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3bff5411-c66b-433c-a679-cd4589e1a003, max-turns 500, Done — 2026-11-14T05:29:36Z
 
 ## Results
 

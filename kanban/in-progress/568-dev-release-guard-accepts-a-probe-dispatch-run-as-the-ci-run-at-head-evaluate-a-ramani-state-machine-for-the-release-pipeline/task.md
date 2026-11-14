@@ -82,6 +82,8 @@ Acceptance:
   fixed the step 8 walk, wrote `report/analysis.md`. Audit boy-scout: `vscode-window-icon` warning
   fixed by `ganda repo audit --fix` (writes the git-ignored `.vscode/settings.json`, nothing to commit).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-14T00:05:31Z
+- Review oracle round 1: Grok 4.7 (grok, vendor xai), body tw-implementation-review, effort 2, roster general, turn cap 120 (cursor session uncapped; no --max-turns flag), session not reported, disposition clean — 2026-11-14. No findings. The restatement matches the task; no misread. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-14T00:12:39Z
 
 ## Results
 
@@ -137,8 +139,20 @@ Live check (optional, read-only): in a repo whose HEAD has a probe run
 commit back, `dev release --dry-run` prints `skipped run <probe id> (workflow_dispatch, no Packages-* artifact) at <head>`
 and then `✓ HEAD is 1 kanban-only commit(s) past <push sha> (CI run <push id>)`.
 
+### Review
+
+Round 1, roster general, effort 2. Counts: bug 0, suggestion 0, nit 0; open 0. Disposition: clean. No wontfix and no escalation. The implementer restatement matches the task; no misread.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 Filed from the timewarp-ramani v1.0.0-beta.23 release session. Workaround used there: `gh workflow run workflow.yml --ref master -f mode=merge` at HEAD to produce an artifact on the exact commit, then `dev release`.
 
 Related: timewarp-ganda task 567 (worktree gc "unhandled" refusal) is another case of a hand-written phase machine refusing from an unexpected state; the Ramani evaluation here may inform that one.
+
+Review: round 1, general, effort 2, disposition clean. See `review/disposition.md`.

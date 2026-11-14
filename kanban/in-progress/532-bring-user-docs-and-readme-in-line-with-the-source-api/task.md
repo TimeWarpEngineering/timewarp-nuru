@@ -76,7 +76,7 @@ The one remaining broken snippet is `documentation/user/features/mcp-hosting.md:
 |------|---------|--------|
 | Build | `./bin/dev build` | pass (0 warnings, 0 errors) |
 | Test | `./bin/dev test` | pass (multi-mode 2213 total, 2207 passed, 6 skipped; standalone 47 files, 0 failed) |
-| Audit | `ganda repo audit` | AUDIT_RESULT |
+| Audit | `ganda repo audit` | first run: pass with 1 advisory (`vscode-window-icon`, `.vscode/settings.json` missing); `ganda repo audit --fix` wrote the git-ignored `.vscode/settings.json`; rerun: "Repository passes all audit checks." |
 
 ### How to validate
 

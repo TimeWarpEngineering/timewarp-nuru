@@ -38,6 +38,10 @@ Acceptance:
 - [x] Re-run `tw-nuru-verify --steps docs --docs-ref HEAD` and record the broken-snippet count (target 0 outside the two dependent areas)
 - [x] Record any code tasks spawned in Notes
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Related: the UseLogging/UseConsoleLogging NURU_S999 task, the WithNuruTools ASP.NET chain task, 523.
@@ -57,6 +61,8 @@ Acceptance:
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - 2026-11-14 implementer (claude): merged origin/master (535 land), fixed docs, filed 585 and 586, merged origin/master again (585/586 lands), ran gates.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-14T01:26:41Z
+- Review oracle round 1: grok (grok-4.7), body tw-implementation-review, effort 2, roster general, session not reported, turn cap 120 (cursor uncapped; no `--max-turns` flag), disposition clean — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-14T01:34:22Z
 
 ## Results
 
@@ -88,4 +94,8 @@ skills/tw-nuru-verify/scripts/nuru-consumer-check.sh --steps docs --docs-ref HEA
 ```
 
 Expect: `doc snippets (HEAD) use only APIs the package has (1 broken, ...)`, and the only `DOC-DEFECT ... snippet` line is `documentation/user/features/mcp-hosting.md:50` (task 531). No `CS1501`, `WithGroup`, `NURU_R003` or `NURU_H005` rows.
+
+### Review
+
+Round 1 (2026-11-14): tw-implementation-review, effort 2, roster general, Grok 4.7, turn cap 120 (cursor uncapped; no `--max-turns` flag), session not reported. The goal restatement matches the task. No findings. Disposition clean. Final counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0 open / 0 fixed / 0 wontfix; nit 0 open / 0 fixed / 0 wontfix. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 

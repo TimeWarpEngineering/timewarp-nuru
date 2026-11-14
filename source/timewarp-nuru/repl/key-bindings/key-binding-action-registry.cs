@@ -48,7 +48,7 @@ public static class KeyBindingActionRegistry
 
   private static (Dictionary<string, Func<ReplConsoleReader, Func<Task>>> Actions, string[] Names) CreateRegistry()
   {
-    Dictionary<string, Func<ReplConsoleReader, Func<Task>>> actions = new(StringComparer.OrdinalIgnoreCase);
+    Dictionary<string, Func<ReplConsoleReader, Func<Task>>> actions = [with(StringComparer.OrdinalIgnoreCase)];
     List<string> names = [];
 
     Register(actions, names, "BackwardChar", static reader => reader.HandleBackwardCharAsync);

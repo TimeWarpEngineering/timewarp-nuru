@@ -30,7 +30,7 @@ internal static class EnumInfoExtractor
     if (model is null)
       return [];
 
-    HashSet<string> candidates = new(StringComparer.Ordinal);
+    HashSet<string> candidates = [with(StringComparer.Ordinal)];
 
     foreach (RouteDefinition route in EnumerateRoutes(model))
     {
@@ -81,7 +81,7 @@ internal static class EnumInfoExtractor
   /// </summary>
   public static IReadOnlyDictionary<string, ImmutableArray<string>> BuildLookup(EquatableArray<EnumInfo> enumInfo)
   {
-    Dictionary<string, ImmutableArray<string>> lookup = new(StringComparer.Ordinal);
+    Dictionary<string, ImmutableArray<string>> lookup = [with(StringComparer.Ordinal)];
     foreach (EnumInfo info in enumInfo)
       lookup[info.MetadataTypeName] = info.MemberNames;
 

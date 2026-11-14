@@ -259,7 +259,7 @@ internal sealed class PackableProjectService : IPackableProjectService
   {
     ArgumentNullException.ThrowIfNull(projects);
 
-    Dictionary<string, string> firstProjectPathByPackageId = new(StringComparer.Ordinal);
+    Dictionary<string, string> firstProjectPathByPackageId = [with(StringComparer.Ordinal)];
 
     foreach (PackableProject project in projects)
     {

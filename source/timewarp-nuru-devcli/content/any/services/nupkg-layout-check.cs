@@ -82,7 +82,7 @@ internal static class NupkgLayoutCheck
     ArgumentNullException.ThrowIfNull(requiredEntries);
 
     using ZipArchive zip = ZipFile.OpenRead(nupkgPath);
-    HashSet<string> entries = new(StringComparer.Ordinal);
+    HashSet<string> entries = [with(StringComparer.Ordinal)];
     foreach (ZipArchiveEntry entry in zip.Entries)
     {
       entries.Add(entry.FullName);

@@ -176,7 +176,7 @@ internal sealed class ReplHistory
       // clobbered by this writer. File entries first (baseline), then our in-memory items
       // not already present; dedup by exact line and cap to MaxHistorySize.
       List<string> merged = [];
-      HashSet<string> seen = new(StringComparer.Ordinal);
+      HashSet<string> seen = [with(StringComparer.Ordinal)];
       if (File.Exists(historyPath))
       {
         foreach (string line in File.ReadAllLines(historyPath))

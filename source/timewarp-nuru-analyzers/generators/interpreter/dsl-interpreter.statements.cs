@@ -18,12 +18,12 @@ public sealed partial class DslInterpreter
     ArgumentNullException.ThrowIfNull(invocation);
 
     // Fresh state per interpretation
-    VariableState = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
+    VariableState = [with(SymbolEqualityComparer.Default)];
     BuiltApps = [];
     BuildCalls = [];
     CollectedDiagnostics = [];
     BoundEntryPointCalls = [];
-    AppAssignments = new Dictionary<ISymbol, List<AppAssignment>>(SymbolEqualityComparer.Default);
+    AppAssignments = [with(SymbolEqualityComparer.Default)];
 
     try
     {

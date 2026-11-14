@@ -53,8 +53,9 @@ public sealed class HelpOptions
   /// <summary>
   /// Known REPL command patterns that are hidden in CLI mode by default.
   /// </summary>
-  internal static readonly HashSet<string> ReplCommandPatterns = new(StringComparer.OrdinalIgnoreCase)
-  {
+  internal static readonly HashSet<string> ReplCommandPatterns =
+  [
+    with(StringComparer.OrdinalIgnoreCase),
     "exit",
     "quit",
     "q",
@@ -64,7 +65,7 @@ public sealed class HelpOptions
     "history",
     "key-bindings",
     "help"  // literal help (without dash)
-  };
+  ];
 
   /// <summary>
   /// Known completion route prefixes.

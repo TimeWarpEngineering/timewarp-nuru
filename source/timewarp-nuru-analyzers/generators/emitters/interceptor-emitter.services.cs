@@ -62,7 +62,7 @@ internal static partial class InterceptorEmitter
     sb.AppendLine("  private static global::TimeWarp.Nuru.NuruApp? __fw_NuruApp;");
 
     // Emit additional framework service fields needed by services
-    HashSet<string> frameworkFieldNames = new(StringComparer.Ordinal) { "__fw_ITerminal", "__fw_NuruApp" };
+    HashSet<string> frameworkFieldNames = [with(StringComparer.Ordinal), "__fw_ITerminal", "__fw_NuruApp"];
     foreach (string frameworkType in frameworkServiceTypes)
     {
       string fieldName = FrameworkServices.GetFieldName(frameworkType);
@@ -203,7 +203,7 @@ internal static partial class InterceptorEmitter
   /// </summary>
   private static HashSet<string> CollectFrameworkServiceTypes(ImmutableArray<ServiceDefinition> services)
   {
-    HashSet<string> frameworkTypes = new(StringComparer.Ordinal);
+    HashSet<string> frameworkTypes = [with(StringComparer.Ordinal)];
 
     foreach (ServiceDefinition service in services)
     {
@@ -277,7 +277,7 @@ internal static partial class InterceptorEmitter
     }
 
     // Initialize additional framework services
-    HashSet<string> frameworkFieldNames = new(StringComparer.Ordinal) { "__fw_ITerminal", "__fw_NuruApp" };
+    HashSet<string> frameworkFieldNames = [with(StringComparer.Ordinal), "__fw_ITerminal", "__fw_NuruApp"];
     foreach (string frameworkType in frameworkServiceTypes)
     {
       string fieldName = FrameworkServices.GetFieldName(frameworkType);

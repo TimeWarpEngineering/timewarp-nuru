@@ -42,7 +42,7 @@ internal static class CommandConstructionEmitter
   {
     HandlerDefinition handler = route.Handler;
     string commandTypeName = handler.FullTypeName ?? "UnknownCommand";
-    HashSet<string> constructorProperties = new(StringComparer.Ordinal);
+    HashSet<string> constructorProperties = [with(StringComparer.Ordinal)];
     List<string> constructorLocals = [];
     if (!handler.ConstructorArguments.IsDefaultOrEmpty)
     {

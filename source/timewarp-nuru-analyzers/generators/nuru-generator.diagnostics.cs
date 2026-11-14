@@ -88,7 +88,7 @@ public sealed partial class NuruGenerator : IIncrementalGenerator
           .Concat(service.ConstructorDependencyTypes)));
 
     // A route can appear both in an app's routes and in the endpoint list
-    HashSet<string> reportedCategories = new(StringComparer.Ordinal);
+    HashSet<string> reportedCategories = [with(StringComparer.Ordinal)];
     foreach (string typeName in loggerSiteTypes)
     {
       if (!LoggerExpressions.IsLoggingServiceType(typeName)

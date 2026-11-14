@@ -24,15 +24,17 @@ namespace TimeWarp.Nuru;
 /// </remarks>
 public static class BooleanConverter
 {
-  private static readonly HashSet<string> TrueValues = new(StringComparer.OrdinalIgnoreCase)
-  {
+  private static readonly HashSet<string> TrueValues =
+  [
+    with(StringComparer.OrdinalIgnoreCase),
     "true", "yes", "1", "on", "enabled"
-  };
+  ];
 
-  private static readonly HashSet<string> FalseValues = new(StringComparer.OrdinalIgnoreCase)
-  {
+  private static readonly HashSet<string> FalseValues =
+  [
+    with(StringComparer.OrdinalIgnoreCase),
     "false", "no", "0", "off", "disabled"
-  };
+  ];
 
   /// <summary>
   /// Attempts to parse the string as a boolean, accepting extended spellings.

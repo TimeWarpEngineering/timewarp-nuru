@@ -24,21 +24,21 @@ internal static class DependencyGraphBuilder
       return services;
 
     // Build lookup: implementation type name → service definition
-    Dictionary<string, ServiceDefinition> serviceByImpl = new(StringComparer.Ordinal);
+    Dictionary<string, ServiceDefinition> serviceByImpl = [with(StringComparer.Ordinal)];
     foreach (ServiceDefinition service in services)
     {
       serviceByImpl[NormalizeTypeName(service.ImplementationTypeName)] = service;
     }
 
     // Build adjacency list and in-degree count
-    Dictionary<string, HashSet<string>> adjacencyList = new(StringComparer.Ordinal);
-    Dictionary<string, int> inDegree = new(StringComparer.Ordinal);
+    Dictionary<string, HashSet<string>> adjacencyList = [with(StringComparer.Ordinal)];
+    Dictionary<string, int> inDegree = [with(StringComparer.Ordinal)];
 
     foreach (ServiceDefinition service in services)
     {
       string implName = NormalizeTypeName(service.ImplementationTypeName);
       if (!adjacencyList.ContainsKey(implName))
-        adjacencyList[implName] = new HashSet<string>(StringComparer.Ordinal);
+        adjacencyList[implName] = [with(StringComparer.Ordinal)];
       if (!inDegree.ContainsKey(implName))
         inDegree[implName] = 0;
 
@@ -61,7 +61,7 @@ internal static class DependencyGraphBuilder
 
             // Add edge: dep → service (dep must be instantiated first)
             if (!adjacencyList.ContainsKey(depImplName))
-              adjacencyList[depImplName] = new HashSet<string>(StringComparer.Ordinal);
+              adjacencyList[depImplName] = [with(StringComparer.Ordinal)];
 
             if (adjacencyList[depImplName].Add(implName))
             {
@@ -74,7 +74,7 @@ internal static class DependencyGraphBuilder
 
     // Kahn's algorithm
     Queue<string> queue = new();
-    List<ServiceDefinition> result = new(services.Length);
+    List<ServiceDefinition> result = [with(services.Length)];
 
     // Start with nodes that have no dependencies (in-degree = 0)
     foreach (KeyValuePair<string, int> kvp in inDegree)
@@ -122,14 +122,14 @@ internal static class DependencyGraphBuilder
       return [];
 
     // Build lookup: implementation type name → service definition
-    Dictionary<string, ServiceDefinition> serviceByImpl = new(StringComparer.Ordinal);
+    Dictionary<string, ServiceDefinition> serviceByImpl = [with(StringComparer.Ordinal)];
     foreach (ServiceDefinition service in services)
     {
       serviceByImpl[NormalizeTypeName(service.ImplementationTypeName)] = service;
     }
 
     // Build adjacency list
-    Dictionary<string, List<string>> graph = new(StringComparer.Ordinal);
+    Dictionary<string, List<string>> graph = [with(StringComparer.Ordinal)];
     foreach (ServiceDefinition service in services)
     {
       string implName = NormalizeTypeName(service.ImplementationTypeName);
@@ -156,9 +156,9 @@ internal static class DependencyGraphBuilder
     }
 
     // DFS cycle detection
-    HashSet<string> visited = new(StringComparer.Ordinal);
-    HashSet<string> recursionStack = new(StringComparer.Ordinal);
-    HashSet<string> cycleNodes = new(StringComparer.Ordinal);
+    HashSet<string> visited = [with(StringComparer.Ordinal)];
+    HashSet<string> recursionStack = [with(StringComparer.Ordinal)];
+    HashSet<string> cycleNodes = [with(StringComparer.Ordinal)];
 
     foreach (string node in graph.Keys)
     {
@@ -218,7 +218,7 @@ internal static class DependencyGraphBuilder
     List<(string, string, string, string)> mismatches = [];
 
     // Build lookup
-    Dictionary<string, ServiceDefinition> serviceByImpl = new(StringComparer.Ordinal);
+    Dictionary<string, ServiceDefinition> serviceByImpl = [with(StringComparer.Ordinal)];
     foreach (ServiceDefinition service in services)
     {
       serviceByImpl[NormalizeTypeName(service.ImplementationTypeName)] = service;
@@ -310,7 +310,7 @@ internal static class DependencyGraphBuilder
     ServiceDefinition service,
     ImmutableArray<ServiceDefinition> services)
   {
-    return WalkInvocationScope(service, services, new HashSet<string>(StringComparer.Ordinal));
+    return WalkInvocationScope(service, services, [with(StringComparer.Ordinal)]);
   }
 
   private static bool WalkInvocationScope(

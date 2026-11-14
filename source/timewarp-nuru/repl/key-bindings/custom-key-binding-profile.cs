@@ -286,7 +286,7 @@ public sealed class CustomKeyBindingProfile : IKeyBindingProfile
 
     // Start with base profile bindings if we have one
     Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>> bindings = BaseProfile is not null
-      ? new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>>(BaseProfile.GetBindings(reader))
+      ? [with(BaseProfile.GetBindings(reader))]
       : [];
 
     // Remove any bindings marked for removal

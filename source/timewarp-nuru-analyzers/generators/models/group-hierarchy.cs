@@ -61,7 +61,7 @@ internal static class GroupHierarchyBuilder
   public static GroupHierarchyResult BuildHierarchy(IEnumerable<RouteDefinition> routes)
   {
     List<RouteDefinition> ungrouped = [];
-    Dictionary<string, GroupNode> rootGroupsByName = new(StringComparer.OrdinalIgnoreCase);
+    Dictionary<string, GroupNode> rootGroupsByName = [with(StringComparer.OrdinalIgnoreCase)];
 
     foreach (RouteDefinition route in routes)
     {

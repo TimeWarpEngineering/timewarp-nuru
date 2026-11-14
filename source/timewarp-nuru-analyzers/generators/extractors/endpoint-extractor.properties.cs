@@ -71,7 +71,7 @@ internal static partial class EndpointExtractor
 
     // A derived member can redeclare a base property under a different option name.
     // Skip the base property by the declared name, not by the option spelling.
-    HashSet<string> seenPropertyNames = new(StringComparer.Ordinal);
+    HashSet<string> seenPropertyNames = [with(StringComparer.Ordinal)];
 
     // Iterate over all properties from the type symbol (handles partial classes correctly)
     foreach (IPropertySymbol propertySymbol in classSymbol.GetMembers().OfType<IPropertySymbol>())

@@ -36,7 +36,7 @@ internal static class ReferencedEndpointLocator
   {
     ImmutableArray<(INamedTypeSymbol Type, Location Location)>.Builder types =
       ImmutableArray.CreateBuilder<(INamedTypeSymbol Type, Location Location)>();
-    HashSet<IAssemblySymbol> seen = new(SymbolEqualityComparer.Default);
+    HashSet<IAssemblySymbol> seen = [with(SymbolEqualityComparer.Default)];
 
     foreach (AttributeData attribute in attributes)
     {

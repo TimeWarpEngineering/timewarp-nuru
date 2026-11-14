@@ -85,7 +85,7 @@ public class NupkgLayoutCsprojGateParityTests
   internal static HashSet<string> CollectPackedBuildAndAnalyzerEntries(string csprojXml)
   {
     XDocument doc = XDocument.Parse(csprojXml);
-    HashSet<string> entries = new(StringComparer.Ordinal);
+    HashSet<string> entries = [with(StringComparer.Ordinal)];
 
     foreach (XElement none in doc.Descendants().Where(e => e.Name.LocalName == "None"))
     {

@@ -152,7 +152,7 @@ internal static partial class JsonArgsEmitter
   /// </summary>
   internal static string OptionSlotId(RouteDefinition route, OptionDefinition option)
   {
-    HashSet<string> ids = new(StringComparer.Ordinal);
+    HashSet<string> ids = [with(StringComparer.Ordinal)];
     foreach (ParameterDefinition param in route.Parameters)
       AllocId(param.Name, ids);
 

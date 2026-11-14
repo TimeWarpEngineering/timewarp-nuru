@@ -238,7 +238,7 @@ internal static class CiRunPromotion
     ArgumentNullException.ThrowIfNull(version);
 
     HashSet<string> actualSet = new(actualFileNames, StringComparer.Ordinal);
-    HashSet<string> expectedSet = new(StringComparer.Ordinal);
+    HashSet<string> expectedSet = [with(StringComparer.Ordinal)];
 
     List<string> missing = [];
     foreach (PackableProject project in projects)

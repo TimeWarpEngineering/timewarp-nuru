@@ -2,6 +2,13 @@
 // ReplConsoleReader partial for undo and redo handlers.
 #endregion
 
+#region Design
+// Undo state is snapshotted before each edit; consecutive character inserts are grouped into one
+// undo unit, and movement commands end the group via EndUndoCharacterGrouping. RevertLine
+// restores the initial state captured at ReadLineAsync start but saves the current state first,
+// so reverting is itself undoable.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,14 @@
 // Resolves the location of the search index database under `~/.nuru` and secures it to the owner.
 #endregion
 
+#region Design
+// The index lives in ~/.nuru, a directory shared with other per-user state such as REPL history, so
+// it is created owner-only (0700 directory, 0600 file) on Unix; Windows relies on the user-profile
+// ACLs. The empty file is created here, not by SQLite, because SQLite would apply the process umask;
+// creating it first is what pins the mode. Modes are set at creation only and never tightened
+// afterward. EnsureIndexPath is internal and takes the directory so tests never touch the real home.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 public static class DatabasePath

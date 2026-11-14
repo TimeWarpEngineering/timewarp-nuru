@@ -2,6 +2,14 @@
 // Contract for a converter that turns a route parameter string into a strongly typed value.
 #endregion
 
+#region Design
+// The extension point for custom route constraint types. Constraint names resolve by the target
+// type's name first, with the alias as an optional shorter spelling. The generator recognizes
+// AddTypeConverter(new X()) registrations at compile time, so converters stay discoverable
+// without runtime scanning. TryConvert is non-throwing so a bad value becomes a routing error,
+// not an exception.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

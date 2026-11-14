@@ -2,6 +2,16 @@
 // Options shared by the serve route and the forwarding client of a served Nuru app.
 #endregion
 
+#region Design
+// Server and client read one instance so they always agree on the socket. The default socket is per
+// build of the app, so two builds of one app never talk to each other's server and a
+// rebuilt app does not claim an older server; a fixed SocketPath deliberately opts out of that.
+// Relative paths resolve under the socket directory, never the current directory, so a call and the
+// server it starts reach the same file. The environment variable sits between SocketPath and the
+// default so tests and side-by-side builds can isolate servers without code changes. Clone is
+// internal so a host's instance cannot be mutated by the server it configured.
+#endregion
+
 namespace TimeWarp.Nuru.Daemon;
 
 /// <summary>

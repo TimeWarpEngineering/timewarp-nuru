@@ -3,6 +3,13 @@
 // database.
 #endregion
 
+#region Design
+// --cli accepts the app name or the executable name, resolved by SearchIndex.ResolveCliNamesAsync, the
+// same key search --cli takes, so one value works across commands and may match more than one indexed
+// CLI. Both paths confirm before deleting unless --force is given; the prompt is skipped for scripts
+// and agents with --force rather than detected from the terminal.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;

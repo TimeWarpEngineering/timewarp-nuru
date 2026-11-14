@@ -2,6 +2,15 @@
 // Source-generated JSON context for the capabilities response, keeping serialization AOT-compatible.
 #endregion
 
+#region Design
+// A source-generated context is used so the `--capabilities` document serializes without
+// reflection under Native AOT and trimming. The generated --capabilities handler serializes
+// through CapabilitiesResponse's type info, and CapabilitiesClient deserializes with the same
+// context so producer and consumer share one contract. CamelCase plus WhenWritingNull is part of
+// that contract: absent optional members are omitted, which lets older documents still load.
+// Every capability type must be registered here or serialization fails under AOT.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,12 @@
 // Key binding profile following Visual Studio Code and modern IDE editing conventions.
 #endregion
 
+#region Design
+// Maps IDE conventions onto the console editor: Ctrl+A selects all, where Default and Emacs use it
+// for beginning of line. Ctrl+D is deliberately omitted as EOF because IDE terminals do not use it
+// that way; Enter is the only accept-line chord.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

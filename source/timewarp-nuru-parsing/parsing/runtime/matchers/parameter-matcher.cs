@@ -2,6 +2,11 @@
 // Route matcher for a parameter segment that extracts a value.
 #endregion
 
+#region Design
+// TryMatch accepts any argument: a parameter's type constraint is enforced during binding, not
+// matching, so a type mismatch surfaces as a bind error rather than as "no route matched".
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

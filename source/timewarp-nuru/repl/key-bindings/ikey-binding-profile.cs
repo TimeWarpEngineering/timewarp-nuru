@@ -3,6 +3,14 @@
 // exit keys.
 #endregion
 
+#region Design
+// Bindings are returned from GetBindings(reader) rather than stored, because the handlers are instance
+// methods of the ReplConsoleReader that consumes them; each reader gets its own delegates. Exit keys
+// are separate from bindings: the reader runs a chord's action first, then returns the input line
+// if the chord is an exit key. Profiles are instantiable by name only through the internal factory
+// (Default, Emacs, Vi, VSCode); custom profiles are passed as instances.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

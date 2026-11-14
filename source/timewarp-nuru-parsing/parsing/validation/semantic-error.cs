@@ -2,6 +2,13 @@
 // Base class for semantic validation errors: valid syntax with incorrect meaning.
 #endregion
 
+#region Design
+// Semantic errors are found after a successful parse, so the pattern's structure is known and the
+// error can name the offending parameter or option. They stay separate from ParseError so callers can
+// tell "unreadable" from "readable but invalid". Concrete errors are registered in
+// NuruJsonSerializerContext for AOT-safe serialization.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,13 @@
 // ReplConsoleReader partial for Emacs-style kill and yank handlers.
 #endregion
 
+#region Design
+// Kill commands append to the previous ring entry when run consecutively (backward kills prepend),
+// via LastCommandWasKill. YankPop is valid only directly after Yank or YankPop and replaces the
+// span recorded in LastYankStart/LastYankLength. Word kills use letter/digit/underscore word
+// boundaries; UnixWordRubout uses whitespace boundaries.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

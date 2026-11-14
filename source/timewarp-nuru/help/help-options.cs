@@ -2,6 +2,15 @@
 // Options that control which routes appear in help listings and how they are shown.
 #endregion
 
+#region Design
+// The ConfigureHelp lambda is a compile-time contract: HelpOptionsExtractor reads assignments
+// to these properties (and ExcludePatterns string literals) into HelpModel, and the generated
+// help honors that model. A value computed at run time is therefore not seen by the generator.
+// Everything defaults to hidden so help lists only user routes; REPL, completion and per-command
+// help routes still work, they are just not listed. ExcludePatterns uses a settable collection so a
+// lambda can assign a collection expression.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

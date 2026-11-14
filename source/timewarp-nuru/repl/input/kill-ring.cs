@@ -2,6 +2,14 @@
 // Emacs-style kill ring: a circular buffer of killed text for yank and yank-pop.
 #endregion
 
+#region Design
+// Capacity-bounded circular buffer: the oldest entry is overwritten when full, so memory stays fixed
+// without any eviction bookkeeping. Yank position is a separate cursor into the ring that any new
+// Add resets, which is what limits YankPop to the moment right after a yank.
+// Empty text is ignored so a no-op kill never creates a blank entry or breaks append chaining.
+// The ring holds only text killed inside the REPL; the OS clipboard is a separate channel.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,14 @@
 // Exception type reported when a key binding JSON config is missing, unreadable, or invalid.
 #endregion
 
+#region Design
+// JSON shape for keybindings.json, deserialized through a source-generated context so the config
+// path works under AOT and trimming. UnmappedMemberHandling.Disallow makes a misspelled key such as
+// "overide" an error instead of a silently dead setting. Properties are mutable collections only
+// because System.Text.Json assigns them while reading; the analyzer suppressions record that.
+// Comments and trailing commas are allowed so users can annotate hand-edited files.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

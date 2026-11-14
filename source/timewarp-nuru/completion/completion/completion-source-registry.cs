@@ -2,6 +2,13 @@
 // Registry that maps parameter names and types to custom completion sources.
 #endregion
 
+#region Design
+// Parameter-name sources are consulted before type sources (see DynamicCompletionHandler), so a
+// name-specific source overrides a type-wide one. Registering again replaces silently. The registry
+// is instance-owned by the app and holds only runtime-registered sources; static route data comes
+// from the generated provider instead.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

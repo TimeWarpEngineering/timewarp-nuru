@@ -2,6 +2,14 @@
 // Assembly attribute that opts a referenced assembly's endpoint types into discovery in this compilation.
 #endregion
 
+#region Design
+// Discovery is opt-in per referenced assembly so that referencing a contracts package never
+// silently adds commands. ReferencedEndpointLocator resolves the marker type to its assembly
+// at compile time and extracts that assembly's endpoint types as if declared in this
+// project. The marker is a Type, not a string, so the reference is checked by the compiler and
+// survives assembly renames. Repeatable to name several assemblies.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

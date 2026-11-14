@@ -2,6 +2,19 @@
 // Runtime NuruApp partial: terminal, exclusivity gate, and the state a built app carries.
 #endregion
 
+#region Design
+// A built NuruApp holds no route table. The generator attaches delegates (RouteExecutor,
+// JsonBinder, InvocationExecutor, CapabilitiesProvider, ProblemRenderer) when it intercepts Build()
+// or RunAsync(), and the members that need them throw a descriptive InvalidOperationException
+// when absent, so an un-intercepted app fails loudly instead of silently doing nothing.
+// RunAsync and RunReplAsync bodies throw by design: the interceptor replaces every call, so
+// reaching the body means the generator did not run.
+// The generator-facing members are public but EditorBrowsable.Never because generated code in the
+// consumer's assembly cannot reach internals.
+// Terminal prefers the ambient NuruCallContext terminal so concurrent daemon/MCP calls write to
+// their own output; ExclusiveGate serializes routes marked Exclusive().
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using OpenTelemetry.Metrics;

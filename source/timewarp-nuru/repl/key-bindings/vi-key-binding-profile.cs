@@ -2,6 +2,12 @@
 // Vi-inspired key binding profile that stays in insert mode, with Vi-style navigation keys.
 #endregion
 
+#region Design
+// Insert-mode only: the profile has no modal state, so Escape clears the line instead of switching
+// to a command mode. Ctrl+D is not an exit key; it deletes a character or signals EOF through the
+// reader's exit flag, and Enter is the only accept-line chord.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

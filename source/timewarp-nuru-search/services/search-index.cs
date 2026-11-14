@@ -2,6 +2,23 @@
 // SQLite-backed store for indexed CLI endpoints: persists capability catalogs and answers search queries.
 #endregion
 
+#region Design
+// Search is SQLite FTS5 over pattern, description and CLI name, kept in step with the endpoints table
+// by insert, update and delete triggers, so writers touch only endpoints. Indexing a CLI replaces all
+// of its rows in one transaction, so a failed rebuild leaves the previous index intact. Schema
+// creation is idempotent and lazy (InitializeAsync runs on first use), and a column added after the
+// first release (clis.cli_path) is migrated in place; old rows keep a null path and rebuild falls
+// back to the CLI name. The data source is injectable (":memory:") so tests never open the real
+// ~/.nuru database. The class owns its connection and is disposed by its container.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): ClearIndexAsync deletes from endpoints and clis as two separate commands
+//     with no transaction, while ClearCliAsync and IndexCliAsync use one. Is the lack of a
+//     transaction in the clear-all path intended, or should a failure between the two deletes be
+//     unable to leave clis rows without endpoints?
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 public sealed partial class SearchIndex : IAsyncDisposable

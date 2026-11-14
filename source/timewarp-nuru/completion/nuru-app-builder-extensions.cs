@@ -2,6 +2,21 @@
 // Extension methods that enable shell completion on NuruAppBuilder and its endpoint builders.
 #endregion
 
+#region Design
+// EnableCompletion has two halves. The generator recognizes the call (DispatchEnableCompletion)
+// and emits the completion routes and provider. The configure callback is a runtime delegate: it
+// is stored on the builder and replayed by the generated code through ConfigureCompletionRegistry
+// so user-registered completion sources populate the built app's registry.
+// The EndpointBuilder overloads exist so EnableCompletion can follow Map(...) without an explicit
+// Done().
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): the appName parameter is discarded ("will be used by source generator")
+//     and DispatchEnableCompletion ignores arguments; generated scripts take the name at runtime.
+//     Is appName meant to be honored, or should the parameter be removed or marked obsolete?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

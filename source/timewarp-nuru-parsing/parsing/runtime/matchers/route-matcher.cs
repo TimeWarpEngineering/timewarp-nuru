@@ -2,6 +2,18 @@
 // Base class for route matchers (literals, parameters, and so on).
 #endregion
 
+#region Design
+// The runtime matchers are the data model of a CompiledRoute. Their matching rules mirror the
+// source-generated matcher path, which is what routes run through at runtime.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): No code outside the matcher classes calls RouteMatcher.TryMatch in
+//     source/, tests/ or samples/ except parser-16 on OptionMatcher. Is TryMatch intended public
+//     API for external consumers of CompiledRoute, or a leftover from before generator-emitted
+//     matching?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,13 @@
 // Attribute that marks an endpoint exclusive so served-app calls to it run one at a time.
 #endregion
 
+#region Design
+// A marker only: the generator reads it from the endpoint class (EndpointExtractor sets
+// IsExclusive) and the serve/MCP runtime serializes those calls. It is not inherited, so a
+// derived request must opt in itself, matching fluent .Exclusive(). The attribute exists
+// because most handlers are safe to run in parallel and exclusivity is the exception.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

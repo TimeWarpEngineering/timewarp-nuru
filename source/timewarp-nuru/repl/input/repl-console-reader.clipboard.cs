@@ -2,6 +2,15 @@
 // ReplConsoleReader partial with cross-platform clipboard access via native OS tools.
 #endregion
 
+#region Design
+// Shells out to OS clipboard tools through Shell.Builder instead of linking a clipboard library, so
+// a missing tool degrades to a no-op or null rather than a load failure.
+// Errors are swallowed on purpose: headless sessions and CI have no clipboard and must not break
+// editing. Text goes to tools via stdin, not argv, to avoid quoting problems.
+// Linux probes pwsh, then Windows tools for WSL, then xclip, then xsel; clip.exe is write-only,
+// so only the setter uses it. Tool availability is probed once and cached in ClipboardToolCache.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 #pragma warning disable CA1031 // Do not catch general exception types - clipboard access can fail for many OS-specific reasons

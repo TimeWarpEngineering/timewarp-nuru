@@ -2,6 +2,20 @@
 // Endpoint builder for routes declared inside a group; Done() returns to the parent GroupBuilder.
 #endregion
 
+#region Design
+// Mirrors EndpointBuilder's compile-time-only stubs (NuruGenerator reads each call; none execute
+// logic) but returns to the owning GroupBuilder from Done(). Group routes inherit the group prefix
+// at compile time, not through this type.
+// It exposes a narrower surface than EndpointBuilder: no Implements, Map or Build, and no implicit
+// conversion, so a group chain must be closed with Done() before continuing.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): DispatchImplements accepts any route builder, but this type has no
+//     Implements<TFilter> method, so [filter] interfaces cannot be attached to a grouped fluent
+//     route. Is that omission intentional (use endpoint classes instead), or a gap?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

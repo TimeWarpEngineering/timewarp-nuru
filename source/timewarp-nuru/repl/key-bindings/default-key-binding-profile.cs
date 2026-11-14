@@ -2,6 +2,12 @@
 // Default PSReadLine-compatible key binding profile shipped with Nuru.
 #endregion
 
+#region Design
+// Mirrors PSReadLine's function set, plus Emacs-style Ctrl aliases for the same functions, so users
+// coming from PowerShell get familiar behavior. Enter submits; Shift+Enter inserts a line
+// break instead of submitting. This is the profile a REPL uses unless configuration selects another.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

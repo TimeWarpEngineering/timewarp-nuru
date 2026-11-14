@@ -2,6 +2,15 @@
 // Builder extension that adds the built-in mcp route serving the app's routes as MCP tools.
 #endregion
 
+#region Design
+// A no-op stub: NuruGenerator recognizes AddMcpRoute and emits a route that runs
+// NuruMcpServer.RunStdioAsync, so the arguments are read as compile-time constants and the route is
+// owned by the emitter (see the built-in routes in timewarp-nuru-analyzers). The generated route is
+// the only way to reach the stdio server from a CLI call; hosts that already run an MCP server use
+// NuruMcpServerBuilderExtensions.WithNuruTools instead. User-mapped routes win over the built-in so
+// an app can replace it.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using TimeWarp.Nuru.McpHost;

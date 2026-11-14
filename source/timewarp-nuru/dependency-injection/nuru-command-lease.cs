@@ -2,6 +2,16 @@
 // Lease types that run generator-emitted scope cleanup when a command method returns.
 #endregion
 
+#region Design
+// Leases exist so generated code can use one `await using` per command and stay correct whatever
+// the entry path: single CLI run, REPL command, REPL host call, or isolated daemon/MCP call.
+// The lease types are public because the generator emits calls to them into the consumer's
+// assembly; they are not meant for hand-written code.
+// ReleaseSessionInstances reaches into the Microsoft scope's private _disposables list (trim
+// suppressed with a justification) because session services are registered transient, which the
+// command scope would otherwise dispose along with the command and end the session early.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

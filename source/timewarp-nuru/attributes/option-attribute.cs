@@ -2,6 +2,23 @@
 // Attribute that marks a request property as a command-line option (flag or valued).
 #endregion
 
+#region Design
+// Read by EndpointExtractor (and OperationEndpointExtractor) from the request property. Dashes
+// are added by the generator, so the attribute carries bare names. Option shape comes from the
+// property type, not from attribute flags: bool is a flag, a nullable type is an optional
+// value, an array or collection is repeatable. The property initializer is read as the default.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): IsRepeated is never read by the generator; repeatability is inferred
+//     from the property type (IsRepeatedOptionType). Setting IsRepeated = true on a scalar
+//     property has no effect. Should the property be removed or made to take part?
+// Q2 (2026-11-14, claude): EndpointExtractor reads the named arguments LongName, ShortName and
+//     IsRequired, which this attribute does not define (it has constructor parameters
+//     longForm/shortForm and no required flag). Are those dead branches to delete, or is an
+//     IsRequired setting intended?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

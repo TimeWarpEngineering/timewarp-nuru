@@ -2,6 +2,14 @@
 // ReplConsoleReader partial for interactive history search (Ctrl+R and Ctrl+S).
 #endregion
 
+#region Design
+// Search is a separate EditMode: while active, HandleSearchModeKeyAsync consumes keys directly and
+// the key-binding table is bypassed. Entering saves the input and cursor so Escape or Ctrl+G
+// restores them; Enter accepts the match and submits. Any other key accepts the match, exits
+// search, then dispatches through the normal bindings. Matching is case-insensitive substring.
+// Refining the pattern re-tests the current match before moving, so the selection does not jump.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

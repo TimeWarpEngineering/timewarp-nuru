@@ -2,6 +2,20 @@
 // Completion source that suggests every value of an enum type.
 #endregion
 
+#region Design
+// Offers enum names for a type registered with CompletionSourceRegistry.RegisterForType. The type
+// parameter keeps all members (DynamicallyAccessedMembers) so Enum.GetValues and the Description
+// lookup survive trimming. The description comes from DescriptionAttribute, else the decimal value;
+// the "D" format is used because it is safe for every underlying type, including wide [Flags]
+// enums.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): This source tags candidates CompletionType.Parameter, while the
+//     generator-emitted enum candidates (completion-emitter.cs, repl-emitter.cs) use
+//     CompletionType.Enum. Is the difference intended, or should this source use Enum?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

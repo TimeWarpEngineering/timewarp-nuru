@@ -2,6 +2,17 @@
 // Extension that adds a Nuru app's routes to an MCP server registered with AddMcpServer().
 #endregion
 
+#region Design
+// Public API on IMcpServerBuilder so a host that already owns an MCP server (ASP.NET Core with
+// streamable HTTP) can publish a Nuru app without the stdio-only built-in mcp route. It is a runtime
+// extension, not a DSL stub: the source generator does not interpret it, and the generator must ignore
+// the surrounding non-Nuru builder chain (AddMcpServer, builder.Services; kanban 531). The app is
+// passed already built; tools and instructions come from app.Capabilities, the same catalog
+// --capabilities prints. The tool list is fixed when the call runs. Instructions and server info use
+// ??= so a value the host set earlier wins over the app's catalog. The invoker copies the options,
+// so the caller's instance is not shared.
+#endregion
+
 namespace TimeWarp.Nuru.McpHost;
 
 /// <summary>

@@ -2,6 +2,14 @@
 // Base type for requests bound from JSON by TryBind, ready to pass to InvokeAsync.
 #endregion
 
+#region Design
+// Abstract so each route's generated sealed subclass can carry strongly typed bound values while
+// callers hold only this base. Values are copied out of the JSON so the request outlives the
+// JsonDocument. A request is tied to the app that bound it and is only valid for InvokeAsync
+// on that app.
+// The constructor is protected: it is called by generated code, not by consumers.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

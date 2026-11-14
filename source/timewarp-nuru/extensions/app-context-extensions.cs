@@ -2,6 +2,13 @@
 // Extension members exposing the entry-point file path that `dotnet run file.cs` sets in AppContext.
 #endregion
 
+#region Design
+// Uses C# extension members on AppContext (not extension methods) so call sites read as
+// AppContext.EntryPointFilePath(). The values exist only while `dotnet run file.cs` runs; publish
+// and pack do not set them, which is why Path.EntryPointFilePath() (PathExtensions) exists as the
+// fallback. The AppContext members return null when the data is absent rather than throwing.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

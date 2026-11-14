@@ -47,3 +47,5 @@ Filed 2026-10-25 at Steven's request ("change Nuru and architecture to run on th
 - Created: 985504 (2026-10-25)
 
 ## Results
+
+- 2026-11-15 groom: timewarp-infrastructure 004 is done; runner capacity, wslc targeting, and image-tool decisions live there. Start from that data instead of re-checking.

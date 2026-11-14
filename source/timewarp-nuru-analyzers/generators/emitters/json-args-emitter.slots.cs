@@ -279,8 +279,7 @@ internal static partial class JsonArgsEmitter
         return CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName);
 
       bool isStringTypedCatchAll = routeParam.IsCatchAll
-        && routeParam.HasTypeConstraint
-        && routeParam.TypeConstraint!.Equals("string", StringComparison.OrdinalIgnoreCase);
+        && TypeConversionMap.IsStringConstraint(routeParam.TypeConstraint);
       if (routeParam.IsCatchAll && (!routeParam.HasTypeConstraint || isStringTypedCatchAll))
         return $"__{routeParam.CamelCaseName}_{routeIndex}";
 

@@ -109,6 +109,21 @@ internal static class TypeConversionMap
   }
 
   /// <summary>
+  /// Checks whether a type constraint is the built-in <c>string</c> type (<c>string</c> or <c>string?</c>,
+  /// any casing). A string constraint needs no conversion: the captured value is bound as is,
+  /// the same as an untyped <c>{name}</c>.
+  /// </summary>
+  /// <param name="constraint">The type constraint as written, possibly with a trailing '?'</param>
+  public static bool IsStringConstraint(string? constraint)
+  {
+    if (constraint is null)
+      return false;
+
+    string baseType = constraint.EndsWith('?', StringComparison.Ordinal) ? constraint[..^1] : constraint;
+    return baseType.Equals("string", StringComparison.OrdinalIgnoreCase);
+  }
+
+  /// <summary>
   /// Checks if the given constraint is a known built-in type.
   /// </summary>
   public static bool IsBuiltInType(string constraint)

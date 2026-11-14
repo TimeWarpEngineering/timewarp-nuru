@@ -27,6 +27,7 @@ namespace TimeWarp.Nuru.Generators;
 /// <param name="NestedHandlerFactoryConstructible">For Command handlers: true when the nested Handler is declared in this
 /// compilation and has exactly one public constructor whose parameters are all required services, so generated code can
 /// register it with an explicit <c>new</c> factory (kanban 573: CA1812 sees that instantiation)</param>
+/// <param name="SuccessValueKind">For a problem pair: whether <c>SuccessTypeName</c> can be null or is an enum (kanban 583)</param>
 public sealed record HandlerDefinition(
   HandlerKind HandlerKind,
   string? FullTypeName,
@@ -48,7 +49,8 @@ public sealed record HandlerDefinition(
   string? RendererTypeName = null,
   EquatableArray<string> ConstructorArguments = default,
   string? ProblemRendererTypeName = null,
-  bool NestedHandlerFactoryConstructible = false)
+  bool NestedHandlerFactoryConstructible = false,
+  ResultValueKind SuccessValueKind = ResultValueKind.MaybeNull)
 {
   /// <summary>
   /// Creates a handler definition for a delegate-based handler.
@@ -124,7 +126,8 @@ public sealed record HandlerDefinition(
     string? successTypeName,
     string? rendererTypeName,
     EquatableArray<string> constructorArguments = default,
-    string? problemRendererTypeName = null)
+    string? problemRendererTypeName = null,
+    ResultValueKind successValueKind = ResultValueKind.MaybeNull)
   {
     return new HandlerDefinition(
       HandlerKind: HandlerKind.Command,
@@ -144,7 +147,8 @@ public sealed record HandlerDefinition(
       SuccessTypeName: successTypeName,
       RendererTypeName: rendererTypeName,
       ConstructorArguments: constructorArguments,
-      ProblemRendererTypeName: problemRendererTypeName);
+      ProblemRendererTypeName: problemRendererTypeName,
+      SuccessValueKind: successValueKind);
   }
 
   /// <summary>
@@ -171,6 +175,12 @@ public sealed record HandlerDefinition(
       RequiresCancellationToken: requiresCancellationToken,
       RequiresServiceProvider: requiresServiceProvider);
   }
+
+  /// <summary>
+  /// The kind of the value the invoker writes: the problem pair's success type, otherwise the (awaited) result.
+  /// </summary>
+  public ResultValueKind RenderedValueKind =>
+    ReturnsProblemPair && SuccessTypeName is not null ? SuccessValueKind : ReturnType.ValueKind;
 
   /// <summary>
   /// Gets whether this handler has any parameters to bind.
@@ -219,12 +229,15 @@ public enum HandlerKind
 /// <param name="IsVoid">Whether the return type is void</param>
 /// <param name="IsTask">Whether it returns Task/ValueTask</param>
 /// <param name="UnwrappedTypeName">For Task&lt;T&gt;, the T type name; otherwise same as FullTypeName</param>
+/// <param name="ValueKind">Whether the result value (T for Task&lt;T&gt;) can be null or is an enum, from the semantic
+/// model (kanban 583)</param>
 public sealed record HandlerReturnType(
   string FullTypeName,
   string ShortTypeName,
   bool IsVoid,
   bool IsTask,
-  string? UnwrappedTypeName)
+  string? UnwrappedTypeName,
+  ResultValueKind ValueKind = ResultValueKind.MaybeNull)
 {
   /// <summary>
   /// The void return type.
@@ -249,22 +262,30 @@ public sealed record HandlerReturnType(
   /// <summary>
   /// Creates a Task&lt;T&gt; return type.
   /// </summary>
-  public static HandlerReturnType TaskOf(string innerTypeName, string shortInnerTypeName) => new(
+  public static HandlerReturnType TaskOf(
+    string innerTypeName,
+    string shortInnerTypeName,
+    ResultValueKind valueKind = ResultValueKind.MaybeNull) => new(
     FullTypeName: $"global::System.Threading.Tasks.Task<{innerTypeName}>",
     ShortTypeName: $"Task<{shortInnerTypeName}>",
     IsVoid: false,
     IsTask: true,
-    UnwrappedTypeName: innerTypeName);
+    UnwrappedTypeName: innerTypeName,
+    ValueKind: valueKind);
 
   /// <summary>
   /// Creates a non-async return type.
   /// </summary>
-  public static HandlerReturnType Of(string fullTypeName, string shortTypeName) => new(
+  public static HandlerReturnType Of(
+    string fullTypeName,
+    string shortTypeName,
+    ResultValueKind valueKind = ResultValueKind.MaybeNull) => new(
     FullTypeName: fullTypeName,
     ShortTypeName: shortTypeName,
     IsVoid: false,
     IsTask: false,
-    UnwrappedTypeName: null);
+    UnwrappedTypeName: null,
+    ValueKind: valueKind);
 
   /// <summary>
   /// Gets whether this returns a value (not void or Task without result).

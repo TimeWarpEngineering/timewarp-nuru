@@ -42,7 +42,7 @@ internal static partial class HandlerInvokerEmitter
     }
     else
     {
-      EmitResultOutput(sb, indent + "  ", resultTypeName, "result", terminal);
+      EmitResultOutput(sb, indent + "  ", resultTypeName, handler.ReturnType.ValueKind, "result", terminal);
     }
 
     sb.AppendLine($"{indent}}}");
@@ -50,32 +50,41 @@ internal static partial class HandlerInvokerEmitter
 
   /// <summary>
   /// Emits code to output the handler result to the terminal.
-  /// Uses type-based strategy: Unit/null = no output, primitives = raw, dates = ISO 8601, complex = JSON.
+  /// Uses type-based strategy: Unit/null = no output, primitives and enums = raw, dates = ISO 8601, complex = JSON.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="indent">The indentation string.</param>
   /// <param name="resultTypeName">The result type name to determine output strategy.</param>
-  private static void EmitResultOutput(StringBuilder sb, string indent, string? resultTypeName = null, string valueName = "result", string terminal = "app.Terminal")
+  /// <param name="valueKind">Whether the result can be null or is an enum, from the semantic model.</param>
+  private static void EmitResultOutput(
+    StringBuilder sb,
+    string indent,
+    string? resultTypeName,
+    ResultValueKind valueKind,
+    string valueName = "result",
+    string terminal = "app.Terminal")
   {
-    OutputStrategy strategy = GetOutputStrategy(resultTypeName);
+    OutputStrategy strategy = GetOutputStrategy(resultTypeName, valueKind);
 
     // Unit/void = no output at all
     if (strategy == OutputStrategy.None)
       return;
 
-    bool isValueType = IsKnownValueType(resultTypeName);
+    // A non-nullable value type (kanban 583: including a user enum or struct) can never be null,
+    // and `is not null` / `?.` on one does not compile (CS0037 / CS0023).
+    bool isValueType = valueKind != ResultValueKind.MaybeNull || IsKnownValueType(resultTypeName);
 
     if (isValueType)
     {
       // Value types can never be null - output directly
-      EmitOutputForStrategy(sb, indent, strategy, resultTypeName, valueName, terminal);
+      EmitOutputForStrategy(sb, indent, strategy, isValueType, valueName, terminal);
     }
     else
     {
       // Reference types - check for null before outputting
       sb.AppendLine($"{indent}if ({valueName} is not null)");
       sb.AppendLine($"{indent}{{");
-      EmitOutputForStrategy(sb, $"{indent}  ", strategy, resultTypeName, valueName, terminal);
+      EmitOutputForStrategy(sb, $"{indent}  ", strategy, isValueType, valueName, terminal);
       sb.AppendLine($"{indent}}}");
     }
   }
@@ -86,8 +95,8 @@ internal static partial class HandlerInvokerEmitter
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="indent">The indentation string.</param>
   /// <param name="strategy">The output strategy to use.</param>
-  /// <param name="typeName">The type name for JSON serialization context.</param>
-  private static void EmitOutputForStrategy(StringBuilder sb, string indent, OutputStrategy strategy, string? typeName = null, string valueName = "result", string terminal = "app.Terminal")
+  /// <param name="isValueType">True when the value is a non-nullable value type, so the ToString() fallback has no <c>?.</c>.</param>
+  private static void EmitOutputForStrategy(StringBuilder sb, string indent, OutputStrategy strategy, bool isValueType, string valueName, string terminal)
   {
     switch (strategy)
     {
@@ -125,7 +134,9 @@ internal static partial class HandlerInvokerEmitter
         sb.AppendLine($"{indent}  catch");
         sb.AppendLine($"{indent}  {{");
         sb.AppendLine($"{indent}    // Type not in any context - fall back to ToString()");
-        sb.AppendLine($"{indent}    {terminal}.WriteLine({valueName}?.ToString() ?? \"\");");
+        sb.AppendLine(isValueType
+          ? $"{indent}    {terminal}.WriteLine({valueName}.ToString());"
+          : $"{indent}    {terminal}.WriteLine({valueName}?.ToString() ?? \"\");");
         sb.AppendLine($"{indent}  }}");
         sb.AppendLine($"{indent}}}");
         break;
@@ -151,11 +162,15 @@ internal static partial class HandlerInvokerEmitter
   /// <summary>
   /// Determines the output strategy based on the result type.
   /// <c>CapabilitiesEmitter.DescribeReturnType</c> uses it for the <c>returnType</c> kind.
+  /// A non-nullable enum (<paramref name="valueKind"/>) prints its member name raw, as a primitive does.
   /// </summary>
-  internal static OutputStrategy GetOutputStrategy(string? typeName)
+  internal static OutputStrategy GetOutputStrategy(string? typeName, ResultValueKind valueKind = ResultValueKind.MaybeNull)
   {
     if (string.IsNullOrEmpty(typeName))
       return OutputStrategy.None;
+
+    if (valueKind == ResultValueKind.Enum)
+      return OutputStrategy.Raw;
 
     return typeName switch
     {
@@ -206,8 +221,8 @@ internal static partial class HandlerInvokerEmitter
     if (string.IsNullOrEmpty(typeName))
       return false;
 
-    // Note: We can't know if user types are value types without semantic analysis
-    // So we only recognize well-known value types
+    // User value types come from the semantic model as ResultValueKind (kanban 583); this name list
+    // covers the BCL types and callers that have no kind.
     return typeName switch
     {
       "global::System.Int32" or "int" or "Int32" => true,

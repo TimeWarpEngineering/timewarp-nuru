@@ -57,6 +57,7 @@ internal static partial class EndpointExtractor
       RendererTypeName = shape.RendererTypeName,
       ConstructorArguments = constructorArguments,
       ProblemRendererTypeName = shape.ProblemRendererTypeName,
+      SuccessValueKind = shape.SuccessValueKind,
       NestedHandlerFactoryConstructible = IsFactoryConstructible(compilation, classSymbol, handlerClass)
     };
   }
@@ -138,7 +139,7 @@ internal static partial class EndpointExtractor
         ITypeSymbol resultType = iface.TypeArguments[0];
         string fullTypeName = resultType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         string shortTypeName = resultType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        return HandlerReturnType.TaskOf(fullTypeName, shortTypeName);
+        return HandlerReturnType.TaskOf(fullTypeName, shortTypeName, ResultValueKinds.Of(resultType));
       }
     }
 

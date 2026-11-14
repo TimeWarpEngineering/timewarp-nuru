@@ -562,10 +562,10 @@ builder.Map("validate")
       if (hasErrors)
       {
           terminal.WriteErrorLine("Validation failed".Red());
-          return 1;
+          Environment.ExitCode = 1;  // a returned int is printed, not the exit code
+          return;
       }
       terminal.WriteLine("Validation passed".Green());
-      return 0;
   })
   .AsCommand()
   .Done();

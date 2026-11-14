@@ -141,6 +141,10 @@ return await app.RunAsync(args);
 
 Wrap existing command-line tools to add authentication, logging, validation, or routing logic.
 
+In these examples `RunTool(tool, args)` stands for your own process helper (for example, a
+TimeWarp.Amuru call) that runs the wrapped tool and returns its exit code. Pass that code on with
+`Environment.ExitCode`: a handler's returned `int` is printed to stdout, not used as the exit code.
+
 ### Adding Authentication Layer
 
 **Use Case**: Wrap an existing deployment CLI with access control
@@ -150,30 +154,29 @@ using TimeWarp.Nuru;
 
 NuruApp app = NuruApp.CreateBuilder()
   // Intercept production deployments for auth check
-  .Map
-  (
-    "deploy prod {*args}",
-    async (string[] args) =>
+  .Map("deploy prod {*args}")
+    .WithHandler(async (string[] args) =>
     {
       if (!await ValidateProductionAccess())
       {
         Console.Error.WriteLine("❌ Production access denied");
-        return 1;
+        Environment.ExitCode = 1;  // a returned int is printed, not the exit code
+        return;
       }
 
       Console.WriteLine("✅ Access granted, deploying to production...");
-      return await Shell.ExecuteAsync("existing-deploy-tool", ["deploy", "prod", ..args]);
-    }
-  )
+      Environment.ExitCode = await RunTool("existing-deploy-tool", ["deploy", "prod", ..args]);
+    })
+    .AsCommand()
+    .Done()
   // Other environments pass through
-  .Map
-  (
-    "deploy {env} {*args}",
-    async (string env, string[] args) =>
+  .Map("deploy {env} {*args}")
+    .WithHandler(async (string env, string[] args) =>
     {
-      return await Shell.ExecuteAsync("existing-deploy-tool", ["deploy", env, ..args]);
-    }
-  )
+      Environment.ExitCode = await RunTool("existing-deploy-tool", ["deploy", env, ..args]);
+    })
+    .AsCommand()
+    .Done()
   .Build();
 
 return await app.RunAsync(args);
@@ -190,41 +193,39 @@ return await app.RunAsync(args);
 **Use Case**: Add safety checks to dangerous operations
 
 ```csharp
-builder.Map
-(
-  "delete database {name} --confirm",
-  async (string name, bool confirm) =>
+// One route: --confirm and --dry-run are optional flags on the same command
+builder.Map("delete database {name} --confirm --dry-run")
+  .WithHandler(async (string name, bool confirm, bool dryRun) =>
   {
+    // Add dry-run capability not in original tool
+    if (dryRun)
+    {
+      Console.WriteLine($"[DRY RUN] Would delete database: {name}");
+      return;
+    }
+
     if (!confirm)
     {
       Console.Error.WriteLine("❌ Must use --confirm flag to delete database");
-      return 1;
+      Environment.ExitCode = 1;
+      return;
     }
 
     // Validate database name against pattern
     if (!ValidateDatabaseName(name))
     {
       Console.Error.WriteLine($"❌ Invalid database name: {name}");
-      return 1;
+      Environment.ExitCode = 1;
+      return;
     }
 
     // Log before execution
     await LogAuditEvent("database.delete", name);
 
-    return await Shell.ExecuteAsync("original-cli", "delete", "database", name);
-  }
-);
-
-// Add dry-run capability not in original tool
-builder.Map
-(
-  "delete database {name} --dry-run",
-  (string name) =>
-  {
-    Console.WriteLine($"[DRY RUN] Would delete database: {name}");
-    return 0;
-  }
-);
+    Environment.ExitCode = await RunTool("original-cli", ["delete", "database", name]);
+  })
+  .AsCommand()
+  .Done();
 ```
 
 **Benefits**:
@@ -238,47 +239,27 @@ builder.Map
 **Use Case**: Modernize CLI interface while maintaining backward compatibility
 
 ```csharp
-// New simplified interface
-builder.Map
-(
-  "build {project}",
-  async (string project) =>
+// New simplified interface; --debug and --quiet are optional flags
+builder.Map("build {project} --debug --quiet")
+  .WithHandler(async (string project, bool debug, bool quiet) =>
   {
     // Transform to old CLI syntax
-    return await Shell.ExecuteAsync
-    (
-      "legacy-tool",
-      "--project", project,
-      "--config", "Release",
-      "--verbose"
-    );
-  }
-);
-
-// New interface with options
-builder.Map
-(
-  "build {project} --debug --quiet",
-  async (string project, bool debug, bool quiet) =>
-  {
-    List<string> args = new() { "--project", project };
-    args.Add("--config");
-    args.Add(debug ? "Debug" : "Release");
+    List<string> args = ["--project", project, "--config", debug ? "Debug" : "Release"];
     if (!quiet) args.Add("--verbose");
 
-    return await Shell.ExecuteAsync("legacy-tool", args.ToArray());
-  }
-);
+    Environment.ExitCode = await RunTool("legacy-tool", [.. args]);
+  })
+  .AsCommand()
+  .Done();
 
 // Pass through for advanced users needing old syntax
-builder.Map
-(
-  "{*args}",
-  async (string[] args) =>
+builder.Map("{*args}")
+  .WithHandler(async (string[] args) =>
   {
-    return await Shell.ExecuteAsync("legacy-tool", args);
-  }
-);
+    Environment.ExitCode = await RunTool("legacy-tool", args);
+  })
+  .AsCommand()
+  .Done();
 ```
 
 **Benefits**:
@@ -305,7 +286,7 @@ NuruApp app = NuruApp.CreateBuilder()
 
       try
       {
-        int result = await Shell.ExecuteAsync("original-tool", args);
+        int result = await RunTool("original-tool", args);
         sw.Stop();
 
         await telemetry.TrackCommandAsync(new CommandMetrics
@@ -316,7 +297,7 @@ NuruApp app = NuruApp.CreateBuilder()
           Timestamp = DateTime.UtcNow
         });
 
-        return result;
+        Environment.ExitCode = result;
       }
       catch (Exception ex)
       {
@@ -362,7 +343,7 @@ NuruApp app = NuruApp.CreateBuilder()
   .Map<ValidateCommand>()
   // Wrap existing tool for migration
   .Map("legacy {*args}")
-    .WithHandler(async (string[] args) => await Shell.ExecuteAsync("old-deploy-tool", args))
+    .WithHandler(async (string[] args) => { Environment.ExitCode = await RunTool("old-deploy-tool", args); })
     .AsCommand()
     .Done()
   .Build();

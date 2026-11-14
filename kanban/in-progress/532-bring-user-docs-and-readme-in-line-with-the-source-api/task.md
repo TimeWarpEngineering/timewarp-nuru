@@ -16,6 +16,16 @@ Known defects:
 
 Logging docs depend on the outcome of the UseLogging/UseConsoleLogging task; MCP docs depend on the WithNuruTools task.
 
+## Goal (implementer restatement)
+
+Make every C# snippet in `readme.md` and `documentation/user/**` that builds an app compile against the latest shipped TimeWarp.Nuru package, by correcting the docs to match the source public API (the source plus its Purpose/Design regions is the authority). Where the source says a documented behavior should exist and the package does not deliver it, file a code task instead of editing the doc.
+
+Acceptance:
+- Each listed defect (README `CreateBuilder(args)`/`EnableStaticCompletion`, two-argument `Map` in `output-handling.md`/`use-cases.md`, `WithGroup` in `best-practices.md`, unreachable `Map("")` in `routing.md`, parameter-name mismatches in `supported-types.md`, the `telemetry.md` ActivitySource sample) is checked against source and fixed in the doc, or turned into a code task.
+- `skills/tw-nuru-verify/scripts/nuru-consumer-check.sh --steps docs --docs-ref HEAD` reports 0 broken snippets outside the logging (task 527 area) and MCP/`WithNuruTools` (task 531) areas; the count is recorded in Results.
+- Any spawned code tasks are listed in Notes.
+- Build, test and audit gates pass.
+
 ## Checklist
 
 - [ ] For each defect, confirm against the source's public API that the doc is wrong (not the code); if the API says the behavior should exist, file a code task instead of editing the doc

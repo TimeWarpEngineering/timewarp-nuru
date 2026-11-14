@@ -16,31 +16,30 @@ builder.Map("hello")
 
 // Structured data (automatic JSON serialization)
 builder.Map("info")
-  .WithHandler(() => new {
-    Name = "MyApp",
-    Version = "1.0.0",
-    Status = "Running"
-  })
+  .WithHandler(() => new AppInfo("MyApp", "1.0.0", "Running"))
   .AsQuery()
   .Done();
+
+public sealed record AppInfo(string Name, string Version, string Status);
 ```
 
 ### stderr (Standard Error)
 Use for **diagnostics, progress, and errors** that humans read:
 
 ```csharp
-builder.Map
-(
-  "process {file}",
-  (string file) =>
+builder.Map("process {file}")
+  .WithHandler((string file) =>
   {
     Console.Error.WriteLine($"Processing {file}...");  // Progress → stderr
     Thread.Sleep(1000);
     Console.Error.WriteLine("Complete!");              // Status → stderr
 
-    return new { File = file, Lines = 42 };             // Data → stdout
-  }
-);
+    return new FileSummary(file, 42);                  // Data → stdout
+  })
+  .AsCommand()
+  .Done();
+
+public sealed record FileSummary(string File, int Lines);
 ```
 
 ## Why Separate Streams?
@@ -63,34 +62,27 @@ This separation enables powerful scripting patterns:
 
 ## Automatic JSON Serialization
 
-Return objects from handlers for automatic JSON output:
+Return objects from handlers for automatic JSON output. Return a named type (a record or class); the generated JSON context cannot name an anonymous type, so `new { ... }` does not build:
 
 ```csharp
-public record AnalysisResult(
-    string File,
-    int Lines,
-    int Errors,
-    string Status
-);
-
-builder.Map
-(
-  "analyze {file}",
-  (string file) =>
+builder.Map("analyze {file}")
+  .WithHandler((string file) =>
   {
     Console.Error.WriteLine($"Analyzing {file}...");
 
-    AnalysisResult result = AnalyzeFile(file);
+    (int lines, int errors) = AnalyzeFile(file);
 
     // Returned object → JSON to stdout
-    return new AnalysisResult
-    (
-      File: file,
-      Lines: result.LineCount,
-      Errors: result.ErrorCount,
-      Status: "Complete"
-    );
-  }
+    return new AnalysisResult(file, lines, errors, "Complete");
+  })
+  .AsQuery()
+  .Done();
+
+public sealed record AnalysisResult(
+  string File,
+  int Lines,
+  int Errors,
+  string Status
 );
 ```
 
@@ -165,10 +157,8 @@ public sealed class AnalyzeQuery : IQuery<AnalysisResult>
 ### Progress Reporting
 
 ```csharp
-builder.Map
-(
-  "download {url}",
-  async (string url) =>
+builder.Map("download {url}")
+  .WithHandler(async (string url) =>
   {
     Console.Error.WriteLine($"Downloading {url}...");
 
@@ -183,46 +173,48 @@ builder.Map
 
     Console.Error.WriteLine("Download complete!");
 
-    return new { Url = url, Size = data.Length, Status = "Success" };  // stdout
-  }
-);
+    return new DownloadResult(url, data.Length, "Success");  // stdout
+  })
+  .AsCommand()
+  .Done();
+
+public sealed record DownloadResult(string Url, int Size, string Status);
 ```
 
 ### Error Reporting
 
 ```csharp
-builder.Map
-(
-  "validate {file}",
-  (string file) =>
+builder.Map("validate {file}")
+  .WithHandler((string file) =>
   {
     Console.Error.WriteLine($"Validating {file}...");
 
     List<ValidationError> errors = Validate(file);
 
-    if (errors.Any())
+    if (errors.Count > 0)
     {
       Console.Error.WriteLine($"❌ Found {errors.Count} errors");
       foreach (ValidationError error in errors)
       {
         Console.Error.WriteLine($"  Line {error.Line}: {error.Message}");
       }
-      return 1;  // Exit code for errors
+
+      Environment.ExitCode = 1;  // Exit code for errors
+      return;
     }
 
     Console.Error.WriteLine("✅ Validation passed");
-    return new { File = file, Status = "Valid" };
-  }
-);
+    Console.WriteLine(file);     // Data → stdout
+  })
+  .AsQuery()
+  .Done();
 ```
 
 ### Multi-Step Operations
 
 ```csharp
-builder.Map
-(
-  "deploy {env}",
-  async (string env) =>
+builder.Map("deploy {env}")
+  .WithHandler(async (string env) =>
   {
     Console.Error.WriteLine($"Deploying to {env}...");
 
@@ -237,15 +229,12 @@ builder.Map
 
     Console.Error.WriteLine("✅ Deployment complete");
 
-    return new
-    {
-      Environment = env,
-      Version = result.Version,
-      Url = result.Url,
-      DeployedAt = DateTime.UtcNow
-    };
-  }
-);
+    return new DeploymentSummary(env, result.Version, result.Url, DateTime.UtcNow);
+  })
+  .AsCommand()
+  .Done();
+
+public sealed record DeploymentSummary(string Environment, string Version, string Url, DateTime DeployedAt);
 ```
 
 ## Output Control
@@ -253,10 +242,8 @@ builder.Map
 ### Verbose Mode
 
 ```csharp
-builder.Map
-(
-  "process {file} --verbose",
-  (string file, bool verbose) =>
+builder.Map("process {file} --verbose")
+  .WithHandler((string file, bool verbose) =>
   {
     if (verbose)
       Console.Error.WriteLine("Verbose mode enabled");
@@ -274,17 +261,16 @@ builder.Map
     );
 
     return result;
-  }
-);
+  })
+  .AsCommand()
+  .Done();
 ```
 
 ### Quiet Mode
 
 ```csharp
-builder.Map
-(
-  "backup {source} --quiet",
-  (string source, bool quiet) =>
+builder.Map("backup {source} --quiet")
+  .WithHandler((string source, bool quiet) =>
   {
     if (!quiet)
       Console.Error.WriteLine($"Backing up {source}...");
@@ -295,8 +281,9 @@ builder.Map
       Console.Error.WriteLine("Backup complete");
 
     return result;
-  }
-);
+  })
+  .AsCommand()
+  .Done();
 ```
 
 ## Best Practices
@@ -308,9 +295,9 @@ builder.Map
 Console.Error.WriteLine("Processing...");
 logger.LogInformation("Started at {Time}", DateTime.Now);
 
-// Data and results → stdout (or return objects)
+// Data and results → stdout (or return a record; it is written as JSON)
 Console.WriteLine(jsonData);
-return new { Result = data };
+return new ExportResult(data);
 ```
 
 ### ❌ DON'T
@@ -354,24 +341,23 @@ Console.Error.WriteLine(jsonData);  // Bad: data on stderr
 
 ## Exit Codes
 
-Return exit codes for shell scripting:
+Set `Environment.ExitCode` for shell scripting. A returned `int` is printed to stdout; it is not the exit code:
 
 ```csharp
-builder.Map
-(
-  "check {file}",
-  (string file) =>
+builder.Map("check {file}")
+  .WithHandler((string file) =>
   {
     if (!File.Exists(file))
     {
       Console.Error.WriteLine($"❌ File not found: {file}");
-      return 1;  // Error exit code
+      Environment.ExitCode = 1;  // Error exit code
+      return;
     }
 
-    Console.Error.WriteLine("✅ File exists");
-    return 0;  // Success
-  }
-);
+    Console.Error.WriteLine("✅ File exists");  // Exit code stays 0
+  })
+  .AsQuery()
+  .Done();
 ```
 
 ```bash

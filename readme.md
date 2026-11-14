@@ -172,20 +172,25 @@ NuruApp.CreateBuilder()
 ```
 
 ### 🔄 Progressive Enhancement
-Wrap existing CLIs to add auth, logging, or validation:
+Wrap existing CLIs to add auth, logging, or validation. `RunExistingCli` is your own process helper that returns the wrapped tool's exit code:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("deploy prod")
     .WithHandler(async () =>
     {
-      if (!await ValidateAccess()) return 1;
-      return await Shell.ExecuteAsync("existing-cli", "deploy", "prod");
+      if (!await ValidateAccess())
+      {
+        Environment.ExitCode = 1;  // a returned int is printed, not the exit code
+        return;
+      }
+
+      Environment.ExitCode = await RunExistingCli(["deploy", "prod"]);
     })
     .AsCommand()
     .Done()
   .Map("{*args}")
-    .WithHandler(async (string[] args) => await Shell.ExecuteAsync("existing-cli", args))
+    .WithHandler(async (string[] args) => { Environment.ExitCode = await RunExistingCli(args); })
     .AsCommand()
     .Done()
   .Build();
@@ -245,7 +250,7 @@ Get instant help:
 Enable tab completion for your CLI with one line of code:
 
 ```csharp
-NuruApp app = NuruApp.CreateBuilder(args)
+NuruApp app = NuruApp.CreateBuilder()
   .Map("deploy {env} --version {tag}")
     .WithHandler((string env, string tag) => Deploy(env, tag))
     .AsCommand()
@@ -254,7 +259,7 @@ NuruApp app = NuruApp.CreateBuilder(args)
     .WithHandler(() => ShowStatus())
     .AsQuery()
     .Done()
-  .EnableStaticCompletion()  // ← Add this
+  .EnableCompletion()  // ← Add this
   .Build();
 ```
 

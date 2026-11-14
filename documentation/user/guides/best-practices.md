@@ -22,33 +22,39 @@ Minimize route explosion by using optional parameters:
 
 ### Hierarchical Commands with Groups
 
-Use `WithGroup()` to organize related commands:
+Use `WithGroupPrefix()` to organize related commands. Each group ends with `.Done()`:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
   .WithName("myapp")
-  .WithGroup("user", group => group
+  .WithGroupPrefix("user")
     .Map("create {email}")
       .WithHandler((string email) => CreateUser(email))
+      .AsCommand()
       .Done()
     .Map("delete {id:Guid}")
       .WithHandler((Guid id) => DeleteUser(id))
+      .AsCommand()
       .Done()
     .Map("list")
       .WithHandler(() => ListUsers())
+      .AsQuery()
       .Done()
-  )
-  .WithGroup("project", group => group
+    .Done()
+  .WithGroupPrefix("project")
     .Map("create {name}")
       .WithHandler((string name) => CreateProject(name))
+      .AsCommand()
       .Done()
     .Map("delete {id:Guid}")
       .WithHandler((Guid id) => DeleteProject(id))
+      .AsCommand()
       .Done()
     .Map("list")
       .WithHandler(() => ListProjects())
+      .AsQuery()
       .Done()
-  )
+    .Done()
   .Build();
 ```
 
@@ -245,7 +251,7 @@ Use `ITerminal.WriteLine()` for stdout and `ITerminal.WriteErrorLine()` for stde
 
 // ❌ Unnecessary allocations
 .Map("calc {x:int} {y:int}")
-  .WithHandler((int x, int y) => new { Result = x + y })
+  .WithHandler((int x, int y) => new CalcResult(x + y))
   .Done()
 ```
 

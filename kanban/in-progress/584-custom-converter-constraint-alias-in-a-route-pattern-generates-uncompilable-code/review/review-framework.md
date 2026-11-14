@@ -10,7 +10,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 459
+- Lines changed: 345
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -20,6 +20,13 @@
 
 **Date:** 2026-11-14
 **Diff scope:** Product delta since round-1 base `2d49ff0f` (`review/round-1/base.sha`): `d3a444e1` (NURU_S010 fallback) and `558ab9d6` (TimeWarp.Build.Tasks pin). HEAD `fc349ead`. Not the whole task diff.
+**Effort:** 2 (general only)
+**Session IDs:** cursor reviewer (Grok 4.7); session not reported; turn cap 120 (no `--max-turns` flag; bound 120)
+
+## Round 3
+
+**Date:** 2026-11-14
+**Diff scope:** Product delta since round-2 base `fc349ead` (`review/round-2/base.sha`): `280434b0` (Uri, FileInfo, and DirectoryInfo list elements) and kitchen record `c1755d50`. HEAD `c1755d50`. Not the whole task diff.
 **Effort:** 2 (general only)
 **Session IDs:** cursor reviewer (Grok 4.7); session not reported; turn cap 120 (no `--max-turns` flag; bound 120)
 

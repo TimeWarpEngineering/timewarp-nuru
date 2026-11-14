@@ -60,7 +60,8 @@ the same as the scalar path, on the route matcher and the `--json-args` list pat
 ## Review
 
 - Round 1: Blocked — open M1 (fix pass implemented; see Results › Fix pass)
-- Round 2: Blocked — open M2
+- Round 2: Blocked — open M2 (fix pass implemented; see Results › Fix pass)
+- Round 3: Done
 ## Notes
 
 - The samples define aliases (`email`, `semver`) but route only by type name, so nothing exercised the alias form.
@@ -77,6 +78,7 @@ the same as the scalar path, on the route matcher and the `--json-args` list pat
   DirectoryInfo convert per element on the catch-all, repeated-option, and `--json-args` list paths.
 - Implement-fix-2 (implementer-claude, claude-opus-5-5, 2026-11-14): fixed round-1 M1. Unresolved constraints now emit compilable fallback declarations, and list converters report NURU_S010. The audit flagged a new TimeWarp.Build.Tasks beta; I fixed it with audit --fix.
 - Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 120), round 2, M1 fixed, open finding M2 — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 120), round 3, M1 and M2 fixed, disposition clean — 2026-11-14
 
 ## Results
 
@@ -201,7 +203,9 @@ Implement pass:
 
 Round 1 (general, effort 3): M1 open. See `review/round-1/merged.md`.
 
-Round 2 (general, effort 2, turn cap 120, uncapped): M1 is fixed in `d3a444e1`. An unresolved positional, option, repeated option, catch-all, or `--json-args` value is declared or assigned as the handler type (`default!`), and generator-76 requires that generated compilation to have no errors. M2 is open: a typed catch-all or repeated option of `uri`, `FileInfo`, or `DirectoryInfo` reports `NURU_S010`, and the message says the constraint is not a built-in. No disposition. See `review/round-2/merged.md`.
+Round 2 (general, effort 2, turn cap 120, uncapped): M1 is fixed in `d3a444e1`. An unresolved positional, option, repeated option, catch-all, or `--json-args` value is declared or assigned as the handler type (`default!`), and generator-76 requires that generated compilation to have no errors. M2 was open: a typed catch-all or repeated option of `uri`, `FileInfo`, or `DirectoryInfo` reports `NURU_S010`, and the message says the constraint is not a built-in. No disposition yet. See `review/round-2/merged.md`.
+
+Round 3 (general, effort 2, turn cap 120, uncapped): M1 stays fixed. M2 is fixed in `280434b0`. Those three convert per element on the catch-all, repeated-option, and `--json-args` list paths, and generator-76 plus routing-16 lock that. Counts: bug 0 open / 2 fixed / 0 wontfix. Disposition: clean. No wontfix and no escalation. See `review/round-3/merged.md` and `review/disposition.md`.
 
 ## Learnings
 

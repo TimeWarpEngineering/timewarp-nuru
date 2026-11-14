@@ -51,6 +51,8 @@ Acceptance:
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-22), from Steven asking for a real benchmark of the three telemetry cases after 517.
 - 2026-11-15 implementer (ganda task work): built `benchmarks/telemetry-overhead/`, ran the full benchmark, filed 590. Installed hyperfine 1.19.0 to `~/.local/bin` (it was missing on this machine).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b5a23b14-2325-41a2-a306-eb79624b9ba8, max-turns 500, Done — 2026-11-14T20:38:02Z
+- Review oracle round 1: Grok 4.7 (grok, vendor xai), body tw-implementation-review, effort 3, roster general, turn cap 200 (cursor session uncapped; no --max-turns flag), session not reported, disposition clean — 2026-11-15. No findings. The restatement matches the task; no misread. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md, disposition.md — 2026-11-14T20:46:34Z
 
 ## Results
 
@@ -100,3 +102,11 @@ curl -s http://127.0.0.1:24318/stats
 ```
 
 Expect: both runs print `Hello, x`. The no-endpoint run prints `timeline handler=<under 1> end=<under 1>`. The endpoint run prints `handler` of about 5 ms and `end` of about 1003 ms. `/stats` shows one `grpc …TraceService` export and two `grpc …MetricsService` exports per endpoint run. A full `run-benchmark.sh` writes `results/<today>-telemetry-overhead.md` with case 1 at about 4 ms, case 2 about 1.3 ms higher, and cases 3 and 4 at about 1.015 s.
+
+### Review
+
+Round 1 (2026-11-15): tw-implementation-review, effort 3, roster general, Grok 4.7, turn cap 200 (cursor uncapped; no `--max-turns` flag), session not reported. Disposition clean. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. The restatement matches the task; no misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Blocked
+
+2026-11-14: unsandboxed git add of the written kitchen paths under kanban/in-progress/520-telemetry-overhead-benchmark-aot-startup-with-telemetry-off-on-with-no-endpoint-and-on-with-an-endpoint (git index is outside the worktree sandbox)

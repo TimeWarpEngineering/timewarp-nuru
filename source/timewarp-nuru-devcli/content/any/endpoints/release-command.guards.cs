@@ -240,7 +240,8 @@ internal sealed partial class ReleaseCommand
     /// Walks first-parent history back from <paramref name="headSha"/> (at most
     /// <see cref="ReleaseGuard.ReleaseTargetWalkLimit"/> commits) and returns
     /// <see cref="ReleaseGuard.SelectReleaseTarget"/>'s verdict over what it found. The walk
-    /// stops at the first commit with a successful run or a path outside kanban/. Returns
+    /// stops at the first commit with a successful run that has a live Packages-* artifact
+    /// (task 568; other runs are printed as skipped) or a path outside kanban/. Returns
     /// <see langword="null"/> after printing the error when git or gh fails.
     /// </summary>
     private async Task<ReleaseTargetVerdict?> LocateReleaseTargetAsync(string headSha, CancellationToken cancellationToken)
@@ -277,9 +278,39 @@ internal sealed partial class ReleaseCommand
         List<CiRunSummary>? runs = JsonSerializer.Deserialize(runListResult.Stdout, DevCliJsonContext.Default.ListCiRunSummary);
         IReadOnlyList<CiRunSummary> candidateRuns = CiRunPromotion.OrderCandidateRuns(runs ?? [], sha);
 
-        if (candidateRuns.Count > 0)
+        // 568: a run counts only when the release event could promote it (a live
+        // Packages-* artifact). A probe dispatch run is skipped, and a commit whose
+        // runs are all skipped is walked like a commit with no run.
+        long? releasableRunId = null;
+        foreach (CiRunSummary run in candidateRuns)
         {
-          commits.Add(new ReleaseTargetCommit(sha, [], candidateRuns[0].DatabaseId));
+          CommandOutput artifactsResult = await Shell.Builder("gh")
+            .WithArguments("api", $"repos/{{owner}}/{{repo}}/actions/runs/{run.DatabaseId}/artifacts")
+            .WithNoValidation()
+            .CaptureAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+          if (artifactsResult.ExitCode != 0)
+          {
+            Terminal.WriteErrorLine($"Error: could not list the artifacts of CI run {run.DatabaseId}.\n{artifactsResult.Stderr.Trim()}");
+            return null;
+          }
+
+          RunArtifactListResponse? artifactList = JsonSerializer.Deserialize(artifactsResult.Stdout, DevCliJsonContext.Default.RunArtifactListResponse);
+          string? skipLine = CiRunPromotion.DescribeUnreleasableRun(run, artifactList?.Artifacts ?? []);
+
+          if (skipLine is null)
+          {
+            releasableRunId = run.DatabaseId;
+            break;
+          }
+
+          Terminal.WriteLine($"  {skipLine} at {ShortSha(sha)}".Yellow());
+        }
+
+        if (releasableRunId is not null)
+        {
+          commits.Add(new ReleaseTargetCommit(sha, [], releasableRunId));
           break;
         }
 

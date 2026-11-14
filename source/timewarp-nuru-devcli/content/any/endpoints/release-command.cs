@@ -15,6 +15,8 @@
 // newest first-parent commit (within ReleaseTargetWalkLimit of HEAD) with a
 // successful CI run of workflow.yml, where every commit after it changes only
 // kanban/ (kanban task 543; else the release event would fail at locate-run).
+// A run counts only when it has a live Packages-* artifact (kanban task 568):
+// a probe dispatch run at HEAD is printed as skipped and the walk goes on.
 // The walk asks gh for runs one commit at a time and stops at the first green
 // commit or the first commit outside kanban/, so a release at a green HEAD
 // costs one gh call, as before. When the target is behind HEAD, <Version> is

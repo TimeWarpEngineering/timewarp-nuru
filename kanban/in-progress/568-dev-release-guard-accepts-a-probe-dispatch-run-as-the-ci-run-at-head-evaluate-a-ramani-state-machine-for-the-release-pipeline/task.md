@@ -81,6 +81,7 @@ Acceptance:
 - 2026-11-14 implementer (ganda task work, implement oracle): merged origin/master (land kanban 526),
   fixed the step 8 walk, wrote `report/analysis.md`. Audit boy-scout: `vscode-window-icon` warning
   fixed by `ganda repo audit --fix` (writes the git-ignored `.vscode/settings.json`, nothing to commit).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-14T00:05:31Z
 
 ## Results
 

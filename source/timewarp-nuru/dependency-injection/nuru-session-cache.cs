@@ -2,6 +2,16 @@
 // Holds AddSessionScoped instances for a REPL session or one CLI invocation and disposes them on reset.
 #endregion
 
+#region Design
+// Session scope is a cache held by a singleton, not an IServiceScope; services are registered as
+// transients that delegate here so instances live from first resolution until ResetAsync.
+// Root is the construction provider, which keeps session services from capturing instances that
+// belong to a shorter-lived scope.
+// Per-call state: inside a NuruCallContext each call gets its own SessionState, so daemon/MCP
+// calls never share session instances; outside one a single shared state is used.
+// ResetAsync disposes in reverse creation order and never touches process-wide singletons.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

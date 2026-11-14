@@ -2,6 +2,15 @@
 // Serves a Nuru app's routes as MCP tools.
 #endregion
 
+#region Design
+// One tools-and-instructions source (CreateServerOptions) feeds every transport, so stdio, stream pair
+// and the IMcpServerBuilder extension publish identical tools. RunStdioAsync points Console.Out at
+// stderr for the whole session because stdout is the protocol stream; handler writes are captured per
+// call instead of reaching either stream. The stream-pair RunAsync does not redirect the console;
+// the caller owns those streams. Cancellation ends a session normally
+// rather than as an error, since a host stops the server that way.
+#endregion
+
 namespace TimeWarp.Nuru.McpHost;
 
 /// <summary>

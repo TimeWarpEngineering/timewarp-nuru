@@ -2,6 +2,15 @@
 // Installs the generated completion script into each shell's standard location and profile.
 #endregion
 
+#region Design
+// Uses each shell's auto-load location where one exists (bash-completion and fish directories);
+// zsh and PowerShell need a one-time profile edit, which is wrapped in BEGIN/END nuru-completion
+// markers so a rerun is detected and not appended twice. Profile edits are skipped when already
+// configured, and failures print the snippet for manual setup instead of aborting. Dry-run reports
+// the files and profile change without writing. With no shell argument, every shell is attempted
+// and failures are counted into the exit code.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

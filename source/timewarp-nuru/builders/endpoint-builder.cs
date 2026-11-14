@@ -2,6 +2,18 @@
 // Fluent configuration surface returned after registering a route (description, handler, metadata).
 #endregion
 
+#region Design
+// Every configuration method is a no-op stub. NuruGenerator reads the call chain syntactically
+// and semantically at compile time (handler, description, examples, message type, LocalOnly,
+// Exclusive, Implements<T>), so no route table is built at runtime; that keeps routing AOT-safe.
+// Arguments such as the handler delegate and the Implements<T> configure lambda are inspected,
+// never invoked.
+// TBuilder lets derived builders keep their own type through the chain. Done(), the implicit
+// conversion to TBuilder, and the forwarded Map and Build members let a chain continue with the
+// next route or finish without an explicit Done().
+// The constructor is internal so that only a builder's Map call can create an endpoint builder.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,16 @@
 // Error kinds and details reported when TryBind cannot bind a JSON object to a route.
 #endregion
 
+#region Design
+// Bind failures are values, not exceptions: TryBind is a try-pattern so JSON-driven callers
+// (daemon, MCP) get a machine-readable kind and key instead of parsing exception text. Message is
+// already the user-facing "Error: ..." line, so the same text is printed in argv mode and
+// returned in JSON mode.
+// IsJsonMemberFailure and ForJsonMember are public for generated binders: they classify the
+// failures System.Text.Json and converters raise per member, and strip the serializer's trailing
+// Path/LineNumber noise from the message.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

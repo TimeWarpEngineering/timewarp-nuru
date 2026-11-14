@@ -2,6 +2,14 @@
 // Parses key combination strings such as Ctrl+Shift+Left into a ConsoleKey and ConsoleModifiers pair.
 #endregion
 
+#region Design
+// Accepts a PSReadLine/VSCode-like text form (Ctrl+Shift+Left, Alt+., a lone +) so config files stay
+// readable. Literal punctuation maps to US-layout OEM keys plus Shift where needed. Modifier
+// tokens are peeled left to right; empty or repeated modifiers and unknown keys fail with
+// KeyBindingConfigException rather than being ignored, because a silently ignored chord would
+// leave a user wondering why a binding does nothing.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

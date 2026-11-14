@@ -2,6 +2,14 @@
 // Attribute that overrides the configuration section key an options class binds to.
 #endregion
 
+#region Design
+// Read at compile time by the handler extractor when a handler takes IOptions<T>: it matches the
+// attribute on T by simple name. The key is the generator-emitted configuration section
+// lookup, so there is no runtime reflection for the binding. Without the attribute the section
+// is derived from the type name by stripping a trailing "Options". The key belongs
+// to the options type that carries it.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

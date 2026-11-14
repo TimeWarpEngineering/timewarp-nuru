@@ -2,6 +2,13 @@
 // Contract for runtime sources that supply completion candidates for a parameter.
 #endregion
 
+#region Design
+// The extension point for dynamic values the generator cannot know at compile time. Sources are
+// consulted only for the parameter under the cursor and replace, not extend, the static candidates.
+// CompletionDirective is a flags enum (NoFileComp 4, NoSpace 8, FilterDirs 16,
+// KeepOrder 64) and are written to the shell as the final ":<n>" line of the protocol output.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

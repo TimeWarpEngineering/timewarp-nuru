@@ -2,6 +2,15 @@
 // Delegate and supporting types for the generated TryBind entry point that binds JSON to a route.
 #endregion
 
+#region Design
+// Hidden from IntelliSense (EditorBrowsable.Never) but public because generated code in the
+// consumer's assembly reads and writes it; it is the contract between NuruApp.InvokeAsync /
+// RenderAsync and the emitted per-route dispatch, not a consumer API.
+// One type serves both modes: RenderTerminal set means the generated code renders Result instead
+// of running the handler. Dispatched lets InvokeAsync tell a handler that ran from an early
+// exit that produced only an exit code.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

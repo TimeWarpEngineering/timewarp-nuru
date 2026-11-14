@@ -3,6 +3,15 @@
 // ReplCommandExecutor.
 #endregion
 
+#region Design
+// Commands run through a ReplCommandExecutor delegate into the generated matcher, so the REPL needs no
+// route table of its own. RunAsync runs and disposes a local instance; CurrentSession only mirrors
+// it, so concurrent sessions cannot dispose each other. The in-flight command's token source is
+// published for the Ctrl+C handler, which runs on another thread, and is owned by the executing
+// method, not by Dispose. Only executed commands set the exit code, so a piped script whose last
+// command failed still exits non-zero.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,13 @@
 // Exception thrown when a route pattern cannot be parsed or validated.
 #endregion
 
+#region Design
+// Carries the structured ParseErrors and SemanticErrors, not just text, so callers (validators,
+// tooling) can report positions without re-parsing the message. The message is built from those same
+// errors so the text and the data cannot disagree. The error-less constructors exist for the standard
+// exception shape and leave RoutePattern empty.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

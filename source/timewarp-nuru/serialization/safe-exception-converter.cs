@@ -3,6 +3,14 @@
 // TargetSite.
 #endregion
 
+#region Design
+// Write-only by design: exceptions are emitted for diagnostics, never read back. It skips
+// TargetSite (reflection, not AOT-safe) and also HResult, Data, HelpLink and Source, whose
+// content is either arbitrary or unhelpful in CLI output. Parse and semantic errors of a
+// PatternException serialize through NuruJsonSerializerContext's type info, never reflection.
+// Public because the context references it by type in its source-generation options.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

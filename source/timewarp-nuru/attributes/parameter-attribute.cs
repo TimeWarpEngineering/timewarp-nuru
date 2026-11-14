@@ -2,6 +2,21 @@
 // Attribute that marks a request property as a positional route parameter.
 #endregion
 
+#region Design
+// Read by EndpointExtractor from the request property. The route parameter name is the
+// lowercased property name and optionality comes from nullability, so the generator derives
+// shape from the type system instead of repeating it in the attribute. Position follows
+// declaration order. The catch-all flag is the one setting the generator takes from the
+// attribute, together with Description.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): Order and Name are not read by the generator. Parameter position is
+//     property declaration order and the segment name is the lowercased property name. The XML
+//     docs state Order is required for several parameters and Name overrides the name. Should
+//     the generator honor them, or should the properties and docs be removed?
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

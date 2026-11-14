@@ -3,6 +3,14 @@
 // settings.
 #endregion
 
+#region Design
+// NuruTelemetryOptions is a compile-time contract: TelemetryOptionsExtractor reads UseTelemetry
+// lambda assignments (OtlpEndpoint, ActivitySources, Meters adds) to emit OTLP setup, so those
+// values must be literals or consts. A value that cannot be read reports NURU_T001 and the
+// environment variable applies instead. Export is off unless an endpoint is known, and the OTEL_*
+// environment variables are honored so deployment can set them. OTLP sinks are a trust boundary.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

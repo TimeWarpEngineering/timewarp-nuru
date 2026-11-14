@@ -2,6 +2,14 @@
 // Runs a CLI executable with `--capabilities` and parses the JSON catalog it returns for indexing.
 #endregion
 
+#region Design
+// The catalog is obtained by running the CLI with --capabilities rather than reading its assembly, so
+// any Nuru app (AOT or not, any location) can be indexed with no reference to it. A non-zero exit,
+// empty output or invalid JSON returns null and a logged warning, so one broken CLI does not abort an
+// index run. RawJson is kept verbatim because the index stores the full catalog, while only the fields
+// search needs are copied into CliCapabilities (invocation stays in RawJson).
+#endregion
+
 namespace TimeWarp.Nuru.Search.Services;
 
 public sealed partial class CapabilitiesClient

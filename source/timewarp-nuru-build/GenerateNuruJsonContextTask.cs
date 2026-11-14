@@ -4,6 +4,17 @@
 // return types from BOTH delegate routes AND endpoints.
 #endregion
 
+#region Design
+// The task runs before CoreCompile, so it cannot see the generator's output; it builds its own
+// compilation from the project's source files and references and reuses the generator's extractors,
+// which keeps the registered types identical to what the generated routes serialize. Two contexts are
+// emitted because the naming rules differ: return values use camelCase, while JSON members keep
+// declared property names (--json-args keys) and bind case-insensitively. Both are internal partial
+// JsonSerializerContext classes, so System.Text.Json source generation keeps serialization AOT-safe.
+// A file or reference that cannot be read is skipped with a low-importance message, not an error;
+// only an unexpected exception fails the build, so a project with no Nuru DSL still builds.
+#endregion
+
 namespace TimeWarp.Nuru.Build;
 
 using Microsoft.Build.Framework;

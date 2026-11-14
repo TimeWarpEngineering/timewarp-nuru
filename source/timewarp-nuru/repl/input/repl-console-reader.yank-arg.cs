@@ -2,6 +2,14 @@
 // ReplConsoleReader partial for YankLastArg and YankNthArg, which insert arguments from history.
 #endregion
 
+#region Design
+// Arguments are parsed from history lines with shell-like quoting and backslash escapes (quotes
+// stripped), so a yanked argument is the logical value, not its raw text.
+// YankLastArg removes the previous insertion only after a replacement is found, so a fruitless
+// cycle leaves buffer and screen untouched; YankNthArg does not cycle. DigitArgument persists
+// across kill-tracking resets until a yank consumes it.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

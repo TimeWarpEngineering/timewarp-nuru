@@ -2,6 +2,15 @@
 // Handles the `__complete` callback route that shells call to get dynamic completion candidates.
 #endregion
 
+#region Design
+// Output follows the Cobra completion protocol: one candidate per line (value, optional TAB and
+// description), then a final ":<directive>" line. Diagnostics go to stderr so they never reach the
+// shell. Resolution order is a source registered for the parameter name, then for the parameter
+// type, then the generator-emitted provider, which is the reflection-free path.
+// ResolveDirective turns File/Directory candidates into delegation to the shell's own
+// path completion and otherwise suppresses file completion.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

@@ -2,6 +2,14 @@
 // Attribute that defines a route group prefix on a base class that request classes inherit from.
 #endregion
 
+#region Design
+// Placed on a base class: EndpointExtractor walks a request's base-class chain to build the
+// full prefix, so nested groups are nested base classes. The group is carried by inheritance
+// instead of repetition, which is also how group options and group aliases reach every member
+// route. Inherited = true is required for that chain to be visible on derived requests.
+// The prefix is literal segments only; no parameters or options.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

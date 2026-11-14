@@ -3,6 +3,14 @@
 // absent.
 #endregion
 
+#region Design
+// CallerFilePath is resolved by the compiler at the call site, so the path is baked in at build
+// time and is available when AppContext data is not (publish, pack, compiled executables). It
+// therefore reflects the build machine's path, not the running machine's.
+// EntryPointImpl is a private helper because CallerFilePath only works on an optional parameter,
+// and the public members must stay parameterless.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

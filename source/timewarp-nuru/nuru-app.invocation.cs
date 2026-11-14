@@ -2,6 +2,17 @@
 // NuruApp binding, invocation, rendering and problem/bind error reporting members.
 #endregion
 
+#region Design
+// TryBind/InvokeAsync/RenderAsync give hosts (daemon, MCP) the same binding rules as
+// --json-args without going through argv. Execution always flows through the generated
+// InvocationExecutor, so these members stay AOT-safe and reuse the route's behaviors.
+// InvokeAsync throws when the handler never ran, because an exit code alone cannot carry the
+// failure to a caller that expects a result.
+// Argument-error writers route through the problem renderer only when ProblemRendererForErrors is
+// set, and otherwise write the plain message, so argv users keep the classic text.
+// Bind error and bound-request types are in separate files; this partial only orchestrates them.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using TimeWarp.Foundation.Types;

@@ -2,6 +2,15 @@
 // Fluent builder for nested route groups that share a prefix, e.g. `admin config get {key}`.
 #endregion
 
+#region Design
+// Map and WithGroupPrefix are no-op stubs. NuruGenerator accumulates the prefixes of enclosing
+// groups at compile time and applies them to each route pattern, so no grouping exists at
+// runtime. Prefixes must therefore be compile-time strings.
+// TParent is the type Done() returns to: WithGroupPrefix returns GroupBuilder<GroupBuilder<TParent>>
+// so each Done() unwinds exactly one nesting level.
+// The constructor is internal; groups are only created through WithGroupPrefix.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

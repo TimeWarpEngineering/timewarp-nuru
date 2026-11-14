@@ -2,6 +2,12 @@
 // Implements the `index list` query: prints the CLIs currently held in the local search index.
 #endregion
 
+#region Design
+// A query: it only reads the index, so it is safe to run and retry freely. The handler writes its
+// listing through ITerminal and returns Unit, because a non-Unit result would be serialized by the
+// generated invoker and appended after the listing (482-009).
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;

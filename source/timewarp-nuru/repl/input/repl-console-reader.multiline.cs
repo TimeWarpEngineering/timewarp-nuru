@@ -2,6 +2,14 @@
 // ReplConsoleReader partial for multiline editing and rendering with a continuation prompt.
 #endregion
 
+#region Design
+// Single-line input stays on a cheap path; a MultilineBuffer takes over only when a newline is added
+// or recalled from history. UserInput mirrors the buffer joined with '\n' (one char per break) so
+// CursorPosition indexes both consistently regardless of platform newline.
+// Redraw clears and repaints every input row; the first row uses the primary prompt and the rest
+// use ContinuationPrompt (default ">> ").
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

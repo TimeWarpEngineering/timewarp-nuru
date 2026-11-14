@@ -2,6 +2,14 @@
 // Interface for the fluent key-binding operations shared by standalone and nested builders.
 #endregion
 
+#region Design
+// One interface keeps the standalone and nested builders from drifting apart: both expose an identical
+// surface and the nested one only forwards to the standalone one. TSelf is a self-referential type
+// parameter so every call returns the concrete builder and Done() stays reachable on nested chains.
+// Bindings are keyed by (ConsoleKey, ConsoleModifiers); binding the same chord again replaces the
+// action rather than adding a second one.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

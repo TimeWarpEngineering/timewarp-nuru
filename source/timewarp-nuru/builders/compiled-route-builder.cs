@@ -2,6 +2,17 @@
 // Standalone fluent builder that produces CompiledRoute instances without parsing a pattern string.
 #endregion
 
+#region Design
+// Runtime-only route construction: NuruGenerator dispatches calls by containing type name
+// (NuruAppBuilder, EndpointBuilder, GroupBuilder, GroupEndpointBuilder, NestedCompiledRouteBuilder,
+// NuruApp) and this type is not among them, so nothing here is interpreted at compile time.
+// Specificity is accumulated as segments are added, using weights that must equal the pattern
+// compiler's (documentation/developer/design/resolver/specificity-algorithm.md), so a built route
+// and the same route parsed from a string order identically.
+// Boolean flags derive their parameter name from the long form (camel case), and flags or repeated
+// options are always optional at runtime, mirroring the pattern compiler.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

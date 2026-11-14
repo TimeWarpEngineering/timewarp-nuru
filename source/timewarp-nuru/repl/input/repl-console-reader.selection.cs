@@ -2,6 +2,13 @@
 // ReplConsoleReader partial for text selection handlers.
 #endregion
 
+#region Design
+// Selection is tracked as state in SelectionState and cleared by non-shift movement or edits;
+// bounds are clamped against the current buffer because history, kill, or undo can leave a stale
+// selection longer than the new text. Cut writes to both the OS clipboard and the kill ring, so
+// Ctrl+Y recovers it even without a clipboard tool; copy touches only the clipboard.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

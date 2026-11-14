@@ -2,6 +2,16 @@
 // Customizable key binding profile that extends an existing profile or starts from scratch.
 #endregion
 
+#region Design
+// A decorator over an optional base profile: edits are recorded and replayed in GetBindings and
+// GetExitKeys, so the base is never mutated and the same custom profile can wrap any base.
+// Order matters between Remove and Override/Add for the same chord: the most recent call wins,
+// because each clears the other's record. Remove also drops the exit mark; AddExitKey also binds.
+// Overrides take action factories (ReplConsoleReader -> handler) because handlers need a reader.
+// WithName exists on this type as well as on the app builder; the generator's semantic check keeps
+// it from dispatching this one as a DSL call.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

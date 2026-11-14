@@ -2,6 +2,14 @@
 // Attribute that registers a request class as a route endpoint with a single-literal pattern.
 #endregion
 
+#region Design
+// The pattern is restricted to a single literal or empty string (diagnostic on violation):
+// multi-word prefixes belong to [NuruRouteGroup], positionals to [Parameter], flags to [Option].
+// That split keeps each route's shape readable from its class instead of from a pattern string.
+// The attribute is not inherited, so a derived request is not a route unless it declares one.
+// EndpointExtractor matches it by name; there is no runtime reflection.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

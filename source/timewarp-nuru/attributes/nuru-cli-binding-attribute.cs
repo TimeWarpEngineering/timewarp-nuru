@@ -2,6 +2,13 @@
 // Attribute carrying Nuru's CLI binding overrides (such as the group path) for an `[Operation]` request.
 #endregion
 
+#region Design
+// Exists because the TimeWarp.Contracts CliOperationBinding carries Pattern only, and the group
+// path is a Nuru concern. OperationEndpointExtractor applies Group only when no [NuruRouteGroup]
+// prefix is inherited, so one source of group path wins and the two never concatenate.
+// Inherited = true lets a base request class carry the binding for its derivatives.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

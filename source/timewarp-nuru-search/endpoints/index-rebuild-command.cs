@@ -3,6 +3,14 @@
 // index.
 #endregion
 
+#region Design
+// Rebuild re-runs the executable that was indexed (the stored CliPath), not the capabilities name:
+// the name comes from WithName or the assembly name and need not resolve to anything (482-011).
+// --cli accepts a file or a PATH name and is stored as an absolute path so --all can run it again.
+// A CLI that fails to index is counted and skipped so one broken executable does not stop a rebuild
+// of the rest. With neither --cli nor --all the command prints an error and does nothing.
+#endregion
+
 namespace TimeWarp.Nuru.Search.Endpoints;
 
 using TimeWarp.Mediator;

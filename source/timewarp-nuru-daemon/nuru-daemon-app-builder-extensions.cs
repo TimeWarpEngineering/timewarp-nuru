@@ -2,6 +2,15 @@
 // Builder extension that makes an app a served app: a built-in serve route plus route forwarding.
 #endregion
 
+#region Design
+// A no-op stub: NuruGenerator recognizes AddServeRoute and emits both the serve route and the
+// forwarder attached as NuruApp.RouteForwarder, so the arguments must be compile-time constants and
+// the server and client share one NuruDaemonOptions. Forwarding is opt-in per call: autoStart false
+// keeps default calls in-process so a CLI never spawns a background process unasked. Routes the app
+// maps itself are matched first, so a user serve route replaces the built-in. Unix domain sockets keep
+// the server local to the user; there is no network listener.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 using TimeWarp.Nuru.Daemon;

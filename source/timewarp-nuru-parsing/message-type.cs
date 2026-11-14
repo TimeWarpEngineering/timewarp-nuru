@@ -2,6 +2,13 @@
 // Message type of a route (CQRS terminology) so AI agents can judge execution safety.
 #endregion
 
+#region Design
+// The values follow CQRS so a tool that cannot read a handler can still decide whether to confirm and
+// whether to retry. Unspecified is treated as Command everywhere, because the safe default for an
+// unclassified route is to confirm and never auto-retry; it exists so help and catalogs can show
+// "not yet classified" instead of claiming a classification the author never made.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

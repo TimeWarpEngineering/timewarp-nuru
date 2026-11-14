@@ -2,6 +2,14 @@
 // Public entry point that parses route pattern strings into CompiledRoute objects.
 #endregion
 
+#region Design
+// This source is compiled into both the runtime package and the analyzer assembly (see
+// timewarp-nuru-analyzers.csproj), so the generator and the runtime parse patterns with one grammar.
+// The ILoggerFactory overload is compiled out under ANALYZER_BUILD: an analyzer must not depend on
+// logging. Parse throws PatternException carrying every parse and semantic error; TryParse reports the
+// same errors without throwing, for callers (such as validators) that need to keep going.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

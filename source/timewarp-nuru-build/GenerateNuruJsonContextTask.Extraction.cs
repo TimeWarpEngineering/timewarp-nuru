@@ -2,6 +2,21 @@
 // Route and endpoint JSON type extraction helpers of GenerateNuruJsonContextTask.
 #endregion
 
+#region Design
+// Extraction goes through DslInterpreter and EndpointExtractor, the same code the source generator
+// uses, so delegate routes, [NuruRoute] classes and referenced-assembly endpoints (opt-in via
+// [assembly: NuruEndpointAssembly] or Map<T>()) resolve by one set of rules. Failures while
+// extracting are logged at low importance and extraction continues, so one unreadable file does not
+// lose the types found in others.
+#endregion
+
+#region Open Questions
+// Q1 (2026-11-14, claude): The method-body loop in ExtractFromDelegateRoutes ends in a bare catch
+//     that swallows every exception, while Execute's comment says unexpected extraction bugs must
+//     not fall back silently (470 M24). Is that loop meant to stay fail-soft for "method has no DSL",
+//     or should it catch only the expected case and let real bugs fail the build?
+#endregion
+
 namespace TimeWarp.Nuru.Build;
 
 using Microsoft.Build.Framework;

@@ -2,6 +2,15 @@
 // Machine-readable catalog of a CLI's endpoints returned by `--capabilities` for AI agent discovery.
 #endregion
 
+#region Design
+// This is the wire contract for agent discovery, serialized by CapabilitiesJsonSerializerContext
+// and produced by the generator's CapabilitiesEmitter at compile time, so the catalog costs no
+// reflection. Additions stay optional (nullable, omitted when null) and go last so documents from
+// older CLIs still deserialize. `required` on a member is a statement that every producer
+// supplies it. The invocation object is identical in every document, so an agent learns the
+// --json-args transport from the catalog itself.
+#endregion
+
 namespace TimeWarp.Nuru;
 
 /// <summary>

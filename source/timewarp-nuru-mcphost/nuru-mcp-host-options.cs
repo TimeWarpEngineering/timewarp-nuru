@@ -2,6 +2,16 @@
 // Options for the MCP host, including the format a tools/call result carries.
 #endregion
 
+#region Design
+// The options mirror what the built-in mcp route accepts as constants (Instructions, GroupFilter,
+// ContentFormat); the rest are runtime-only and apply to the extension and RunStdioAsync paths.
+// GroupFilter uses the --capabilities rule so the MCP tool set and the printed catalog cannot drift.
+// CaptureConsoleOutput defaults on because stdio hosting cannot let a handler write to stdout.
+// ToolAnnotations overrides win per hint over annotations derived from the catalog, for apps that
+// serve contracts they do not own. Hosts that keep an instance receive an internal copy (Clone), so
+// later changes do not alter a running server.
+#endregion
+
 namespace TimeWarp.Nuru.McpHost;
 
 /// <summary>

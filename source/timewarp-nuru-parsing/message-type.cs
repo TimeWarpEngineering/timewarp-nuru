@@ -4,9 +4,12 @@
 
 #region Design
 // The values follow CQRS so a tool that cannot read a handler can still decide whether to confirm and
-// whether to retry. Unspecified is treated as Command everywhere, because the safe default for an
-// unclassified route is to confirm and never auto-retry; it exists so help and catalogs can show
-// "not yet classified" instead of claiming a classification the author never made.
+// whether to retry. The safe reading of an unclassified route is Command (confirm, never auto-retry),
+// but surfaces carry that in different ways: CompiledRoute.MessageType defaults to Command; help
+// shows Unspecified as ( ); the capabilities catalog keeps Unspecified as its own EndpointKind so it
+// reports "not yet classified" instead of claiming a classification the author never made; and MCP
+// tool annotations (NuruMcpToolCatalog.CreateAnnotations) set no readOnly / idempotent hints for it,
+// which MCP clients read as their spec defaults (not read-only, not idempotent), the same as Command.
 #endregion
 
 namespace TimeWarp.Nuru;

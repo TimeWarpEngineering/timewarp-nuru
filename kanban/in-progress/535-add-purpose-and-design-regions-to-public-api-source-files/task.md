@@ -37,6 +37,11 @@ Acceptance criteria:
 - [x] Build passes (warnings are errors; no trailing whitespace, RCS1037)
 - [x] Record the new counts in Results
 
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Fix pass 2 (2026-11-14): M1 and M2 fixed (see Results, Fix pass 2)
+
 ## Notes
 
 - Files from the 523 findings to include early: `nuru-logging-extensions.cs`, `nuru-app-builder-extensions.updates.cs`, `nuru-mcp-server-builder-extensions.cs`, `check-updates-types.cs`.
@@ -114,9 +119,14 @@ trivial files elsewhere. Whether to continue there is a human call (separate tas
 
 - 2026-11-14 implementer (claude, ganda task work): merged origin/master; inventory; Design added in
   five parallel batches (sonnet helpers), each diff checked to be comment-only; spot-checked claims.
+- 2026-11-14 implement-fix-2 (claude, ganda task work): fixed round-1 M1 (`nuru-telemetry-options.cs`
+  Design now matches `TelemetryOptionsExtractor`) and M2 (`message-type.cs` Design records the
+  Unspecified split across CompiledRoute, help, the capabilities catalog, and MCP annotations).
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-23)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-14T00:32:04Z
+- Review oracle: general reviewer (cursor, grok 4.7), session not reported, review budget 200 (cursor uncapped), round 1 open — 2026-11-14
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md — 2026-11-14T00:37:01Z
 
 ## Results
 
@@ -140,6 +150,24 @@ no code, XML docs, or usings changed (`git diff -U0 -- source | grep '^-[^-]'` i
   `vscode-window-icon` (`.vscode/settings.json` missing). That file is gitignored (`.gitignore:404`),
   so it is local machine setup with nothing to commit; left as is.
 
+### Fix pass 2 (round-1 findings)
+
+- M1 `source/timewarp-nuru/telemetry/nuru-telemetry-options.cs`: Design lists every member
+  `TelemetryOptionsExtractor` reads (ServiceName, ServiceVersion, EnableTracing/Metrics/Logging,
+  OtlpEndpoint, ActivitySources.Add / Meters.Add) and the NURU_T001 fallback for each, taken from
+  `AssignmentFallback` and the Add path. The unexplained "trust boundary" sentence is gone.
+- M2 `source/timewarp-nuru-parsing/message-type.cs`: Design no longer says "everywhere". It records
+  the split: CompiledRoute defaults to Command, help shows ( ), the capabilities catalog keeps
+  `EndpointKind.Unspecified`, and `NuruMcpToolCatalog.CreateAnnotations` sets no readOnly/idempotent
+  hints, which MCP clients read as the spec defaults (false), the same as Command. No Open Question:
+  the behavior agents see is the same.
+- Still comment-only. Gates after the fix:
+  - `./bin/dev build`: passed ("Build completed successfully!").
+  - `./bin/dev test`: passed (standalone: 0 failed; "Tests completed successfully!"). It ran twice
+    by mistake (once on its own, once chained in front of the audit).
+  - `ganda repo audit`: passed ("Repository passes"), with the same advisory `vscode-window-icon`
+    warning (gitignored `.vscode/settings.json`).
+
 ### How to validate
 
 Smoke:
@@ -151,5 +179,13 @@ git diff origin/master -U0 -- source | grep -E '^[+-][^+-]' | grep -vE '^[+-]\s*
 ./bin/dev build
 ```
 
+Fix pass 2: `git diff e95f5752 -- source` touches only the Design regions of
+`nuru-telemetry-options.cs` and `message-type.cs`; compare them with `AssignmentFallback` in
+`telemetry-options-extractor.cs` and `CreateAnnotations` in `nuru-mcp-tool-catalog.cs`.
+
 Expect: 203 files with Design; the 14 Open Questions files listed in Notes; the third command
 prints nothing (only comment and region lines changed); the build succeeds.
+
+### Review
+
+Round 1, roster general, effort 3, turn cap 200. The restatement matches the groomed task (Design only). Disposition is not written: M1 and M2 are open bugs. Counts: bug 2/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

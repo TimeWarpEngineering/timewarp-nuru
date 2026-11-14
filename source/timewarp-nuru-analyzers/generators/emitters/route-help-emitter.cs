@@ -85,7 +85,7 @@ internal static class RouteHelpEmitter
     IEnumerable<RouteDefinition> routes,
     int indent = 4)
   {
-    HashSet<RouteDefinition> covered = new(ReferenceEqualityComparer.Instance);
+    HashSet<RouteDefinition> covered = [with(ReferenceEqualityComparer.Instance)];
     string indentStr = new(' ', indent);
 
     List<(RouteDefinition Route, string Key, List<string> Prefix)> prefixed = [];

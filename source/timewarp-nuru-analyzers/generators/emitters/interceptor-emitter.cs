@@ -94,7 +94,7 @@ internal static partial class InterceptorEmitter
 
     // Emit per-app interceptor methods
     // A Build() site is emitted once even when two app models share it.
-    HashSet<string> emittedBuildSites = new(StringComparer.Ordinal);
+    HashSet<string> emittedBuildSites = [with(StringComparer.Ordinal)];
     for (int appIndex = 0; appIndex < model.Apps.Length; appIndex++)
     {
       AppModel app = model.Apps[appIndex];

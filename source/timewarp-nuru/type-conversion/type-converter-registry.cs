@@ -46,7 +46,7 @@ public class TypeConverterRegistry : ITypeConverterRegistry
     ArgumentNullException.ThrowIfNull(converter);
 
     // Lazy initialize dictionaries on first use
-    ConvertersByConstraint ??= new Dictionary<string, IRouteTypeConverter>(StringComparer.OrdinalIgnoreCase);
+    ConvertersByConstraint ??= [with(StringComparer.OrdinalIgnoreCase)];
     ConvertersByType ??= [];
 
     // Register by type name (primary)

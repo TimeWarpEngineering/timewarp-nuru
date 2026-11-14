@@ -194,7 +194,7 @@ public sealed class KeyBindingBuilder : IKeyBindingBuilder<KeyBindingBuilder>, I
   /// </remarks>
   public KeyBindingResult Build() => new()
   {
-    Bindings = new Dictionary<(ConsoleKey Key, ConsoleModifiers Modifiers), Func<Task>>(Bindings),
+    Bindings = [with(Bindings)],
     ExitKeys = [.. ExitKeys]
   };
 

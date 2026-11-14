@@ -19,33 +19,33 @@ internal static class ServiceRegistrationMethods
   /// Standard lifetime registration methods with bodies we already analyze.
   /// </summary>
   internal static readonly HashSet<string> LifetimeAdds =
-    new(StringComparer.Ordinal)
-    {
+    [
+      with(StringComparer.Ordinal),
       "AddTransient",
       "AddScoped",
       "AddSingleton",
       "AddSessionScoped",
       "AddCommandScoped"
-    };
+    ];
 
   /// <summary>
   /// TryAdd variants replayed in order against the accumulated model.
   /// </summary>
   internal static readonly HashSet<string> TryAdds =
-    new(StringComparer.Ordinal)
-    {
+    [
+      with(StringComparer.Ordinal),
       "TryAddTransient",
       "TryAddScoped",
       "TryAddSingleton",
       "TryAddSessionScoped",
       "TryAddCommandScoped"
-    };
+    ];
 
   /// <summary>
   /// Existing special-cases that scrape lambdas; not lowered as collection scripts.
   /// </summary>
   internal static readonly HashSet<string> SpecialCased =
-    new(StringComparer.Ordinal) { "AddLogging", "AddHttpClient" };
+    [with(StringComparer.Ordinal), "AddLogging", "AddHttpClient"];
 
   internal static bool IsLifetimeAdd(string methodName) => LifetimeAdds.Contains(methodName);
 

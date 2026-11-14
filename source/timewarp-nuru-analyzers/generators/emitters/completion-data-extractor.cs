@@ -19,7 +19,7 @@ internal static class CompletionDataExtractor
   /// </summary>
   public static List<string> ExtractCommandPrefixes(IEnumerable<RouteDefinition> routes)
   {
-    HashSet<string> prefixes = new(StringComparer.OrdinalIgnoreCase);
+    HashSet<string> prefixes = [with(StringComparer.OrdinalIgnoreCase)];
 
     foreach (RouteDefinition route in routes)
     {

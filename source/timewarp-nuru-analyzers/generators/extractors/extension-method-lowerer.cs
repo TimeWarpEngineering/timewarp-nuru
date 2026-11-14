@@ -47,7 +47,7 @@ internal static partial class ExtensionMethodLowerer
 
     List<ServiceDefinition> accumulator = [.. alreadyRegistered];
     int start = accumulator.Count;
-    HashSet<IMethodSymbol> visiting = new(SymbolEqualityComparer.Default);
+    HashSet<IMethodSymbol> visiting = [with(SymbolEqualityComparer.Default)];
 
     ImmutableDictionary<string, ITypeSymbol> emptyTypeArgs = [];
     if (!TryLowerMethod(

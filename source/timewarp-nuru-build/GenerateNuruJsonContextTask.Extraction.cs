@@ -143,7 +143,7 @@ public partial class GenerateNuruJsonContextTask
     HashSet<string> jsonMemberTypes,
     CancellationToken cancellationToken)
   {
-    HashSet<INamedTypeSymbol> types = new(SymbolEqualityComparer.Default);
+    HashSet<INamedTypeSymbol> types = [with(SymbolEqualityComparer.Default)];
     foreach ((INamedTypeSymbol type, Location _) in ReferencedEndpointLocator.FromAssemblyAttributes(compilation, cancellationToken))
       types.Add(type);
 

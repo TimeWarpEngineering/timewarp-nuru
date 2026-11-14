@@ -46,8 +46,8 @@ internal static class JsonContextTypeNames
       ? compilation.GetSemanticModel(tree)
       : null;
 
-    Dictionary<string, ITypeSymbol> rootSymbols = new(StringComparer.Ordinal);
-    HashSet<ITypeSymbol> reached = new(SymbolEqualityComparer.Default);
+    Dictionary<string, ITypeSymbol> rootSymbols = [with(StringComparer.Ordinal)];
+    HashSet<ITypeSymbol> reached = [with(SymbolEqualityComparer.Default)];
     foreach (string root in roots)
     {
       if (model is null || Resolve(model, root) is not ITypeSymbol symbol)
@@ -57,16 +57,16 @@ internal static class JsonContextTypeNames
       Visit(symbol, reached);
     }
 
-    HashSet<ITypeSymbol> renamed = new(SymbolEqualityComparer.Default);
+    HashSet<ITypeSymbol> renamed = [with(SymbolEqualityComparer.Default)];
     foreach (IGrouping<string, ITypeSymbol> group in reached.GroupBy(DefaultName, StringComparer.Ordinal))
     {
       if (group.Skip(1).Any())
         renamed.UnionWith(group);
     }
 
-    HashSet<string> usedNames = new(StringComparer.Ordinal);
+    HashSet<string> usedNames = [with(StringComparer.Ordinal)];
     List<JsonContextRegistration> registrations = [];
-    HashSet<ITypeSymbol> registered = new(SymbolEqualityComparer.Default);
+    HashSet<ITypeSymbol> registered = [with(SymbolEqualityComparer.Default)];
     foreach (string root in roots)
     {
       string? propertyName = null;

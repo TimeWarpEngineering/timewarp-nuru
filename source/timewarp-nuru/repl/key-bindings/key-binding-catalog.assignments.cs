@@ -69,7 +69,7 @@ public static partial class KeyBindingCatalog
 
   private static Dictionary<string, FunctionInfo> CreateFunctions()
   {
-    Dictionary<string, FunctionInfo> functions = new(StringComparer.Ordinal);
+    Dictionary<string, FunctionInfo> functions = [with(StringComparer.Ordinal)];
     Add(functions, "Enter", BasicEditing, "Submit the input.");
     Add(functions, "AddLine", BasicEditing, "Insert a new line without submitting.");
     Add(functions, "BackwardDeleteChar", BasicEditing, "Delete the character before the cursor.");

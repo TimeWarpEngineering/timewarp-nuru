@@ -169,7 +169,7 @@ public sealed partial class WorkflowCommand
 
     private static Dictionary<string, string> HashPackages(string packagesDir)
     {
-      Dictionary<string, string> hashes = new(StringComparer.Ordinal);
+      Dictionary<string, string> hashes = [with(StringComparer.Ordinal)];
       if (!Directory.Exists(packagesDir))
       {
         return hashes;

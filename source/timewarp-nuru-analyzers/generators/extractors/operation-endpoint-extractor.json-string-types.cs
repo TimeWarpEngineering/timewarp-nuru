@@ -28,7 +28,7 @@ internal static partial class EndpointExtractor
   private static EquatableArray<JsonStringType> FindJsonStringTypes(ITypeSymbol memberType)
   {
     List<JsonStringType> found = [];
-    HashSet<ITypeSymbol> visited = new(SymbolEqualityComparer.Default);
+    HashSet<ITypeSymbol> visited = [with(SymbolEqualityComparer.Default)];
     Stack<ITypeSymbol> pending = new();
     pending.Push(memberType);
 

@@ -58,8 +58,8 @@ internal static partial class ServiceValidator
 
     // Map service implementation type names to their registration locations (from 3c LocationInfo).
     // Keyed both by normalized full name (for cycle detection) and short name (for lifetime mismatches).
-    Dictionary<string, Location> serviceLocationByImpl = new(StringComparer.Ordinal);
-    Dictionary<string, Location> serviceLocationByShortImpl = new(StringComparer.Ordinal);
+    Dictionary<string, Location> serviceLocationByImpl = [with(StringComparer.Ordinal)];
+    Dictionary<string, Location> serviceLocationByShortImpl = [with(StringComparer.Ordinal)];
     if (!app.Services.IsDefaultOrEmpty)
     {
       foreach (ServiceDefinition service in app.Services)
@@ -99,7 +99,7 @@ internal static partial class ServiceValidator
   /// These register standard services that Nuru handles correctly at runtime.
   /// </summary>
   private static readonly HashSet<string> WhitelistedExtensionMethods =
-    new(StringComparer.Ordinal) { "AddLogging", "AddHttpClient" };
+    [with(StringComparer.Ordinal), "AddLogging", "AddHttpClient"];
 
   /// <summary>
   /// Reports warnings for extension method calls that may register services.
@@ -127,7 +127,7 @@ internal static partial class ServiceValidator
   /// </summary>
   private static HashSet<string> BuildRegisteredServiceSet(ImmutableArray<ServiceDefinition> services)
   {
-    HashSet<string> set = new(StringComparer.Ordinal);
+    HashSet<string> set = [with(StringComparer.Ordinal)];
 
     if (!services.IsDefaultOrEmpty)
     {

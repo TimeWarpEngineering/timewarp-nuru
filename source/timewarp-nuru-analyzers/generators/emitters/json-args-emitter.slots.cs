@@ -17,7 +17,7 @@ internal static partial class JsonArgsEmitter
       converters = [];
 
     List<Slot> slots = [];
-    HashSet<string> ids = new(StringComparer.Ordinal);
+    HashSet<string> ids = [with(StringComparer.Ordinal)];
     foreach (ParameterDefinition param in route.Parameters)
     {
       slots.Add(CreateParameterSlot(route, param, converters, ids));

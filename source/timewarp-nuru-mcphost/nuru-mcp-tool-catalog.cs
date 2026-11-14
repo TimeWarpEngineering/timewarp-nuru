@@ -52,7 +52,7 @@ public static partial class NuruMcpToolCatalog
       ? catalog
       : catalog.FilterByGroup(options.GroupFilter);
 
-    HashSet<string> names = new(StringComparer.Ordinal);
+    HashSet<string> names = [with(StringComparer.Ordinal)];
     List<NuruMcpToolDefinition> tools = [];
 
     foreach (EndpointCapability endpoint in published.Endpoints)

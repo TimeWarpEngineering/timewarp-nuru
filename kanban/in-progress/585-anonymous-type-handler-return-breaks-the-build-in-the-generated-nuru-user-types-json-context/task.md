@@ -60,6 +60,7 @@ Acceptance criteria:
   rather than failing with a new diagnostic.
 - Boy-scout: `ganda repo audit` reported the advisory `vscode-window-icon` warning; `ganda repo audit --fix`
   wrote the git-ignored `.vscode/settings.json` (no tracked change).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session dcef3df4-f714-42b8-8077-c159d876e8c2, max-turns 500, Done — 2026-11-14T07:27:39Z
 
 ## Notes
 

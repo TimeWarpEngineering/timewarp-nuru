@@ -232,29 +232,24 @@ internal static partial class JsonArgsEmitter
       return;
     }
 
-    if (slot.BaseConstraint is not null)
+    // Built-in element types, Uri, FileInfo, and DirectoryInfo included (task 584 review M2)
+    string? elementClr = slot.BaseConstraint is null ? null : BuiltInElementParse.GetClrType(slot.BaseConstraint);
+    if (elementClr is not null)
     {
-      (string ClrType, string TryParseCondition)? typed = TypeConversionMap.GetBuiltInTryConversion(
-        slot.BaseConstraint,
+      sb.AppendLine($"{ind}{elementClr}[] __typed_{slot.Id} = new {elementClr}[{list}.Count];");
+      sb.AppendLine($"{ind}for (int __ni = 0; __ni < {list}.Count; __ni++)");
+      sb.AppendLine($"{ind}{{");
+      BuiltInElementParse.TryEmit(
+        sb,
+        ind + "  ",
+        slot.BaseConstraint!,
         $"{list}[__ni]",
-        $"__parsed_{slot.Id}");
-      if (typed is var (clr, condition))
-      {
-        sb.AppendLine($"{ind}{clr}[] __typed_{slot.Id} = new {clr}[{list}.Count];");
-        sb.AppendLine($"{ind}for (int __ni = 0; __ni < {list}.Count; __ni++)");
-        sb.AppendLine($"{ind}{{");
-        sb.AppendLine($"{ind}  {clr} __parsed_{slot.Id};");
-        sb.AppendLine($"{ind}  if (!({condition}))");
-        sb.AppendLine($"{ind}  {{");
-        sb.AppendLine($"{ind}    __ok = false;");
-        sb.AppendLine($"{ind}    {fail.Assign()}");
-        sb.AppendLine($"{ind}    break;");
-        sb.AppendLine($"{ind}  }}");
-        sb.AppendLine($"{ind}  __typed_{slot.Id}[__ni] = __parsed_{slot.Id};");
-        sb.AppendLine($"{ind}}}");
-        sb.AppendLine($"{ind}if (__ok) {slot.VariableName} = __typed_{slot.Id};");
-        return;
-      }
+        $"__parsed_{slot.Id}",
+        ["__ok = false;", fail.Assign(), "break;"]);
+      sb.AppendLine($"{ind}  __typed_{slot.Id}[__ni] = __parsed_{slot.Id};");
+      sb.AppendLine($"{ind}}}");
+      sb.AppendLine($"{ind}if (__ok) {slot.VariableName} = __typed_{slot.Id};");
+      return;
     }
 
     if (slot.Shape == ValueShape.NumberList && slot.BaseConstraint is not null && slot.NumberClr is not null)

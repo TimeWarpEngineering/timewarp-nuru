@@ -17,7 +17,8 @@
 // of the generated output to have no errors: NURU_S010 is the only error, never CS0103 / CS0029 in
 // generated code (review M1). A converter whose ConstraintAlias is not a compile-time constant cannot be
 // read, so its alias reports NURU_S010 too. A typed catch-all and a repeated option have no custom
-// converter path, so a converter constraint there reports NURU_S010.
+// converter path, so a converter constraint there reports NURU_S010. Their built-in element types
+// include Uri, FileInfo, and DirectoryInfo, which have no TryParse (review M2).
 // Roslyn-hosted (the analyzers library collides with timewarp-nuru's parsing types, CS0433), so it
 // runs in the standalone phase.
 #endregion
@@ -241,6 +242,33 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen76ConverterConstraintAlias
 
       Diagnostic[] s010 = S010(Compile(Source));
       s010.ShouldBeEmpty(Describe(s010));
+
+      await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Uri, FileInfo, and DirectoryInfo are built-in types with no TryParse. A typed catch-all and a
+    /// repeated option convert them per element, so they report no NURU_S010 and the generated code
+    /// compiles (review M2).
+    /// </summary>
+    public static async Task Should_convert_uri_fileinfo_and_directoryinfo_lists()
+    {
+      const string Source = """
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map("files {*files:FileInfo}").WithHandler((System.IO.FileInfo[] files) => files.Length).AsQuery().Done()
+          .Map("urls {*urls:uri}").WithHandler((Uri[] urls) => urls.Length).AsQuery().Done()
+          .Map("dirs --dir {dir:DirectoryInfo}*").WithHandler((System.IO.DirectoryInfo[] dir) => dir.Length).AsQuery().Done()
+          .Map("links --link {link:Uri}*").WithHandler((Uri[] link) => link.Length).AsQuery().Done()
+          .Build();
+
+        return await app.RunAsync(args);
+
+        """;
+
+      CompileResult result = Compile(Source);
+      Diagnostic[] s010 = S010(result);
+      s010.ShouldBeEmpty(Describe(s010));
+      ShouldCompileGeneratedCode(result);
 
       await Task.CompletedTask;
     }

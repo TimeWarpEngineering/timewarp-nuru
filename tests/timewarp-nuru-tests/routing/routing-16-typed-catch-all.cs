@@ -464,6 +464,29 @@ public class TypedCatchAllTests
     terminal.OutputContains("major:3|minor:1").ShouldBeTrue();
     badExit.ShouldBe(1);
   }
+
+  /// <summary>
+  /// Uri, FileInfo, and DirectoryInfo have no TryParse; catch-alls and repeated options convert them
+  /// per element (task 584 review M2).
+  /// </summary>
+  public static async Task Should_bind_uri_fileinfo_and_directoryinfo_lists()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("files {*files:FileInfo}").WithHandler((FileInfo[] files) => $"files:{string.Join(",", files.Select(f => f.Name))}").AsCommand().Done()
+      .Map("urls {*urls:uri}").WithHandler((Uri[] urls) => $"hosts:{string.Join(",", urls.Select(u => u.Host))}").AsCommand().Done()
+      .Map("dirs --dir {dir:DirectoryInfo}*").WithHandler((DirectoryInfo[] dir) => $"dirs:{string.Join(",", dir.Select(d => d.Name))}").AsCommand().Done()
+      .Build();
+
+    (await app.RunAsync(["files", "a.txt", "b.cs"])).ShouldBe(0);
+    (await app.RunAsync(["urls", "https://one.example", "https://two.example"])).ShouldBe(0);
+    (await app.RunAsync(["dirs", "--dir", "src", "--dir", "tests"])).ShouldBe(0);
+
+    terminal.OutputContains("files:a.txt,b.cs").ShouldBeTrue();
+    terminal.OutputContains("hosts:one.example,two.example").ShouldBeTrue();
+    terminal.OutputContains("dirs:src,tests").ShouldBeTrue();
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Routing

@@ -9,7 +9,8 @@
 // registered on the app (CustomConverterMatcher: target type, simple name, ConstraintAlias, or the
 // "XConverter" convention). A constraint that names none of them used to fall through the emitters
 // and produce CS0103 / CS0029 in generated code (task 584). This check reports the route instead.
-// List values convert less: a typed catch-all {*name:T} has built-in element parsers only, and a
+// List values convert less: a typed catch-all {*name:T} converts built-in element types only (the
+// TypeConversionMap set, Uri, FileInfo, and DirectoryInfo included, through BuiltInElementParse), and a
 // repeated option adds EnumTypeConverter<T> but has no custom converter path.
 // Only Delegate and Method routes are checked: the user writes their constraint strings. [NuruRoute]
 // and Map<T> endpoints (HandlerKind.Command) derive constraints from property CLR types and bind
@@ -32,7 +33,7 @@ internal static class UnknownTypeConstraintValidator
     "is not a built-in type, an enum handler parameter, or a converter registered with AddTypeConverter() (by target type name or ConstraintAlias)";
 
   private const string CatchAllReason =
-    "is not a built-in type; a typed catch-all converts built-in element types only";
+    "is not a built-in type; a typed catch-all does not convert through an enum or a custom converter";
 
   private const string RepeatedOptionReason =
     "is not a built-in type or an enum handler parameter; a repeated option does not convert through a custom converter";
@@ -124,14 +125,15 @@ internal static class UnknownTypeConstraintValidator
     return IsEnumBound(boundNames, route);
   }
 
-  // Catch-all and repeated-option arrays: string, a built-in TryParse element, or (repeated options) an enum.
+  // Catch-all and repeated-option arrays: any built-in type (string needs no conversion, the rest
+  // convert per element through BuiltInElementParse), or (repeated options) an enum.
   private static bool IsKnownListElement(string? typeConstraint, bool allowEnum, string?[] boundNames, RouteDefinition route)
   {
-    if (string.IsNullOrEmpty(typeConstraint) || TypeConversionMap.IsStringConstraint(typeConstraint))
+    if (string.IsNullOrEmpty(typeConstraint))
       return true;
 
     string baseType = typeConstraint!.TrimEnd('?');
-    if (TypeConversionMap.GetBuiltInTryConversion(baseType, "__value", "__parsed") is not null)
+    if (TypeConversionMap.IsBuiltInType(baseType))
       return true;
 
     return allowEnum && IsEnumBound(boundNames, route);

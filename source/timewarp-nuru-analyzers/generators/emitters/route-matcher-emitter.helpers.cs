@@ -29,7 +29,7 @@ internal static partial class RouteMatcherEmitter
 
   /// <summary>
   /// Emits type conversion code for a repeated option.
-  /// Converts List&lt;string&gt; to a typed array (built-in primitives or enum elements).
+  /// Converts List&lt;string&gt; to a typed array (built-in or enum elements).
   /// </summary>
   private static void EmitRepeatedOptionTypeConversion(
     StringBuilder sb,
@@ -196,8 +196,8 @@ internal static partial class RouteMatcherEmitter
   }
 
   /// <summary>
-  /// Fills an array by TryParse-ing each string element.
-  /// Returns false when <paramref name="baseType"/> has no built-in TryParse.
+  /// Fills an array by converting each string element (BuiltInElementParse).
+  /// Returns false when <paramref name="baseType"/> has no built-in element conversion.
   /// </summary>
   private static bool EmitBuiltInArrayConversion(
     StringBuilder sb,
@@ -211,23 +211,15 @@ internal static partial class RouteMatcherEmitter
     string parsedVarName,
     string errorStatement)
   {
-    (string ClrType, string TryParseCondition)? conversion =
-      TypeConversionMap.GetBuiltInTryConversion(baseType, itemVarName, parsedVarName);
-    if (conversion is null)
+    string? clrType = BuiltInElementParse.GetClrType(baseType);
+    if (clrType is null)
       return false;
 
-    string clrType = conversion.Value.ClrType;
-    string tryParseCondition = conversion.Value.TryParseCondition;
     sb.AppendLine($"{indent}{clrType}[] {arrayVarName} = new {clrType}[{lengthExpression}];");
     sb.AppendLine($"{indent}for (int {indexVarName} = 0; {indexVarName} < {lengthExpression}; {indexVarName}++)");
     sb.AppendLine($"{indent}{{");
     sb.AppendLine($"{indent}  string {itemVarName} = {sourceVarName}[{indexVarName}];");
-    sb.AppendLine($"{indent}  {clrType} {parsedVarName};");
-    sb.AppendLine($"{indent}  if (!({tryParseCondition}))");
-    sb.AppendLine($"{indent}  {{");
-    sb.AppendLine($"{indent}    {errorStatement}");
-    sb.AppendLine($"{indent}    return 1;");
-    sb.AppendLine($"{indent}  }}");
+    BuiltInElementParse.TryEmit(sb, indent + "  ", baseType, itemVarName, parsedVarName, [errorStatement, "return 1;"]);
     sb.AppendLine($"{indent}  {arrayVarName}[{indexVarName}] = {parsedVarName};");
     sb.AppendLine($"{indent}}}");
     return true;

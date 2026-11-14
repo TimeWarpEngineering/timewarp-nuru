@@ -187,7 +187,7 @@ builder
 
 The generator reads `ConstraintAlias` from the converter source, so it must return a constant string (`=> "point"` or a `const`).
 
-A typed catch-all (`{*points:T}`) converts built-in element types only, and a repeated option (`--at {at:T}*`) converts built-in and enum elements. A custom converter constraint on either reports NURU_S010.
+A typed catch-all (`{*points:T}`) converts built-in element types only (every built-in type, `Uri`, `FileInfo`, and `DirectoryInfo` included), and a repeated option (`--at {at:T}*`) converts built-in and enum elements. A custom converter constraint on either reports NURU_S010.
 
 NURU_S010 is the only error such a route produces: the generated code still compiles, so the build does not also report CS0103 or CS0029 inside generated files.
 

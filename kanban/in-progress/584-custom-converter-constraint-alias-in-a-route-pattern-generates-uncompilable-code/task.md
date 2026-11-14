@@ -103,4 +103,7 @@ Both options from the checklist, together:
 - `./bin/dev build`: passed (0 warnings, 0 errors).
 - `ganda runfile cache --clear` then `./bin/dev test`: passed. CI multi-mode: 2227 total, 2221 passed, 6 skipped,
   0 failed. Standalone: 48 files, 0 failed (generator-76 included).
+- `ganda repo audit`: passed (Repository passes). One advisory, non-blocking warning was already there and is
+  not from this change: `vscode-window-icon` (`.vscode/settings.json` is missing). The first commit's hook flagged
+  `runfile-executable` on the new generator-76 runfile. I fixed it with `chmod +x` in a follow-up commit.
 

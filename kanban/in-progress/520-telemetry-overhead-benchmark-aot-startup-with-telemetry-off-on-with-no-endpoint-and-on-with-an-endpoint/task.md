@@ -50,6 +50,7 @@ Acceptance:
 
 - Created: 7dce871f-a50c-41b9-b2b5-aefa4c4ad890 (2026-10-22), from Steven asking for a real benchmark of the three telemetry cases after 517.
 - 2026-11-15 implementer (ganda task work): built `benchmarks/telemetry-overhead/`, ran the full benchmark, filed 590. Installed hyperfine 1.19.0 to `~/.local/bin` (it was missing on this machine).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b5a23b14-2325-41a2-a306-eb79624b9ba8, max-turns 500, Done — 2026-11-14T20:38:02Z
 
 ## Results
 

@@ -47,6 +47,11 @@ Acceptance criteria:
 - [x] Add a regression case (enum and user struct return) to generator-75 or its own generator test
 - [x] `ganda runfile cache --clear`, then `./bin/dev test` green
 
+## Review
+
+- Round 1: Blocked — open M1
+- Fix pass 1 (round 2): M1 wontfix. The finding used the wrong base, `master`; this task stacks on `feature/generator-fixes-2026-11-14`
+
 ## Notes
 
 - Workaround in 529's lane: the handler returns `shade.ToString()`.
@@ -58,6 +63,12 @@ Acceptance criteria:
 - Implement (2026-11-14): merged origin/master (land kanban 586) before the first commit; model, extractors,
   emitter and tests per ## Results.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3bff5411-c66b-433c-a679-cd4589e1a003, max-turns 500, Done — 2026-11-14T05:29:36Z
+- Review round 1 (2026-11-14): general, effort 2, roster general, turn cap 120 (cursor uncapped). Reviewer Grok 4.7. Scope `master` `560f013f` vs `HEAD` `7a3c4f6a`. M1 open. Disposition not written.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md — 2026-11-14T05:35:12Z
+- Implement fix pass 1 (2026-11-14, implementer-claude): M1 checked. The walk is
+  `ganda task work-set --ids 586,583,584,585 --into feature/generator-fixes-2026-11-14`. This branch was cut
+  from that branch's tip `75b4475f` (PR #405, task 586, merged there, not into `master`), so 586's files are base, not
+  this task's delta. Disposition wontfix is in `review/round-1/merged.md`. No product edit; gates rerun.
 
 ## Results
 
@@ -95,9 +106,9 @@ Acceptance criteria:
 
 | Gate | Command | Result |
 |------|---------|--------|
-| Build | `./bin/dev build` | pass (exit 0) |
-| Test | `ganda runfile cache --clear` then `./bin/dev test` | pass (exit 0; CI multi-mode incl. routing-39, standalone incl. generator-75 6/6) |
-| Audit | `ganda repo audit` | pass; first run had one advisory `vscode-window-icon` warning, fixed with `--fix`, rerun "Repository passes all audit checks." |
+| Build | `./bin/dev build` | pass (exit 0); fix pass 1 rerun: pass (exit 0) |
+| Test | `ganda runfile cache --clear` then `./bin/dev test` | pass (exit 0; CI multi-mode incl. routing-39, standalone incl. generator-75 6/6); fix pass 1 rerun: pass (exit 0, 0 failed) |
+| Audit | `ganda repo audit` | pass; first run had one advisory `vscode-window-icon` warning, fixed with `--fix`, rerun "Repository passes all audit checks."; fix pass 1 rerun: pass (exit 0, "Repository passes all audit checks.") |
 
 ### How to validate
 
@@ -115,3 +126,13 @@ the struct writes both members, the null `VtrShade?` writes nothing); generator-
 `artifacts/generated/routing-39-value-type-results.cs/.../NuruGenerated.g.cs` the enum route emits
 `app.Terminal.WriteLine(result.ToString());` with no `if (result is not null)`, and the struct's JSON fallback is
 `result.ToString()` with no `?.`.
+
+### Review
+
+Round 1 (general, effort 2) is in `review/round-1/merged.md`. It had one bug (M1): the diff against `master`
+contained task 586's string-constraint change. Fix pass 1 marked it wontfix because `master` is the wrong
+base. This task is in the work-set into `feature/generator-fixes-2026-11-14`, and its PR targets that branch. The
+branch was cut from that branch's tip `75b4475f`, which already has 586 (PR #405). The task's own delta is
+`git diff --stat origin/feature/generator-fixes-2026-11-14...HEAD`. That diff has only the 583 files listed under
+What changed, and no 586 file (`type-conversion-map.cs`, `routing-38`, and the others). Review a later round
+against that base. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

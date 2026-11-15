@@ -83,7 +83,7 @@ An agent ports these repos in order **by following the skill only**, as **privat
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6
 - Round 1 fix pass: M1–M6 fixed (docs, skill, glossary; product gaps filed as task 591 items 11–13)
-
+- Round 2: Done
 ## Notes
 
 - System.CommandLine was the biggest group in the scan (49 of 205 repos). AOT pain shows up across every library.
@@ -108,6 +108,8 @@ An agent ports these repos in order **by following the skill only**, as **privat
   skill, and `glossary.md`; appended the unread `Order`/`IsRepeated` and endpoint `FileInfo` binding gaps to
   task 591 (items 11–13). Verified each finding against `endpoint-extractor.properties.cs` first.
 - Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md — 2026-11-15T03:55:29Z
+- 2026-11-15 review-2 oracle (general, effort 2, print mode, turn cap 120): round 2 under `review/round-2/`. Re-verified M1–M6 fixed on `95dc80b8`. No new findings. Disposition clean.
+- Review-2 oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts review/round-2/general.md, review/round-2/merged.md, review/disposition.md — 2026-11-15
 
 ## Results
 
@@ -180,6 +182,7 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true 2>&1 | grep -c 'warnin
 ./bin/Release/net11.0/linux-x64/publish/app --output=x.txt   # Output stays null, exit 0
 ```
 
+```bash
 # Review round 1 fixes: no Order/IsRepeated in the recipe, normalizer stops at --, Step 4 uses Unit.ValueTask
 grep -n "Order = \|IsRepeated = true" documentation/user/guides/migrating-from-system-commandline.md skills/tw-nuru-migrate-system-commandline/SKILL.md
 grep -n 'arg == "--"' documentation/user/guides/migrating-from-system-commandline.md
@@ -206,13 +209,15 @@ Review round 1 fix pass (2026-11-15, markdown only: guide, skill, `glossary.md`,
 | Test | `./bin/dev test` | Passed ("Tests completed successfully!"; standalone 6/6, 0 failed) |
 | Audit | `ganda repo audit` | Passed: "Repository passes all audit checks." |
 
-Build and test ran after the first draft of the page and skill. Later edits were markdown only
-(`documentation/` and `skills/`), which no build or test step compiles, so they were not rerun.
+The original build and test ran after the first draft of the page and skill. Markdown edits between that
+draft and those gates were not a second full run. The review-round-1 fix pass recorded its own gates in
+the table above.
 
 ### Review
 
-Round 1, general reviewer, effort 3. Fix pass (implement-fix-2) fixed all six; dispositions are in
-`review/round-1/merged.md`.
+Round 1 (general, effort 3) raised M1–M6. The fix pass fixed all six. Round 2 (general, effort 2) re-verified
+them on `95dc80b8` and raised nothing new. Disposition: **clean** (0 open, no wontfix). The goal restatement
+matches the original task; no misread.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
@@ -229,4 +234,6 @@ Round 1, general reviewer, effort 3. Fix pass (implement-fix-2) fixed all six; d
   not); `glossary.md` `built-in type` notes the narrower endpoint subset.
 - M6: stray `**` removed in behavior difference 9; enum sentence split out.
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. Live ledger: `review/round-1/merged.md` (M1–M6). The goal restatement matches the original task; no misread.
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+`review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+Confirming ledger: `review/round-2/merged.md`. Disposition: `review/disposition.md`.

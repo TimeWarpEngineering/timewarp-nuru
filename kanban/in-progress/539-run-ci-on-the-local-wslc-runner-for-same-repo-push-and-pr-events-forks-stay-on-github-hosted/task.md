@@ -59,6 +59,7 @@ Acceptance:
 - Created: 985504 (2026-10-25)
 - 2026-11-15 implement (Claude Opus 5.5, ganda task work): live checks of runners, runner groups and fork approval; workflow edit; gates.
 - 2026-11-15 implement (Grok 4.7, ganda task work): the claim branch had been cut from `feature/groom-2026-11-15` and would have pulled tasks 496, 497, and 520 into the PR. Replayed only the 539 workflow and kitchen onto `origin/master`. The wslc image has no `pwsh`; the stage job extracts PowerShell 7.7.0 without sudo before any `pwsh` step. Gates re-run on that tree.
+- 2026-11-15 review round 1 (Claude Opus 5.5, ganda task work review oracle): effort 3, roster general, turn cap 200. One targeted command: `wslc run --rm twe-runner-01` tool check.
 
 ## Results
 
@@ -130,3 +131,10 @@ Re-run on this walk after the branch was reset onto `origin/master`. The earlier
 | `./bin/dev build` | passed, 0 warnings, 0 errors |
 | `./bin/dev test` | passed, exit 0. Multi-mode execute finished in 206.7 s. Standalone finished in 27.0 s (0 failed). `Tests completed successfully!` |
 | `ganda repo audit` | first run failed: `workflow-pwsh-shell` (the bash install step) and `memsearch-scaffold` (outdated `.githooks/prepare-commit-msg`). The install moved into `.github/actions/install-pwsh`. `ganda repo audit --fix` deployed `.githooks/prepare-commit-msg.cs` and linked the hook. That run then passed: 44 passed, 0 failed, 1 skipped (`self-hosted-runner`, public repo) |
+
+### 2026-11-15 review round 1
+
+- Roster general, effort 3, 1 round so far. Counts: bug 0; suggestion 1 open (M1); nit 0.
+- M1: the wslc image already ships `pwsh` (`/usr/bin/pwsh`, from the dotnet SDK base image), so `install-pwsh` is unused code, the "no PowerShell" Results bullet is wrong, and the How to validate expectation `Installed 7.7.0` will not match. Fix pass needed.
+- The `runs-on` routing, fork safety record, zsh/NuGet-cache gating, and unchanged check names are correct.
+- Disposition: pending (no `review/disposition.md` yet; 1 open). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

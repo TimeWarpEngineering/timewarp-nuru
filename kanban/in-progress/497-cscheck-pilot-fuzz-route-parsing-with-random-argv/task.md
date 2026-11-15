@@ -53,6 +53,10 @@ Acceptance:
 - [x] Pin CsCheck_Seed in CI; print seed on failure
 - [x] Record findings for the kill-criterion review
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 Not launched. Filed 2026-10-13 at Steven's request ("sure lets try").
@@ -65,6 +69,9 @@ Not launched. Filed 2026-10-13 at Steven's request ("sure lets try").
   The first `./bin/dev test` failed in the CI multi-mode assembly only (NU1504 duplicate PackageReference,
   then finding 2 below); both are handled, and the second run passed.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 43078b26-6d48-413d-82e2-c757977a61e5, max-turns 500, Done — 2026-11-15T02:57:12Z
+- Review oracle round 1: Grok 4.7 (grok, vendor xai), body tw-implementation-review, effort 2, roster general, turn cap 120 (cursor session uncapped; no --max-turns flag), session not reported, disposition clean — 2026-11-15. No findings. The restatement matches the task; no misread. See `review/round-1/merged.md` and `review/disposition.md`.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-15
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-15T03:05:34Z
 
 ## Results
 
@@ -160,3 +167,9 @@ Expect:
   (untracked, nothing to commit), and its re-audit reports "Repository passes all audit checks."
   The commit hook's audit then failed `runfile-executable` on the new runfile, which the working-tree audit
   had not flagged while the file was untracked. Fixed with `chmod +x` (commit 25aa7885), and that commit attested.
+
+### Review
+
+- Round 1, roster general, effort 2. Counts: bug 0, suggestion 0, nit 0 (all open 0). Disposition: clean. No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- The restatement matches the task. No misread.

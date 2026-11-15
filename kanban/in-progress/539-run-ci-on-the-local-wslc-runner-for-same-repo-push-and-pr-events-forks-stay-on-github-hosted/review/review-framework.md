@@ -21,3 +21,11 @@
   command and the reason. A full build, full test run, or audit is never that command
 - A missing or thin recorded result is a finding, not a reason to run the gates
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 1 re-run (host restart, 2026-11-15)
+
+The first round-1 oracle wrote its files, but the host logged "review kitchen not found" and restarted the review node. The re-run keeps the round-1 files and appends to them; it does not open round 2, because no fix pass ran in between.
+
+- **Diff scope (re-run):** `origin/feature/groom-2026-11-15...HEAD` (HEAD `0486ecc5`). After the first round-1 run, the branch merged `origin/feature/groom-2026-11-15` back in, so the walk's base is the groom branch, not `master`. Product delta is unchanged: `d7f84ffd` (`.github/workflows/workflow.yml`, `.github/actions/setup-dotnet/action.yml`, `.github/actions/install-pwsh/action.yml`) plus kanban files.
+- **Budget.ByDiff:** 446 lines changed → effort 2; roster general; turn cap 120. (The first run recorded effort 3 from a 1032-line count against `master`.)
+- **Session:** review oracle re-run, Claude Opus 5.5 (ganda task work, print mode). No targeted command run in the re-run.

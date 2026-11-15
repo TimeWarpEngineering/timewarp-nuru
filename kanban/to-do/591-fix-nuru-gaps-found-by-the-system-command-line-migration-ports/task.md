@@ -45,6 +45,17 @@ Split into child tasks during grooming if they should ship separately.
    Errors belong on stderr.
 10. **Unhandled handler exceptions abort the process** (SIGABRT, exit 134, raw stack trace). Consider a default
    handler that prints the message and returns 1.
+11. **`[Parameter(Order = n)]` is not read, and `NURU_A002` is never reported.** `ExtractParameterFromAttribute`
+   reads `Description` and `IsCatchAll` only; position is property declaration order. The
+   `MultipleParametersRequireOrder` descriptor exists but nothing reports it, and the `ParameterAttribute`
+   XML docs say `Order` is required. Honor `Order` (and `Name`), or remove them and the descriptor. See the
+   open question in `source/timewarp-nuru/attributes/parameter-attribute.cs`. (Review M1 on task 496.)
+12. **`[Option(IsRepeated = true)]` is not read.** Repeatability comes from the property type
+   (`IsRepeatedOptionType`); `IsRepeated = true` on a scalar does nothing, silently. Read it (or warn), or
+   remove it. See the open question in `source/timewarp-nuru/attributes/option-attribute.cs`. (Review M4.)
+13. **Endpoint `FileInfo`/`DirectoryInfo`/`IPAddress` properties do not bind.** `GetTypeConstraintFromClrType`
+   maps `Version` but not these, although fluent `{x:FileInfo}` constraints convert them through
+   `TypeConversionMap`. (Review M5.)
 
 ## Checklist
 

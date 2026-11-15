@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Cases 2 to 4: the shared program with UseTelemetry(). The endpoint comes from the environment. -->
+  <PropertyGroup>
+    <AssemblyName>bench-telemetry-on</AssemblyName>
+    <DefineConstants>$(DefineConstants);BENCH_TELEMETRY</DefineConstants>
+  </PropertyGroup>
+</Project>

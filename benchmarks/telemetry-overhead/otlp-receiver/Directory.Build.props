@@ -1,0 +1,4 @@
+<Project>
+  <!-- The receiver runfile takes the plain benchmark settings, not the AOT app settings one level up. -->
+  <Import Project="$(MSBuildThisFileDirectory)../../Directory.Build.props" />
+</Project>

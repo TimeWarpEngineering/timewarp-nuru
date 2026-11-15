@@ -264,5 +264,8 @@
     <!-- Packages for configuration tests -->
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
     <PackageReference Include="TimeWarp.Amuru.Tools" />
+    <!-- CsCheck (task 497 pilot, test-only) arrives through the #:package CsCheck directive in
+         routing-41-argv-fuzz-property.cs (transitive directives are on above); a PackageReference
+         here as well fails restore with NU1504. -->
   </ItemGroup>
 </Project>

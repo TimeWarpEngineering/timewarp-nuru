@@ -1,0 +1,31 @@
+<Project>
+  <!-- Telemetry overhead benchmark apps (task 520). Same AOT settings as aot-benchmarks. -->
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Build.props" />
+
+  <PropertyGroup Label="AOT Configuration">
+    <OutputType>Exe</OutputType>
+    <PublishAot>true</PublishAot>
+    <TrimMode>partial</TrimMode>
+    <OptimizationPreference>Speed</OptimizationPreference>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Interceptors">
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <!-- Both variants compile the same program; only BENCH_TELEMETRY differs. -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)shared/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj" />
+    <!-- Source generators don't flow transitively with ProjectReference -->
+    <ProjectReference Include="$(SourceDirectory)timewarp-nuru-analyzers/timewarp-nuru-analyzers.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Case 1 baseline: the shared program without UseTelemetry(). -->
+  <PropertyGroup>
+    <AssemblyName>bench-telemetry-off</AssemblyName>
+  </PropertyGroup>
+</Project>

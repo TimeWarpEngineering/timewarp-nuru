@@ -231,6 +231,10 @@ NuruApp app = NuruApp.CreateBuilder()
 
 > 💡 **Tip:** No MCP installation needed - the skill provides all essential patterns.
 
+**Porting from System.CommandLine?** Point your agent at the
+[`tw-nuru-migrate-system-commandline` skill](skills/tw-nuru-migrate-system-commandline/SKILL.md). The full guide is
+[Migrating from System.CommandLine](documentation/user/guides/migrating-from-system-commandline.md).
+
 **For MCP Server:** The `TimeWarp.Nuru.Mcp` package is frozen and is **not part of the 3.0 release**. Its answers do not match 3.0; use the Nuru skill above. Older prereleases install with:
 
 ```bash

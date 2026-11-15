@@ -1,0 +1,4 @@
+grpc opentelemetry.proto.collector.metrics.v1.MetricsService 132
+grpc opentelemetry.proto.collector.trace.v1.TraceService 66
+http metrics 66
+http traces 33

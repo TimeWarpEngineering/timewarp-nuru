@@ -91,7 +91,7 @@ Keep `RunAsync` on an app you built in the same method (`NURU_I001` warns otherw
 | optional argument with a default | nullable property, default applied in the handler (`?? "x"`) |
 | optional argument before a required one (`[method] url`) | one catch-all, classify tokens in the handler |
 | `Argument<T[]>` | `[Parameter(IsCatchAll = true)] public string[] Items { get; set; } = [];` (last) |
-| several arguments | `[Parameter(Order = 0)]`, `[Parameter(Order = 1)]`, ... |
+| several arguments | one `[Parameter]` property each, declared in command-line order (position = declaration order; `Order` is not read and `NURU_A002` is not reported on 4.0.0-beta.14, so do not set `Order`) |
 | `Option<T>("--name", "-n")` | `[Option("name", "n")]` (no dashes) |
 | extra long aliases (`--offline`, `--dry-run`) | one `[Option]` takes one long + one short (the short may be multi-char: `"cs"` → `-cs`); add a property per extra long name and OR them, or rewrite aliases in argv before `RunAsync` |
 | an existing `-h` option | loses `-h` (reserved for help); keep the long form |
@@ -100,7 +100,7 @@ Keep `RunAsync` on an app you built in the same method (`NURU_I001` warns otherw
 | `--flag true` / `--flag false` | not supported (`false` becomes a positional); rewrite argv or drop |
 | default value | property initializer (value options only) |
 | `Required = true` / `IsRequired` | nullable property + check in handler (no attribute) |
-| `Option<T[]>`, `AllowMultipleArgumentsPerToken` | `[Option("x", IsRepeated = true)] public string[] X { get; set; } = [];` |
+| `Option<T[]>`, `AllowMultipleArgumentsPerToken` | `[Option("x")] public string[] X { get; set; } = [];` (the array/collection type makes it repeat; `IsRepeated` is not read on 4.0.0-beta.14) |
 | `AcceptOnlyFromAmong` / `FromAmong` | an `enum` property, or a handler check |
 | `Validators.Add` / `AddValidator` | handler check |
 | `Recursive = true` / `AddGlobalOption` | `[GroupOption("name", "n")]` on the group base |
@@ -149,7 +149,7 @@ Rules:
   takes an `internal` service (`CS0051` otherwise). `[NuruRoute]` takes one literal or `""`, never a pattern.
 - A plain `[Option]` on a base class **without** `[NuruRouteGroup]` is silently ignored (the option becomes
   `Unknown option`). Shared options go on a `[NuruRouteGroup]` base as `[GroupOption]`; use
-  `[NuruRouteGroup("")]` for no prefix. A `string[]` `[GroupOption]` repeats like `IsRepeated`.
+  `[NuruRouteGroup("")]` for no prefix. A `string[]` `[GroupOption]` repeats like a `string[]` `[Option]`.
 - An enum cannot hold a hyphenated choice (`dotnet-coverage`). Use `string` and check it in the handler.
 - Do not name a property `Type` (generated code fails to compile). Enum option types need a simple name that
   is unique in the compilation (`CS0104` in generated code otherwise).
@@ -161,17 +161,19 @@ Rules:
   an `async` one. Use `ICommand<Unit>` (side effects), `IQuery<Unit>` (read-only), or
   `IIdempotentCommand<Unit>`. These live in `TimeWarp.Mediator`.
 - A property named like a type in scope (`Environment`) shadows it. Write `System.Environment.ExitCode`.
-- Types such as `FileInfo`, `DirectoryInfo`, and `Version` are not built in. Bind `string` and convert in the
-  handler. Built in: `string`, `int`, `long`, `double`, `decimal`, `bool`, `DateTime`, `Guid`, `TimeSpan`,
-  `Uri`, and enums.
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` does not bind. Bind `string` and
+  convert in the handler. Endpoint properties do bind `string`, the numeric types, `bool`, `char`, `Guid`,
+  `DateTime`, `DateTimeOffset`, `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and
+  enums. (Fluent `{file:FileInfo}` constraints convert `FileInfo`/`DirectoryInfo`; endpoint properties do not.)
 - Keep business logic where it was. Move only the parsing and wiring.
 - The builder must be one literal chain in one method. A ternary or helper around part of the chain fails
   with `NURU_S999`.
 
 ## Step 4: Exit codes and errors
 
-- `return 2;` from an action → `System.Environment.ExitCode = 2; return Unit.Value;`. A returned `int` is
-  printed, not used as the exit code.
+- `return 2;` from an action → `System.Environment.ExitCode = 2; return Unit.ValueTask;` in the synchronous
+  Step 3 template (`return Unit.Value;` only in an `async` `Handle`). A returned `int` is printed, not used as
+  the exit code.
 - `context.ExitCode = n` (beta4) → same.
 - Wrap `RunAsync` in `try`/`catch` for the exceptions the old `EnableDefaultExceptionHandler` or
   `UseExceptionHandler` turned into exit code 1. Without it, a handler exception aborts the process with a
@@ -180,8 +182,8 @@ Rules:
 
 ## Step 5: Passthrough and free-form tails
 
-- `--` passthrough and `UnmatchedTokens` → `[Parameter(Order = n, IsCatchAll = true)] public string[] Args { get; set; } = [];`
-  as the last parameter.
+- `--` passthrough and `UnmatchedTokens` → `[Parameter(IsCatchAll = true)] public string[] Args { get; set; } = [];`
+  as the last declared parameter property.
 - Before `--`, an undeclared `-x` or `--name` token is an error (`Unknown option`). After `--`, it goes into the
   catch-all. Nuru removes the `--` itself. Add it back if the child program needs it.
 - Free-form items (`key=value`, `key:=1`, `Header:value`) arrive unchanged in the catch-all. Classify them in
@@ -191,7 +193,7 @@ Rules:
   through a catch-all does not work.
 - **Users rely on `--name=value`?** Rewrite argv in `Program.cs` before `RunAsync`: for each name your tool
   declares (and legacy aliases), turn `--name=value` into `--name value` and the alias into the canonical
-  name. Stop at `--`. Example: [Option syntax](../../documentation/user/guides/migrating-from-system-commandline.md#option-syntax).
+  name. Stop at `--` and copy it and the tail unchanged. Example: [Option syntax](../../documentation/user/guides/migrating-from-system-commandline.md#option-syntax).
 - **Split at `--` first** when the tool takes variable items before `--` *and* forwards items after it (a
   single catch-all cannot tell them apart), or when it must forward `=` or `/p:` tokens:
 

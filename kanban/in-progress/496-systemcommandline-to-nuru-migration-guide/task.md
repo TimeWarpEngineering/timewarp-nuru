@@ -79,6 +79,11 @@ An agent ports these repos in order **by following the skill only**, as **privat
 - [x] AOT publish of at least one port with zero trim/AOT warnings
 - [ ] PR merged
 
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6
+- Round 1 fix pass: M1–M6 fixed (docs, skill, glossary; product gaps filed as task 591 items 11–13)
+
 ## Notes
 
 - System.CommandLine was the biggest group in the scan (49 of 205 repos). AOT pain shows up across every library.
@@ -98,6 +103,11 @@ An agent ports these repos in order **by following the skill only**, as **privat
   invented steps; every one was either folded into the page and skill or filed as a product defect.
   Filed task 591 for the product defects.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-sonnet-5-5), session b9116d6a-fc74-4920-bb1a-05e41098b727, max-turns 500, Done — 2026-11-15T03:44:39Z
+- 2026-11-15 review oracle (general, effort 3, print mode, turn cap 200): round 1 under `review/round-1/`. Open findings M1–M6. Disposition not written. The launch prompt did not supply a vendor session id.
+- 2026-11-15 implement-fix-2 (implementer-claude, headless): fixed review round 1 M1–M6 in the guide, the
+  skill, and `glossary.md`; appended the unread `Order`/`IsRepeated` and endpoint `FileInfo` binding gaps to
+  task 591 (items 11–13). Verified each finding against `endpoint-extractor.properties.cs` first.
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md — 2026-11-15T03:55:29Z
 
 ## Results
 
@@ -149,6 +159,9 @@ retargeting libraries under `TreatWarningsAsErrors`, `-f net11.0` with plural `T
 8. A property named `Type`, or two same-named enum types, break the generated code.
 9. Some parse errors print to stdout.
 10. Unhandled handler exceptions abort the process (exit 134).
+11. `[Parameter(Order = n)]` is not read and `NURU_A002` is never reported (review M1).
+12. `[Option(IsRepeated = true)]` is not read; the property type decides (review M4).
+13. Endpoint `FileInfo`/`DirectoryInfo`/`IPAddress` properties do not bind (review M5).
 
 ### How to validate
 
@@ -167,8 +180,15 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true 2>&1 | grep -c 'warnin
 ./bin/Release/net11.0/linux-x64/publish/app --output=x.txt   # Output stays null, exit 0
 ```
 
+# Review round 1 fixes: no Order/IsRepeated in the recipe, normalizer stops at --, Step 4 uses Unit.ValueTask
+grep -n "Order = \|IsRepeated = true" documentation/user/guides/migrating-from-system-commandline.md skills/tw-nuru-migrate-system-commandline/SKILL.md
+grep -n 'arg == "--"' documentation/user/guides/migrating-from-system-commandline.md
+grep -n "ExitCode = 2; return Unit.ValueTask" skills/tw-nuru-migrate-system-commandline/SKILL.md
+```
+
 Expect: both files exist; four files link the page; the publish prints `0` IL warnings; `--output=x.txt` is
-not bound (exit 0), matching "Behavior differences to check" item 1.
+not bound (exit 0), matching "Behavior differences to check" item 1. The review-fix greps print no `Order = ` /
+`IsRepeated = true` lines, one `arg == "--"` line, and one `Unit.ValueTask` exit-code line.
 
 ### Gates
 
@@ -178,5 +198,35 @@ not bound (exit 0), matching "Behavior differences to check" item 1.
 | Test | `./bin/dev test` | Passed (exit 0; standalone phase 6/6; CI suite green) |
 | Audit | `ganda repo audit` | First run failed: `kanban-landed` (task 591's new kitchen not yet on origin-home) and warning `vscode-window-icon` (`.vscode/settings.json` missing). Fixed by `ganda kanban publish 591` and `ganda repo audit --fix` (creates the git-ignored `.vscode/settings.json`); rerun: "Repository passes all audit checks." |
 
+Review round 1 fix pass (2026-11-15, markdown only: guide, skill, `glossary.md`, task 591, review ledger):
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Build | `./bin/dev build` | Passed, 0 errors ("Build completed successfully!") |
+| Test | `./bin/dev test` | Passed ("Tests completed successfully!"; standalone 6/6, 0 failed) |
+| Audit | `ganda repo audit` | Passed: "Repository passes all audit checks." |
+
 Build and test ran after the first draft of the page and skill. Later edits were markdown only
 (`documentation/` and `skills/`), which no build or test step compiles, so they were not rerun.
+
+### Review
+
+Round 1, general reviewer, effort 3. Fix pass (implement-fix-2) fixed all six; dispositions are in
+`review/round-1/merged.md`.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 3 | 0 |
+| suggestion | 0 | 2 | 0 |
+| nit | 0 | 1 | 0 |
+
+- M1: `Order` / `NURU_A002` removed from the recipe (concept map, samples, checklist, skill); position is
+  property declaration order.
+- M2: skill Step 4 uses `return Unit.ValueTask;` for the synchronous template.
+- M3: the `=`/alias normalizer sample stops at `--` and copies the tail unchanged.
+- M4: repeat comes from the array/collection type; `IsRepeated` documented as unread.
+- M5: endpoint-property type set spelled out (`Version` binds; `FileInfo`/`DirectoryInfo`/`IPAddress` do
+  not); `glossary.md` `built-in type` notes the narrower endpoint subset.
+- M6: stray `**` removed in behavior difference 9; enum sentence split out.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. Live ledger: `review/round-1/merged.md` (M1–M6). The goal restatement matches the original task; no misread.

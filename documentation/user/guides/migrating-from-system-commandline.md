@@ -45,14 +45,14 @@ That is the closest match to a `Command` with its options and arguments. The Flu
 | Optional argument with a default (`DefaultValueFactory = _ => "2026"`) | Nullable property; apply the default in the handler (`command.Version ?? "2026"`). A non-nullable property is required. |
 | Optional argument *before* a required one (`[method] url`) | Not expressible as two parameters. Use one catch-all and classify the tokens in the handler. |
 | `Argument<string[]>` (`ZeroOrMore`, `OneOrMore`) | `[Parameter(IsCatchAll = true)] public string[] Items { get; set; } = [];` (must be last) |
-| Several arguments | `[Parameter(Order = 0)]`, `[Parameter(Order = 1)]`, ... (`Order` is required when there is more than one, analyzer `NURU_A002`) |
+| Several arguments | One `[Parameter]` property per argument, declared in command-line order. Position is property declaration order. On 4.0.0-beta.14 the generator does not read `Order`, and analyzer `NURU_A002` is not reported, so leave `Order` out and order the properties instead. |
 | `new Option<string>("--output", "-o")` | `[Option("output", "o")] public string? Output { get; set; }` (no dashes in the attribute). The short name may be several characters: `[Option("connectionstring", "cs")]` matches `-cs`. |
 | Extra option aliases (`new Option<bool>("--offline", "--dry-run", "-n")`) | `[Option]` takes one long and one short name. Add one property per extra long name and combine them in the handler. |
 | `new Option<bool>("--force")` | `[Option("force")] public bool Force { get; set; }` (a flag: presence binds `true`, absence binds `false`) |
 | `Option<bool>` with `DefaultValueFactory = _ => true` | Not expressible as a `bool`: an initializer `= true` is ignored and absence binds `false`. Invert the flag (`--no-create`), or check the raw arguments. `--create false` is not supported; `false` becomes a positional argument. |
 | `DefaultValueFactory = _ => 3` (beta4: `getDefaultValue: () => 3`) | Property initializer: `public int Count { get; set; } = 3;` (value options; not `bool` flags) |
 | `Required = true` (beta4: `IsRequired = true`) | No attribute. Check the value in the handler and set `Environment.ExitCode`. See [Required options](#required-options). |
-| `Option<string[]>` with `AllowMultipleArgumentsPerToken` | `[Option("tag", "t", IsRepeated = true)] public string[] Tags { get; set; } = [];` Repeat the flag for each value: `-t a -t b`. |
+| `Option<string[]>` with `AllowMultipleArgumentsPerToken` | `[Option("tag", "t")] public string[] Tags { get; set; } = [];` The array (or collection) property type is what makes the option repeat; the `IsRepeated` flag is not read on 4.0.0-beta.14 and does nothing on a `string`. Repeat the flag for each value: `-t a -t b`. |
 | `Option<MyEnum>` | `[Option("format")] public MyEnum Format { get; set; }` (case-insensitive) |
 | `AcceptOnlyFromAmong("a", "b")` (beta4: `FromAmong`) | An `enum`, or a check in the handler |
 | `Validators.Add(...)` (beta4: `AddValidator`) | A check in the handler, or a [pipeline behavior](../features/pipeline-behaviors.md) |
@@ -161,10 +161,12 @@ Notes:
 - `.Map<ScanCommand>()` registers one endpoint. `.DiscoverEndpoints()` registers every `[NuruRoute]` class in
   the compilation. Either works in an app. Use `Map<T>()` in a test assembly that builds several apps
   (analyzer `NURU_A003`).
-- `FileInfo` and `DirectoryInfo` are not built-in parameter types. Bind a `string` and build the object in the
-  handler, or register a type converter (see [Supported Types](../reference/supported-types.md)). Built-in
-  types include `string`, `int`, `long`, `double`, `decimal`, `bool`, `DateTime`, `Guid`, `TimeSpan`, `Uri`,
-  and enums.
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` does not bind on 4.0.0-beta.14.
+  Bind a `string` and build the object in the handler, or register a type converter (see
+  [Supported Types](../reference/supported-types.md)). Endpoint properties bind `string`, the numeric types,
+  `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`,
+  `Uri`, `Version`, and enums. Fluent route constraints such as `{file:FileInfo}` convert the full
+  [built-in type](../../../glossary.md) set, which includes `FileInfo` and `DirectoryInfo`.
 - The exit code comes from `Environment.ExitCode`, not from the handler's return value. A property named
   `Environment` shadows the type; write `System.Environment.ExitCode` then.
 - Endpoint classes can be `public sealed` or `internal sealed`. Use `internal` when the handler takes an
@@ -214,7 +216,7 @@ command line, or the route does not match.
 | Command line | Nuru 4.0 betas |
 |--------------|----------------|
 | `--output x.txt`, `-o x.txt` | Supported |
-| `--tag a --tag b` (repeated option) | Supported with `IsRepeated = true` |
+| `--tag a --tag b` (repeated option) | Supported when the property is an array or collection (`string[]`) |
 | `--tag a b` (several values per token) | Only `a` binds. `b` is treated as a positional argument: it fills an optional `[Parameter]` if the route has one, otherwise the call fails with `Unknown command`. Repeat the flag. |
 | `--force true`, `--force false` (explicit bool value) | Not supported. The flag binds `true` and the value is treated as a positional argument. |
 | `--output=x.txt`, `--output:x.txt` | **Not bound.** Nuru reads these as configuration overrides (see below). |
@@ -241,8 +243,16 @@ Dictionary<string, string> canonical = new(StringComparer.Ordinal)
 };
 
 List<string> normalized = [];
-foreach (string arg in args)
+for (int i = 0; i < args.Length; i++)
 {
+  string arg = args[i];
+  if (arg == "--")
+  {
+    // Forwarded arguments: copy "--" and everything after it unchanged.
+    normalized.AddRange(args[i..]);
+    break;
+  }
+
   int equals = arg.IndexOf('=', StringComparison.Ordinal);
   string name = equals > 0 ? arg[..equals] : arg;
   if (canonical.TryGetValue(name, out string? longName))
@@ -260,7 +270,9 @@ foreach (string arg in args)
 args = [.. normalized];
 ```
 
-Stop rewriting at `--` if the tool forwards arguments.
+The loop stops at `--` and copies the separator and the tail unchanged, so a forwarded `-- --format=xml` is
+not rewritten into `--format xml`. Nuru itself still removes `=` tokens after `--`; to forward those, split
+at `--` first (see [`--` passthrough](#---passthrough)).
 
 ## Subcommands and global options
 
@@ -328,10 +340,10 @@ must be the last parameter:
 [NuruRoute("get", Description = "Send a GET request")]
 public sealed class GetCommand : IQuery<Unit>
 {
-  [Parameter(Order = 0, Description = "URL")]
+  [Parameter(Description = "URL")]
   public string Url { get; set; } = string.Empty;
 
-  [Parameter(Order = 1, IsCatchAll = true, Description = "Request items: key=value, Header:value")]
+  [Parameter(IsCatchAll = true, Description = "Request items: key=value, Header:value")]
   public string[] Items { get; set; } = [];
 
   [Option("verbose", "v", Description = "Print the request")]
@@ -375,10 +387,10 @@ A tool that forwards arguments to another program (`dotnet r build -- --no-resto
 [NuruRoute("run", Description = "Run a script")]
 public sealed class RunCommand : ICommand<Unit>
 {
-  [Parameter(Order = 0, Description = "Script name")]
+  [Parameter(Description = "Script name")]
   public string Script { get; set; } = string.Empty;
 
-  [Parameter(Order = 1, IsCatchAll = true, Description = "Arguments for the script")]
+  [Parameter(IsCatchAll = true, Description = "Arguments for the script")]
   public string[] Args { get; set; } = [];
 
   [Option("if-present", Description = "Skip a missing script")]
@@ -702,7 +714,7 @@ straight to the Nuru column.
 | `option.ArgumentHelpName = "N"` | `HelpName = "N"` | Help uses the property name |
 | `option.FromAmong("a", "b")` | `AcceptOnlyFromAmong("a", "b")` | An enum, or a handler check |
 | `option.AddValidator(r => ...)` | `Validators.Add(r => ...)` | A handler check, or a pipeline behavior |
-| `option.AllowMultipleArgumentsPerToken = true` | Same | `IsRepeated = true`, one value per flag |
+| `option.AllowMultipleArgumentsPerToken = true` | Same | A `string[]` property, one value per flag |
 | `parseResult.GetValueForOption(o)` / `GetValueForArgument(a)` | `parseResult.GetValue(o)` | Endpoint property |
 | `BinderBase<T>` custom binder | Removed | A property of the type with a type converter, or inject a service |
 | `System.CommandLine.NamingConventionBinder` `CommandHandler.Create(...)` | Separate package, reflection | A nested `Handler` class |
@@ -737,8 +749,9 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
    register `Console.CancelKeyPress` or `PosixSignalRegistration` yourself.
 9. **`-h` belongs to help.** An existing `-h` option (for example `-h` for `--headers`) loses its short form.
    No required-option attribute, no `-?` help alias, no bundled short options, and no `[diagram]`,
-   `[parse]`, `[env]`, or `[suggest]` directives.** An enum cannot hold a hyphenated value such as
-   `dotnet-coverage`; check those in the handler.
+   `[parse]`, `[env]`, or `[suggest]` directives.
+
+   An enum cannot hold a hyphenated value such as `dotnet-coverage`; check those in the handler.
 10. **`--version` has no `-v` alias.** That leaves `-v` free for `--verbose`, as in most `System.CommandLine`
    tools. A value option named `version` (`[Option("version")] public string? Version`) still binds
    `--version 1.2`; a bare `--version` prints the app version.
@@ -760,7 +773,7 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 
 - [ ] Retarget to `net11.0`, swap the packages, and remove every `System.CommandLine*` reference
 - [ ] One `[NuruRoute]` class per `Command`; `[NuruRoute("")]` for the root action
-- [ ] `[Parameter]` per argument (`Order` when there are several; catch-all last)
+- [ ] `[Parameter]` per argument, properties in command-line order (catch-all last)
 - [ ] `[Option]` per option; defaults as initializers; required options checked in the handler
 - [ ] `[NuruRouteGroup]` per command level; `[GroupOption]` for recursive options
 - [ ] Exit codes through `Environment.ExitCode`; expected exceptions caught around `RunAsync`

@@ -157,3 +157,5 @@ Expect:
 - `ganda repo audit`: passed with one advisory warning (`vscode-window-icon`: the gitignored local
   `.vscode/settings.json` was missing in this worktree). `ganda repo audit --fix` wrote that local file
   (untracked, nothing to commit), and its re-audit reports "Repository passes all audit checks."
+  The commit hook's audit then failed `runfile-executable` on the new runfile, which the working-tree audit
+  had not flagged while the file was untracked. Fixed with `chmod +x` (commit 25aa7885), and that commit attested.

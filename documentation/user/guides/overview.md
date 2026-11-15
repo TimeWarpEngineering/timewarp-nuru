@@ -33,6 +33,14 @@ package references, and a checklist for consumer repos.
 Breaking changes from 2.x and early 3.0 betas: Mediator contracts, handler
 return types, and the `--capabilities` document.
 
+### [Migrating from System.CommandLine](migrating-from-system-commandline.md)
+Port a CLI from `System.CommandLine` (2.0 or a 2.0 beta) to Nuru:
+- Concept map: `RootCommand`, `Command`, `Option<T>`, `Argument<T>`, `SetAction`, `SetHandler`
+- Native AOT and trimming with zero warnings
+- Beta-era API churn table (`InvocationContext`, `CommandLineBuilder`, binders)
+- `--` passthrough, free-form trailing arguments, verbosity, configuration, global tools
+- Agent recipe: the [`tw-nuru-migrate-system-commandline` skill](../../../skills/tw-nuru-migrate-system-commandline/SKILL.md)
+
 ### [Best Practices](best-practices.md)
 Patterns and conventions for maintainable CLI apps:
 - Route organization strategies

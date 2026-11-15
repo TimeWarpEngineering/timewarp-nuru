@@ -60,6 +60,7 @@ Acceptance:
 - 2026-11-15 implement (Claude Opus 5.5, ganda task work): live checks of runners, runner groups and fork approval; workflow edit; gates.
 - 2026-11-15 implement (Grok 4.7, ganda task work): the claim branch had been cut from `feature/groom-2026-11-15` and would have pulled tasks 496, 497, and 520 into the PR. Replayed only the 539 workflow and kitchen onto `origin/master`. The wslc image has no `pwsh`; the stage job extracts PowerShell 7.7.0 without sudo before any `pwsh` step. Gates re-run on that tree.
 - 2026-11-15 review round 1 (Claude Opus 5.5, ganda task work review oracle): effort 3, roster general, turn cap 200. One targeted command: `wslc run --rm twe-runner-01` tool check.
+- 2026-11-15 review round 1 re-run after host restart (Claude Opus 5.5, ganda task work review oracle): effort 2 (Budget.ByDiff 446 lines vs `origin/feature/groom-2026-11-15`), roster general, turn cap 120. No targeted command.
 
 ## Results
 
@@ -137,4 +138,6 @@ Re-run on this walk after the branch was reset onto `origin/master`. The earlier
 - Roster general, effort 3, 1 round so far. Counts: bug 0; suggestion 1 open (M1); nit 0.
 - M1: the wslc image already ships `pwsh` (`/usr/bin/pwsh`, from the dotnet SDK base image), so `install-pwsh` is unused code, the "no PowerShell" Results bullet is wrong, and the How to validate expectation `Installed 7.7.0` will not match. Fix pass needed.
 - The `runs-on` routing, fork safety record, zsh/NuGet-cache gating, and unchanged check names are correct.
-- Disposition: pending (no `review/disposition.md` yet; 1 open). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Re-run (host restart, effort 2): M1 still open, product files unchanged since `d7f84ffd`. New M2 (nit, open): the "Branch base" bullet, the Grok Session line and the `### Gates` preamble say the branch was reset to `origin/master`, but HEAD `0486ecc5` merged `origin/feature/groom-2026-11-15` back in and that branch is this walk's base.
+- Counts after re-run: bug 0; suggestion 1 open (M1); nit 1 open (M2).
+- Disposition: pending (no `review/disposition.md` yet; 2 open, fix pass needed). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

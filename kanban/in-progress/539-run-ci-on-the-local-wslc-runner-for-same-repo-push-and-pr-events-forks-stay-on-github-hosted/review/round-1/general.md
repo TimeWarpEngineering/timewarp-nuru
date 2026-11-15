@@ -27,3 +27,17 @@ This uses the image's documented smoke-test path: `entrypoint.sh` runs its argum
   The action never reaches its download path on the only runner that calls it. That leaves 32 lines of unused code plus three comments that state something false. The pinned 7.7.0 tarball and sha256 are never exercised.
 - Suggestion: Remove `.github/actions/install-pwsh/` and the `Install PowerShell` step. Correct the Results "pwsh" bullet and the `### How to validate` expectation: the image ships pwsh from the SDK base image, so no install step is needed. If the action should stay as a guard against a future base image without pwsh, keep it, but rewrite all three comments to say that, and change the How to validate expectation to `pwsh is already installed`.
 - Status: open
+
+## Re-run (host restart) — 2026-11-15
+
+**Scope:** `origin/feature/groom-2026-11-15...HEAD` (HEAD `0486ecc5`). The product files are byte-for-byte the `d7f84ffd` change reviewed above; the new commits are the kanban land (`c02469cd`) and a merge of the groom branch (`0486ecc5`).
+
+- Issue 1 still holds. `.github/actions/install-pwsh/action.yml`, the `Install PowerShell` step comment (`.github/workflows/workflow.yml:185`), the Results "pwsh" bullet, the Goal restatement's "The image has no `pwsh`" acceptance line, and the How to validate expectation `Installed 7.7.0` are all unchanged. Status: open.
+- No targeted command was run in the re-run; Issue 1 rests on the first run's `wslc run` check.
+- Re-read the `runs-on` expression, the `nuget-cache` input (`cache: ${{ inputs.nuget-cache == 'true' }}` gets a string `'true'`/`'false'` from `runner.environment == 'github-hosted'`, so the comparison is right on both runner kinds), the zsh gating and `defaults.run.shell: pwsh`. No new correctness issue.
+
+### Issue 2 — Severity: nit
+- File: kanban/in-progress/539-…/task.md `## Results` → "Branch base" bullet (and `## Session` Grok line, `### Gates` preamble)
+- Description: The record says the walk reset the task branch to `origin/master` and kept only the 539 change, and that the gates were re-run on that tree. HEAD `0486ecc5` has since merged `origin/feature/groom-2026-11-15` back in, and the host measures this walk against the groom branch (Budget.ByDiff 446 lines = `origin/feature/groom-2026-11-15...HEAD`). The groom branch is the base, so the reset was not needed, and the Results now describe a tree the branch no longer has. The product delta is the same, so the gates record still covers the CI-file change; only the narrative is stale.
+- Suggestion: Rewrite the "Branch base" bullet to say the base is `feature/groom-2026-11-15` and that 496, 497 and 520 arrive from that base, not from this task. Note in `### Gates` that they ran on the `origin/master`-based tree before the groom merge.
+- Status: open

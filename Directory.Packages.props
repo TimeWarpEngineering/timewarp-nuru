@@ -36,6 +36,8 @@
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="Shouldly" Version="5.0.0-preview.2" />
+    <!-- Test-only property-based testing (task 497 pilot). Never reference from product code. -->
+    <PackageVersion Include="CsCheck" Version="4.9.1" />
   </ItemGroup>
   <ItemGroup Label="Logging - Serilog">
     <PackageVersion Include="Serilog" Version="4.4.0" />

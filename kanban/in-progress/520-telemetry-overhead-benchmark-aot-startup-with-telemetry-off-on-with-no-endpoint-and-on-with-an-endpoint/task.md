@@ -106,7 +106,3 @@ Expect: both runs print `Hello, x`. The no-endpoint run prints `timeline handler
 ### Review
 
 Round 1 (2026-11-15): tw-implementation-review, effort 3, roster general, Grok 4.7, turn cap 200 (cursor uncapped; no `--max-turns` flag), session not reported. Disposition clean. Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. The restatement matches the task; no misread. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
-
-## Blocked
-
-2026-11-14: unsandboxed git add of the written kitchen paths under kanban/in-progress/520-telemetry-overhead-benchmark-aot-startup-with-telemetry-off-on-with-no-endpoint-and-on-with-an-endpoint (git index is outside the worktree sandbox)

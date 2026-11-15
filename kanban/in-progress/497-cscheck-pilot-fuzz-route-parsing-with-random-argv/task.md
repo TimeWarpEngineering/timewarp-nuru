@@ -64,6 +64,7 @@ Not launched. Filed 2026-10-13 at Steven's request ("sure lets try").
   Ran the explore mode for about 30M random cases in total (CsCheck_Iter 20k/50k, CsCheck_Time 30/60/90 s).
   The first `./bin/dev test` failed in the CI multi-mode assembly only (NU1504 duplicate PackageReference,
   then finding 2 below); both are handled, and the second run passed.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 43078b26-6d48-413d-82e2-c757977a61e5, max-turns 500, Done — 2026-11-15T02:57:12Z
 
 ## Results
 

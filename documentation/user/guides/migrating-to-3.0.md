@@ -3,7 +3,8 @@
 > Nuru 4.0 moves to TimeWarp.Mediator 15: handlers implement `IRequestHandler<X, T>` and return `ValueTask<T>`. See [Migrating to TimeWarp.Mediator 15](migrating-to-timewarp-mediator-15.md). This page describes 3.0 as it shipped.
 
 Guide for applications moving from the 2.x line, or from a 3.0 beta, to the
-stable 3.0 release.
+stable 3.0 release. Coming from `System.CommandLine` instead? See
+[Migrating from System.CommandLine](migrating-from-system-commandline.md).
 
 `TimeWarp.Nuru` targets `net10.0`. Install the stable package:
 

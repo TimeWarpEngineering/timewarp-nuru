@@ -143,7 +143,21 @@ jobs:
       ${{ !cancelled() && needs.changes.outputs.code != 'false' &&
       github.event_name != 'release' &&
       !(github.event_name == 'workflow_dispatch' && inputs.mode != 'merge') }}
-    runs-on: ubuntu-latest
+    # Runner (task 539). A push to this repo, or a pull request whose head
+    # branch lives in this repo, runs on the wslc container runners on TWE-001
+    # (labels self-hosted, twe-001, wslc; org runner group 3, which allows this
+    # public repo: timewarp-infrastructure 004). Everything else stays on ubuntu-latest:
+    # fork pull requests (untrusted code; this repo is public) and
+    # workflow_dispatch merge mode. A fork PR runs its own copy of this file and
+    # can rewrite this line, so the real gate is the fork PR approval setting
+    # (all_external_contributors, org and repo): approvers read the workflow
+    # diff before approving. Set the repository variable CI_HOSTED_ONLY to true
+    # to send every run to ubuntu-latest (runners offline) without a code change.
+    runs-on: >-
+      ${{ vars.CI_HOSTED_ONLY != 'true' &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) &&
+      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
     strategy:
@@ -160,15 +174,30 @@ jobs:
 
       - name: Setup .NET
         uses: ./.github/actions/setup-dotnet
+        with:
+          # The wslc runners keep NuGet packages on a per-instance volume shared
+          # with other repos' jobs (task 539). Saving that to this repo's
+          # Actions cache would carry their packages, so only hosted runners
+          # use the cache.
+          nuget-cache: ${{ runner.environment == 'github-hosted' }}
+
+      - name: Install PowerShell
+        # The wslc image has bash and no pwsh. This action extracts PowerShell
+        # before any pwsh run step. It stays out of this file because
+        # workflow-pwsh-shell rejects a bash step here (task 539).
+        if: runner.environment == 'self-hosted'
+        uses: ./.github/actions/install-pwsh
 
       - name: Runner size
         run: nproc && free -h
 
       - name: Read OS codename
-        # completion-31 (multi-mode phase) drives a fresh zsh, which the runner
-        # image does not ship. The apt mirror sometimes serves the debs at
-        # 60 kB/s (1.5 to 5 minutes), so the debs are cached.
-        if: matrix.stage == 'test-multi'
+        # completion-31 (multi-mode phase) drives a fresh zsh, which the hosted
+        # runner image does not ship. The apt mirror sometimes serves the debs
+        # at 60 kB/s (1.5 to 5 minutes), so the debs are cached. The wslc image
+        # bakes zsh and has no sudo, so it skips the cache and Install zsh
+        # finds zsh already present (task 539).
+        if: matrix.stage == 'test-multi' && runner.environment == 'github-hosted'
         id: os
         run: |
           $ErrorActionPreference = 'Stop'
@@ -178,7 +207,7 @@ jobs:
           Write-Output "codename=$codename" >> $env:GITHUB_OUTPUT
 
       - name: Cache zsh packages
-        if: matrix.stage == 'test-multi'
+        if: matrix.stage == 'test-multi' && runner.environment == 'github-hosted'
         uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/zsh-debs

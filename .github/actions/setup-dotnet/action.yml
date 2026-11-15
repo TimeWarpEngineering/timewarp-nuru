@@ -1,6 +1,12 @@
 name: Setup .NET
 description: .NET SDK with the NuGet global-packages cache. Shared by the workflow.yml jobs (task 538).
 
+inputs:
+  nuget-cache:
+    description: Restore and save the NuGet global-packages folder through the Actions cache. The wslc runners pass false (task 539).
+    required: false
+    default: 'true'
+
 runs:
   using: composite
   steps:
@@ -18,7 +24,7 @@ runs:
         # sources at checkout time, so a restored cache either misses or can
         # skip work that should run. Local invalidation stays
         # `ganda runfile cache --clear`.
-        cache: true
+        cache: ${{ inputs.nuget-cache == 'true' }}
         cache-dependency-path: |
           Directory.Packages.props
           global.json

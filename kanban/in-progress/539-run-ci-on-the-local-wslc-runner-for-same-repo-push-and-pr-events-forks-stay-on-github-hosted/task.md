@@ -66,6 +66,7 @@ Acceptance:
 - 2026-11-15 review round 1 (Claude Opus 5.5, ganda task work review oracle): effort 3, roster general, turn cap 200. One targeted command: `wslc run --rm twe-runner-01` tool check.
 - 2026-11-15 review round 1 re-run after host restart (Claude Opus 5.5, ganda task work review oracle): effort 2 (Budget.ByDiff 446 lines vs `origin/feature/groom-2026-11-15`), roster general, turn cap 120. No targeted command.
 - 2026-11-16 review round 2 (Grok 4.7, ganda task work review oracle): effort 3 (Budget.ByDiff 7104 lines vs `master`), roster general, turn cap 200. One targeted command: `git merge-tree --write-tree master HEAD`. Round 1 files were not edited.
+- 2026-11-16 implement-fix-2 (Claude Opus 5.5, ganda task work): M1 removed `.github/actions/install-pwsh` and the `Install PowerShell` step; Goal, Results and How to validate corrected. M2 rewrote the Branch base, Session and Gates preamble. Merged `origin/master` to clear `package-pin-currency`. Gates re-run.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2c3-7a19-73b3-b14c-d7502b85246c, max-turns 200, artifacts general.md, merged.md — 2026-11-16T05:20:59Z
 
 ## Results
@@ -82,7 +83,7 @@ Acceptance:
 - `changes`, `ci` (the required aggregate) and `release` stay on `ubuntu-latest`. `changes` needs `yq` (not in the wslc image) and is a 10 s gate; `ci` only downloads/uploads artifacts and calls `gh api`. Keeping them hosted leaves all four wslc slots for the four stages and keeps the `ci` check from queueing behind other repos. `workflow_dispatch` (all modes) and `release` stay hosted; OIDC trusted publishing unchanged. Job and check names unchanged.
 - zsh: the wslc image bakes zsh 5.9 and has no sudo. `Read OS codename` and `Cache zsh packages` now run only when `runner.environment == 'github-hosted'`; `Install zsh` already exits 0 when zsh is present, so the `sudo` path is hosted-only.
 - pwsh: the image is `mcr.microsoft.com/dotnet/sdk:10.0-noble` plus tools (infra 004 Dockerfile). The SDK base image ships PowerShell (`/usr/bin/pwsh`, 7.6.x) and the infra Dockerfile keeps it, so `defaults.run.shell: pwsh` works on wslc with no install step. Round 1 review confirmed it with `wslc run --rm twe-runner-01 … command -v pwsh`. An earlier `install-pwsh` action was removed in the round-2 fix pass (M1).
-- Branch base: the first implement commit sat on `feature/groom-2026-11-15` (tasks 496, 497, 520). The Grok walk reset the task branch to `origin/master` (`08f89145`) and replayed only the 539 change (`d7f84ffd`). The walk then merged `origin/feature/groom-2026-11-15` back in (`0486ecc5`). Master has since merged that groom branch (PR #415) and task 594, and is 16 commits ahead (`5f0d2c7c`). Round 2 review ran `git merge-tree --write-tree master HEAD`: clean (tree `826d65f3`), keeps Amuru beta.5, CsCheck 5.0.1, tasks 496, 497, 520 in done, and the 539 workflow; it does not revert 594. The product delta against master is the workflow and `setup-dotnet` change only. No reset or rebase for the round-2 fix pass.
+- Branch base: the first implement commit sat on `feature/groom-2026-11-15` (tasks 496, 497, 520). The Grok walk reset the task branch to `origin/master` (`08f89145`) and replayed only the 539 change (`d7f84ffd`). The walk then merged `origin/feature/groom-2026-11-15` back in (`0486ecc5`). Master has since merged that groom branch (PR #415) and task 594, and is 16 commits ahead (`5f0d2c7c`). Round 2 review ran `git merge-tree --write-tree master HEAD`: clean (tree `826d65f3`), keeps Amuru beta.5, CsCheck 5.0.1, tasks 496, 497, 520 in done, and the 539 workflow; it does not revert 594. The round-2 fix pass merged `origin/master` (`5f0d2c7c`) into the branch (`c964078c`, no reset or rebase) because `package-pin-currency` failed on the stale pins; master's copy of this kitchen was older, so the kitchen took the branch side. After that merge the product delta against master is `.github/workflows/workflow.yml` and `.github/actions/setup-dotnet/action.yml` only.
 - `ganda repo audit --fix` deployed the current `prepare-commit-msg` runfile (the Task trailer hook). The branch did not have the attest baseline, so `memsearch-scaffold` warned.
 - `.github/actions/setup-dotnet/action.yml`: new input `nuget-cache` (default `true`). The stage job passes `runner.environment == 'github-hosted'`. Each wslc instance mounts a NuGet volume shared with ganda and architecture jobs, so saving it to nuru's Actions cache would carry their packages. Side effect: master pushes on wslc no longer refresh the hosted NuGet cache, so a later fork PR may restore an older key or download fresh.
 - `dotnet-coverage` installs to `~/.dotnet/tools`, which the image has on `PATH`. `setup-dotnet 11.0.x` installs into `/usr/share/dotnet`, which the image makes writable by `runner` (infra 004).
@@ -135,9 +136,13 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 
 | Command | Result |
 |---|---|
-| `./bin/dev build` | passed, 0 warnings, 0 errors |
-| `./bin/dev test` | passed, exit 0. Multi-mode execute finished in 206.7 s. Standalone finished in 27.0 s (0 failed). `Tests completed successfully!` |
-| `ganda repo audit` | first run failed: `workflow-pwsh-shell` (the bash install step) and `memsearch-scaffold` (outdated `.githooks/prepare-commit-msg`). The install moved into `.github/actions/install-pwsh`. `ganda repo audit --fix` deployed `.githooks/prepare-commit-msg.cs` and linked the hook. That run then passed: 44 passed, 0 failed, 1 skipped (`self-hosted-runner`, public repo) |
+| `./bin/dev build` (2026-11-15) | passed, 0 warnings, 0 errors |
+| `./bin/dev test` (2026-11-15) | passed, exit 0. Multi-mode execute finished in 206.7 s. Standalone finished in 27.0 s (0 failed). `Tests completed successfully!` |
+| `ganda repo audit` (2026-11-15) | first run failed: `workflow-pwsh-shell` (the bash install step) and `memsearch-scaffold` (outdated `.githooks/prepare-commit-msg`). The install moved into `.github/actions/install-pwsh`. `ganda repo audit --fix` deployed `.githooks/prepare-commit-msg.cs` and linked the hook. That run then passed: 44 passed, 0 failed, 1 skipped (`self-hosted-runner`, public repo) |
+| `./bin/dev build` (2026-11-16 fix pass, after the master merge `c964078c`) | passed, 0 warnings, 0 errors (also passed before the merge) |
+| `./bin/dev test` (2026-11-16 fix pass, after the master merge, runfile cache cleared) | passed, exit 0. Multi-mode execute finished in 77.6 s. Standalone finished in 32.8 s (0 failed). `Tests completed successfully!` |
+| `ganda repo audit` (2026-11-16 fix pass) | first run failed `package-pin-currency` (Amuru beta.2, Contracts beta.32, Mediator beta.8 behind; master already had the bumps). Merged `origin/master`; rerun: `Repository passes all audit checks.` |
+| `actionlint` | not installed on this machine; not run this pass. The edit only deletes one `uses:` step |
 
 ### 2026-11-15 review round 1
 
@@ -156,6 +161,11 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 - M2 still open: the Branch base bullet still describes a pure `origin/master` replay. HEAD includes the groom merge, and master is 16 commits ahead. `git merge-tree --write-tree master HEAD` is clean (tree `826d65f3`) and does not revert task 594.
 - Disposition: not written. Two findings are open, so this is not `clean` or `accepted-exceptions`. Fix pass needed for M1 and M2.
 - Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`. No `review/disposition.md`.
+
+### 2026-11-16 implement-fix-2 (round 2 findings)
+
+- M1 fixed: deleted `.github/actions/install-pwsh/action.yml` and the stage job's `Install PowerShell` step. The wslc image's `/usr/bin/pwsh` (SDK base image) runs the `pwsh` steps. Goal acceptance, the pwsh Results bullet and How to validate now say so.
+- M2 fixed: the Branch base bullet, the Grok Session line and the Gates preamble now record the replay `d7f84ffd`, the groom merge `0486ecc5`, and this pass's `origin/master` merge `c964078c`.
 
 ## Learnings
 

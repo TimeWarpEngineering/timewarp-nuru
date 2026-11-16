@@ -233,3 +233,7 @@ workflow makes `python3` available on the wslc runner, or the test gets its pty 
 Check the other wslc stages for the same dependency.
 
 why: Steven's cockpit 2026-11-16, `ganda pr merge 417` parked on CI red
+
+## Blocked
+
+2026-11-16: review verdict refused: Done with no roster findings. Round folder: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-539-run-ci-on-the-local-wslc-runner-for-same-repo-push/kanban/in-progress/539-run-ci-on-the-local-wslc-runner-for-same-repo-push-and-pr-events-forks-stay-on-github-hosted/review/round-4. Oracle log: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-539-run-ci-on-the-local-wslc-runner-for-same-repo-push/kanban/in-progress/539-run-ci-on-the-local-wslc-runner-for-same-repo-push-and-pr-events-forks-stay-on-github-hosted/oracle-review-2-20261116t054405011z.log.

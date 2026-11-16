@@ -32,11 +32,11 @@ The first round-1 oracle wrote its files, but the host logged "review kitchen no
 
 ## Budget (by-diff)
 
-- Lines changed: 305
-- Effort: 2
+- Lines changed: 120
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Round 2 (2026-11-16)
 

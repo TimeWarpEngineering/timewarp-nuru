@@ -73,6 +73,7 @@ Acceptance:
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2c3-7a19-73b3-b14c-d7502b85246c, max-turns 200, artifacts general.md, merged.md — 2026-11-16T05:20:59Z
 - 2026-11-16 review-2 post-fix (Grok 4.7, ganda task work review oracle): effort 2 (Budget.ByDiff 393 lines), roster general, turn cap 120. Re-reviewed `aabb1737..fea0ecf3`. M1 and M2 fixed. No new findings. Session 01a1e2d9-dfac-7083-baea-4764e549234f.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-16T06:01:26Z
+- 2026-11-16 implement-fix-3 (Claude Opus 5.5, ganda task work): M3. Merged `origin/master` (`51693a74`) into the branch (`871a7691`, no reset or rebase). Gates re-run.
 - 2026-11-16 review round 3 (Grok 4.7, ganda task work review oracle): effort 2 (Budget.ByDiff 305 lines), roster general, turn cap 120. Re-reviewed HEAD `8839dfd6`. M1 and M2 still fixed. M3 open (`task.md` conflicts with master `4747af42`). One targeted command: `git merge-tree --write-tree master HEAD`. Session 01a1e2f2-5637-7363-90d6-23534a0fa267.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2f2-5637-7363-90d6-23534a0fa267, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-16T06:12:28Z
 
@@ -155,6 +156,9 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 | `./bin/dev build` (2026-11-16 CI-red fix, python3 to `script`) | passed, 0 warnings, 0 errors |
 | `./bin/dev test` (2026-11-16 CI-red fix) | passed, exit 0. Multi-mode execute finished in 79.7 s (`Should_cover_stdin_tty_and_a_builtin_that_does_not_read_stdin` passed). Standalone finished in 25.6 s (0 failed). `Tests completed successfully!` |
 | `ganda repo audit` (2026-11-16 CI-red fix) | `Repository passes all audit checks.` |
+| `./bin/dev build` (2026-11-16 fix-3, after the master merge `871a7691`) | passed, 0 errors |
+| `./bin/dev test` (2026-11-16 fix-3, runfile cache cleared) | passed, exit 0. Multi-mode execute finished in 73.0 s. Standalone finished in 27.0 s (0 failed). `Tests completed successfully!` |
+| `ganda repo audit` (2026-11-16 fix-3) | `Repository passes all audit checks.` |
 
 ### 2026-11-16 CI-red fix (python3 missing on wslc)
 
@@ -206,6 +210,10 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 - The `script` change matches the CI-red addendum. `RunOnPty` uses util-linux `script` so only stdin is a pty. The tty assertion is unchanged. Recorded gates from the CI-red fix pass cover the test. This review did not re-run build, test, or audit.
 - Disposition: not closed. One finding is open, so this is not `clean` or `accepted-exceptions`. Fix pass needed for M3.
 - Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
+
+### 2026-11-16 implement-fix-3 (round 3 finding)
+
+- M3 fixed: the two master commits the branch lacked (`4747af42`, `51693a74`, both `land kanban 539`) only carry this task's kitchen and review files, which the branch already had through its own `land task 539` commits. `git merge-tree --write-tree --name-only origin/master HEAD` was clean (tree `6e7ae4a9`), so `git merge origin/master` made `871a7691` with the same tree: the kitchen is the branch side, no content changed. The branch is now 0 behind master. The product delta against master is still `.github/workflows/workflow.yml`, `.github/actions/setup-dotnet/action.yml`, and `routing-33b-json-args-stdin-and-defaults.cs`.
 
 ## Learnings
 

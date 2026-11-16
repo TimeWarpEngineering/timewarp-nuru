@@ -51,6 +51,8 @@ Acceptance:
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-16)
 - Implementer: opencode session ses_e1dd251b3ffeYlN87OdRWte6v4 (2026-11-16)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e7035b14-987c-4e3e-beba-75397f6e601b, max-turns 500, Done — 2026-11-16T02:47:22Z
+- Reviewer: grok session 01a1e240-a847-7340-8fdb-bbaf339f95c4 (2026-11-16), effort 1, roster general, max-turns 80
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e240-a847-7340-8fdb-bbaf339f95c4, max-turns 80, artifacts general.md, merged.md, disposition.md — 2026-11-16T02:53:22Z
 
 ## Results
 
@@ -99,6 +101,16 @@ runs the multi-mode assembly and then `tests/ci-standalone/run-standalone-tests.
 | `ganda repo audit` | Pass. 44 passed, 0 failed, 1 skipped. `Repository passes all audit checks.` |
 
 **Not in scope:** a Nuru version bump or changelog entry. This task only moves consumed pins.
+
+### Review
+
+Round 1, effort 1, roster general. Counts: bug 0 open / 0 fixed / 0 wontfix, suggestion 0, nit 0. No issues raised. Disposition: clean.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

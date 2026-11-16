@@ -90,6 +90,8 @@ Acceptance criteria:
 - Created: 31bc0748-8dda-4ee8-912e-8d546f2d6990 (2026-11-16)
 - Implemented: ganda task work implement oracle, Claude Opus 5.5 (2026-11-16)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c38d03ab-dd0c-4a05-afaf-48941e0e01f2, max-turns 500, Done — 2026-11-16T10:59:16Z
+- Reviewer: Grok 4.7, general, effort 3, session 01a1e403-0252-7720-adf2-120385f3ebb0 (2026-11-16). Round 1 clean.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e403-0252-7720-adf2-120385f3ebb0, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-16T11:11:52Z
 
 ## Results
 
@@ -181,6 +183,20 @@ consumer, warnings as errors) succeeded.
 - Release 4.0.0-beta.15 after merge (`dev release`), then ganda 655/656 pin to it.
 - `push.paths-ignore` in `workflow.yml` and `pullRequestBuild` in `dev.jsonc` are two lists for
   two events; the comment beside each names the other.
+
+### Review
+
+- Round 1, roster general, effort 3. Counts: bug 0, suggestion 0, nit 0 (all statuses 0). Disposition: **clean**. No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Gates were not re-run. The implementer's `## Results` record (build, test, audit) covers the diff.
+
+## Learnings
+
+No misread. The restatement matches the rule, the one call, the extension limits, the tests, the readme, and the in-repo workflow. Requirement 7 says release the package; the restatement says the version bump is prepared and recorded. The branch is `4.0.0-beta.15` and the release checklist item stays open, because `dev release` runs from master after merge. That did not change the classifier.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

@@ -36,6 +36,7 @@ Acceptance:
 - No step needs `sudo` on the wslc image. zsh is baked and the apt fallback is hosted-only. The image already has `pwsh` (`/usr/bin/pwsh` from the .NET SDK base image), so the `pwsh` run steps need no install step. The GitHub NuGet cache stays off on wslc.
 - Check names (`changes`, `build`, `samples`, `test-multi`, `test-standalone`, `ci`) are unchanged; release/OIDC unchanged.
 - Hosted baseline wall and queue times recorded; the wslc numbers come from this PR's own CI run.
+- (CI red on PR #417) Every test passes on the wslc image without skips. The stdin-TTY test in `routing-33b` gets its pty from util-linux `script` (in the image and on ubuntu-latest) instead of `python3` (not in the image). Only stdin is the pty; stdout and stderr stay separate so the assertions keep their meaning. No other wslc stage needs `python3`.
 
 ## Checklist
 
@@ -67,6 +68,7 @@ Acceptance:
 - 2026-11-15 review round 1 re-run after host restart (Claude Opus 5.5, ganda task work review oracle): effort 2 (Budget.ByDiff 446 lines vs `origin/feature/groom-2026-11-15`), roster general, turn cap 120. No targeted command.
 - 2026-11-16 review round 2 (Grok 4.7, ganda task work review oracle): effort 3 (Budget.ByDiff 7104 lines vs `master`), roster general, turn cap 200. One targeted command: `git merge-tree --write-tree master HEAD`. Round 1 files were not edited.
 - 2026-11-16 implement-fix-2 (Claude Opus 5.5, ganda task work): M1 removed `.github/actions/install-pwsh` and the `Install PowerShell` step; Goal, Results and How to validate corrected. M2 rewrote the Branch base, Session and Gates preamble. Merged `origin/master` to clear `package-pin-currency`. Gates re-run.
+- 2026-11-16 implement (Claude Opus 5.5, ganda task work): CI red on PR #417. The `routing-33b` stdin-TTY test now gets its pty from `script`, not `python3`. Gates re-run.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2c3-7a19-73b3-b14c-d7502b85246c, max-turns 200, artifacts general.md, merged.md — 2026-11-16T05:20:59Z
 - 2026-11-16 review-2 post-fix (Grok 4.7, ganda task work review oracle): effort 2 (Budget.ByDiff 393 lines), roster general, turn cap 120. Re-reviewed `aabb1737..fea0ecf3`. M1 and M2 fixed. No new findings. Session 01a1e2d9-dfac-7083-baea-4764e549234f.
 
@@ -128,6 +130,8 @@ Median run wall about 8 m 23 s. `changes` and `ci` add about 10 s each.
 
 - Smoke: `gh pr checks <this PR>` then `gh api /repos/TimeWarpEngineering/timewarp-nuru/actions/runs/<run id>/jobs --jq '.jobs[] | "\(.name) \(.runner_name)"'`
 - Expect: `build`, `samples`, `test-multi`, `test-standalone` show `twe-runner-01-i*` runner names and pass; `changes` and `ci` show `GitHub Actions *`; the `ci` check is green. There is no `Install PowerShell` step; `Runner size` (the first `pwsh` step) passes on wslc. In `test-multi`, `Read OS codename` and `Cache zsh packages` are skipped and `Install zsh` prints `zsh is already installed.`
+- Smoke: `dotnet run tests/timewarp-nuru-tests/routing/routing-33b-json-args-stdin-and-defaults.cs` (on a machine without `python3`, or in the wslc image)
+- Expect: 4 of 4 pass, including `Should_cover_stdin_tty_and_a_builtin_that_does_not_read_stdin`; `grep -n python3` on that file finds only the comment.
 - Smoke: `actionlint -shellcheck= .github/workflows/workflow.yml` (actionlint v1.7.12)
 - Expect: exit 0, no output.
 
@@ -144,6 +148,16 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 | `./bin/dev test` (2026-11-16 fix pass, after the master merge, runfile cache cleared) | passed, exit 0. Multi-mode execute finished in 77.6 s. Standalone finished in 32.8 s (0 failed). `Tests completed successfully!` |
 | `ganda repo audit` (2026-11-16 fix pass) | first run failed `package-pin-currency` (Amuru beta.2, Contracts beta.32, Mediator beta.8 behind; master already had the bumps). Merged `origin/master`; rerun: `Repository passes all audit checks.` |
 | `actionlint` | not installed on this machine; not run this pass. The edit only deletes one `uses:` step |
+| `./bin/dev build` (2026-11-16 CI-red fix, python3 to `script`) | passed, 0 warnings, 0 errors |
+| `./bin/dev test` (2026-11-16 CI-red fix) | passed, exit 0. Multi-mode execute finished in 79.7 s (`Should_cover_stdin_tty_and_a_builtin_that_does_not_read_stdin` passed). Standalone finished in 25.6 s (0 failed). `Tests completed successfully!` |
+| `ganda repo audit` (2026-11-16 CI-red fix) | `Repository passes all audit checks.` |
+
+### 2026-11-16 CI-red fix (python3 missing on wslc)
+
+- `tests/timewarp-nuru-tests/routing/routing-33b-json-args-stdin-and-defaults.cs`: `RunOnPty` now runs `script -q -e -c '<dotnet run …> >out 2>err' /dev/null` (util-linux) instead of a `python3` pty helper. The child's stdin is the pty; its stdout and stderr go to temp files, as with the python helper, so the `requires redirected stdin` assertion means the same thing. `-e` returns the child's exit code. The test still runs on wslc; nothing is skipped.
+- Checked in the image: `wslc.exe run --rm twe-runner-01 bash -c "… printf '' | script -q -e -c 'sleep 2; test -t 0 && echo stdin-tty …; exit 1' /dev/null …"` printed `no-python3`, uid `1001`, `script-exit=1`, `stdin-tty`.
+- No other wslc stage needs python: `grep -rl python` outside `bin/`, `obj/`, `artifacts/`, `kanban/` hits only this test (and two old `.agent/workspace` notes).
+- Proof on wslc is the next PR #417 CI run (`test-multi` green on a `twe-runner-01-i*` runner).
 
 ### 2026-11-15 review round 1
 

@@ -156,32 +156,39 @@ public class JsonArgsStdinAndDefaultsTests
     return (output.ExitCode, output.Stdout, output.Stderr);
   }
 
+  // util-linux `script` gives the child a pty. It is in the wslc runner image and on ubuntu-latest;
+  // python3 is not in the image (task 539). The child's stdout and stderr go to files, so only stdin
+  // is a TTY, and `-e` returns the child's exit code.
   private static async Task<(int ExitCode, string Stdout, string Stderr)> RunOnPty(string harness, string[] args)
   {
-    string script = Path.Combine(Path.GetTempPath(), "nuru-json-args-478-pty.py");
-    await File.WriteAllTextAsync(script, """
-      import os, pty, subprocess, sys
-      master, slave = pty.openpty()
-      proc = subprocess.Popen(sys.argv[1:], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      os.close(slave)
-      try:
-          out, err = proc.communicate(timeout=180)
-      except subprocess.TimeoutExpired:
-          proc.kill()
-          sys.stderr.write(b"pty timeout\n")
-          sys.exit(3)
-      sys.stdout.buffer.write(out)
-      sys.stderr.buffer.write(err)
-      sys.exit(proc.returncode)
-      """);
+    string stem = Path.Combine(Path.GetTempPath(), $"nuru-json-args-478-pty-{Guid.NewGuid():N}");
+    string stdoutPath = stem + ".out";
+    string stderrPath = stem + ".err";
+    string[] argv = ["dotnet", "run", harness, "--", .. args];
+    string command = string.Join(' ', argv.Select(ShellQuote))
+      + " >" + ShellQuote(stdoutPath)
+      + " 2>" + ShellQuote(stderrPath);
 
-    List<string> argv = [script, "dotnet", "run", harness, "--", .. args];
-    CommandOutput output = await Shell.Builder("python3")
-      .WithArguments([.. argv])
-      .WithNoValidation()
-      .CaptureAsync();
-    return (output.ExitCode, output.Stdout, output.Stderr);
+    try
+    {
+      CommandOutput output = await Shell.Builder("script")
+        .WithArguments("-q", "-e", "-c", command, "/dev/null")
+        .WithStandardInput("")
+        .WithNoValidation()
+        .CaptureAsync();
+      string stdout = File.Exists(stdoutPath) ? await File.ReadAllTextAsync(stdoutPath) : "";
+      string stderr = File.Exists(stderrPath) ? await File.ReadAllTextAsync(stderrPath) : "";
+      return (output.ExitCode, stdout, stderr + output.Stdout + output.Stderr);
+    }
+    finally
+    {
+      File.Delete(stdoutPath);
+      File.Delete(stderrPath);
+    }
   }
+
+  private static string ShellQuote(string value) =>
+    "'" + value.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
 }
 
 [NuruRoute("ship")]

@@ -170,6 +170,7 @@ reports 22 passed.
 | Test | `./bin/dev test` | exit 0; multi-mode 2260 total, 2252 passed, 8 skipped, 0 failed (PullRequestBuildClassifier 22/22); standalone 0 failed |
 | Audit | `ganda repo audit` | exit 0, passed with 1 advisory: `vscode-window-icon` (`.vscode/settings.json` missing) |
 | Audit fix | `ganda repo audit --fix` | exit 0, "Repository passes all audit checks." (fix wrote the git-ignored `.vscode/settings.json`; nothing tracked changed) |
+| Audit (rerun after fix) | `ganda repo audit` | first commit's attest refused: `runfile-executable` (new test runfile lacked the executable bit; the earlier audit ran while it was untracked). Fixed with `chmod +x` (mode 100755); rerun exit 0, "Repository passes all audit checks." |
 
 Also: `dotnet build` in `tests/devcli-consumer-check` (the content compiled as a strict net11
 consumer, warnings as errors) succeeded.

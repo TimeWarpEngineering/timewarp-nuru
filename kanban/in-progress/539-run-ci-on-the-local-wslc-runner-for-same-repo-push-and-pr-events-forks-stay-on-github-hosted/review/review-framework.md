@@ -32,7 +32,7 @@ The first round-1 oracle wrote its files, but the host logged "review kitchen no
 
 ## Budget (by-diff)
 
-- Lines changed: 120
+- Lines changed: 104
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -50,7 +50,7 @@ Round 1 stays as written. No fix pass landed between round 1 and this review, so
 
 ## Round 2 post-fix re-review (2026-11-16)
 
-That post-fix launch counted 393 lines (effort 2, roster general, turn cap 120). The Budget block above is the round-3 count. The Round 2 section above is the pre-fix review. This re-review does not edit `review/round-1/`. It updates `review/round-2/` because that is the folder this host node reads.
+That post-fix launch counted 393 lines (effort 2, roster general, turn cap 120). The Budget block above is the latest by-diff count (round 4: 104 lines, effort 1). Round 3's count was 305 lines, recorded in the Round 3 section. The Round 2 section above is the pre-fix review. This re-review does not edit `review/round-1/`. It updates `review/round-2/` because that is the folder this host node reads.
 
 - **Diff scope:** `aabb1737` (round-1 `base.sha`) through HEAD `fea0ecf3`. Product delta is the install-pwsh deletion. `c964078c` merges `origin/master`; those product files match master.
 - **Session:** Grok 4.7, ganda task work review-2 oracle, print mode, session 01a1e2d9-dfac-7083-baea-4764e549234f.
@@ -64,3 +64,12 @@ Round 1 and round 2 stay as written. This round reviews the CI-red fix (`b0e9d8a
 - **Effort:** 2 (Budget.ByDiff 305 lines). Roster: general. Turn cap: 120.
 - **Session:** Grok 4.7, ganda task work review oracle, print mode, session 01a1e2f2-5637-7363-90d6-23534a0fa267.
 - **Targeted command:** `git merge-tree --write-tree master HEAD`. Reason: the branch is 1 commit behind `master` (`4747af42`, `land kanban 539`), and that commit edits this kitchen. Exit 1. Conflict only in `task.md`. No full build, test, or audit.
+
+## Round 4 (2026-11-16)
+
+Rounds 1, 2, and 3 stay as written. This round re-checks the M3 fix on HEAD `b161f9be`. A prior round-4 launch was refused for returning Done with no roster files; this round writes `review/round-4/` and does not edit earlier rounds.
+
+- **Diff scope:** HEAD `b161f9be` against `master` `51693a74`. The merge-base is `master` (0 behind, 16 ahead). Product delta is `.github/workflows/workflow.yml`, `.github/actions/setup-dotnet/action.yml`, and `tests/timewarp-nuru-tests/routing/routing-33b-json-args-stdin-and-defaults.cs`. Since round 3 (`8839dfd6`) the product tree is unchanged; `871a7691` merges `origin/master`.
+- **Effort:** 1 (Budget.ByDiff 104 lines). Roster: general. Turn cap: 80.
+- **Session:** Grok 4.7, ganda task work review oracle, print mode, session 01a1e304-3563-76f2-9504-3e188fa79a57.
+- **Targeted command:** none. M3 was re-checked with read-only `git rev-parse`, `git merge-base`, and `git rev-list --left-right --count`: `master` is an ancestor of HEAD. No full build, test, or audit.

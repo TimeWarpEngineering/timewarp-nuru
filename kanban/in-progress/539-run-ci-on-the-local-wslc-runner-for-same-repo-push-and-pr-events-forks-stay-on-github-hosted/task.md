@@ -50,7 +50,7 @@ Acceptance:
 ## Review
 
 - Round 1: Blocked — open M1, M2
-
+- Round 2: Done
 ## Notes
 
 - Related nuru tasks: 537 (path filters), 538 (parallel jobs). Not a hard depends-on edge; ordering vs 538 is decided by the capacity check.
@@ -68,6 +68,7 @@ Acceptance:
 - 2026-11-16 review round 2 (Grok 4.7, ganda task work review oracle): effort 3 (Budget.ByDiff 7104 lines vs `master`), roster general, turn cap 200. One targeted command: `git merge-tree --write-tree master HEAD`. Round 1 files were not edited.
 - 2026-11-16 implement-fix-2 (Claude Opus 5.5, ganda task work): M1 removed `.github/actions/install-pwsh` and the `Install PowerShell` step; Goal, Results and How to validate corrected. M2 rewrote the Branch base, Session and Gates preamble. Merged `origin/master` to clear `package-pin-currency`. Gates re-run.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2c3-7a19-73b3-b14c-d7502b85246c, max-turns 200, artifacts general.md, merged.md — 2026-11-16T05:20:59Z
+- 2026-11-16 review-2 post-fix (Grok 4.7, ganda task work review oracle): effort 2 (Budget.ByDiff 393 lines), roster general, turn cap 120. Re-reviewed `aabb1737..fea0ecf3`. M1 and M2 fixed. No new findings. Session 01a1e2d9-dfac-7083-baea-4764e549234f.
 
 ## Results
 
@@ -167,7 +168,17 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 - M1 fixed: deleted `.github/actions/install-pwsh/action.yml` and the stage job's `Install PowerShell` step. The wslc image's `/usr/bin/pwsh` (SDK base image) runs the `pwsh` steps. Goal acceptance, the pwsh Results bullet and How to validate now say so.
 - M2 fixed: the Branch base bullet, the Grok Session line and the Gates preamble now record the replay `d7f84ffd`, the groom merge `0486ecc5`, and this pass's `origin/master` merge `c964078c`.
 
+### 2026-11-16 review round 2 (post-fix)
+
+- Roster: general. Effort: 2 (Budget.ByDiff 393 lines). Turn cap 120. This subsection is the disposition. The pre-fix round 2 record above is the open ledger from before the fix pass.
+- Counts (live ledger `review/round-2/merged.md`): bug 0; suggestion 1 fixed (M1); nit 1 fixed (M2); open 0; wontfix 0.
+- M1 fixed: `.github/actions/install-pwsh/` and the `Install PowerShell` step are gone. Goal, the pwsh Results bullet, and How to validate say the image already has `/usr/bin/pwsh`.
+- M2 fixed: Branch base, the Grok Session line, and the Gates preamble record `d7f84ffd`, `0486ecc5`, and `c964078c`. `git merge-base HEAD master` is `5f0d2c7c`.
+- No new findings. No targeted command. Gates were not re-run; the fix-pass record covers HEAD after the deletion and the master merge.
+- Disposition: clean. Final open count 0. No wontfix.
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Learnings
 
 - The routing restatement matches the task. "Move the ci job" means the post-538 `stage` matrix (`build`, `samples`, `test-multi`, `test-standalone`). The required `ci` aggregate stays on `ubuntu-latest`, which the task also requires. That is not a misread.
-- Misread: the Goal acceptance line says the image has no `pwsh` and that each stage job extracts PowerShell 7.7.0. The task does not say that. It says to adapt steps that need `sudo` or a tool the image lacks (the named case is zsh). The image base already provides `pwsh`. The false acceptance is M1.
+- Misread, corrected in the round-2 fix pass: the Goal acceptance line used to say the image has no `pwsh` and that each stage extracts PowerShell 7.7.0. The task does not say that. It says to adapt steps that need `sudo` or a tool the image lacks (the named case is zsh). The image base already provides `pwsh`. The line now says that, and there is no install step. The corrected restatement matches the task.

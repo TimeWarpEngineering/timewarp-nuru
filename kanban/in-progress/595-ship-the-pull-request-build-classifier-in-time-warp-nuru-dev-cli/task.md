@@ -49,13 +49,36 @@ implementation and the existing pin-currency audit carries rule changes to every
 
 ## Checklist
 
-- [ ] Classifier service in `timewarp-nuru-devcli` content, rule ported exactly from ganda
-- [ ] One-call decision (event read, diff, rule, message); never-skip cases covered
-- [ ] Repo extension point, with the protected roots not overridable
-- [ ] Tests for each rule row and never-skip case
-- [ ] Package docs updated
-- [ ] timewarp-nuru's own `workflow` command uses it
-- [ ] Released; version recorded in Results
+- [x] Classifier service in `timewarp-nuru-devcli` content, rule ported exactly from ganda
+- [x] One-call decision (event read, diff, rule, message); never-skip cases covered
+- [x] Repo extension point, with the protected roots not overridable
+- [x] Tests for each rule row and never-skip case
+- [x] Package docs updated
+- [x] timewarp-nuru's own `workflow` command uses it
+- [ ] Released; version recorded in Results (version bumped to 4.0.0-beta.15 here; `dev release` runs from master after merge)
+
+## Goal (implementer restatement)
+
+Ship one implementation of the "does this pull request need build and test?" rule inside the
+`TimeWarp.Nuru.DevCli` source-only content, so every repo's dev CLI gets it from the package
+instead of a hand copy.
+
+Acceptance criteria:
+
+- A service in `content/any/services/` applies ganda's `WorkflowChangeFilter.RequiresBuild` rule
+  unchanged: kanban/documentation/assets/notes, `.github/**` except workflows, `.gitignore`, and
+  `.md` outside the four build roots are non-build; `source/`, `tests/`, `tools/`, `msbuild/`
+  always build (markdown too); `.editorconfig` builds; an empty diff does not build.
+- One call decides the whole thing: read the pull request SHAs from `GITHUB_EVENT_PATH`, run
+  `git diff --name-only base...head`, apply the rule, return build or skip plus the message.
+  Any non-pull-request event, a local run, an unreadable event, and a failed diff build.
+- A repo can add build paths and non-build paths (one place, decided and justified); no extension
+  can make the four roots, `.github/workflows/**`, or `.editorconfig` non-build.
+- Stable greppable names; the exact consumer call is recorded under `## Results`.
+- Tests cover each rule row and each never-skip case.
+- The DevCli readme documents the standard, the one call, and the no-`paths`-on-`pull_request` rule.
+- A DevCli version containing it is prepared (version bump) and recorded under `## Results`.
+- timewarp-nuru's own `dev workflow` uses it; the YAML path gate in `workflow.yml` goes away.
 
 ## Related tasks
 
@@ -65,6 +88,97 @@ implementation and the existing pin-currency audit carries rule changes to every
 ## Session
 
 - Created: 31bc0748-8dda-4ee8-912e-8d546f2d6990 (2026-11-16)
+- Implemented: ganda task work implement oracle, Claude Opus 5.5 (2026-11-16)
+
+## Results
+
+### What shipped
+
+- `source/timewarp-nuru-devcli/content/any/services/pull-request-build-classifier.cs`:
+  `PullRequestBuildClassifier` (static) and `PullRequestBuildDecision` (record: `RequiresBuild`,
+  `Message`, `ChangedPaths`). `RequiresBuild(paths)` is ganda's `WorkflowChangeFilter.RequiresBuild`
+  ported unchanged; `RequiresBuild(paths, config)` adds the repo additions;
+  `TryReadPullRequestShas` and `ListChangedPathsAsync` are ported from ganda too.
+- `pull-request-build-config.cs`: `PullRequestBuildConfig` (`BuildPaths`, `NonBuildPaths`), read
+  from `.timewarp/dev.jsonc` key `pullRequestBuild` (added to `RepoConfig` and `DevCliJsonContext`).
+- Extension point decision: **repo config, not a caller argument.** The consumer call is then one
+  identical line in every repo (ganda 655 greps for it), and the additions are data a person or
+  the audit reads without parsing C#. `RepoConfig` is already loaded by every dev CLI. Entries
+  are `path`, `dir/`, or `dir/**`; other wildcards are invalid and make the decision build.
+  `buildPaths` beat every non-build list; `nonBuildPaths` are checked after the four protected
+  roots, `.github/workflows/**`, and `.editorconfig`, so they cannot cover them.
+- Never-skip: any event other than `pull_request` (push, release, workflow_dispatch, local run
+  with no event name), unset/missing/malformed event file, event without both SHAs, failed
+  `git diff`, unreadable `dev.jsonc`, invalid `pullRequestBuild` entry.
+- timewarp-nuru: `dev workflow --stage classify` makes the call and writes `code=true|false` to
+  `GITHUB_OUTPUT`; `--stage all` (local default) asks first and stops on skip. The `changes` job
+  in `workflow.yml` now runs that command instead of the PowerShell/yq glob gate (task 537), on
+  the same runner choice as the stage jobs, with `fetch-depth: 0`. Non-PR events skip the job's
+  steps and the output defaults to `true`. The `pull_request` trigger still has no `paths`;
+  `push.paths-ignore` stays. This repo's additions in `.timewarp/dev.jsonc`: `buildPaths`
+  `readme.md`, `assets/logo.png` (packed into the nupkgs); `nonBuildPaths` `skills/**`,
+  `.agent/**`, `.claude/**` (same set the old gate skipped).
+- Docs: `source/timewarp-nuru-devcli/readme.md` section "Pull request build decision" (standard,
+  one call, rule table, additions, split jobs) plus a 4.0.0-beta.15 migration note; changelog entry.
+- Tests: `tests/timewarp-nuru-tests/devcli/pull-request-build-01-classifier.cs` (22 tests: every
+  rule row, additions and protected roots, config parse, event JSON, every never-skip case, and
+  end-to-end git repos for kanban-only skip, empty diff skip, source build, buildPaths build).
+
+### The consumer call (ganda 655 checks for it)
+
+```csharp
+PullRequestBuildDecision decision = await PullRequestBuildClassifier.DecideAsync(repoRoot, ct);
+Terminal.WriteLine(decision.Message);
+if (!decision.RequiresBuild)
+{
+  return Unit.Value;
+}
+```
+
+Greppable token: `PullRequestBuildClassifier.DecideAsync(`.
+
+### Version
+
+`TimeWarp.Nuru.DevCli` **4.0.0-beta.15** (`source/Directory.Build.props` bumped from beta.14 on
+this branch). Not yet published: this walk cannot merge or release. After merge, cut it with
+`dev release` from a clean synced master (tw-release); ganda 655 and 656 pin to 4.0.0-beta.15.
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev self-install   # tools/dev-cli changed
+B=$(git rev-parse 5670e4c0~1); H=$(git rev-parse 5670e4c0)   # kanban-only commit
+echo "{\"pull_request\":{\"base\":{\"sha\":\"$B\"},\"head\":{\"sha\":\"$H\"}}}" > /tmp/ev.json
+GITHUB_EVENT_NAME=pull_request GITHUB_EVENT_PATH=/tmp/ev.json GITHUB_OUTPUT=/tmp/out ./bin/dev workflow --stage classify; cat /tmp/out
+GITHUB_EVENT_NAME=push ./bin/dev workflow --stage classify
+dotnet run tests/timewarp-nuru-tests/devcli/pull-request-build-01-classifier.cs
+```
+
+Expect: the kanban-only range prints `Pull request changes only declared non-build paths.
+Skipping build and test. ... (1 changed paths)` and `/tmp/out` holds `code=false`; a range that
+touches `.github/workflows/workflow.yml` prints `Build path changed: ... Full build.` and
+`code=true`; the push run prints `Event push is not a pull request. Full build.`; the test file
+reports 22 passed.
+
+### Gates
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Build | `./bin/dev build` | exit 0, 0 warnings, 0 errors |
+| Test | `./bin/dev test` | exit 0; multi-mode 2260 total, 2252 passed, 8 skipped, 0 failed (PullRequestBuildClassifier 22/22); standalone 0 failed |
+| Audit | `ganda repo audit` | exit 0, passed with 1 advisory: `vscode-window-icon` (`.vscode/settings.json` missing) |
+| Audit fix | `ganda repo audit --fix` | exit 0, "Repository passes all audit checks." (fix wrote the git-ignored `.vscode/settings.json`; nothing tracked changed) |
+
+Also: `dotnet build` in `tests/devcli-consumer-check` (the content compiled as a strict net11
+consumer, warnings as errors) succeeded.
+
+### Follow-ups
+
+- Release 4.0.0-beta.15 after merge (`dev release`), then ganda 655/656 pin to it.
+- `push.paths-ignore` in `workflow.yml` and `pullRequestBuild` in `dev.jsonc` are two lists for
+  two events; the comment beside each names the other.
 
 ## Notes
 

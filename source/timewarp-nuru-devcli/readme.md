@@ -35,6 +35,8 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `AttestationVerifier` (`AttestationNoteDto`, `AttestationEvaluation`, `AttestationVerificationStatus`) | Pure verifier for ganda-audit attestation notes (kanban task 458-010): parses the frozen v1 note JSON, rebuilds the canonical signed payload, decodes the unpadded-base64url signature, resolves `key_id` against a baked-in key registry (or a test-only `keyOverride`), and compares the note's tree against the tree being verified — no process execution; the actual Ed25519 verify (via `openssl pkeyutl -verify -rawin`) runs in `workflow-command.cs`, not here |
 | `AttestationConfig` | Config model for the attestation verify step's `mode` (`"off"`\|`"warn"`\|`"require"`; blank uses a context-sensitive default) |
 | `AttestationConfigResolver` (`AttestationMode`, `AttestationModeResolution`) | Pure resolver for `attestation.mode`: blank/absent → `(null, null)`; `"off"`/`"warn"`/`"require"` (case-insensitive) → enum; unrecognized non-blank → `(null, trimmed)` so callers can warn about a typo. `EffectiveMode(resolution, whenUnset)` applies context defaults (`DefaultPrMode` = Warn, `DefaultReleaseMode` = Require). Typos never silently become Off |
+| `PullRequestBuildClassifier` (`PullRequestBuildDecision`) | The fleet pull request build decision (kanban task 595). `DecideAsync(repoRoot, ct)` reads the GitHub event, runs `git diff --name-only base...head`, applies the non-build rule plus the repo's `pullRequestBuild` additions, and returns build or skip with the line to print. See [Pull request build decision](#pull-request-build-decision) |
+| `PullRequestBuildConfig` | Config model for `pullRequestBuild` in `.timewarp/dev.jsonc`: `buildPaths` and `nonBuildPaths` |
 
 ## Configuration
 
@@ -119,6 +121,93 @@ version is absent from NuGet; `--strict` fails the gap, not that membership chec
 `PrereleaseDistance` (namespace `DevCli`) is the pure function behind the line. A consuming repo
 that already declares that type name fails to compile with `CS0101`.
 
+## Pull request build decision
+
+The fleet standard for pull request CI (decided in timewarp-ganda tasks 476, 479, 565, 587):
+
+- One workflow, `.github/workflows/workflow.yml`. Its `pull_request` trigger has **no `paths`
+  or `paths-ignore` filter**, so every pull request reports the `CI` check and a docs-only pull
+  request is never refused at merge for a missing check. The `push` trigger may keep a filter.
+- The decision "does this pull request need build and test?" is made in `dev workflow` (C#), not
+  in YAML, by `PullRequestBuildClassifier` in this package. A rule change ships in a DevCli
+  version, and the pin-currency audit carries it to every repo.
+
+### The one call
+
+A repo's `workflow` command makes this call before it builds, in pull request mode:
+
+```csharp
+PullRequestBuildDecision decision = await PullRequestBuildClassifier.DecideAsync(repoRoot, ct);
+Terminal.WriteLine(decision.Message);
+if (!decision.RequiresBuild)
+{
+  return Unit.Value; // skip build and test; the run still reports success
+}
+```
+
+`repoRoot` is the repository root (the directory that holds `.timewarp/dev.jsonc`). The call:
+
+1. Reads `GITHUB_EVENT_NAME`. Anything other than `pull_request` builds, including `push`,
+   `release`, `workflow_dispatch`, and a local run with no event name.
+2. Reads `pull_request.base.sha` and `pull_request.head.sha` from the file at
+   `GITHUB_EVENT_PATH`.
+3. Runs `git diff --name-only base...head` in `repoRoot`. The checkout needs the history between
+   the two commits (`fetch-depth: 0`); a shallow checkout fails the diff, and a failed diff builds.
+4. Reads `pullRequestBuild` from `.timewarp/dev.jsonc` and applies the rule below.
+
+An unreadable event, a failed diff, and an unreadable or invalid `dev.jsonc` build. Only a
+definite all-non-build diff skips.
+
+### The rule
+
+A pull request skips build and test only when **every** changed path is a non-build path.
+It is ganda's `WorkflowChangeFilter.RequiresBuild`, ported exactly:
+
+| Path | Result |
+|------|--------|
+| `.github/workflows/**` | build |
+| `source/**`, `tests/**`, `tools/**`, `msbuild/**` (markdown too) | build, always |
+| `kanban/**`, `documentation/**`, `assets/**`, `notes/**`, the rest of `.github/**` | skip |
+| a file named `.editorconfig` anywhere else (warnings are errors) | build |
+| a file named `.gitignore` | skip |
+| any other `*.md` | skip |
+| anything else | build |
+| an empty diff | skip |
+
+### Repo additions (`pullRequestBuild`)
+
+A repo extends the lists in `.timewarp/dev.jsonc`. It does not fork the rule:
+
+```jsonc
+{
+  "pullRequestBuild": {
+    // Always build, even when a default non-build path covers them
+    // (here: files packed into the nupkgs).
+    "buildPaths": ["readme.md", "assets/logo.png"],
+    // Extra non-build trees and files.
+    "nonBuildPaths": ["skills/**", ".agent/**"]
+  }
+}
+```
+
+An entry is a repo-relative path. `dir`, `dir/`, and `dir/**` mean the directory tree; anything
+else is one exact path (`readme.md` is the root readme only). No other wildcards: an entry with
+`*` or `?` anywhere else is invalid, and an invalid entry makes the decision build with a message
+naming it. `buildPaths` win over every non-build list. `nonBuildPaths` cannot make `source/`,
+`tests/`, `tools/`, `msbuild/`, `.github/workflows/`, or `.editorconfig` non-build; the rule
+checks those first.
+
+The additions live in `dev.jsonc`, not in a call argument, so the call is the same line in
+every repo (ganda's audit looks for it) and the additions are data that a person or an audit
+reads without parsing C#.
+
+### Split CI jobs
+
+A workflow that runs build and test in several jobs runs the decision once, in a first job, and
+gates the others on its output. timewarp-nuru does this: `dev workflow --stage classify` makes
+the one call and writes `code=true|false` to `GITHUB_OUTPUT`; the stage jobs run only when
+`code != 'false'`, and the required `ci` job is skipped (which reports success) on `false`.
+
 ## Installation
 
 Add the package to your project:
@@ -157,6 +246,21 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 4.0.0-beta.15+: shared pull request build decision (`pull-request-build-classifier.cs`, kanban task 595)
+
+`PullRequestBuildClassifier` replaces the hand copies of the non-build path rule (ganda's
+`WorkflowChangeFilter`, the factory template's `NonBuildPaths`, and per-repo copies).
+
+**To adopt:**
+
+- Delete the repo's own copy of the rule and call
+  `PullRequestBuildClassifier.DecideAsync(repoRoot, ct)` from the `workflow` command (see
+  [The one call](#the-one-call)). A local type named `PullRequestBuildClassifier`,
+  `PullRequestBuildDecision`, or `PullRequestBuildConfig` in namespace `DevCli` fails the build
+  with `CS0101`.
+- Remove `paths` / `paths-ignore` from the `pull_request` trigger in `workflow.yml`.
+- Move repo-specific additions to `pullRequestBuild` in `.timewarp/dev.jsonc`.
 
 ### Next release after 4.0.0-beta.10: publish gates read only the declared feeds (kanban task 564)
 

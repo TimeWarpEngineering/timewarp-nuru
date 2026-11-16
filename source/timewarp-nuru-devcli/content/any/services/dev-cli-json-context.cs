@@ -12,6 +12,7 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(RepoConfig))]
 [JsonSerializable(typeof(CheckVersionConfig))]
 [JsonSerializable(typeof(AttestationConfig))]
+[JsonSerializable(typeof(PullRequestBuildConfig))]
 [JsonSerializable(typeof(NuGetVersionIndex))]
 [JsonSerializable(typeof(NuGetServiceIndex))]
 [JsonSerializable(typeof(MsBuildEvaluationOutput))]

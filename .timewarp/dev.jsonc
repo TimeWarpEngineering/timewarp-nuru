@@ -8,7 +8,7 @@
     // "feeds" (kanban task 564): nuget.org | github-packages, comma-separated.
     // Absent means nuget.org, which is the only feed this repo publishes to, so
     // the publish gates never contact GitHub Packages or need a token for it.
-  }
+  },
 
   // Attestation verify step (kanban tasks 458-010, 458-011). Values:
   // off | warn | require. One key for all pipeline modes.
@@ -22,4 +22,15 @@
   // "attestation": {
   //   "mode": "warn"
   // }
+
+  // Pull request build decision (kanban task 595): additions to the
+  // PullRequestBuildClassifier rule in TimeWarp.Nuru.DevCli. An entry is a path,
+  // "dir/", or "dir/**". buildPaths always build; nonBuildPaths skip, but never
+  // source/, tests/, tools/, msbuild/, .github/workflows/, or .editorconfig.
+  // readme.md and assets/logo.png are packed into the nupkgs, so they build.
+  // These match the push trigger's paths-ignore in .github/workflows/workflow.yml.
+  "pullRequestBuild": {
+    "buildPaths": ["readme.md", "assets/logo.png"],
+    "nonBuildPaths": ["skills/**", ".agent/**", ".claude/**"]
+  }
 }

@@ -36,6 +36,7 @@ Acceptance:
 - No step needs `sudo` on the wslc image. zsh is baked and the apt fallback is hosted-only. The image already has `pwsh` (`/usr/bin/pwsh` from the .NET SDK base image), so the `pwsh` run steps need no install step. The GitHub NuGet cache stays off on wslc.
 - Check names (`changes`, `build`, `samples`, `test-multi`, `test-standalone`, `ci`) are unchanged; release/OIDC unchanged.
 - Hosted baseline wall and queue times recorded; the wslc numbers come from this PR's own CI run.
+- (CI red on PR #417) Every test passes on the wslc image without skips. The stdin-TTY test in `routing-33b` gets its pty from util-linux `script` (in the image and on ubuntu-latest) instead of `python3` (not in the image). Only stdin is the pty; stdout and stderr stay separate so the assertions keep their meaning. No other wslc stage needs `python3`.
 
 ## Checklist
 
@@ -51,6 +52,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2
 - Round 2: Done
+- Round 3: Blocked — open M3
 ## Notes
 
 - Related nuru tasks: 537 (path filters), 538 (parallel jobs). Not a hard depends-on edge; ordering vs 538 is decided by the capacity check.
@@ -67,8 +69,12 @@ Acceptance:
 - 2026-11-15 review round 1 re-run after host restart (Claude Opus 5.5, ganda task work review oracle): effort 2 (Budget.ByDiff 446 lines vs `origin/feature/groom-2026-11-15`), roster general, turn cap 120. No targeted command.
 - 2026-11-16 review round 2 (Grok 4.7, ganda task work review oracle): effort 3 (Budget.ByDiff 7104 lines vs `master`), roster general, turn cap 200. One targeted command: `git merge-tree --write-tree master HEAD`. Round 1 files were not edited.
 - 2026-11-16 implement-fix-2 (Claude Opus 5.5, ganda task work): M1 removed `.github/actions/install-pwsh` and the `Install PowerShell` step; Goal, Results and How to validate corrected. M2 rewrote the Branch base, Session and Gates preamble. Merged `origin/master` to clear `package-pin-currency`. Gates re-run.
+- 2026-11-16 implement (Claude Opus 5.5, ganda task work): CI red on PR #417. The `routing-33b` stdin-TTY test now gets its pty from `script`, not `python3`. Gates re-run.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2c3-7a19-73b3-b14c-d7502b85246c, max-turns 200, artifacts general.md, merged.md — 2026-11-16T05:20:59Z
 - 2026-11-16 review-2 post-fix (Grok 4.7, ganda task work review oracle): effort 2 (Budget.ByDiff 393 lines), roster general, turn cap 120. Re-reviewed `aabb1737..fea0ecf3`. M1 and M2 fixed. No new findings. Session 01a1e2d9-dfac-7083-baea-4764e549234f.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-16T06:01:26Z
+- 2026-11-16 review round 3 (Grok 4.7, ganda task work review oracle): effort 2 (Budget.ByDiff 305 lines), roster general, turn cap 120. Re-reviewed HEAD `8839dfd6`. M1 and M2 still fixed. M3 open (`task.md` conflicts with master `4747af42`). One targeted command: `git merge-tree --write-tree master HEAD`. Session 01a1e2f2-5637-7363-90d6-23534a0fa267.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2f2-5637-7363-90d6-23534a0fa267, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-16T06:12:28Z
 
 ## Results
 
@@ -128,6 +134,8 @@ Median run wall about 8 m 23 s. `changes` and `ci` add about 10 s each.
 
 - Smoke: `gh pr checks <this PR>` then `gh api /repos/TimeWarpEngineering/timewarp-nuru/actions/runs/<run id>/jobs --jq '.jobs[] | "\(.name) \(.runner_name)"'`
 - Expect: `build`, `samples`, `test-multi`, `test-standalone` show `twe-runner-01-i*` runner names and pass; `changes` and `ci` show `GitHub Actions *`; the `ci` check is green. There is no `Install PowerShell` step; `Runner size` (the first `pwsh` step) passes on wslc. In `test-multi`, `Read OS codename` and `Cache zsh packages` are skipped and `Install zsh` prints `zsh is already installed.`
+- Smoke: `dotnet run tests/timewarp-nuru-tests/routing/routing-33b-json-args-stdin-and-defaults.cs` (on a machine without `python3`, or in the wslc image)
+- Expect: 4 of 4 pass, including `Should_cover_stdin_tty_and_a_builtin_that_does_not_read_stdin`; `grep -n python3` on that file finds only the comment.
 - Smoke: `actionlint -shellcheck= .github/workflows/workflow.yml` (actionlint v1.7.12)
 - Expect: exit 0, no output.
 
@@ -144,6 +152,16 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 | `./bin/dev test` (2026-11-16 fix pass, after the master merge, runfile cache cleared) | passed, exit 0. Multi-mode execute finished in 77.6 s. Standalone finished in 32.8 s (0 failed). `Tests completed successfully!` |
 | `ganda repo audit` (2026-11-16 fix pass) | first run failed `package-pin-currency` (Amuru beta.2, Contracts beta.32, Mediator beta.8 behind; master already had the bumps). Merged `origin/master`; rerun: `Repository passes all audit checks.` |
 | `actionlint` | not installed on this machine; not run this pass. The edit only deletes one `uses:` step |
+| `./bin/dev build` (2026-11-16 CI-red fix, python3 to `script`) | passed, 0 warnings, 0 errors |
+| `./bin/dev test` (2026-11-16 CI-red fix) | passed, exit 0. Multi-mode execute finished in 79.7 s (`Should_cover_stdin_tty_and_a_builtin_that_does_not_read_stdin` passed). Standalone finished in 25.6 s (0 failed). `Tests completed successfully!` |
+| `ganda repo audit` (2026-11-16 CI-red fix) | `Repository passes all audit checks.` |
+
+### 2026-11-16 CI-red fix (python3 missing on wslc)
+
+- `tests/timewarp-nuru-tests/routing/routing-33b-json-args-stdin-and-defaults.cs`: `RunOnPty` now runs `script -q -e -c '<dotnet run …> >out 2>err' /dev/null` (util-linux) instead of a `python3` pty helper. The child's stdin is the pty; its stdout and stderr go to temp files, as with the python helper, so the `requires redirected stdin` assertion means the same thing. `-e` returns the child's exit code. The test still runs on wslc; nothing is skipped.
+- Checked in the image: `wslc.exe run --rm twe-runner-01 bash -c "… printf '' | script -q -e -c 'sleep 2; test -t 0 && echo stdin-tty …; exit 1' /dev/null …"` printed `no-python3`, uid `1001`, `script-exit=1`, `stdin-tty`.
+- No other wslc stage needs python: `grep -rl python` outside `bin/`, `obj/`, `artifacts/`, `kanban/` hits only this test (and two old `.agent/workspace` notes).
+- Proof on wslc is the next PR #417 CI run (`test-multi` green on a `twe-runner-01-i*` runner).
 
 ### 2026-11-15 review round 1
 
@@ -178,7 +196,44 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 - Disposition: clean. Final open count 0. No wontfix.
 - Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
+### 2026-11-16 review round 3
+
+- Roster: general. Effort: 2 (Budget.ByDiff 305 lines). Turn cap 120. Rounds: 3. Round 1 and round 2 files were left as they were.
+- Counts (live ledger `review/round-3/merged.md`): bug 0; suggestion 1 open (M3), 1 fixed (M1); nit 1 fixed (M2); wontfix 0.
+- M1 still fixed: no `install-pwsh` action or step. The kitchen says the image already has `/usr/bin/pwsh`.
+- M2 still fixed: Branch base, the Grok Session line, and the Gates preamble record `d7f84ffd`, `0486ecc5`, and `c964078c`.
+- M3 open: `git merge-tree --write-tree master HEAD` exits 1. The only conflict is `task.md` against master `4747af42` (`land kanban 539`). Product files merge clean. Keep this branch's `task.md` when merging master.
+- The `script` change matches the CI-red addendum. `RunOnPty` uses util-linux `script` so only stdin is a pty. The tty assertion is unchanged. Recorded gates from the CI-red fix pass cover the test. This review did not re-run build, test, or audit.
+- Disposition: not closed. One finding is open, so this is not `clean` or `accepted-exceptions`. Fix pass needed for M3.
+- Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
+
 ## Learnings
 
 - The routing restatement matches the task. "Move the ci job" means the post-538 `stage` matrix (`build`, `samples`, `test-multi`, `test-standalone`). The required `ci` aggregate stays on `ubuntu-latest`, which the task also requires. That is not a misread.
 - Misread, corrected in the round-2 fix pass: the Goal acceptance line used to say the image has no `pwsh` and that each stage extracts PowerShell 7.7.0. The task does not say that. It says to adapt steps that need `sudo` or a tool the image lacks (the named case is zsh). The image base already provides `pwsh`. The line now says that, and there is no install step. The corrected restatement matches the task.
+- Round 3: the `script` acceptance line matches the CI-red addendum (do not skip the test; take the pty from `script`; no other wslc stage needs `python3`). That is not a misread.
+
+## CI red on PR #417 (2026-11-16)
+
+`test-multi` failed on the wslc runner (run 43812271591): 1 of 2238 tests.
+
+- Test: `Should_cover_stdin_tty_and_a_builtin_that_does_not_read_stdin`
+  (`tests/timewarp-nuru-tests/routing/routing-33b-json-args-stdin-and-defaults.cs:179`).
+- Error: `Win32Exception: Failed to start a process with file path 'python3'`.
+- Cause: the test starts `python3` to give the child a pty on stdin. The `twe-runner-01`
+  image has no `python3` and no `python`. Checked with
+  `wslc.exe run --rm twe-runner-01 bash -c 'command -v python3 python script apt-get; id -u'`:
+  it prints `/usr/bin/script`, `/usr/bin/apt-get`, and uid `1001`. GitHub-hosted
+  `ubuntu-latest` has `python3`, so the test passed there.
+- This PR is the first to run that test on wslc, so the failure belongs to this task.
+
+Fix it so the test still runs on the wslc runner. Do not skip it there. Either the
+workflow makes `python3` available on the wslc runner, or the test gets its pty from
+`script` (present in the image and on ubuntu-latest) and no longer needs python.
+Check the other wslc stages for the same dependency.
+
+why: Steven's cockpit 2026-11-16, `ganda pr merge 417` parked on CI red
+
+## Blocked
+
+2026-11-16: review verdict refused: Done with no roster findings. Round folder: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-539-run-ci-on-the-local-wslc-runner-for-same-repo-push/kanban/in-progress/539-run-ci-on-the-local-wslc-runner-for-same-repo-push-and-pr-events-forks-stay-on-github-hosted/review/round-4. Oracle log: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-nuru/task-539-run-ci-on-the-local-wslc-runner-for-same-repo-push/kanban/in-progress/539-run-ci-on-the-local-wslc-runner-for-same-repo-push-and-pr-events-forks-stay-on-github-hosted/oracle-review-2-20261116t054405011z.log.

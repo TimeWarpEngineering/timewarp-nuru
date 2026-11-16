@@ -182,3 +182,24 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 
 - The routing restatement matches the task. "Move the ci job" means the post-538 `stage` matrix (`build`, `samples`, `test-multi`, `test-standalone`). The required `ci` aggregate stays on `ubuntu-latest`, which the task also requires. That is not a misread.
 - Misread, corrected in the round-2 fix pass: the Goal acceptance line used to say the image has no `pwsh` and that each stage extracts PowerShell 7.7.0. The task does not say that. It says to adapt steps that need `sudo` or a tool the image lacks (the named case is zsh). The image base already provides `pwsh`. The line now says that, and there is no install step. The corrected restatement matches the task.
+
+## CI red on PR #417 (2026-11-16)
+
+`test-multi` failed on the wslc runner (run 43812271591): 1 of 2238 tests.
+
+- Test: `Should_cover_stdin_tty_and_a_builtin_that_does_not_read_stdin`
+  (`tests/timewarp-nuru-tests/routing/routing-33b-json-args-stdin-and-defaults.cs:179`).
+- Error: `Win32Exception: Failed to start a process with file path 'python3'`.
+- Cause: the test starts `python3` to give the child a pty on stdin. The `twe-runner-01`
+  image has no `python3` and no `python`. Checked with
+  `wslc.exe run --rm twe-runner-01 bash -c 'command -v python3 python script apt-get; id -u'`:
+  it prints `/usr/bin/script`, `/usr/bin/apt-get`, and uid `1001`. GitHub-hosted
+  `ubuntu-latest` has `python3`, so the test passed there.
+- This PR is the first to run that test on wslc, so the failure belongs to this task.
+
+Fix it so the test still runs on the wslc runner. Do not skip it there. Either the
+workflow makes `python3` available on the wslc runner, or the test gets its pty from
+`script` (present in the image and on ubuntu-latest) and no longer needs python.
+Check the other wslc stages for the same dependency.
+
+why: Steven's cockpit 2026-11-16, `ganda pr merge 417` parked on CI red

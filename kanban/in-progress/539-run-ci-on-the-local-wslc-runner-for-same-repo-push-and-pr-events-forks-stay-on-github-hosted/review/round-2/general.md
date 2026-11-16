@@ -1,0 +1,27 @@
+# Round 2 — general
+**Date:** 2026-11-16
+**Scope reviewed:** branch `task/539-run-ci-on-the-local-wslc-runner-for-same-repo-push` (HEAD `aabb1737`) against current `master` (`5f0d2c7c`). Product files: `.github/workflows/workflow.yml`, `.github/actions/setup-dotnet/action.yml`, `.github/actions/install-pwsh/action.yml`. Kitchen: Goal restatement, Results, How to validate, Gates. Round 1 findings re-read against the unchanged product diff (`d7f84ffd`).
+
+## Summary
+
+The `stage` job routes same-repo `push` and `pull_request` events to `["self-hosted", "twe-001", "wslc"]`, and sends fork PRs, `workflow_dispatch`, and a `CI_HOSTED_ONLY=true` kill switch to `ubuntu-latest`. `changes`, `ci`, and `release` stay on `ubuntu-latest`. Check names and the release OIDC permissions are unchanged. zsh's `sudo` path is still behind `Get-Command zsh`, and the Read OS / Cache zsh steps are hosted-only. The NuGet Actions cache is passed only when `runner.environment == 'github-hosted'`. A deleted PR head repo makes `head.repo.full_name` null, which fails the same-repo comparison and stays hosted.
+
+The goal restatement matches the task on routing. The task's "ci job" is the post-538 `stage` matrix; the required `ci` aggregate stays hosted, which is what the task also requires. That is not a misread. The restatement adds an acceptance line the task does not contain: the image has no `pwsh`, so the stage job extracts PowerShell 7.7.0. That line is factually wrong (M1).
+
+Round 1's M1 and M2 are still open. No product file changed after `d7f84ffd`. The image base `mcr.microsoft.com/dotnet/sdk:10.0-noble` installs PowerShell and links `/usr/bin/pwsh` (current SDK Dockerfile pins PowerShell 7.6.9). The infra runner Dockerfile does not remove it. The install action's `command -v pwsh` guard therefore exits before the download on the only runner that calls it.
+
+The 7104-line three-dot diff is the criss-cross merge-base (`08f89145` and groom tip `7ee4a2d`), not a second copy of tasks 496, 497, and 520 that a merge would replay. Targeted command, one, for that suspicion: `git merge-tree --write-tree master HEAD`. Exit 0, tree `826d65f3`, no conflicts. The merged tree keeps Amuru `3.0.0-beta.5`, CsCheck `5.0.1`, `Gen.OneOf`, task 496 in `kanban/done/`, and the 539 workflow. The wslc NuGet mount is only `/home/runner/.nuget/packages` on a fresh `wslc run --rm` container (`runner/run-loop.ps1`), so `dotnet tool install --global dotnet-coverage` does not hit an already-installed tool. No full build, test, or audit.
+
+## Issues
+
+### Issue 1 — Severity: suggestion
+- File: .github/actions/install-pwsh/action.yml:3 (also .github/workflows/workflow.yml:185-187; task.md Goal acceptance line 36, Results pwsh bullet, ### How to validate)
+- Description: Carried from round 1 as M1. Still open. The wslc image already has PowerShell. `timewarp-infrastructure` `runner/Dockerfile` is `FROM mcr.microsoft.com/dotnet/sdk:10.0-noble` and never removes pwsh. The SDK image Dockerfile (`dotnet/dotnet-docker` `src/sdk/10.0/noble/amd64/Dockerfile`) downloads PowerShell 7.6.9 and runs `ln -s /usr/share/powershell/pwsh /usr/bin/pwsh`. Round 1's targeted `wslc run --rm twe-runner-01` also reported `/usr/bin/pwsh`. This round did not re-run wslc. The action description, the workflow step comment, the Goal acceptance line, and the Results pwsh bullet all say the image has no pwsh. `### How to validate` expects `Installed 7.7.0`. The step will print `pwsh is already installed:` and the pinned 7.7.0 tarball never runs. The early-exit path is safe, so CI is not broken. The record and the proof text are wrong, and the action is unused on the runner that calls it.
+- Suggestion: Remove `.github/actions/install-pwsh/` and the `Install PowerShell` step. Delete the "image has no pwsh / extracts 7.7.0" acceptance line and the Results pwsh bullet. Change How to validate so it does not expect `Installed 7.7.0`. If the action stays as a guard for a future image without pwsh, say that in the action description and the workflow comment, and expect `pwsh is already installed`.
+- Status: open
+
+### Issue 2 — Severity: nit
+- File: kanban/in-progress/539-run-ci-on-the-local-wslc-runner-for-same-repo-push-and-pr-events-forks-stay-on-github-hosted/task.md:79 (also Session Grok line 61 and ### Gates preamble line 127)
+- Description: Carried from round 1 as M2. Still open, and the suggested rewrite from round 1 is no longer the right wording. The Results still say this walk reset the branch to `origin/master` (`08f89145`) and kept only the 539 change. That was true of `d7f84ffd`. HEAD `aabb1737` also contains `0486ecc5`, which merged `origin/feature/groom-2026-11-15` back in. Current `master` (`5f0d2c7c`) is 16 commits ahead of this branch: it already merged that groom branch (PR #415) and landed task 594. The Gates preamble says the proof is the post-reset tree. The product files of 539 are still `d7f84ffd`, so the build, test, and audit record still covers the CI edit. The narrative does not describe the branch that exists now.
+- Suggestion: Rewrite the Branch base bullet, the Grok Session line, and the Gates preamble. Say `d7f84ffd` was replayed onto `08f89145`, then `0486ecc5` merged the groom branch, and the branch is behind current master. Say the merge preview `git merge-tree --write-tree master HEAD` (tree `826d65f3`) keeps task 594's pins and leaves 496, 497, and 520 in done. Do not reset or rebase the branch as part of this wording fix.
+- Status: open

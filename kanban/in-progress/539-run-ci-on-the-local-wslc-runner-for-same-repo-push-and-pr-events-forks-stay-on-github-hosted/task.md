@@ -33,7 +33,7 @@ Acceptance:
 
 - The `stage` matrix job's `runs-on` picks `["self-hosted", "twe-001", "wslc"]` only for same-repo push and PR events; everything else gets `ubuntu-latest`.
 - The fork-safety settings are confirmed live and recorded: fork PR approval `all_external_contributors` (org and repo), and the runner group that lets this public repo use the runners was created with Steven's yes (infrastructure 004).
-- No step needs `sudo` on the wslc image. zsh is baked and the apt fallback is hosted-only. The image has no `pwsh`, so each stage job extracts PowerShell 7.7.0 into `~/.local` with bash before any `pwsh` step. The GitHub NuGet cache stays off on wslc.
+- No step needs `sudo` on the wslc image. zsh is baked and the apt fallback is hosted-only. The image already has `pwsh` (`/usr/bin/pwsh` from the .NET SDK base image), so the `pwsh` run steps need no install step. The GitHub NuGet cache stays off on wslc.
 - Check names (`changes`, `build`, `samples`, `test-multi`, `test-standalone`, `ci`) are unchanged; release/OIDC unchanged.
 - Hosted baseline wall and queue times recorded; the wslc numbers come from this PR's own CI run.
 
@@ -47,6 +47,10 @@ Acceptance:
 - [ ] Record before/after wall time and queue time (before recorded; after = this PR's CI run)
 - [ ] Open a PR with run links as proof (host open-pr)
 
+## Review
+
+- Round 1: Blocked — open M1, M2
+
 ## Notes
 
 - Related nuru tasks: 537 (path filters), 538 (parallel jobs). Not a hard depends-on edge; ordering vs 538 is decided by the capacity check.
@@ -58,9 +62,11 @@ Acceptance:
 
 - Created: 985504 (2026-10-25)
 - 2026-11-15 implement (Claude Opus 5.5, ganda task work): live checks of runners, runner groups and fork approval; workflow edit; gates.
-- 2026-11-15 implement (Grok 4.7, ganda task work): the claim branch had been cut from `feature/groom-2026-11-15` and would have pulled tasks 496, 497, and 520 into the PR. Replayed only the 539 workflow and kitchen onto `origin/master`. The wslc image has no `pwsh`; the stage job extracts PowerShell 7.7.0 without sudo before any `pwsh` step. Gates re-run on that tree.
+- 2026-11-15 implement (Grok 4.7, ganda task work): the claim branch had been cut from `feature/groom-2026-11-15` and would have pulled tasks 496, 497, and 520 into the PR. Replayed only the 539 workflow and kitchen onto `origin/master` (`d7f84ffd`). Added an `install-pwsh` action on the wrong premise that the wslc image has no `pwsh` (removed in the round-2 fix pass, M1). Gates re-run on that tree. A later walk step merged `origin/feature/groom-2026-11-15` back in (`0486ecc5`).
 - 2026-11-15 review round 1 (Claude Opus 5.5, ganda task work review oracle): effort 3, roster general, turn cap 200. One targeted command: `wslc run --rm twe-runner-01` tool check.
 - 2026-11-15 review round 1 re-run after host restart (Claude Opus 5.5, ganda task work review oracle): effort 2 (Budget.ByDiff 446 lines vs `origin/feature/groom-2026-11-15`), roster general, turn cap 120. No targeted command.
+- 2026-11-16 review round 2 (Grok 4.7, ganda task work review oracle): effort 3 (Budget.ByDiff 7104 lines vs `master`), roster general, turn cap 200. One targeted command: `git merge-tree --write-tree master HEAD`. Round 1 files were not edited.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2c3-7a19-73b3-b14c-d7502b85246c, max-turns 200, artifacts general.md, merged.md — 2026-11-16T05:20:59Z
 
 ## Results
 
@@ -75,8 +81,8 @@ Acceptance:
   Ganda's model expression minus its `repository.private == true` check, plus a repo-variable kill switch: set `CI_HOSTED_ONLY=true` (Settings, Actions variables) to send every run back to hosted when TWE-001 is offline. Without it, same-repo jobs would queue until the runners return.
 - `changes`, `ci` (the required aggregate) and `release` stay on `ubuntu-latest`. `changes` needs `yq` (not in the wslc image) and is a 10 s gate; `ci` only downloads/uploads artifacts and calls `gh api`. Keeping them hosted leaves all four wslc slots for the four stages and keeps the `ci` check from queueing behind other repos. `workflow_dispatch` (all modes) and `release` stay hosted; OIDC trusted publishing unchanged. Job and check names unchanged.
 - zsh: the wslc image bakes zsh 5.9 and has no sudo. `Read OS codename` and `Cache zsh packages` now run only when `runner.environment == 'github-hosted'`; `Install zsh` already exits 0 when zsh is present, so the `sudo` path is hosted-only.
-- pwsh: the image is `mcr.microsoft.com/dotnet/sdk:10.0-noble` plus tools (infra 004 Dockerfile). It has no PowerShell, and `defaults.run.shell` is `pwsh`, so every `run` step would fail on wslc. `workflow-pwsh-shell` rejects a bash step in the workflow file, so `.github/actions/install-pwsh` does the extract (official `powershell-7.7.0-linux-x64.tar.gz`, sha256 pinned, no sudo) and the stage job calls it only when `runner.environment == 'self-hosted'`. The 7.7.0 dotnet global tool is not used: NuGet has no `powershell.linux-x64` pack, so `dotnet tool install --global PowerShell` fails (PowerShell issue 28392). `~/.local/bin` is appended to `GITHUB_PATH`. Hosted runners skip the step.
-- Branch base: the first implement commit sat on `feature/groom-2026-11-15`, which is not in `origin/master` and carries tasks 496, 497, and 520. This walk reset the task branch to `origin/master` (`08f89145`) and kept only the 539 workflow and kitchen. The remote task branch is updated with `--force-with-lease` before review.
+- pwsh: the image is `mcr.microsoft.com/dotnet/sdk:10.0-noble` plus tools (infra 004 Dockerfile). The SDK base image ships PowerShell (`/usr/bin/pwsh`, 7.6.x) and the infra Dockerfile keeps it, so `defaults.run.shell: pwsh` works on wslc with no install step. Round 1 review confirmed it with `wslc run --rm twe-runner-01 … command -v pwsh`. An earlier `install-pwsh` action was removed in the round-2 fix pass (M1).
+- Branch base: the first implement commit sat on `feature/groom-2026-11-15` (tasks 496, 497, 520). The Grok walk reset the task branch to `origin/master` (`08f89145`) and replayed only the 539 change (`d7f84ffd`). The walk then merged `origin/feature/groom-2026-11-15` back in (`0486ecc5`). Master has since merged that groom branch (PR #415) and task 594, and is 16 commits ahead (`5f0d2c7c`). Round 2 review ran `git merge-tree --write-tree master HEAD`: clean (tree `826d65f3`), keeps Amuru beta.5, CsCheck 5.0.1, tasks 496, 497, 520 in done, and the 539 workflow; it does not revert 594. The product delta against master is the workflow and `setup-dotnet` change only. No reset or rebase for the round-2 fix pass.
 - `ganda repo audit --fix` deployed the current `prepare-commit-msg` runfile (the Task trailer hook). The branch did not have the attest baseline, so `memsearch-scaffold` warned.
 - `.github/actions/setup-dotnet/action.yml`: new input `nuget-cache` (default `true`). The stage job passes `runner.environment == 'github-hosted'`. Each wslc instance mounts a NuGet volume shared with ganda and architecture jobs, so saving it to nuru's Actions cache would carry their packages. Side effect: master pushes on wslc no longer refresh the hosted NuGet cache, so a later fork PR may restore an older key or download fresh.
 - `dotnet-coverage` installs to `~/.dotnet/tools`, which the image has on `PATH`. `setup-dotnet 11.0.x` installs into `/usr/share/dotnet`, which the image makes writable by `runner` (infra 004).
@@ -119,13 +125,13 @@ Median run wall about 8 m 23 s. `changes` and `ci` add about 10 s each.
 ### How to validate
 
 - Smoke: `gh pr checks <this PR>` then `gh api /repos/TimeWarpEngineering/timewarp-nuru/actions/runs/<run id>/jobs --jq '.jobs[] | "\(.name) \(.runner_name)"'`
-- Expect: `build`, `samples`, `test-multi`, `test-standalone` show `twe-runner-01-i*` runner names and pass; `changes` and `ci` show `GitHub Actions *`; the `ci` check is green. Each stage's `Install PowerShell` prints `Installed 7.7.0`. In `test-multi`, `Read OS codename` and `Cache zsh packages` are skipped and `Install zsh` prints `zsh is already installed.`
+- Expect: `build`, `samples`, `test-multi`, `test-standalone` show `twe-runner-01-i*` runner names and pass; `changes` and `ci` show `GitHub Actions *`; the `ci` check is green. There is no `Install PowerShell` step; `Runner size` (the first `pwsh` step) passes on wslc. In `test-multi`, `Read OS codename` and `Cache zsh packages` are skipped and `Install zsh` prints `zsh is already installed.`
 - Smoke: `actionlint -shellcheck= .github/workflows/workflow.yml` (actionlint v1.7.12)
 - Expect: exit 0, no output.
 
 ### Gates
 
-Re-run on this walk after the branch was reset onto `origin/master`. The earlier record was from the `feature/groom-2026-11-15` base and is not the proof for this diff.
+The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the groom merge `0486ecc5`. The round-2 fix pass rows below ran on HEAD after that merge, with the `install-pwsh` removal.
 
 | Command | Result |
 |---|---|
@@ -141,3 +147,17 @@ Re-run on this walk after the branch was reset onto `origin/master`. The earlier
 - Re-run (host restart, effort 2): M1 still open, product files unchanged since `d7f84ffd`. New M2 (nit, open): the "Branch base" bullet, the Grok Session line and the `### Gates` preamble say the branch was reset to `origin/master`, but HEAD `0486ecc5` merged `origin/feature/groom-2026-11-15` back in and that branch is this walk's base.
 - Counts after re-run: bug 0; suggestion 1 open (M1); nit 1 open (M2).
 - Disposition: pending (no `review/disposition.md` yet; 2 open, fix pass needed). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+### 2026-11-16 review round 2
+
+- Roster: general. Effort: 3 (7104-line three-dot count vs `master`). Turn cap 200. Rounds: 2. Round 1 files were left as they were.
+- Counts (this round's ledger, `review/round-2/merged.md`): bug 0 open; suggestion 1 open (M1); nit 1 open (M2); fixed 0; wontfix 0.
+- M1 still open: the wslc image already has `/usr/bin/pwsh` (SDK image PowerShell 7.6.9). `install-pwsh` never downloads 7.7.0, and How to validate expects `Installed 7.7.0`.
+- M2 still open: the Branch base bullet still describes a pure `origin/master` replay. HEAD includes the groom merge, and master is 16 commits ahead. `git merge-tree --write-tree master HEAD` is clean (tree `826d65f3`) and does not revert task 594.
+- Disposition: not written. Two findings are open, so this is not `clean` or `accepted-exceptions`. Fix pass needed for M1 and M2.
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`. No `review/disposition.md`.
+
+## Learnings
+
+- The routing restatement matches the task. "Move the ci job" means the post-538 `stage` matrix (`build`, `samples`, `test-multi`, `test-standalone`). The required `ci` aggregate stays on `ubuntu-latest`, which the task also requires. That is not a misread.
+- Misread: the Goal acceptance line says the image has no `pwsh` and that each stage job extracts PowerShell 7.7.0. The task does not say that. It says to adapt steps that need `sudo` or a tool the image lacks (the named case is zsh). The image base already provides `pwsh`. The false acceptance is M1.

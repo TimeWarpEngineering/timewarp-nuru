@@ -29,3 +29,21 @@ The first round-1 oracle wrote its files, but the host logged "review kitchen no
 - **Diff scope (re-run):** `origin/feature/groom-2026-11-15...HEAD` (HEAD `0486ecc5`). After the first round-1 run, the branch merged `origin/feature/groom-2026-11-15` back in, so the walk's base is the groom branch, not `master`. Product delta is unchanged: `d7f84ffd` (`.github/workflows/workflow.yml`, `.github/actions/setup-dotnet/action.yml`, `.github/actions/install-pwsh/action.yml`) plus kanban files.
 - **Budget.ByDiff:** 446 lines changed → effort 2; roster general; turn cap 120. (The first run recorded effort 3 from a 1032-line count against `master`.)
 - **Session:** review oracle re-run, Claude Opus 5.5 (ganda task work, print mode). No targeted command run in the re-run.
+
+## Budget (by-diff)
+
+- Lines changed: 7104
+- Effort: 3
+- TCB hits: none
+- Roster axes: general
+- Turn cap: 200 (--max-turns; cursor uncapped)
+
+## Round 2 (2026-11-16)
+
+Round 1 stays as written. No fix pass landed between round 1 and this review, so M1 and M2 are carried forward. This round does not edit `review/round-1/`.
+
+- **Diff scope:** branch `task/539-run-ci-on-the-local-wslc-runner-for-same-repo-push` (HEAD `aabb1737`) against current `master` (`5f0d2c7c`). `git merge-base --all` returns two bases (`08f89145` and groom tip `7ee4a2d`). `git diff master...HEAD` therefore counts 7104 lines (the groom feature plus the 539 edit). The tree diff `git diff master HEAD` is the CI files, `Directory.Packages.props`, the argv fuzz test, and kanban column drift from being 16 commits behind.
+- **Product scope reviewed:** `.github/workflows/workflow.yml`, `.github/actions/setup-dotnet/action.yml`, `.github/actions/install-pwsh/action.yml`, and the kitchen `## Goal` / `## Results` / `### How to validate` / `### Gates` record. The behind-master drift was checked with one merge preview, not by re-reviewing tasks 496, 497, 520, or 594.
+- **Effort:** 3. Roster: general. Turn cap: 200.
+- **Session:** Grok 4.7, ganda task work review oracle, print mode.
+- **Targeted command:** `git merge-tree --write-tree master HEAD`. Reason: the 7104-line three-dot diff looked like this branch would re-ship the groom feature and revert task 594. Exit 0, tree `826d65f3`. No conflicts. The merged tree keeps Amuru `3.0.0-beta.5`, CsCheck `5.0.1`, `Gen.OneOf`, task 496 under `kanban/done/`, and the 539 `runs-on` expression. No full build, test, or audit.

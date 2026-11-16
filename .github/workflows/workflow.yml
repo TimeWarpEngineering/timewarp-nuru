@@ -181,13 +181,6 @@ jobs:
           # use the cache.
           nuget-cache: ${{ runner.environment == 'github-hosted' }}
 
-      - name: Install PowerShell
-        # The wslc image has bash and no pwsh. This action extracts PowerShell
-        # before any pwsh run step. It stays out of this file because
-        # workflow-pwsh-shell rejects a bash step here (task 539).
-        if: runner.environment == 'self-hosted'
-        uses: ./.github/actions/install-pwsh
-
       - name: Runner size
         run: nproc && free -h
 

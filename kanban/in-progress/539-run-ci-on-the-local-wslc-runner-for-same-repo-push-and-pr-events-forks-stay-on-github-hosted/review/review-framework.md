@@ -32,7 +32,7 @@ The first round-1 oracle wrote its files, but the host logged "review kitchen no
 
 ## Budget (by-diff)
 
-- Lines changed: 393
+- Lines changed: 305
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -50,8 +50,17 @@ Round 1 stays as written. No fix pass landed between round 1 and this review, so
 
 ## Round 2 post-fix re-review (2026-11-16)
 
-The Budget block above is this launch (393 lines, effort 2, roster general, turn cap 120). The Round 2 section above is the pre-fix review. This re-review does not edit `review/round-1/`. It updates `review/round-2/` because that is the folder this host node reads.
+That post-fix launch counted 393 lines (effort 2, roster general, turn cap 120). The Budget block above is the round-3 count. The Round 2 section above is the pre-fix review. This re-review does not edit `review/round-1/`. It updates `review/round-2/` because that is the folder this host node reads.
 
 - **Diff scope:** `aabb1737` (round-1 `base.sha`) through HEAD `fea0ecf3`. Product delta is the install-pwsh deletion. `c964078c` merges `origin/master`; those product files match master.
 - **Session:** Grok 4.7, ganda task work review-2 oracle, print mode, session 01a1e2d9-dfac-7083-baea-4764e549234f.
 - **Targeted command:** none. M1 and M2 were checked by reading the workflow, the actions directory, and the kitchen. No full build, test, or audit.
+
+## Round 3 (2026-11-16)
+
+Round 1 and round 2 stay as written. This round reviews the CI-red fix (`b0e9d8ac`) and re-checks M1 and M2 on HEAD `8839dfd6`.
+
+- **Diff scope:** HEAD `8839dfd6` against `master` `4747af42` (merge-base `5f0d2c7c`). Product since `fea0ecf3`: `tests/timewarp-nuru-tests/routing/routing-33b-json-args-stdin-and-defaults.cs`. Product against the merge-base also includes `.github/workflows/workflow.yml` and `.github/actions/setup-dotnet/action.yml`.
+- **Effort:** 2 (Budget.ByDiff 305 lines). Roster: general. Turn cap: 120.
+- **Session:** Grok 4.7, ganda task work review oracle, print mode, session 01a1e2f2-5637-7363-90d6-23534a0fa267.
+- **Targeted command:** `git merge-tree --write-tree master HEAD`. Reason: the branch is 1 commit behind `master` (`4747af42`, `land kanban 539`), and that commit edits this kitchen. Exit 1. Conflict only in `task.md`. No full build, test, or audit.

@@ -52,6 +52,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2
 - Round 2: Done
+- Round 3: Blocked — open M3
 ## Notes
 
 - Related nuru tasks: 537 (path filters), 538 (parallel jobs). Not a hard depends-on edge; ordering vs 538 is decided by the capacity check.
@@ -72,6 +73,8 @@ Acceptance:
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2c3-7a19-73b3-b14c-d7502b85246c, max-turns 200, artifacts general.md, merged.md — 2026-11-16T05:20:59Z
 - 2026-11-16 review-2 post-fix (Grok 4.7, ganda task work review oracle): effort 2 (Budget.ByDiff 393 lines), roster general, turn cap 120. Re-reviewed `aabb1737..fea0ecf3`. M1 and M2 fixed. No new findings. Session 01a1e2d9-dfac-7083-baea-4764e549234f.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-16T06:01:26Z
+- 2026-11-16 review round 3 (Grok 4.7, ganda task work review oracle): effort 2 (Budget.ByDiff 305 lines), roster general, turn cap 120. Re-reviewed HEAD `8839dfd6`. M1 and M2 still fixed. M3 open (`task.md` conflicts with master `4747af42`). One targeted command: `git merge-tree --write-tree master HEAD`. Session 01a1e2f2-5637-7363-90d6-23534a0fa267.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e2f2-5637-7363-90d6-23534a0fa267, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-16T06:12:28Z
 
 ## Results
 
@@ -193,10 +196,22 @@ The 2026-11-15 rows ran on the `origin/master` replay (`d7f84ffd`), before the g
 - Disposition: clean. Final open count 0. No wontfix.
 - Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
+### 2026-11-16 review round 3
+
+- Roster: general. Effort: 2 (Budget.ByDiff 305 lines). Turn cap 120. Rounds: 3. Round 1 and round 2 files were left as they were.
+- Counts (live ledger `review/round-3/merged.md`): bug 0; suggestion 1 open (M3), 1 fixed (M1); nit 1 fixed (M2); wontfix 0.
+- M1 still fixed: no `install-pwsh` action or step. The kitchen says the image already has `/usr/bin/pwsh`.
+- M2 still fixed: Branch base, the Grok Session line, and the Gates preamble record `d7f84ffd`, `0486ecc5`, and `c964078c`.
+- M3 open: `git merge-tree --write-tree master HEAD` exits 1. The only conflict is `task.md` against master `4747af42` (`land kanban 539`). Product files merge clean. Keep this branch's `task.md` when merging master.
+- The `script` change matches the CI-red addendum. `RunOnPty` uses util-linux `script` so only stdin is a pty. The tty assertion is unchanged. Recorded gates from the CI-red fix pass cover the test. This review did not re-run build, test, or audit.
+- Disposition: not closed. One finding is open, so this is not `clean` or `accepted-exceptions`. Fix pass needed for M3.
+- Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
+
 ## Learnings
 
 - The routing restatement matches the task. "Move the ci job" means the post-538 `stage` matrix (`build`, `samples`, `test-multi`, `test-standalone`). The required `ci` aggregate stays on `ubuntu-latest`, which the task also requires. That is not a misread.
 - Misread, corrected in the round-2 fix pass: the Goal acceptance line used to say the image has no `pwsh` and that each stage extracts PowerShell 7.7.0. The task does not say that. It says to adapt steps that need `sudo` or a tool the image lacks (the named case is zsh). The image base already provides `pwsh`. The line now says that, and there is no install step. The corrected restatement matches the task.
+- Round 3: the `script` acceptance line matches the CI-red addendum (do not skip the test; take the pty from `script`; no other wslc stage needs `python3`). That is not a misread.
 
 ## CI red on PR #417 (2026-11-16)
 

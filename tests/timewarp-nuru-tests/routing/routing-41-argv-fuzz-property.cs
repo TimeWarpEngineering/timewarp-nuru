@@ -15,6 +15,7 @@
 // CsCheck's random SampleAsync (fresh seeds plus shrinking) runs only in the explore test, and only
 // when NURU_ARGV_FUZZ_EXPLORE=1, so CI timing and fresh randomness never block a build. `Faster`
 // is not used.
+// Constant picks use Gen.OneOf (params T[]), the CsCheck 5 name for a uniform choice among values.
 // The fuzz app calls AddConfiguration(): configuration detection is compilation-wide, so in the CI
 // multi-mode assembly every app has it, and the standalone run must match.
 // Handler exceptions propagate out of RunAsync by design (documentation/user/reference/builder-api.md),
@@ -111,12 +112,12 @@ public class ArgvFuzzPropertyTests
 
   /// <summary>One argv token, weighted toward tokens that reach deep into matching.</summary>
   public static readonly Gen<string> Token = Gen.Frequency(
-    (6, Gen.OneOfConst(KnownWords)),
-    (5, Gen.OneOfConst(KnownOptions)),
-    (5, Gen.OneOfConst(ValueTokens)),
-    (2, Gen.OneOfConst(BuiltInTokens)),
+    (6, Gen.OneOf(KnownWords)),
+    (5, Gen.OneOf(KnownOptions)),
+    (5, Gen.OneOf(ValueTokens)),
+    (2, Gen.OneOf(BuiltInTokens)),
     (2, UnknownOption),
-    (2, Gen.OneOfConst(UnicodeTokens)),
+    (2, Gen.OneOf(UnicodeTokens)),
     (2, IntToken),
     (1, Gen.String.AlphaNumeric),
     (1, Gen.String[0, 6]));
@@ -157,14 +158,14 @@ public class ArgvFuzzPropertyTests
   static readonly Gen<string> Value =
     Gen.Frequency(
       (3, Gen.String.AlphaNumeric),
-      (2, Gen.OneOfConst(UnicodeTokens)),
-      (1, Gen.OneOfConst(ValueTokens)),
+      (2, Gen.OneOf(UnicodeTokens)),
+      (1, Gen.OneOf(ValueTokens)),
       (1, Gen.String[0, 8]))
     .Select(static value => value.StartsWith('-') || value.StartsWith('/') ? "v" + value : value);
 
   static readonly Gen<int> Int = Gen.Int[-1000, 1000];
 
-  static readonly Gen<(string Token, Stage Stage)> StageToken = Gen.OneOfConst(
+  static readonly Gen<(string Token, Stage Stage)> StageToken = Gen.OneOf(
     ("Dev", Stage.Dev), ("dev", Stage.Dev), ("DEV", Stage.Dev),
     ("Staging", Stage.Staging), ("staging", Stage.Staging),
     ("Prod", Stage.Prod), ("prod", Stage.Prod), ("PROD", Stage.Prod));

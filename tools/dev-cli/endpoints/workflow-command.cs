@@ -13,6 +13,14 @@
 // The package integrity gate needs build and tests on one machine, so only
 // the full pipeline (stage all, the local default) runs it. In CI the
 // separate runners give the same guarantee.
+// Pull request build decision (task 595): PullRequestBuildClassifier from
+// TimeWarp.Nuru.DevCli content decides whether a pull request needs build and
+// test. --stage classify runs only that decision and writes code=true|false to
+// GITHUB_OUTPUT; workflow.yml's changes job runs it, and the stage jobs skip on
+// code=false. --stage all (the local default) asks the same question first and
+// stops before attestation when the answer is skip. The single stages never
+// re-ask: the changes job already did. Repo additions to the rule live in
+// .timewarp/dev.jsonc under pullRequestBuild.
 // Partial files: .verification, .release, .attestation, .publish.
 #endregion
 
@@ -23,8 +31,9 @@
 // Auto-detects mode from GITHUB_EVENT_NAME or accepts explicit --mode flag.
 //
 // Modes:
-//   pr/merge:  attestation -> clean -> build -> verify-samples -> test
-//              (--stage build|samples|test-multi|test-standalone runs one slice)
+//   pr/merge:  [pull request build decision] -> attestation -> clean -> build -> verify-samples -> test
+//              (--stage build|samples|test-multi|test-standalone runs one slice;
+//              --stage classify runs only the decision)
 //   release:   tag-gate -> check-version -> locate-run -> download-artifact -> verify -> push
 //              (no rebuild — promotes the exact .nupkg set that master-merge CI
 //              already built+tested+uploaded for this commit; kanban task 458-002)
@@ -45,7 +54,7 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
   [Option("mode", "m", Description = "CI mode: pr, merge, or release (auto-detected from GITHUB_EVENT_NAME if not specified)")]
   public string? Mode { get; set; }
 
-  [Option("stage", "s", Description = "PR/merge stage: all (default), build, samples, test-multi, or test-standalone")]
+  [Option("stage", "s", Description = "PR/merge stage: all (default), classify, build, samples, test-multi, or test-standalone")]
   public string? Stage { get; set; }
 
   [Option("api-key", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
@@ -57,6 +66,7 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
   internal sealed partial class Handler : IRequestHandler<WorkflowCommand, Unit>
   {
     private const string StageAll = "all";
+    private const string StageClassify = "classify";
     private const string StageBuild = "build";
     private const string StageSamples = "samples";
     private const string StageTestMulti = "test-multi";
@@ -95,9 +105,9 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("");
 
       string stage = string.IsNullOrEmpty(command.Stage) ? StageAll : command.Stage;
-      if (stage is not (StageAll or StageBuild or StageSamples or StageTestMulti or StageTestStandalone))
+      if (stage is not (StageAll or StageClassify or StageBuild or StageSamples or StageTestMulti or StageTestStandalone))
       {
-        throw new ArgumentException($"Unknown stage: {stage}. Valid options: all, build, samples, test-multi, test-standalone");
+        throw new ArgumentException($"Unknown stage: {stage}. Valid options: all, classify, build, samples, test-multi, test-standalone");
       }
 
       if (mode == CiMode.Release)
@@ -111,10 +121,38 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
       }
       else
       {
+        if (stage is StageAll or StageClassify)
+        {
+          // Task 595: the fleet pull request build decision, one call.
+          PullRequestBuildDecision decision = await PullRequestBuildClassifier.DecideAsync(ResolveRepoRoot(), ct);
+          Terminal.WriteLine(decision.Message);
+          if (stage == StageClassify)
+          {
+            await WriteGitHubOutputAsync("code", decision.RequiresBuild ? "true" : "false", ct);
+            return Unit.Value;
+          }
+
+          if (!decision.RequiresBuild)
+          {
+            return Unit.Value;
+          }
+        }
+
         await RunPrWorkflowAsync(command.Attestation, stage, ModeName(mode));
       }
 
       return Unit.Value;
+    }
+
+    private static async Task WriteGitHubOutputAsync(string name, string value, CancellationToken ct)
+    {
+      string? outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
+      if (string.IsNullOrEmpty(outputPath))
+      {
+        return;
+      }
+
+      await File.AppendAllTextAsync(outputPath, $"{name}={value}\n", ct);
     }
 
     private void WriteStepDuration(Stopwatch step, string label)

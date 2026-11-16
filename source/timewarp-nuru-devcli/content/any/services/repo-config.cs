@@ -19,4 +19,9 @@ internal sealed class RepoConfig
   /// Configuration for the ganda-audit attestation verify step (kanban task 458-010).
   /// </summary>
   public AttestationConfig? Attestation { get; set; }
+
+  /// <summary>
+  /// Repo additions to the pull request build rule (kanban task 595). See <see cref="PullRequestBuildClassifier"/>.
+  /// </summary>
+  public PullRequestBuildConfig? PullRequestBuild { get; init; }
 }

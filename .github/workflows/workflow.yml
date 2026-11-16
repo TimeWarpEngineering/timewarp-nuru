@@ -9,10 +9,11 @@ on:
     # conclude success, and `dev release` (step 8) and release-mode locate-run
     # treat a successful push run at the tag sha as tested, with a Packages-*
     # artifact. No run keeps that true. Required checks gate pull requests, not
-    # pushes, so nothing waits on a missing push run. Pull requests use the
-    # `changes` job below, which reads this list, so the list lives only here.
-    # Use `dir/**` or exact file names; the gate matches them as bash globs.
-    # readme.md and assets/logo.png are packed into the nupkgs, so they stay code.
+    # pushes, so nothing waits on a missing push run. Pull requests do not
+    # read this list: the `changes` job below runs PullRequestBuildClassifier
+    # (task 595) with the additions in .timewarp/dev.jsonc pullRequestBuild.
+    # readme.md and assets/logo.png are packed into the nupkgs, so they stay
+    # code here and are pullRequestBuild.buildPaths there.
     paths-ignore:
       - 'kanban/**'
       - 'documentation/**'
@@ -56,80 +57,42 @@ defaults:
 
 jobs:
   changes:
-    # Path gate for pull requests (task 537). Sets code=false only when every
-    # file the PR changes (and every rename source) matches push.paths-ignore.
-    # Any other event, or any failure here, means code=true. `ci` is the
-    # required check; a skipped job reports success, so a kanban-only PR stays
-    # mergeable without a build (the stage jobs skip too). release and
-    # workflow_dispatch are never gated.
-    runs-on: ubuntu-latest
+    # Pull request build decision (task 595, fleet standard from timewarp-ganda
+    # 476/479/565/587). `dev workflow --stage classify` runs
+    # PullRequestBuildClassifier (TimeWarp.Nuru.DevCli content) and writes
+    # code=false only when every changed path is a declared non-build path.
+    # The rule and this repo's additions (.timewarp/dev.jsonc pullRequestBuild)
+    # live in C#, not here. Only pull requests are classified; every other
+    # event, and any failure here, means code=true. `ci` is the required check;
+    # a skipped job reports success, so a kanban-only PR stays mergeable
+    # without a build (the stage jobs skip too). The pull_request trigger has
+    # no paths filter, so every pull request reports `ci`.
+    # Same runner choice as the stage jobs (see the comment there).
+    runs-on: >-
+      ${{ vars.CI_HOSTED_ONLY != 'true' &&
+      github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository &&
+      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
-      pull-requests: read
     outputs:
-      code: ${{ steps.gate.outputs.code }}
+      code: ${{ steps.gate.outputs.code || 'true' }}
     steps:
-      - name: Checkout workflow file
+      - name: Checkout repository
         if: github.event_name == 'pull_request'
         uses: actions/checkout@v7
         with:
-          sparse-checkout: .github/workflows/workflow.yml
-          sparse-checkout-cone-mode: false
+          fetch-depth: 0  # git diff base...head needs the merge base
+
+      - name: Setup .NET
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/setup-dotnet
+        with:
+          nuget-cache: ${{ runner.environment == 'github-hosted' }}
 
       - name: Classify changed paths
         id: gate
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:EVENT_NAME -ne 'pull_request') {
-            Write-Output "Event $($env:EVENT_NAME) is never path-gated: full build."
-            Write-Output 'code=true' >> $env:GITHUB_OUTPUT
-            exit 0
-          }
-
-          $patterns = @(yq -r '.on.push."paths-ignore"[]' .github/workflows/workflow.yml | Where-Object { $_ })
-          if ($LASTEXITCODE -ne 0) { throw 'yq failed to read push.paths-ignore.' }
-          if ($patterns.Count -eq 0) {
-            Write-Output '::warning::No push.paths-ignore patterns read from workflow.yml; building.'
-            Write-Output 'code=true' >> $env:GITHUB_OUTPUT
-            exit 0
-          }
-
-          $files = @(gh api --paginate "/repos/$($env:GITHUB_REPOSITORY)/pulls/$($env:PR_NUMBER)/files?per_page=100" `
-            --jq '.[] | .filename, (.previous_filename // empty)' | Where-Object { $_ })
-          if ($LASTEXITCODE -ne 0) { throw 'gh api failed to list the PR files.' }
-          # The files API stops at 3000 entries. A short list could hide code.
-          if ($files.Count -eq 0 -or $files.Count -lt [int]$env:PR_CHANGED_FILES) {
-            Write-Output "Listed $($files.Count) of $($env:PR_CHANGED_FILES) changed files; building."
-            Write-Output 'code=true' >> $env:GITHUB_OUTPUT
-            exit 0
-          }
-
-          # Glob to regex with bash [[ == ]] unquoted semantics: * and ** cross /, ? is one char.
-          $regexes = foreach ($p in $patterns) {
-            $r = [regex]::Escape($p)
-            $r = $r.Replace('\*\*', '.*').Replace('\*', '.*').Replace('\?', '.')
-            "^$r$"
-          }
-
-          foreach ($f in $files) {
-            $matched = $false
-            foreach ($r in $regexes) {
-              if ($f -match $r) { $matched = $true; break }
-            }
-            if (-not $matched) {
-              Write-Output "Code path changed: $f. Full build."
-              Write-Output 'code=true' >> $env:GITHUB_OUTPUT
-              exit 0
-            }
-          }
-
-          Write-Output "All $($files.Count) changed paths are non-code ($($patterns -join ' ')). Skipping the build."
-          Write-Output 'code=false' >> $env:GITHUB_OUTPUT
+        if: github.event_name == 'pull_request'
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage classify
 
   stage:
     # The PR/merge pipeline as parallel jobs (task 538): build (pack plus the

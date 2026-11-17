@@ -9,9 +9,11 @@ mode `require` on release). When the target commit's tree has no note, the job a
 GitHub Release already exist. A tag cannot be retried, so recovery is manual: attest the tree from a scratch
 branch tracking origin/master, push notes, `gh run rerun --failed`.
 
-Hit twice:
+Hit three times:
 - 4.0.0-beta.13 (task 582): release run 43492390251 aborted on merge-commit tree e479fb9.
 - 4.0.0-beta.14 (task 589): caught before tagging only because the operator checked the note by hand.
+- 4.0.0-beta.15 (2026-11-16): the target was merge commit 8a002f0 (PR #418) with no note; the operator attested it from a
+  scratch worktree before tagging.
 
 **How the tree came to be unattested (589, verified):**
 
@@ -30,7 +32,7 @@ the cause: any unattested target must refuse before the tag.
 ## Requirements
 
 - New guard in `dev release` (shared DevCli content, `source/timewarp-nuru-devcli/content/any/endpoints/release-command.guards.cs`
-  and `release-guard.cs`), evaluated after the release target is selected and in `--dry-run` too:
+  and `source/timewarp-nuru-devcli/content/any/services/release-guard.cs`), evaluated after the release target is selected and in `--dry-run` too:
   fetch `refs/notes/ganda-audit`, read the note for `<target>^{tree}`, run `AttestationVerifier.Evaluate` and the
   signature check, and honour the repo's attestation mode through `AttestationConfig` (`off` skips, `warn` prints,
   `require` refuses). Use the same effective mode the release job will use, so local and CI agree.
@@ -57,6 +59,7 @@ the cause: any unattested target must refuse before the tag.
 ## Session
 
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-15)
+- 2026-11-17 groom: `release-guard.cs` path corrected to `content/any/services/`; added the beta.15 occurrence.
 
 ## Notes
 

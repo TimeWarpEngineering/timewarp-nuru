@@ -28,8 +28,8 @@
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.16" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.1-beta.1" />
     <!-- Held at beta.11: beta.13+ ships TWA0038 (500-line cap); task 581 splits the long files, then bumps. TWA0004 (#region Purpose) is clean since task 580. -->
-    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.16" />
-    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.33" />
+    <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.17" />
+    <PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.34" />
     <!-- TimeWarp.Contracts 2.0.0-beta.31 depends on TimeWarp.Mediator 15.0.0-beta.4, so the two move together (task 566). -->
     <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.10" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.10" />

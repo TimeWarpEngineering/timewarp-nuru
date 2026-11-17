@@ -618,9 +618,12 @@ Points to check:
 ## Tests
 
 `System.CommandLine` tests usually call `root.Parse(args)` or `InvokeAsync(args, console)`. In Nuru, run the
-app with a `TestTerminal` and assert on the output and the exit code:
+app with a `TestTerminal` and assert on the output and the exit code. `ShouldBeTrue()` comes from the
+[Shouldly](https://www.nuget.org/packages/Shouldly) package; use your test framework's assertion if you do
+not reference it:
 
 ```csharp
+using Shouldly;
 using TimeWarp.Terminal;
 
 using TestTerminal terminal = new();

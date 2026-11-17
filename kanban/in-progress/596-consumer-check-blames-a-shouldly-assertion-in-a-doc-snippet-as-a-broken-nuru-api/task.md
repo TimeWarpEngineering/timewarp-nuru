@@ -126,6 +126,16 @@ Round-2 fix pass (after M1, skill doc edit only):
 | Test | `./bin/dev test` | Exit 0. Multi-mode 2260 total, 2252 passed, 8 skipped, 0 failed; standalone 6/6 passed |
 | Audit | `ganda repo audit` | Exit 0, repository passes; same pre-existing advisory warning `vscode-window-icon`, non-blocking |
 
+Audit-fix pass (2026-11-17): `package-pin-currency` failed because nuget.org published
+TimeWarp.Mediator and TimeWarp.Mediator.Generators 15.0.0-beta.10 (pins were 15.0.0-beta.9).
+`ganda repo audit --fix` bumped both pins in `Directory.Packages.props` (boy-scout fix, not task scope).
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Audit fix | `ganda repo audit --fix` | Bumped both Mediator pins to 15.0.0-beta.10; repository passes all audit checks |
+| Build | `./bin/dev build` | Build completed successfully, 0 warnings, 0 errors |
+| Test | `./bin/dev test` (after `ganda runfile cache --clear`) | Exit 0, "Tests completed successfully!"; standalone 6/6 passed, 0 failed |
+
 ### How to validate
 
 Smoke:

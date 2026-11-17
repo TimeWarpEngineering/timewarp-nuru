@@ -35,7 +35,7 @@ Make Nuru measurably faster than its peers wherever framework work (not process 
 - [ ] Synchronous path when no handler awaits
 - [ ] Compile-time route table
 - [ ] Full-builder regression since July 2025 explained and fixed or filed
-- [ ] After numbers per the 567 measurement bar (paired or interleaved runs, N and median stated)
+- [ ] After numbers from `dev benchmark run <name> --base <ref>` (the 578 contract); the verdict it prints decides, not hand-copied numbers
 - [ ] `ganda runfile cache --clear`, then CI tests green
 
 ## Related
@@ -45,3 +45,4 @@ Make Nuru measurably faster than its peers wherever framework work (not process 
 
 - Created: 1508201 (2026-10-13)
 - 2026-11-14 groom: added Checklist and Depends on 578 so the speedups are measured through the shared benchmark contract.
+- 2026-11-17 groom: 567 (measurement bar) archived, covered by the tw-perf-sweep skill; the "after numbers" box now names the 578 verdict.

@@ -76,6 +76,7 @@ Acceptance:
 - Review oracle: general (grok), session 01a1e91d-eb5a-7e52-b7ff-20fe8aafdeb8, effort 2, round 1 (2026-11-17). Open finding M1. No disposition yet.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e91d-eb5a-7e52-b7ff-20fe8aafdeb8, max-turns 120, artifacts general.md, merged.md — 2026-11-17T11:00:06Z
 - Implement-fix-2 oracle (claude-opus-5-5), 2026-11-17: fixed review M1 in `skills/tw-nuru-verify/SKILL.md`.
+- Review-2 oracle: general (grok), session 01a1e92e-f35d-7720-a305-ede15ff180ce, effort 1, round 2 (2026-11-17). M1 confirmed fixed. Disposition clean.
 
 ## Results
 
@@ -139,11 +140,18 @@ Expect: the summary line ends `(1 passed, 0 failed, 0 doc defects)` and the awk 
 Before this change the beta.15 run reported 2 DOC-DEFECT rows from this snippet
 (`CS1061: 'bool' does not contain a definition for 'ShouldBeTrue'`).
 
+### Review disposition
+
+- Rounds: 2. Roster: general. Round 1 effort 2; round 2 effort 1 (97-line delta, turn cap 80).
+- Counts (round 2 ledger): bug 0, suggestion 1 fixed (M1), nit 0. Final open count: 0. No wontfix. No escalation.
+- Outcome: clean. M1 is fixed. The docs-step `broken` bullet in `skills/tw-nuru-verify/SKILL.md` matches `nuru_errors`.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`. Round 1 stays at `review/round-1/`.
+
 ## Review
 
 - Round 1: Blocked — open M1
 - Round 1 fix pass: M1 fixed (SKILL.md `broken` bullet matches `nuru_errors`)
-
+- Round 2: Done
 ## Notes
 
 Filed after the 4.0.0-beta.15 release. Doc defects do not hold promotion (tw-release step 4).

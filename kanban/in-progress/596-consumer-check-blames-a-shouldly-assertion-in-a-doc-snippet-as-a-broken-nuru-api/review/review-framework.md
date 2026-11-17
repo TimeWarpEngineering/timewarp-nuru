@@ -6,15 +6,22 @@
 **Plan / brief:** Stop `nuru_errors` from blaming `CS1061` on a C# built-in receiver, keep blaming a missing member on a package type, and name Shouldly in the migration guide's `## Tests` section.
 **Effort:** 2 (general only)
 **Reviewer roster:** general
-**Session IDs:** review oracle grok `01a1e91d-eb5a-7e52-b7ff-20fe8aafdeb8` (2026-11-17). Implementer session `8b6163b4-ed04-4f23-9e84-d0676118d037`.
+**Session IDs:** review oracle grok `01a1e91d-eb5a-7e52-b7ff-20fe8aafdeb8` (2026-11-17). Implementer session `8b6163b4-ed04-4f23-9e84-d0676118d037`. Review-2 oracle grok `01a1e92e-f35d-7720-a305-ede15ff180ce` (2026-11-17).
 
 ## Budget (by-diff)
 
-- Lines changed: 205
-- Effort: 2
+- Lines changed: 97
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
+
+## Round 2
+
+**Date:** 2026-11-17
+**Diff scope:** `2b5b5e208841b9adef65fae8aa1779737b44c6d2..ce03e1f57c68bbd2ca6215ee23a5474f1414a0cc`. Product path: `skills/tw-nuru-verify/SKILL.md` (re-check of M1). Prior round files stay frozen.
+**Effort:** 1 (general only). The budget block above is this round.
+**Session ID:** review-2 oracle grok `01a1e92e-f35d-7720-a305-ede15ff180ce`
 
 ## Ground rules
 

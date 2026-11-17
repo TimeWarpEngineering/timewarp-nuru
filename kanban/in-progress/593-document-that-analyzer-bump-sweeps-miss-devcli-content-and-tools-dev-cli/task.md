@@ -19,14 +19,49 @@ looked green and `./bin/dev test` then failed three standalone tests on devcli c
   `claude/projects/-home-steve-repos-github-com-TimeWarpEngineering-timewarp-nuru-git/memory/` (git-ignored, not
   a commit).
 
+## Goal (implementer restatement)
+
+Make the "slnx-wide `dotnet format` misses runfile-only sources" fact visible to every harness by adding it to the
+repo's shared agent rules instead of Claude-only memory.
+
+Acceptance criteria:
+
+- `.agent/local/nuru-specific.md` `### Code Style` gains one short bullet: after a slnx-wide `dotnet format` sweep for
+  a diagnostic, grep `source/timewarp-nuru-devcli/content` and `tools/dev-cli` for the same pattern, fix by hand, then
+  run `dev self-install` once.
+- The bullet carries `why: task 588 (2026-11-15)`.
+- Deleting the Claude memory copy happens after merge (git-ignored, not part of this branch).
+
 ## Checklist
 
-- [ ] Sentence added under Code Style in `.agent/local/nuru-specific.md` with `why:`
+- [x] Sentence added under Code Style in `.agent/local/nuru-specific.md` with `why:`
 - [ ] Claude memory file and its `MEMORY.md` line deleted after merge
 
 ## Session
 
 - Created: 2356195 (2026-11-15)
+
+## Results
+
+Added one bullet under `### Code Style` in `.agent/local/nuru-specific.md`: a slnx-wide `dotnet format` sweep skips
+`source/timewarp-nuru-devcli/content` and `tools/dev-cli`; after a sweep for a new diagnostic, grep both paths, fix by
+hand, run `dev self-install` once. Carries `why: task 588 (2026-11-15)`. Docs-only change; no product code touched.
+
+Follow-up (after merge, not a commit): delete `analyzer-bump-sweeps-miss-runfile-sources.md` and its `MEMORY.md` line
+under timewarp-flow master `claude/projects/-home-steve-repos-github-com-TimeWarpEngineering-timewarp-nuru-git/memory/`.
+
+### Gates
+
+- `./bin/dev build` — passed (0 errors).
+- `./bin/dev test` — passed (multi-mode and standalone phases, 0 failed).
+- `ganda repo audit` — passed with 1 advisory warning, `vscode-window-icon` (`.vscode/settings.json` missing). That
+  file is git-ignored (`.gitignore:404`), so there is nothing to commit for it; left as is.
+
+### How to validate
+
+- Smoke: `grep -n "tools/dev-cli" .agent/local/nuru-specific.md`
+- Expect: one line under `### Code Style` naming `source/timewarp-nuru-devcli/content`, `tools/dev-cli`,
+  `dev self-install`, and `why: task 588 (2026-11-15)`.
 
 ## Notes
 

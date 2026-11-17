@@ -93,6 +93,7 @@ terminal.OutputContains("output").ShouldBeTrue();
 - `dotnet format` runs automatically in build
 - All warnings treated as errors
 - **NO TRAILING WHITESPACE** - build fails with RCS1037
+- A solution-wide `dotnet format` sweep on `timewarp-nuru.slnx` skips `source/timewarp-nuru-devcli/content` (compiled only by the standalone runfile tests) and `tools/dev-cli` (compiled only by `dev self-install`). After a sweep for a new diagnostic, grep both paths for the same pattern, fix them by hand, and run `dev self-install` once. why: task 588 (2026-11-15)
 
 ### Building AOT Executables
 

@@ -317,8 +317,12 @@ nuru_errors() {
     # Missing members, except on host extension points: docs call their own or another package's
     # extensions there (services.AddDatabase(), logging.AddOpenTelemetry()) and leave the using
     # directive to the reader. A missing Nuru extension still names Nuru and is caught above.
+    # A CS1061 on a C# built-in type (bool, string, int, ...) is the same case: an assertion or
+    # helper library the reader adds (nuru#596: Shouldly's ShouldBeTrue() on bool). A missing
+    # member on a package type (TestTerminal, ITerminal, NuruAppBuilder) is still blamed.
     grep -E '^CS(1061|0117):' <<<"$errors" \
-      | grep -vE "^CS[0-9]+: '(IServiceCollection|ILoggingBuilder|IConfigurationBuilder|IHostBuilder|IHostApplicationBuilder|WebApplicationBuilder|IMcpServerBuilder)'"
+      | grep -vE "^CS[0-9]+: '(IServiceCollection|ILoggingBuilder|IConfigurationBuilder|IHostBuilder|IHostApplicationBuilder|WebApplicationBuilder|IMcpServerBuilder)'" \
+      | grep -vE "^CS1061: '(bool|byte|sbyte|char|short|ushort|int|uint|long|ulong|nint|nuint|float|double|decimal|string)(\?|\[\])*'"
   } | sort -u
 }
 

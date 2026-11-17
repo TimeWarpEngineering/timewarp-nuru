@@ -46,6 +46,21 @@ TimeWarp.Terminal type (`TestTerminal`, `ITerminal`, `NuruAppBuilder`) must stil
 Also name Shouldly in the guide's `## Tests` section, in one sentence or a `using Shouldly;` line, so a
 reader who copies the snippet knows where `ShouldBeTrue` comes from.
 
+## Goal (implementer restatement)
+
+The consumer check's doc-snippet classifier (`nuru_errors` in
+`skills/tw-nuru-verify/scripts/nuru-consumer-check.sh`) must stop counting a missing member on a C#
+built-in type (`bool`, `string`, `int`, ...) as a broken Nuru API. Those are assertion or helper
+extensions the reader adds (here Shouldly's `ShouldBeTrue`), so the snippet is a `fragment`.
+
+Acceptance:
+
+- `CS1061` whose receiver is a built-in keyword type (optionally `?` or `[]`) is not blamed.
+- `CS1061` on a package type (`TestTerminal`, `ITerminal`, `NuruAppBuilder`) is still blamed (shown).
+- The migration guide's `## Tests` section names Shouldly as the source of `ShouldBeTrue`.
+- Re-running the doc step for 4.0.0-beta.15 against the task branch reports 0 doc defects and the
+  L624 snippet is `fragment`.
+
 ## Checklist
 
 - [ ] `nuru_errors` no longer blames `CS1061` on a built-in type receiver

@@ -104,7 +104,13 @@ from. Nothing in the run writes to the global cache.
     inaccessible package type, or a call shape that no longer exists. `CS1501` (wrong argument
     count, such as `Map` with 2 arguments) is always broken. `CS1061` and `CS0117` (missing member)
     are broken unless the receiver is a host extension point such as `IServiceCollection` or
-    `ILoggingBuilder`, where docs call their own or another package's extensions.
+    `ILoggingBuilder`, where docs call their own or another package's extensions. `CS1061` (not
+    `CS0117`) is also not blamed when the receiver is a C# built-in keyword type (`bool`, `byte`,
+    `sbyte`, `char`, `short`, `ushort`, `int`, `uint`, `long`, `ulong`, `nint`, `nuint`, `float`,
+    `double`, `decimal`, `string`, optionally with `?` or `[]`): that is an assertion or helper
+    library the reader adds, such as Shouldly's `ShouldBeTrue()` on `bool`. `object` and `dynamic`
+    receivers stay blamed, and so does a missing member on a package type (`TestTerminal`,
+    `ITerminal`, `NuruAppBuilder`).
   - `fragment`: it only lacks names it never defined, such as its own handlers, services or types.
     Generator errors that follow from those missing names count as fragment too.
 

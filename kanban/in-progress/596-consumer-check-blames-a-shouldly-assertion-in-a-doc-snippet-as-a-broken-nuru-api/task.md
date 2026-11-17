@@ -73,6 +73,9 @@ Acceptance:
 
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-16)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 8b6163b4-ed04-4f23-9e84-d0676118d037, max-turns 500, Done — 2026-11-17T10:46:46Z
+- Review oracle: general (grok), session 01a1e91d-eb5a-7e52-b7ff-20fe8aafdeb8, effort 2, round 1 (2026-11-17). Open finding M1. No disposition yet.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1e91d-eb5a-7e52-b7ff-20fe8aafdeb8, max-turns 120, artifacts general.md, merged.md — 2026-11-17T11:00:06Z
+- Implement-fix-2 oracle (claude-opus-5-5), 2026-11-17: fixed review M1 in `skills/tw-nuru-verify/SKILL.md`.
 
 ## Results
 
@@ -82,6 +85,10 @@ Acceptance:
   `string`, optionally `?` or `[]`). `object` and `dynamic` are left out on purpose: a Nuru API that
   returns `object` and loses a member would still be blamed. `CS0117` on built-ins is unchanged (the
   task scoped the fix to `CS1061`).
+- Review round 1 fix (M1): `skills/tw-nuru-verify/SKILL.md`, the `broken` bullet of the *docs* step,
+  now states the same rule as `nuru_errors`: host extension points cover `CS1061` and `CS0117`;
+  built-in keyword receivers (same list, optional `?`/`[]`) cover `CS1061` only; `object`, `dynamic`,
+  and package types (`TestTerminal`, `ITerminal`, `NuruAppBuilder`) stay blamed.
 - `documentation/user/guides/migrating-from-system-commandline.md` `## Tests`: one sentence says
   `ShouldBeTrue()` comes from the Shouldly package, and the snippet starts with `using Shouldly;`.
   The snippet moved from L624 to L626.
@@ -110,6 +117,14 @@ Consumer check against the task branch:
 | Test | `./bin/dev test` | Exit 0. Multi-mode 2260 total, 2252 passed, 8 skipped, 0 failed; standalone 6/6 passed |
 | Audit | `ganda repo audit` | Exit 0, repository passes; 1 advisory warning `vscode-window-icon` (`.vscode/settings.json` missing), pre-existing and non-blocking, not touched here |
 
+Round-2 fix pass (after M1, skill doc edit only):
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Build | `./bin/dev build` | Build completed successfully, 0 errors |
+| Test | `./bin/dev test` | Exit 0. Multi-mode 2260 total, 2252 passed, 8 skipped, 0 failed; standalone 6/6 passed |
+| Audit | `ganda repo audit` | Exit 0, repository passes; same pre-existing advisory warning `vscode-window-icon`, non-blocking |
+
 ### How to validate
 
 Smoke:
@@ -123,6 +138,11 @@ awk -F'\t' '$1 ~ /system-commandline-md-626/ {print $4}' /tmp/nv596/docs/snippet
 Expect: the summary line ends `(1 passed, 0 failed, 0 doc defects)` and the awk prints `fragment`.
 Before this change the beta.15 run reported 2 DOC-DEFECT rows from this snippet
 (`CS1061: 'bool' does not contain a definition for 'ShouldBeTrue'`).
+
+## Review
+
+- Round 1: Blocked — open M1
+- Round 1 fix pass: M1 fixed (SKILL.md `broken` bullet matches `nuru_errors`)
 
 ## Notes
 

@@ -9,7 +9,8 @@ TimeWarp.Nuru 4.0.0-beta.14 found these product defects. The guide documents eac
 difference with a workaround; when one is fixed, update the "Behavior differences to check" section of the
 guide and the skill.
 
-Split into child tasks during grooming if they should ship separately.
+Split into seven child tasks on 2026-11-17 (see Children). Each child carries its defects in full; the numbered
+list below is kept as the original record.
 
 ## Defects
 
@@ -57,12 +58,22 @@ Split into child tasks during grooming if they should ship separately.
    maps `Version` but not these, although fluent `{x:FileInfo}` constraints convert them through
    `TypeConversionMap`. (Review M5.)
 
+## Children
+
+| Child | Defects | Scope |
+|---|---|---|
+| 591-001 | 1 | `--name=value` / `--name:value` swallowed as configuration, also after `--` |
+| 591-002 | 4, 6, 7, 11, 12 | Binding strictness and unread `Order` / `IsRepeated` |
+| 591-003 | 3 | Root `--help` hides the default route's parameters and options |
+| 591-004 | 2 | `IOptions<T>` in an endpoint `Handler` constructor |
+| 591-005 | 5, 9, 10 | Errors on stdout, unhandled exceptions abort, Ctrl+C does not cancel |
+| 591-006 | 8 | Generated code breaks on some member and type names |
+| 591-007 | 13 | `FileInfo` / `DirectoryInfo` / `IPAddress` endpoint properties |
+
 ## Checklist
 
-- [ ] Decide which items are bugs vs documented design; split children
-- [ ] Fix and test each accepted item
-- [ ] Update `documentation/user/guides/migrating-from-system-commandline.md` and
-      `skills/tw-nuru-migrate-system-commandline/SKILL.md` for each fix
+- [x] Split children (2026-11-17 groom)
+- [ ] All seven children done
 
 ## Notes
 
@@ -71,3 +82,4 @@ Split into child tasks during grooming if they should ship separately.
 ## Session
 
 - Created: implementer-claude from task 496 (ganda task work, headless), 2026-11-15
+- 2026-11-17 groom: split into children 591-001 to 591-007.

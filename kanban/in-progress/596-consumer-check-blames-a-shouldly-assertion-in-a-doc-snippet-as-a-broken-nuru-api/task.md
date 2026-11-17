@@ -63,15 +63,65 @@ Acceptance:
 
 ## Checklist
 
-- [ ] `nuru_errors` no longer blames `CS1061` on a built-in type receiver
-- [ ] A `CS1061` on `TestTerminal` or another package type is still `broken` (show one case)
-- [ ] The guide's `## Tests` section says the assertion is Shouldly
-- [ ] `nuru-consumer-check.sh --version 4.0.0-beta.15 --docs-ref <task branch>` (or the script's
+- [x] `nuru_errors` no longer blames `CS1061` on a built-in type receiver
+- [x] A `CS1061` on `TestTerminal` or another package type is still `broken` (show one case)
+- [x] The guide's `## Tests` section says the assertion is Shouldly
+- [x] `nuru-consumer-check.sh --version 4.0.0-beta.15 --docs-ref <task branch>` (or the script's
       equivalent) reports 0 doc defects, and the L624 snippet is `fragment`
 
 ## Session
 
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-16)
+
+## Results
+
+- `skills/tw-nuru-verify/scripts/nuru-consumer-check.sh`: the "Missing members" rule in `nuru_errors`
+  now also drops `CS1061` whose receiver is a C# built-in keyword type (`bool`, `byte`, `sbyte`, `char`,
+  `short`, `ushort`, `int`, `uint`, `long`, `ulong`, `nint`, `nuint`, `float`, `double`, `decimal`,
+  `string`, optionally `?` or `[]`). `object` and `dynamic` are left out on purpose: a Nuru API that
+  returns `object` and loses a member would still be blamed. `CS0117` on built-ins is unchanged (the
+  task scoped the fix to `CS1061`).
+- `documentation/user/guides/migrating-from-system-commandline.md` `## Tests`: one sentence says
+  `ShouldBeTrue()` comes from the Shouldly package, and the snippet starts with `using Shouldly;`.
+  The snippet moved from L624 to L626.
+
+Classifier cases (the `nuru_errors` function extracted with sed and called directly):
+
+| Errors | Result |
+|--------|--------|
+| L624 set: `CS0246 DeployCommand`, `CS1061 'bool' ... ShouldBeTrue`, `CS0246 Shouldly` | fragment |
+| `CS1061: 'string[]' ... ShouldBe` / `CS1061: 'int?' ... ShouldBe` | fragment |
+| `CS1061: 'TestTerminal' does not contain a definition for 'OutputContainz'` | **broken** |
+| `CS1061: 'ITerminal' does not contain a definition for 'Foo'` | **broken** |
+| `CS1061: 'object' ...` / `CS1061: 'boolean' ...` | **broken** |
+| `CS1061: 'IServiceCollection' ...` (existing host exclusion) | fragment |
+
+Consumer check against the task branch:
+`nuru-consumer-check.sh --version 4.0.0-beta.15 --steps docs --docs-ref task/596-consumer-check-blames-a-shouldly-assertion-in-a --out /tmp/nv596`
+→ `1 passed, 0 failed, 0 doc defects`; docs: 47 compile, 86 fragments, 133 total. The snippet
+`migrating-from-system-commandline.md#L626` is `fragment` (first error: `CS0246` on `Shouldly`).
+
+### Gates
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Build | `./bin/dev build` | Build succeeded, 0 warnings, 0 errors |
+| Test | `./bin/dev test` | Exit 0. Multi-mode 2260 total, 2252 passed, 8 skipped, 0 failed; standalone 6/6 passed |
+| Audit | `ganda repo audit` | Exit 0, repository passes; 1 advisory warning `vscode-window-icon` (`.vscode/settings.json` missing), pre-existing and non-blocking, not touched here |
+
+### How to validate
+
+Smoke:
+
+```bash
+bash skills/tw-nuru-verify/scripts/nuru-consumer-check.sh --version 4.0.0-beta.15 --steps docs \
+  --docs-ref task/596-consumer-check-blames-a-shouldly-assertion-in-a --out /tmp/nv596
+awk -F'\t' '$1 ~ /system-commandline-md-626/ {print $4}' /tmp/nv596/docs/snippets.tsv
+```
+
+Expect: the summary line ends `(1 passed, 0 failed, 0 doc defects)` and the awk prints `fragment`.
+Before this change the beta.15 run reported 2 DOC-DEFECT rows from this snippet
+(`CS1061: 'bool' does not contain a definition for 'ShouldBeTrue'`).
 
 ## Notes
 

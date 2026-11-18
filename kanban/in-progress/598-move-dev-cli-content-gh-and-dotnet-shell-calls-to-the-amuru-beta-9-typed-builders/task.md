@@ -69,6 +69,7 @@ DevCli content) self-installs, the touched runfiles still run, and `ganda repo a
   timewarp-amuru 154, bumped to 4.0.0-beta.16. Boy-scout: `tests/scripts/run-*.cs` had pre-existing
   RS0030 (`Console` banned) errors; they now write through `await Terminal.WriteLineAsync`. Audit
   advisory `vscode-window-icon` fixed with `ganda repo audit --fix` (ignored local file).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-18T06:14:06Z
 
 ## Notes
 

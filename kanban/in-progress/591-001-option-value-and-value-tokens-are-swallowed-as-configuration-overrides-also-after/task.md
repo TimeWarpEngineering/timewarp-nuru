@@ -42,12 +42,14 @@ Acceptance criteria:
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-18T20:25:03Z
 - Reviewer: grok session 01a1f055-b7fd-7891-94b6-6728fcfd0c3a (2026-11-19), effort 2, roster general, round 1
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f055-b7fd-7891-94b6-6728fcfd0c3a, max-turns 120, artifacts general.md, merged.md — 2026-11-18T20:37:10Z
+- Reviewer round 2: grok session 01a1f064-c47a-7e62-a02d-05db885de292 (2026-11-19), effort 2, roster general
+- Review oracle round 2: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f064-c47a-7e62-a02d-05db885de292, max-turns 120, artifacts review/round-2/general.md, review/round-2/merged.md, review/disposition.md — 2026-11-19
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
-- Round 1 fix pass (2026-11-19, implementer claude-opus-5-5): M1 fixed, M2 fixed. Round 2 review pending.
-
+- Round 1 fix pass (2026-11-19, implementer claude-opus-5-5): M1 fixed, M2 fixed
+- Round 2: Done
 ## Notes
 
 Found by task 496 (System.CommandLine migration guide) against TimeWarp.Nuru 4.0.0-beta.14. Parent: 591.
@@ -130,4 +132,10 @@ configuration `Before` and leaves `After` unset. Routing-42 now has 9 tests: wit
 
 ### Review
 
-Round 1 (2026-11-19), effort 2, roster general. Counts: bug 1 open, suggestion 1 open, nit 0. Disposition is not written; M1 and M2 are still open. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. No misread between the implementer restatement and the original task.
+Rounds: 2. Roster: general. Effort: 2.
+
+Round 2 is the status ledger. Counts: bug 0 open / 1 fixed, suggestion 0 open / 1 fixed, nit 0. Disposition: clean. M1 and M2 are fixed. No wontfix and no escalation.
+
+No misread between the implementer restatement and the original task.
+
+Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`. Round 1 files stay as written.

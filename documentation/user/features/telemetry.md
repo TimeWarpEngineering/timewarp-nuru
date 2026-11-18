@@ -97,6 +97,15 @@ variable) is never run; warning **NURU_T002** reports it, and the default option
 | `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_ENDPOINT` | Full URL for one signal, used as-is; overrides the base URL for that signal |
 | `OTEL_EXPORTER_OTLP_{TRACES,METRICS,LOGS}_PROTOCOL` | Protocol for one signal; overrides `OTEL_EXPORTER_OTLP_PROTOCOL` |
 | `OTEL_SERVICE_NAME` | Service name for telemetry (defaults to app name) |
+| `OTEL_EXPORTER_OTLP_TIMEOUT` | Exporter timeout in milliseconds. Nuru also uses it as the total time a run waits to flush telemetry before exit (default 2000) |
+
+### Flush at exit
+
+When `RunAsync` finishes, Nuru flushes telemetry before it returns. It shuts the tracer provider,
+meter provider, and logger factory down in parallel, and returns when their export has finished.
+There is no fixed delay. The whole flush waits at most 2 seconds, or `OTEL_EXPORTER_OTLP_TIMEOUT`
+milliseconds when that is set. A collector that does not answer (a dropped or firewalled address)
+costs a run at most that time, and telemetry not exported by then is dropped.
 
 ### Endpoint paths
 

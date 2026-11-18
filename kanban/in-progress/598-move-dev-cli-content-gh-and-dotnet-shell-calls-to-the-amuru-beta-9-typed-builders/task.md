@@ -133,6 +133,7 @@ the same errors if it consumes Nuru.DevCli content.
 - `dotnet run --file tests/timewarp-nuru-search-tests/search-07-cli-key.cs`: does not compile standalone (CS1729 `SearchIndex` ctor), pre-existing before this change; it compiles in the CI multi assembly, CI runs it.
 - `benchmarks/operation-dispatch/operation-dispatch-overhead.cs`, `tests/ci-standalone/run-standalone-tests.cs`, `tests/ci-tests/run-ci-tests.cs`, `tests/scripts/run-*.cs`: compiled with `dotnet build <file>` (rc=0); not run (benchmark / suite runners; CI runs the suites).
 - `ganda repo audit`: passes, 1 advisory (`vscode-window-icon`); `ganda repo audit --fix` → passes all checks.
+- Post-commit attest then failed `package-pin-currency` (TimeWarp.Jaribu 1.0.0-beta.17 published the same day). Boy-scout fix: Jaribu pin 1.0.0-beta.16 → 1.0.0-beta.17 in `Directory.Packages.props`. Reran: release-02 6/6, routing-33b 4/4, `dotnet build tests/ci-tests/run-ci-tests.cs` rc=0, `ganda repo audit` passes all checks.
 - Smoke: `./bin/dev check-version` → `Evaluating 9 projects for IsPackable…`, `Version in source is new`, exit 0; `./bin/dev release --dry-run` → `✓ gh authenticated` (then refuses on the dirty tree, as expected).
 
 ### How to validate

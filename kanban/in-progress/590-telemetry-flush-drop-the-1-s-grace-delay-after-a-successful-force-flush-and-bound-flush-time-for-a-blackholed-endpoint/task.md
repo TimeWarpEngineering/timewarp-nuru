@@ -40,6 +40,10 @@ Acceptance:
 - [x] Tests for both paths
 - [x] Benchmark re-run with results
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Found by 520 (telemetry overhead benchmark). Related: 517 (no-provider early return, PR #347), 501 (startup performance).
@@ -52,6 +56,8 @@ Acceptance:
 - 2026-11-19 implementer (Claude Opus 5.5, `ganda task work`): replaced the grace delay with a
   bounded parallel shutdown, added telemetry-07, re-ran the benchmark with a new blackhole case 5.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4ed09d35-117b-46d2-a11b-3ab17572538d, max-turns 500, Done — 2026-11-18T17:13:36Z
+- Review: Grok session 01a1efa6-70e4-7740-ac80-1004c8ea1c50 (2026-11-19), effort 3, roster general, round 1.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1efa6-70e4-7740-ac80-1004c8ea1c50, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-18T17:23:23Z
 
 ## Results
 
@@ -131,3 +137,10 @@ Expect:
 - telemetry-03 passes 3/3.
 - In the benchmark results, case 3 is within about 10 ms of case 2, and case 5 is about 2.0 s
   (about 0.5 s with `OTEL_EXPORTER_OTLP_TIMEOUT=500`).
+
+### Review
+
+- Round 1, effort 3, roster: general (Grok session 01a1efa6-70e4-7740-ac80-1004c8ea1c50, 2026-11-19).
+- Counts: bug 0 open / 0 fixed / 0 wontfix, suggestion 0, nit 0. Final open count 0.
+- Disposition: clean. The goal restatement matches the original task. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

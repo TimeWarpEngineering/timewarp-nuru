@@ -29,4 +29,3 @@ Build a small sample pinned to Nuru 4.0 beta that declares a route with `[NuruRo
 ## Notes
 
 - Source: Busara REWORK verdict on the Nov 9 Nuru x Fowler brainstorm (Masoko ideas 1–3 folded into one proof capture that feeds the post, image card, and merged silent terminal video). Confirmed by Steven 2026-11-09 (Bangkok).
-- Filed only; not launched. Do not start until Steven says so.

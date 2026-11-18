@@ -76,7 +76,7 @@ Both items fixed.
 - Extra regression runs on code paths this change touches: routing-12-colon-filtering 11/11, configuration-02-cli-overrides 7/7,
   routing-33-json-args 15/15, routing-34-json-bind-invoke 10/10 (failed 9/10 on a first version that stopped
   peeling `--json-args` after `--`; that part was reverted), routing-37-unknown-options 18/18, capabilities-02-integration 10/10
-- `ganda repo audit`: pass with 1 advisory warning (`vscode-window-icon`: local `.vscode/settings.json` missing). `ganda repo audit --fix` wrote the git-ignored local file; the rerun passes all checks (45 passed, 0 failed)
+- `ganda repo audit`: pass with 1 advisory warning (`vscode-window-icon`: local `.vscode/settings.json` missing). `ganda repo audit --fix` wrote the git-ignored local file; the rerun passes all checks (45 passed, 0 failed). The commit-hook attest then failed `runfile-executable` because the new routing-42 runfile had no executable bit; fixed with `chmod +x` in a follow-up commit
 
 ### How to validate
 

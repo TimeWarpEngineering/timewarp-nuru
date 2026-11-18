@@ -39,6 +39,7 @@ Acceptance criteria:
 
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-17), split from 591 during groom
 - 2026-11-19 implementer (claude-opus-5-5, ganda task work): fixed both items, tests, docs.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-18T20:25:03Z
 
 ## Notes
 

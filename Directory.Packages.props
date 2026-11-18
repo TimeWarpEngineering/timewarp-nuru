@@ -21,8 +21,8 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0" />
   </ItemGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.9" />
-    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.9" />
+    <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.10" />
+    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.10" />
     <PackageVersion Include="TimeWarp.Builder" Version="2.1.0-beta.1" />
     <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.17" />

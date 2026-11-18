@@ -36,7 +36,7 @@
 // (precedence: CLI > config > context default). Empty CLI still overrides
 // config (is not null check) and then resolves as blank → context default.
 //
-// Verify I/O (git notes, openssl) stays in workflow-command.cs; this file is
+// Verify I/O (git notes, openssl) stays in attestation-verify-runner.cs; this file is
 // pure mode policy only — no change to ganda signing or note format.
 #endregion
 

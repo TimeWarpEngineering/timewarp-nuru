@@ -1,8 +1,9 @@
 #region Purpose
 // ReleaseCommand.Handler steps split out of Handle: the tag-availability guard (step 6),
-// the check-version publish-state gate (step 7), the release-target walk (step 8) and
-// the tag/push/gh release create execution (step 10). Guard helpers print their own
-// refusal and return false; Handle sets the exit code.
+// the check-version publish-state gate (step 7), the release-target walk (step 8), the
+// release-target attestation guard (step 9, kanban task 592) and the tag/push/gh release
+// create execution (step 11). Guard helpers print their own refusal and return false;
+// Handle sets the exit code.
 #endregion
 
 namespace DevCli;
@@ -165,7 +166,74 @@ internal sealed partial class ReleaseCommand
     }
 
     /// <summary>
-    /// Step 10: creates the annotated tag at <paramref name="targetSha"/>, pushes it, then runs
+    /// Step 9: verifies the ganda-audit note on <paramref name="targetSha"/>'s tree under the
+    /// attestation mode the release job uses (ReleaseAttestationGuard). Prints the pass,
+    /// advisory or refusal lines and returns <see langword="false"/> only on a refusal.
+    /// </summary>
+    private async Task<bool> CheckTargetAttestedAsync
+    (
+      RepoConfig config,
+      string? repoRoot,
+      string targetSha,
+      string headSha,
+      CancellationToken cancellationToken
+    )
+    {
+      (AttestationMode mode, string? modeWarning) = ReleaseAttestationGuard.ResolveReleaseMode(config.Attestation?.Mode);
+      if (modeWarning is not null)
+      {
+        Terminal.WriteLine(modeWarning.Yellow());
+      }
+
+      AttestationVerifyOutcome? outcome = null;
+      if (mode != AttestationMode.Off)
+      {
+        try
+        {
+          outcome = await AttestationVerifyRunner
+            .VerifyAsync(repoRoot ?? Environment.CurrentDirectory, targetSha, keyOverride: null, cancellationToken)
+            .ConfigureAwait(false);
+        }
+        catch (InvalidOperationException ex)
+        {
+          Terminal.WriteErrorLine($"Error: {ex.Message}");
+          return false;
+        }
+      }
+
+      ReleaseAttestationGuardVerdict verdict = ReleaseAttestationGuard.Check(mode, targetSha, headSha, outcome);
+
+      switch (verdict.Kind)
+      {
+        case ReleaseAttestationGuardKind.Pass:
+          Terminal.WriteLine(verdict.Lines[0].Green());
+          return true;
+
+        case ReleaseAttestationGuardKind.Skipped:
+          Terminal.WriteLine(verdict.Lines[0]);
+          return true;
+
+        case ReleaseAttestationGuardKind.Warn:
+          foreach (string line in verdict.Lines)
+          {
+            Terminal.WriteLine(line.Yellow());
+          }
+
+          return true;
+
+        default:
+          Terminal.WriteErrorLine($"Error: {verdict.Lines[0]}");
+          foreach (string line in verdict.Lines.Skip(1))
+          {
+            Terminal.WriteErrorLine(line);
+          }
+
+          return false;
+      }
+    }
+
+    /// <summary>
+    /// Step 11: creates the annotated tag at <paramref name="targetSha"/>, pushes it, then runs
     /// gh release create. Sets <see cref="Environment.ExitCode"/> to 1 on failure.
     /// </summary>
     private async Task ExecuteReleaseAsync

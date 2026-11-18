@@ -26,7 +26,7 @@ using global::DevCli;
 /// region — never via AttestationVerifier.KnownKeys.
 ///
 /// This reproduces, byte for byte, the exact command shape
-/// workflow-command.cs's VerifyAttestationAsync runs against a real ganda
+/// AttestationVerifyRunner.VerifyAsync runs against a real ganda
 /// note: `openssl pkeyutl -verify -pubin -inkey &lt;pem&gt; -rawin -in
 /// &lt;payload&gt; -sigfile &lt;sig&gt;`.
 /// </summary>
@@ -103,8 +103,8 @@ public class AttestationOpenSslVerifyTests
       evaluation.CanonicalBytes.ShouldBe(canonicalBytes);
       evaluation.SignatureBytes.ShouldBe(sigBytes);
 
-      // --- Run the EXACT command shape workflow-command.cs's
-      // VerifyAttestationAsync runs, using the evaluation's own derived
+      // --- Run the EXACT command shape that
+      // AttestationVerifyRunner.VerifyAsync runs, using the evaluation's own derived
       // bytes/PEM (not the raw openssl-generated files above) — this
       // proves AttestationVerifier's derived PEM is what actually gets
       // handed to openssl in production, not just structurally similar. ---

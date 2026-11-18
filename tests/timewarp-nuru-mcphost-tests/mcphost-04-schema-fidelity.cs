@@ -196,8 +196,9 @@ public class McpHostSchemaFidelityTests
   public static async Task Should_serve_the_contracts_sample_schema_and_call_it_over_stdio()
   {
     // --capabilities builds the sample first, so the MCP launch below does not compile.
-    CommandOutput capabilities = await Shell.Builder("dotnet")
-      .WithArguments(["run", SamplePath(), "--", "--capabilities"])
+    CommandOutput capabilities = await DotNet.Run()
+      .WithFile(SamplePath())
+      .WithArguments("--capabilities")
       .WithNoValidation()
       .CaptureAsync();
     capabilities.ExitCode.ShouldBe(0, capabilities.Stderr);

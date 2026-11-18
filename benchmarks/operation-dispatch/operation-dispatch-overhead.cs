@@ -1,6 +1,7 @@
 #!/usr/bin/env -S dotnet --
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 #:package TimeWarp.Amuru
+#:package TimeWarp.Amuru.Tools
 
 // In-process cost of mediator dispatch versus UseDirectInvoke.
 // Each path is its own method: two Build() calls in one method are intercepted twice.
@@ -192,15 +193,10 @@ internal static class OverheadBench
 
   private static async Task PublishAsync(string projectFile, string outputDirectory)
   {
-    CommandOutput publish = await Shell.Builder("dotnet")
-      .WithArguments(
-        "publish",
-        projectFile,
-        "-c",
-        "Release",
-        "-p:PublishAot=true",
-        "-o",
-        outputDirectory)
+    CommandOutput publish = await DotNet.Publish(projectFile)
+      .WithConfiguration("Release")
+      .WithProperty("PublishAot", "true")
+      .WithOutput(outputDirectory)
       .WithNoValidation()
       .CaptureAsync();
 

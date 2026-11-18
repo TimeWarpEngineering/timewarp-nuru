@@ -139,8 +139,7 @@ internal sealed partial class ReleaseCommand : ICommand<Unit>
       CommandOutput ghAuthResult;
       try
       {
-        ghAuthResult = await Shell.Builder("gh")
-          .WithArguments("auth", "status")
+        ghAuthResult = await Gh.Auth().Status()
           .WithNoValidation()
           .CaptureAsync(cancellationToken)
           .ConfigureAwait(false);
@@ -332,8 +331,8 @@ internal sealed partial class ReleaseCommand : ICommand<Unit>
       // --- Step 9: --dry-run stops here ---------------------------------------
       string tagCommand = $"git tag -a {tag} -m \"Release {tag}\" {targetSha}";
       string pushCommand = $"git push origin {tag}";
-      IReadOnlyList<string> releaseCreateArguments = ReleaseGuard.BuildReleaseCreateArguments(tag, version);
-      string releaseCommand = ReleaseGuard.FormatReleaseCreateCommand(releaseCreateArguments);
+      GhReleaseCreateBuilder releaseCreate = ReleaseGuard.BuildReleaseCreate(tag, version);
+      string releaseCommand = ReleaseGuard.FormatReleaseCreateCommand(releaseCreate.ToArguments());
 
       if (command.DryRun)
       {
@@ -351,7 +350,7 @@ internal sealed partial class ReleaseCommand : ICommand<Unit>
       }
 
       // --- Step 10: execute — tag, push, gh release create --------------------
-      await ExecuteReleaseAsync(tag, targetSha, releaseCreateArguments, releaseCommand, cancellationToken).ConfigureAwait(false);
+      await ExecuteReleaseAsync(tag, targetSha, releaseCreate, releaseCommand, cancellationToken).ConfigureAwait(false);
       return Unit.Value;
     }
   }

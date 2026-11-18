@@ -344,8 +344,11 @@ public sealed partial class WorkflowCommand
       CommandOutput runListResult;
       try
       {
-        runListResult = await Shell.Builder("gh")
-          .WithArguments("run", "list", "--workflow", "workflow.yml", "--commit", headSha, "--status", "success", "--json", "databaseId,event,headSha,createdAt")
+        runListResult = await Gh.Run().List()
+          .WithWorkflow("workflow.yml")
+          .WithCommit(headSha)
+          .WithStatus("success")
+          .WithJson("databaseId", "event", "headSha", "createdAt")
           .WithNoValidation()
           .CaptureAsync(CancellationToken.None);
       }
@@ -384,8 +387,7 @@ public sealed partial class WorkflowCommand
 
       foreach (CiRunSummary run in candidateRuns)
       {
-        CommandOutput artifactsResult = await Shell.Builder("gh")
-          .WithArguments("api", $"repos/{{owner}}/{{repo}}/actions/runs/{run.DatabaseId}/artifacts")
+        CommandOutput artifactsResult = await Gh.Api($"repos/{{owner}}/{{repo}}/actions/runs/{run.DatabaseId}/artifacts")
           .WithNoValidation()
           .CaptureAsync(CancellationToken.None);
 
@@ -419,8 +421,9 @@ public sealed partial class WorkflowCommand
 
         Terminal.WriteLine($"Downloading artifact '{artifact.Name}' from run {run.DatabaseId} ({run.Event})...");
 
-        int exitCode = await Shell.Builder("gh")
-          .WithArguments("run", "download", run.DatabaseId.ToString(System.Globalization.CultureInfo.InvariantCulture), "--name", artifact.Name, "--dir", artifactsDir)
+        int exitCode = await Gh.Run().Download(run.DatabaseId.ToString(System.Globalization.CultureInfo.InvariantCulture))
+          .WithName(artifact.Name)
+          .WithDirectory(artifactsDir)
           .WithWorkingDirectory(repoRoot)
           .RunAsync();
 

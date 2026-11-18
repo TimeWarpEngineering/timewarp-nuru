@@ -41,8 +41,8 @@ if (phase == "multi")
 }
 
 string standaloneRunner = Path.GetFullPath(Path.Combine(ciDir, "..", "ci-standalone", "run-standalone-tests.cs"));
-int standaloneResult = await Shell.Builder("dotnet")
-  .WithArguments("run", standaloneRunner)
+int standaloneResult = await DotNet.Run()
+  .WithFile(standaloneRunner)
   .WithWorkingDirectory(Path.GetDirectoryName(standaloneRunner)!)
   .WithNoValidation()
   .RunAsync();

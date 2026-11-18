@@ -44,8 +44,7 @@ internal sealed record GitHubPackagesCredential(string Token, string Source)
     CommandOutput output;
     try
     {
-      output = await Shell.Builder("gh")
-        .WithArguments("auth", "token")
+      output = await Gh.Auth().Token()
         .WithNoValidation()
         .CaptureAsync(cancellationToken)
         .ConfigureAwait(false);

@@ -172,7 +172,7 @@ internal sealed partial class ReleaseCommand
     (
       string tag,
       string targetSha,
-      IReadOnlyList<string> releaseCreateArguments,
+      GhReleaseCreateBuilder releaseCreate,
       string releaseCommand,
       CancellationToken cancellationToken
     )
@@ -217,8 +217,7 @@ internal sealed partial class ReleaseCommand
 
       Terminal.WriteLine($"Pushed tag {tag} to origin.");
 
-      CommandOutput releaseCreateResult = await Shell.Builder("gh")
-        .WithArguments([.. releaseCreateArguments])
+      CommandOutput releaseCreateResult = await releaseCreate
         .WithNoValidation()
         .CaptureAsync(cancellationToken)
         .ConfigureAwait(false);
@@ -263,8 +262,11 @@ internal sealed partial class ReleaseCommand
 
       foreach (string sha in shas)
       {
-        CommandOutput runListResult = await Shell.Builder("gh")
-          .WithArguments("run", "list", "--workflow", "workflow.yml", "--commit", sha, "--status", "success", "--json", "databaseId,event,headSha,createdAt")
+        CommandOutput runListResult = await Gh.Run().List()
+          .WithWorkflow("workflow.yml")
+          .WithCommit(sha)
+          .WithStatus("success")
+          .WithJson("databaseId", "event", "headSha", "createdAt")
           .WithNoValidation()
           .CaptureAsync(cancellationToken)
           .ConfigureAwait(false);
@@ -284,8 +286,7 @@ internal sealed partial class ReleaseCommand
         long? releasableRunId = null;
         foreach (CiRunSummary run in candidateRuns)
         {
-          CommandOutput artifactsResult = await Shell.Builder("gh")
-            .WithArguments("api", $"repos/{{owner}}/{{repo}}/actions/runs/{run.DatabaseId}/artifacts")
+          CommandOutput artifactsResult = await Gh.Api($"repos/{{owner}}/{{repo}}/actions/runs/{run.DatabaseId}/artifacts")
             .WithNoValidation()
             .CaptureAsync(cancellationToken)
             .ConfigureAwait(false);

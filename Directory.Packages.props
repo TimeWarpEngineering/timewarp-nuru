@@ -21,11 +21,11 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0" />
   </ItemGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.5" />
-    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.5" />
+    <PackageVersion Include="TimeWarp.Amuru" Version="3.0.0-beta.9" />
+    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="3.0.0-beta.9" />
     <PackageVersion Include="TimeWarp.Builder" Version="2.1.0-beta.1" />
     <PackageVersion Include="TimeWarp.Terminal" Version="2.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.16" />
+    <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.17" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="2.0.1-beta.1" />
     <!-- Held at beta.11: beta.13+ ships TWA0038 (500-line cap); task 581 splits the long files, then bumps. TWA0004 (#region Purpose) is clean since task 580. -->
     <PackageVersion Include="TimeWarp.SourceGenerators" Version="1.0.0-beta.17" />

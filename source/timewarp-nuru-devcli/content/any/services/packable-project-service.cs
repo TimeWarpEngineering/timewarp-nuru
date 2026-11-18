@@ -218,7 +218,9 @@ internal sealed class PackableProjectService : IPackableProjectService
 
   private static Task<CommandOutput> EvaluateWithMsBuildAsync(string projectPath, CancellationToken cancellationToken)
   {
-    return Shell.Builder("dotnet")
+    // DotNet.MsBuild() has no -nodeReuse option yet (timewarp-amuru task 154), so this
+    // uses the base DotNet builder with the same argument list.
+    return DotNet.Builder()
       .WithArguments("msbuild", projectPath, "-nologo", "-nodeReuse:false", "-getProperty:IsPackable,PackageId")
       .WithNoValidation()
       .CaptureAsync(cancellationToken);

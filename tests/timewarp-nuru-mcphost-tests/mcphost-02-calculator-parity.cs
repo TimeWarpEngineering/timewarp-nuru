@@ -136,8 +136,9 @@ public class McpHostCalculatorParityTests
 
   private static async Task<CapabilitiesResponse> ReadCapabilitiesAsync()
   {
-    CommandOutput output = await Shell.Builder("dotnet")
-      .WithArguments(["run", CalculatorPath(), "--", "--capabilities"])
+    CommandOutput output = await DotNet.Run()
+      .WithFile(CalculatorPath())
+      .WithArguments("--capabilities")
       .WithNoValidation()
       .CaptureAsync();
     output.ExitCode.ShouldBe(0, output.Stderr);

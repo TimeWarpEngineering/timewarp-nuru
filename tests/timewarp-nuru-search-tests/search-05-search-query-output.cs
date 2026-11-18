@@ -59,7 +59,7 @@ public class SearchQueryOutputTests
     {
       string searchDll = Path.Combine(AppContext.BaseDirectory, "TimeWarp.Nuru.Search.dll");
 
-      CommandOutput output = await Shell.Builder("dotnet")
+      CommandOutput output = await DotNet.Builder()
         .WithArguments([searchDll, "search", .. terms])
         .WithEnvironmentVariable("HOME", home)
         .WithEnvironmentVariable("USERPROFILE", home)

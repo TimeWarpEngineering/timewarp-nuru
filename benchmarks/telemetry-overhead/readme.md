@@ -10,6 +10,7 @@ setup changes between cases.
 | 2 on, no endpoint | `bench-telemetry-on` | `OTEL_EXPORTER_OTLP_ENDPOINT` unset |
 | 3 on, reachable | `bench-telemetry-on` | endpoint = local OTLP receiver, gRPC and http/protobuf |
 | 4 on, unreachable | `bench-telemetry-on` | endpoint = a closed local port (connection refused) |
+| 5 on, blackholed | `bench-telemetry-on` | endpoint = an address that drops packets (`http://192.0.2.1:4317`), with and without `OTEL_EXPORTER_OTLP_TIMEOUT=500` |
 
 Cases 1 and 2, and case 3 over gRPC, also run as JIT builds (`dotnet <app>.dll`), so the AOT
 and JIT gap sits next to task 517's JIT numbers.
@@ -20,8 +21,8 @@ and JIT gap sits next to task 517's JIT numbers.
   `BENCH_TELEMETRY`, which adds `.UseTelemetry()`. Nothing else differs.
 - `shared/bench-timeline.cs`: with `NURU_BENCH_TIMELINE=1`, the app writes
   `timeline handler=<ms> end=<ms>` to stderr. The two values are the time from Main to the
-  handler (provider setup happens here) and from Main to RunAsync returning (adds ForceFlush,
-  the grace delay, and dispose). The script uses this to split case 3 into its parts.
+  handler (provider setup happens here) and from Main to RunAsync returning (adds provider
+  shutdown, export, and dispose). The script uses this to split case 3 into its parts.
 - `otlp-receiver/otlp-receiver.cs`: a minimal OTLP receiver (runfile, ASP.NET Core). It accepts
   gRPC on one port and http/protobuf on another, answers every export with success, and drops
   the payload. `GET /stats` on the HTTP port returns export counts.
@@ -43,8 +44,10 @@ and JIT gap sits next to task 517's JIT numbers.
 ```
 
 The script clears every `OTEL_*` variable from the environment, so a shell set up for another
-collector does not leak into the cases. It takes about 6 minutes: the endpoint cases are about
-1 s per run because of the grace delay in `NuruApp.FlushTelemetryAsync`.
+collector does not leak into the cases. It takes a few minutes, most of it the four publishes.
+Case 5 runs for the flush budget each time (2 s by default, task 590).
+Case 5 measures a dropped endpoint only on a network that drops packets to TEST-NET-1. Where that
+address is refused at once, case 5 costs about the same as case 4.
 
 | Variable | Default | Meaning |
 |:---|---:|:---|
@@ -53,6 +56,8 @@ collector does not leak into the cases. It takes about 6 minutes: the endpoint c
 | `TIMELINE_RUNS` | 30 | runs per case for the timeline means |
 | `GRPC_PORT` / `HTTP_PORT` | 24317 / 24318 | receiver ports |
 | `CLOSED_PORT` | 24319 | port for case 4. The script refuses to run if it has a listener |
+| `BLACKHOLE_ENDPOINT` | `http://192.0.2.1:4317` | endpoint for case 5. Empty skips case 5 |
+| `BLACKHOLE_RUNS` | 5 | hyperfine runs for case 5 |
 | `SKIP_PUBLISH` | 0 | `1` reuses `publish/` from an earlier run |
 
 The script overwrites that day's results file. Add the hand-written analysis (the

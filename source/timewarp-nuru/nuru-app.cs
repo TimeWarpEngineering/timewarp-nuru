@@ -211,33 +211,93 @@ public partial class NuruApp
   }
 
   /// <summary>
-  /// Flushes all telemetry data and disposes providers.
+  /// Default total time, in milliseconds, <see cref="FlushTelemetryAsync"/> waits for telemetry
+  /// export when neither its argument nor <c>OTEL_EXPORTER_OTLP_TIMEOUT</c> sets one.
+  /// </summary>
+  public const int DefaultTelemetryFlushTimeoutMs = 2000;
+
+  /// <summary>
+  /// Exports buffered telemetry, then shuts down and disposes the providers.
   /// Called automatically by generated RunAsync code when telemetry is enabled.
   /// </summary>
   /// <remarks>
-  /// Returns immediately when no provider was created (no OTLP endpoint configured),
-  /// so the grace delay is only paid when there is telemetry to export.
+  /// <para>
+  /// Returns immediately when no provider was created (no OTLP endpoint configured).
+  /// </para>
+  /// <para>
+  /// There is no grace delay: provider shutdown exports what is buffered and returns when the
+  /// export has finished. The tracer provider, meter provider, and logger factory shut down in
+  /// parallel, and the whole flush waits at most the timeout. When an endpoint does not answer
+  /// (for example a blackholed address), the call returns after the timeout. The export threads
+  /// are background threads, so they do not keep the process alive.
+  /// </para>
   /// </remarks>
-  /// <param name="delayMs">Delay in milliseconds to allow export to complete. Default: 1000ms.</param>
-  public async Task FlushTelemetryAsync(int delayMs = 1000)
+  /// <param name="timeoutMs">
+  /// Total time to wait, in milliseconds, or <see cref="Timeout.Infinite"/> to wait for the export
+  /// to finish. When null, <c>OTEL_EXPORTER_OTLP_TIMEOUT</c> applies if it is set to a positive
+  /// number, otherwise <see cref="DefaultTelemetryFlushTimeoutMs"/>.
+  /// </param>
+  /// <exception cref="ArgumentOutOfRangeException"><paramref name="timeoutMs"/> is less than -1.</exception>
+  public async Task FlushTelemetryAsync(int? timeoutMs = null)
   {
-    if (TracerProvider is null && MeterProvider is null && LoggerFactory is null)
+    if (timeoutMs is int explicitTimeout)
+      ArgumentOutOfRangeException.ThrowIfLessThan(explicitTimeout, Timeout.Infinite, nameof(timeoutMs));
+
+    TracerProvider? tracerProvider = TracerProvider;
+    MeterProvider? meterProvider = MeterProvider;
+    ILoggerFactory? loggerFactory = LoggerFactory;
+    if (tracerProvider is null && meterProvider is null && loggerFactory is null)
       return;
 
-    TracerProvider?.ForceFlush();
-    MeterProvider?.ForceFlush();
-
-    if (delayMs > 0)
-    {
-      await Task.Delay(delayMs).ConfigureAwait(false);
-    }
-
-    TracerProvider?.Dispose();
-    MeterProvider?.Dispose();
-    LoggerFactory?.Dispose();
     TracerProvider = null;
     MeterProvider = null;
     LoggerFactory = null;
+
+    int budgetMs = timeoutMs ?? ResolveTelemetryFlushTimeoutMs();
+
+    List<Task> shutdowns = [];
+    if (tracerProvider is not null)
+    {
+      shutdowns.Add(Task.Run(() =>
+      {
+        tracerProvider.Shutdown(budgetMs);
+        tracerProvider.Dispose();
+      }));
+    }
+
+    if (meterProvider is not null)
+    {
+      shutdowns.Add(Task.Run(() =>
+      {
+        meterProvider.Shutdown(budgetMs);
+        meterProvider.Dispose();
+      }));
+    }
+
+    // ILoggerFactory has no timed shutdown; the wait below bounds its dispose.
+    if (loggerFactory is not null)
+      shutdowns.Add(Task.Run(loggerFactory.Dispose));
+
+    try
+    {
+      await Task.WhenAll(shutdowns).WaitAsync(TimeSpan.FromMilliseconds(budgetMs)).ConfigureAwait(false);
+    }
+    catch (TimeoutException)
+    {
+      // The budget ran out. The shutdowns finish on their own threads; a CLI run exits without them.
+    }
+  }
+
+  /// <summary>
+  /// The flush budget when <see cref="FlushTelemetryAsync"/> gets no timeout: a positive
+  /// <c>OTEL_EXPORTER_OTLP_TIMEOUT</c>, otherwise <see cref="DefaultTelemetryFlushTimeoutMs"/>.
+  /// </summary>
+  private static int ResolveTelemetryFlushTimeoutMs()
+  {
+    string? value = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_TIMEOUT");
+    return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int timeoutMs) && timeoutMs > 0
+      ? timeoutMs
+      : DefaultTelemetryFlushTimeoutMs;
   }
 
   /// <summary>

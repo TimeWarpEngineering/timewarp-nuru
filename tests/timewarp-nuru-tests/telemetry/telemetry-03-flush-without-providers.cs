@@ -2,8 +2,9 @@
 #:project $(SourceDirectory)timewarp-nuru/timewarp-nuru.csproj
 
 #region Purpose
-// Kanban 517: FlushTelemetryAsync skips its grace delay when no provider exists
-// (UseTelemetry() with no OTLP endpoint), and keeps flush + delay + dispose when one does.
+// Kanban 517: FlushTelemetryAsync returns at once when no provider exists (UseTelemetry() with
+// no OTLP endpoint), and exports and disposes when one does. Kanban 590 removed the grace delay
+// and added the flush budget; telemetry-07 covers the timing.
 #endregion
 
 #if !JARIBU_MULTI
@@ -71,7 +72,7 @@ namespace TimeWarp.Nuru.Tests.Telemetry
       NuruApp app = new();
 
       Stopwatch stopwatch = Stopwatch.StartNew();
-      await app.FlushTelemetryAsync(delayMs: 5000);
+      await app.FlushTelemetryAsync(timeoutMs: 5000);
       stopwatch.Stop();
 
       stopwatch.ElapsedMilliseconds.ShouldBeLessThan(1000);
@@ -80,18 +81,17 @@ namespace TimeWarp.Nuru.Tests.Telemetry
       app.LoggerFactory.ShouldBeNull();
     }
 
-    public static async Task Should_flush_delay_and_dispose_when_tracer_provider_exists()
+    public static async Task Should_flush_and_dispose_when_tracer_provider_exists()
     {
-      const string sourceName = "TimeWarp.Nuru.Tests.Tel03";
-      const int delayMs = 300;
+      const string SourceName = "TimeWarp.Nuru.Tests.Tel03";
       Tel03CountingExporter exporter = new();
 
-      using ActivitySource activitySource = new(sourceName);
+      using ActivitySource activitySource = new(SourceName);
       NuruApp app = new()
       {
         // A long scheduled delay keeps the span buffered until ForceFlush runs.
         TracerProvider = Sdk.CreateTracerProviderBuilder()
-          .AddSource(sourceName)
+          .AddSource(SourceName)
           .AddProcessor(new BatchActivityExportProcessor(exporter, scheduledDelayMilliseconds: 60_000))
           .Build()
       };
@@ -102,12 +102,9 @@ namespace TimeWarp.Nuru.Tests.Telemetry
 
       exporter.ExportedCount.ShouldBe(0);
 
-      Stopwatch stopwatch = Stopwatch.StartNew();
-      await app.FlushTelemetryAsync(delayMs);
-      stopwatch.Stop();
+      await app.FlushTelemetryAsync();
 
       exporter.ExportedCount.ShouldBe(1);
-      stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(delayMs - 50);
       app.TracerProvider.ShouldBeNull();
       exporter.ShutdownCalled.ShouldBeTrue();
     }

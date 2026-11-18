@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 # Telemetry overhead benchmark (task 520).
 # Publishes the off/on apps (AOT and JIT), starts the local OTLP receiver, runs hyperfine
-# over cases 1 to 4 plus the JIT comparison, collects the in-process timeline, and writes
+# over cases 1 to 5 plus the JIT comparison, collects the in-process timeline, and writes
 # results/<date>-telemetry-overhead.md. Needs hyperfine, curl, and the .NET SDK.
+# Case 5 (blackholed endpoint, task 590) checks the flush budget.
 #
 # Knobs (environment):
-#   FAST_RUNS / FAST_WARMUP   runs for the cases without a grace delay (default 500 / 20)
+#   FAST_RUNS / FAST_WARMUP   runs for the cases without an endpoint (default 500 / 20)
 #   SLOW_RUNS / SLOW_WARMUP   runs for the cases with an endpoint (default 30 / 3)
 #   TIMELINE_RUNS             runs per case for the timeline breakdown (default 30)
 #   GRPC_PORT / HTTP_PORT     receiver ports (default 24317 / 24318)
 #   CLOSED_PORT               port with nothing listening, for case 4 (default 24319)
+#   BLACKHOLE_ENDPOINT        endpoint that drops packets, for case 5 (default http://192.0.2.1:4317,
+#                             TEST-NET-1); empty skips case 5
+#   BLACKHOLE_RUNS            runs for case 5 (default 5)
 #   SKIP_PUBLISH=1            reuse publish/ from an earlier run
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -22,6 +26,8 @@ TIMELINE_RUNS=${TIMELINE_RUNS:-30}
 GRPC_PORT=${GRPC_PORT:-24317}
 HTTP_PORT=${HTTP_PORT:-24318}
 CLOSED_PORT=${CLOSED_PORT:-24319}
+BLACKHOLE_ENDPOINT=${BLACKHOLE_ENDPOINT-http://192.0.2.1:4317}
+BLACKHOLE_RUNS=${BLACKHOLE_RUNS:-5}
 
 for tool in hyperfine curl dotnet; do
   command -v "$tool" > /dev/null || { echo "error: $tool not found on PATH" >&2; exit 1; }
@@ -67,6 +73,7 @@ NO_ENDPOINT='env -u OTEL_EXPORTER_OTLP_ENDPOINT'
 GRPC_ENV="env OTEL_EXPORTER_OTLP_PROTOCOL=grpc OTEL_EXPORTER_OTLP_ENDPOINT=$GRPC_ENDPOINT"
 HTTP_ENV="env OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf OTEL_EXPORTER_OTLP_ENDPOINT=$HTTP_ENDPOINT"
 CLOSED_ENV="env OTEL_EXPORTER_OTLP_PROTOCOL=grpc OTEL_EXPORTER_OTLP_ENDPOINT=$CLOSED_ENDPOINT"
+BLACKHOLE_ENV="env OTEL_EXPORTER_OTLP_PROTOCOL=grpc OTEL_EXPORTER_OTLP_ENDPOINT=$BLACKHOLE_ENDPOINT"
 
 echo "== start otlp-receiver"
 RECEIVER_LOG=$(mktemp)
@@ -89,7 +96,7 @@ DATE=$(date +%Y-%m-%d)
 RAW="results/raw/$DATE"
 mkdir -p "$RAW"
 
-echo "== hyperfine: cases without a grace delay"
+echo "== hyperfine: cases without an endpoint"
 hyperfine -N --warmup "$FAST_WARMUP" --runs "$FAST_RUNS" \
   --export-markdown "$RAW/fast.md" --export-json "$RAW/fast.json" \
   -n '1 off (AOT)' "$NO_ENDPOINT $AOT_OFF $ARGS" \
@@ -105,10 +112,18 @@ hyperfine -N --warmup "$SLOW_WARMUP" --runs "$SLOW_RUNS" \
   -n '4 on, unreachable, grpc (AOT)' "$CLOSED_ENV $AOT_ON $ARGS" \
   -n '3 on, reachable, grpc (JIT)' "$GRPC_ENV $DOTNET $JIT_ON $ARGS"
 
+if [[ -n "$BLACKHOLE_ENDPOINT" ]]; then
+  echo "== hyperfine: blackholed endpoint"
+  hyperfine -N --warmup 1 --runs "$BLACKHOLE_RUNS" \
+    --export-markdown "$RAW/blackhole.md" --export-json "$RAW/blackhole.json" \
+    -n '5 on, blackholed, grpc (AOT)' "$BLACKHOLE_ENV $AOT_ON $ARGS" \
+    -n '5 on, blackholed, OTEL_EXPORTER_OTLP_TIMEOUT=500 (AOT)' "$BLACKHOLE_ENV OTEL_EXPORTER_OTLP_TIMEOUT=500 $AOT_ON $ARGS"
+fi
+
 curl -s "$HTTP_ENDPOINT/stats" > "$RAW/receiver-stats.txt"
 
 # Timeline: mean ms from Main start to handler entry (provider setup lands here) and from
-# handler entry to RunAsync returning (handler, output, ForceFlush, grace delay, dispose).
+# handler entry to RunAsync returning (handler, output, provider shutdown and dispose).
 timeline() {
   local label=$1
   shift
@@ -154,6 +169,7 @@ OUT="results/$DATE-telemetry-overhead.md"
   echo "| hyperfine | $(hyperfine --version | cut -d' ' -f2), \`-N\` |"
   echo "| Receiver | \`otlp-receiver/otlp-receiver.cs\` on 127.0.0.1:$GRPC_PORT (gRPC) and :$HTTP_PORT (HTTP) |"
   echo "| Closed port (case 4) | 127.0.0.1:$CLOSED_PORT |"
+  echo "| Blackholed endpoint (case 5) | ${BLACKHOLE_ENDPOINT:-skipped} |"
   echo
   echo "## Binary size"
   echo
@@ -162,7 +178,7 @@ OUT="results/$DATE-telemetry-overhead.md"
   echo "| bench-telemetry-off | $(du -h "$AOT_OFF" | cut -f1) |"
   echo "| bench-telemetry-on | $(du -h "$AOT_ON" | cut -f1) |"
   echo
-  echo "## Cases without a grace delay ($FAST_RUNS runs, $FAST_WARMUP warmup)"
+  echo "## Cases without an endpoint ($FAST_RUNS runs, $FAST_WARMUP warmup)"
   echo
   cat "$RAW/fast.md"
   echo
@@ -170,6 +186,12 @@ OUT="results/$DATE-telemetry-overhead.md"
   echo
   cat "$RAW/slow.md"
   echo
+  if [[ -n "$BLACKHOLE_ENDPOINT" ]]; then
+    echo "## Blackholed endpoint ($BLACKHOLE_RUNS runs, 1 warmup)"
+    echo
+    cat "$RAW/blackhole.md"
+    echo
+  fi
   echo "## Timeline (mean of $TIMELINE_RUNS runs, ms since Main started)"
   echo
   cat "$RAW/timeline.md"

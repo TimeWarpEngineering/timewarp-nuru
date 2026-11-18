@@ -14,7 +14,8 @@ using System.Text;
 internal static class ConfigurationEmitter
 {
   /// <summary>
-  /// Emits configuration building code at the start of RunAsync_Intercepted.
+  /// Emits configuration building code in RunAsync_Intercepted, after the route filter.
+  /// Reads <c>__configArgList</c> emitted by <c>JsonArgsEmitter.EmitPrepare</c>.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="indent">Number of spaces for indentation.</param>
@@ -100,9 +101,9 @@ internal static class ConfigurationEmitter
     // Environment variables and command line
     sb.AppendLine($"{ind}// Environment variables and command line arguments");
     sb.AppendLine($"{ind}__configBuilder.AddEnvironmentVariables();");
-    // Tokens after "--" are forwarded to the route, never configuration overrides (task 591-001).
-    sb.AppendLine($"{ind}int __configArgsEnd = global::System.Array.IndexOf(args, \"--\");");
-    sb.AppendLine($"{ind}__configBuilder.AddCommandLine(__configArgsEnd < 0 ? args : args[..__configArgsEnd]);");
+    // Only the overrides the route filter dropped (JsonArgsEmitter.EmitPrepare): nothing after "--", and no
+    // route token such as a declared --name:value, which AddCommandLine would read as a key taking the next arg (task 591-001).
+    sb.AppendLine($"{ind}__configBuilder.AddCommandLine([.. __configArgList]);");
     sb.AppendLine();
 
     // Build final configuration

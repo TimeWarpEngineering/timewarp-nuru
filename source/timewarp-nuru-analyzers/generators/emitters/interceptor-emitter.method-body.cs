@@ -10,19 +10,6 @@ internal static partial class InterceptorEmitter
 {
   private static void EmitMethodBody(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string? loggerFactoryFieldName)
   {
-    // Full sources when AddConfiguration() ran or a handler takes configuration.
-    // A blank root still satisfies EnsureServicesInitialized.
-    if (app.HasConfiguration)
-    {
-      ConfigurationEmitter.Emit(sb);
-    }
-    else
-    {
-      sb.AppendLine("    // Minimal configuration for service initialization");
-      sb.AppendLine("    global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration =");
-      sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");
-    }
-
     // Peel --json-args before the command scope so the REPL host check sees routeArgs
     // (config args stripped), including AutoStartWhenEmpty on an empty route.
     // A call in a NuruCallContext (daemon, MCP host) is isolated: its own __NuruCall, scoped like a REPL
@@ -38,6 +25,20 @@ internal static partial class InterceptorEmitter
     // EmitPrepare reads their long options so a declared --name=value is not taken as configuration.
     List<RouteDefinition> allRoutesOrdered = RoutesInIndexOrder(app, model);
     JsonArgsEmitter.EmitPrepare(sb, app, allRoutesOrdered);
+
+    // Full sources when AddConfiguration() ran or a handler takes configuration.
+    // A blank root still satisfies EnsureServicesInitialized.
+    // Built after EmitPrepare: AddCommandLine reads only the overrides the route filter dropped.
+    if (app.HasConfiguration)
+    {
+      ConfigurationEmitter.Emit(sb);
+    }
+    else
+    {
+      sb.AppendLine("    // Minimal configuration for service initialization");
+      sb.AppendLine("    global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration =");
+      sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");
+    }
 
     // The REPL host must not open a command scope. Nested commands open their own.
     // await using disposes that scope on every later return, including early exits.

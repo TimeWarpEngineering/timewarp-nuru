@@ -191,7 +191,8 @@ Rules:
 - Tokens after `--` are never removed or taken as configuration, so `/p:Configuration=Release` and
   `--verbosity=quiet` forward through a catch-all unchanged.
 - Before `--`, `--name=value` and `--name:value` bind a declared long option (value = everything after the
-  first `=` or `:`). Undeclared names (`--Section:Key=v`, `/Mode=fast`) are still configuration overrides.
+  first `=` or `:`). Undeclared names (`--Section:Key=v`) and every slash form (`/Mode=fast`, declared or
+  not) are still configuration overrides. `-o=value` binds a declared short value option.
   Before the release after 4.0.0-beta.14, `--name=value` never bound.
 - **Users rely on a legacy alias with `=` (`--old=value`)?** An undeclared alias is taken as configuration.
   Rewrite argv in `Program.cs` before `RunAsync`: turn the alias into the canonical name. Stop at `--` and

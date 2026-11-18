@@ -73,6 +73,8 @@ internal static partial class JsonArgsEmitter
   /// config args, and either leaves a built-in for later dispatch or parses the payload.
   /// Tokens after the first <c>--</c> skip the config filter. Before it, a declared long option's
   /// <c>--name=value</c> or <c>--name:value</c> stays a route token (task 591-001).
+  /// When the app has configuration, the dropped overrides are collected in <c>__configArgList</c>
+  /// for <see cref="ConfigurationEmitter"/>, which runs after this.
   /// </summary>
   /// <param name="sb">The generated method body.</param>
   /// <param name="app">The app being emitted.</param>
@@ -153,6 +155,13 @@ internal static partial class JsonArgsEmitter
     sb.AppendLine("    }");
     sb.AppendLine();
     sb.AppendLine("    global::System.Collections.Generic.List<string> __routeArgList = new(__jsonPeeledArgs.Count);");
+    if (app.HasConfiguration)
+    {
+      sb.AppendLine("    // Configuration reads only the overrides the route drops. A route token such as a declared");
+      sb.AppendLine("    // --name:value would otherwise be read by AddCommandLine as a key that takes the next argument.");
+      sb.AppendLine("    global::System.Collections.Generic.List<string> __configArgList = [];");
+    }
+
     sb.AppendLine("    for (int __ri = 0; __ri < __jsonPeeledArgs.Count; __ri++)");
     sb.AppendLine("    {");
     sb.AppendLine("      string? __routeToken = __argsEndOfOptions >= 0 && __ri >= __argsEndOfOptions");
@@ -160,6 +169,12 @@ internal static partial class JsonArgsEmitter
     sb.AppendLine("        : RouteTokenOrConfig(__jsonPeeledArgs[__ri]);");
     sb.AppendLine("      if (__routeToken is not null)");
     sb.AppendLine("        __routeArgList.Add(__routeToken);");
+    if (app.HasConfiguration)
+    {
+      sb.AppendLine("      else");
+      sb.AppendLine("        __configArgList.Add(__jsonPeeledArgs[__ri]);");
+    }
+
     sb.AppendLine("    }");
     sb.AppendLine();
     sb.AppendLine("    string[] routeArgs = [.. __routeArgList];");

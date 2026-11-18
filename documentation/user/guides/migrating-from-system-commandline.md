@@ -224,13 +224,19 @@ command line, or the route does not match.
 | `-vo x` (bundled short options) | Not supported. Write `-v -o x`. |
 | `--OUTPUT` | Not matched. Option names are case-sensitive. Enum values are not. |
 
-Before `--`, a token shaped like `--name=value`, `--name:value`, `/name=value`, or `/name:value` whose name is
-not a long option declared by any route is a configuration override (`--Database:Host=prod`). Nuru removes it
-from the arguments before route matching, so `Microsoft.Extensions.Configuration` can read it. Name matching
-is ordinal (case-sensitive). When the name is a declared long option, the token binds instead: `--format=json`
-and `--format:json` both bind `--format` to `json`. (Before the release after 4.0.0-beta.14, `--name=value`
-was always taken as configuration and never bound; fixed in task 591-001.) Short options with `=` (`-o=x`)
-are not filtered or bound.
+Before `--`, a configuration override is removed from the arguments before route matching, so
+`Microsoft.Extensions.Configuration` can read it:
+
+- `--name=value` or `--name:value` whose name is not a long option declared by any route
+  (`--Database:Host=prod`). Name matching is ordinal (case-sensitive). When the name is a declared long
+  option, the token binds instead: `--format=json` and `--format:json` both bind `--format` to `json`.
+  (Before the release after 4.0.0-beta.14, `--name=value` was always taken as configuration and never bound;
+  fixed in task 591-001.)
+- Every `/name=value` and `/name:value`, even when `name` is a declared option. The slash form is never an
+  option.
+
+Configuration reads only these removed overrides, never a token that reaches the route.
+`-o=value` binds a declared short value option. `-o:value` does not bind.
 
 If your users and scripts depend on several long aliases per option, or `--flag false`, rewrite the
 arguments in `Program.cs` before `RunAsync`. An alias that is not a declared option is read as configuration

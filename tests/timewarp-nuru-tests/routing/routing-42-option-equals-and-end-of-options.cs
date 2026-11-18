@@ -168,6 +168,27 @@ public class OptionEqualsAndEndOfOptionsTests
     exitCode.ShouldBe(0);
     terminal.OutputContains("pass:--After=yes|before:yes|after:unset").ShouldBeTrue();
   }
+
+  public static async Task Should_keep_override_after_declared_colon_option_with_configuration()
+  {
+    // Arrange: AddCommandLine reads a --name:value with no '=' as a key that takes the next argument.
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .AddConfiguration()
+      .Map("report --format {format}")
+        .WithHandler((string format, IConfiguration config) =>
+          $"format:{format}|host:{config["Database:Host"] ?? "unset"}|key:{config["format:json"] ?? "unset"}")
+        .AsQuery().Done()
+      .Build();
+
+    // Act
+    int exitCode = await app.RunAsync(["report", "--format:json", "--Database:Host=prod"]);
+
+    // Assert
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("format:json|host:prod|key:unset").ShouldBeTrue();
+  }
 }
 
 } // namespace TimeWarp.Nuru.Tests.Routing

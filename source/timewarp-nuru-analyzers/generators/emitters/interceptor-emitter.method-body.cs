@@ -31,7 +31,13 @@ internal static partial class InterceptorEmitter
     sb.AppendLine("    if (__isolatedCall)");
     sb.AppendLine("      __nuruCall.Value = new __NuruCall();");
     sb.AppendLine("    __replCommandActive = fromRepl || __isolatedCall;");
-    JsonArgsEmitter.EmitPrepare(sb, app);
+
+    // Build a lookup from route to its original index for command class naming
+    // IMPORTANT: Use only this app's routes (plus filtered endpoints), not all routes from all apps
+    // Using model.AllRoutes would cause route index collisions between different apps
+    // EmitPrepare reads their long options so a declared --name=value is not taken as configuration.
+    List<RouteDefinition> allRoutesOrdered = RoutesInIndexOrder(app, model);
+    JsonArgsEmitter.EmitPrepare(sb, app, allRoutesOrdered);
 
     // The REPL host must not open a command scope. Nested commands open their own.
     // await using disposes that scope on every later return, including early exits.
@@ -66,11 +72,6 @@ internal static partial class InterceptorEmitter
     // Filter endpoints based on app's discovery mode (DiscoverEndpoints or Map<T> calls)
     ImmutableArray<RouteDefinition> endpointsForApp = FilterEndpointsForApp(app, model.Endpoints);
     IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(endpointsForApp);
-
-    // Build a lookup from route to its original index for command class naming
-    // IMPORTANT: Use only this app's routes (plus filtered endpoints), not all routes from all apps
-    // Using model.AllRoutes would cause route index collisions between different apps
-    List<RouteDefinition> allRoutesOrdered = RoutesInIndexOrder(app, model);
 
     // A request bound by NuruApp.TryBind runs here, after services and the command scope.
     JsonArgsEmitter.EmitInvocationDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);

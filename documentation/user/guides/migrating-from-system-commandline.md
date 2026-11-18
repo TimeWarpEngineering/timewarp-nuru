@@ -219,26 +219,27 @@ command line, or the route does not match.
 | `--tag a --tag b` (repeated option) | Supported when the property is an array or collection (`string[]`) |
 | `--tag a b` (several values per token) | Only `a` binds. `b` is treated as a positional argument: it fills an optional `[Parameter]` if the route has one, otherwise the call fails with `Unknown command`. Repeat the flag. |
 | `--force true`, `--force false` (explicit bool value) | Not supported. The flag binds `true` and the value is treated as a positional argument. |
-| `--output=x.txt`, `--output:x.txt` | **Not bound.** Nuru reads these as configuration overrides (see below). |
+| `--output=x.txt`, `--output:x.txt` | Supported for a declared long option. The value is everything after the first `=` or `:` (`--connection=Server=h:5432` binds `Server=h:5432`). |
+| `--verbose=true` (bool flag with a value) | Error: `Unknown option '--verbose=true'. Use --help for usage.`, exit 1. |
 | `-vo x` (bundled short options) | Not supported. Write `-v -o x`. |
 | `--OUTPUT` | Not matched. Option names are case-sensitive. Enum values are not. |
 
-Nuru removes every token shaped like `--name=value`, `--name:value`, `/name=value`, or `/name:value` from
-the arguments before route matching, so `Microsoft.Extensions.Configuration` can read it as a configuration
-override (`--Database:Host=prod`). A user who types `--output=x.txt` gets the default value and exit code 0,
-not an error. Tell your users to put a space between an option and its value. Mention it in your readme if
-your old docs used `=`.
+Before `--`, a token shaped like `--name=value`, `--name:value`, `/name=value`, or `/name:value` whose name is
+not a long option declared by any route is a configuration override (`--Database:Host=prod`). Nuru removes it
+from the arguments before route matching, so `Microsoft.Extensions.Configuration` can read it. Name matching
+is ordinal (case-sensitive). When the name is a declared long option, the token binds instead: `--format=json`
+and `--format:json` both bind `--format` to `json`. (Before the release after 4.0.0-beta.14, `--name=value`
+was always taken as configuration and never bound; fixed in task 591-001.) Short options with `=` (`-o=x`)
+are not filtered or bound.
 
-If your users and scripts depend on `=` (or on several long aliases per option, or `--flag false`), rewrite
-the arguments in `Program.cs` before `RunAsync`. Only touch names your tool declares, so real configuration
-overrides still pass through:
+If your users and scripts depend on several long aliases per option, or `--flag false`, rewrite the
+arguments in `Program.cs` before `RunAsync`. An alias that is not a declared option is read as configuration
+when written `--alias=value`, so map it to the canonical name first:
 
 ```csharp
-// Program.cs: --format=json -> --format json, --dt sqlite -> --databasetype sqlite
+// Program.cs: --dt sqlite -> --databasetype sqlite, --dt=sqlite -> --databasetype sqlite
 Dictionary<string, string> canonical = new(StringComparer.Ordinal)
 {
-  ["--format"] = "--format",
-  ["--databasetype"] = "--databasetype",
   ["--dt"] = "--databasetype",
 };
 
@@ -270,9 +271,8 @@ for (int i = 0; i < args.Length; i++)
 args = [.. normalized];
 ```
 
-The loop stops at `--` and copies the separator and the tail unchanged, so a forwarded `-- --format=xml` is
-not rewritten into `--format xml`. Nuru itself still removes `=` tokens after `--`; to forward those, split
-at `--` first (see [`--` passthrough](#---passthrough)).
+The loop stops at `--` and copies the separator and the tail unchanged, so a forwarded `-- --dt=xml` is
+not rewritten. Nuru does not touch tokens after `--` either (see [`--` passthrough](#---passthrough)).
 
 ## Subcommands and global options
 
@@ -372,9 +372,9 @@ Two rules decide what lands in the catch-all:
 - **An option-shaped token that the route does not declare is an error**, as long as it comes before `--`.
   `myapp get url --pretty=all` fails with `Unknown option`. A catch-all only takes `-x` or `--name` tokens
   after `--`. `-` alone and negative numbers (`-5`) are positionals.
-- **Configuration-shaped tokens are removed first.** `--name=value`, `--name:value`, `/name=value`, and
-  `/name:value` never reach the catch-all, even after `--`. See
-  [Option syntax](#option-syntax).
+- **Tokens after `--` are never removed.** `--name=value`, `--name:value`, `/name=value`, and `/name:value`
+  after `--` reach the catch-all unchanged and never become configuration overrides. Before `--`, undeclared
+  tokens of that shape are still taken as configuration. See [Option syntax](#option-syntax).
 
 Items such as `key=value`, `key:=json`, `Header:value`, and `:3000/path` do not start with `--` or `/letter`, so
 they arrive unchanged.
@@ -406,19 +406,18 @@ public sealed class RunCommand : ICommand<Unit>
 | `myapp run build -- --no-restore -c Release` | `["--no-restore", "-c", "Release"]` |
 | `myapp run build --if-present -- -x` | `["-x"]` (and `IfPresent` is `true`) |
 | `myapp run build --no-restore` | Error: `Unknown option '--no-restore'` |
-| `myapp run build -- --verbosity=quiet /p:Configuration=Release` | `[]`. **Both tokens are dropped** as configuration overrides. |
+| `myapp run build -- --verbosity=quiet /p:Configuration=Release` | `[--verbosity=quiet, /p:Configuration=Release]`. Tokens after `--` are never removed. |
 
 Nuru removes the `--` separator itself, so your handler does not see it. If the program you forward to needs
 it, add it back.
 
-The catch-all approach has two limits:
+The catch-all approach has one limit:
 
 - **The catch-all cannot tell items before `--` from items after it.** A tool such as `dotnet r build test --
   --no-restore` takes several script names *and* forwarded arguments. With one catch-all, both end up in the
   same array.
-- **Forwarded `name=value` and `/p:` tokens are dropped** (the last row above).
 
-When either limit matters, split the arguments at the first `--` in `Program.cs`, before Nuru sees them, and
+When the limit matters, split the arguments at the first `--` in `Program.cs`, before Nuru sees them, and
 hand the tail to the handler yourself:
 
 ```csharp
@@ -442,9 +441,8 @@ internal static class Passthrough
 }
 ```
 
-The handler reads `Passthrough.Arguments`. Everything after `--` reaches it unchanged, including
-`--verbosity=quiet` and `/p:Configuration=Release`. The route's own catch-all (if any) holds only the items
-before `--`.
+The handler reads `Passthrough.Arguments`. Everything after `--` reaches it unchanged. The route's own
+catch-all (if any) holds only the items before `--`.
 
 ## Configuration and verbosity
 
@@ -730,36 +728,34 @@ straight to the Nuru column.
 
 Each item comes from running the 4.0.0-beta.14 package. Check the ones that affect your tool:
 
-1. **`--name=value` and `--name:value` are not bound.** They are read as configuration overrides and removed
-   before matching, with exit code 0. This also drops forwarded `--x=y` and `/p:X=Y` tokens after `--`.
-2. **Root `--help` does not list the default route's parameters or options.** A single-command tool
+1. **Root `--help` does not list the default route's parameters or options.** A single-command tool
    (`[NuruRoute("")]`) shows only the route description under `Commands:`. Put a usage line in
    `.WithDescription(...)` until this changes. Subcommands show their parameters and options under
    `<command> --help`.
-3. **Help looks different.** Help is drawn as tables about 80 columns wide, so long command and option names
+2. **Help looks different.** Help is drawn as tables about 80 columns wide, so long command and option names
    are truncated. Default values, `(REQUIRED)` markers, and enum choices are not shown. Put them in the
    `Description` text if your users rely on them.
-4. **Extra positional arguments.** On a route that has a `[Parameter]`, extras are ignored: one parameter
+3. **Extra positional arguments.** On a route that has a `[Parameter]`, extras are ignored: one parameter
    given `a b` binds `a`, drops `b`, and exits 0. On a route with no parameters, an extra is
    `Unknown command`, exit 1. `System.CommandLine` reports `Unrecognized command or argument 'b'`. Use a
    catch-all parameter when you need to see or reject extras.
-5. **An option with a missing value binds its default.** `myapp -o` (no value) leaves `Output` at its default
+4. **An option with a missing value binds its default.** `myapp -o` (no value) leaves `Output` at its default
    with exit code 0.
-6. **Handler exceptions are not caught.** See [Results, output, and exit codes](#results-output-and-exit-codes).
-7. **`IOptions<T>` cannot be injected into an endpoint `Handler` constructor.** Inject `IConfiguration`.
-8. **Ctrl+C ends the process.** The handler's `CancellationToken` is not cancelled in a CLI run, so there is
+5. **Handler exceptions are not caught.** See [Results, output, and exit codes](#results-output-and-exit-codes).
+6. **`IOptions<T>` cannot be injected into an endpoint `Handler` constructor.** Inject `IConfiguration`.
+7. **Ctrl+C ends the process.** The handler's `CancellationToken` is not cancelled in a CLI run, so there is
    no graceful-shutdown window like `System.CommandLine`'s `ProcessTerminationTimeout`. If you need cleanup,
    register `Console.CancelKeyPress` or `PosixSignalRegistration` yourself.
-9. **`-h` belongs to help.** An existing `-h` option (for example `-h` for `--headers`) loses its short form.
+8. **`-h` belongs to help.** An existing `-h` option (for example `-h` for `--headers`) loses its short form.
    No required-option attribute, no `-?` help alias, no bundled short options, and no `[diagram]`,
    `[parse]`, `[env]`, or `[suggest]` directives.
 
    An enum cannot hold a hyphenated value such as `dotnet-coverage`; check those in the handler.
-10. **`--version` has no `-v` alias.** That leaves `-v` free for `--verbose`, as in most `System.CommandLine`
+9. **`--version` has no `-v` alias.** That leaves `-v` free for `--verbose`, as in most `System.CommandLine`
    tools. A value option named `version` (`[Option("version")] public string? Version`) still binds
    `--version 1.2`; a bare `--version` prints the app version.
-11. **`bool` flags cannot default to `true`, and `--flag false` is not supported.** See the concept map.
-12. **Built-in routes reserve names**: `--help`, `-h`, `--version`, `--capabilities`, `--json-args`, plus
+10. **`bool` flags cannot default to `true`, and `--flag false` is not supported.** See the concept map.
+11. **Built-in routes reserve names**: `--help`, `-h`, `--version`, `--capabilities`, `--json-args`, plus
    `--interactive`/`-i` when you add the REPL. Do not declare these yourself.
 
 ## What you get after the port
@@ -782,7 +778,7 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 - [ ] Exit codes through `Environment.ExitCode`; expected exceptions caught around `RunAsync`
 - [ ] `--` passthrough and free-form tails through a catch-all, tested with `=` tokens
 - [ ] Configuration through `IConfiguration`; verbosity through a runtime log filter
-- [ ] Docs and scripts updated: no `--name=value`, no `-?`
+- [ ] Docs and scripts updated: no `-?`, no `--flag=true` on bool flags
 - [ ] `dotnet publish -c Release -r <rid>` with `PublishAot` and zero warnings, or `dotnet pack` for a tool
 
 ## See also

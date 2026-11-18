@@ -100,7 +100,9 @@ internal static class ConfigurationEmitter
     // Environment variables and command line
     sb.AppendLine($"{ind}// Environment variables and command line arguments");
     sb.AppendLine($"{ind}__configBuilder.AddEnvironmentVariables();");
-    sb.AppendLine($"{ind}__configBuilder.AddCommandLine(args);");
+    // Tokens after "--" are forwarded to the route, never configuration overrides (task 591-001).
+    sb.AppendLine($"{ind}int __configArgsEnd = global::System.Array.IndexOf(args, \"--\");");
+    sb.AppendLine($"{ind}__configBuilder.AddCommandLine(__configArgsEnd < 0 ? args : args[..__configArgsEnd]);");
     sb.AppendLine();
 
     // Build final configuration

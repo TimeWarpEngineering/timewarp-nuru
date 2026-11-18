@@ -152,8 +152,8 @@ public class ArgvFuzzPropertyTests
 
   /// <summary>
   /// A free-text value. A value that starts with '-' reads as an option, so it gets a leading 'v'.
-  /// So does one that starts with '/': IsConfigArg peels "/name=..." and "/name:..." as configuration
-  /// overrides before routing (task 497 finding, the same filter as the skipped --option=value test in routing-24).
+  /// So does one that starts with '/': the config filter peels "/name=..." and "/name:..." before "--" as
+  /// configuration overrides before routing (task 497 finding; task 591-001 kept that for undeclared names).
   /// </summary>
   static readonly Gen<string> Value =
     Gen.Frequency(

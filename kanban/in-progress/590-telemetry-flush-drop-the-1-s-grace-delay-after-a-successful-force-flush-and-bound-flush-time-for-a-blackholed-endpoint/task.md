@@ -108,7 +108,9 @@ Acceptance:
 - `dotnet run --file tests/timewarp-nuru-tests/telemetry/telemetry-05-use-telemetry-command-spans.cs`: pass, 7/7.
 - `dotnet run --file tests/timewarp-nuru-tests/telemetry/telemetry-06-extra-activity-sources.cs`: pass, 2/2.
 - `benchmarks/telemetry-overhead/run-benchmark.sh`: exit 0, wrote `results/2026-11-19-telemetry-overhead.md`.
-- `ganda repo audit`: pass (exit 0). It gave one advisory warning, `vscode-window-icon`, because `.vscode/settings.json` is missing. That file is git-ignored worktree state with nothing to commit, so it is not fixed here.
+- `ganda repo audit`: pass (exit 0), with one advisory warning (`vscode-window-icon`, git-ignored `.vscode/settings.json`).
+- Commit attestation then failed on `runfile-executable` (telemetry-07 had no executable bit) and `package-pin-currency` (TimeWarp.Jaribu 1.0.0-beta.17 was behind beta.18; the TimeWarp.Amuru probe also hit a transient nuget.org connection reset). Fix: `chmod +x` on telemetry-07, then `ganda repo audit --fix`. That bumped TimeWarp.Jaribu to 1.0.0-beta.18 in `Directory.Packages.props` and set the ignored VS Code window title. Result: pass, 45 passed, 0 failed.
+- After the Jaribu bump: `./bin/dev build` passed, telemetry-07 passed 5/5, and telemetry-03 passed 3/3.
 
 ### How to validate
 

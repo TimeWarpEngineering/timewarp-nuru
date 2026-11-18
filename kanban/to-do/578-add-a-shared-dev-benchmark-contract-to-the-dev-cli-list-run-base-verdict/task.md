@@ -45,5 +45,4 @@ Closest prior art, to read before designing:
 - Bench jobs stay off the PR path.
 - Order in the sweep: this is step 1. Mediator 038 and 035 wait on it.
 - Eval: https://github.com/TimeWarpEngineering/timewarp-intel/blob/master/evaluations/2026-11-11-agent-perf-sweep.md
-- Filed only; do not start until Steven says so.
 - why: Steven 2026-11-13, perf-sweep split across repos

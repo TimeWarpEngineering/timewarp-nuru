@@ -32,7 +32,7 @@ public class DaemonServedAppTests
     string socket = Path.Combine(socketDirectory, "sa.sock");
     string workDirectory = Directory.CreateTempSubdirectory("nuru-sa-").FullName;
 
-    // Builds the sample once; later calls use --no-build.
+    // Builds the sample once; later calls run the built app.
     CommandOutput version = await RunAsync(socket, build: true, args: ["--version"]);
     version.ExitCode.ShouldBe(0, version.Stderr);
 
@@ -100,6 +100,7 @@ public class DaemonServedAppTests
       await RunAsync(socket, args: ["serve", "--stop"]);
       Directory.Delete(workDirectory, recursive: true);
       Directory.Delete(socketDirectory, recursive: true);
+      Directory.Delete(AppDirectory, recursive: true);
     }
   }
 
@@ -109,13 +110,26 @@ public class DaemonServedAppTests
     return int.Parse(output.Stdout.Trim(), CultureInfo.InvariantCulture);
   }
 
-  private static Task<CommandOutput> RunAsync(string socket, string[] args, bool build = false, string? workingDirectory = null, string? stdin = null)
+  // DotNet.Run() has no WithStandardInput or WithTimeout yet (timewarp-amuru task 154), so the
+  // sample is built once with the typed builder and its apphost runs directly.
+  private static readonly string AppDirectory = Directory.CreateTempSubdirectory("nuru-sa-app-").FullName;
+
+  private static string AppPath => Path.Combine(AppDirectory, OperatingSystem.IsWindows() ? "served-app.exe" : "served-app");
+
+  private static async Task<CommandOutput> RunAsync(string socket, string[] args, bool build = false, string? workingDirectory = null, string? stdin = null)
   {
-    string[] dotnetArgs = build
-      ? ["run", SamplePath(), "--", .. args]
-      : ["run", "--no-build", SamplePath(), "--", .. args];
-    ShellBuilder builder = Shell.Builder("dotnet")
-      .WithArguments(dotnetArgs)
+    if (build)
+    {
+      CommandOutput built = await DotNet.Build(SamplePath())
+        .WithOutput(AppDirectory)
+        .WithNoValidation()
+        .CaptureAsync();
+      if (built.ExitCode != 0)
+        return built;
+    }
+
+    ShellBuilder builder = Shell.Builder(AppPath)
+      .WithArguments(args)
       .WithEnvironmentVariable(NuruDaemonOptions.SocketPathEnvironmentVariable, socket)
       .WithTimeout(TimeSpan.FromMinutes(3))
       .WithNoValidation();
@@ -123,7 +137,7 @@ public class DaemonServedAppTests
       builder = builder.WithWorkingDirectory(workingDirectory);
     if (stdin is not null)
       builder = builder.WithStandardInput(stdin);
-    return builder.CaptureAsync();
+    return await builder.CaptureAsync();
   }
 
   private static async Task<McpClient> StartMcpAsync(string socket)
@@ -131,8 +145,8 @@ public class DaemonServedAppTests
     StdioClientTransport transport = new(new StdioClientTransportOptions
     {
       Name = "served-app",
-      Command = "dotnet",
-      Arguments = ["run", "--no-build", SamplePath(), "--", "mcp"],
+      Command = AppPath,
+      Arguments = ["mcp"],
       EnvironmentVariables = new Dictionary<string, string?> { [NuruDaemonOptions.SocketPathEnvironmentVariable] = socket },
       ShutdownTimeout = TimeSpan.FromSeconds(10)
     });

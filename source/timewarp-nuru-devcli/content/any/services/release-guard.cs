@@ -46,13 +46,14 @@
 // from, so a NEW tag at this commit could pin a different source than the
 // partial push used. All means already fully released — bump. None passes.
 //
-// IsPrerelease / BuildReleaseCreateArguments (kanban task 486): the GitHub
+// IsPrerelease / BuildReleaseCreate (kanban task 486): the GitHub
 // Release prerelease flag mirrors the version the same way NuGet does — a
 // SemVer prerelease suffix (a `-` before any `+build` metadata) means
 // prerelease. NuGet.Versioning is not referenced by this source-only package,
-// so this is a plain string check, not NuGetVersion.IsPrerelease. The gh
-// argument list is built in ONE place so the --dry-run / recovery string and
-// the executed WithArguments(...) cannot drift.
+// so this is a plain string check, not NuGetVersion.IsPrerelease. The typed
+// Gh.Release().Create() builder (Amuru 3.0.0-beta.9, AMURU0001; kanban task
+// 598) is built in ONE place: the --dry-run / recovery string comes from its
+// ToArguments(), and the same builder instance executes, so they cannot drift.
 //
 // SelectReleaseTarget (kanban task 543): the CI path filters give a commit
 // that changes only kanban/ no run at all, and board commits land on master
@@ -293,18 +294,17 @@ internal static class ReleaseGuard
     return withoutBuildMetadata.Contains('-', StringComparison.Ordinal);
   }
 
-  public static IReadOnlyList<string> BuildReleaseCreateArguments(string tag, string version)
+  public static GhReleaseCreateBuilder BuildReleaseCreate(string tag, string version)
   {
     ArgumentNullException.ThrowIfNull(tag);
     ArgumentNullException.ThrowIfNull(version);
 
-    List<string> arguments = ["release", "create", tag, "--title", tag, "--generate-notes", "--verify-tag"];
-    if (IsPrerelease(version))
-    {
-      arguments.Add("--prerelease");
-    }
+    GhReleaseCreateBuilder releaseCreate = Gh.Release().Create(tag)
+      .WithTitle(tag)
+      .WithGenerateNotes()
+      .WithVerifyTag();
 
-    return arguments;
+    return IsPrerelease(version) ? releaseCreate.WithPrerelease() : releaseCreate;
   }
 
   public static string FormatReleaseCreateCommand(IReadOnlyList<string> arguments)

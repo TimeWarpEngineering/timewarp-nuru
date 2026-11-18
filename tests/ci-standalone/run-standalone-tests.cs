@@ -1,5 +1,6 @@
 #!/usr/bin/env -S dotnet --
 #:package TimeWarp.Amuru
+#:package TimeWarp.Amuru.Tools
 
 #region Purpose
 // Standalone CI test phase: runs each test file that cannot be compiled into the JARIBU_MULTI assembly as
@@ -110,8 +111,9 @@ string[] sharedProjects =
 
 foreach (string sharedProject in sharedProjects)
 {
-  CommandOutput sharedBuild = await Shell.Builder("dotnet")
-    .WithArguments("build", Path.Combine(ciRepoRoot, sharedProject), "-c", "Debug", "-v", "quiet")
+  CommandOutput sharedBuild = await DotNet.Build(Path.Combine(ciRepoRoot, sharedProject))
+    .WithConfiguration("Debug")
+    .WithVerbosity("quiet")
     .WithNoValidation()
     .CaptureAsync();
   if (sharedBuild.ExitCode != 0)
@@ -134,8 +136,9 @@ await Parallel.ForEachAsync
   {
     string fullPath = Path.GetFullPath(testFile);
     string name = Path.GetFileName(fullPath);
-    CommandOutput result = await Shell.Builder("dotnet")
-      .WithArguments("run", "-p:BuildProjectReferences=false", fullPath)
+    CommandOutput result = await DotNet.Run()
+      .WithFile(fullPath)
+      .WithProperty("BuildProjectReferences", "false")
       .WithWorkingDirectory(Path.GetDirectoryName(fullPath)!)
       .WithEnvironmentVariable("DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER", "1")
       .WithNoValidation()

@@ -99,12 +99,14 @@ public class JsonArgsStdinAndDefaultsTests
         return await app.RunAsync(args);
         """);
 
+      string app = await BuildHarness(harness);
+
       string big = new('x', 131073);
-      (int bigCode, string bigOut, string bigErr) = await RunDotnet(harness, ["apply", "--json-args", "-"], "{\"patch\":\"" + big + "\"}");
+      (int bigCode, string bigOut, string bigErr) = await RunApp(app, ["apply", "--json-args", "-"], "{\"patch\":\"" + big + "\"}");
       bigCode.ShouldBe(0, bigErr + bigOut);
       bigOut.ShouldContain("131073");
 
-      (int emptyCode, _, string emptyErr) = await RunDotnet(harness, ["apply", "--json-args", "-"], "");
+      (int emptyCode, _, string emptyErr) = await RunApp(app, ["apply", "--json-args", "-"], "");
       emptyCode.ShouldBe(1, emptyErr);
       emptyErr.ShouldContain("empty stdin");
 
@@ -112,7 +114,7 @@ public class JsonArgsStdinAndDefaultsTests
       ttyCode.ShouldBe(1, ttyErr);
       ttyErr.ShouldContain("requires redirected stdin");
 
-      (int versionCode, string versionOut, string versionErr) = await RunDotnet(harness, ["--version", "--json-args", "-"], "");
+      (int versionCode, string versionOut, string versionErr) = await RunApp(app, ["--version", "--json-args", "-"], "");
       versionCode.ShouldBe(0, versionErr + versionOut);
       versionErr.ShouldNotContain("empty stdin");
       versionOut.ShouldNotBeNullOrWhiteSpace();
@@ -121,6 +123,9 @@ public class JsonArgsStdinAndDefaultsTests
     {
       if (File.Exists(harness))
         File.Delete(harness);
+      string output = HarnessOutputDir(harness);
+      if (Directory.Exists(output))
+        Directory.Delete(output, recursive: true);
     }
   }
 
@@ -142,14 +147,29 @@ public class JsonArgsStdinAndDefaultsTests
     throw new InvalidOperationException("tests/test-apps was not found.");
   }
 
-  private static async Task<(int ExitCode, string Stdout, string Stderr)> RunDotnet(
-    string harness,
+  private static string HarnessOutputDir(string harness) =>
+    Path.Combine(Path.GetDirectoryName(harness)!, "bin-478");
+
+  // DotNet.Run() has no WithStandardInput yet (timewarp-amuru task 154), so the harness is built
+  // once with the typed builder and its apphost runs directly with stdin piped in.
+  private static async Task<string> BuildHarness(string harness)
+  {
+    string output = HarnessOutputDir(harness);
+    CommandOutput build = await DotNet.Build(harness)
+      .WithOutput(output)
+      .WithNoValidation()
+      .CaptureAsync();
+    build.ExitCode.ShouldBe(0, build.Stdout + build.Stderr);
+    return Path.Combine(output, OperatingSystem.IsWindows() ? "harness.exe" : "harness");
+  }
+
+  private static async Task<(int ExitCode, string Stdout, string Stderr)> RunApp(
+    string app,
     string[] args,
     string stdin)
   {
-    List<string> argv = ["run", harness, "--", .. args];
-    CommandOutput output = await Shell.Builder("dotnet")
-      .WithArguments([.. argv])
+    CommandOutput output = await Shell.Builder(app)
+      .WithArguments(args)
       .WithStandardInput(stdin)
       .WithNoValidation()
       .CaptureAsync();

@@ -86,8 +86,8 @@ public sealed class TestCommand : ICommand<Unit>
 
       // run-ci-tests.cs runs the standalone phase after the multi-mode phase
       // unless NURU_CI_PHASE=multi.
-      ShellBuilder runner = Shell.Builder("dotnet")
-        .WithArguments(testRunner)
+      DotNetRunBuilder runner = DotNet.Run()
+        .WithFile(testRunner)
         .WithWorkingDirectory(repoRoot)
         .WithEnvironmentVariable("NURU_CI_PHASE", phase)
         .WithNoValidation();

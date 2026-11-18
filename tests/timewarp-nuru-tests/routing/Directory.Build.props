@@ -5,4 +5,9 @@
     <!-- Concurrency test helpers shared with the daemon and McpHost tests (task 508-016). -->
     <Compile Include="$(MSBuildThisFileDirectory)../../shared/call-probes.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The typed DotNet.* builders (AMURU0001, kanban task 598). A #:package directive would
+         reach the CI multi-mode assembly too and duplicate its reference (NU1504). -->
+    <PackageReference Include="TimeWarp.Amuru.Tools" />
+  </ItemGroup>
 </Project>

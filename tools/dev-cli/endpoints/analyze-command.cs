@@ -73,7 +73,7 @@ public sealed class AnalyzeCommand : ICommand<Unit>
       {
         Terminal.WriteLine($"\nAnalyzing project: {Path.GetFileName(project)}");
 
-        List<string> roslynatorArgs = ["roslynator", "fix", project];
+        List<string> roslynatorArgs = ["fix", project];
 
         if (!string.IsNullOrEmpty(command.Diagnostic))
         {
@@ -82,7 +82,7 @@ public sealed class AnalyzeCommand : ICommand<Unit>
           Terminal.WriteLine($"  Fixing diagnostic: {command.Diagnostic}");
         }
 
-        CommandResult analyzeResult = Shell.Builder("dotnet")
+        CommandResult analyzeResult = DotNet.Tool().Run("roslynator")
           .WithArguments([.. roslynatorArgs])
           .Build();
 

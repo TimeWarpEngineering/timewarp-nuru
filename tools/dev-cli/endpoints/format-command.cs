@@ -64,7 +64,8 @@ public sealed class FormatCommand : ICommand<Unit>
         args.Add("--verify-no-changes");
       }
 
-      CommandResult formatResult = Shell.Builder("dotnet")
+      // No DotNet.Format() builder yet (timewarp-amuru task 154).
+      CommandResult formatResult = DotNet.Builder()
         .WithArguments([.. args])
         .Build();
 

@@ -221,7 +221,10 @@ The source files will be automatically included in your project's compilation vi
 ## Requirements
 
 - TimeWarp.Nuru (the CLI framework)
-- TimeWarp.Amuru 1.0.0-beta.22+ (for repo services)
+- TimeWarp.Amuru and TimeWarp.Amuru.Tools 3.0.0-beta.9+. The content calls the typed `Gh.*`
+  and `DotNet.*` builders and `Git` from TimeWarp.Amuru.Tools, so the consumer references both
+  packages (`<PackageReference Include="TimeWarp.Amuru" />` and
+  `<PackageReference Include="TimeWarp.Amuru.Tools" />`)
 - TimeWarp.Terminal (for ITerminal)
 
 ## Usage
@@ -246,6 +249,19 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 4.0.0-beta.16+: typed Amuru builders (kanban task 598)
+
+TimeWarp.Amuru 3.0.0-beta.9 adds AMURU0001, a compile error for a raw `Shell.Builder("gh")` or
+`Shell.Builder("dotnet")` call that has a typed builder. The content now calls `Gh.Auth()`,
+`Gh.Run().List()`, `Gh.Api()` and `Gh.Release().Create()`, so a consumer dev CLI builds against
+Amuru beta.9. `ReleaseGuard.BuildReleaseCreateArguments` is replaced by
+`ReleaseGuard.BuildReleaseCreate(tag, version)`, which returns the `GhReleaseCreateBuilder`; its
+`ToArguments()` gives the printed command (`--prerelease` now comes before `--verify-tag`).
+The packable-project scan keeps `dotnet msbuild … -nodeReuse:false` on `DotNet.Builder()`
+until `DotNet.MsBuild()` has a node-reuse option (timewarp-amuru task 154).
+
+Bump `TimeWarp.Amuru` and `TimeWarp.Amuru.Tools` to 3.0.0-beta.9 or later with this release.
 
 ### 4.0.0-beta.15+: shared pull request build decision (`pull-request-build-classifier.cs`, kanban task 595)
 

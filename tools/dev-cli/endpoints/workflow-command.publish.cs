@@ -59,18 +59,19 @@ public sealed partial class WorkflowCommand
 
         Terminal.WriteLine($"Pushing {project.PackageId}.{version}.nupkg...");
 
-        // Build push arguments - include API key if provided (from OIDC Trusted Publishing)
-        List<string> args = ["nuget", "push", nupkgPath, "--source", "https://api.nuget.org/v3/index.json", "--skip-duplicate"];
+        // Include the API key if provided (from OIDC Trusted Publishing)
+        DotNetNuGetPushBuilder push = DotNet.NuGet()
+          .WithWorkingDirectory(repoRoot)
+          .Push(nupkgPath)
+          .WithSource("https://api.nuget.org/v3/index.json")
+          .WithSkipDuplicate();
 
         if (!string.IsNullOrEmpty(apiKey))
         {
-          args.AddRange(["--api-key", apiKey]);
+          push = push.WithApiKey(apiKey);
         }
 
-        int exitCode = await Shell.Builder("dotnet")
-          .WithArguments([.. args])
-          .WithWorkingDirectory(repoRoot)
-          .RunAsync();
+        int exitCode = await push.RunAsync();
 
         if (exitCode != 0)
         {

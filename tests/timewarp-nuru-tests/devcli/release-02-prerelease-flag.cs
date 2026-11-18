@@ -51,18 +51,18 @@ public class ReleasePrereleaseFlagTests
 
   public static async Task Beta_version_arguments_include_prerelease()
   {
-    IReadOnlyList<string> arguments = ReleaseGuard.BuildReleaseCreateArguments("v3.0.0-beta.79", "3.0.0-beta.79");
+    IReadOnlyList<string> arguments = ReleaseGuard.BuildReleaseCreate("v3.0.0-beta.79", "3.0.0-beta.79").ToArguments();
 
     arguments.ShouldContain("--prerelease");
     ReleaseGuard.FormatReleaseCreateCommand(arguments)
-      .ShouldBe("gh release create v3.0.0-beta.79 --title v3.0.0-beta.79 --generate-notes --verify-tag --prerelease");
+      .ShouldBe("gh release create v3.0.0-beta.79 --title v3.0.0-beta.79 --generate-notes --prerelease --verify-tag");
 
     await Task.CompletedTask;
   }
 
   public static async Task Stable_version_arguments_exclude_prerelease()
   {
-    IReadOnlyList<string> arguments = ReleaseGuard.BuildReleaseCreateArguments("v3.0.0", "3.0.0");
+    IReadOnlyList<string> arguments = ReleaseGuard.BuildReleaseCreate("v3.0.0", "3.0.0").ToArguments();
 
     arguments.ShouldNotContain("--prerelease");
     ReleaseGuard.FormatReleaseCreateCommand(arguments)

@@ -175,7 +175,7 @@ public class CliKeyTests
   {
     string searchDll = Path.Combine(AppContext.BaseDirectory, "TimeWarp.Nuru.Search.dll");
 
-    CommandOutput output = await Shell.Builder("dotnet")
+    CommandOutput output = await DotNet.Builder()
       .WithArguments([searchDll, "search", .. arguments])
       .WithEnvironmentVariable("HOME", home)
       .WithEnvironmentVariable("USERPROFILE", home)

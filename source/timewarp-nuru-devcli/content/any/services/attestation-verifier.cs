@@ -5,7 +5,7 @@
 // refs/notes/ganda-audit; this file lets ANY public repo's CI verify that
 // evidence without ever running ganda's private audit itself. No process
 // execution here — git/openssl orchestration lives in the caller
-// (tools/dev-cli/endpoints/workflow-command.cs) so this logic stays testable
+// (attestation-verify-runner.cs, kanban task 592) so this logic stays testable
 // as pure functions.
 #endregion
 #region Design

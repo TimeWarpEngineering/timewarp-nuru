@@ -21,7 +21,9 @@
 // commit or the first commit outside kanban/, so a release at a green HEAD
 // costs one gh call, as before. When the target is behind HEAD, <Version> is
 // re-read at the target with `git show` and must match the version steps 6
-// and 7 checked (ReleaseGuard.CheckTargetVersion).
+// and 7 checked (ReleaseGuard.CheckTargetVersion). Step 9 (kanban task 592): the
+// target's tree must carry a valid ganda-audit note under the mode the release job
+// uses (ReleaseAttestationGuard); it runs in --dry-run too, before anything is tagged.
 //
 // D2: pure per-guard classifiers live in release-guard.cs (GuardVerdict);
 // this handler owns the git/gh process orchestration and prints a short
@@ -47,8 +49,9 @@
 // the two-independent-human-acts stage"); the operator instead gets the
 // exact `gh release create` command to retry by hand.
 //
-// D4: --dry-run runs every guard (all read-only — even `git fetch origin
-// master` only reads remote state into the local tracking ref) and then
+// D4: --dry-run runs every guard (all read-only — `git fetch origin master`
+// and step 9's fetch of refs/notes/ganda-audit only read remote state into
+// local refs) and then
 // prints the version/tag/target-sha/guard checklist/exact commands instead
 // of executing them. No notes-related options: --generate-notes is the
 // house convention, not a per-run choice.
@@ -70,7 +73,7 @@
 // refuses with PackageFeedLookup.FormatUnknownRefusal (feed, status, fix).
 // The feed set is resolved in step 1, before any network call.
 //
-// D7 (kanban task 581, 500-line cap): steps 6, 7 and 10 and the step 8 walk
+// D7 (kanban task 581, 500-line cap): steps 6, 7, 9 and 11 and the step 8 walk
 // live in release-command.guards.cs; Handle keeps the step order and exit codes.
 #endregion
 
@@ -328,7 +331,14 @@ internal sealed partial class ReleaseCommand : ICommand<Unit>
         Terminal.WriteLine($"✓ HEAD is {targetVerdict.SkippedCommitCount} kanban-only commit(s) past {ShortSha(targetSha)} (CI run {targetVerdict.RunId})".Green());
       }
 
-      // --- Step 9: --dry-run stops here ---------------------------------------
+      // --- Step 9: release target tree attested --------------------------------
+      if (!await CheckTargetAttestedAsync(config, repoRoot, targetSha, headSha, cancellationToken).ConfigureAwait(false))
+      {
+        Environment.ExitCode = 1;
+        return Unit.Value;
+      }
+
+      // --- Step 10: --dry-run stops here --------------------------------------
       string tagCommand = $"git tag -a {tag} -m \"Release {tag}\" {targetSha}";
       string pushCommand = $"git push origin {tag}";
       GhReleaseCreateBuilder releaseCreate = ReleaseGuard.BuildReleaseCreate(tag, version);
@@ -349,7 +359,7 @@ internal sealed partial class ReleaseCommand : ICommand<Unit>
         return Unit.Value;
       }
 
-      // --- Step 10: execute — tag, push, gh release create --------------------
+      // --- Step 11: execute — tag, push, gh release create --------------------
       await ExecuteReleaseAsync(tag, targetSha, releaseCreate, releaseCommand, cancellationToken).ConfigureAwait(false);
       return Unit.Value;
     }

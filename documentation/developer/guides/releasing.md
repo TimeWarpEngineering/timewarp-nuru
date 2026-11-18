@@ -48,8 +48,8 @@ nothing is published yet.
 ### 2. Cut the release with `dev release`
 
 `dev release` (from the `TimeWarp.Nuru.DevCli` package, `release-command.cs`) reads
-`<Version>` from `source/Directory.Build.props` and runs eight guards, in order,
-before creating anything. Guards 2–8 each print a `✓` line on success (guard 1,
+`<Version>` from `source/Directory.Build.props` and runs nine guards, in order,
+before creating anything. Guards 2–9 each print a `✓` line on success (guard 1,
 reading the props version, confirms itself implicitly by proceeding); the first
 failure aborts with an operator-facing reason and a nonzero exit code:
 
@@ -106,9 +106,38 @@ failure aborts with an operator-facing reason and a nonzero exit code:
    exists for `<sha>`"**, plus the commit and path when a commit outside `kanban/`
    ended the walk. The fix is to wait for the merge run on that commit, or
    `gh run rerun <id>` a run whose artifact expired. A probe run never fixes it.
+9. **The release target's tree is attested.** `dev release` fetches
+   `refs/notes/ganda-audit`, reads the note for the guard 8 target's tree (not
+   `HEAD`'s, when the target is behind `HEAD`), and verifies it the way the
+   `release: published` job does (`AttestationVerifyRunner`, shared with
+   `dev workflow`). It uses the job's mode: `.timewarp/dev.jsonc`
+   `attestation.mode`, unset or a typo meaning `require`. `off` prints
+   `attestation skipped` and verifies nothing; `warn` prints the block below in
+   yellow and continues; `require` refuses. Pass line:
+
+   ```text
+   ✓ target tree b8a1894ff695 attested (key_id=tw-audit-1)
+   ```
+
+   Refusal: **"release target `<sha12>` is not attested (`<status>`) — refusing
+   before the tag"**, followed by the target commit, its tree, the status
+   (`NoNote`, `RefMissing`, `BadSignature`, `TreeMismatch`, `ParseFailure`,
+   `UnknownKey`, `VerifierUnavailable`) and the remedy:
+
+   | Status | Remedy |
+   |---|---|
+   | `UnknownKey` | Update `TimeWarp.Nuru.DevCli` so its key registry knows the note's `key_id`. |
+   | `VerifierUnavailable` | Install `openssl`. |
+   | any other, target is `HEAD` | `git pull --ff-only`, `ganda repo attest` (it pushes the notes ref), rerun `dev release`. |
+   | any other, target behind `HEAD` | `git switch -c attest-<sha12> <target>`, `git branch --set-upstream-to=origin/master`, `ganda repo attest`, `git switch master && git branch -D attest-<sha12>`, rerun `dev release`. |
+
+   Without this guard, an unattested target is found only by the
+   `release: published` job's attestation gate (Step 1/6 below), after the tag
+   and the GitHub Release already exist. A tag cannot be retried, so that
+   recovery was manual (4.0.0-beta.13 to beta.15, task 592).
 
 Run `dev release --dry-run` first to see every guard evaluated (all read-only, even
-the `git fetch origin master` step) plus the exact tag/push/`gh release create`
+the `git fetch origin master` and notes-ref fetch steps) plus the exact tag/push/`gh release create`
 commands it would run, without creating anything.
 
 With guards passed and not `--dry-run`, `dev release`:
@@ -157,7 +186,9 @@ distinct failure class:
   portable/no-ganda consumers). A typo'd mode value is treated as `require`
   with a warning (fail-closed — never silently `off`). Refusal when enforced:
   **"attestation required (mode=require) and not valid"** with guidance such as
-  "pull master locally so ganda can attest."
+  "pull master locally so ganda can attest." `dev release` guard 9 runs this same
+  verify on the same tree before tagging, so this gate should only trip when the
+  mode or the notes ref changed after `dev release` ran.
 
 **Step 2/6 — Check Version.** Runs the standalone `check-version` gate directly
 (not the stricter `ReleaseGuard.CheckPublishState` guard 7 uses) — here `None` and

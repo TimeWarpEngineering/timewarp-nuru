@@ -136,16 +136,6 @@ public sealed partial class WorkflowCommand
     // a specific run for `gh run rerun {RunId}` guidance.
     private sealed record ExpiredArtifactEncounter(long RunId, string Event, IReadOnlyList<string> ArtifactNames);
 
-    // Outcome of VerifyAttestationAsync — one of every AttestationVerificationStatus
-    // value EXCEPT ReadyToVerify (an internal-to-Evaluate intermediate state
-    // that never escapes VerifyAttestationAsync; by the time this record is
-    // returned, the openssl step has already resolved it to Valid or
-    // BadSignature, or a pre-signature check already resolved it to something
-    // else). CheckSet/Ts are populated whenever a note was parsed far enough
-    // to have them (including failure paths like TreeMismatch/BadSignature),
-    // so failure messages can still cite them when useful.
-    private sealed record AttestationVerifyOutcome(AttestationVerificationStatus Status, string? Tree, string? CheckSet, string? Ts, string? Detail);
-
     // Outcome of RunAttestationPolicyStepAsync — whether the pipeline must
     // abort (mode=require + non-Valid) and, when in mode=warn with a
     // non-Valid outcome, the advisory line PR/merge repeats just before the

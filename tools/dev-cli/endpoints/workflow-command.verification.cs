@@ -140,7 +140,7 @@ public sealed partial class WorkflowCommand
         return new AttestationStepResult(ShouldAbort: false, RepeatAdvisory: null);
       }
 
-      AttestationVerifyOutcome outcome = await VerifyAttestationAsync(repoRoot).ConfigureAwait(false);
+      AttestationVerifyOutcome outcome = await AttestationVerifyRunner.VerifyAsync(repoRoot, "HEAD").ConfigureAwait(false);
 
       if (outcome.Status == AttestationVerificationStatus.Valid)
       {
@@ -148,7 +148,7 @@ public sealed partial class WorkflowCommand
         return new AttestationStepResult(ShouldAbort: false, RepeatAdvisory: null);
       }
 
-      string message = DescribeAttestationOutcome(outcome);
+      string message = AttestationVerifyRunner.Describe(outcome);
 
       if (mode == AttestationMode.Require)
       {

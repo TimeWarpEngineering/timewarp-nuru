@@ -10,8 +10,25 @@ internal static partial class InterceptorEmitter
 {
   private static void EmitMethodBody(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string? loggerFactoryFieldName)
   {
+    // Peel --json-args before the command scope so the REPL host check sees routeArgs
+    // (config args stripped), including AutoStartWhenEmpty on an empty route.
+    // A call in a NuruCallContext (daemon, MCP host) is isolated: its own __NuruCall, scoped like a REPL
+    // command (Scoped per call), and its session and command instances disposed when it returns.
+    sb.AppendLine("    bool __isolatedCall = !fromRepl && global::TimeWarp.Nuru.NuruCallContext.Current is not null;");
+    sb.AppendLine("    if (__isolatedCall)");
+    sb.AppendLine("      __nuruCall.Value = new __NuruCall();");
+    sb.AppendLine("    __replCommandActive = fromRepl || __isolatedCall;");
+
+    // Build a lookup from route to its original index for command class naming
+    // IMPORTANT: Use only this app's routes (plus filtered endpoints), not all routes from all apps
+    // Using model.AllRoutes would cause route index collisions between different apps
+    // EmitPrepare reads their long options so a declared --name=value is not taken as configuration.
+    List<RouteDefinition> allRoutesOrdered = RoutesInIndexOrder(app, model);
+    JsonArgsEmitter.EmitPrepare(sb, app, allRoutesOrdered);
+
     // Full sources when AddConfiguration() ran or a handler takes configuration.
     // A blank root still satisfies EnsureServicesInitialized.
+    // Built after EmitPrepare: AddCommandLine reads only the overrides the route filter dropped.
     if (app.HasConfiguration)
     {
       ConfigurationEmitter.Emit(sb);
@@ -22,16 +39,6 @@ internal static partial class InterceptorEmitter
       sb.AppendLine("    global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration =");
       sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");
     }
-
-    // Peel --json-args before the command scope so the REPL host check sees routeArgs
-    // (config args stripped), including AutoStartWhenEmpty on an empty route.
-    // A call in a NuruCallContext (daemon, MCP host) is isolated: its own __NuruCall, scoped like a REPL
-    // command (Scoped per call), and its session and command instances disposed when it returns.
-    sb.AppendLine("    bool __isolatedCall = !fromRepl && global::TimeWarp.Nuru.NuruCallContext.Current is not null;");
-    sb.AppendLine("    if (__isolatedCall)");
-    sb.AppendLine("      __nuruCall.Value = new __NuruCall();");
-    sb.AppendLine("    __replCommandActive = fromRepl || __isolatedCall;");
-    JsonArgsEmitter.EmitPrepare(sb, app);
 
     // The REPL host must not open a command scope. Nested commands open their own.
     // await using disposes that scope on every later return, including early exits.
@@ -66,11 +73,6 @@ internal static partial class InterceptorEmitter
     // Filter endpoints based on app's discovery mode (DiscoverEndpoints or Map<T> calls)
     ImmutableArray<RouteDefinition> endpointsForApp = FilterEndpointsForApp(app, model.Endpoints);
     IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(endpointsForApp);
-
-    // Build a lookup from route to its original index for command class naming
-    // IMPORTANT: Use only this app's routes (plus filtered endpoints), not all routes from all apps
-    // Using model.AllRoutes would cause route index collisions between different apps
-    List<RouteDefinition> allRoutesOrdered = RoutesInIndexOrder(app, model);
 
     // A request bound by NuruApp.TryBind runs here, after services and the command scope.
     JsonArgsEmitter.EmitInvocationDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);

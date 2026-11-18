@@ -71,16 +71,29 @@ internal static partial class JsonArgsEmitter
   /// <summary>
   /// Peels <c>--json-args</c> from the original args, rejects attached forms, filters
   /// config args, and either leaves a built-in for later dispatch or parses the payload.
+  /// Tokens after the first <c>--</c> skip the config filter. Before it, a declared long option's
+  /// <c>--name=value</c> or <c>--name:value</c> stays a route token (task 591-001).
+  /// When the app has configuration, the dropped overrides are collected in <c>__configArgList</c>
+  /// for <see cref="ConfigurationEmitter"/>, which runs after this.
   /// </summary>
-  public static void EmitPrepare(StringBuilder sb, AppModel app)
+  /// <param name="sb">The generated method body.</param>
+  /// <param name="app">The app being emitted.</param>
+  /// <param name="routes">Every route of this app, endpoints included; their long options are kept.</param>
+  public static void EmitPrepare(StringBuilder sb, AppModel app, IReadOnlyList<RouteDefinition> routes)
   {
-    sb.AppendLine("    // --json-args is peeled from the original args before IsConfigArg and before user routes.");
+    sb.AppendLine("    // --json-args is peeled from the original args before the config filter and before user routes.");
+    sb.AppendLine("    // Tokens after the first \"--\" skip the config filter. --json-args is still peeled there: a route");
+    sb.AppendLine("    // whose pattern has a literal \"--\" takes --json-args after it.");
     sb.AppendLine("    string? __jsonArgsValue = null;");
     sb.AppendLine("    bool __jsonArgsSeen = false;");
+    sb.AppendLine("    int __argsEndOfOptions = -1;");
     sb.AppendLine("    global::System.Collections.Generic.List<string> __jsonPeeledArgs = new(args.Length);");
     sb.AppendLine("    for (int __ji = 0; __ji < args.Length; __ji++)");
     sb.AppendLine("    {");
     sb.AppendLine("      string __jarg = args[__ji];");
+    sb.AppendLine("      if (__argsEndOfOptions < 0 && string.Equals(__jarg, \"--\", global::System.StringComparison.Ordinal))");
+    sb.AppendLine("        __argsEndOfOptions = __jsonPeeledArgs.Count;");
+    sb.AppendLine();
     sb.AppendLine("      if (__jarg.StartsWith(\"--json-args=\", global::System.StringComparison.Ordinal)");
     sb.AppendLine("        || __jarg.StartsWith(\"--json-args:\", global::System.StringComparison.Ordinal)");
     sb.AppendLine("        || __jarg.StartsWith(\"/json-args=\", global::System.StringComparison.Ordinal)");
@@ -112,26 +125,59 @@ internal static partial class JsonArgsEmitter
     sb.AppendLine("      __jsonPeeledArgs.Add(__jarg);");
     sb.AppendLine("    }");
     sb.AppendLine();
-    sb.AppendLine("    static bool IsConfigArg(string arg)");
+    EmitDeclaredOptionPredicate(sb, routes);
+    sb.AppendLine("    // Returns the route token for an argument before \"--\", or null for a configuration override.");
+    sb.AppendLine("    // A declared long option's --name:value is rewritten to --name=value so the matcher binds it.");
+    sb.AppendLine("    static string? RouteTokenOrConfig(string arg)");
     sb.AppendLine("    {");
     sb.AppendLine("      if (arg.StartsWith(\"--\", global::System.StringComparison.Ordinal))");
     sb.AppendLine("      {");
     sb.AppendLine("        int eqIdx = arg.IndexOf('=');");
     sb.AppendLine("        int colonIdx = arg.IndexOf(':');");
-    sb.AppendLine("        return (eqIdx > 2) || (colonIdx > 2);");
+    sb.AppendLine("        if (eqIdx <= 2 && colonIdx <= 2)");
+    sb.AppendLine("          return arg;");
+    sb.AppendLine();
+    sb.AppendLine("        int sepIdx = eqIdx < 0 ? colonIdx : colonIdx < 0 ? eqIdx : global::System.Math.Min(eqIdx, colonIdx);");
+    sb.AppendLine("        if (!__IsDeclaredLongOption(arg.Substring(2, sepIdx - 2)))");
+    sb.AppendLine("          return null;");
+    sb.AppendLine();
+    sb.AppendLine("        return arg[sepIdx] == ':' ? arg.Substring(0, sepIdx) + \"=\" + arg.Substring(sepIdx + 1) : arg;");
     sb.AppendLine("      }");
     sb.AppendLine();
     sb.AppendLine("      if (arg.StartsWith(\"/\", global::System.StringComparison.Ordinal) && arg.Length > 1 && char.IsLetter(arg[1]))");
     sb.AppendLine("      {");
     sb.AppendLine("        int eqIdx = arg.IndexOf('=');");
     sb.AppendLine("        int colonIdx = arg.IndexOf(':');");
-    sb.AppendLine("        return (eqIdx > 1) || (colonIdx > 1);");
+    sb.AppendLine("        return (eqIdx > 1) || (colonIdx > 1) ? null : arg;");
     sb.AppendLine("      }");
     sb.AppendLine();
-    sb.AppendLine("      return false;");
+    sb.AppendLine("      return arg;");
     sb.AppendLine("    }");
     sb.AppendLine();
-    sb.AppendLine("    string[] routeArgs = [.. __jsonPeeledArgs.Where(arg => !IsConfigArg(arg))];");
+    sb.AppendLine("    global::System.Collections.Generic.List<string> __routeArgList = new(__jsonPeeledArgs.Count);");
+    if (app.HasConfiguration)
+    {
+      sb.AppendLine("    // Configuration reads only the overrides the route drops. A route token such as a declared");
+      sb.AppendLine("    // --name:value would otherwise be read by AddCommandLine as a key that takes the next argument.");
+      sb.AppendLine("    global::System.Collections.Generic.List<string> __configArgList = [];");
+    }
+
+    sb.AppendLine("    for (int __ri = 0; __ri < __jsonPeeledArgs.Count; __ri++)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string? __routeToken = __argsEndOfOptions >= 0 && __ri >= __argsEndOfOptions");
+    sb.AppendLine("        ? __jsonPeeledArgs[__ri]");
+    sb.AppendLine("        : RouteTokenOrConfig(__jsonPeeledArgs[__ri]);");
+    sb.AppendLine("      if (__routeToken is not null)");
+    sb.AppendLine("        __routeArgList.Add(__routeToken);");
+    if (app.HasConfiguration)
+    {
+      sb.AppendLine("      else");
+      sb.AppendLine("        __configArgList.Add(__jsonPeeledArgs[__ri]);");
+    }
+
+    sb.AppendLine("    }");
+    sb.AppendLine();
+    sb.AppendLine("    string[] routeArgs = [.. __routeArgList];");
     sb.AppendLine("    global::System.Text.Json.JsonDocument? __jsonDoc = null;");
     sb.AppendLine("    bool __jsonBuiltInOnly = false;");
     sb.AppendLine("    if (__jsonArgsValue is not null)");
@@ -154,6 +200,29 @@ internal static partial class JsonArgsEmitter
     sb.AppendLine("    }");
     sb.AppendLine();
     EmitBuiltInPredicate(sb, app);
+  }
+
+  /// <summary>
+  /// Emits <c>__IsDeclaredLongOption</c>: true when any route of the app declares that long option name.
+  /// </summary>
+  private static void EmitDeclaredOptionPredicate(StringBuilder sb, IReadOnlyList<RouteDefinition> routes)
+  {
+    SortedSet<string> longForms = [with(StringComparer.Ordinal)];
+    foreach (RouteDefinition route in routes)
+    {
+      foreach (OptionDefinition option in route.Options)
+      {
+        if (option.LongForm is not null)
+          longForms.Add(option.LongForm);
+      }
+    }
+
+    string body = longForms.Count == 0
+      ? "false"
+      : "name is " + string.Join(" or ", longForms.Select(form => $"\"{Escape(form)}\""));
+    sb.AppendLine("    // Long options declared by this app's routes. Their =value and :value forms are not configuration.");
+    sb.AppendLine($"    static bool __IsDeclaredLongOption(string name) => {body};");
+    sb.AppendLine();
   }
 
   /// <summary>

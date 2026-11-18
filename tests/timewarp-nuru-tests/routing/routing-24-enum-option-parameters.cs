@@ -82,10 +82,7 @@ public class EnumOptionParameterTests
     terminal.OutputContains("env:Prod").ShouldBeTrue();
   }
 
-  // TODO: This test is skipped due to pre-existing bug where IsConfigArg incorrectly
-  // filters out --option=value syntax. The enum conversion code is correct.
-  // See generated code: --env=staging triggers IsConfigArg() == true incorrectly.
-  [Skip("Pre-existing bug: IsConfigArg incorrectly filters --option=value syntax")]
+  // A declared option's --name=value is a route token, not a configuration override (task 591-001)
   public static async Task Should_bind_enum_option_with_equals_syntax()
   {
     // Arrange

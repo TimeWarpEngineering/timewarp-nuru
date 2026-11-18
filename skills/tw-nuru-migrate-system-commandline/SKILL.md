@@ -188,14 +188,17 @@ Rules:
   catch-all. Nuru removes the `--` itself. Add it back if the child program needs it.
 - Free-form items (`key=value`, `key:=1`, `Header:value`) arrive unchanged in the catch-all. Classify them in
   the handler. Declared options can sit between them.
-- **Known gap:** tokens shaped `--name=value`, `--name:value`, `/name=value`, `/name:value` are removed as
-  configuration overrides, even after `--`. Forwarding `/p:Configuration=Release` or `--verbosity=quiet`
-  through a catch-all does not work.
-- **Users rely on `--name=value`?** Rewrite argv in `Program.cs` before `RunAsync`: for each name your tool
-  declares (and legacy aliases), turn `--name=value` into `--name value` and the alias into the canonical
-  name. Stop at `--` and copy it and the tail unchanged. Example: [Option syntax](../../documentation/user/guides/migrating-from-system-commandline.md#option-syntax).
+- Tokens after `--` are never removed or taken as configuration, so `/p:Configuration=Release` and
+  `--verbosity=quiet` forward through a catch-all unchanged.
+- Before `--`, `--name=value` and `--name:value` bind a declared long option (value = everything after the
+  first `=` or `:`). Undeclared names (`--Section:Key=v`) and every slash form (`/Mode=fast`, declared or
+  not) are still configuration overrides. `-o=value` binds a declared short value option.
+  Before the release after 4.0.0-beta.14, `--name=value` never bound.
+- **Users rely on a legacy alias with `=` (`--old=value`)?** An undeclared alias is taken as configuration.
+  Rewrite argv in `Program.cs` before `RunAsync`: turn the alias into the canonical name. Stop at `--` and
+  copy it and the tail unchanged. Example: [Option syntax](../../documentation/user/guides/migrating-from-system-commandline.md#option-syntax).
 - **Split at `--` first** when the tool takes variable items before `--` *and* forwards items after it (a
-  single catch-all cannot tell them apart), or when it must forward `=` or `/p:` tokens:
+  single catch-all cannot tell them apart):
 
 ```csharp
 // Program.cs, before CreateBuilder (the class goes after the top-level statements)
@@ -291,8 +294,8 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
    parameters or options. For a single-command tool, add a usage line to `.WithDescription(...)` and note
    the gap in your report.
 3. The old tests, ported, pass.
-4. Run each command with the arguments from the tool's readme. Rewrite any `--name=value` example as
-   `--name value`.
+4. Run each command with the arguments from the tool's readme. Check that `--name=value` examples
+   bind declared options and that `--flag=true` on a bool flag is not used.
 5. AOT: `dotnet publish -c Release -r linux-x64` (with `PublishAot`; add `-f net11.0` if the project uses
    plural `<TargetFrameworks>`). Expect zero `IL2xxx`/`IL3xxx` warnings from Nuru. Fix new warnings in the
    code. Do not suppress them. Warnings from other dependencies (Dapper, Roslyn scripting) stay theirs.
@@ -303,7 +306,7 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 
 ## Behavior differences to tell the user about
 
-- `--name=value` not bound (exit 0, default value used).
+- `--flag=true` on a bool flag is an unknown-option error (`Unknown option '--verbose=true'`), exit 1.
 - Extra positional arguments are ignored when the route has a `[Parameter]`; on a route with none they are
   `Unknown command`. Several values per token (`--env A B`) do the same: `B` becomes a positional.
 - Help is a table about 80 columns wide: long names truncated, no defaults, no `(REQUIRED)`, no enum choices.

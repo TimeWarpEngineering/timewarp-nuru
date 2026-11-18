@@ -80,6 +80,7 @@ Acceptance:
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-15)
 - 2026-11-17 groom: `release-guard.cs` path corrected to `content/any/services/`; added the beta.15 occurrence.
 - 2026-11-18 implement (ganda task work, implementer-claude): shared verify runner, release guard step 9, docs, tests.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-11-18T11:36:21Z
 
 ## Notes
 

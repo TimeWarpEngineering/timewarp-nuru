@@ -15,6 +15,9 @@
 // An optional positional reserves nothing.
 // When a required positional or a catch-all follows, a typed element stops the run at the
 // first token that does not convert, and that token stays positional.
+// A string element accepts every token. When a catch-all follows and no "--" stands before
+// that catch-all, one flag takes one value so the catch-all still receives the rest.
+// Repeat the flag for more values. A "--" before the catch-all keeps the greedy run.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -234,14 +237,19 @@ internal static partial class RouteMatcherEmitter
     bool leaveUnparsed = route.Parameters.Any(parameter => parameter.IsCatchAll || !parameter.IsOptional);
     string? accepts = leaveUnparsed ? RepeatedElementAccepts(option) : null;
     int keep = option.ParameterIsOptional ? 0 : 1;
+    bool oneValue = TakesOneValueBeforeCatchAll(route, accepts);
+    string takeLoop = oneValue ? "if" : "while";
 
     sb.AppendLine($"        if ({conditionRepeated})");
     sb.AppendLine("        {");
     sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
     sb.AppendLine("          bool __tookValue = false;");
     sb.AppendLine("          bool __trackRun = false;");
-    sb.AppendLine("          // Take every following non-option token. --opt=value above stays one value.");
-    sb.AppendLine($"          while (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]) && !global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike(routeArgs[__i + 1]))");
+    if (oneValue)
+      sb.AppendLine("          // One value. A catch-all follows and no \"--\" stands before it.");
+    else
+      sb.AppendLine("          // Take every following non-option token. --opt=value above stays one value.");
+    sb.AppendLine($"          {takeLoop} (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]) && !global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike(routeArgs[__i + 1]))");
     sb.AppendLine("          {");
     if (accepts is not null)
       sb.AppendLine($"            if (!({accepts})) break;");
@@ -269,6 +277,32 @@ internal static partial class RouteMatcherEmitter
 
     // Emit type conversion and array creation
     EmitRepeatedOptionTypeConversion(conversions, option, escapedVarName, listVarName, routeIndex, customConverters, route);
+  }
+
+  /// <summary>
+  /// A string repeated option takes one value per flag when a catch-all follows and no
+  /// end-of-options separator stands before that catch-all. A typed element is told apart
+  /// by conversion, so <paramref name="accepts"/> being non-null keeps the greedy run.
+  /// </summary>
+  private static bool TakesOneValueBeforeCatchAll(RouteDefinition route, string? accepts)
+  {
+    if (accepts is not null)
+      return false;
+
+    bool separatorBeforeCatchAll = false;
+    foreach (SegmentDefinition segment in route.Segments)
+    {
+      if (segment is EndOfOptionsSeparatorDefinition)
+      {
+        separatorBeforeCatchAll = true;
+        continue;
+      }
+
+      if (segment is ParameterDefinition parameter && parameter.IsCatchAll)
+        return !separatorBeforeCatchAll;
+    }
+
+    return false;
   }
 
   /// <summary>

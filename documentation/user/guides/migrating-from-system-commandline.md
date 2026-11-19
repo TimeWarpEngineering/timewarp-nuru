@@ -223,7 +223,7 @@ command line, or the route does not match.
 |--------------|----------------|
 | `--output x.txt`, `-o x.txt` | Supported |
 | `--tag a --tag b` (repeated option) | Supported when the property is an array or collection (`string[]`) |
-| `--tag a b` (several values per token) | Both bind when the property is an array or collection. A following optional positional is swallowed. A required positional keeps the trailing values it still needs, and the repeated option keeps one value when the element is required. `--tag=a` stays one value, so the next token can still be a positional. |
+| `--tag a b` (several values per token) | Both bind when the property is an array or collection. A following optional positional is swallowed. A required positional keeps the trailing values it still needs, and the repeated option keeps one value when the element is required. When a catch-all follows and the route has no `--` before it, a string repeated option takes one value per flag (`--env A=1 nginx echo hi` binds the env value, then `nginx`, then the command). Repeat the flag for more values, or put `--` before the catch-all to take every value before the separator. A typed repeated option still takes every token that converts. `--tag=a` stays one value, so the next token can still be a positional. |
 | `--force true`, `--force false` (explicit bool value) | Supported as a separate token (`--force false`). `--force=true` is an unknown option. A bool whose initializer is `true` is a value option: absence stays `true`. |
 | `--output=x.txt`, `--output:x.txt` | Supported for a declared long option. The value is everything after the first `=` or `:` (`--connection=Server=h:5432` binds `Server=h:5432`). |
 | `--verbose=true` (bool flag with a value) | Error: `Unknown option '--verbose=true'. Use --help for usage.`, exit 1. |
@@ -741,6 +741,12 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
    `Description` text if your users rely on them.
 3. **Extra positional arguments.** A route with no catch-all rejects tokens past its last parameter
    (required or optional): `Unknown command`, exit 1. A catch-all takes the rest.
+   A repeated option takes every following value (`--env A B` binds both) and swallows a following
+   optional positional. A required positional keeps the trailing values it still needs.
+   When a catch-all follows and the route has no `--` before it, a string repeated option takes one
+   value per flag, so `--env A=1 nginx echo hi` binds the env value, the image, and the command.
+   Repeat the flag for more values, or write `--` before the catch-all. A typed repeated option
+   still takes every token that converts.
    `System.CommandLine` reports `Unrecognized command or argument 'b'`.
 4. **An option that requires a value rejects a bare flag.** `myapp -o` (no value), when `Output` is a
    non-nullable `string` or other required value, does not run the handler: `Unknown command`, exit 1.

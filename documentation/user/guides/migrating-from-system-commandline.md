@@ -177,8 +177,12 @@ Notes:
   builder fails with `NURU_S999`.
 - Builder values are read at compile time. `.WithDescription(...)` needs a plain string literal (or a raw
   string literal). An interpolated string compiles but prints an empty description.
-- Do not name an endpoint property `Type`; the generated code does not compile. Give enum option types a
-  simple name that is unique in the compilation, or the generated code is ambiguous (`CS0104`).
+- An endpoint property may be named `Type`, or another C# keyword. Generated locals escape the keyword
+  as a whole identifier (`@type`). Two enum types may share a simple name when they live in different
+  namespaces; generated code uses the fully qualified name (`global::Ns1.Mode`). A name you write yourself
+  (`public Mode` while both namespaces are imported) is still your source's ambiguity. On 4.0.0-beta.14 a
+  property named `Type` emitted `@type_0` and failed to compile, and two same-named enums were `CS0104` in
+  generated code. Fixed in task 591-006.
 
 ## Arguments and options
 
@@ -772,6 +776,13 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 10. **`bool` flags cannot default to `true`, and `--flag false` is not supported.** See the concept map.
 11. **Built-in routes reserve names**: `--help`, `-h`, `--version`, `--capabilities`, `--json-args`, plus
    `--interactive`/`-i` when you add the REPL. Do not declare these yourself.
+12. **A property named `Type`, and two enums with the same simple name, compile.** Generated code escapes
+    a keyword property as a whole identifier (`@type`) and qualifies handler return types
+    (`global::Ns1.Mode`). A name you write yourself, such as `public Mode` while both namespaces are
+    imported, is still your source's ambiguity.
+    (On 4.0.0-beta.14 a property named `Type` emitted `@type_0` and failed to compile, and two enum types
+    with the same simple name in different namespaces were an ambiguous reference, `CS0104`, in generated
+    code. Fixed in task 591-006.)
 
 ## What you get after the port
 

@@ -402,12 +402,9 @@ internal static partial class HandlerInvokerEmitter
     if (handler.ReturnType.HasValue)
     {
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
-      string resultType = handler.IsAsync
-        ? GetUnwrappedReturnTypeName(handler)
-        : handler.ReturnType.ShortTypeName;
 
       sb.AppendLine(
-        $"{indent}{resultType} result = {awaitKeyword}{typeName}.{methodName}({args});");
+        $"{indent}{resultTypeName} result = {awaitKeyword}{typeName}.{methodName}({args});");
       EmitResultOrCapture(sb, indent, resultTypeName, handler.ReturnType.ValueKind, captureResultInto);
     }
     else

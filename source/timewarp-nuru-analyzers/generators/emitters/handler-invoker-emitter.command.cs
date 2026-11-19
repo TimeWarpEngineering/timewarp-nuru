@@ -33,6 +33,11 @@ internal static partial class HandlerInvokerEmitter
         sb.AppendLine($"{indent}// Resolve handler constructor dependencies");
         foreach (ParameterBinding dep in handler.ConstructorDependencies)
         {
+          // Source-gen direct invoke binds IOptions<T> from the route's configuration local.
+          // Runtime DI keeps GetRequiredService so services.Configure<T> supplies the instance.
+          if (!useRuntimeDI && ServiceResolverEmitter.TryEmitConstructorOptions(sb, dep, indent))
+            continue;
+
           string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
           sb.AppendLine(
             $"{indent}{dep.ParameterTypeName} __{dep.ParameterName} = {resolution};");
@@ -397,12 +402,9 @@ internal static partial class HandlerInvokerEmitter
     if (handler.ReturnType.HasValue)
     {
       string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
-      string resultType = handler.IsAsync
-        ? GetUnwrappedReturnTypeName(handler)
-        : handler.ReturnType.ShortTypeName;
 
       sb.AppendLine(
-        $"{indent}{resultType} result = {awaitKeyword}{typeName}.{methodName}({args});");
+        $"{indent}{resultTypeName} result = {awaitKeyword}{typeName}.{methodName}({args});");
       EmitResultOrCapture(sb, indent, resultTypeName, handler.ReturnType.ValueKind, captureResultInto);
     }
     else

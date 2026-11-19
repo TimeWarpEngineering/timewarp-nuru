@@ -26,16 +26,10 @@ internal static partial class HandlerInvokerEmitter
       return;
 
     string resultTypeName = handler.ReturnType.UnwrappedTypeName ?? handler.ReturnType.FullTypeName;
-    string localType = handler.HandlerKind switch
-    {
-      HandlerKind.Command => resultTypeName,
-      HandlerKind.Method when !handler.IsAsync => handler.ReturnType.ShortTypeName,
-      _ => GetUnwrappedReturnTypeName(handler)
-    };
 
     sb.AppendLine($"{indent}if ({valueExpression} is not null)");
     sb.AppendLine($"{indent}{{");
-    sb.AppendLine($"{indent}  {localType} result = ({localType}){valueExpression};");
+    sb.AppendLine($"{indent}  {resultTypeName} result = ({resultTypeName}){valueExpression};");
     if (handler.HandlerKind == HandlerKind.Command)
     {
       EmitCommandResult(sb, indent + "  ", handler, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix, terminal, verbatimRendererOutput);

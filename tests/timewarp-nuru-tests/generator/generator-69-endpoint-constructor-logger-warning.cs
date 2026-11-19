@@ -9,7 +9,8 @@
 // handlers). nuru search lost every warning and error that way. A registered service's constructor
 // logger was worse: it was a NullLogger even with AddLogging, and never warned. These tests check that
 // H007 fires for endpoint and service constructor loggers without AddLogging, stays quiet once logging
-// is configured, and that a service logger then comes from the AddLogging factory.
+// is configured, and that a service logger then comes from the AddLogging factory. An endpoint
+// constructor IOptions<T> binds from configuration; IOptionsSnapshot<T> reports NURU050 (591-004).
 #endregion
 
 #region Design
@@ -253,6 +254,91 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen69EndpointConstructorLoggerWarning
       run.GeneratedSource.ShouldContain("EnsureServicesInitialized(app, configuration, app.LoggerFactory);");
       run.GeneratedSource.ShouldContain("__fw_ILogger_Gen69Service = (__nuruLoggerFactory?.CreateLogger<global::Gen69Service>()");
       run.GeneratorDiagnostics.Any(static d => d.Id == "NURU_H007").ShouldBeFalse(Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_bind_endpoint_constructor_ioptions_in_generated_source()
+    {
+      // This compilation has no generated mediator, so the handler is constructed in the route
+      // method. The section key strips the Options suffix.
+      const string Source = """
+        using System.Threading;
+        using System.Threading.Tasks;
+        using Microsoft.Extensions.Options;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map<Gen69OptionsCommand>()
+          .Build();
+        return await app.RunAsync([]);
+
+        public sealed class Gen69Options
+        {
+          public string Host { get; set; } = "localhost";
+        }
+
+        [NuruRoute("gen69-options")]
+        public sealed class Gen69OptionsCommand : ICommand<Unit>
+        {
+          public sealed class Handler(IOptions<Gen69Options> options) : IRequestHandler<Gen69OptionsCommand, Unit>
+          {
+            public ValueTask<Unit> Handle(Gen69OptionsCommand request, CancellationToken cancellationToken)
+            {
+              _ = options;
+              return ValueTask.FromResult(Unit.Value);
+            }
+          }
+        }
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.GeneratedSource.ShouldContain("GetSection(\"Gen69\")");
+      run.GeneratedSource.ShouldContain("Options.Create(");
+      run.GeneratorDiagnostics.Any(static d => d.Id == "NURU050").ShouldBeFalse(Describe(run.GeneratorDiagnostics));
+
+      await Task.CompletedTask;
+    }
+
+    public static async Task Should_report_nuru050_for_endpoint_constructor_options_snapshot()
+    {
+      const string Source = """
+        using System.Threading;
+        using System.Threading.Tasks;
+        using Microsoft.Extensions.Options;
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        NuruApp app = NuruApp.CreateBuilder()
+          .Map<Gen69SnapshotCommand>()
+          .Build();
+        return await app.RunAsync([]);
+
+        public sealed class Gen69SnapshotOptions
+        {
+          public string Host { get; set; } = "localhost";
+        }
+
+        [NuruRoute("gen69-snapshot")]
+        public sealed class Gen69SnapshotCommand : ICommand<Unit>
+        {
+          public sealed class Handler(IOptionsSnapshot<Gen69SnapshotOptions> options) : IRequestHandler<Gen69SnapshotCommand, Unit>
+          {
+            public ValueTask<Unit> Handle(Gen69SnapshotCommand request, CancellationToken cancellationToken)
+            {
+              _ = options;
+              return ValueTask.FromResult(Unit.Value);
+            }
+          }
+        }
+        """;
+
+      GeneratorRun run = Run(Source);
+
+      run.GeneratorDiagnostics.Any(static d => d.Id == "NURU050").ShouldBeTrue(Describe(run.GeneratorDiagnostics));
+      run.GeneratedSource.ShouldNotContain("GetSection(\"Gen69Snapshot\")");
 
       await Task.CompletedTask;
     }

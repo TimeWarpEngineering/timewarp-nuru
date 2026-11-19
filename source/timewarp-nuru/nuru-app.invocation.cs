@@ -9,7 +9,7 @@
 // InvokeAsync throws when the handler never ran, because an exit code alone cannot carry the
 // failure to a caller that expects a result.
 // Argument-error writers route through the problem renderer only when ProblemRendererForErrors is
-// set, and otherwise write the plain message, so argv users keep the classic text.
+// set, and otherwise write the plain message to stderr.
 // Bind error and bound-request types are in separate files; this partial only orchestrates them.
 #endregion
 
@@ -188,7 +188,7 @@ public partial class NuruApp
   /// <summary>
   /// Writes an argv value error. Called by generated code. With <c>UseProblemRendererForErrors()</c> and a
   /// problem renderer, the error is rendered as <see cref="NuruProblems.Invalid"/> to stderr; otherwise
-  /// <paramref name="message"/> is written to stdout as it always was.
+  /// <paramref name="message"/> is written to stderr.
   /// </summary>
   /// <param name="message">The CLI's message.</param>
   /// <param name="key">The parameter or option name.</param>
@@ -207,7 +207,7 @@ public partial class NuruApp
   public void WriteArgumentError(string message, NuruBindErrorKind kind, string? key)
   {
     if (!TryWriteProblemError(message, kind, key))
-      Terminal.WriteLine(message);
+      Terminal.WriteErrorLine(message);
   }
 
   /// <summary>

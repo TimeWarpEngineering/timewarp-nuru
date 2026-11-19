@@ -6,6 +6,7 @@
 // IsRepeated = true on a non-collection reports NURU_A004. A collection repeats from its type
 // even when IsRepeated is left false. A non-nullable bool whose initializer is true is a value
 // option, so absence keeps true. The property initializer applies only when the option is absent.
+// FileInfo, DirectoryInfo, and IPAddress use the same constraint names TypeConversionMap converts.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -159,6 +160,8 @@ internal static partial class EndpointExtractor
   /// Gets a type constraint string from a CLR type name.
   /// Handles both C# keyword aliases (e.g., "double") and fully qualified names (e.g., "global::System.Double").
   /// Also handles nullable value types (e.g., "int?", "long?").
+  /// <c>FileInfo</c>, <c>DirectoryInfo</c>, and <c>IPAddress</c> use the same constraint names
+  /// <see cref="TypeConversionMap"/> converts for a fluent route.
   /// </summary>
   private static string? GetTypeConstraintFromClrType(string clrTypeName)
   {
@@ -209,6 +212,9 @@ internal static partial class EndpointExtractor
       "global::System.Numerics.BigInteger" or "System.Numerics.BigInteger" or "BigInteger" => "biginteger",
       "global::System.Uri" or "System.Uri" or "Uri" => "uri",
       "global::System.Version" or "System.Version" or "Version" => "version",
+      "global::System.IO.FileInfo" or "System.IO.FileInfo" or "FileInfo" => "fileinfo",
+      "global::System.IO.DirectoryInfo" or "System.IO.DirectoryInfo" or "DirectoryInfo" => "directoryinfo",
+      "global::System.Net.IPAddress" or "System.Net.IPAddress" or "IPAddress" => "ipaddress",
       _ => null
     };
   }

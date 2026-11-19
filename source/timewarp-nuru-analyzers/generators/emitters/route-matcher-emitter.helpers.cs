@@ -108,10 +108,11 @@ internal static partial class RouteMatcherEmitter
     int routeIndex)
   {
     string baseEnumType = GetEnumElementTypeName(parameterTypeName);
-    string converterVarName = $"__enumConverter_{varName}_{routeIndex}";
-    string tempVarName = $"__temp_{varName}_{routeIndex}";
+    string compoundName = CSharpIdentifierUtils.Bare(varName);
+    string converterVarName = $"__enumConverter_{compoundName}_{routeIndex}";
+    string tempVarName = $"__temp_{compoundName}_{routeIndex}";
     string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
-    string indexVarName = $"__i_{varName}_{routeIndex}";
+    string indexVarName = $"__i_{compoundName}_{routeIndex}";
 
     sb.AppendLine($"      var {converterVarName} = new global::TimeWarp.Nuru.EnumTypeConverter<{baseEnumType}>();");
     sb.AppendLine($"      {baseEnumType}[] {varName} = new {baseEnumType}[{listVarName}.Count];");

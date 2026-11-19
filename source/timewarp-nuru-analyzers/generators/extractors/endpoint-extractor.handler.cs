@@ -1,6 +1,13 @@
 #region Purpose
 // EndpointExtractor partial: nested Handler extraction, filter interfaces and segment merging.
 #endregion
+#region Design
+// An endpoint Handler constructor parameter is a service. IOptions<T> is the exception that
+// delegate parameters already bind from configuration: the same [ConfigurationKey] or "Options"
+// suffix rule, and the same IValidateOptions<T> lookup, are stored on the binding so the
+// source-gen mediator container and UseDirectInvoke can build it. IOptionsSnapshot<T> and
+// IOptionsMonitor<T> stay ordinary services and fail NURU050 when nothing registers them.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -33,7 +40,7 @@ internal static partial class EndpointExtractor
     string handlerTypeName = handlerClass.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
     // 2. Extract constructor dependencies from the Handler class
-    ImmutableArray<ParameterBinding> constructorDeps = ExtractConstructorDependencies(handlerClass);
+    ImmutableArray<ParameterBinding> constructorDeps = ExtractConstructorDependencies(handlerClass, compilation);
 
     // 4. Infer return type from interface
     HandlerReturnType returnType = InferReturnTypeFromInterfaces(classSymbol);
@@ -97,7 +104,9 @@ internal static partial class EndpointExtractor
   /// <summary>
   /// Extracts constructor dependencies from a nested Handler class.
   /// </summary>
-  private static ImmutableArray<ParameterBinding> ExtractConstructorDependencies(INamedTypeSymbol handlerClass)
+  private static ImmutableArray<ParameterBinding> ExtractConstructorDependencies(
+    INamedTypeSymbol handlerClass,
+    Compilation compilation)
   {
     ImmutableArray<ParameterBinding>.Builder deps = ImmutableArray.CreateBuilder<ParameterBinding>();
 
@@ -112,10 +121,8 @@ internal static partial class EndpointExtractor
     {
       string typeName = param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-      // All constructor params are services (resolved via static instantiation per task #292)
-      deps.Add(ParameterBinding.FromService(
-        parameterName: param.Name,
-        serviceTypeName: typeName));
+      // Services, plus IOptions<T> section key and validator (same record delegate parameters use).
+      deps.Add(HandlerExtractor.CreateServiceBinding(param, typeName, compilation));
     }
 
     return deps.ToImmutable();

@@ -151,8 +151,11 @@ Rules:
   `Unknown option`). Shared options go on a `[NuruRouteGroup]` base as `[GroupOption]`; use
   `[NuruRouteGroup("")]` for no prefix. A `string[]` `[GroupOption]` repeats like a `string[]` `[Option]`.
 - An enum cannot hold a hyphenated choice (`dotnet-coverage`). Use `string` and check it in the handler.
-- Do not name a property `Type` (generated code fails to compile). Enum option types need a simple name that
-  is unique in the compilation (`CS0104` in generated code otherwise).
+- A property may be named `Type`, or another C# keyword. Generated locals escape it as a whole identifier
+  (`@type`). Enum option types may share a simple name across namespaces; generated code uses the fully
+  qualified name. A name you write yourself (`public Mode` while both namespaces are imported) is still
+  your source's ambiguity. On 4.0.0-beta.14 a property named `Type` failed to compile, and two same-named
+  enums were `CS0104` in generated code. Fixed in task 591-006.
 - Under strict analyzers (`AnalysisMode=AllEnabledByDefault`), make endpoints `internal sealed` to avoid
   CA1515/CA1034/CS1591 on generated-facing public types.
 - The `Handle` parameter is named `request` in `IRequestHandler`. Repos with Roslynator (`RCS1168`) want that
@@ -161,10 +164,11 @@ Rules:
   an `async` one. Use `ICommand<Unit>` (side effects), `IQuery<Unit>` (read-only), or
   `IIdempotentCommand<Unit>`. These live in `TimeWarp.Mediator`.
 - A property named like a type in scope (`Environment`) shadows it. Write `System.Environment.ExitCode`.
-- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` does not bind. Bind `string` and
-  convert in the handler. Endpoint properties do bind `string`, the numeric types, `bool`, `char`, `Guid`,
-  `DateTime`, `DateTimeOffset`, `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and
-  enums. (Fluent `{file:FileInfo}` constraints convert `FileInfo`/`DirectoryInfo`; endpoint properties do not.)
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` binds from the argument string
+  (`FileInfo` and `DirectoryInfo` take the path; `IPAddress` uses `IPAddress.TryParse`). Endpoint properties
+  also bind `string`, the numeric types, `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `TimeSpan`,
+  `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and enums. On 4.0.0-beta.14 those three properties
+  did not bind; bind `string` and convert in the handler on that package.
 - Keep business logic where it was. Move only the parsing and wiring.
 - The builder must be one literal chain in one method. A ternary or helper around part of the chain fails
   with `NURU_S999`.
@@ -175,9 +179,11 @@ Rules:
   Step 3 template (`return Unit.Value;` only in an `async` `Handle`). A returned `int` is printed, not used as
   the exit code.
 - `context.ExitCode = n` (beta4) → same.
-- Wrap `RunAsync` in `try`/`catch` for the exceptions the old `EnableDefaultExceptionHandler` or
-  `UseExceptionHandler` turned into exit code 1. Without it, a handler exception aborts the process with a
-  stack trace (exit 134 on Linux).
+- `RunAsync` writes a handler exception's message to stderr and returns 1 (the old
+  `EnableDefaultExceptionHandler` / `UseExceptionHandler`). It does not print the stack trace.
+  `OptionsValidationException` still propagates. `ExecuteAsync` and `InvokeAsync` still let exceptions
+  propagate, so a host can catch them. On 4.0.0-beta.14 a handler exception aborted the process (exit 134
+  on Linux) unless `Program.cs` caught it. Fixed in task 591-005.
 - Required options: `if (command.X is null) { terminal.WriteErrorLine("Option '--x' is required."); System.Environment.ExitCode = 1; return Unit.ValueTask; }`
 
 ## Step 5: Passthrough and free-form tails
@@ -220,10 +226,12 @@ internal static class Passthrough { public static string[] Arguments { get; set;
   resolve in handlers, or move registrations into `ConfigureServices` with `.UseMicrosoftDependencyInjection()`.
 - `UseHost(...)` → `.ConfigureServices(services => ...)` on the builder (`using Microsoft.Extensions.DependencyInjection;`).
   Register services with `AddSingleton`/`AddScoped`/`AddTransient`. Factory lambdas need `.UseMicrosoftDependencyInjection()`.
-- Configuration: inject `IConfiguration` into the `Handler` constructor and call
-  `configuration.GetSection("X").Get<XOptions>()`. Do **not** inject `IOptions<T>` into an endpoint handler
-  constructor; it fails at run time with `No service for type 'IOptions<T>'`. `services.Configure<T>(...)`
-  reports `NURU052` and does nothing.
+- Configuration: inject `IOptions<T>` or `IConfiguration` into the `Handler` constructor.
+  `IOptions<DatabaseOptions>` binds the `Database` section (a trailing `Options` is removed);
+  `[ConfigurationKey("Api")]` selects the section. An `IValidateOptions<T>` in the project runs when the
+  value is created. `services.Configure<T>(...)` reports `NURU052` and does nothing under source-generated
+  DI. Call `.UseMicrosoftDependencyInjection()` for `Configure`, data annotations, `IOptionsSnapshot<T>`,
+  or `IOptionsMonitor<T>`. `IConfiguration` still works: `configuration.GetSection("X").Get<XOptions>()`.
 - Sources: `appsettings.json`, `{app}.settings.json`, environment variables (no prefix), `--Section:Key=value`.
 - Verbosity: the `AddLogging` lambda is compiled, so `SetMinimumLevel(fromArgs)` cannot work. Use a runtime
   filter:
@@ -313,14 +321,24 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 - Extra positional arguments are `Unknown command`, exit 1, unless the route has a catch-all.
   A repeated option takes every following value (`--env A B` binds both) and swallows a following positional.
 - Help is a table about 80 columns wide: long names truncated, no defaults, no `(REQUIRED)`, no enum choices.
-- Some parse errors print to stdout, not stderr.
+- Parse and argument errors go to stderr. On 4.0.0-beta.14 some of them printed to stdout. Fixed in task 591-005.
 - A user option named `version` binds `--version 1.2`; bare `--version` is the built-in.
-- Ctrl+C ends the process; the handler's `CancellationToken` is not cancelled in a CLI run.
-- Handler exceptions abort the process unless `Program.cs` catches them.
+- Ctrl+C cancels the handler's `CancellationToken`. If the handler is still running after
+  `ProcessTerminationTimeout` (two seconds by default), the process exits 130. SIGTERM exits 143.
+  `null` turns that off. The REPL still cancels only the current command. On 4.0.0-beta.14 Ctrl+C ended
+  the process and did not cancel the token. Fixed in task 591-005.
+- A handler exception in `RunAsync` prints the message to stderr and returns 1. `OptionsValidationException`
+  still propagates. On 4.0.0-beta.14 the process aborted unless `Program.cs` caught the exception. Fixed in
+  task 591-005.
 - `-o` with no value, when the value is required, is `Unknown command`, exit 1. The initializer applies
   only when the option is absent. A nullable value still binds null.
 - No `-?`, no bundled short options (`-vo`), option names case-sensitive, `-h` is help.
 - `--help`, `-h`, `--version`, `--capabilities`, `--json-args` are reserved.
+- A property named `Type`, and two enums with the same simple name in different namespaces, compile.
+  On 4.0.0-beta.14 the property emitted `@type_0` and failed to compile, and the enums were `CS0104` in
+  generated code. Fixed in task 591-006. A name you write yourself can still be ambiguous.
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` binds. On 4.0.0-beta.14 it did
+  not. Fixed in task 591-007.
 
 Details and examples: [Behavior differences to check](../../documentation/user/guides/migrating-from-system-commandline.md#behavior-differences-to-check).
 

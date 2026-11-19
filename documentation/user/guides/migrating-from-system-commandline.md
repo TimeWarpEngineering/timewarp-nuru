@@ -61,7 +61,7 @@ That is the closest match to a `Command` with its options and arguments. The Flu
 | `command.SetAction(parseResult => ...)` | A nested `sealed class Handler : IRequestHandler<TEndpoint, TResult>`. Bound values arrive as the endpoint's properties. |
 | `parseResult.GetValue(option)` | Read the property: `command.Output` |
 | `SetAction` returning `int` | Set `Environment.ExitCode`. A returned `int` is **printed**, not used as the exit code. |
-| `CancellationToken` in an async action | The `CancellationToken` parameter of `Handle`. In a CLI run, Ctrl+C ends the process; it does not cancel this token. |
+| `CancellationToken` in an async action | The `CancellationToken` parameter of `Handle`. A CLI run cancels it on Ctrl+C and waits `ProcessTerminationTimeout` (default two seconds) before exiting 130. |
 | `parseResult.Invoke()` / `InvokeAsync()` | `await app.RunAsync(args)` (returns the exit code) |
 | `--help`, `-h`, `-?` | `--help` and `-h` are built in. `-?` is not. |
 | `--version` | Built in. It prints `AssemblyInformationalVersion`. |
@@ -123,6 +123,7 @@ return await app.RunAsync(args);
 
 ```csharp
 // scan-command.cs
+using System.IO;
 using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
@@ -130,10 +131,10 @@ using TimeWarp.Nuru;
 public sealed class ScanCommand : ICommand<Unit>
 {
   [Parameter(Description = "Folder to scan")]
-  public string? Path { get; set; }
+  public DirectoryInfo? Path { get; set; }
 
   [Option("output", "o", Description = "Output file")]
-  public string? Output { get; set; }
+  public FileInfo? Output { get; set; }
 
   [Option("depth", Description = "Scan depth")]
   public int Depth { get; set; } = 3;
@@ -145,9 +146,8 @@ public sealed class ScanCommand : ICommand<Unit>
   {
     public ValueTask<Unit> Handle(ScanCommand command, CancellationToken cancellationToken)
     {
-      DirectoryInfo path = new(command.Path ?? ".");
-      FileInfo? output = command.Output is null ? null : new FileInfo(command.Output);
-      Environment.ExitCode = Scanner.Run(path, output, command.Depth, command.Verbose);
+      DirectoryInfo path = command.Path ?? new DirectoryInfo(".");
+      Environment.ExitCode = Scanner.Run(path, command.Output, command.Depth, command.Verbose);
       return Unit.ValueTask;
     }
   }
@@ -161,12 +161,14 @@ Notes:
 - `.Map<ScanCommand>()` registers one endpoint. `.DiscoverEndpoints()` registers every `[NuruRoute]` class in
   the compilation. Either works in an app. Use `Map<T>()` in a test assembly that builds several apps
   (analyzer `NURU_A003`).
-- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` does not bind on 4.0.0-beta.14.
-  Bind a `string` and build the object in the handler, or register a type converter (see
-  [Supported Types](../reference/supported-types.md)). Endpoint properties bind `string`, the numeric types,
-  `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`,
-  `Uri`, `Version`, and enums. Fluent route constraints such as `{file:FileInfo}` convert the full
-  [built-in type](../../../glossary.md) set, which includes `FileInfo` and `DirectoryInfo`.
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` binds from the argument string.
+  `FileInfo` and `DirectoryInfo` take the path. `IPAddress` uses `IPAddress.TryParse`; a bad address is an
+  invalid-value error. The same conversion is what a fluent `{file:FileInfo}` constraint uses. Endpoint
+  properties also bind `string`, the numeric types, `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`,
+  `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and enums. On 4.0.0-beta.14 a
+  `FileInfo`, `DirectoryInfo`, or `IPAddress` property did not bind; bind a `string` and build the object
+  in the handler on that package. See [Supported Types](../reference/supported-types.md) and
+  [built-in type](../../../glossary.md).
 - The exit code comes from `Environment.ExitCode`, not from the handler's return value. A property named
   `Environment` shadows the type; write `System.Environment.ExitCode` then.
 - Endpoint classes can be `public sealed` or `internal sealed`. Use `internal` when the handler takes an
@@ -177,8 +179,12 @@ Notes:
   builder fails with `NURU_S999`.
 - Builder values are read at compile time. `.WithDescription(...)` needs a plain string literal (or a raw
   string literal). An interpolated string compiles but prints an empty description.
-- Do not name an endpoint property `Type`; the generated code does not compile. Give enum option types a
-  simple name that is unique in the compilation, or the generated code is ambiguous (`CS0104`).
+- An endpoint property may be named `Type`, or another C# keyword. Generated locals escape the keyword
+  as a whole identifier (`@type`). Two enum types may share a simple name when they live in different
+  namespaces; generated code uses the fully qualified name (`global::Ns1.Mode`). A name you write yourself
+  (`public Mode` while both namespaces are imported) is still your source's ambiguity. On 4.0.0-beta.14 a
+  property named `Type` emitted `@type_0` and failed to compile, and two same-named enums were `CS0104` in
+  generated code. Fixed in task 591-006.
 
 ## Arguments and options
 
@@ -317,24 +323,13 @@ public sealed class DbMigrateCommand : DbGroup, ICommand<Unit>
 | Action returns `int` | Set `Environment.ExitCode = n`. A returned `int` is written to stdout. |
 | Action returns `void` or `Task` | Return `Unit` (`return Unit.ValueTask;`) |
 | Write JSON yourself with `JsonSerializer` | Return a named record or class. Nuru writes it as JSON through a generated `JsonSerializerContext`, so it is AOT-safe. An anonymous type prints through `ToString()`. |
-| Parse error: message on stderr, help, exit code 1 | Unknown option or command: one error line, exit code 1. A bad typed value: `Error: Invalid value 'x' for option '--count'. Expected: int`, exit code 1. Some of these errors go to **stdout**, not stderr; adjust tests that assert stderr. |
-| Exception in the action: `EnableDefaultExceptionHandler` prints it, exit code 1 | The exception escapes `RunAsync`. Catch it in `Program.cs` (below). |
+| Parse error: message on stderr, help, exit code 1 | Unknown option or command: one error line on stderr, exit code 1. A bad typed value: `Error: Invalid value 'x' for option '--count'. Expected: int` on stderr, exit code 1. (On 4.0.0-beta.14 some of these errors went to stdout. Fixed in task 591-005.) |
+| Exception in the action: `EnableDefaultExceptionHandler` prints it, exit code 1 | `RunAsync` writes the exception message to stderr and returns 1. It does not print the stack trace. `OptionsValidationException` still propagates. `ExecuteAsync` and `InvokeAsync` still let exceptions propagate. |
 
-An exception thrown in a handler propagates out of `RunAsync`. Without a `catch`, the runtime prints the
-stack trace and the process aborts (exit code 134 on Linux). To match the `System.CommandLine` behavior, catch
-the exceptions your tool expects:
-
-```csharp
-try
-{
-  return await app.RunAsync(args);
-}
-catch (IOException ex)
-{
-  Console.Error.WriteLine($"error: {ex.Message}");
-  return 1;
-}
-```
+A handler exception in `RunAsync` is exit code 1 and one stderr line, the exception message. Catch
+`OptionsValidationException` in `Program.cs` when invalid configuration should be a message you write
+yourself. On 4.0.0-beta.14 the exception escaped `RunAsync` and the process aborted (exit code 134 on
+Linux). Fixed in task 591-005.
 
 ## Free-form trailing arguments
 
@@ -483,9 +478,9 @@ The configuration binder then generates `Get<T>()` and `Bind()` code instead of 
 `IL2026` otherwise).
 
 The [Configuration](../features/configuration.md) page also describes `IOptions<T>` injection by naming
-convention (`DatabaseOptions` binds the `Database` section). In the 4.0 betas, `IOptions<T>` works as a
-delegate handler parameter (Fluent DSL), but **not** as an endpoint `Handler` constructor parameter. That fails
-at run time with `No service for type 'IOptions<T>'`. Inject `IConfiguration` and bind the section as shown.
+convention (`DatabaseOptions` binds the `Database` section). An endpoint `Handler` constructor takes
+`IOptions<T>` the same way a Fluent delegate parameter does. `services.Configure<T>(...)` still reports
+`NURU052` and does not run unless the builder calls `.UseMicrosoftDependencyInjection()`.
 
 ### An existing service container
 
@@ -711,7 +706,7 @@ straight to the Nuru column.
 | `context.ExitCode = 2` | Return `int` from the action | `Environment.ExitCode = 2` |
 | `context.Console` / `IConsole` | `parseResult.Configuration.Output` / `InvocationConfiguration.Output` | Inject `ITerminal`. Test with `TestTerminal`. |
 | `new CommandLineBuilder(root).UseDefaults().Build()` | `root.Parse(args)` / `ParserConfiguration` + `InvocationConfiguration` | `NuruApp.CreateBuilder()...Build()` |
-| `.UseExceptionHandler(...)` | `InvocationConfiguration.EnableDefaultExceptionHandler` | `try`/`catch` around `RunAsync` |
+| `.UseExceptionHandler(...)` | `InvocationConfiguration.EnableDefaultExceptionHandler` | `RunAsync` writes the message to stderr and returns 1. `OptionsValidationException` still propagates. |
 | `.AddMiddleware(...)` | Removed | A pipeline behavior: `.AddBehavior(typeof(MyBehavior))` |
 | `command.AddOption(o)` / `AddArgument(a)` / `AddCommand(c)` | `command.Options.Add(o)` / `Arguments.Add(a)` / `Subcommands.Add(c)` | Properties with `[Option]` / `[Parameter]`; a class with `[NuruRoute]` |
 | `root.AddGlobalOption(o)` | `Recursive = true` | `[GroupOption]` on a `[NuruRouteGroup]` base |
@@ -751,11 +746,28 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
    non-nullable `string` or other required value, does not run the handler: `Unknown command`, exit 1.
    The initializer applies only when the option is absent. `-o=` is an empty value and does run.
    A nullable value (`string?`, `{mode?}`) still binds null when the flag is present with no value.
-5. **Handler exceptions are not caught.** See [Results, output, and exit codes](#results-output-and-exit-codes).
-6. **`IOptions<T>` cannot be injected into an endpoint `Handler` constructor.** Inject `IConfiguration`.
-7. **Ctrl+C ends the process.** The handler's `CancellationToken` is not cancelled in a CLI run, so there is
-   no graceful-shutdown window like `System.CommandLine`'s `ProcessTerminationTimeout`. If you need cleanup,
-   register `Console.CancelKeyPress` or `PosixSignalRegistration` yourself.
+5. **`RunAsync` catches handler exceptions.** It writes the exception message to stderr and returns 1.
+   It does not print the stack trace. `OptionsValidationException` still propagates, so invalid
+   configuration fails the process. `ExecuteAsync` and `InvokeAsync` still let exceptions propagate.
+   See [Results, output, and exit codes](#results-output-and-exit-codes).
+   (On 4.0.0-beta.14 the exception escaped `RunAsync` and the process aborted, exit 134 on Linux.
+   Fixed in task 591-005.)
+6. **`services.Configure<T>` does not run under source-generated DI.** An endpoint `Handler` constructor
+   and a Fluent delegate parameter both take `IOptions<T>`. The section is `[ConfigurationKey("Name")]`,
+   or the type name with a trailing `Options` removed. `--Name:Key=value` overrides it. An
+   `IValidateOptions<T>` in the compilation runs when the options are created. `Configure<T>`, data
+   annotations, named options, `IOptionsSnapshot<T>`, and `IOptionsMonitor<T>` belong to the Microsoft
+   options pipeline. Source-generated DI reports `NURU052` for `Configure<T>` and does not run it, and
+   a constructor that asks for snapshot or monitor gets `NURU050`. Call
+   `.UseMicrosoftDependencyInjection()` when you need that pipeline.
+   (On 4.0.0-beta.14, an endpoint constructor `IOptions<T>` threw `No service for type 'IOptions<T>'`
+   at run time. Fixed in task 591-004.)
+7. **Ctrl+C cancels the handler token.** A CLI `RunAsync` cancels the `CancellationToken` passed to the
+   handler and waits `NuruApp.ProcessTerminationTimeout` (two seconds, the same default as
+   System.CommandLine). If the handler finishes, its exit code is the result. If it is still running
+   when the timeout ends, the call returns 130 (SIGINT) or 143 (SIGTERM). Set the timeout to `null` to
+   turn signal handling off. The REPL handles Ctrl+C itself: it cancels the current command and stays up.
+   (On 4.0.0-beta.14 Ctrl+C ended the process and did not cancel the token. Fixed in task 591-005.)
 8. **`-h` belongs to help.** An existing `-h` option (for example `-h` for `--headers`) loses its short form.
    No required-option attribute, no `-?` help alias, no bundled short options, and no `[diagram]`,
    `[parse]`, `[env]`, or `[suggest]` directives.
@@ -771,6 +783,19 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
     `--verbose=true` is an unknown option.
 11. **Built-in routes reserve names**: `--help`, `-h`, `--version`, `--capabilities`, `--json-args`, plus
    `--interactive`/`-i` when you add the REPL. Do not declare these yourself.
+12. **A property named `Type`, and two enums with the same simple name, compile.** Generated code escapes
+    a keyword property as a whole identifier (`@type`) and qualifies handler return types
+    (`global::Ns1.Mode`). A name you write yourself, such as `public Mode` while both namespaces are
+    imported, is still your source's ambiguity.
+    (On 4.0.0-beta.14 a property named `Type` emitted `@type_0` and failed to compile, and two enum types
+    with the same simple name in different namespaces were an ambiguous reference, `CS0104`, in generated
+    code. Fixed in task 591-006.)
+13. **`FileInfo`, `DirectoryInfo`, and `IPAddress` properties bind.** A `[Parameter]` or `[Option]` of one
+    of those types converts the argument the same way a fluent `{name:FileInfo}` constraint does.
+    `FileInfo` and `DirectoryInfo` take the path. A path the constructor rejects, and a string
+    `IPAddress.TryParse` rejects, are invalid-value errors. An `[Operation]` property of one of those types
+    binds from argv too.
+    (On 4.0.0-beta.14 those properties did not bind. Fixed in task 591-007.)
 
 ## What you get after the port
 
@@ -789,9 +814,9 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 - [ ] `[Parameter]` per argument, with `Order` when there is more than one (catch-all last)
 - [ ] `[Option]` per option; defaults as initializers; required options checked in the handler
 - [ ] `[NuruRouteGroup]` per command level; `[GroupOption]` for recursive options
-- [ ] Exit codes through `Environment.ExitCode`; expected exceptions caught around `RunAsync`
+- [ ] Exit codes through `Environment.ExitCode`. `RunAsync` returns 1 for a handler exception; catch `OptionsValidationException` when the message should be yours
 - [ ] `--` passthrough and free-form tails through a catch-all, tested with `=` tokens
-- [ ] Configuration through `IConfiguration`; verbosity through a runtime log filter
+- [ ] Configuration through `IOptions<T>` or `IConfiguration`; verbosity through a runtime log filter
 - [ ] Docs and scripts updated: no `-?`, no `--flag=true` on bool flags
 - [ ] `dotnet publish -c Release -r <rid>` with `PublishAot` and zero warnings, or `dotnet pack` for a tool
 

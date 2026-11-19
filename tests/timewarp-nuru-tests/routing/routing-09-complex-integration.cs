@@ -92,7 +92,9 @@ public class ComplexIntegrationTests
       .Build();
 
     // Act
-    int exitCode = await app.RunAsync(["process", "--id", "1", "--id", "2", "--tag", "A", "run.sh"]);
+    // --tag=A is one value, so run.sh stays the positional. A space-separated
+    // repeated option would take run.sh as another tag (task 591-002).
+    int exitCode = await app.RunAsync(["process", "--id", "1", "--id", "2", "--tag=A", "run.sh"]);
 
     // Assert
     exitCode.ShouldBe(0);

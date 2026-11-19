@@ -12,7 +12,7 @@
 return await RunAllTests();
 #endif
 
-namespace TimeWarp.Nuru.Tests.Generator.Gen76BindingAttributeDiagnostics
+namespace TimeWarp.Nuru.Tests.Generator.Gen79BindingAttributeDiagnostics
 {
   using Microsoft.CodeAnalysis;
   using Microsoft.CodeAnalysis.CSharp;

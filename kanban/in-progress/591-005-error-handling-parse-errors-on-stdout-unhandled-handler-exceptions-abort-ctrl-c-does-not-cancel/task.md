@@ -36,6 +36,12 @@ Three defects in how a CLI run ends when something goes wrong.
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-17), split from 591 during groom
 - Implementation: 01a1f411-8e3a-72a3-bd0a-68465bddf245 (2026-11-19)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f411-8e3a-72a3-bd0a-68465bddf245, max-turns 500, Done — 2026-11-19T14:32:37Z
+- Review oracle: tw-implementation-review, effort 3, roster general (Claude Code headless, model claude-opus-5-5), turn cap 200, round 1, disposition accepted-exceptions — 2026-11-19
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session cd0771ae-8ddd-40df-a232-85b76d8b4bd7, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-19T14:38:36Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -86,3 +92,14 @@ dotnet run --file tests/timewarp-nuru-tests/generator/generator-14-options-valid
 ```
 
 Expect: routing-43 reports 7 passed. An invalid option value is on stderr and stdout does not contain `Error:`. A throwing handler prints `handler failed` on stderr, does not print `at TimeWarp`, and returns 1. `ExecuteAsync` of that handler still throws `InvalidOperationException`. Ctrl+C returns 130 and the handler token is cancelled. A handler that ignores the token returns 130 after the timeout. `ProcessTerminationTimeout = null` does not cancel. generator-14 reports 5 passed, and an invalid port still throws `OptionsValidationException` from `RunAsync`.
+
+### Review disposition
+
+- Rounds: 1. Roster: general. Effort 3 (review oracle, claude-opus-5-5). Scope: `de5c941b..0d0e1dfe`.
+- Final counts: bug 0. Suggestion 1 (wontfix). Nit 1 (wontfix). Open 0.
+- Disposition: **accepted-exceptions**.
+  - M1 (suggestion), wontfix: a daemon `serve` stop on Ctrl+C or SIGTERM is now bounded by `ProcessTerminationTimeout`, and served-apps.md does not say so. This matches the System.CommandLine contract, calls get a linked cancelled token, and the next start removes a stale socket. A doc sentence can come later.
+  - M2 (nit), wontfix: a narrow `ObjectDisposedException` race on `delayCancellation.Token` from a signal thread at the instant the run finishes. It has no visible effect.
+- The goal restatement matches the task. No misread.
+- Review gates: no build, test, or audit was re-run, and no targeted command was needed. The review relied on the Gates record above.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.

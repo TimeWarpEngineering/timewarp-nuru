@@ -76,6 +76,8 @@ Gates:
 - `dotnet run --file tests/timewarp-nuru-tests/routing/routing-44-endpoint-file-directory-ip.cs` — 7 passed
 - `ganda repo audit` — exit 0; advisory `vscode-window-icon` only
 
+The new runfile has a shebang. The first commit left it mode 100644, and `ganda repo attest` then failed `runfile-executable`. The follow-up commit marks `tests/timewarp-nuru-tests/routing/routing-44-endpoint-file-directory-ip.cs` mode 100755. That commit's hook attested tree `0185ad2cf1cf`.
+
 ## Notes
 
 Found by task 496 (System.CommandLine migration guide) against TimeWarp.Nuru 4.0.0-beta.14. Parent: 591.

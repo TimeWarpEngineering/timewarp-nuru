@@ -52,6 +52,9 @@ Done when:
 - Fix pass (implement-fix-2, 2026-11-19): `IsScalar` drops a nullable reference annotation for every
   reference type before the display match. `routing-44` adds `t591007-optional` for `FileInfo?`,
   `DirectoryInfo?`, `IPAddress?`, and `Uri?`.
+- Review round 2: review oracle (claude, model claude-opus-5-5), effort 2, roster general, turn cap 120 —
+  2026-11-19. Delta `a90c3da2..038fa1e3`; M1 fixed, 0 open; disposition clean. Artifacts:
+  `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -114,10 +117,15 @@ Round 1 (effort 2, roster general): 0 bug, 1 suggestion, 0 nit. M1 implemented o
 `[Operation]` `FileInfo?`, `DirectoryInfo?`, `IPAddress?`, and `Uri?`. Ledger: `review/round-1/merged.md`.
 Disposition stays with review round 2.
 
+Round 2 (effort 2, roster general, delta `a90c3da2..038fa1e3`): M1 verified fixed; no new findings.
+Final counts: bug 0, suggestion 0 open / 1 fixed / 0 wontfix, nit 0. **Disposition: clean**, 2 rounds,
+0 open, no wontfix, no escalations. Paths: `review/review-framework.md`, `review/round-2/merged.md`,
+`review/disposition.md`.
+
 ## Review
 
 - Round 1: M1 implemented on the fix pass. Review round 2 follows.
-
+- Round 2: Done
 ## Notes
 
 Found by task 496 (System.CommandLine migration guide) against TimeWarp.Nuru 4.0.0-beta.14. Parent: 591.

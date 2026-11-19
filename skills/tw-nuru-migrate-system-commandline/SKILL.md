@@ -151,8 +151,11 @@ Rules:
   `Unknown option`). Shared options go on a `[NuruRouteGroup]` base as `[GroupOption]`; use
   `[NuruRouteGroup("")]` for no prefix. A `string[]` `[GroupOption]` repeats like a `string[]` `[Option]`.
 - An enum cannot hold a hyphenated choice (`dotnet-coverage`). Use `string` and check it in the handler.
-- Do not name a property `Type` (generated code fails to compile). Enum option types need a simple name that
-  is unique in the compilation (`CS0104` in generated code otherwise).
+- A property may be named `Type`, or another C# keyword. Generated locals escape it as a whole identifier
+  (`@type`). Enum option types may share a simple name across namespaces; generated code uses the fully
+  qualified name. A name you write yourself (`public Mode` while both namespaces are imported) is still
+  your source's ambiguity. On 4.0.0-beta.14 a property named `Type` failed to compile, and two same-named
+  enums were `CS0104` in generated code. Fixed in task 591-006.
 - Under strict analyzers (`AnalysisMode=AllEnabledByDefault`), make endpoints `internal sealed` to avoid
   CA1515/CA1034/CS1591 on generated-facing public types.
 - The `Handle` parameter is named `request` in `IRequestHandler`. Repos with Roslynator (`RCS1168`) want that
@@ -327,6 +330,9 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 - `-o` with no value binds the default, exit 0.
 - No `-?`, no bundled short options (`-vo`), option names case-sensitive, `-h` is help.
 - `--help`, `-h`, `--version`, `--capabilities`, `--json-args` are reserved.
+- A property named `Type`, and two enums with the same simple name in different namespaces, compile.
+  On 4.0.0-beta.14 the property emitted `@type_0` and failed to compile, and the enums were `CS0104` in
+  generated code. Fixed in task 591-006. A name you write yourself can still be ambiguous.
 
 Details and examples: [Behavior differences to check](../../documentation/user/guides/migrating-from-system-commandline.md#behavior-differences-to-check).
 

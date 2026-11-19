@@ -3,6 +3,12 @@
 // Delegate lambda bodies become local functions; command handlers instantiate the nested Handler
 // class and call Handle().
 #endregion
+#region Design
+// Return types are emitted from FullTypeName and UnwrappedTypeName, which are already global::-qualified.
+// ShortTypeName is the simple name and is not emitted: two enums with that same simple name are CS0104
+// in the generated compilation (task 591-006). Unit stays global::TimeWarp.Mediator.Unit because that
+// is the stored name (bug 442), not because of a special case at the emit site.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -260,14 +266,7 @@ internal static partial class HandlerInvokerEmitter
     if (handler.ReturnType.IsVoid && !handler.IsAsync)
       return "void";
 
-    if (handler.IsAsync)
-    {
-      if (handler.ReturnType.HasValue)
-        return handler.ReturnType.ShortTypeName; // Task<T>
-      return "Task";
-    }
-
-    return handler.ReturnType.ShortTypeName;
+    return handler.ReturnType.FullTypeName;
   }
 
   /// <summary>
@@ -276,20 +275,9 @@ internal static partial class HandlerInvokerEmitter
   private static string GetUnwrappedReturnTypeName(HandlerDefinition handler)
   {
     if (handler.IsAsync && handler.ReturnType.UnwrappedTypeName is not null)
-    {
-      string unwrapped = handler.ReturnType.UnwrappedTypeName;
+      return handler.ReturnType.UnwrappedTypeName;
 
-      // Preserve fully qualified name for Unit to avoid ambiguity
-      // when other packages (e.g. MediatR) also define a Unit type.
-      if (unwrapped == "global::TimeWarp.Mediator.Unit")
-        return unwrapped;
-
-      // For Task<T>, extract short name from fully qualified unwrapped type
-      int lastDot = unwrapped.LastIndexOf('.', StringComparison.Ordinal);
-      return lastDot >= 0 ? unwrapped[(lastDot + 1)..] : unwrapped;
-    }
-
-    return handler.ReturnType.ShortTypeName;
+    return handler.ReturnType.FullTypeName;
   }
 
   private const string ProblemDetailsTypeName = "global::TimeWarp.Foundation.Types.SharedProblemDetails";

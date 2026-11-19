@@ -325,9 +325,11 @@ internal static class ServiceResolverEmitter
   {
     // A constructor local is already prefixed (__name). A delegate parameter is not (name),
     // and its value local keeps the historical __nameValue spelling.
-    string valueVarName = varName.StartsWith("__", StringComparison.Ordinal)
-      ? $"{varName}Value"
-      : $"__{varName}Value";
+    // A keyword parameter arrives as @type. Suffixing that token yields @typeValue (task 591-006).
+    string compoundName = CSharpIdentifierUtils.Bare(varName);
+    string valueVarName = compoundName.StartsWith("__", StringComparison.Ordinal)
+      ? $"{compoundName}Value"
+      : $"__{compoundName}Value";
 
     sb.AppendLine($"{indent}// Resolve {optionsTypeName} from configuration section \"{sectionKey}\"");
     sb.AppendLine($"{indent}{innerTypeName} {valueVarName} = {configurationExpression}.GetSection(\"{sectionKey}\").Get<{innerTypeName}>() ?? new();");
@@ -335,8 +337,8 @@ internal static class ServiceResolverEmitter
     // Emit validation if a validator was found
     if (validatorTypeName is not null)
     {
-      string validatorVarName = $"__{varName}Validator";
-      string resultVarName = $"__{varName}ValidationResult";
+      string validatorVarName = $"__{compoundName}Validator";
+      string resultVarName = $"__{compoundName}ValidationResult";
 
       sb.AppendLine();
       sb.AppendLine($"{indent}// Validate options using {validatorTypeName}");

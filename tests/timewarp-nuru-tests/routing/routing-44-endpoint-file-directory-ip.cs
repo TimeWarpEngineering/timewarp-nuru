@@ -1,7 +1,8 @@
 #!/usr/bin/env -S dotnet --
 
 #region Purpose
-// Pins [NuruRoute] and [Operation] binding of FileInfo, DirectoryInfo, and IPAddress properties.
+// Pins [NuruRoute] and [Operation] binding of FileInfo, DirectoryInfo, and IPAddress,
+// including nullable [Operation] properties of those types and of Uri.
 #endregion
 
 #if !JARIBU_MULTI
@@ -14,7 +15,8 @@ using TimeWarp.Contracts;
 
 /// <summary>
 /// Endpoint properties of <see cref="FileInfo"/>, <see cref="DirectoryInfo"/>, and <see cref="IPAddress"/>
-/// convert through the same constraint names a fluent route uses.
+/// convert through the same constraint names a fluent route uses. A nullable [Operation] property of
+/// those types, and of <see cref="Uri"/>, binds from argv and stays unset when omitted.
 /// </summary>
 [TestTag("Routing")]
 public class EndpointFileDirectoryIpTests
@@ -32,6 +34,7 @@ public class EndpointFileDirectoryIpTests
       .Map<T591007ScanCommand>()
       .Map<T591007ReadCommand>()
       .Map<T591007PlaceQuery>()
+      .Map<T591007OptionalQuery>()
       .Build();
   }
 
@@ -123,6 +126,35 @@ public class EndpointFileDirectoryIpTests
     exitCode.ShouldBe(0);
     terminal.OutputContains("input:place-in.txt|destination:place-out|address:10.0.0.8").ShouldBeTrue();
   }
+
+  public static async Task Should_bind_nullable_operation_fileinfo_directoryinfo_ipaddress_and_uri()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int exitCode = await App.RunAsync(
+    [
+      "t591007-optional",
+      "--Input", "/tmp/opt-in.txt",
+      "--Destination", "/tmp/opt-out",
+      "--Address", "10.1.2.3",
+      "--Location", "https://example.com/a"
+    ]);
+
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("input:opt-in.txt|destination:opt-out|address:10.1.2.3|location:https://example.com/a").ShouldBeTrue();
+  }
+
+  public static async Task Should_leave_nullable_operation_properties_unset_when_omitted()
+  {
+    using TestTerminal terminal = new();
+    CreateApp(terminal);
+
+    int exitCode = await App.RunAsync(["t591007-optional"]);
+
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("input:none|destination:none|address:none|location:none").ShouldBeTrue();
+  }
 }
 
 [NuruRoute("t591007-scan", Description = "Scan a folder")]
@@ -185,6 +217,33 @@ public sealed class T591007PlaceQuery : IQuery<string>
       _ = cancellationToken;
       return ValueTask.FromResult(
         $"input:{query.Input.Name}|destination:{query.Destination.Name}|address:{query.Address}");
+    }
+  }
+}
+
+[Operation("t591007-optional", Description = "Optional file, folder, address, and uri")]
+public sealed class T591007OptionalQuery : IQuery<string>
+{
+  public FileInfo? Input { get; set; }
+
+  public DirectoryInfo? Destination { get; set; }
+
+  public IPAddress? Address { get; set; }
+
+  public Uri? Location { get; set; }
+
+  public sealed class Handler : IRequestHandler<T591007OptionalQuery, string>
+  {
+    public ValueTask<string> Handle(T591007OptionalQuery query, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+      _ = cancellationToken;
+      string input = query.Input?.Name ?? "none";
+      string destination = query.Destination?.Name ?? "none";
+      string address = query.Address?.ToString() ?? "none";
+      string location = query.Location?.ToString() ?? "none";
+      return ValueTask.FromResult(
+        $"input:{input}|destination:{destination}|address:{address}|location:{location}");
     }
   }
 }

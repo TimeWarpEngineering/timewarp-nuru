@@ -131,3 +131,22 @@ Prior pass (implement-fix-2), not rerun:
 ## Notes
 
 Found by task 496 (System.CommandLine migration guide) against TimeWarp.Nuru 4.0.0-beta.14. Parent: 591.
+
+## Restart 2026-11-19: what is left
+
+The implementation and three review rounds are on this branch (PR #428, base `feature/591-system-commandline-gaps`).
+Do not re-implement. Two things keep the PR from merging:
+
+1. **CI red, `test-multi` (run 44529607941).** CS0433: `Lexer` and `Token` exist in both `TimeWarp.Nuru.Analyzers`
+   and `TimeWarp.Nuru`. Cause: the new `tests/timewarp-nuru-tests/generator/generator-76-binding-attribute-diagnostics.cs`
+   references the analyzers project and is compiled into the CI multi assembly. Add it to `CiTestExcludes` in
+   `tests/ci-tests/Directory.Build.props` and to the standalone list in `tests/ci-standalone/run-standalone-tests.cs`,
+   the same way `generator-76-converter-constraint-alias.cs` is listed. That file already uses number 76; renumber
+   the new one to 77.
+2. **Conflicts with the base branch.** 591-004 to 591-007 merged onto the feature branch after this child parked.
+   `git merge origin/feature/591-system-commandline-gaps` conflicts in
+   `documentation/user/guides/migrating-from-system-commandline.md`, `skills/tw-nuru-migrate-system-commandline/SKILL.md`
+   and `source/timewarp-nuru-analyzers/generators/extractors/endpoint-extractor.properties.cs`. Merge the base in and
+   keep both sides' behaviour.
+
+Then run the CI tests (`dotnet run tests/ci-tests/run-ci-tests.cs`) and the standalone phase.

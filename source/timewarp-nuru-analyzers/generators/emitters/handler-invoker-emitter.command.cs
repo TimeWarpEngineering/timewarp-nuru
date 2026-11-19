@@ -33,6 +33,11 @@ internal static partial class HandlerInvokerEmitter
         sb.AppendLine($"{indent}// Resolve handler constructor dependencies");
         foreach (ParameterBinding dep in handler.ConstructorDependencies)
         {
+          // Source-gen direct invoke binds IOptions<T> from the route's configuration local.
+          // Runtime DI keeps GetRequiredService so services.Configure<T> supplies the instance.
+          if (!useRuntimeDI && ServiceResolverEmitter.TryEmitConstructorOptions(sb, dep, indent))
+            continue;
+
           string resolution = ResolveServiceForCommand(dep.ParameterTypeName, services, httpClientConfigurations, loggerFactoryFieldName, useRuntimeDI, runtimeDISuffix);
           sb.AppendLine(
             $"{indent}{dep.ParameterTypeName} __{dep.ParameterName} = {resolution};");

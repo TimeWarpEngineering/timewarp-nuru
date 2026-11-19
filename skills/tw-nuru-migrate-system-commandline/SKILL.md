@@ -220,10 +220,12 @@ internal static class Passthrough { public static string[] Arguments { get; set;
   resolve in handlers, or move registrations into `ConfigureServices` with `.UseMicrosoftDependencyInjection()`.
 - `UseHost(...)` → `.ConfigureServices(services => ...)` on the builder (`using Microsoft.Extensions.DependencyInjection;`).
   Register services with `AddSingleton`/`AddScoped`/`AddTransient`. Factory lambdas need `.UseMicrosoftDependencyInjection()`.
-- Configuration: inject `IConfiguration` into the `Handler` constructor and call
-  `configuration.GetSection("X").Get<XOptions>()`. Do **not** inject `IOptions<T>` into an endpoint handler
-  constructor; it fails at run time with `No service for type 'IOptions<T>'`. `services.Configure<T>(...)`
-  reports `NURU052` and does nothing.
+- Configuration: inject `IOptions<T>` or `IConfiguration` into the `Handler` constructor.
+  `IOptions<DatabaseOptions>` binds the `Database` section (a trailing `Options` is removed);
+  `[ConfigurationKey("Api")]` selects the section. An `IValidateOptions<T>` in the project runs when the
+  value is created. `services.Configure<T>(...)` reports `NURU052` and does nothing under source-generated
+  DI. Call `.UseMicrosoftDependencyInjection()` for `Configure`, data annotations, `IOptionsSnapshot<T>`,
+  or `IOptionsMonitor<T>`. `IConfiguration` still works: `configuration.GetSection("X").Get<XOptions>()`.
 - Sources: `appsettings.json`, `{app}.settings.json`, environment variables (no prefix), `--Section:Key=value`.
 - Verbosity: the `AddLogging` lambda is compiled, so `SetMinimumLevel(fromArgs)` cannot work. Use a runtime
   filter:

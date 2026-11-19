@@ -70,7 +70,7 @@ internal static partial class InterceptorEmitter
     if (handlerFactories.Length > 0 && emitsMediatorContainer)
       EmitHandlerFactoryHelper(sb);
 
-    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.GeneratedMediatorNamespace, currentAppLoggerFactory, sourceGenHttpClients, allBehaviors, allServices, handlerFactories);
+    EmitServiceFields(sb, sourceGenServices, model.SourceGenDIRequiresMediator, model.GeneratedMediatorNamespace, currentAppLoggerFactory, sourceGenHttpClients, allBehaviors, allServices, handlerFactories, CollectEndpointOptionsBindings(model));
 
     // Emit runtime DI infrastructure for apps that use UseMicrosoftDependencyInjection()
     // Each app gets its own __ConfigureServices and GetServiceProvider methods
@@ -182,7 +182,7 @@ internal static partial class InterceptorEmitter
       TelemetryEmitter.EmitTelemetrySetup(sb, app.TelemetryOptions ?? TelemetryModel.Default);
       sb.AppendLine("    try");
       sb.AppendLine("    {");
-      sb.AppendLine($"      return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
+      sb.AppendLine($"      return await global::TimeWarp.Nuru.NuruApp.RunCliAsync(app, args, static (application, arguments, token) => ExecuteRouteAsync{methodSuffix}(application, arguments, token)).ConfigureAwait(false);");
       sb.AppendLine("    }");
       sb.AppendLine("    finally");
       sb.AppendLine("    {");
@@ -191,7 +191,7 @@ internal static partial class InterceptorEmitter
     }
     else
     {
-      sb.AppendLine($"    return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
+      sb.AppendLine($"    return await global::TimeWarp.Nuru.NuruApp.RunCliAsync(app, args, static (application, arguments, token) => ExecuteRouteAsync{methodSuffix}(application, arguments, token)).ConfigureAwait(false);");
     }
 
     sb.AppendLine("  }");
@@ -216,6 +216,39 @@ internal static partial class InterceptorEmitter
   /// </summary>
   private static List<RouteDefinition> RoutesInIndexOrder(AppModel app, GeneratorModel model) =>
     [.. app.Routes.Concat(FilterEndpointsForApp(app, model.Endpoints))];
+
+  /// <summary>
+  /// Distinct <c>IOptions&lt;T&gt;</c> constructor dependencies of endpoint handlers on source-gen apps.
+  /// Runtime DI apps are excluded: their container runs <c>services.Configure&lt;T&gt;</c>.
+  /// </summary>
+  private static ImmutableArray<ParameterBinding> CollectEndpointOptionsBindings(GeneratorModel model)
+  {
+    HashSet<string> seen = [with(StringComparer.Ordinal)];
+    ImmutableArray<ParameterBinding>.Builder bindings = ImmutableArray.CreateBuilder<ParameterBinding>();
+    foreach (AppModel app in model.Apps)
+    {
+      if (app.UseMicrosoftDependencyInjection)
+        continue;
+
+      foreach (RouteDefinition route in RoutesInIndexOrder(app, model))
+      {
+        if (route.Handler.ConstructorDependencies.IsDefaultOrEmpty)
+          continue;
+
+        foreach (ParameterBinding dependency in route.Handler.ConstructorDependencies)
+        {
+          if (!ServiceResolverEmitter.TryDescribeBoundOptions(dependency, out _, out _))
+            continue;
+          if (!seen.Add(dependency.ParameterTypeName))
+            continue;
+
+          bindings.Add(dependency);
+        }
+      }
+    }
+
+    return bindings.ToImmutable();
+  }
 
   /// <summary>
   /// Emits the core route execution method that handles all route matching.

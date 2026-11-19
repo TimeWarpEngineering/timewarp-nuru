@@ -120,10 +120,10 @@ public class EnumOptionParameterTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error").ShouldBeTrue();
-    terminal.OutputContains("Dev").ShouldBeTrue("Should show valid values");
-    terminal.OutputContains("Staging").ShouldBeTrue("Should show valid values");
-    terminal.OutputContains("Prod").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Error").ShouldBeTrue();
+    terminal.ErrorContains("Dev").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Staging").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Prod").ShouldBeTrue("Should show valid values");
   }
 
   // ============================================================================

@@ -11,10 +11,10 @@ using TimeWarp.Nuru;
 [NuruRoute("copy", Description = "Copy a file from source to destination")]
 public sealed class CopyCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Source file path")]
+  [Parameter(Order = 0, Description = "Source file path")]
   public string Source { get; set; } = string.Empty;
 
-  [Parameter(Description = "Destination file path")]
+  [Parameter(Order = 1, Description = "Destination file path")]
   public string Destination { get; set; } = string.Empty;
 
   public sealed class Handler : IRequestHandler<CopyCommand, Unit>

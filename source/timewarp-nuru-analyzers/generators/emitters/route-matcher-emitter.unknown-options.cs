@@ -132,10 +132,20 @@ internal static partial class RouteMatcherEmitter
     StringBuilder sb,
     RouteDefinition route,
     int routeIndex,
-    ImmutableArray<CustomConverterDefinition> customConverters)
+    ImmutableArray<CustomConverterDefinition> customConverters,
+    int requiredPositionalCount)
   {
     if (HasOptionGuard(route))
       sb.AppendLine($"      bool __optionMissing_{routeIndex} = false;");
+
+    bool hasRepeatedValue = route.Options.Any(option => !option.IsFlag && option.IsRepeated);
+    if (hasRepeatedValue)
+    {
+      sb.AppendLine($"      global::System.Collections.Generic.List<int> __greedyRun_{routeIndex} = [];");
+      sb.AppendLine($"      global::System.Collections.Generic.List<string>? __greedyList_{routeIndex} = null;");
+      sb.AppendLine($"      int __greedyStart_{routeIndex} = 0;");
+      sb.AppendLine($"      int __greedyKeep_{routeIndex} = 0;");
+    }
 
     StringBuilder conversions = new();
     foreach (OptionDefinition option in route.Options)
@@ -154,17 +164,68 @@ internal static partial class RouteMatcherEmitter
       }
     }
 
+    if (hasRepeatedValue)
+      EmitGreedyPositionalGiveBack(sb, routeIndex, requiredPositionalCount, route.HasEndOfOptions);
+
     return conversions.ToString();
   }
 
   /// <summary>
+  /// Moves trailing values from the rightmost greedy repeated-option run back to unbound required
+  /// positionals. An optional positional adds nothing to <paramref name="requiredPositionalCount"/>.
+  /// The run keeps one value when its element is required.
+  /// </summary>
+  private static void EmitGreedyPositionalGiveBack(
+    StringBuilder sb,
+    int routeIndex,
+    int requiredPositionalCount,
+    bool hasEndOfOptions)
+  {
+    sb.AppendLine($"      int __positionalHave_{routeIndex} = 0;");
+    sb.AppendLine("      for (int __j = 0; __j < routeArgs.Length; __j++)");
+    sb.AppendLine("      {");
+    if (!hasEndOfOptions)
+    {
+      sb.AppendLine($"        if (__j == __endOfOptions_{routeIndex} && routeArgs[__j] == \"--\") continue;");
+    }
+
+    sb.AppendLine($"        if (__consumed_{routeIndex}.Contains(__j)) continue;");
+    sb.AppendLine($"        if (__j < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__j]) && global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike(routeArgs[__j])) continue;");
+    sb.AppendLine($"        __positionalHave_{routeIndex}++;");
+    sb.AppendLine("      }");
+    sb.AppendLine($"      int __positionalDeficit_{routeIndex} = {requiredPositionalCount} - __positionalHave_{routeIndex};");
+    sb.AppendLine($"      if (__positionalDeficit_{routeIndex} > 0 && __greedyList_{routeIndex} is not null)");
+    sb.AppendLine("      {");
+    sb.AppendLine($"        int __canReturn_{routeIndex} = __greedyRun_{routeIndex}.Count - __greedyKeep_{routeIndex};");
+    sb.AppendLine($"        if (__canReturn_{routeIndex} > __positionalDeficit_{routeIndex}) __canReturn_{routeIndex} = __positionalDeficit_{routeIndex};");
+    sb.AppendLine($"        if (__canReturn_{routeIndex} > 0)");
+    sb.AppendLine("        {");
+    sb.AppendLine($"          __greedyList_{routeIndex}.RemoveRange(__greedyStart_{routeIndex} + __greedyRun_{routeIndex}.Count - __canReturn_{routeIndex}, __canReturn_{routeIndex});");
+    sb.AppendLine($"          for (int __k = __greedyRun_{routeIndex}.Count - __canReturn_{routeIndex}; __k < __greedyRun_{routeIndex}.Count; __k++)");
+    sb.AppendLine($"            __consumed_{routeIndex}.Remove(__greedyRun_{routeIndex}[__k]);");
+    sb.AppendLine("        }");
+    sb.AppendLine("      }");
+  }
+
+  /// <summary>
   /// True when a route option has a match guard: an unbound discriminator flag, a required value
-  /// option, or an option whose value is required when the option is given.
+  /// option, an option whose value is required when the option is given, or a repeated option
+  /// whose element is required (a bare flag took no value).
   /// </summary>
   private static bool HasOptionGuard(RouteDefinition route) =>
-    route.Options.Any(option => option.IsFlag
-      ? !option.IsOptional && !option.IsFlagBound(route)
-      : !option.IsRepeated && !option.IsJsonValue && (!option.IsOptional || !option.ParameterIsOptional));
+    route.Options.Any(option =>
+    {
+      if (option.IsJsonValue)
+        return false;
+
+      if (option.IsFlag)
+        return !option.IsOptional && !option.IsFlagBound(route);
+
+      if (option.IsRepeated)
+        return !option.ParameterIsOptional;
+
+      return !option.IsOptional || !option.ParameterIsOptional;
+    });
 
   /// <summary>
   /// Skips the route when an option guard failed. Emitted after the unknown-option check so a typo

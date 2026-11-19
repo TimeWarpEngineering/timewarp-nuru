@@ -17,10 +17,10 @@ public sealed class DockerRunCommand : ICommand<Unit>
   [Option("port", "p", Description = "Port mappings")]
   public string[] Port { get; set; } = [];
 
-  [Parameter(Description = "Container image")]
+  [Parameter(Order = 0, Description = "Container image")]
   public string Image { get; set; } = string.Empty;
 
-  [Parameter(IsCatchAll = true, Description = "Container command")]
+  [Parameter(Order = 1, IsCatchAll = true, Description = "Container command")]
   public string[] Cmd { get; set; } = [];
 
   public sealed class Handler : IRequestHandler<DockerRunCommand, Unit>

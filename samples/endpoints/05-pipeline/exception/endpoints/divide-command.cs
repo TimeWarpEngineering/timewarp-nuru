@@ -11,10 +11,10 @@ using TimeWarp.Nuru;
 [NuruRoute("divide", Description = "Divide two numbers (handles divide by zero)")]
 public sealed class DivideCommand : ICommand<double>
 {
-  [Parameter(Description = "Dividend")]
+  [Parameter(Order = 0, Description = "Dividend")]
   public double X { get; set; }
 
-  [Parameter(Description = "Divisor")]
+  [Parameter(Order = 1, Description = "Divisor")]
   public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<DivideCommand, double>

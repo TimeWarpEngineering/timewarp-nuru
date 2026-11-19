@@ -3,6 +3,14 @@
 // Generates instantiation code for registered services (static DI).
 // Supports constructor parameters with optional default values.
 #endregion
+#region Design
+// IOptions<T> is not a container service under source-generated DI. Delegate parameters and
+// endpoint Handler constructors share EmitOptionsBinding: section key from the binding
+// (or the type name minus a trailing Options), then Options.Create. A found IValidateOptions<T>
+// runs before the value is wrapped. The configuration expression is the route's configuration
+// local, or an IConfiguration resolved from a service provider inside the source-gen mediator
+// container. IOptionsSnapshot<T> and IOptionsMonitor<T> are not this path.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -221,12 +229,54 @@ internal static class ServiceResolverEmitter
   }
 
   /// <summary>
+  /// True when <paramref name="binding"/> is <c>IOptions&lt;T&gt;</c> and this emitter can bind it
+  /// from configuration. Writes the inner type and the section key.
+  /// </summary>
+  internal static bool TryDescribeBoundOptions(
+    ParameterBinding binding,
+    out string innerTypeName,
+    out string sectionKey)
+  {
+    innerTypeName = "";
+    sectionKey = "";
+    if (!TryGetOptionsInnerType(binding.ParameterTypeName, out string? inner) || inner is null)
+      return false;
+
+    innerTypeName = inner;
+    sectionKey = binding.SourceName != binding.ParameterTypeName
+      ? binding.SourceName
+      : GetConfigurationSectionKey(inner);
+    return true;
+  }
+
+  /// <summary>
+  /// Emits the configuration binding for an endpoint <c>Handler</c> constructor dependency
+  /// into <c>__{parameter name}</c>. Returns false when the dependency is not <c>IOptions&lt;T&gt;</c>.
+  /// The route method's <c>configuration</c> local must be in scope.
+  /// </summary>
+  internal static bool TryEmitConstructorOptions(StringBuilder sb, ParameterBinding binding, string indent)
+  {
+    if (!TryDescribeBoundOptions(binding, out string innerTypeName, out string sectionKey))
+      return false;
+
+    EmitOptionsBinding(
+      sb,
+      binding.ParameterTypeName,
+      innerTypeName,
+      $"__{binding.ParameterName}",
+      sectionKey,
+      binding.ValidatorTypeName,
+      indent);
+    return true;
+  }
+
+  /// <summary>
   /// Checks if a type name is IOptions&lt;T&gt; and extracts the inner type name.
   /// </summary>
   /// <param name="typeName">The full type name to check.</param>
   /// <param name="innerTypeName">The inner type name if it's an IOptions type.</param>
   /// <returns>True if the type is IOptions&lt;T&gt;, false otherwise.</returns>
-  private static bool TryGetOptionsInnerType(string typeName, out string? innerTypeName)
+  internal static bool TryGetOptionsInnerType(string typeName, out string? innerTypeName)
   {
     innerTypeName = null;
 
@@ -263,18 +313,32 @@ internal static class ServiceResolverEmitter
   /// <param name="sectionKey">The configuration section key (from [ConfigurationKey] or convention).</param>
   /// <param name="validatorTypeName">Optional validator type implementing IValidateOptions&lt;T&gt;.</param>
   /// <param name="indent">The indentation string.</param>
-  private static void EmitOptionsBinding(StringBuilder sb, string optionsTypeName, string innerTypeName, string varName, string sectionKey, string? validatorTypeName, string indent)
+  internal static void EmitOptionsBinding(
+    StringBuilder sb,
+    string optionsTypeName,
+    string innerTypeName,
+    string varName,
+    string sectionKey,
+    string? validatorTypeName,
+    string indent,
+    string configurationExpression = "configuration")
   {
-    string valueVarName = $"__{varName}Value";
+    // A constructor local is already prefixed (__name). A delegate parameter is not (name),
+    // and its value local keeps the historical __nameValue spelling.
+    // A keyword parameter arrives as @type. Suffixing that token yields @typeValue (task 591-006).
+    string compoundName = CSharpIdentifierUtils.Bare(varName);
+    string valueVarName = compoundName.StartsWith("__", StringComparison.Ordinal)
+      ? $"{compoundName}Value"
+      : $"__{compoundName}Value";
 
     sb.AppendLine($"{indent}// Resolve {optionsTypeName} from configuration section \"{sectionKey}\"");
-    sb.AppendLine($"{indent}{innerTypeName} {valueVarName} = configuration.GetSection(\"{sectionKey}\").Get<{innerTypeName}>() ?? new();");
+    sb.AppendLine($"{indent}{innerTypeName} {valueVarName} = {configurationExpression}.GetSection(\"{sectionKey}\").Get<{innerTypeName}>() ?? new();");
 
     // Emit validation if a validator was found
     if (validatorTypeName is not null)
     {
-      string validatorVarName = $"__{varName}Validator";
-      string resultVarName = $"__{varName}ValidationResult";
+      string validatorVarName = $"__{compoundName}Validator";
+      string resultVarName = $"__{compoundName}ValidationResult";
 
       sb.AppendLine();
       sb.AppendLine($"{indent}// Validate options using {validatorTypeName}");

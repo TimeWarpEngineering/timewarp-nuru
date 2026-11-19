@@ -4,8 +4,8 @@ using TimeWarp.Nuru;
 [NuruRoute("multiply", Description = "Multiply two doubles")]
 public sealed class MultiplyCommand : IQuery<double>
 {
-  [Parameter] public double X { get; set; }
-  [Parameter] public double Y { get; set; }
+  [Parameter(Order = 0)] public double X { get; set; }
+  [Parameter(Order = 1)] public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<MultiplyCommand, double>
   {

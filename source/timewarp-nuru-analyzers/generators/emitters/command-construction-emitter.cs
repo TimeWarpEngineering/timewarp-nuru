@@ -163,7 +163,10 @@ internal static class CommandConstructionEmitter
   private static string LocalName(ParameterBinding param, int routeIndex) =>
     param.Source switch
     {
-      BindingSource.CatchAll => $"__{CSharpIdentifierUtils.ToCamelCase(param.ParameterName)}_{routeIndex}",
+      // Parameter and catch-all locals follow the route segment name, so a [Parameter(Name = ...)]
+      // override matches the matcher variable. Option locals stay the property name.
+      BindingSource.CatchAll => $"__{CSharpIdentifierUtils.ToCamelCase(param.SourceName)}_{routeIndex}",
+      BindingSource.Parameter => CSharpIdentifierUtils.EscapeIfKeyword(CSharpIdentifierUtils.ToCamelCase(param.SourceName)),
       BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(CSharpIdentifierUtils.ToCamelCase(param.SourceName)),
       _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())
     };

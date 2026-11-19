@@ -65,6 +65,7 @@ public class OptionalIntSkipTests
     exitCode.ShouldBe(0);
     terminal.OutputContains("Setting up repo").ShouldBeTrue();
     terminal.OutputContains("Error").ShouldBeFalse($"Should not contain error, got: {terminal.AllOutput}");
+    terminal.ErrorContains("Error").ShouldBeFalse($"Should not contain error, got: {terminal.AllOutput}");
   }
 
   /// <summary>

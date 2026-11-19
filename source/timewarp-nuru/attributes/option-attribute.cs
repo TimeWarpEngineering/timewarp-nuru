@@ -5,15 +5,15 @@
 #region Design
 // Read by EndpointExtractor (and OperationEndpointExtractor) from the request property. Dashes
 // are added by the generator, so the attribute carries bare names. Option shape comes from the
-// property type, not from attribute flags: bool is a flag, a nullable type is an optional
-// value, an array or collection is repeatable. The property initializer is read as the default.
+// property type: a nullable type is an optional value, an array or collection is repeatable.
+// A non-nullable bool is a flag, except when its initializer is true: that bool is a value
+// option so absence keeps true. IsRepeated = true on a non-collection reports NURU_A004.
+// IsRepeated = false does not stop a collection from repeating. The property initializer is
+// the default, and it applies only when the option is absent.
 #endregion
 
 #region Open Questions
-// Q1 (2026-11-14, claude): IsRepeated is never read by the generator; repeatability is inferred
-//     from the property type (IsRepeatedOptionType). Setting IsRepeated = true on a scalar
-//     property has no effect. Should the property be removed or made to take part?
-// Q2 (2026-11-14, claude): EndpointExtractor reads the named arguments LongName, ShortName and
+// Q1 (2026-11-14, claude): EndpointExtractor reads the named arguments LongName, ShortName and
 //     IsRequired, which this attribute does not define (it has constructor parameters
 //     longForm/shortForm and no required flag). Are those dead branches to delete, or is an
 //     IsRequired setting intended?
@@ -32,7 +32,7 @@ namespace TimeWarp.Nuru;
 /// <para>
 /// The option type is inferred from the property type:
 /// <list type="bullet">
-///   <item><description><c>bool</c> - Boolean flag (no value expected)</description></item>
+///   <item><description><c>bool</c> - Boolean flag (no value expected), unless the initializer is <c>true</c>. That bool is a value option, so leaving it off stays true and <c>--name false</c> binds false.</description></item>
 ///   <item><description>Other types - Valued option (value expected after the flag)</description></item>
 ///   <item><description>Nullable types (<c>string?</c>, <c>int?</c>) - Optional valued option</description></item>
 /// </list>
@@ -60,7 +60,8 @@ public sealed class OptionAttribute : Attribute
   /// Gets or sets whether this option can be specified multiple times.
   /// </summary>
   /// <remarks>
-  /// When true, the property should have an array or collection type to hold multiple values.
+  /// When true, the property must be an array or collection. A scalar reports NURU_A004.
+  /// A collection repeats from its type even when this is left false.
   /// </remarks>
   public bool IsRepeated { get; set; }
 

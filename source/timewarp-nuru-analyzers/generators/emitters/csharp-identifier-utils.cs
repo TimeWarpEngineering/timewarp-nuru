@@ -1,6 +1,12 @@
 #region Purpose
 // Escapes C# keywords as @-prefixed identifiers so generated code compiles with user-chosen names.
 #endregion
+#region Design
+// EscapeIfKeyword prefixes @ for a reserved or contextual keyword. The @ applies to the whole
+// following identifier, so __enumConverter_@type_0 is the token @type_0, not the name type with
+// a suffix (task 591-006). Bare drops that @ before a prefix or suffix is added. A standalone
+// local stays escaped.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -27,6 +33,19 @@ internal static class CSharpIdentifierUtils
       return identifier;
 
     return IsKeyword(name) ? $"@{name}" : name;
+  }
+
+  /// <summary>
+  /// Drops a leading @ so the name can be embedded in a larger identifier.
+  /// </summary>
+  /// <param name="identifier">An identifier, possibly already escaped by <see cref="EscapeIfKeyword"/>.</param>
+  /// <returns>The name without a leading @. An empty string is unchanged.</returns>
+  public static string Bare(string identifier)
+  {
+    if (string.IsNullOrEmpty(identifier) || identifier[0] != '@')
+      return identifier;
+
+    return identifier[1..];
   }
 
   /// <summary>

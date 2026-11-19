@@ -32,6 +32,8 @@ internal static partial class RouteMatcherEmitter
     string typeConstraint = option.TypeConstraint ?? "";
     string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal) ? typeConstraint[..^1] : typeConstraint;
     string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
+    // varName may be @type. A suffix on that token is @type_0, which does not compile (task 591-006).
+    string compoundName = CSharpIdentifierUtils.Bare(varName);
 
     // Use shared type conversion mapping with TryParse for graceful error handling
     bool isNullableValueType = typeConstraint.EndsWith('?', StringComparison.Ordinal);
@@ -42,7 +44,7 @@ internal static partial class RouteMatcherEmitter
       // Handle nullable value types (long?, int?, etc.) - declare as nullable and only parse if value provided
       if (isNullableValueType)
       {
-        string tempVarName = $"__{varName}_parsed_{routeIndex}";
+        string tempVarName = $"__{compoundName}_parsed_{routeIndex}";
         sb.AppendLine($"      {clrType}? {varName} = null;");
         sb.AppendLine($"      if ({rawVarName} is not null)");
         sb.AppendLine("      {");
@@ -95,7 +97,7 @@ internal static partial class RouteMatcherEmitter
       {
         if (option.ParameterIsOptional)
         {
-          string tempVarName = $"__{varName}_parsed_{routeIndex}";
+          string tempVarName = $"__{compoundName}_parsed_{routeIndex}";
           sb.AppendLine($"      global::System.Uri? {varName} = null;");
           sb.AppendLine($"      if ({rawVarName} is not null)");
           sb.AppendLine("      {");
@@ -246,8 +248,9 @@ internal static partial class RouteMatcherEmitter
     string rawVarName,
     int routeIndex)
   {
-    string converterVarName = $"__converter_{varName}_{routeIndex}";
-    string tempVarName = $"__temp_{varName}_{routeIndex}";
+    string compoundName = CSharpIdentifierUtils.Bare(varName);
+    string converterVarName = $"__converter_{compoundName}_{routeIndex}";
+    string tempVarName = $"__temp_{compoundName}_{routeIndex}";
 
     // Use the converter's target type (resolved via semantic model)
     // For non-generic converters, derive target type from converter name by convention
@@ -296,8 +299,9 @@ internal static partial class RouteMatcherEmitter
     string rawVarName,
     int routeIndex)
   {
-    string converterVarName = $"__enumConverter_{varName}_{routeIndex}";
-    string tempVarName = $"__temp_{varName}_{routeIndex}";
+    string compoundName = CSharpIdentifierUtils.Bare(varName);
+    string converterVarName = $"__enumConverter_{compoundName}_{routeIndex}";
+    string tempVarName = $"__temp_{compoundName}_{routeIndex}";
     string optionDisplay = option.LongForm is not null ? $"--{option.LongForm}" : $"-{option.ShortForm}";
 
     // Strip nullable suffix from the type name for the converter and casts

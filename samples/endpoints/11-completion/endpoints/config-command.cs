@@ -5,13 +5,13 @@ using static System.Console;
 [NuruRoute("config", Description = "Manage configuration")]
 public sealed class ConfigCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Action: get, set, list")]
+  [Parameter(Order = 0, Description = "Action: get, set, list")]
   public string Action { get; set; } = "";
 
-  [Parameter(Description = "Configuration key")]
+  [Parameter(Order = 1, Description = "Configuration key")]
   public string Key { get; set; } = "";
 
-  [Parameter(Description = "Configuration value (for set)")]
+  [Parameter(Order = 2, Description = "Configuration value (for set)")]
   public string? Value { get; set; }
 
   public sealed class Handler : IRequestHandler<ConfigCommand, Unit>

@@ -12,10 +12,10 @@ using TimeWarp.Nuru;
 [NuruRoute("user-create", Description = "Create a new user (admin only)")]
 public sealed class UserCreateCommand : ICommand<Unit>, IRequireAuthorization
 {
-  [Parameter(Description = "Username")]
+  [Parameter(Order = 0, Description = "Username")]
   public string Username { get; set; } = string.Empty;
 
-  [Parameter(Description = "Email address")]
+  [Parameter(Order = 1, Description = "Email address")]
   public string Email { get; set; } = string.Empty;
 
   [Option("admin", "a", Description = "Grant admin privileges")]

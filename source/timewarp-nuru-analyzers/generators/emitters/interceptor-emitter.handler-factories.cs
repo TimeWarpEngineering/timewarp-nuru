@@ -12,6 +12,9 @@
 // same service type and lifetime whose factory calls the handler's constructor, resolving every
 // argument with GetRequiredService. That is how the container activates a single-constructor type
 // with required parameters, so behavior does not change, and CA1812 counts the instantiation.
+// IOptions<T> is not a user service. The source-gen container registers it first, bound from
+// IConfiguration, so this GetRequiredService call resolves. A runtime-DI container does not get
+// that registration: services.Configure<T> in the user's ConfigureServices supplies it.
 // __UseHandlerFactory replaces only a descriptor the mediator added (non-keyed, implementation type
 // is the handler); with none it adds nothing. Registrations made after it (a runtime-DI app's own
 // ConfigureServices) still win. Handlers the container could build differently (several public

@@ -215,12 +215,13 @@ internal static partial class ServiceValidator
         ValidateServiceRequirement(param.ParameterTypeName, registeredServices, routeLocation, diagnostics, onlyBoundOptionsResolve: true);
       }
 
-      // Check constructor dependencies for endpoint handlers
+      // Endpoint Handler constructors bind IOptions<T> the same way delegate parameters do.
+      // IOptionsSnapshot<T> and IOptionsMonitor<T> stay unregistered and report NURU050.
       if (!route.Handler.ConstructorDependencies.IsDefaultOrEmpty)
       {
         foreach (ParameterBinding dep in route.Handler.ConstructorDependencies)
         {
-          ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, routeLocation, diagnostics);
+          ValidateServiceRequirement(dep.ParameterTypeName, registeredServices, routeLocation, diagnostics, onlyBoundOptionsResolve: true);
         }
       }
     }
@@ -245,8 +246,8 @@ internal static partial class ServiceValidator
   /// Validates a single service requirement and adds diagnostic if not registered.
   /// </summary>
   /// <param name="onlyBoundOptionsResolve">
-  /// True for handler parameters, where only <c>IOptions&lt;T&gt;</c> is bound from configuration.
-  /// False skips every options type, as constructor dependencies have.
+  /// True for delegate parameters and endpoint Handler constructors, where only <c>IOptions&lt;T&gt;</c>
+  /// is bound from configuration. False skips every options type, as behavior constructors do.
   /// </param>
   private static void ValidateServiceRequirement(
     string? typeName,

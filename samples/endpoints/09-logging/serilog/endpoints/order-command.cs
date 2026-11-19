@@ -6,8 +6,8 @@ using TimeWarp.Nuru;
 [NuruRoute("order", Description = "Process an order with structured logging")]
 public sealed class OrderCommand : ICommand<Unit>
 {
-  [Parameter] public string OrderId { get; set; } = "";
-  [Parameter] public decimal Amount { get; set; }
+  [Parameter(Order = 0)] public string OrderId { get; set; } = "";
+  [Parameter(Order = 1)] public decimal Amount { get; set; }
 
   public sealed class Handler(ILogger<OrderCommand> Logger) : IRequestHandler<OrderCommand, Unit>
   {

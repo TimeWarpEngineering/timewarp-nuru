@@ -4,9 +4,9 @@ using TimeWarp.Nuru;
 [NuruRoute("calc", Description = "Simple calculator")]
 public sealed class CalcCommand : ICommand<double>
 {
-  [Parameter] public string Operation { get; set; } = "";
-  [Parameter] public double X { get; set; }
-  [Parameter] public double Y { get; set; }
+  [Parameter(Order = 0)] public string Operation { get; set; } = "";
+  [Parameter(Order = 1)] public double X { get; set; }
+  [Parameter(Order = 2)] public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<CalcCommand, double>
   {

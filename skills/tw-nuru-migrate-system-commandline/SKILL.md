@@ -91,16 +91,16 @@ Keep `RunAsync` on an app you built in the same method (`NURU_I001` warns otherw
 | optional argument with a default | nullable property, default applied in the handler (`?? "x"`) |
 | optional argument before a required one (`[method] url`) | one catch-all, classify tokens in the handler |
 | `Argument<T[]>` | `[Parameter(IsCatchAll = true)] public string[] Items { get; set; } = [];` (last) |
-| several arguments | one `[Parameter]` property each, declared in command-line order (position = declaration order; `Order` is not read and `NURU_A002` is not reported on 4.0.0-beta.14, so do not set `Order`) |
+| several arguments | one `[Parameter]` property each, with `Order` (`0`, `1`, `2`, ...). `NURU_A002` is an error when two or more omit it. One parameter may omit `Order`. A catch-all stays last |
 | `Option<T>("--name", "-n")` | `[Option("name", "n")]` (no dashes) |
 | extra long aliases (`--offline`, `--dry-run`) | one `[Option]` takes one long + one short (the short may be multi-char: `"cs"` → `-cs`); add a property per extra long name and OR them, or rewrite aliases in argv before `RunAsync` |
 | an existing `-h` option | loses `-h` (reserved for help); keep the long form |
-| `Option<bool>` | `bool` property: a flag (absent = `false`) |
-| `Option<bool>` defaulting to `true` | **no bool initializer works** (`= true` is ignored); invert the flag (`--no-x`) |
-| `--flag true` / `--flag false` | not supported (`false` becomes a positional); rewrite argv or drop |
-| default value | property initializer (value options only) |
+| `Option<bool>` | `bool` property: a flag (absent = `false`). Presence is `true`. The next token stays a positional, even when it looks like a boolean (`--verbose 0`) |
+| `Option<bool>` defaulting to `true` | `[Option("create")] public bool Create { get; set; } = true;` (absence stays `true`; `--create false` binds `false`). A bare `--create` is `Unknown command`, exit 1 |
+| `--flag true` / `--flag false` | the next token is not the flag's value. `--flag=true` is an unknown option |
+| default value | property initializer. It applies when the option is absent. A bare `-o` on a required value is `Unknown command`, exit 1 |
 | `Required = true` / `IsRequired` | nullable property + check in handler (no attribute) |
-| `Option<T[]>`, `AllowMultipleArgumentsPerToken` | `[Option("x")] public string[] X { get; set; } = [];` (the array/collection type makes it repeat; `IsRepeated` is not read on 4.0.0-beta.14) |
+| `Option<T[]>`, `AllowMultipleArgumentsPerToken` | `[Option("x")] public string[] X { get; set; } = [];`. `--x a b` binds both. `IsRepeated = true` on a scalar is `NURU_A004` |
 | `AcceptOnlyFromAmong` / `FromAmong` | an `enum` property, or a handler check |
 | `Validators.Add` / `AddValidator` | handler check |
 | `Recursive = true` / `AddGlobalOption` | `[GroupOption("name", "n")]` on the group base |
@@ -151,8 +151,11 @@ Rules:
   `Unknown option`). Shared options go on a `[NuruRouteGroup]` base as `[GroupOption]`; use
   `[NuruRouteGroup("")]` for no prefix. A `string[]` `[GroupOption]` repeats like a `string[]` `[Option]`.
 - An enum cannot hold a hyphenated choice (`dotnet-coverage`). Use `string` and check it in the handler.
-- Do not name a property `Type` (generated code fails to compile). Enum option types need a simple name that
-  is unique in the compilation (`CS0104` in generated code otherwise).
+- A property may be named `Type`, or another C# keyword. Generated locals escape it as a whole identifier
+  (`@type`). Enum option types may share a simple name across namespaces; generated code uses the fully
+  qualified name. A name you write yourself (`public Mode` while both namespaces are imported) is still
+  your source's ambiguity. On 4.0.0-beta.14 a property named `Type` failed to compile, and two same-named
+  enums were `CS0104` in generated code. Fixed in task 591-006.
 - Under strict analyzers (`AnalysisMode=AllEnabledByDefault`), make endpoints `internal sealed` to avoid
   CA1515/CA1034/CS1591 on generated-facing public types.
 - The `Handle` parameter is named `request` in `IRequestHandler`. Repos with Roslynator (`RCS1168`) want that
@@ -161,10 +164,11 @@ Rules:
   an `async` one. Use `ICommand<Unit>` (side effects), `IQuery<Unit>` (read-only), or
   `IIdempotentCommand<Unit>`. These live in `TimeWarp.Mediator`.
 - A property named like a type in scope (`Environment`) shadows it. Write `System.Environment.ExitCode`.
-- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` does not bind. Bind `string` and
-  convert in the handler. Endpoint properties do bind `string`, the numeric types, `bool`, `char`, `Guid`,
-  `DateTime`, `DateTimeOffset`, `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and
-  enums. (Fluent `{file:FileInfo}` constraints convert `FileInfo`/`DirectoryInfo`; endpoint properties do not.)
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` binds from the argument string
+  (`FileInfo` and `DirectoryInfo` take the path; `IPAddress` uses `IPAddress.TryParse`). Endpoint properties
+  also bind `string`, the numeric types, `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `TimeSpan`,
+  `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and enums. On 4.0.0-beta.14 those three properties
+  did not bind; bind `string` and convert in the handler on that package.
 - Keep business logic where it was. Move only the parsing and wiring.
 - The builder must be one literal chain in one method. A ternary or helper around part of the chain fails
   with `NURU_S999`.
@@ -175,9 +179,11 @@ Rules:
   Step 3 template (`return Unit.Value;` only in an `async` `Handle`). A returned `int` is printed, not used as
   the exit code.
 - `context.ExitCode = n` (beta4) → same.
-- Wrap `RunAsync` in `try`/`catch` for the exceptions the old `EnableDefaultExceptionHandler` or
-  `UseExceptionHandler` turned into exit code 1. Without it, a handler exception aborts the process with a
-  stack trace (exit 134 on Linux).
+- `RunAsync` writes a handler exception's message to stderr and returns 1 (the old
+  `EnableDefaultExceptionHandler` / `UseExceptionHandler`). It does not print the stack trace.
+  `OptionsValidationException` still propagates. `ExecuteAsync` and `InvokeAsync` still let exceptions
+  propagate, so a host can catch them. On 4.0.0-beta.14 a handler exception aborted the process (exit 134
+  on Linux) unless `Program.cs` caught it. Fixed in task 591-005.
 - Required options: `if (command.X is null) { terminal.WriteErrorLine("Option '--x' is required."); System.Environment.ExitCode = 1; return Unit.ValueTask; }`
 
 ## Step 5: Passthrough and free-form tails
@@ -220,10 +226,12 @@ internal static class Passthrough { public static string[] Arguments { get; set;
   resolve in handlers, or move registrations into `ConfigureServices` with `.UseMicrosoftDependencyInjection()`.
 - `UseHost(...)` → `.ConfigureServices(services => ...)` on the builder (`using Microsoft.Extensions.DependencyInjection;`).
   Register services with `AddSingleton`/`AddScoped`/`AddTransient`. Factory lambdas need `.UseMicrosoftDependencyInjection()`.
-- Configuration: inject `IConfiguration` into the `Handler` constructor and call
-  `configuration.GetSection("X").Get<XOptions>()`. Do **not** inject `IOptions<T>` into an endpoint handler
-  constructor; it fails at run time with `No service for type 'IOptions<T>'`. `services.Configure<T>(...)`
-  reports `NURU052` and does nothing.
+- Configuration: inject `IOptions<T>` or `IConfiguration` into the `Handler` constructor.
+  `IOptions<DatabaseOptions>` binds the `Database` section (a trailing `Options` is removed);
+  `[ConfigurationKey("Api")]` selects the section. An `IValidateOptions<T>` in the project runs when the
+  value is created. `services.Configure<T>(...)` reports `NURU052` and does nothing under source-generated
+  DI. Call `.UseMicrosoftDependencyInjection()` for `Configure`, data annotations, `IOptionsSnapshot<T>`,
+  or `IOptionsMonitor<T>`. `IConfiguration` still works: `configuration.GetSection("X").Get<XOptions>()`.
 - Sources: `appsettings.json`, `{app}.settings.json`, environment variables (no prefix), `--Section:Key=value`.
 - Verbosity: the `AddLogging` lambda is compiled, so `SetMinimumLevel(fromArgs)` cannot work. Use a runtime
   filter:
@@ -290,9 +298,9 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 ## Step 9: Verify
 
 1. `dotnet build` with zero warnings (keep the repo's `TreatWarningsAsErrors`).
-2. Every command's `--help` against the Step 0 output. Root `--help` does **not** show the default route's
-   parameters or options. For a single-command tool, add a usage line to `.WithDescription(...)` and note
-   the gap in your report.
+2. Every command's `--help` against the Step 0 output. Root `--help` lists the default route's parameters,
+   options, and examples. A default route with only a description still shows that description under
+   `Commands:` with a blank name.
 3. The old tests, ported, pass.
 4. Run each command with the arguments from the tool's readme. Check that `--name=value` examples
    bind declared options and that `--flag=true` on a bool flag is not used.
@@ -307,18 +315,30 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 ## Behavior differences to tell the user about
 
 - `--flag=true` on a bool flag is an unknown-option error (`Unknown option '--verbose=true'`), exit 1.
-- Extra positional arguments are ignored when the route has a `[Parameter]`; on a route with none they are
-  `Unknown command`. Several values per token (`--env A B`) do the same: `B` becomes a positional.
+  A following token is not the flag's value, so `--verbose 0` keeps `0` as a positional.
+  A bool initializer `= true` stays true when the flag is absent. A bare `--create` on that option is
+  `Unknown command`, exit 1 (System.CommandLine binds the bare flag as true).
+- Extra positional arguments are `Unknown command`, exit 1, unless the route has a catch-all.
+  A repeated option takes every following value (`--env A B` binds both) and swallows a following optional positional. A required positional keeps the trailing values it still needs. When a catch-all follows and the route has no `--` before it, a string or enum repeated option (or any other element with no built-in conversion) takes one value per flag (`--env A=1 nginx echo hi` binds the env value, then the image, then the command). Repeat the flag for more values, or put `--` before the catch-all. A repeated option whose element has a built-in conversion still takes every token that converts.
 - Help is a table about 80 columns wide: long names truncated, no defaults, no `(REQUIRED)`, no enum choices.
-- `bool` flags cannot default to `true`; `--flag false` is not supported.
-- Some parse errors print to stdout, not stderr.
+- Parse and argument errors go to stderr. On 4.0.0-beta.14 some of them printed to stdout. Fixed in task 591-005.
 - A user option named `version` binds `--version 1.2`; bare `--version` is the built-in.
-- Ctrl+C ends the process; the handler's `CancellationToken` is not cancelled in a CLI run.
-- Handler exceptions abort the process unless `Program.cs` catches them.
-- `-o` with no value binds the default, exit 0.
+- Ctrl+C cancels the handler's `CancellationToken`. If the handler is still running after
+  `ProcessTerminationTimeout` (two seconds by default), the process exits 130. SIGTERM exits 143.
+  `null` turns that off. The REPL still cancels only the current command. On 4.0.0-beta.14 Ctrl+C ended
+  the process and did not cancel the token. Fixed in task 591-005.
+- A handler exception in `RunAsync` prints the message to stderr and returns 1. `OptionsValidationException`
+  still propagates. On 4.0.0-beta.14 the process aborted unless `Program.cs` caught the exception. Fixed in
+  task 591-005.
+- `-o` with no value, when the value is required, is `Unknown command`, exit 1. The initializer applies
+  only when the option is absent. A nullable value still binds null.
 - No `-?`, no bundled short options (`-vo`), option names case-sensitive, `-h` is help.
-- Root `--help` hides the default route's options.
 - `--help`, `-h`, `--version`, `--capabilities`, `--json-args` are reserved.
+- A property named `Type`, and two enums with the same simple name in different namespaces, compile.
+  On 4.0.0-beta.14 the property emitted `@type_0` and failed to compile, and the enums were `CS0104` in
+  generated code. Fixed in task 591-006. A name you write yourself can still be ambiguous.
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` binds. On 4.0.0-beta.14 it did
+  not. Fixed in task 591-007.
 
 Details and examples: [Behavior differences to check](../../documentation/user/guides/migrating-from-system-commandline.md#behavior-differences-to-check).
 

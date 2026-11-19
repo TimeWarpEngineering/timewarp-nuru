@@ -1,6 +1,15 @@
 #region Purpose
 // InterceptorEmitter partial: service fields, source-gen mediator and service initialization emission.
 #endregion
+#region Design
+// The source-gen mediator container resolves a Handler with GetRequiredService. IOptions<T> is not
+// a user registration there: each distinct IOptions<T> on a source-gen app's endpoint Handler
+// constructor is AddTransient of the same configuration binding delegate parameters use.
+// A runtime-DI app is left out of that list. Its container runs services.Configure<T>, and the
+// factory's GetRequiredService finds that registration. Registering the convention binding in
+// the runtime container would hide Configure, because a closed IOptions<T> beats AddOptions'
+// open-generic TryAdd.
+#endregion
 
 namespace TimeWarp.Nuru.Generators;
 
@@ -13,7 +22,7 @@ internal static partial class InterceptorEmitter
   /// Each field is built on first read by its <c>__Resolve</c> accessor, so a call that never
   /// reaches a service (a built-in, a parse error, a forwarded route) never constructs it.
   /// </summary>
-  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, ImmutableArray<BehaviorDefinition> behaviors, ImmutableArray<ServiceDefinition> behaviorServices, ImmutableArray<HandlerDefinition> handlerFactories)
+  private static void EmitServiceFields(StringBuilder sb, IEnumerable<ServiceDefinition> services, bool requiresMediator, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations, ImmutableArray<BehaviorDefinition> behaviors, ImmutableArray<ServiceDefinition> behaviorServices, ImmutableArray<HandlerDefinition> handlerFactories, ImmutableArray<ParameterBinding> endpointOptionsBindings)
   {
     // Materialize to ImmutableArray for ResolveConstructorArguments compatibility
     ImmutableArray<ServiceDefinition> allServices = [.. services];
@@ -124,7 +133,7 @@ internal static partial class InterceptorEmitter
     EmitSourceGenScopeMethods(sb, allServices, cachedProcessServices);
 
     if (requiresMediator)
-      EmitSourceGenMediator(sb, allServices, generatedMediatorNamespace, loggerFactoryFieldName, httpClientConfigurations, handlerFactories);
+      EmitSourceGenMediator(sb, allServices, generatedMediatorNamespace, loggerFactoryFieldName, httpClientConfigurations, handlerFactories, endpointOptionsBindings);
   }
 
   /// <summary>
@@ -133,7 +142,7 @@ internal static partial class InterceptorEmitter
   /// <see cref="System.IServiceProvider"/>, so this builds a small container per app holding
   /// <c>AddGeneratedMediator()</c> plus Nuru's framework services and the statically registered services.
   /// </summary>
-  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, ImmutableArray<HandlerDefinition> handlerFactories = default)
+  private static void EmitSourceGenMediator(StringBuilder sb, ImmutableArray<ServiceDefinition> allServices, string? generatedMediatorNamespace, string? loggerFactoryFieldName, ImmutableArray<HttpClientConfiguration> httpClientConfigurations = default, ImmutableArray<HandlerDefinition> handlerFactories = default, ImmutableArray<ParameterBinding> endpointOptionsBindings = default)
   {
     const string Sce = "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions";
 
@@ -187,6 +196,7 @@ internal static partial class InterceptorEmitter
       }
     }
 
+    EmitEndpointOptionsRegistrations(sb, endpointOptionsBindings, "      ");
     sb.AppendLine($"      {GeneratedMediatorDetector.RegistrationMethod(generatedMediatorNamespace)}(services);");
     if (!handlerFactories.IsDefaultOrEmpty)
       EmitHandlerFactoryRegistrations(sb, handlerFactories, "      ");
@@ -196,6 +206,44 @@ internal static partial class InterceptorEmitter
     sb.AppendLine("    return global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::TimeWarp.Mediator.IMediator>(__mediatorServiceProvider);");
     sb.AppendLine("  }");
     sb.AppendLine();
+  }
+
+  /// <summary>
+  /// Registers one transient <c>IOptions&lt;T&gt;</c> per endpoint constructor dependency.
+  /// The factory binds the section from the container's <c>IConfiguration</c>, including
+  /// <c>IValidateOptions&lt;T&gt;</c> when the compilation has one.
+  /// </summary>
+  private static void EmitEndpointOptionsRegistrations(
+    StringBuilder sb,
+    ImmutableArray<ParameterBinding> bindings,
+    string indent)
+  {
+    if (bindings.IsDefaultOrEmpty)
+      return;
+
+    const string Sce = "global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions";
+    const string Resolve = "global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService";
+
+    foreach (ParameterBinding binding in bindings)
+    {
+      if (!ServiceResolverEmitter.TryDescribeBoundOptions(binding, out string innerTypeName, out string sectionKey))
+        continue;
+
+      string bodyIndent = indent + "  ";
+      sb.AppendLine($"{indent}{Sce}.AddTransient<{binding.ParameterTypeName}>(services, static sp =>");
+      sb.AppendLine($"{indent}{{");
+      sb.AppendLine($"{bodyIndent}global::Microsoft.Extensions.Configuration.IConfiguration configuration = {Resolve}<global::Microsoft.Extensions.Configuration.IConfiguration>(sp);");
+      ServiceResolverEmitter.EmitOptionsBinding(
+        sb,
+        binding.ParameterTypeName,
+        innerTypeName,
+        "__resolved",
+        sectionKey,
+        binding.ValidatorTypeName,
+        bodyIndent);
+      sb.AppendLine($"{bodyIndent}return __resolved;");
+      sb.AppendLine($"{indent}}});");
+    }
   }
 
   /// <summary>

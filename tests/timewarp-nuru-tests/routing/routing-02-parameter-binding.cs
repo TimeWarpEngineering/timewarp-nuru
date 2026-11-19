@@ -71,7 +71,7 @@ namespace TimeWarp.Nuru.Tests.Routing
 
       // Assert
       exitCode.ShouldBe(1);
-      terminal.OutputContains("Error:").ShouldBeTrue();
+      terminal.ErrorContains("Error:").ShouldBeTrue();
       terminal.OutputContains("ms:").ShouldBeFalse(); // Handler should not have been invoked
 
       await Task.CompletedTask;
@@ -167,7 +167,7 @@ namespace TimeWarp.Nuru.Tests.Routing
 
       // Assert
       exitCode.ShouldBe(1);
-      terminal.OutputContains("Error:").ShouldBeTrue();
+      terminal.ErrorContains("Error:").ShouldBeTrue();
       terminal.OutputContains("years:").ShouldBeFalse(); // Handler should not have been invoked
 
       await Task.CompletedTask;

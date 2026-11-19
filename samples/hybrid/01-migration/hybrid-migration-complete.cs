@@ -51,8 +51,8 @@ static void ConfigureServices(IServiceCollection services)
 [NuruRoute("add", Description = "Add two numbers (Endpoint)")]
 public sealed class AddCommand : IQuery<double>
 {
-  [Parameter] public double X { get; set; }
-  [Parameter] public double Y { get; set; }
+  [Parameter(Order = 0)] public double X { get; set; }
+  [Parameter(Order = 1)] public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<AddCommand, double>
   {
@@ -67,8 +67,8 @@ public sealed class AddCommand : IQuery<double>
 [NuruRoute("subtract", Description = "Subtract two numbers (Endpoint)")]
 public sealed class SubtractCommand : IQuery<double>
 {
-  [Parameter] public double X { get; set; }
-  [Parameter] public double Y { get; set; }
+  [Parameter(Order = 0)] public double X { get; set; }
+  [Parameter(Order = 1)] public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<SubtractCommand, double>
   {
@@ -83,8 +83,8 @@ public sealed class SubtractCommand : IQuery<double>
 [NuruRoute("multiply", Description = "Multiply two numbers (Endpoint)")]
 public sealed class MultiplyCommand : IQuery<double>
 {
-  [Parameter] public double X { get; set; }
-  [Parameter] public double Y { get; set; }
+  [Parameter(Order = 0)] public double X { get; set; }
+  [Parameter(Order = 1)] public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<MultiplyCommand, double>
   {
@@ -99,8 +99,8 @@ public sealed class MultiplyCommand : IQuery<double>
 [NuruRoute("divide", Description = "Divide two numbers (Endpoint)")]
 public sealed class DivideCommand : IQuery<double>
 {
-  [Parameter] public double X { get; set; }
-  [Parameter] public double Y { get; set; }
+  [Parameter(Order = 0)] public double X { get; set; }
+  [Parameter(Order = 1)] public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<DivideCommand, double>
   {

@@ -2,6 +2,13 @@
 // Constructor selection, property classification and attribute helpers for [Operation] endpoints (EndpointExtractor partial).
 #endregion
 
+#region Design
+// IsScalar matches the display name after a nullable reference annotation is removed.
+// The annotation is not a different scalar: FileInfo? is FileInfo, and the same holds for
+// every reference type in the list (Uri?, Version?, DirectoryInfo?, IPAddress?).
+// Nullable value types are Nullable<T> and recurse into the type argument before that match.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 internal static partial class EndpointExtractor
@@ -265,7 +272,14 @@ internal static partial class EndpointExtractor
       return true;
     }
 
-    string display = type.ToDisplayString();
+    // A nullable reference annotation is not a different scalar. Compare the unannotated display
+    // for every reference type, so Uri? and Version? stay scalars the same way FileInfo? does.
+    ITypeSymbol scalarType = type;
+    if (type.IsReferenceType && type.NullableAnnotation == NullableAnnotation.Annotated)
+      scalarType = type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+
+    string display = scalarType.ToDisplayString();
+
     return display is "System.DateTimeOffset"
       or "System.DateOnly"
       or "System.TimeOnly"
@@ -273,7 +287,10 @@ internal static partial class EndpointExtractor
       or "System.Guid"
       or "System.Uri"
       or "System.Version"
-      or "System.Numerics.BigInteger";
+      or "System.Numerics.BigInteger"
+      or "System.IO.FileInfo"
+      or "System.IO.DirectoryInfo"
+      or "System.Net.IPAddress";
   }
 
   private static ITypeSymbol? ElementType(ITypeSymbol type)

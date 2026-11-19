@@ -92,6 +92,7 @@ Gates:
 - `dotnet run --file tests/timewarp-nuru-tests/generator/generator-76-binding-attribute-diagnostics.cs` — 4 passed
 - `dotnet run --file tests/timewarp-nuru-tests/help/help-11-root-default-route-parameters.cs` — 6 passed
 - `ganda repo audit --fix` — passed (45 passed, 0 failed, 1 skipped)
+- `ganda repo audit` — passed again after the new runfiles were marked executable (the first commit's attest failed `runfile-executable`)
 
 ## Notes
 

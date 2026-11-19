@@ -4,8 +4,8 @@ using TimeWarp.Nuru;
 [NuruRoute("price", Description = "Calculate with decimal precision")]
 public sealed class PriceCommand : IQuery<decimal>
 {
-  [Parameter] public decimal Amount { get; set; }
-  [Parameter] public decimal TaxRate { get; set; } = 0.08m;
+  [Parameter(Order = 0)] public decimal Amount { get; set; }
+  [Parameter(Order = 1)] public decimal TaxRate { get; set; } = 0.08m;
 
   public sealed class Handler : IRequestHandler<PriceCommand, decimal>
   {

@@ -164,6 +164,8 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-76-converter-constraint-alias.cs" />
     <!-- generator-78: Roslyn-hosted (task 591-006 keyword compounds and qualified return types); CS0433 applies. Run standalone instead. -->
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-78-member-and-type-names.cs" />
+    <!-- generator-79: Roslyn-hosted (task 591-002 NURU_A002, NURU_A004, NURU_A005); CS0433 applies. Run standalone instead. -->
+    <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-79-binding-attribute-diagnostics.cs" />
     <!-- telemetry-04: end-to-end OTLP/HTTP export to a local sink (task 551). OpenTelemetry log
          export never reaches the sink inside this shared assembly, even from a plain
          LoggerFactory with no Nuru code; traces and metrics do. It passes as its own app, which

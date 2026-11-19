@@ -45,14 +45,14 @@ That is the closest match to a `Command` with its options and arguments. The Flu
 | Optional argument with a default (`DefaultValueFactory = _ => "2026"`) | Nullable property; apply the default in the handler (`command.Version ?? "2026"`). A non-nullable property is required. |
 | Optional argument *before* a required one (`[method] url`) | Not expressible as two parameters. Use one catch-all and classify the tokens in the handler. |
 | `Argument<string[]>` (`ZeroOrMore`, `OneOrMore`) | `[Parameter(IsCatchAll = true)] public string[] Items { get; set; } = [];` (must be last) |
-| Several arguments | One `[Parameter]` property per argument, declared in command-line order. Position is property declaration order. On 4.0.0-beta.14 the generator does not read `Order`, and analyzer `NURU_A002` is not reported, so leave `Order` out and order the properties instead. |
+| Several arguments | One `[Parameter]` property per argument. Set `Order` on each (`0`, `1`, `2`, ...). `NURU_A002` is an error when two or more parameters omit it. A single parameter may omit `Order`. A catch-all stays last. |
 | `new Option<string>("--output", "-o")` | `[Option("output", "o")] public string? Output { get; set; }` (no dashes in the attribute). The short name may be several characters: `[Option("connectionstring", "cs")]` matches `-cs`. |
 | Extra option aliases (`new Option<bool>("--offline", "--dry-run", "-n")`) | `[Option]` takes one long and one short name. Add one property per extra long name and combine them in the handler. |
-| `new Option<bool>("--force")` | `[Option("force")] public bool Force { get; set; }` (a flag: presence binds `true`, absence binds `false`) |
-| `Option<bool>` with `DefaultValueFactory = _ => true` | Not expressible as a `bool`: an initializer `= true` is ignored and absence binds `false`. Invert the flag (`--no-create`), or check the raw arguments. `--create false` is not supported; `false` becomes a positional argument. |
+| `new Option<bool>("--force")` | `[Option("force")] public bool Force { get; set; }` (a flag: presence binds `true`, absence binds `false`). The next token stays a positional, even when it is spelled like a boolean (`--verbose 0`). |
+| `Option<bool>` with `DefaultValueFactory = _ => true` | `[Option("create")] public bool Create { get; set; } = true;`. Absence stays `true`. `--create false` and `--create true` bind that value. A bare `--create` (no value) is `Unknown command`, exit 1. System.CommandLine treats that bare flag as `true`. `--verbose=true` on a normal flag is an unknown option. |
 | `DefaultValueFactory = _ => 3` (beta4: `getDefaultValue: () => 3`) | Property initializer: `public int Count { get; set; } = 3;` (value options; not `bool` flags) |
 | `Required = true` (beta4: `IsRequired = true`) | No attribute. Check the value in the handler and set `Environment.ExitCode`. See [Required options](#required-options). |
-| `Option<string[]>` with `AllowMultipleArgumentsPerToken` | `[Option("tag", "t")] public string[] Tags { get; set; } = [];` The array (or collection) property type is what makes the option repeat; the `IsRepeated` flag is not read on 4.0.0-beta.14 and does nothing on a `string`. Repeat the flag for each value: `-t a -t b`. |
+| `Option<string[]>` with `AllowMultipleArgumentsPerToken` | `[Option("tag", "t")] public string[] Tags { get; set; } = [];` The array or collection type makes the option repeat. `--tag a b` binds both values. `--tag a --tag b` does too. `--tag=a` binds only `a`. `IsRepeated = true` on a `string` is an error (`NURU_A004`). |
 | `Option<MyEnum>` | `[Option("format")] public MyEnum Format { get; set; }` (case-insensitive) |
 | `AcceptOnlyFromAmong("a", "b")` (beta4: `FromAmong`) | An `enum`, or a check in the handler |
 | `Validators.Add(...)` (beta4: `AddValidator`) | A check in the handler, or a [pipeline behavior](../features/pipeline-behaviors.md) |
@@ -223,8 +223,8 @@ command line, or the route does not match.
 |--------------|----------------|
 | `--output x.txt`, `-o x.txt` | Supported |
 | `--tag a --tag b` (repeated option) | Supported when the property is an array or collection (`string[]`) |
-| `--tag a b` (several values per token) | Only `a` binds. `b` is treated as a positional argument: it fills an optional `[Parameter]` if the route has one, otherwise the call fails with `Unknown command`. Repeat the flag. |
-| `--force true`, `--force false` (explicit bool value) | Not supported. The flag binds `true` and the value is treated as a positional argument. |
+| `--tag a b` (several values per token) | Both bind when the property is an array or collection. A following optional positional is swallowed. A required positional keeps the trailing values it still needs, and the repeated option keeps one value when the element is required. When a catch-all follows and the route has no `--` before it, a string or enum repeated option (or any other element with no built-in conversion) takes one value per flag (`--env A=1 nginx echo hi` binds the env value, then `nginx`, then the command). Repeat the flag for more values, or put `--` before the catch-all to take every value before the separator. A repeated option whose element has a built-in conversion still takes every token that converts. `--tag=a` stays one value, so the next token can still be a positional. |
+| `--force true`, `--force false` (explicit bool value) | Supported as a separate token (`--force false`). `--force=true` is an unknown option. A bool whose initializer is `true` is a value option: absence stays `true`. |
 | `--output=x.txt`, `--output:x.txt` | Supported for a declared long option. The value is everything after the first `=` or `:` (`--connection=Server=h:5432` binds `Server=h:5432`). |
 | `--verbose=true` (bool flag with a value) | Error: `Unknown option '--verbose=true'. Use --help for usage.`, exit 1. |
 | `-vo x` (bundled short options) | Not supported. Write `-v -o x`. |
@@ -341,10 +341,10 @@ must be the last parameter:
 [NuruRoute("get", Description = "Send a GET request")]
 public sealed class GetCommand : IQuery<Unit>
 {
-  [Parameter(Description = "URL")]
+  [Parameter(Order = 0, Description = "URL")]
   public string Url { get; set; } = string.Empty;
 
-  [Parameter(IsCatchAll = true, Description = "Request items: key=value, Header:value")]
+  [Parameter(Order = 1, IsCatchAll = true, Description = "Request items: key=value, Header:value")]
   public string[] Items { get; set; } = [];
 
   [Option("verbose", "v", Description = "Print the request")]
@@ -388,10 +388,10 @@ A tool that forwards arguments to another program (`dotnet r build -- --no-resto
 [NuruRoute("run", Description = "Run a script")]
 public sealed class RunCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Script name")]
+  [Parameter(Order = 0, Description = "Script name")]
   public string Script { get; set; } = string.Empty;
 
-  [Parameter(IsCatchAll = true, Description = "Arguments for the script")]
+  [Parameter(Order = 1, IsCatchAll = true, Description = "Arguments for the script")]
   public string[] Args { get; set; } = [];
 
   [Option("if-present", Description = "Skip a missing script")]
@@ -739,12 +739,20 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 2. **Help looks different.** Help is drawn as tables about 80 columns wide, so long command and option names
    are truncated. Default values, `(REQUIRED)` markers, and enum choices are not shown. Put them in the
    `Description` text if your users rely on them.
-3. **Extra positional arguments.** On a route that has a `[Parameter]`, extras are ignored: one parameter
-   given `a b` binds `a`, drops `b`, and exits 0. On a route with no parameters, an extra is
-   `Unknown command`, exit 1. `System.CommandLine` reports `Unrecognized command or argument 'b'`. Use a
-   catch-all parameter when you need to see or reject extras.
-4. **An option with a missing value binds its default.** `myapp -o` (no value) leaves `Output` at its default
-   with exit code 0.
+3. **Extra positional arguments.** A route with no catch-all rejects tokens past its last parameter
+   (required or optional): `Unknown command`, exit 1. A catch-all takes the rest.
+   A repeated option takes every following value (`--env A B` binds both) and swallows a following
+   optional positional. A required positional keeps the trailing values it still needs.
+   When a catch-all follows and the route has no `--` before it, a string or enum repeated option
+   (or any other element with no built-in conversion) takes one value per flag, so
+   `--env A=1 nginx echo hi` binds the env value, the image, and the command.
+   Repeat the flag for more values, or write `--` before the catch-all. A repeated option whose
+   element has a built-in conversion still takes every token that converts.
+   `System.CommandLine` reports `Unrecognized command or argument 'b'`.
+4. **An option that requires a value rejects a bare flag.** `myapp -o` (no value), when `Output` is a
+   non-nullable `string` or other required value, does not run the handler: `Unknown command`, exit 1.
+   The initializer applies only when the option is absent. `-o=` is an empty value and does run.
+   A nullable value (`string?`, `{mode?}`) still binds null when the flag is present with no value.
 5. **`RunAsync` catches handler exceptions.** It writes the exception message to stderr and returns 1.
    It does not print the stack trace. `OptionsValidationException` still propagates, so invalid
    configuration fails the process. `ExecuteAsync` and `InvokeAsync` still let exceptions propagate.
@@ -775,7 +783,11 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 9. **`--version` has no `-v` alias.** That leaves `-v` free for `--verbose`, as in most `System.CommandLine`
    tools. A value option named `version` (`[Option("version")] public string? Version`) still binds
    `--version 1.2`; a bare `--version` prints the app version.
-10. **`bool` flags cannot default to `true`, and `--flag false` is not supported.** See the concept map.
+10. **A `bool` whose initializer is `true` is a value option.** Absence stays `true`. `--create false`
+    binds `false`. A bare `--create` (no value token) is `Unknown command`, exit 1.
+    System.CommandLine binds that bare flag as `true`. A normal flag treats presence as `true` and
+    leaves the next token for a positional, including `0`, `1`, `true`, and `false`.
+    `--verbose=true` is an unknown option.
 11. **Built-in routes reserve names**: `--help`, `-h`, `--version`, `--capabilities`, `--json-args`, plus
    `--interactive`/`-i` when you add the REPL. Do not declare these yourself.
 12. **A property named `Type`, and two enums with the same simple name, compile.** Generated code escapes
@@ -806,12 +818,12 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 
 - [ ] Retarget to `net11.0`, swap the packages, and remove every `System.CommandLine*` reference
 - [ ] One `[NuruRoute]` class per `Command`; `[NuruRoute("")]` for the root action
-- [ ] `[Parameter]` per argument, properties in command-line order (catch-all last)
+- [ ] `[Parameter]` per argument, with `Order` when there is more than one (catch-all last)
 - [ ] `[Option]` per option; defaults as initializers; required options checked in the handler
 - [ ] `[NuruRouteGroup]` per command level; `[GroupOption]` for recursive options
-- [ ] Exit codes through `Environment.ExitCode`; expected exceptions caught around `RunAsync`
+- [ ] Exit codes through `Environment.ExitCode`. `RunAsync` returns 1 for a handler exception; catch `OptionsValidationException` when the message should be yours
 - [ ] `--` passthrough and free-form tails through a catch-all, tested with `=` tokens
-- [ ] Configuration through `IConfiguration`; verbosity through a runtime log filter
+- [ ] Configuration through `IOptions<T>` or `IConfiguration`; verbosity through a runtime log filter
 - [ ] Docs and scripts updated: no `-?`, no `--flag=true` on bool flags
 - [ ] `dotnet publish -c Release -r <rid>` with `PublishAot` and zero warnings, or `dotnet pack` for a tool
 

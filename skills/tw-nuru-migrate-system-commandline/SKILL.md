@@ -91,16 +91,16 @@ Keep `RunAsync` on an app you built in the same method (`NURU_I001` warns otherw
 | optional argument with a default | nullable property, default applied in the handler (`?? "x"`) |
 | optional argument before a required one (`[method] url`) | one catch-all, classify tokens in the handler |
 | `Argument<T[]>` | `[Parameter(IsCatchAll = true)] public string[] Items { get; set; } = [];` (last) |
-| several arguments | one `[Parameter]` property each, declared in command-line order (position = declaration order; `Order` is not read and `NURU_A002` is not reported on 4.0.0-beta.14, so do not set `Order`) |
+| several arguments | one `[Parameter]` property each, with `Order` (`0`, `1`, `2`, ...). `NURU_A002` is an error when two or more omit it. One parameter may omit `Order`. A catch-all stays last |
 | `Option<T>("--name", "-n")` | `[Option("name", "n")]` (no dashes) |
 | extra long aliases (`--offline`, `--dry-run`) | one `[Option]` takes one long + one short (the short may be multi-char: `"cs"` → `-cs`); add a property per extra long name and OR them, or rewrite aliases in argv before `RunAsync` |
 | an existing `-h` option | loses `-h` (reserved for help); keep the long form |
-| `Option<bool>` | `bool` property: a flag (absent = `false`) |
-| `Option<bool>` defaulting to `true` | **no bool initializer works** (`= true` is ignored); invert the flag (`--no-x`) |
-| `--flag true` / `--flag false` | not supported (`false` becomes a positional); rewrite argv or drop |
-| default value | property initializer (value options only) |
+| `Option<bool>` | `bool` property: a flag (absent = `false`). Presence is `true`. The next token stays a positional, even when it looks like a boolean (`--verbose 0`) |
+| `Option<bool>` defaulting to `true` | `[Option("create")] public bool Create { get; set; } = true;` (absence stays `true`; `--create false` binds `false`). A bare `--create` is `Unknown command`, exit 1 |
+| `--flag true` / `--flag false` | the next token is not the flag's value. `--flag=true` is an unknown option |
+| default value | property initializer. It applies when the option is absent. A bare `-o` on a required value is `Unknown command`, exit 1 |
 | `Required = true` / `IsRequired` | nullable property + check in handler (no attribute) |
-| `Option<T[]>`, `AllowMultipleArgumentsPerToken` | `[Option("x")] public string[] X { get; set; } = [];` (the array/collection type makes it repeat; `IsRepeated` is not read on 4.0.0-beta.14) |
+| `Option<T[]>`, `AllowMultipleArgumentsPerToken` | `[Option("x")] public string[] X { get; set; } = [];`. `--x a b` binds both. `IsRepeated = true` on a scalar is `NURU_A004` |
 | `AcceptOnlyFromAmong` / `FromAmong` | an `enum` property, or a handler check |
 | `Validators.Add` / `AddValidator` | handler check |
 | `Recursive = true` / `AddGlobalOption` | `[GroupOption("name", "n")]` on the group base |
@@ -315,10 +315,12 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 ## Behavior differences to tell the user about
 
 - `--flag=true` on a bool flag is an unknown-option error (`Unknown option '--verbose=true'`), exit 1.
-- Extra positional arguments are ignored when the route has a `[Parameter]`; on a route with none they are
-  `Unknown command`. Several values per token (`--env A B`) do the same: `B` becomes a positional.
+  A following token is not the flag's value, so `--verbose 0` keeps `0` as a positional.
+  A bool initializer `= true` stays true when the flag is absent. A bare `--create` on that option is
+  `Unknown command`, exit 1 (System.CommandLine binds the bare flag as true).
+- Extra positional arguments are `Unknown command`, exit 1, unless the route has a catch-all.
+  A repeated option takes every following value (`--env A B` binds both) and swallows a following optional positional. A required positional keeps the trailing values it still needs. When a catch-all follows and the route has no `--` before it, a string or enum repeated option (or any other element with no built-in conversion) takes one value per flag (`--env A=1 nginx echo hi` binds the env value, then the image, then the command). Repeat the flag for more values, or put `--` before the catch-all. A repeated option whose element has a built-in conversion still takes every token that converts.
 - Help is a table about 80 columns wide: long names truncated, no defaults, no `(REQUIRED)`, no enum choices.
-- `bool` flags cannot default to `true`; `--flag false` is not supported.
 - Parse and argument errors go to stderr. On 4.0.0-beta.14 some of them printed to stdout. Fixed in task 591-005.
 - A user option named `version` binds `--version 1.2`; bare `--version` is the built-in.
 - Ctrl+C cancels the handler's `CancellationToken`. If the handler is still running after
@@ -328,7 +330,8 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 - A handler exception in `RunAsync` prints the message to stderr and returns 1. `OptionsValidationException`
   still propagates. On 4.0.0-beta.14 the process aborted unless `Program.cs` caught the exception. Fixed in
   task 591-005.
-- `-o` with no value binds the default, exit 0.
+- `-o` with no value, when the value is required, is `Unknown command`, exit 1. The initializer applies
+  only when the option is absent. A nullable value still binds null.
 - No `-?`, no bundled short options (`-vo`), option names case-sensitive, `-h` is help.
 - `--help`, `-h`, `--version`, `--capabilities`, `--json-args` are reserved.
 - A property named `Type`, and two enums with the same simple name in different namespaces, compile.

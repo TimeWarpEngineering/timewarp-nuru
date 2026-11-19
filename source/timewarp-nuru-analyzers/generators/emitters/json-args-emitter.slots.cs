@@ -270,7 +270,8 @@ internal static partial class JsonArgsEmitter
     {
       return param.Source switch
       {
-        BindingSource.CatchAll => $"__{CSharpIdentifierUtils.ToCamelCase(param.ParameterName)}_{routeIndex}",
+        BindingSource.CatchAll => $"__{CSharpIdentifierUtils.ToCamelCase(param.SourceName)}_{routeIndex}",
+        BindingSource.Parameter => CSharpIdentifierUtils.EscapeIfKeyword(CSharpIdentifierUtils.ToCamelCase(param.SourceName)),
         BindingSource.Flag => CSharpIdentifierUtils.EscapeIfKeyword(CSharpIdentifierUtils.ToCamelCase(param.SourceName)),
         BindingSource.Option => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant()),
         _ => CSharpIdentifierUtils.EscapeIfKeyword(param.ParameterName.ToLowerInvariant())

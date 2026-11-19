@@ -12,8 +12,8 @@ using TimeWarp.Nuru;
 [NuruRoute("admin-config", Description = "Set config (admin only)")]
 public sealed class AdminConfigCommand : ICommand<Unit>, IRequireAuthorization
 {
-  [Parameter] public string Key { get; set; } = "";
-  [Parameter] public string Value { get; set; } = "";
+  [Parameter(Order = 0)] public string Key { get; set; } = "";
+  [Parameter(Order = 1)] public string Value { get; set; } = "";
 
   public sealed class Handler : IRequestHandler<AdminConfigCommand, Unit>
   {

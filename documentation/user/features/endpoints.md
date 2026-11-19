@@ -117,19 +117,19 @@ Group base classes can also define shared options using `[GroupOption]`.
 Marks a property as a positional parameter:
 
 ```csharp
-[Parameter(Description = "Target environment")]
+[Parameter(Order = 0, Description = "Target environment")]
 public string Env { get; set; } = string.Empty;
 
 [Parameter(Order = 1, Description = "Optional deployment tag")]
 public string? Tag { get; set; }
 
-[Parameter(IsCatchAll = true, Description = "Arguments to forward")]
+[Parameter(Order = 2, IsCatchAll = true, Description = "Arguments to forward")]
 public string[] Args { get; set; } = [];
 ```
 
 | Property | Description |
 |----------|-------------|
-| `Order` | Position in the pattern (0-based, inferred from declaration order if omitted) |
+| `Order` | Position in the pattern (0-based). Required when the command has two or more parameters (`NURU_A002`). A single parameter may omit it. A catch-all is forced last. |
 | `Description` | Help text for the parameter |
 | `IsCatchAll` | Captures all remaining arguments as `string[]` |
 
@@ -229,8 +229,8 @@ Handlers support:
 Parameter optionality is inferred from nullability:
 
 ```csharp
-[Parameter] public string Env { get; set; } = string.Empty;     // Required
-[Parameter] public string? Tag { get; set; }                     // Optional
+[Parameter(Order = 0)] public string Env { get; set; } = string.Empty; // Required
+[Parameter(Order = 1)] public string? Tag { get; set; }                 // Optional
 ```
 
 Option optionality follows the same pattern:

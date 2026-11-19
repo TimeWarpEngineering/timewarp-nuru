@@ -12,10 +12,10 @@ using TimeWarp.Nuru;
 [NuruRoute("backup", Description = "Backup a source directory")]
 public sealed class BackupCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Source directory to backup")]
+  [Parameter(Order = 0, Description = "Source directory to backup")]
   public string Source { get; set; } = string.Empty;
 
-  [Parameter(Description = "Optional destination path")]
+  [Parameter(Order = 1, Description = "Optional destination path")]
   public string? Destination { get; set; }
 
   public sealed class Handler : IRequestHandler<BackupCommand, Unit>

@@ -11,10 +11,10 @@ using TimeWarp.Nuru;
 [NuruRoute("exec", Description = "Execute a command")]
 public sealed class ExecCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Command to execute")]
+  [Parameter(Order = 0, Description = "Command to execute")]
   public string Command { get; set; } = string.Empty;
 
-  [Parameter(IsCatchAll = true, Description = "Command arguments")]
+  [Parameter(Order = 1, IsCatchAll = true, Description = "Command arguments")]
   public string[] Args { get; set; } = [];
 
   public sealed class Handler : IRequestHandler<ExecCommand, Unit>

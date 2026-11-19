@@ -6,8 +6,8 @@ using TimeWarp.Nuru;
 [NuruRoute("audit", Description = "Log audit event with full context")]
 public sealed class AuditCommand : ICommand<Unit>
 {
-  [Parameter] public string Action { get; set; } = "";
-  [Parameter] public string Resource { get; set; } = "";
+  [Parameter(Order = 0)] public string Action { get; set; } = "";
+  [Parameter(Order = 1)] public string Resource { get; set; } = "";
 
   public sealed class Handler(ILogger<AuditCommand> Logger) : IRequestHandler<AuditCommand, Unit>
   {

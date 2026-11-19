@@ -5,8 +5,8 @@ using static System.Console;
 [NuruRoute("process", Description = "Process with selected mode")]
 public sealed class ProcessCommand : ICommand<string>
 {
-  [Parameter] public string Mode { get; set; } = "fast";
-  [Parameter] public string Input { get; set; } = "";
+  [Parameter(Order = 0)] public string Mode { get; set; } = "fast";
+  [Parameter(Order = 1)] public string Input { get; set; } = "";
 
   public sealed class Handler(FastProcessor Fast, ThoroughProcessor Thorough) : IRequestHandler<ProcessCommand, string>
   {

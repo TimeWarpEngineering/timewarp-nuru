@@ -6,8 +6,8 @@ using static System.Console;
 [NuruRoute("version", Description = "Check version compatibility")]
 public sealed class VersionCommand : ICommand<Unit>
 {
-  [Parameter] public string Current { get; set; } = "1.0.0";
-  [Parameter] public string Required { get; set; } = "1.0.0";
+  [Parameter(Order = 0)] public string Current { get; set; } = "1.0.0";
+  [Parameter(Order = 1)] public string Required { get; set; } = "1.0.0";
 
   public sealed class Handler : IRequestHandler<VersionCommand, Unit>
   {

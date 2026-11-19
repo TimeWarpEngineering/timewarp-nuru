@@ -12,10 +12,10 @@ using TimeWarp.Nuru;
 [NuruRoute("config-set", Description = "Set configuration value (admin only)")]
 public sealed class ConfigSetCommand : ICommand<Unit>, IRequireAuthorization
 {
-  [Parameter(Description = "Configuration key")]
+  [Parameter(Order = 0, Description = "Configuration key")]
   public string Key { get; set; } = string.Empty;
 
-  [Parameter(Description = "Configuration value")]
+  [Parameter(Order = 1, Description = "Configuration value")]
   public string Value { get; set; } = string.Empty;
 
   public sealed class Handler : IRequestHandler<ConfigSetCommand, Unit>

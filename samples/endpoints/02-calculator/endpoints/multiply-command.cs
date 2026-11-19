@@ -14,10 +14,10 @@ using TimeWarp.Nuru;
 [NuruRoute("multiply", Description = "Multiply two numbers together")]
 public sealed class MultiplyCommand : IQuery<double>
 {
-  [Parameter(Description = "First number")]
+  [Parameter(Order = 0, Description = "First number")]
   public double X { get; set; }
 
-  [Parameter(Description = "Second number")]
+  [Parameter(Order = 1, Description = "Second number")]
   public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<MultiplyCommand, double>

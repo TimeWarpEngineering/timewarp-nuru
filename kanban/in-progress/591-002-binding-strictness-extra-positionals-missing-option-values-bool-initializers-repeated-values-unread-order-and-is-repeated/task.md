@@ -51,6 +51,7 @@ Acceptance: each item has a test that fails on the old behavior; in-repo multi-p
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-17), split from 591 during groom
 - Implementer: all five items fixed. Cache cleared. Touched runfiles passed. Full CI is the pull request, so the last checklist box stays open.
 - Boy-scout: option attribute reading moved to `endpoint-extractor.option-attributes.cs` so the properties file stays under the 500-line cap. The repeated-option test uses `IReadOnlyList<string>` so CA1819 needs no suppression. `ganda repo audit --fix` wrote the gitignored `.vscode/settings.json` window title.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f399-cd39-7b01-801f-35c11cd59b70, max-turns 500, Done — 2026-11-19T12:23:27Z
 
 ## Results
 

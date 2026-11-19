@@ -39,6 +39,12 @@ Acceptance criteria:
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-17), split from 591 during groom
 - 2026-11-19 implementer (grok, ganda task work): root help lists the default route's parameters, options, and examples.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f377-ba63-7e51-926e-0243f2c72b0a, max-turns 500, Done — 2026-11-19T11:25:51Z
+- Review oracle: claude (claude-opus-5-5), ganda task work review node, effort 2, roster general, turn cap 120 — 2026-11-19, disposition accepted-exceptions
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 397ac3f3-6efc-4e20-9e5c-f5feb83021af, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-19T11:27:42Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -62,6 +68,17 @@ Kept: a default route with only a description (no parameters, options, or exampl
 - Extra regression runs on root and per-route help: help-01 11/11, help-01b 8/8, help-02-default-route-help 6/6, help-02-table-formatting 10/10, help-03 4/4, help-04 6/6, help-05 1/1, help-06 7/7, help-07 3/3, help-08 8/8, help-09 4/4
 - `dotnet run --file tests/timewarp-nuru-tests/help/help-10-configure-help-filtering.cs`: does not compile standalone (pre-existing RCS1021 on the `ConfigureHelp` lambda; the file is unchanged from master)
 - `ganda repo audit`: pass (45 passed, 0 failed, 1 skipped) after `--fix` for the local window title
+
+### Review
+
+- Rounds: 1. Effort 2, roster: general.
+- Final counts: bug 0, suggestion 0, nit 2 (0 open, 0 fixed, 2 wontfix).
+- Disposition: **accepted-exceptions**. M1 (option/parameter/example formatting duplicated from
+  `route-help-emitter.cs`) and M2 (several promoted default routes share one Parameters/Options table)
+  are wontfix nits; rationale in `review/disposition.md`.
+- No mismatch between the goal restatement and the task.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 

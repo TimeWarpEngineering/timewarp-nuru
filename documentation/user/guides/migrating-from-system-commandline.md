@@ -734,10 +734,13 @@ straight to the Nuru column.
 
 Each item comes from running the 4.0.0-beta.14 package. Check the ones that affect your tool:
 
-1. **Root `--help` does not list the default route's parameters or options.** A single-command tool
-   (`[NuruRoute("")]`) shows only the route description under `Commands:`. Put a usage line in
-   `.WithDescription(...)` until this changes. Subcommands show their parameters and options under
-   `<command> --help`.
+1. **Root `--help` lists the default route's parameters and options.** A route with no command literal
+   (`[NuruRoute("")]`) has no `<command> --help` page. Root `--help` prints its usage pattern,
+   description, parameters, options, and examples, and it does not leave a blank command name.
+   Other commands stay under `Commands:`. A default route with only a description (no parameters,
+   options, or examples) is still a blank name under `Commands:`. Subcommands show their own
+   parameters and options under `<command> --help`.
+   (On 4.0.0-beta.14, root `--help` showed only that blank row. Fixed in task 591-003.)
 2. **Help looks different.** Help is drawn as tables about 80 columns wide, so long command and option names
    are truncated. Default values, `(REQUIRED)` markers, and enum choices are not shown. Put them in the
    `Description` text if your users rely on them.

@@ -290,9 +290,9 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 ## Step 9: Verify
 
 1. `dotnet build` with zero warnings (keep the repo's `TreatWarningsAsErrors`).
-2. Every command's `--help` against the Step 0 output. Root `--help` does **not** show the default route's
-   parameters or options. For a single-command tool, add a usage line to `.WithDescription(...)` and note
-   the gap in your report.
+2. Every command's `--help` against the Step 0 output. Root `--help` lists the default route's parameters,
+   options, and examples. A default route with only a description still shows that description under
+   `Commands:` with a blank name.
 3. The old tests, ported, pass.
 4. Run each command with the arguments from the tool's readme. Check that `--name=value` examples
    bind declared options and that `--flag=true` on a bool flag is not used.
@@ -317,7 +317,6 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 - Handler exceptions abort the process unless `Program.cs` catches them.
 - `-o` with no value binds the default, exit 0.
 - No `-?`, no bundled short options (`-vo`), option names case-sensitive, `-h` is help.
-- Root `--help` hides the default route's options.
 - `--help`, `-h`, `--version`, `--capabilities`, `--json-args` are reserved.
 
 Details and examples: [Behavior differences to check](../../documentation/user/guides/migrating-from-system-commandline.md#behavior-differences-to-check).

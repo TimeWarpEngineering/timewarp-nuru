@@ -30,6 +30,12 @@ Done when constructor injection is covered by tests, the migration guide and `tw
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-17), split from 591 during groom
 - 2026-11-19 implementer (grok, ganda task work, session 1730565): endpoint Handler constructors bind IOptions<T> the same way delegate parameters do. Configure stays NURU052.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f3ec-d66c-7da2-adcf-bddf6fdebbf6, max-turns 500, Done — 2026-11-19T13:37:02Z
+- Review oracle: claude (opus-5.5), ganda task work, effort 2, roster general, turn cap 120 — 2026-11-19. Round 1, disposition accepted-exceptions.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session bafed58b-5eb8-4c37-bb8a-6ea6bbb0aa4b, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-19T13:39:09Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -57,6 +63,14 @@ Out of scope: a behavior constructor, and a registered service constructor, that
 - `dotnet run --file tests/timewarp-nuru-tests/generator/generator-69-endpoint-constructor-logger-warning.cs`: 7/7 pass. Standalone runfile, and `tests/ci-tests/Directory.Build.props` already excludes it from the CI multi assembly (Roslyn-hosted, CS0433).
 - Smoke: `dotnet run --file samples/endpoints/07-configuration/advanced/advanced.cs -- endpoints` printed `Configured Endpoints:` and exited 0.
 - `ganda repo audit`: first run exit 0, repository passes, 1 advisory (`vscode-window-icon`). `ganda repo audit --fix --checks vscode-window-icon` fixed the gitignored file and reran: 45 passed, 0 failed, 1 skipped, "Repository passes all audit checks."
+
+### Review disposition
+
+- Rounds: 1. Roster: general. Effort: 2 (by-diff, 663 lines).
+- Final counts: bug 0, suggestion 0, nit 2 (both wontfix); 0 open.
+- Disposition: **accepted-exceptions**. M1: unused `configurationExpression` default parameter on `EmitOptionsBinding` (clean up on next touch). M2: generator-77 is also compiled into the CI multi assembly, not standalone-only; CI covers that run.
+- No misread: the restatement matches the task.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 

@@ -137,11 +137,11 @@ public class EnumRepeatedOptionTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error").ShouldBeTrue();
-    terminal.OutputContains("invalid").ShouldBeTrue();
-    terminal.OutputContains("Dev").ShouldBeTrue("Should show valid values");
-    terminal.OutputContains("Staging").ShouldBeTrue("Should show valid values");
-    terminal.OutputContains("Prod").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Error").ShouldBeTrue();
+    terminal.ErrorContains("invalid").ShouldBeTrue();
+    terminal.ErrorContains("Dev").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Staging").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Prod").ShouldBeTrue("Should show valid values");
   }
 
   public static async Task Should_show_error_when_invalid_value_among_valid_enums()
@@ -161,11 +161,11 @@ public class EnumRepeatedOptionTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error").ShouldBeTrue();
-    terminal.OutputContains("nope").ShouldBeTrue();
-    terminal.OutputContains("Dev").ShouldBeTrue("Should show valid values");
-    terminal.OutputContains("Staging").ShouldBeTrue("Should show valid values");
-    terminal.OutputContains("Prod").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Error").ShouldBeTrue();
+    terminal.ErrorContains("nope").ShouldBeTrue();
+    terminal.ErrorContains("Dev").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Staging").ShouldBeTrue("Should show valid values");
+    terminal.ErrorContains("Prod").ShouldBeTrue("Should show valid values");
   }
 
   // ============================================================================

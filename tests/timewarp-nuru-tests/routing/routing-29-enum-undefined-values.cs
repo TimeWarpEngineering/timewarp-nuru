@@ -62,7 +62,7 @@ public class EnumUndefinedValueTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error").ShouldBeTrue();
+    terminal.ErrorContains("Error").ShouldBeTrue();
   }
 
   public static async Task Should_reject_undefined_numeric_enum_value_option()
@@ -82,7 +82,7 @@ public class EnumUndefinedValueTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error").ShouldBeTrue();
+    terminal.ErrorContains("Error").ShouldBeTrue();
   }
 
   public static async Task Should_reject_undefined_numeric_between_defined_values()
@@ -181,7 +181,7 @@ public class EnumUndefinedValueTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error").ShouldBeTrue();
+    terminal.ErrorContains("Error").ShouldBeTrue();
   }
 
   public static async Task Should_show_valid_values_in_error_message()
@@ -201,10 +201,10 @@ public class EnumUndefinedValueTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Low").ShouldBeTrue();
-    terminal.OutputContains("Normal").ShouldBeTrue();
-    terminal.OutputContains("High").ShouldBeTrue();
-    terminal.OutputContains("Critical").ShouldBeTrue();
+    terminal.ErrorContains("Low").ShouldBeTrue();
+    terminal.ErrorContains("Normal").ShouldBeTrue();
+    terminal.ErrorContains("High").ShouldBeTrue();
+    terminal.ErrorContains("Critical").ShouldBeTrue();
   }
 
   // ============================================================================
@@ -308,7 +308,7 @@ public class EnumUndefinedValueTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error").ShouldBeTrue();
+    terminal.ErrorContains("Error").ShouldBeTrue();
   }
 
   public static async Task Should_reject_flags_comma_separated_numerics()

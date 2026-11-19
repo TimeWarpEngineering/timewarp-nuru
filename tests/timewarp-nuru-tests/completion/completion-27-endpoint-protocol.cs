@@ -28,7 +28,7 @@ public class CompletionEndpointProtocolTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done()
+      .Map("deploy {env}").WithHandler((string env) => env.Length).AsCommand().Done()
       .Map("list-environments").WithHandler(() => { }).AsQuery().Done()
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
@@ -52,8 +52,8 @@ public class CompletionEndpointProtocolTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done()
-      .Map("delete {item}").WithHandler((string item) => 0).AsCommand().Done()
+      .Map("deploy {env}").WithHandler((string env) => env.Length).AsCommand().Done()
+      .Map("delete {item}").WithHandler((string item) => item.Length).AsCommand().Done()
       .Map("status").WithHandler(() => { }).AsQuery().Done()
       .EnableCompletion()
       .Build();
@@ -75,11 +75,8 @@ public class CompletionEndpointProtocolTests
 
     NuruApp app = NuruApp.CreateBuilder()
       .UseTerminal(terminal)
-      .Map("deploy {env}").WithHandler((string env) => 0).AsCommand().Done()
-      .EnableCompletion(configure: registry =>
-      {
-        registry.RegisterForParameter("env", new TestEnvironmentSource());
-      })
+      .Map("deploy {env}").WithHandler((string env) => env.Length).AsCommand().Done()
+      .EnableCompletion(configure: registry => registry.RegisterForParameter("env", new TestEnvironmentSource()))
       .Build();
 
     // Act
@@ -246,16 +243,12 @@ public class CompletionEndpointProtocolTests
       .EnableCompletion()
       .Build();
 
-    // Act & Assert - Should throw for unknown shell
-    try
-    {
-      await app.RunAsync(["--generate-completion", "unknown"]);
-      throw new ShouldAssertException("Expected ArgumentException but none was thrown");
-    }
-    catch (ArgumentException ex)
-    {
-      ex.Message.ShouldContain("Unknown shell");
-    }
+    // Act
+    int exitCode = await app.RunAsync(["--generate-completion", "unknown"]);
+
+    // Assert — a CLI RunAsync writes the message and returns 1 (591-005)
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown shell").ShouldBeTrue();
   }
 
   // ==========================================================================

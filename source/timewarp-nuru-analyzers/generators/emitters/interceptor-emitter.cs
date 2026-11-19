@@ -182,7 +182,7 @@ internal static partial class InterceptorEmitter
       TelemetryEmitter.EmitTelemetrySetup(sb, app.TelemetryOptions ?? TelemetryModel.Default);
       sb.AppendLine("    try");
       sb.AppendLine("    {");
-      sb.AppendLine($"      return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
+      sb.AppendLine($"      return await global::TimeWarp.Nuru.NuruApp.RunCliAsync(app, args, static (application, arguments, token) => ExecuteRouteAsync{methodSuffix}(application, arguments, token)).ConfigureAwait(false);");
       sb.AppendLine("    }");
       sb.AppendLine("    finally");
       sb.AppendLine("    {");
@@ -191,7 +191,7 @@ internal static partial class InterceptorEmitter
     }
     else
     {
-      sb.AppendLine($"    return await ExecuteRouteAsync{methodSuffix}(app, args).ConfigureAwait(false);");
+      sb.AppendLine($"    return await global::TimeWarp.Nuru.NuruApp.RunCliAsync(app, args, static (application, arguments, token) => ExecuteRouteAsync{methodSuffix}(application, arguments, token)).ConfigureAwait(false);");
     }
 
     sb.AppendLine("  }");

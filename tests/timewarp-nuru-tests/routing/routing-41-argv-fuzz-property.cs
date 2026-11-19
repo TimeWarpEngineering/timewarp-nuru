@@ -18,8 +18,8 @@
 // Constant picks use Gen.OneOf (params T[]), the CsCheck 5 name for a uniform choice among values.
 // The fuzz app calls AddConfiguration(): configuration detection is compilation-wide, so in the CI
 // multi-mode assembly every app has it, and the standalone run must match.
-// Handler exceptions propagate out of RunAsync by design (documentation/user/reference/builder-api.md),
-// so the fuzz app's handlers never throw; "sum" adds as long because argv can hold int.MaxValue.
+// A CLI RunAsync turns a handler exception into exit 1 (591-005). The fuzz handlers still never throw;
+// "sum" adds as long because argv can hold int.MaxValue. OptionsValidationException still propagates.
 // The builder stays inside RunArgvAsync: the generator intercepts RunAsync only when it can trace
 // the app to a builder in the same method.
 // CsCheck is a test-only dependency. This file and tests/ci-tests reference it; product code never does.
@@ -345,7 +345,7 @@ public class ArgvFuzzPropertyTests
     if (result.Exception is not null)
       return $"RunAsync threw {result.Exception}";
 
-    // An argv value error goes to stdout; an unknown option or unmatched route goes to stderr (task 497 finding)
+    // An argv value error, an unknown option, and an unmatched route all go to stderr (591-005).
     return result.ExitCode switch
     {
       0 => null,

@@ -33,8 +33,9 @@ This enables proper piping and scripting workflows where errors don't contaminat
 ### 5. Standard Exit Codes
 Use conventional exit codes for compatibility with shell scripts and CI/CD:
 - `0` = Success
-- `1` = General error (default for all failures)
-- Future: Consider specific exit codes for different error types
+- `1` = General error (default for all failures), including a handler exception in a CLI `RunAsync`
+- `130` = SIGINT after `ProcessTerminationTimeout` (default two seconds)
+- `143` = SIGTERM after `ProcessTerminationTimeout`
 
 ## Error Detection Pipeline
 

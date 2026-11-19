@@ -175,9 +175,11 @@ Rules:
   Step 3 template (`return Unit.Value;` only in an `async` `Handle`). A returned `int` is printed, not used as
   the exit code.
 - `context.ExitCode = n` (beta4) → same.
-- Wrap `RunAsync` in `try`/`catch` for the exceptions the old `EnableDefaultExceptionHandler` or
-  `UseExceptionHandler` turned into exit code 1. Without it, a handler exception aborts the process with a
-  stack trace (exit 134 on Linux).
+- `RunAsync` writes a handler exception's message to stderr and returns 1 (the old
+  `EnableDefaultExceptionHandler` / `UseExceptionHandler`). It does not print the stack trace.
+  `OptionsValidationException` still propagates. `ExecuteAsync` and `InvokeAsync` still let exceptions
+  propagate, so a host can catch them. On 4.0.0-beta.14 a handler exception aborted the process (exit 134
+  on Linux) unless `Program.cs` caught it. Fixed in task 591-005.
 - Required options: `if (command.X is null) { terminal.WriteErrorLine("Option '--x' is required."); System.Environment.ExitCode = 1; return Unit.ValueTask; }`
 
 ## Step 5: Passthrough and free-form tails
@@ -313,10 +315,15 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
   `Unknown command`. Several values per token (`--env A B`) do the same: `B` becomes a positional.
 - Help is a table about 80 columns wide: long names truncated, no defaults, no `(REQUIRED)`, no enum choices.
 - `bool` flags cannot default to `true`; `--flag false` is not supported.
-- Some parse errors print to stdout, not stderr.
+- Parse and argument errors go to stderr. On 4.0.0-beta.14 some of them printed to stdout. Fixed in task 591-005.
 - A user option named `version` binds `--version 1.2`; bare `--version` is the built-in.
-- Ctrl+C ends the process; the handler's `CancellationToken` is not cancelled in a CLI run.
-- Handler exceptions abort the process unless `Program.cs` catches them.
+- Ctrl+C cancels the handler's `CancellationToken`. If the handler is still running after
+  `ProcessTerminationTimeout` (two seconds by default), the process exits 130. SIGTERM exits 143.
+  `null` turns that off. The REPL still cancels only the current command. On 4.0.0-beta.14 Ctrl+C ended
+  the process and did not cancel the token. Fixed in task 591-005.
+- A handler exception in `RunAsync` prints the message to stderr and returns 1. `OptionsValidationException`
+  still propagates. On 4.0.0-beta.14 the process aborted unless `Program.cs` caught the exception. Fixed in
+  task 591-005.
 - `-o` with no value binds the default, exit 0.
 - No `-?`, no bundled short options (`-vo`), option names case-sensitive, `-h` is help.
 - `--help`, `-h`, `--version`, `--capabilities`, `--json-args` are reserved.

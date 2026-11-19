@@ -8,8 +8,9 @@
 // route table of its own. RunAsync runs and disposes a local instance; CurrentSession only mirrors
 // it, so concurrent sessions cannot dispose each other. The in-flight command's token source is
 // published for the Ctrl+C handler, which runs on another thread, and is owned by the executing
-// method, not by Dispose. Only executed commands set the exit code, so a piped script whose last
-// command failed still exits non-zero.
+// method, not by Dispose. The session tells the app it owns Ctrl+C for the whole run, so a CLI
+// RunAsync does not cancel the session token or start its termination timeout. Only executed
+// commands set the exit code, so a piped script whose last command failed still exits non-zero.
 #endregion
 
 namespace TimeWarp.Nuru;
@@ -133,6 +134,7 @@ public sealed class ReplSession : IDisposable
     // finally to dispose the wrong instance.
     ReplSession session = new(nuruApp, replOptions, routeProvider, commandExecutor, loggerFactory);
     CurrentSession = session;
+    nuruApp.EnterReplCancellation();
 
     try
     {
@@ -140,6 +142,8 @@ public sealed class ReplSession : IDisposable
     }
     finally
     {
+      nuruApp.ExitReplCancellation();
+
       // Guaranteed cleanup even on exceptions
       session.Dispose();
 

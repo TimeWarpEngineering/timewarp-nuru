@@ -20,8 +20,8 @@ NuruApp app = NuruApp.CreateBuilder()
 ```
 
 This creates:
-- `--help` or `-h` - Root help: `Version:`, `Usage:`, `Options:`, then `Commands:` (the first literal of each route)
-- `<command> --help` - Per-route help. When several routes share its literal prefix, each of those routes is listed.
+- `--help` or `-h` - Root help: `Version:`, `Usage:`, `Options:`, then `Commands:` (the first literal of each route). A default route (no command literal) has no per-route page; root `--help` lists its parameters, options, and examples instead of a blank command row.
+- `<command> --help` - Per-route help. When several routes share its literal prefix, each of those routes is listed. A route with no literal prefix does not get this page.
 
 ## Basic Help
 

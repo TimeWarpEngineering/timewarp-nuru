@@ -173,7 +173,7 @@ internal static partial class HandlerExtractor
   /// <param name="param">The parameter symbol.</param>
   /// <param name="typeName">The fully qualified type name.</param>
   /// <param name="compilation">Optional compilation for validator discovery.</param>
-  private static ParameterBinding CreateServiceBinding(IParameterSymbol param, string typeName, Compilation? compilation = null)
+  internal static ParameterBinding CreateServiceBinding(IParameterSymbol param, string typeName, Compilation? compilation = null)
   {
     string? configurationKey = null;
     string? validatorTypeName = null;

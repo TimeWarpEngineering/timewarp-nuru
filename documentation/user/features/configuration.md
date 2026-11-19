@@ -65,6 +65,10 @@ async Task ConnectToDatabaseAsync(IOptions<DatabaseOptions> dbOptions)
 }
 ```
 
+An endpoint `Handler` constructor takes `IOptions<T>` the same way. The section is `[ConfigurationKey]`,
+or the type name with a trailing `Options` removed. `IOptionsSnapshot<T>` and `IOptionsMonitor<T>` are
+not bound.
+
 Mix route parameters with injected options:
 
 ```csharp
@@ -166,6 +170,7 @@ NuruApp app = NuruApp.CreateBuilder()
 NuruApp app = NuruApp.CreateBuilder()
   .ConfigureServices((services, config) =>
   {
+    // Configure<T> needs .UseMicrosoftDependencyInjection(). Source-generated DI reports NURU052 and does not run it.
     services.Configure<DatabaseOptions>(config.GetSection("Database"));
 
     string? environment = config["Environment"];

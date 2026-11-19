@@ -483,9 +483,9 @@ The configuration binder then generates `Get<T>()` and `Bind()` code instead of 
 `IL2026` otherwise).
 
 The [Configuration](../features/configuration.md) page also describes `IOptions<T>` injection by naming
-convention (`DatabaseOptions` binds the `Database` section). In the 4.0 betas, `IOptions<T>` works as a
-delegate handler parameter (Fluent DSL), but **not** as an endpoint `Handler` constructor parameter. That fails
-at run time with `No service for type 'IOptions<T>'`. Inject `IConfiguration` and bind the section as shown.
+convention (`DatabaseOptions` binds the `Database` section). An endpoint `Handler` constructor takes
+`IOptions<T>` the same way a Fluent delegate parameter does. `services.Configure<T>(...)` still reports
+`NURU052` and does not run unless the builder calls `.UseMicrosoftDependencyInjection()`.
 
 ### An existing service container
 
@@ -751,7 +751,16 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 4. **An option with a missing value binds its default.** `myapp -o` (no value) leaves `Output` at its default
    with exit code 0.
 5. **Handler exceptions are not caught.** See [Results, output, and exit codes](#results-output-and-exit-codes).
-6. **`IOptions<T>` cannot be injected into an endpoint `Handler` constructor.** Inject `IConfiguration`.
+6. **`services.Configure<T>` does not run under source-generated DI.** An endpoint `Handler` constructor
+   and a Fluent delegate parameter both take `IOptions<T>`. The section is `[ConfigurationKey("Name")]`,
+   or the type name with a trailing `Options` removed. `--Name:Key=value` overrides it. An
+   `IValidateOptions<T>` in the compilation runs when the options are created. `Configure<T>`, data
+   annotations, named options, `IOptionsSnapshot<T>`, and `IOptionsMonitor<T>` belong to the Microsoft
+   options pipeline. Source-generated DI reports `NURU052` for `Configure<T>` and does not run it, and
+   a constructor that asks for snapshot or monitor gets `NURU050`. Call
+   `.UseMicrosoftDependencyInjection()` when you need that pipeline.
+   (On 4.0.0-beta.14, an endpoint constructor `IOptions<T>` threw `No service for type 'IOptions<T>'`
+   at run time. Fixed in task 591-004.)
 7. **Ctrl+C ends the process.** The handler's `CancellationToken` is not cancelled in a CLI run, so there is
    no graceful-shutdown window like `System.CommandLine`'s `ProcessTerminationTimeout`. If you need cleanup,
    register `Console.CancelKeyPress` or `PosixSignalRegistration` yourself.

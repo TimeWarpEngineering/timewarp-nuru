@@ -102,6 +102,8 @@ Acceptance for this pass: both runfiles stay under 500 lines, routing-45 has its
   M9 and M10 fixed. New M11 (bug): routing-45 was squeezed under the 500-line cap instead of being split. New M12
   (nit): the one-value wording names only string elements. Fix pass requested. Files under `review/round-6/`.
 - Fix pass (implement-fix-4, 2026-11-20): M11 restores the blank lines in routing-45 and moves the greedy-run, give-back, catch-all, and endpoint-collection cases to routing-46, with the builder chains wrapped. M12 says the one-value rule is a string element or an element with no built-in conversion. User docs say string or enum.
+- Review round 7 (2026-11-20): review oracle, Claude Opus 5.5, effort 2, roster general. Scope `1d29674c..HEAD`.
+  M11 and M12 fixed. No new findings. Disposition clean. Files under `review/round-7/`.
 
 ## Results
 
@@ -200,10 +202,14 @@ Prior pass (implement-fix-2), not rerun:
 - This fix pass implements M11 and M12. routing-45 has its blank lines back. routing-46 holds the greedy-run,
   give-back, catch-all, and endpoint-collection cases, with wrapped builder chains. The one-value wording names
   a string element or an element with no built-in conversion. Statuses stay open for the next review.
-- Current counts after this pass, pending review: bug 7 addressed (M11 in this pass), suggestion 2 fixed,
-  nit 3 addressed (M12 in this pass), 0 wontfix.
-- Disposition: round 6 reopened M11 and M12. This pass addresses both. The next review confirms them.
-- Framework: `review/review-framework.md`. Last merged: `review/round-6/merged.md`. Disposition: `review/disposition.md`.
+- Round 7 (the host's review round 4 of this walk; effort 2, roster general, scope `1d29674c..HEAD`, the M11/M12
+  fix pass): M11 and M12 fixed. No new findings.
+  - All 11 moved cases have the same routes, argv, and expected output.
+  - routing-45 is 420 lines and routing-46 is 237.
+  - The emitter diff touches only comments.
+- Final counts: bug 7 fixed, suggestion 2 fixed, nit 3 fixed (M1–M12), 0 open, 0 wontfix.
+- Disposition: **clean** (7 rounds).
+- Framework: `review/review-framework.md`. Last merged: `review/round-7/merged.md`. Disposition: `review/disposition.md`.
 
 ## Learnings
 
@@ -236,6 +242,7 @@ Prior pass (implement-fix-2), not rerun:
 - Fix pass implemented M9 and M10.
 - Round 6: Blocked — open M11, M12
 - Fix pass implemented M11 and M12.
+- Round 7: Done
 ## Notes
 
 Found by task 496 (System.CommandLine migration guide) against TimeWarp.Nuru 4.0.0-beta.14. Parent: 591.

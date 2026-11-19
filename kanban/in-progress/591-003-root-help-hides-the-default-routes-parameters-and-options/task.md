@@ -38,6 +38,7 @@ Acceptance criteria:
 
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-17), split from 591 during groom
 - 2026-11-19 implementer (grok, ganda task work): root help lists the default route's parameters, options, and examples.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f377-ba63-7e51-926e-0243f2c72b0a, max-turns 500, Done — 2026-11-19T11:25:51Z
 
 ## Notes
 

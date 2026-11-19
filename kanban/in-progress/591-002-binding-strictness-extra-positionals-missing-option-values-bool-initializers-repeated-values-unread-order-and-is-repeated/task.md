@@ -74,6 +74,7 @@ Acceptance for this pass: the renamed runfile is excluded from the multi assembl
 - Review round 3 (2026-11-19): review oracle, Claude Opus 5.5, effort 1, roster general. Scope `6b29609c..HEAD`.
   M6 fixed, no new findings. Disposition clean. Files under `review/round-3/` and `review/disposition.md`.
 - Restart (2026-11-19): merged `origin/feature/591-system-commandline-gaps` and kept both sides. The binding diagnostic runfile is `generator-79` because 76, 77, and 78 were already taken. `GetTypeConstraintFromClrType` maps `FileInfo`, `DirectoryInfo`, and `IPAddress`. The complex-integration case uses `--tag=A` so the following positional is not swallowed.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f4ac-8cab-7bb0-bba5-1566e920e113, max-turns 500, Done — 2026-11-19T17:09:49Z
 
 ## Results
 

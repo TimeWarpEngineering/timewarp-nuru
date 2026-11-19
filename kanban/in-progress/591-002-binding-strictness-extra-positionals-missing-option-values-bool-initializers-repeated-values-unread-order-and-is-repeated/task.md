@@ -58,6 +58,10 @@ This fix pass closes review M9 and M10. A string repeated option still takes eve
 
 Acceptance for this pass: those two routing-45 cases pass, and the `--` route still binds both env values. `./bin/dev build`, `dotnet run --file` on routing-45, `ganda runfile cache --clear`, `env -u NURU_CI_PHASE dotnet run tests/ci-tests/run-ci-tests.cs` with both phase counts recorded, and one `ganda repo audit` pass.
 
+This fix pass closes review M11 and M12. The binding behaviour stays. routing-45 gets back the blank lines that were removed to slip under the 500-line cap. The greedy-run, give-back, catch-all, and endpoint-collection cases move to `routing-46-repeated-option-binding.cs`, with their own test class and the same `#if !JARIBU_MULTI` entry point. Those builder chains wrap across lines. The one-value rule is a string element, or an element with no built-in conversion (an enum, a custom converter). User docs say string or enum. An element with a built-in conversion still takes every token that converts.
+
+Acceptance for this pass: both runfiles stay under 500 lines, routing-45 has its blank lines back, and routing-46's chains are wrapped. The emitter summary, the migration guide's option-syntax row and checklist item 3, and the migrate skill say that. `./bin/dev build`, `dotnet run --file` on routing-45 and on routing-46, and one `ganda repo audit` pass.
+
 ## Checklist
 
 - [x] Decide per item: fix it, or keep the behavior and say why in Results
@@ -94,6 +98,10 @@ Acceptance for this pass: those two routing-45 cases pass, and the `--` route st
   binds the wrong token and the run exits 0. New M10 (suggestion): no cache clear and no CI-suite run recorded
   after the generator change. Fix pass requested. Files under `review/round-5/`.
 - Fix pass (implement-fix-3, 2026-11-20): M9 takes one value per flag for a string repeated option when a catch-all follows and the route has no `--` before that catch-all. A typed element still takes every converting token. A `--` before the catch-all still takes every value before the separator. M10 clears the runfile cache and records both CI phases. routing-45 was at the 500-line cap, so blank lines inside the tests and between command members came out to fit the new cases.
+- Review round 6 (2026-11-20): review oracle, Claude Opus 5.5, effort 2, roster general. Scope `59102fad..1d29674c`.
+  M9 and M10 fixed. New M11 (bug): routing-45 was squeezed under the 500-line cap instead of being split. New M12
+  (nit): the one-value wording names only string elements. Fix pass requested. Files under `review/round-6/`.
+- Fix pass (implement-fix-4, 2026-11-20): M11 restores the blank lines in routing-45 and moves the greedy-run, give-back, catch-all, and endpoint-collection cases to routing-46, with the builder chains wrapped. M12 says the one-value rule is a string element or an element with no built-in conversion. User docs say string or enum.
 
 ## Results
 
@@ -102,33 +110,38 @@ All five items are fixed.
 1. A route with no catch-all rejects tokens past its last positional (required plus at most the optional ones). Failure is a route skip: `Unknown command`, exit 1. A catch-all still takes the rest.
 2. A present value option with no value token skips the route only when the value is required (`!ParameterIsOptional`). The initializer applies only when the option is absent. `--opt=` counts as a value. A nullable value (`string?`, fluent `{mode?}`) still binds null and exits 0. There is no dedicated missing-value sentence, because option parsing runs before the literal check.
 3. A non-nullable `bool` whose initializer is `true` is a value option and keeps the attribute's long and short forms. Leaving it off stays true. `--create false` and `--create true` bind that bool. A bare `--create` with no token skips the route, because the value is required. A normal flag means presence is true and does not take the next token. A following `0`, `false`, `yes`, or other boolean spelling stays a positional. `--flag=true` stays an unknown option.
-4. A repeated option (collection type, or fluent `*`) takes every following non-option token after one space-separated flag, until the next declared option or an option-like token. `--env A B` binds both. `--env A --env B` still works. `--env=A` stays one value. An optional positional after those values is swallowed. A required positional that is still unbound takes back trailing values from the rightmost greedy run, and that run keeps one value when its element is required. When a required positional or a catch-all follows, a typed element stops at the first token that does not convert. When a catch-all follows and the route has no `--` before that catch-all, a string element takes one value per flag, so `fluent-docker-run --env A=1 nginx echo hi` binds `e=[A=1]`, `image=nginx`, `cmd=[echo,hi]`. Repeat the flag for more values. A `--` before the catch-all still takes every value before the separator. A bare repeated flag whose element is required skips the route.
+4. A repeated option (collection type, or fluent `*`) takes every following non-option token after one space-separated flag, until the next declared option or an option-like token. `--env A B` binds both. `--env A --env B` still works. `--env=A` stays one value. An optional positional after those values is swallowed. A required positional that is still unbound takes back trailing values from the rightmost greedy run, and that run keeps one value when its element is required. When a required positional or a catch-all follows, an element with a built-in conversion stops at the first token that does not convert. When a catch-all follows and the route has no `--` before that catch-all, a string element, or an element with no built-in conversion, takes one value per flag, so `fluent-docker-run --env A=1 nginx echo hi` binds `e=[A=1]`, `image=nginx`, `cmd=[echo,hi]`. An element with a built-in conversion still takes every token that converts. Repeat the flag for more values. A `--` before the catch-all still takes every value before the separator. A bare repeated flag whose element is required skips the route.
 5. `[Parameter]` reads `Order` and `Name`. Two or more parameters that omit `Order` report `NURU_A002` (error) and the route is kept. Parameters sort by `Order`, then declaration index. A catch-all stays last. Duplicate explicit orders keep declaration order as the tie-break. `Name` is trimmed and lowercased when it is an identifier (letter or underscore, then letters, digits, and underscores). A name such as `source-file` reports `NURU_A005` and the route uses the property name lowercased, so the matcher and the constructor both compile. In-repo multi-parameter endpoints set `Order` to their declaration index so current binding order is unchanged. A single parameter may omit `Order`. The user and generator guides set `Order` on every parameter in a multi-parameter example. The migration guide's `GetCommand` and `RunCommand`, the getting-started add command, the readme's second add command, and the endpoint guide's required/optional pair set `Order` too. A catch-all counts toward `NURU_A002`.
 6. `[Option(IsRepeated = true)]` is read. On a collection it is already repeated. On a scalar it reports `NURU_A004` (error) and the option stays a single value. `IsRepeated = false` does not turn a collection into one value. The dead `LongName` / `ShortName` / `IsRequired` branches on `OptionAttribute` stay an open question.
 
-The branch now contains `feature/591-system-commandline-gaps` through 591-007. `FileInfo`, `DirectoryInfo`, and `IPAddress` still map to `fileinfo`, `directoryinfo`, and `ipaddress` in `GetTypeConstraintFromClrType` (the method lives in `endpoint-extractor.option-attributes.cs`). The migration guide and the migrate skill keep both the binding rules and the feature-branch rules (stderr errors, `RunAsync` returns 1, Ctrl+C cancels the handler token, `IOptions<T>` in a handler constructor, keyword and shared type names). They also say that a string repeated option takes one value per flag when a catch-all follows and the route has no `--` before it. The binding diagnostic runfile is `generator-79-binding-attribute-diagnostics.cs` and is excluded from the CI multi assembly. `routing-09-complex-integration.cs` passes `--tag A run.sh`, and `run.sh` stays the script. The binding-strictness runfile is `routing-45-binding-strictness.cs`.
+The branch now contains `feature/591-system-commandline-gaps` through 591-007. `FileInfo`, `DirectoryInfo`, and `IPAddress` still map to `fileinfo`, `directoryinfo`, and `ipaddress` in `GetTypeConstraintFromClrType` (the method lives in `endpoint-extractor.option-attributes.cs`). The migration guide and the migrate skill keep both the binding rules and the feature-branch rules (stderr errors, `RunAsync` returns 1, Ctrl+C cancels the handler token, `IOptions<T>` in a handler constructor, keyword and shared type names). They also say that a string or enum repeated option, or any other element with no built-in conversion, takes one value per flag when a catch-all follows and the route has no `--` before it. The binding diagnostic runfile is `generator-79-binding-attribute-diagnostics.cs` and is excluded from the CI multi assembly. `routing-09-complex-integration.cs` passes `--tag A run.sh`, and `run.sh` stays the script. The binding-strictness runfile is `routing-45-binding-strictness.cs` (420 lines). The greedy-run, give-back, catch-all, and endpoint-collection cases are `routing-46-repeated-option-binding.cs` (237 lines).
 
 ### How to validate
 
 Smoke:
 
 ```bash
-ganda runfile cache --clear
 ./bin/dev build
 dotnet run --file tests/timewarp-nuru-tests/routing/routing-45-binding-strictness.cs
-env -u NURU_CI_PHASE dotnet run tests/ci-tests/run-ci-tests.cs
+dotnet run --file tests/timewarp-nuru-tests/routing/routing-46-repeated-option-binding.cs
 ganda repo audit
 ```
 
 Expect:
 
-- `ganda runfile cache --clear` clears the cache before the generator-dependent runs.
 - `./bin/dev build` succeeds with 0 warnings and 0 errors.
-- routing-45 passes 31 tests. `--env A=1 nginx echo hi` binds `e=[A=1]`, `image=nginx`, `cmd=[echo,hi]`. `docker --env A echo hi` on `docker --env? {e}* {*cmd}` binds `e=[A]`, `cmd=[echo,hi]`. `--env A B -- echo hi` on a route with `--` before the catch-all binds both env values. `-p 80 443 nginx echo hi` still binds both ports. `--tag A run.sh` binds the script, `--env A B` with `{name?}` binds both values, and the endpoint collection leaves the required parameter.
-- The CI runner reports both phases: multi passed with the skipped count, and standalone reports 0 failed.
+- routing-45 passes 20 tests. Blank lines are back between the builder, the run, and the assertions, and between command members. The file is under 500 lines.
+- routing-46 passes 11 tests. `--env A=1 nginx echo hi` binds `e=[A=1]`, `image=nginx`, `cmd=[echo,hi]`. `docker --env A echo hi` on `docker --env? {e}* {*cmd}` binds `e=[A]`, `cmd=[echo,hi]`. `--env A B -- echo hi` on a route with `--` before the catch-all binds both env values. `-p 80 443 nginx echo hi` still binds both ports. `--env A B` with `{name?}` binds both values, and the endpoint collection leaves the required parameter. Builder chains wrap across lines. The file is under 500 lines.
 - `ganda repo audit` passes.
 
-Gates (implement-fix-3, 2026-11-20):
+Gates (implement-fix-4, 2026-11-20):
+
+- `./bin/dev build` — succeeded (0 warnings, 0 errors)
+- `dotnet run --file tests/timewarp-nuru-tests/routing/routing-45-binding-strictness.cs` — 20 passed. Standalone runfile (`#if !JARIBU_MULTI`)
+- `dotnet run --file tests/timewarp-nuru-tests/routing/routing-46-repeated-option-binding.cs` — 11 passed. Standalone runfile (`#if !JARIBU_MULTI`)
+- `ganda repo audit` — passed (45 passed, 0 failed, 1 skipped)
+
+Prior gates (implement-fix-3, 2026-11-20), not rerun:
 
 - `ganda runfile cache --clear` — cleared 100 entries
 - `./bin/dev build` — succeeded (0 warnings, 0 errors)
@@ -180,10 +193,17 @@ Prior pass (implement-fix-2), not rerun:
   (bug) and M10 (suggestion) implemented in this fix pass. A string repeated option takes one value per flag
   when a catch-all follows and the route has no `--` before it. The cache clear and both CI phases are in
   the gate record. Statuses stay open for the next review.
-- Current counts (round 5, pending the next review): M9 and M10 implemented. Prior counts were bug 5 fixed
-  and 1 open, suggestion 1 fixed and 1 open, nit 2 fixed, 0 wontfix.
-- Disposition: reopened by round 5. This fix pass addresses M9 and M10. The next review confirms them.
-- Framework: `review/review-framework.md`. Last merged: `review/round-5/merged.md`. Disposition: `review/disposition.md`.
+- Round 6 (effort 2, roster general, scope `59102fad..1d29674c`, the M9/M10 fix pass): M9 and M10 fixed. New M11
+  (bug): routing-45 was squeezed under the 500-line cap (blank lines removed, builder chains on one long line)
+  instead of being split. New M12 (nit): the one-value rule also covers an enum or custom-converter element, and
+  the text says only "string". Fix pass requested.
+- This fix pass implements M11 and M12. routing-45 has its blank lines back. routing-46 holds the greedy-run,
+  give-back, catch-all, and endpoint-collection cases, with wrapped builder chains. The one-value wording names
+  a string element or an element with no built-in conversion. Statuses stay open for the next review.
+- Current counts after this pass, pending review: bug 7 addressed (M11 in this pass), suggestion 2 fixed,
+  nit 3 addressed (M12 in this pass), 0 wontfix.
+- Disposition: round 6 reopened M11 and M12. This pass addresses both. The next review confirms them.
+- Framework: `review/review-framework.md`. Last merged: `review/round-6/merged.md`. Disposition: `review/disposition.md`.
 
 ## Learnings
 
@@ -214,6 +234,8 @@ Prior pass (implement-fix-2), not rerun:
 - Fix pass implemented M7 and M8.
 - Round 5: Blocked — open M9, M10
 - Fix pass implemented M9 and M10.
+- Round 6: Blocked — open M11, M12
+- Fix pass implemented M11 and M12.
 ## Notes
 
 Found by task 496 (System.CommandLine migration guide) against TimeWarp.Nuru 4.0.0-beta.14. Parent: 591.

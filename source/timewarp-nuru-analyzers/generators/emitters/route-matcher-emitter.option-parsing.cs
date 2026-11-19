@@ -13,11 +13,13 @@
 // The rightmost greedy run gives trailing values back to required non-catch-all positionals
 // that are still unbound, and keeps one value when the element is required.
 // An optional positional reserves nothing.
-// When a required positional or a catch-all follows, a typed element stops the run at the
-// first token that does not convert, and that token stays positional.
-// A string element accepts every token. When a catch-all follows and no "--" stands before
-// that catch-all, one flag takes one value so the catch-all still receives the rest.
-// Repeat the flag for more values. A "--" before the catch-all keeps the greedy run.
+// When a required positional or a catch-all follows, an element with a built-in conversion
+// stops the run at the first token that does not convert, and that token stays positional.
+// A string element, or one with no built-in conversion, accepts every token. When a
+// catch-all follows and no "--" stands before it, one flag takes one value so the
+// catch-all still receives the rest. Repeat the flag for more values. A "--" before
+// the catch-all keeps the greedy run. An element with a built-in conversion still
+// takes every token that converts.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -280,9 +282,10 @@ internal static partial class RouteMatcherEmitter
   }
 
   /// <summary>
-  /// A string repeated option takes one value per flag when a catch-all follows and no
-  /// end-of-options separator stands before that catch-all. A typed element is told apart
-  /// by conversion, so <paramref name="accepts"/> being non-null keeps the greedy run.
+  /// A string element, or one with no built-in conversion, takes one value per flag when a
+  /// catch-all follows and no end-of-options separator stands before that catch-all. An element
+  /// with a built-in conversion is told apart by that conversion, so <paramref name="accepts"/>
+  /// being non-null keeps the greedy run.
   /// </summary>
   private static bool TakesOneValueBeforeCatchAll(RouteDefinition route, string? accepts)
   {

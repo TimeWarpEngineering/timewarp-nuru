@@ -356,6 +356,8 @@ internal static partial class EndpointExtractor
   /// Gets a type constraint string from a CLR type name.
   /// Handles both C# keyword aliases (e.g., "double") and fully qualified names (e.g., "global::System.Double").
   /// Also handles nullable value types (e.g., "int?", "long?").
+  /// <c>FileInfo</c>, <c>DirectoryInfo</c>, and <c>IPAddress</c> use the same constraint names
+  /// <see cref="TypeConversionMap"/> converts for a fluent route.
   /// </summary>
   private static string? GetTypeConstraintFromClrType(string clrTypeName)
   {
@@ -406,6 +408,9 @@ internal static partial class EndpointExtractor
       "global::System.Numerics.BigInteger" or "System.Numerics.BigInteger" or "BigInteger" => "biginteger",
       "global::System.Uri" or "System.Uri" or "Uri" => "uri",
       "global::System.Version" or "System.Version" or "Version" => "version",
+      "global::System.IO.FileInfo" or "System.IO.FileInfo" or "FileInfo" => "fileinfo",
+      "global::System.IO.DirectoryInfo" or "System.IO.DirectoryInfo" or "DirectoryInfo" => "directoryinfo",
+      "global::System.Net.IPAddress" or "System.Net.IPAddress" or "IPAddress" => "ipaddress",
       _ => null
     };
   }

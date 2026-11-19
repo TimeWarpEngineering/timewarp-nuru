@@ -164,10 +164,11 @@ Rules:
   an `async` one. Use `ICommand<Unit>` (side effects), `IQuery<Unit>` (read-only), or
   `IIdempotentCommand<Unit>`. These live in `TimeWarp.Mediator`.
 - A property named like a type in scope (`Environment`) shadows it. Write `System.Environment.ExitCode`.
-- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` does not bind. Bind `string` and
-  convert in the handler. Endpoint properties do bind `string`, the numeric types, `bool`, `char`, `Guid`,
-  `DateTime`, `DateTimeOffset`, `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and
-  enums. (Fluent `{file:FileInfo}` constraints convert `FileInfo`/`DirectoryInfo`; endpoint properties do not.)
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` binds from the argument string
+  (`FileInfo` and `DirectoryInfo` take the path; `IPAddress` uses `IPAddress.TryParse`). Endpoint properties
+  also bind `string`, the numeric types, `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `TimeSpan`,
+  `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and enums. On 4.0.0-beta.14 those three properties
+  did not bind; bind `string` and convert in the handler on that package.
 - Keep business logic where it was. Move only the parsing and wiring.
 - The builder must be one literal chain in one method. A ternary or helper around part of the chain fails
   with `NURU_S999`.
@@ -333,6 +334,8 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 - A property named `Type`, and two enums with the same simple name in different namespaces, compile.
   On 4.0.0-beta.14 the property emitted `@type_0` and failed to compile, and the enums were `CS0104` in
   generated code. Fixed in task 591-006. A name you write yourself can still be ambiguous.
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` binds. On 4.0.0-beta.14 it did
+  not. Fixed in task 591-007.
 
 Details and examples: [Behavior differences to check](../../documentation/user/guides/migrating-from-system-commandline.md#behavior-differences-to-check).
 

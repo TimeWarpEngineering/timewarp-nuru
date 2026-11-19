@@ -223,7 +223,7 @@ command line, or the route does not match.
 |--------------|----------------|
 | `--output x.txt`, `-o x.txt` | Supported |
 | `--tag a --tag b` (repeated option) | Supported when the property is an array or collection (`string[]`) |
-| `--tag a b` (several values per token) | Both bind when the property is an array or collection. A following positional is swallowed. `--tag=a` stays one value, so the next token can still be a positional. |
+| `--tag a b` (several values per token) | Both bind when the property is an array or collection. A following optional positional is swallowed. A required positional keeps the trailing values it still needs, and the repeated option keeps one value when the element is required. `--tag=a` stays one value, so the next token can still be a positional. |
 | `--force true`, `--force false` (explicit bool value) | Supported as a separate token (`--force false`). `--force=true` is an unknown option. A bool whose initializer is `true` is a value option: absence stays `true`. |
 | `--output=x.txt`, `--output:x.txt` | Supported for a declared long option. The value is everything after the first `=` or `:` (`--connection=Server=h:5432` binds `Server=h:5432`). |
 | `--verbose=true` (bool flag with a value) | Error: `Unknown option '--verbose=true'. Use --help for usage.`, exit 1. |

@@ -10,6 +10,11 @@
 // The property default applies only when the option is absent. --opt= counts as a value.
 // A repeated option takes every following non-option token after one space-separated flag.
 // --opt=value stays one value. A bare repeated flag with a required element skips the route.
+// The rightmost greedy run gives trailing values back to required non-catch-all positionals
+// that are still unbound, and keeps one value when the element is required.
+// An optional positional reserves nothing.
+// When a required positional or a catch-all follows, a typed element stops the run at the
+// first token that does not convert, and that token stays positional.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -226,15 +231,34 @@ internal static partial class RouteMatcherEmitter
       _ => throw new InvalidOperationException("Option must have at least one form")
     };
 
+    bool leaveUnparsed = route.Parameters.Any(parameter => parameter.IsCatchAll || !parameter.IsOptional);
+    string? accepts = leaveUnparsed ? RepeatedElementAccepts(option) : null;
+    int keep = option.ParameterIsOptional ? 0 : 1;
+
     sb.AppendLine($"        if ({conditionRepeated})");
     sb.AppendLine("        {");
     sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
     sb.AppendLine("          bool __tookValue = false;");
+    sb.AppendLine("          bool __trackRun = false;");
     sb.AppendLine("          // Take every following non-option token. --opt=value above stays one value.");
     sb.AppendLine($"          while (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]) && !global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike(routeArgs[__i + 1]))");
     sb.AppendLine("          {");
+    if (accepts is not null)
+      sb.AppendLine($"            if (!({accepts})) break;");
+    sb.AppendLine("            if (!__trackRun)");
+    sb.AppendLine("            {");
+    sb.AppendLine($"              if (__greedyRun_{routeIndex}.Count == 0 || __i + 1 > __greedyRun_{routeIndex}[__greedyRun_{routeIndex}.Count - 1])");
+    sb.AppendLine("              {");
+    sb.AppendLine($"                __greedyList_{routeIndex} = {listVarName};");
+    sb.AppendLine($"                __greedyStart_{routeIndex} = {listVarName}.Count;");
+    sb.AppendLine($"                __greedyKeep_{routeIndex} = {keep};");
+    sb.AppendLine($"                __greedyRun_{routeIndex}.Clear();");
+    sb.AppendLine("                __trackRun = true;");
+    sb.AppendLine("              }");
+    sb.AppendLine("            }");
     sb.AppendLine($"            {listVarName}.Add(routeArgs[__i + 1]);");
     sb.AppendLine($"            __consumed_{routeIndex}.Add(__i + 1);");
+    sb.AppendLine($"            if (__trackRun) __greedyRun_{routeIndex}.Add(__i + 1);");
     sb.AppendLine("            __i++;");
     sb.AppendLine("            __tookValue = true;");
     sb.AppendLine("          }");
@@ -245,5 +269,28 @@ internal static partial class RouteMatcherEmitter
 
     // Emit type conversion and array creation
     EmitRepeatedOptionTypeConversion(conversions, option, escapedVarName, listVarName, routeIndex, customConverters, route);
+  }
+
+  /// <summary>
+  /// Expression that is true when the next token converts to the repeated element, or null when
+  /// every non-option token is accepted (string, or a type with no built-in conversion).
+  /// </summary>
+  private static string? RepeatedElementAccepts(OptionDefinition option)
+  {
+    string typeConstraint = option.TypeConstraint ?? "";
+    if (typeConstraint.Length == 0)
+      return null;
+
+    string baseType = typeConstraint.EndsWith('?', StringComparison.Ordinal)
+      ? typeConstraint[..^1]
+      : typeConstraint;
+    if (baseType.Length == 0 || baseType.Equals("string", StringComparison.OrdinalIgnoreCase))
+      return null;
+
+    // The shared char conversion assigns the output. A length check needs no local.
+    if (baseType.Equals("char", StringComparison.OrdinalIgnoreCase))
+      return "routeArgs[__i + 1].Length == 1";
+
+    return TypeConversionMap.GetBuiltInTryConversion(baseType, "routeArgs[__i + 1]", "_")?.TryParseCondition;
   }
 }

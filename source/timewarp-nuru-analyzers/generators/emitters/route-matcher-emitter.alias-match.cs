@@ -61,7 +61,7 @@ internal static partial class RouteMatcherEmitter
     sb.AppendLine($"      if (__endOfOptions_{routeIndex} < 0) __endOfOptions_{routeIndex} = routeArgs.Length;");
     sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
 
-    string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
+    string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters, minPositionalArgs);
     EmitPositionalArrayConstruction(sb, route, routeIndex, trackUnknownValues: aliasParts.Length == 0);
     if (aliasParts.Length > 0)
       EmitUnknownOptionPrefixCheck(sb, routeIndex, [.. aliasParts], aliasSkipLabel);

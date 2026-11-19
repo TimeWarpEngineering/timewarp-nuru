@@ -189,7 +189,7 @@ internal static partial class RouteMatcherEmitter
     sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
 
     // First pass: Extract all options (with index tracking)
-    string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters);
+    string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters, minPositionalArgs);
 
     // Build positional args array (excluding consumed indices; -- is included only if route expects it)
     List<string> literalPrefix = RouteHelpEmitter.GetLiteralPrefix(route);

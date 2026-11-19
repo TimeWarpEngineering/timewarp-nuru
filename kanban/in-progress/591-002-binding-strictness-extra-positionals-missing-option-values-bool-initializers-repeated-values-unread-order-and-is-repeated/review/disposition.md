@@ -1,20 +1,24 @@
 # Disposition — task 591-002
 
-**Date:** 2026-11-19
-**Outcome:** clean
-**Rounds:** 3
-**Final open count:** 0
+**Date:** 2026-11-20
+**Outcome:** reopened. Round 4 has open findings (M7 bug, M8 nit). A final disposition follows the next
+review round.
+**Rounds:** 4
+**Final open count:** 2 (pending fix pass)
 
 ## Summary
 
-Round 1 (effort 3) raised M1–M3 (bug), M4 (suggestion), M5 (nit). Round 2 (effort 2) verified those fixed and
-raised M6 (bug, migration-guide examples without `Order`). Round 3 (effort 1) verified M6 fixed and found nothing
-new. Final: bug 4 fixed, suggestion 1 fixed, nit 1 fixed, 0 open, 0 wontfix.
+Rounds 1–3 closed with a clean disposition on 2026-11-19: M1–M6 fixed. The restart then merged the 591 feature
+branch, and round 4 reviewed that merge. The merge resolution is correct. It also changed the input of the
+existing routing-09 test, which exposed M7: a greedy repeated option swallows a *required* positional, so
+`{args}* {path}` routes that the design docs and a sample show no longer match. M8 is the duplicate routing-43
+file number. See `review/round-4/merged.md`.
 
 ## Exception log (if accepted-exceptions)
 
-None.
+None yet.
 
 ## Escalations
 
-- None.
+- None. If the operator would rather keep pure greedy consumption, M7 becomes a documented contract change
+  (see the round-4 suggestion).

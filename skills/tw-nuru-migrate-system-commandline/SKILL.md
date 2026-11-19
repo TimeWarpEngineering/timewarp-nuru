@@ -319,7 +319,7 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
   A bool initializer `= true` stays true when the flag is absent. A bare `--create` on that option is
   `Unknown command`, exit 1 (System.CommandLine binds the bare flag as true).
 - Extra positional arguments are `Unknown command`, exit 1, unless the route has a catch-all.
-  A repeated option takes every following value (`--env A B` binds both) and swallows a following positional.
+  A repeated option takes every following value (`--env A B` binds both) and swallows a following optional positional. A required positional keeps the trailing values it still needs.
 - Help is a table about 80 columns wide: long names truncated, no defaults, no `(REQUIRED)`, no enum choices.
 - Parse and argument errors go to stderr. On 4.0.0-beta.14 some of them printed to stdout. Fixed in task 591-005.
 - A user option named `version` binds `--version 1.2`; bare `--version` is the built-in.

@@ -63,6 +63,8 @@ Acceptance for this pass: those examples set `Order`. `./bin/dev build` and one 
 - Review round 2 (2026-11-19): review oracle, Claude Opus 5.5, effort 2, roster general. Scope `14104e13..HEAD`.
   M1–M5 fixed. New M6 (bug) open: two migration-guide examples omit `Order`. Fix pass requested. Files under `review/round-2/`.
 - Fix pass (implement-fix-3, 2026-11-19): M6 sets `Order` on `GetCommand` and `RunCommand`. The same omission was in the getting-started add command, the readme's second add command, and the endpoint guide's required/optional pair. Those set `Order` too. No binder change.
+- Review round 3 (2026-11-19): review oracle, Claude Opus 5.5, effort 1, roster general. Scope `6b29609c..HEAD`.
+  M6 fixed, no new findings. Disposition clean. Files under `review/round-3/` and `review/disposition.md`.
 
 ## Results
 
@@ -106,9 +108,11 @@ Prior pass (implement-fix-2), not rerun:
 - Round 1 (effort 3, roster general): 3 bug, 1 suggestion, 1 nit. The fix pass implemented M1–M5. Statuses stay open for review round 2.
 - Round 2 (effort 2, roster general, scope `14104e13..HEAD`): M1–M5 fixed. M6 (bug) implemented in implement-fix-3:
   `GetCommand` and `RunCommand` set `Order`, and the same omission in getting-started, the readme, and the endpoint
-  optionality pair does too. Status stays open for review round 3. Counts before this pass: bug 1 open / 3 fixed,
-  suggestion 1 fixed, nit 1 fixed.
-- Framework: `review/review-framework.md`. Last merged: `review/round-2/merged.md`.
+  optionality pair does too.
+- Round 3 (effort 1, roster general, scope `6b29609c..HEAD`): M6 verified fixed. No new findings.
+- Final counts: bug 4 fixed, suggestion 1 fixed, nit 1 fixed; 0 open, 0 wontfix.
+- Disposition: **clean** (3 rounds). No wontfix, no escalation.
+- Framework: `review/review-framework.md`. Last merged: `review/round-3/merged.md`. Disposition: `review/disposition.md`.
 
 ## Learnings
 
@@ -122,8 +126,8 @@ Prior pass (implement-fix-2), not rerun:
 - Round 1: Blocked — open M1, M2, M3, M4, M5
 - Fix pass implemented M1–M5.
 - Round 2: Blocked — open M6
-- Fix pass implemented M6. Review round 3 has not closed it.
-
+- Fix pass implemented M6.
+- Round 3: Done
 ## Notes
 
 Found by task 496 (System.CommandLine migration guide) against TimeWarp.Nuru 4.0.0-beta.14. Parent: 591.

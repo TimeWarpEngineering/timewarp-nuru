@@ -250,7 +250,7 @@ Methods available on `NuruApp` after building:
 
 In a served app or MCP host, calls run concurrently and `Environment.ExitCode` is not per call: set `NuruCallContext.CurrentExitCode`, which sets the call's own exit code there and `Environment.ExitCode` in a plain CLI run. See [Served apps](../features/served-apps.md#concurrent-calls).
 
-Handler return values are written to the terminal. They are not the exit code. A handler exception is not turned into exit code 1. It propagates out of `RunAsync`. When telemetry is enabled, the host records `error.type` and rethrows.
+Handler return values are written to the terminal. They are not the exit code. A handler exception in `RunAsync` writes the exception message to stderr and returns 1. `OptionsValidationException` still propagates. `ExecuteAsync` and `InvokeAsync` still let the exception propagate. When telemetry is enabled, the command span records `error.type` before `RunAsync` turns the exception into exit code 1. Ctrl+C cancels the handler token and waits `ProcessTerminationTimeout` (two seconds; `null` turns it off) before exiting 130. SIGTERM exits 143.
 
 ```csharp
 // Writes "42" to the terminal. The exit code stays Environment.ExitCode (0 unless the handler sets it).

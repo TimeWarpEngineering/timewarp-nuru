@@ -8,7 +8,8 @@
 // or RunAsync(), and the members that need them throw a descriptive InvalidOperationException
 // when absent, so an un-intercepted app fails loudly instead of silently doing nothing.
 // RunAsync and RunReplAsync bodies throw by design: the interceptor replaces every call, so
-// reaching the body means the generator did not run.
+// reaching the body means the generator did not run. The generated RunAsync call goes through
+// RunCliAsync (signal timeout, handler exceptions). ExecuteAsync does not.
 // The generator-facing members are public but EditorBrowsable.Never because generated code in the
 // consumer's assembly cannot reach internals.
 // Terminal prefers the ambient NuruCallContext terminal so concurrent daemon/MCP calls write to
@@ -33,6 +34,29 @@ public partial class NuruApp
 
   /// <summary>The gate exclusive calls of this app take (<see cref="NuruExclusiveLease"/>).</summary>
   internal SemaphoreSlim ExclusiveGate { get; } = new(1, 1);
+
+  private int ReplCancellationDepth;
+
+  /// <summary>
+  /// How long a CLI <see cref="RunAsync"/> waits after Ctrl+C (exit 130) or SIGTERM (exit 143)
+  /// for the handler to finish. The default is two seconds, the same as System.CommandLine.
+  /// <see langword="null"/> turns signal handling off and passes <see cref="CancellationToken.None"/>
+  /// to the handler. The CLI exception handler stays on either way.
+  /// </summary>
+  /// <remarks>
+  /// <see cref="ExecuteAsync(string[], CancellationToken)"/> and <see cref="InvokeAsync(NuruBoundRequest, CancellationToken)"/>
+  /// do not use this timeout. A REPL session handles Ctrl+C itself and does not start this wait.
+  /// </remarks>
+  public TimeSpan? ProcessTerminationTimeout { get; set; } = TimeSpan.FromSeconds(2);
+
+  /// <summary>Marks a REPL session as the owner of Ctrl+C until <see cref="ExitReplCancellation"/>.</summary>
+  internal void EnterReplCancellation() => Interlocked.Increment(ref ReplCancellationDepth);
+
+  /// <summary>Drops one REPL ownership of Ctrl+C taken by <see cref="EnterReplCancellation"/>.</summary>
+  internal void ExitReplCancellation() => Interlocked.Decrement(ref ReplCancellationDepth);
+
+  /// <summary>True while a REPL session owns Ctrl+C.</summary>
+  internal bool ReplOwnsCancellation => Volatile.Read(ref ReplCancellationDepth) > 0;
   public ReplOptions? ReplOptions { get; init; }
   public ILoggerFactory? LoggerFactory { get; set; }
 
@@ -156,7 +180,8 @@ public partial class NuruApp
   /// <remarks>
   /// <see cref="RunAsync"/> works only at call sites the source generator intercepts. This entry point
   /// is for library code that runs an app it did not build. It skips the process-level telemetry setup
-  /// <see cref="RunAsync"/> does. Like <see cref="RunAsync"/>, it uses process state
+  /// <see cref="RunAsync"/> does, and it does not catch handler exceptions or listen for Ctrl+C.
+  /// Like <see cref="RunAsync"/>, it uses process state
   /// (<see cref="Environment.ExitCode"/>, this app's terminal), so run one call at a time; use
   /// <see cref="ExecuteAsync(string[], NuruCallContext, CancellationToken)"/> to run calls concurrently.
   /// </remarks>
@@ -316,6 +341,11 @@ public partial class NuruApp
   /// To signal failure with a non-zero exit code, set <see cref="NuruCallContext.CurrentExitCode"/>
   /// (or <c>Environment.ExitCode</c>) in your handler. The value will be returned as the process exit
   /// code. In a daemon or MCP host call only <see cref="NuruCallContext.CurrentExitCode"/> is per call.
+  /// </para>
+  /// <para>
+  /// A handler exception writes its message to stderr and this call returns 1.
+  /// <see cref="OptionsValidationException"/> still propagates.
+  /// Ctrl+C cancels the handler's <see cref="CancellationToken"/>; see <see cref="ProcessTerminationTimeout"/>.
   /// </para>
   /// </returns>
 #pragma warning disable CA1822 // Member does not access instance data

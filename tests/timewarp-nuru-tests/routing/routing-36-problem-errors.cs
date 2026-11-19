@@ -156,7 +156,8 @@ public class ProblemErrorsTests
 
     int argv = await app.ExecuteAsync(["pe-delay", "abc"]);
     argv.ShouldBe(1);
-    terminal.Output.ShouldContain("Error: Invalid value 'abc' for parameter 'ms'");
+    terminal.ErrorOutput.ShouldContain("Error: Invalid value 'abc' for parameter 'ms'");
+    terminal.Output.ShouldNotContain("Error:");
     terminal.ErrorOutput.ShouldNotContain("error=Invalid");
 
     terminal.Clear();
@@ -177,7 +178,8 @@ public class ProblemErrorsTests
 
     int exitCode = await app.ExecuteAsync(["pe-delay", "abc"]);
     exitCode.ShouldBe(1);
-    terminal.Output.ShouldContain("Error: Invalid value 'abc' for parameter 'ms'");
+    terminal.ErrorOutput.ShouldContain("Error: Invalid value 'abc' for parameter 'ms'");
+    terminal.Output.ShouldNotContain("Error:");
   }
 }
 

@@ -356,7 +356,7 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error: Invalid value in 'values'. Expected: uint[]").ShouldBeTrue();
+    terminal.ErrorContains("Error: Invalid value in 'values'. Expected: uint[]").ShouldBeTrue();
   }
 
   /// <summary>
@@ -397,7 +397,7 @@ public class TypedCatchAllTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error: Invalid value in 'ids'. Expected: int[]").ShouldBeTrue();
+    terminal.ErrorContains("Error: Invalid value in 'ids'. Expected: int[]").ShouldBeTrue();
   }
 
   /// <summary>
@@ -420,7 +420,7 @@ public class TypedCatchAllTests
     okExit.ShouldBe(0);
     terminal.OutputContains("ids:[7,8]").ShouldBeTrue();
     badExit.ShouldBe(1);
-    terminal.OutputContains("Error: Invalid value in option").ShouldBeTrue();
+    terminal.ErrorContains("Error: Invalid value in option").ShouldBeTrue();
   }
 
   /// <summary>

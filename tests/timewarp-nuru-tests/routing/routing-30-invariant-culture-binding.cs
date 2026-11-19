@@ -380,7 +380,7 @@ public class InvariantCultureBindingTests
 
     // Assert
     exitCode.ShouldBe(1);
-    terminal.OutputContains("Error").ShouldBeTrue();
+    terminal.ErrorContains("Error").ShouldBeTrue();
   }
 }
 

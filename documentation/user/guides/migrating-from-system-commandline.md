@@ -61,7 +61,7 @@ That is the closest match to a `Command` with its options and arguments. The Flu
 | `command.SetAction(parseResult => ...)` | A nested `sealed class Handler : IRequestHandler<TEndpoint, TResult>`. Bound values arrive as the endpoint's properties. |
 | `parseResult.GetValue(option)` | Read the property: `command.Output` |
 | `SetAction` returning `int` | Set `Environment.ExitCode`. A returned `int` is **printed**, not used as the exit code. |
-| `CancellationToken` in an async action | The `CancellationToken` parameter of `Handle`. In a CLI run, Ctrl+C ends the process; it does not cancel this token. |
+| `CancellationToken` in an async action | The `CancellationToken` parameter of `Handle`. A CLI run cancels it on Ctrl+C and waits `ProcessTerminationTimeout` (default two seconds) before exiting 130. |
 | `parseResult.Invoke()` / `InvokeAsync()` | `await app.RunAsync(args)` (returns the exit code) |
 | `--help`, `-h`, `-?` | `--help` and `-h` are built in. `-?` is not. |
 | `--version` | Built in. It prints `AssemblyInformationalVersion`. |
@@ -317,24 +317,13 @@ public sealed class DbMigrateCommand : DbGroup, ICommand<Unit>
 | Action returns `int` | Set `Environment.ExitCode = n`. A returned `int` is written to stdout. |
 | Action returns `void` or `Task` | Return `Unit` (`return Unit.ValueTask;`) |
 | Write JSON yourself with `JsonSerializer` | Return a named record or class. Nuru writes it as JSON through a generated `JsonSerializerContext`, so it is AOT-safe. An anonymous type prints through `ToString()`. |
-| Parse error: message on stderr, help, exit code 1 | Unknown option or command: one error line, exit code 1. A bad typed value: `Error: Invalid value 'x' for option '--count'. Expected: int`, exit code 1. Some of these errors go to **stdout**, not stderr; adjust tests that assert stderr. |
-| Exception in the action: `EnableDefaultExceptionHandler` prints it, exit code 1 | The exception escapes `RunAsync`. Catch it in `Program.cs` (below). |
+| Parse error: message on stderr, help, exit code 1 | Unknown option or command: one error line on stderr, exit code 1. A bad typed value: `Error: Invalid value 'x' for option '--count'. Expected: int` on stderr, exit code 1. (On 4.0.0-beta.14 some of these errors went to stdout. Fixed in task 591-005.) |
+| Exception in the action: `EnableDefaultExceptionHandler` prints it, exit code 1 | `RunAsync` writes the exception message to stderr and returns 1. It does not print the stack trace. `OptionsValidationException` still propagates. `ExecuteAsync` and `InvokeAsync` still let exceptions propagate. |
 
-An exception thrown in a handler propagates out of `RunAsync`. Without a `catch`, the runtime prints the
-stack trace and the process aborts (exit code 134 on Linux). To match the `System.CommandLine` behavior, catch
-the exceptions your tool expects:
-
-```csharp
-try
-{
-  return await app.RunAsync(args);
-}
-catch (IOException ex)
-{
-  Console.Error.WriteLine($"error: {ex.Message}");
-  return 1;
-}
-```
+A handler exception in `RunAsync` is exit code 1 and one stderr line, the exception message. Catch
+`OptionsValidationException` in `Program.cs` when invalid configuration should be a message you write
+yourself. On 4.0.0-beta.14 the exception escaped `RunAsync` and the process aborted (exit code 134 on
+Linux). Fixed in task 591-005.
 
 ## Free-form trailing arguments
 
@@ -711,7 +700,7 @@ straight to the Nuru column.
 | `context.ExitCode = 2` | Return `int` from the action | `Environment.ExitCode = 2` |
 | `context.Console` / `IConsole` | `parseResult.Configuration.Output` / `InvocationConfiguration.Output` | Inject `ITerminal`. Test with `TestTerminal`. |
 | `new CommandLineBuilder(root).UseDefaults().Build()` | `root.Parse(args)` / `ParserConfiguration` + `InvocationConfiguration` | `NuruApp.CreateBuilder()...Build()` |
-| `.UseExceptionHandler(...)` | `InvocationConfiguration.EnableDefaultExceptionHandler` | `try`/`catch` around `RunAsync` |
+| `.UseExceptionHandler(...)` | `InvocationConfiguration.EnableDefaultExceptionHandler` | `RunAsync` writes the message to stderr and returns 1. `OptionsValidationException` still propagates. |
 | `.AddMiddleware(...)` | Removed | A pipeline behavior: `.AddBehavior(typeof(MyBehavior))` |
 | `command.AddOption(o)` / `AddArgument(a)` / `AddCommand(c)` | `command.Options.Add(o)` / `Arguments.Add(a)` / `Subcommands.Add(c)` | Properties with `[Option]` / `[Parameter]`; a class with `[NuruRoute]` |
 | `root.AddGlobalOption(o)` | `Recursive = true` | `[GroupOption]` on a `[NuruRouteGroup]` base |
@@ -750,7 +739,12 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
    catch-all parameter when you need to see or reject extras.
 4. **An option with a missing value binds its default.** `myapp -o` (no value) leaves `Output` at its default
    with exit code 0.
-5. **Handler exceptions are not caught.** See [Results, output, and exit codes](#results-output-and-exit-codes).
+5. **`RunAsync` catches handler exceptions.** It writes the exception message to stderr and returns 1.
+   It does not print the stack trace. `OptionsValidationException` still propagates, so invalid
+   configuration fails the process. `ExecuteAsync` and `InvokeAsync` still let exceptions propagate.
+   See [Results, output, and exit codes](#results-output-and-exit-codes).
+   (On 4.0.0-beta.14 the exception escaped `RunAsync` and the process aborted, exit 134 on Linux.
+   Fixed in task 591-005.)
 6. **`services.Configure<T>` does not run under source-generated DI.** An endpoint `Handler` constructor
    and a Fluent delegate parameter both take `IOptions<T>`. The section is `[ConfigurationKey("Name")]`,
    or the type name with a trailing `Options` removed. `--Name:Key=value` overrides it. An
@@ -761,9 +755,12 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
    `.UseMicrosoftDependencyInjection()` when you need that pipeline.
    (On 4.0.0-beta.14, an endpoint constructor `IOptions<T>` threw `No service for type 'IOptions<T>'`
    at run time. Fixed in task 591-004.)
-7. **Ctrl+C ends the process.** The handler's `CancellationToken` is not cancelled in a CLI run, so there is
-   no graceful-shutdown window like `System.CommandLine`'s `ProcessTerminationTimeout`. If you need cleanup,
-   register `Console.CancelKeyPress` or `PosixSignalRegistration` yourself.
+7. **Ctrl+C cancels the handler token.** A CLI `RunAsync` cancels the `CancellationToken` passed to the
+   handler and waits `NuruApp.ProcessTerminationTimeout` (two seconds, the same default as
+   System.CommandLine). If the handler finishes, its exit code is the result. If it is still running
+   when the timeout ends, the call returns 130 (SIGINT) or 143 (SIGTERM). Set the timeout to `null` to
+   turn signal handling off. The REPL handles Ctrl+C itself: it cancels the current command and stays up.
+   (On 4.0.0-beta.14 Ctrl+C ended the process and did not cancel the token. Fixed in task 591-005.)
 8. **`-h` belongs to help.** An existing `-h` option (for example `-h` for `--headers`) loses its short form.
    No required-option attribute, no `-?` help alias, no bundled short options, and no `[diagram]`,
    `[parse]`, `[env]`, or `[suggest]` directives.

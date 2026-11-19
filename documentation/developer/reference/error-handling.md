@@ -14,24 +14,24 @@ graph TD
     C -->|No| D["'Unknown command. Use --help for usage.' to stderr, return 1"]
     C -->|Yes| E[Parameter and Option Conversion]
     E --> F{Conversion Succeeded?}
-    F -->|No| G["'Error: Invalid value ...' to terminal stdout, return 1"]
+    F -->|No| G["'Error: Invalid value ...' to stderr, return 1"]
     F -->|Yes| H[Handler Execution]
     H --> I{Exception?}
-    I -->|Yes| J[Exception propagates out of RunAsync]
+    I -->|Yes| J["CLI RunAsync: message to stderr, return 1. ExecuteAsync: propagates"]
     I -->|No| K[Result written to terminal; return Environment.ExitCode]
 ```
 
 ## Key Error Handling Mechanisms
 
-### 1. **Handler Exceptions Are Not Caught**
+### 1. **CLI RunAsync catches handler exceptions**
 
-Generated code does not wrap handler invocation in a catch block. If a handler throws, the exception
-propagates out of `RunAsync` to the caller. When telemetry is enabled, the generated code records the
-exception type on the activity and metrics and then rethrows (`throw;`); it does not swallow it.
+A CLI `RunAsync` writes the exception message to stderr and returns 1. It does not print the stack trace.
+`OptionsValidationException` still propagates. `ExecuteAsync` and `InvokeAsync` do not catch, so a daemon
+or MCP host still sees the exception. When telemetry is enabled, the command span records `error.type`
+and rethrows into that CLI boundary.
 
-There is no framework-written `Error executing handler` message and no automatic exit code `1` for
-handler exceptions. If you want a friendly message and a non-zero exit code, handle the exception yourself,
-either inside the handler or around `RunAsync`:
+There is no framework-written `Error executing handler` prefix. To choose a different exit code, catch
+inside the handler. The example below still works for an `IOException` you want to phrase yourself:
 
 ```csharp
 NuruApp app = NuruApp.CreateBuilder()
@@ -54,20 +54,6 @@ NuruApp app = NuruApp.CreateBuilder()
   .Build();
 
 return await app.RunAsync(args);
-```
-
-Or catch at the call site:
-
-```csharp
-try
-{
-  return await app.RunAsync(args);
-}
-catch (Exception ex)
-{
-  Console.Error.WriteLine($"Error: {ex.Message}");
-  return 1;
-}
 ```
 
 ### 2. **Exit Codes and Handler Return Values**
@@ -94,7 +80,7 @@ Generated binding and no-match errors (below) return `1` directly.
 **Key principles:**
 - Handler output is written through the terminal (`app.Terminal`), not via a returned exit code.
 - A non-zero exit code from a handler requires setting `NuruCallContext.CurrentExitCode` (or `Environment.ExitCode` in a plain CLI).
-- Exit codes: `0` = success, `1` = generated binding or no-match failure.
+- Exit codes: `0` = success, `1` = a binding failure, no match, or a handler exception in a CLI `RunAsync`, `130` = SIGINT after `ProcessTerminationTimeout`, `143` = SIGTERM after that timeout.
 
 ### 3. **Route Parsing Errors**
 Route patterns are parsed by the source generator at compile time, so malformed patterns are reported as
@@ -132,7 +118,7 @@ Messages emitted by the generator:
 **binding failed**. The user gets a clear error, not a confusing "unknown command" message from fallback
 behavior.
 
-Note: binding errors currently go to the terminal's standard output.
+Binding errors go to the terminal's standard error.
 
 ### 5. **Command Matching Errors**
 When no route matches the input, the generated fallback writes
@@ -142,7 +128,7 @@ When no route matches the input, the generated fallback writes
 ### 6. **Output Stream Usage**
 - **Handler results**: written to `app.Terminal` (standard output). `void`/`Task`/`Unit` results produce
   no output; primitives are written as text, dates as ISO 8601, and complex types as JSON.
-- **Binding errors**: `app.Terminal.WriteLine` (standard output, currently).
+- **Binding errors**: `app.Terminal.WriteErrorLine` (standard error). With `UseProblemRendererForErrors()` and a problem renderer, the rendered problem goes to standard error too.
 - **No-match error**: `app.Terminal.WriteErrorLineAsync` (standard error).
 - Handlers that need to write errors to standard error should use
   `ITerminal.WriteErrorLine` / `WriteErrorLineAsync`.
@@ -150,5 +136,5 @@ When no route matches the input, the generated fallback writes
 ## Implementation Details
 
 - Matched routes return `Environment.ExitCode` (default `0`); binding and no-match failures return `1`.
-- Handler exceptions are not caught by generated code and propagate to the caller of `RunAsync`.
+- A CLI `RunAsync` catches a handler exception, writes its message to stderr, and returns `1`. `OptionsValidationException` still propagates. `ExecuteAsync` does not catch. Ctrl+C cancels the handler token and returns `130` if the handler is still running after `ProcessTerminationTimeout`; SIGTERM returns `143`.
 - Binding errors name the parameter or option and the offending value.

@@ -104,16 +104,16 @@ public sealed class DockerRunRequest : DockerRequestBase { }
 Marks a property as a positional parameter.
 
 ```csharp
-[Parameter(Description = "Target environment")]
+[Parameter(Order = 0, Description = "Target environment")]
 public string Env { get; set; } = string.Empty;
 
-[Parameter(IsCatchAll = true)]
+[Parameter(Order = 1, IsCatchAll = true)]
 public string[] Args { get; set; } = [];
 ```
 
 **Properties:**
-- `Name` - Override parameter name (defaults to property name in camelCase)
-- `Order` - Position in the argument list (required when a command has multiple parameters)
+- `Name` - Override parameter name (defaults to property name in camelCase). Must be an identifier: a letter or underscore, then letters, digits, and underscores. A hyphenated name reports `NURU_A005`.
+- `Order` - Position in the argument list (required when a command has multiple parameters, `NURU_A002`). A catch-all is forced last.
 - `Description` - Help text
 - `IsCatchAll` - Captures all remaining arguments
 

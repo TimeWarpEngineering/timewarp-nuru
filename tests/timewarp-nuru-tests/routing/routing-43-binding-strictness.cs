@@ -128,7 +128,7 @@ public class BindingStrictnessTests
       .Map<BindingStrictnessCreateCommand>()
       .Build();
 
-    int exitCode = await app.RunAsync(["make", "--create", "false", "--verbose", "false"]);
+    int exitCode = await app.RunAsync(["make", "--create", "false"]);
 
     exitCode.ShouldBe(0);
     terminal.OutputContains("create:False|verbose:False").ShouldBeTrue();
@@ -143,6 +143,53 @@ public class BindingStrictnessTests
 
     trueExitCode.ShouldBe(0);
     trueTerminal.OutputContains("create:True|verbose:False").ShouldBeTrue();
+  }
+
+  public static async Task Should_reject_a_bare_default_true_bool()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map<BindingStrictnessCreateCommand>()
+      .Build();
+
+    int exitCode = await app.RunAsync(["make", "--create"]);
+
+    exitCode.ShouldBe(1);
+    terminal.ErrorContains("Unknown command").ShouldBeTrue();
+    terminal.OutputContains("create:").ShouldBeFalse();
+  }
+
+  public static async Task Should_keep_a_boolean_spelling_as_an_optional_positional()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("seek {pos:int?} --verbose")
+      .WithHandler((int? pos, bool verbose) => $"pos:{pos}|verbose:{verbose}")
+      .AsCommand().Done()
+      .Build();
+
+    int exitCode = await app.RunAsync(["seek", "--verbose", "0"]);
+
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("pos:0|verbose:True").ShouldBeTrue();
+  }
+
+  public static async Task Should_keep_a_boolean_spelling_as_a_required_positional()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("repeat {count:int} --quiet")
+      .WithHandler((int count, bool quiet) => $"count:{count}|quiet:{quiet}")
+      .AsCommand().Done()
+      .Build();
+
+    int exitCode = await app.RunAsync(["repeat", "--quiet", "1"]);
+
+    exitCode.ShouldBe(0);
+    terminal.OutputContains("count:1|quiet:True").ShouldBeTrue();
   }
 
   public static async Task Should_bind_true_for_a_flag_when_the_next_token_is_not_a_boolean()

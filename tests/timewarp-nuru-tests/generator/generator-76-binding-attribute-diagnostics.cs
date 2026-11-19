@@ -4,7 +4,8 @@
 #:package Microsoft.CodeAnalysis.CSharp
 
 #region Purpose
-// Pins NURU_A002 (parameters omit Order) and NURU_A004 (IsRepeated on a scalar).
+// Pins NURU_A002 (parameters omit Order), NURU_A004 (IsRepeated on a scalar),
+// and NURU_A005 (Parameter Name is not an identifier).
 #endregion
 
 #if !JARIBU_MULTI
@@ -137,7 +138,44 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen76BindingAttributeDiagnostics
       await Task.CompletedTask;
     }
 
+    public static async Task Should_report_nuru_a005_when_parameter_name_is_not_an_identifier()
+    {
+      const string Source = """
+        using TimeWarp.Mediator;
+        using TimeWarp.Nuru;
+
+        [NuruRoute("save")]
+        public sealed class SaveCommand : ICommand<Unit>
+        {
+          [Parameter(Name = "source-file")]
+          public string SourcePath { get; set; } = "";
+
+          public sealed class Handler : IRequestHandler<SaveCommand, Unit>
+          {
+            public ValueTask<Unit> Handle(SaveCommand command, CancellationToken cancellationToken) => Unit.ValueTask;
+          }
+        }
+
+        NuruApp app = NuruApp.CreateBuilder().DiscoverEndpoints().Build();
+        app.RunAsync([]);
+        """;
+
+      GeneratorDriverRunResult result = Run(Source);
+      List<Diagnostic> diagnostics = [.. result.Diagnostics.Where(diagnostic => diagnostic.Id == "NURU_A005")];
+      diagnostics.Count.ShouldBe(1);
+      diagnostics[0].Severity.ShouldBe(DiagnosticSeverity.Error);
+      diagnostics[0].GetMessage(CultureInfo.InvariantCulture).ShouldContain("source-file");
+
+      string generated = string.Concat(result.Results.SelectMany(run => run.GeneratedSources).Select(source => source.SourceText.ToString()));
+      generated.ShouldNotContain("source-file");
+      generated.ShouldContain("sourcepath");
+      await Task.CompletedTask;
+    }
+
     private static IEnumerable<Diagnostic> Diagnostics(string source, string id)
+      => Run(source).Diagnostics.Where(diagnostic => diagnostic.Id == id);
+
+    private static GeneratorDriverRunResult Run(string source)
     {
       SyntaxTree tree = CSharpSyntaxTree.ParseText(source);
       string trusted = (string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!;
@@ -155,9 +193,8 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen76BindingAttributeDiagnostics
         options: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 
       CSharpGeneratorDriver driver = CSharpGeneratorDriver.Create(new NuruGenerator());
-      GeneratorDriverRunResult result = driver.RunGenerators(compilation).GetRunResult();
       // RunResult.Diagnostics is already every generator diagnostic. Concatenating Results again doubles them.
-      return result.Diagnostics.Where(diagnostic => diagnostic.Id == id);
+      return driver.RunGenerators(compilation).GetRunResult();
     }
   }
 }

@@ -95,9 +95,9 @@ Keep `RunAsync` on an app you built in the same method (`NURU_I001` warns otherw
 | `Option<T>("--name", "-n")` | `[Option("name", "n")]` (no dashes) |
 | extra long aliases (`--offline`, `--dry-run`) | one `[Option]` takes one long + one short (the short may be multi-char: `"cs"` → `-cs`); add a property per extra long name and OR them, or rewrite aliases in argv before `RunAsync` |
 | an existing `-h` option | loses `-h` (reserved for help); keep the long form |
-| `Option<bool>` | `bool` property: a flag (absent = `false`). A following boolean spelling binds (`--verbose false`) |
-| `Option<bool>` defaulting to `true` | `[Option("create")] public bool Create { get; set; } = true;` (absence stays `true`; `--create false` binds `false`) |
-| `--flag true` / `--flag false` | a separate token binds. `--flag=true` is an unknown option |
+| `Option<bool>` | `bool` property: a flag (absent = `false`). Presence is `true`. The next token stays a positional, even when it looks like a boolean (`--verbose 0`) |
+| `Option<bool>` defaulting to `true` | `[Option("create")] public bool Create { get; set; } = true;` (absence stays `true`; `--create false` binds `false`). A bare `--create` is `Unknown command`, exit 1 |
+| `--flag true` / `--flag false` | the next token is not the flag's value. `--flag=true` is an unknown option |
 | default value | property initializer. It applies when the option is absent. A bare `-o` on a required value is `Unknown command`, exit 1 |
 | `Required = true` / `IsRequired` | nullable property + check in handler (no attribute) |
 | `Option<T[]>`, `AllowMultipleArgumentsPerToken` | `[Option("x")] public string[] X { get; set; } = [];`. `--x a b` binds both. `IsRepeated = true` on a scalar is `NURU_A004` |
@@ -307,7 +307,9 @@ Full example: [Tests](../../documentation/user/guides/migrating-from-system-comm
 ## Behavior differences to tell the user about
 
 - `--flag=true` on a bool flag is an unknown-option error (`Unknown option '--verbose=true'`), exit 1.
-  `--flag false` as a separate token binds `false`. A bool initializer `= true` stays true when the flag is absent.
+  A following token is not the flag's value, so `--verbose 0` keeps `0` as a positional.
+  A bool initializer `= true` stays true when the flag is absent. A bare `--create` on that option is
+  `Unknown command`, exit 1 (System.CommandLine binds the bare flag as true).
 - Extra positional arguments are `Unknown command`, exit 1, unless the route has a catch-all.
   A repeated option takes every following value (`--env A B` binds both) and swallows a following positional.
 - Help is a table about 80 columns wide: long names truncated, no defaults, no `(REQUIRED)`, no enum choices.

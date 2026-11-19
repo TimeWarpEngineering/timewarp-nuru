@@ -48,8 +48,8 @@ That is the closest match to a `Command` with its options and arguments. The Flu
 | Several arguments | One `[Parameter]` property per argument. Set `Order` on each (`0`, `1`, `2`, ...). `NURU_A002` is an error when two or more parameters omit it. A single parameter may omit `Order`. A catch-all stays last. |
 | `new Option<string>("--output", "-o")` | `[Option("output", "o")] public string? Output { get; set; }` (no dashes in the attribute). The short name may be several characters: `[Option("connectionstring", "cs")]` matches `-cs`. |
 | Extra option aliases (`new Option<bool>("--offline", "--dry-run", "-n")`) | `[Option]` takes one long and one short name. Add one property per extra long name and combine them in the handler. |
-| `new Option<bool>("--force")` | `[Option("force")] public bool Force { get; set; }` (a flag: presence binds `true`, absence binds `false`) |
-| `Option<bool>` with `DefaultValueFactory = _ => true` | `[Option("create")] public bool Create { get; set; } = true;`. Absence stays `true`. `--create false` and `--create true` bind that value. A flag whose initializer is not `true` still treats presence as `true`, and it also accepts a following boolean spelling (`--verbose false`). `--verbose=true` is an unknown option. |
+| `new Option<bool>("--force")` | `[Option("force")] public bool Force { get; set; }` (a flag: presence binds `true`, absence binds `false`). The next token stays a positional, even when it is spelled like a boolean (`--verbose 0`). |
+| `Option<bool>` with `DefaultValueFactory = _ => true` | `[Option("create")] public bool Create { get; set; } = true;`. Absence stays `true`. `--create false` and `--create true` bind that value. A bare `--create` (no value) is `Unknown command`, exit 1. System.CommandLine treats that bare flag as `true`. `--verbose=true` on a normal flag is an unknown option. |
 | `DefaultValueFactory = _ => 3` (beta4: `getDefaultValue: () => 3`) | Property initializer: `public int Count { get; set; } = 3;` (value options; not `bool` flags) |
 | `Required = true` (beta4: `IsRequired = true`) | No attribute. Check the value in the handler and set `Environment.ExitCode`. See [Required options](#required-options). |
 | `Option<string[]>` with `AllowMultipleArgumentsPerToken` | `[Option("tag", "t")] public string[] Tags { get; set; } = [];` The array or collection type makes the option repeat. `--tag a b` binds both values. `--tag a --tag b` does too. `--tag=a` binds only `a`. `IsRepeated = true` on a `string` is an error (`NURU_A004`). |
@@ -765,8 +765,10 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
    tools. A value option named `version` (`[Option("version")] public string? Version`) still binds
    `--version 1.2`; a bare `--version` prints the app version.
 10. **A `bool` whose initializer is `true` is a value option.** Absence stays `true`. `--create false`
-    binds `false`. A normal flag treats presence as `true` and also accepts a following boolean spelling
-    (`--verbose false`). `--verbose=true` is an unknown option.
+    binds `false`. A bare `--create` (no value token) is `Unknown command`, exit 1.
+    System.CommandLine binds that bare flag as `true`. A normal flag treats presence as `true` and
+    leaves the next token for a positional, including `0`, `1`, `true`, and `false`.
+    `--verbose=true` is an unknown option.
 11. **Built-in routes reserve names**: `--help`, `-h`, `--version`, `--capabilities`, `--json-args`, plus
    `--interactive`/`-i` when you add the REPL. Do not declare these yourself.
 

@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// A flag consumes a following boolean spelling (BooleanConverter) that is not a declared option.
-// Presence with no such token is true. --flag=true is not a flag form.
+// A flag means presence is true and does not consume the next token.
+// A following positional keeps its own binding, including a boolean spelling such as 0 or false.
+// --flag=true is not a flag form.
 // A value option whose value is required skips when the flag is present and no value token was taken.
 // The property default applies only when the option is absent. --opt= counts as a value.
 // A repeated option takes every following non-option token after one space-separated flag.
@@ -40,7 +41,7 @@ internal static partial class RouteMatcherEmitter
     };
 
     // Every occurrence is consumed, so a repeated flag (--verbose --verbose) is not left as a positional.
-    // A following boolean spelling that is not itself an option is the flag's value (--verbose false).
+    // The next token is not the flag's value. A boolean spelling stays a positional.
     string flagInitializer = option.DefaultValueLiteral is "true" or "false" ? option.DefaultValueLiteral : "false";
     sb.AppendLine($"      bool {escapedVarName} = {flagInitializer};");
     sb.AppendLine($"      for (int __i = 0; __i < __endOfOptions_{routeIndex}; __i++)");
@@ -48,15 +49,7 @@ internal static partial class RouteMatcherEmitter
     sb.AppendLine($"        if ({condition})");
     sb.AppendLine("        {");
     sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
-    sb.AppendLine($"          if (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]) && global::TimeWarp.Nuru.BooleanConverter.TryParse(routeArgs[__i + 1], out bool __{varName}_parsed_{routeIndex}))");
-    sb.AppendLine("          {");
-    sb.AppendLine($"            {escapedVarName} = __{varName}_parsed_{routeIndex};");
-    sb.AppendLine($"            __consumed_{routeIndex}.Add(__i + 1);");
-    sb.AppendLine("          }");
-    sb.AppendLine("          else");
-    sb.AppendLine("          {");
-    sb.AppendLine($"            {escapedVarName} = true;");
-    sb.AppendLine("          }");
+    sb.AppendLine($"          {escapedVarName} = true;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
 

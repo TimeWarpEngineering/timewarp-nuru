@@ -27,7 +27,8 @@ internal static partial class EndpointExtractor
           bool isCatchAll = attribute.NamedArguments.Any(named =>
             named.Key == "IsCatchAll" && named.Value.Value is true);
 
-          string segmentName = ParameterSegmentName(attribute, property.Name);
+          // The segment path reports NURU_A005. This path only has to pick the same name.
+          string segmentName = ParameterSegmentName(attribute, property, diagnostics: null);
           if (isCatchAll)
           {
             propertyBindings.Add(ParameterBinding.FromCatchAll(

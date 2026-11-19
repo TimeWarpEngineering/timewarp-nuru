@@ -222,8 +222,7 @@ internal static partial class EndpointExtractor
   /// <remarks>
   /// TODO(454-012): unlike ExtractPropertyDefaultValueFromSymbol, this syntax-only overload
   /// still emits raw initializer text and has no SemanticModel available to resolve it
-  /// fully-qualified. It is currently unused (dead code) — ExtractSegmentFromProperty, its
-  /// only caller, is itself never invoked. Fix here too if it is ever wired up.
+  /// fully-qualified. It has no caller. Fix here too if it is ever wired up.
   /// </remarks>
   private static string? ExtractPropertyDefaultValue(PropertyDeclarationSyntax property)
   {

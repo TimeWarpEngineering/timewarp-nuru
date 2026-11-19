@@ -4,7 +4,9 @@
 
 #region Design
 // [Parameter] Order is the positional order. Two or more parameters that omit it report NURU_A002.
-// Name, when set, is the route segment name (lowercased). A catch-all stays last.
+// Name, when set, is the route segment name (lowercased) and must be an identifier.
+// A name that is not an identifier reports NURU_A005 and the property name is used instead.
+// A catch-all stays last.
 // [Option] reading lives in endpoint-extractor.option-attributes.cs.
 #endregion
 
@@ -254,51 +256,12 @@ internal static partial class EndpointExtractor
       if (attributeName == ParameterAttributeName || attributeName == $"{ParameterAttributeName}Attribute")
       {
         isParameter = true;
-        return ExtractParameterFromAttribute(propertySymbol, attribute, position, out parameterOrder);
+        return ExtractParameterFromAttribute(propertySymbol, attribute, position, diagnostics, out parameterOrder);
       }
 
       if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
       {
         return ExtractOptionFromAttribute(propertySymbol, attribute, position, compilation, diagnostics, cancellationToken);
-      }
-    }
-
-    return null;
-  }
-
-  /// <summary>
-  /// Extracts a segment from a property with [Parameter] or [Option] attribute.
-  /// </summary>
-  private static SegmentDefinition? ExtractSegmentFromProperty
-  (
-    PropertyDeclarationSyntax property,
-    int position,
-    SemanticModel semanticModel,
-    CancellationToken cancellationToken
-  )
-  {
-    IPropertySymbol? propertySymbol = semanticModel.GetDeclaredSymbol(property, cancellationToken);
-    if (propertySymbol is null)
-      return null;
-
-    foreach (AttributeData attribute in propertySymbol.GetAttributes())
-    {
-      string? attributeName = attribute.AttributeClass?.Name;
-
-      if (attributeName == ParameterAttributeName || attributeName == $"{ParameterAttributeName}Attribute")
-      {
-        return ExtractParameterFromAttribute(propertySymbol, attribute, position, out _);
-      }
-
-      if (attributeName == OptionAttributeName || attributeName == $"{OptionAttributeName}Attribute")
-      {
-        return ExtractOptionFromAttribute(
-          propertySymbol,
-          attribute,
-          position,
-          semanticModel.Compilation,
-          ImmutableArray.CreateBuilder<Diagnostic>(),
-          cancellationToken);
       }
     }
 
@@ -313,6 +276,7 @@ internal static partial class EndpointExtractor
     IPropertySymbol property,
     AttributeData attribute,
     int position,
+    ImmutableArray<Diagnostic>.Builder diagnostics,
     out int order
   )
   {
@@ -344,7 +308,7 @@ internal static partial class EndpointExtractor
 
     return new ParameterDefinition(
       Position: position,
-      Name: ParameterSegmentName(attribute, property.Name),
+      Name: ParameterSegmentName(attribute, property, diagnostics),
       TypeConstraint: typeConstraint,
       Description: description,
       IsOptional: isOptional,
@@ -355,15 +319,55 @@ internal static partial class EndpointExtractor
   /// <summary>
   /// Route segment name for a [Parameter]: the Name override when it is set, otherwise the property name.
   /// The matcher local and the command-construction local both derive from this string.
+  /// A name that is not an identifier reports NURU_A005 and the property name is used, so both locals compile.
   /// </summary>
-  private static string ParameterSegmentName(AttributeData attribute, string propertyName)
+  private static string ParameterSegmentName
+  (
+    AttributeData attribute,
+    IPropertySymbol property,
+    ImmutableArray<Diagnostic>.Builder? diagnostics
+  )
   {
     foreach (KeyValuePair<string, TypedConstant> namedArg in attribute.NamedArguments)
     {
       if (namedArg.Key == "Name" && namedArg.Value.Value is string name && !string.IsNullOrWhiteSpace(name))
-        return name.Trim().ToLowerInvariant();
+      {
+        string trimmed = name.Trim();
+        if (!IsValidParameterName(trimmed))
+        {
+          diagnostics?.Add(Diagnostic.Create(
+            DiagnosticDescriptors.InvalidParameterName,
+            property.Locations.FirstOrDefault() ?? Location.None,
+            trimmed));
+          return property.Name.ToLowerInvariant();
+        }
+
+        return trimmed.ToLowerInvariant();
+      }
     }
 
-    return propertyName.ToLowerInvariant();
+    return property.Name.ToLowerInvariant();
+  }
+
+  /// <summary>
+  /// Same identifier rule the route parser uses: a letter or underscore, then letters, digits, and underscores.
+  /// </summary>
+  private static bool IsValidParameterName(string name)
+  {
+    if (name.Length == 0)
+      return false;
+
+    char first = name[0];
+    if (!char.IsLetter(first) && first != '_')
+      return false;
+
+    for (int i = 1; i < name.Length; i++)
+    {
+      char character = name[i];
+      if (!char.IsLetterOrDigit(character) && character != '_')
+        return false;
+    }
+
+    return true;
   }
 }

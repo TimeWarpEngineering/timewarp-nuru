@@ -38,6 +38,15 @@ internal static partial class DiagnosticDescriptors
       isEnabledByDefault: true,
       description: "IsRepeated = true is read. A scalar property cannot hold several values. Use an array or collection type, or remove IsRepeated.");
 
+  public static readonly DiagnosticDescriptor InvalidParameterName = new(
+      id: "NURU_A005",
+      title: "Parameter Name is not an identifier",
+      messageFormat: "Parameter name '{0}' is not a valid identifier. Use a letter or underscore, then letters, digits, and underscores.",
+      category: EndpointsCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "[Parameter(Name = ...)] must be an identifier, the same rule a fluent parameter name uses. When it is not, the route uses the property name.");
+
   public static readonly DiagnosticDescriptor DiscoverEndpointsAcrossApps = new(
       id: "NURU_A003",
       title: "DiscoverEndpoints() pulls in endpoints meant for other apps",

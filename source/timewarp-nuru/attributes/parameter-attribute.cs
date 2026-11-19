@@ -7,7 +7,8 @@
 // Order is the positional order. Two or more parameters that omit it report NURU_A002.
 // A single parameter may omit Order. Equal Order values keep declaration order.
 // A catch-all is forced last. Name, when set, is the route segment name (lowercased)
-// and the generated local. Description is help text.
+// and the generated local. It must be an identifier. A name that is not reports NURU_A005
+// and the property name is used. Description is help text.
 #endregion
 
 namespace TimeWarp.Nuru;
@@ -54,6 +55,7 @@ public sealed class ParameterAttribute : Attribute
 
   /// <summary>
   /// Gets or sets the parameter name. If null, the property name is used (in camelCase).
+  /// The name must be an identifier: a letter or underscore, then letters, digits, and underscores.
   /// </summary>
   public string? Name { get; set; }
 

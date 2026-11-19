@@ -18,6 +18,8 @@
 - Created: b3be0249-1852-425a-9e90-5a7e56049503 (2026-11-17), split from 591 during groom
 - Implement: both defects fixed. `ganda repo audit --fix` wrote the gitignored `.vscode/settings.json` for vscode-window-icon. Nothing else from that fix is tracked.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1f449-5e15-7fd2-bd56-006d70adf96c, max-turns 500, Done — 2026-11-19T15:31:29Z
+- Review oracle: reviewer-claude (claude-opus-5-5, headless), effort 2, roster general, turn cap 120. Round 1, disposition accepted-exceptions — 2026-11-19
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session c19d8bca-4723-407c-a118-563849af2628, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-19T15:34:37Z
 
 ## Results
 
@@ -41,6 +43,17 @@ Expect: the generated compilation has no errors, no local contains `_@` or `@typ
 
 generator-78 is Roslyn-hosted, so the CI multi assembly excludes it (CS0433) and `tests/ci-standalone/run-standalone-tests.cs` runs it. The full suite runs on the pull request.
 
+### Review
+
+- Rounds: 1. Effort 2, roster general (review oracle). No gates re-run; review read the diff and this record.
+- Final counts: bug 0, suggestion 0, nit 2 (both wontfix). Open: 0.
+- Disposition: **accepted-exceptions**. M1 (nit): the full CI-tests run is deferred to the PR rather than recorded here; the walk waits for green CI before merge. M2 (nit): `Bare` on the `IOptions<T>` delegate, custom-converter, and optional `Uri` option paths has no keyword-named test; same one-line call as the tested paths.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- Review round 1: no misread. The task says "enum option types"; the restatement names the handler return type as the CS0104 source. That is the diagnosed cause, not a narrowing: option conversions already used `global::` names, and generator-78 runs colliding enums through option conversion as well as returns.
+
 ## Goal (implementer restatement)
 
 Generated route code has to compile when a user picks an awkward name. Two cases from the 4.0.0-beta.14 migration ports fail today, and both get fixed:
@@ -49,6 +62,10 @@ Generated route code has to compile when a user picks an awkward name. Two cases
 2. A handler that returns an enum is emitted with the simple type name. Two enums that share that simple name and are both in scope (global usings, or the same pattern from another import) make the generated file report CS0104. Generated type text uses the already stored `global::` name. A name the user writes themselves can still be ambiguous; that is their source, not this generator.
 
 Acceptance: each fix has a test that compiles the generated output; the migration guide and the migrate-from-System.CommandLine skill stop telling people to avoid these names and record that beta.14 failed; build, the new test, the Unit return-type regression, and `ganda repo audit` pass; the change is committed and pushed on this task branch.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

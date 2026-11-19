@@ -11,10 +11,10 @@ using TimeWarp.Nuru;
 [NuruRoute("run", Description = "Run a script with parameters")]
 public sealed class RunCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Script to run")]
+  [Parameter(Order = 0, Description = "Script to run")]
   public string Script { get; set; } = string.Empty;
 
-  [Parameter(IsCatchAll = true, Description = "Script parameters")]
+  [Parameter(Order = 1, IsCatchAll = true, Description = "Script parameters")]
   public string[] Params { get; set; } = [];
 
   public sealed class Handler : IRequestHandler<RunCommand, Unit>

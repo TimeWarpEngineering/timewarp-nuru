@@ -177,10 +177,10 @@ public class RootDefaultRouteParametersTests
 [NuruRouteExample("in.json --format json", Description = "Write json")]
 public sealed class RootHelpConvertCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Source file")]
+  [Parameter(Order = 0, Description = "Source file")]
   public string Input { get; set; } = string.Empty;
 
-  [Parameter(Description = "Repeat count")]
+  [Parameter(Order = 1, Description = "Repeat count")]
   public int? Count { get; set; }
 
   [Option("format", "f", Description = "Output format")]

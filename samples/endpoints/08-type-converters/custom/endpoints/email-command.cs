@@ -5,8 +5,8 @@ using static System.Console;
 [NuruRoute("email", Description = "Send email to address")]
 public sealed class EmailCommand : ICommand<Unit>
 {
-  [Parameter] public string Address { get; set; } = "";
-  [Parameter] public string Message { get; set; } = "";
+  [Parameter(Order = 0)] public string Address { get; set; } = "";
+  [Parameter(Order = 1)] public string Message { get; set; } = "";
 
   public sealed class Handler : IRequestHandler<EmailCommand, Unit>
   {

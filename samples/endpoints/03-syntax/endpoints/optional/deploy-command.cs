@@ -12,10 +12,10 @@ using TimeWarp.Nuru;
 [NuruRoute("deploy", Description = "Deploy to an environment")]
 public sealed class DeployCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Target environment")]
+  [Parameter(Order = 0, Description = "Target environment")]
   public string Env { get; set; } = string.Empty;
 
-  [Parameter(Description = "Optional tag to deploy")]
+  [Parameter(Order = 1, Description = "Optional tag to deploy")]
   public string? Tag { get; set; }
 
   public sealed class Handler : IRequestHandler<DeployCommand, Unit>

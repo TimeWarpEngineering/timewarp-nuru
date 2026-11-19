@@ -29,6 +29,15 @@ internal static partial class DiagnosticDescriptors
       isEnabledByDefault: true,
       description: "When a command has multiple [Parameter] attributes, each must specify an Order value to ensure deterministic argument ordering. Use [Parameter(Order = 0, ...)] for the first parameter, [Parameter(Order = 1, ...)] for the second, etc.");
 
+  public static readonly DiagnosticDescriptor ScalarOptionIsRepeated = new(
+      id: "NURU_A004",
+      title: "IsRepeated requires a collection",
+      messageFormat: "Option '{0}' sets IsRepeated but '{1}' is not a collection. Repeat values with an array or collection property.",
+      category: EndpointsCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "IsRepeated = true is read. A scalar property cannot hold several values. Use an array or collection type, or remove IsRepeated.");
+
   public static readonly DiagnosticDescriptor DiscoverEndpointsAcrossApps = new(
       id: "NURU_A003",
       title: "DiscoverEndpoints() pulls in endpoints meant for other apps",

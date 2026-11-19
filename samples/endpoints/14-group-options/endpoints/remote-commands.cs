@@ -25,10 +25,10 @@ public abstract class GitRemoteGroupBase : GitGroupBase
 [NuruRoute("add", Description = "Add a remote named <name> at <url>")]
 public sealed class RemoteAddCommand : GitRemoteGroupBase, ICommand<Unit>
 {
-  [Parameter(Description = "Remote repository name")]
+  [Parameter(Order = 0, Description = "Remote repository name")]
   public string Name { get; set; } = string.Empty;
 
-  [Parameter(Description = "Remote repository URL")]
+  [Parameter(Order = 1, Description = "Remote repository URL")]
   public string Url { get; set; } = string.Empty;
 
   [Option("fetch", "f", Description = "Fetch the remote branches immediately")]

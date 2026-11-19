@@ -2,6 +2,15 @@
 // Emits flag and value option parsing with index tracking.
 #endregion
 
+#region Design
+// A flag consumes a following boolean spelling (BooleanConverter) that is not a declared option.
+// Presence with no such token is true. --flag=true is not a flag form.
+// A value option whose value is required skips when the flag is present and no value token was taken.
+// The property default applies only when the option is absent. --opt= counts as a value.
+// A repeated option takes every following non-option token after one space-separated flag.
+// --opt=value stays one value. A bare repeated flag with a required element skips the route.
+#endregion
+
 namespace TimeWarp.Nuru.Generators;
 
 using System.Text;
@@ -30,14 +39,24 @@ internal static partial class RouteMatcherEmitter
       _ => throw new InvalidOperationException("Option must have at least one form")
     };
 
-    // Every occurrence is consumed, so a repeated flag (--verbose --verbose) is not left as a positional
-    sb.AppendLine($"      bool {escapedVarName} = false;");
+    // Every occurrence is consumed, so a repeated flag (--verbose --verbose) is not left as a positional.
+    // A following boolean spelling that is not itself an option is the flag's value (--verbose false).
+    string flagInitializer = option.DefaultValueLiteral is "true" or "false" ? option.DefaultValueLiteral : "false";
+    sb.AppendLine($"      bool {escapedVarName} = {flagInitializer};");
     sb.AppendLine($"      for (int __i = 0; __i < __endOfOptions_{routeIndex}; __i++)");
     sb.AppendLine("      {");
     sb.AppendLine($"        if ({condition})");
     sb.AppendLine("        {");
-    sb.AppendLine($"          {escapedVarName} = true;");
     sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
+    sb.AppendLine($"          if (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]) && global::TimeWarp.Nuru.BooleanConverter.TryParse(routeArgs[__i + 1], out bool __{varName}_parsed_{routeIndex}))");
+    sb.AppendLine("          {");
+    sb.AppendLine($"            {escapedVarName} = __{varName}_parsed_{routeIndex};");
+    sb.AppendLine($"            __consumed_{routeIndex}.Add(__i + 1);");
+    sb.AppendLine("          }");
+    sb.AppendLine("          else");
+    sb.AppendLine("          {");
+    sb.AppendLine($"            {escapedVarName} = true;");
+    sb.AppendLine("          }");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
 
@@ -84,7 +103,11 @@ internal static partial class RouteMatcherEmitter
     string rawVarName = needsConversion ? $"__{varName}_raw" : escapedVarName;
 
     sb.AppendLine($"      bool {flagFoundVar} = false;");
-    // Use property default value when available (e.g., string Output = "text")
+    string valueTakenVar = $"__{varName}_valueTaken_{routeIndex}";
+    sb.AppendLine($"      bool {valueTakenVar} = false;");
+    // Use property default value when available (e.g., string Output = "text").
+    // The default applies only when the option is absent. A present flag with no value token
+    // is a missing value when the value is required, even if this initializer makes raw non-null.
     string rawInitializer = !needsConversion && option.DefaultValueLiteral is not null
       ? option.DefaultValueLiteral
       : "null";
@@ -98,6 +121,7 @@ internal static partial class RouteMatcherEmitter
       sb.AppendLine($"        if (routeArgs[__i].StartsWith(\"--{option.LongForm}=\", global::System.StringComparison.Ordinal))");
       sb.AppendLine("        {");
       sb.AppendLine($"          {flagFoundVar} = true;");
+      sb.AppendLine($"          {valueTakenVar} = true;");
       sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
       sb.AppendLine($"          {rawVarName} = routeArgs[__i].Substring({3 + option.LongForm.Length});");
       sb.AppendLine("          break;");
@@ -109,6 +133,7 @@ internal static partial class RouteMatcherEmitter
       sb.AppendLine($"        if (routeArgs[__i].StartsWith(\"-{option.ShortForm}=\", global::System.StringComparison.Ordinal))");
       sb.AppendLine("        {");
       sb.AppendLine($"          {flagFoundVar} = true;");
+      sb.AppendLine($"          {valueTakenVar} = true;");
       sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
       sb.AppendLine($"          {rawVarName} = routeArgs[__i].Substring({2 + option.ShortForm.Length});");
       sb.AppendLine("          break;");
@@ -134,28 +159,20 @@ internal static partial class RouteMatcherEmitter
     sb.AppendLine($"          if (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]))");
     sb.AppendLine("          {");
     sb.AppendLine($"            {rawVarName} = routeArgs[__i + 1];");
+    sb.AppendLine($"            {valueTakenVar} = true;");
     sb.AppendLine($"            __consumed_{routeIndex}.Add(__i + 1);");
     sb.AppendLine("          }");
     sb.AppendLine("          break;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
 
-    // Handle required vs optional flag/value
+    // A required option that is absent skips. A present option whose value is required skips
+    // when no value token was taken. An optional value keeps the default, including null.
     if (!option.IsOptional)
-    {
       sb.AppendLine($"      if (!{flagFoundVar}) __optionMissing_{routeIndex} = true;");
-      if (!option.ParameterIsOptional)
-      {
-        sb.AppendLine($"      if ({rawVarName} is null) __optionMissing_{routeIndex} = true;");
-      }
-    }
-    else
-    {
-      if (!option.ParameterIsOptional)
-      {
-        sb.AppendLine($"      if ({flagFoundVar} && {rawVarName} is null) __optionMissing_{routeIndex} = true;");
-      }
-    }
+
+    if (!option.ParameterIsOptional)
+      sb.AppendLine($"      if ({flagFoundVar} && !{valueTakenVar}) __optionMissing_{routeIndex} = true;");
 
     // Emit type conversion if needed
     if (needsConversion)
@@ -219,13 +236,17 @@ internal static partial class RouteMatcherEmitter
     sb.AppendLine($"        if ({conditionRepeated})");
     sb.AppendLine("        {");
     sb.AppendLine($"          __consumed_{routeIndex}.Add(__i);");
-    sb.AppendLine("          // Check if next arg exists, is before end-of-options, and is NOT a defined option");
-    sb.AppendLine($"          if (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]))");
+    sb.AppendLine("          bool __tookValue = false;");
+    sb.AppendLine("          // Take every following non-option token. --opt=value above stays one value.");
+    sb.AppendLine($"          while (__i + 1 < __endOfOptions_{routeIndex} && !__optionForms_{routeIndex}.Contains(routeArgs[__i + 1]) && !global::TimeWarp.Nuru.NuruUnknownOption.IsOptionLike(routeArgs[__i + 1]))");
     sb.AppendLine("          {");
     sb.AppendLine($"            {listVarName}.Add(routeArgs[__i + 1]);");
     sb.AppendLine($"            __consumed_{routeIndex}.Add(__i + 1);");
     sb.AppendLine("            __i++;");
+    sb.AppendLine("            __tookValue = true;");
     sb.AppendLine("          }");
+    if (!option.ParameterIsOptional)
+      sb.AppendLine("          if (!__tookValue) __optionMissing_" + routeIndex + " = true;");
     sb.AppendLine("        }");
     sb.AppendLine("      }");
 

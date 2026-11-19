@@ -27,19 +27,20 @@ internal static partial class EndpointExtractor
           bool isCatchAll = attribute.NamedArguments.Any(named =>
             named.Key == "IsCatchAll" && named.Value.Value is true);
 
+          string segmentName = ParameterSegmentName(attribute, property.Name);
           if (isCatchAll)
           {
             propertyBindings.Add(ParameterBinding.FromCatchAll(
               parameterName: property.Name,
               typeName: typeName,
-              segmentName: property.Name.ToLowerInvariant()));
+              segmentName: segmentName));
           }
           else
           {
             propertyBindings.Add(ParameterBinding.FromParameter(
               parameterName: property.Name,
               typeName: typeName,
-              segmentName: property.Name.ToLowerInvariant(),
+              segmentName: segmentName,
               isOptional: property.NullableAnnotation == NullableAnnotation.Annotated,
               requiresConversion: typeName != "global::System.String"));
           }
@@ -53,7 +54,20 @@ internal static partial class EndpointExtractor
           string optionLongForm = ExtractOptionLongForm(attribute, property.Name);
           if (typeName is "bool" or "global::System.Boolean")
           {
-            propertyBindings.Add(ParameterBinding.FromFlag(property.Name, optionLongForm));
+            PropertyDefault propertyDefault = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+            if (IsTrueBoolDefault(propertyDefault))
+            {
+              propertyBindings.Add(ParameterBinding.FromOption(
+                parameterName: property.Name,
+                typeName: typeName,
+                optionName: optionLongForm,
+                isOptional: true,
+                requiresConversion: true));
+            }
+            else
+            {
+              propertyBindings.Add(ParameterBinding.FromFlag(property.Name, optionLongForm));
+            }
           }
           else
           {
@@ -75,7 +89,7 @@ internal static partial class EndpointExtractor
     if (hasOperation)
       AddDerivedPropertyBindings(classSymbol, propertyBindings, compilation, cancellationToken);
 
-    ExtractGroupOptionBindingsFromBaseClasses(classSymbol, propertyBindings);
+    ExtractGroupOptionBindingsFromBaseClasses(classSymbol, propertyBindings, compilation, cancellationToken);
     return propertyBindings.ToImmutable();
   }
 

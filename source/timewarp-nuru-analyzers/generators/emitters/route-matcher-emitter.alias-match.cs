@@ -71,6 +71,7 @@ internal static partial class RouteMatcherEmitter
     sb.Append(optionConversions);
 
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto {aliasSkipLabel};");
+    EmitMaxPositionalCheck(sb, route, routeIndex, minPositionalArgs, aliasSkipLabel);
 
     int positionalIndex = 0;
 

@@ -45,14 +45,14 @@ That is the closest match to a `Command` with its options and arguments. The Flu
 | Optional argument with a default (`DefaultValueFactory = _ => "2026"`) | Nullable property; apply the default in the handler (`command.Version ?? "2026"`). A non-nullable property is required. |
 | Optional argument *before* a required one (`[method] url`) | Not expressible as two parameters. Use one catch-all and classify the tokens in the handler. |
 | `Argument<string[]>` (`ZeroOrMore`, `OneOrMore`) | `[Parameter(IsCatchAll = true)] public string[] Items { get; set; } = [];` (must be last) |
-| Several arguments | One `[Parameter]` property per argument, declared in command-line order. Position is property declaration order. On 4.0.0-beta.14 the generator does not read `Order`, and analyzer `NURU_A002` is not reported, so leave `Order` out and order the properties instead. |
+| Several arguments | One `[Parameter]` property per argument. Set `Order` on each (`0`, `1`, `2`, ...). `NURU_A002` is an error when two or more parameters omit it. A single parameter may omit `Order`. A catch-all stays last. |
 | `new Option<string>("--output", "-o")` | `[Option("output", "o")] public string? Output { get; set; }` (no dashes in the attribute). The short name may be several characters: `[Option("connectionstring", "cs")]` matches `-cs`. |
 | Extra option aliases (`new Option<bool>("--offline", "--dry-run", "-n")`) | `[Option]` takes one long and one short name. Add one property per extra long name and combine them in the handler. |
 | `new Option<bool>("--force")` | `[Option("force")] public bool Force { get; set; }` (a flag: presence binds `true`, absence binds `false`) |
-| `Option<bool>` with `DefaultValueFactory = _ => true` | Not expressible as a `bool`: an initializer `= true` is ignored and absence binds `false`. Invert the flag (`--no-create`), or check the raw arguments. `--create false` is not supported; `false` becomes a positional argument. |
+| `Option<bool>` with `DefaultValueFactory = _ => true` | `[Option("create")] public bool Create { get; set; } = true;`. Absence stays `true`. `--create false` and `--create true` bind that value. A flag whose initializer is not `true` still treats presence as `true`, and it also accepts a following boolean spelling (`--verbose false`). `--verbose=true` is an unknown option. |
 | `DefaultValueFactory = _ => 3` (beta4: `getDefaultValue: () => 3`) | Property initializer: `public int Count { get; set; } = 3;` (value options; not `bool` flags) |
 | `Required = true` (beta4: `IsRequired = true`) | No attribute. Check the value in the handler and set `Environment.ExitCode`. See [Required options](#required-options). |
-| `Option<string[]>` with `AllowMultipleArgumentsPerToken` | `[Option("tag", "t")] public string[] Tags { get; set; } = [];` The array (or collection) property type is what makes the option repeat; the `IsRepeated` flag is not read on 4.0.0-beta.14 and does nothing on a `string`. Repeat the flag for each value: `-t a -t b`. |
+| `Option<string[]>` with `AllowMultipleArgumentsPerToken` | `[Option("tag", "t")] public string[] Tags { get; set; } = [];` The array or collection type makes the option repeat. `--tag a b` binds both values. `--tag a --tag b` does too. `--tag=a` binds only `a`. `IsRepeated = true` on a `string` is an error (`NURU_A004`). |
 | `Option<MyEnum>` | `[Option("format")] public MyEnum Format { get; set; }` (case-insensitive) |
 | `AcceptOnlyFromAmong("a", "b")` (beta4: `FromAmong`) | An `enum`, or a check in the handler |
 | `Validators.Add(...)` (beta4: `AddValidator`) | A check in the handler, or a [pipeline behavior](../features/pipeline-behaviors.md) |
@@ -217,8 +217,8 @@ command line, or the route does not match.
 |--------------|----------------|
 | `--output x.txt`, `-o x.txt` | Supported |
 | `--tag a --tag b` (repeated option) | Supported when the property is an array or collection (`string[]`) |
-| `--tag a b` (several values per token) | Only `a` binds. `b` is treated as a positional argument: it fills an optional `[Parameter]` if the route has one, otherwise the call fails with `Unknown command`. Repeat the flag. |
-| `--force true`, `--force false` (explicit bool value) | Not supported. The flag binds `true` and the value is treated as a positional argument. |
+| `--tag a b` (several values per token) | Both bind when the property is an array or collection. A following positional is swallowed. `--tag=a` stays one value, so the next token can still be a positional. |
+| `--force true`, `--force false` (explicit bool value) | Supported as a separate token (`--force false`). `--force=true` is an unknown option. A bool whose initializer is `true` is a value option: absence stays `true`. |
 | `--output=x.txt`, `--output:x.txt` | Supported for a declared long option. The value is everything after the first `=` or `:` (`--connection=Server=h:5432` binds `Server=h:5432`). |
 | `--verbose=true` (bool flag with a value) | Error: `Unknown option '--verbose=true'. Use --help for usage.`, exit 1. |
 | `-vo x` (bundled short options) | Not supported. Write `-v -o x`. |
@@ -744,12 +744,13 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 2. **Help looks different.** Help is drawn as tables about 80 columns wide, so long command and option names
    are truncated. Default values, `(REQUIRED)` markers, and enum choices are not shown. Put them in the
    `Description` text if your users rely on them.
-3. **Extra positional arguments.** On a route that has a `[Parameter]`, extras are ignored: one parameter
-   given `a b` binds `a`, drops `b`, and exits 0. On a route with no parameters, an extra is
-   `Unknown command`, exit 1. `System.CommandLine` reports `Unrecognized command or argument 'b'`. Use a
-   catch-all parameter when you need to see or reject extras.
-4. **An option with a missing value binds its default.** `myapp -o` (no value) leaves `Output` at its default
-   with exit code 0.
+3. **Extra positional arguments.** A route with no catch-all rejects tokens past its last parameter
+   (required or optional): `Unknown command`, exit 1. A catch-all takes the rest.
+   `System.CommandLine` reports `Unrecognized command or argument 'b'`.
+4. **An option that requires a value rejects a bare flag.** `myapp -o` (no value), when `Output` is a
+   non-nullable `string` or other required value, does not run the handler: `Unknown command`, exit 1.
+   The initializer applies only when the option is absent. `-o=` is an empty value and does run.
+   A nullable value (`string?`, `{mode?}`) still binds null when the flag is present with no value.
 5. **Handler exceptions are not caught.** See [Results, output, and exit codes](#results-output-and-exit-codes).
 6. **`IOptions<T>` cannot be injected into an endpoint `Handler` constructor.** Inject `IConfiguration`.
 7. **Ctrl+C ends the process.** The handler's `CancellationToken` is not cancelled in a CLI run, so there is
@@ -763,7 +764,9 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 9. **`--version` has no `-v` alias.** That leaves `-v` free for `--verbose`, as in most `System.CommandLine`
    tools. A value option named `version` (`[Option("version")] public string? Version`) still binds
    `--version 1.2`; a bare `--version` prints the app version.
-10. **`bool` flags cannot default to `true`, and `--flag false` is not supported.** See the concept map.
+10. **A `bool` whose initializer is `true` is a value option.** Absence stays `true`. `--create false`
+    binds `false`. A normal flag treats presence as `true` and also accepts a following boolean spelling
+    (`--verbose false`). `--verbose=true` is an unknown option.
 11. **Built-in routes reserve names**: `--help`, `-h`, `--version`, `--capabilities`, `--json-args`, plus
    `--interactive`/`-i` when you add the REPL. Do not declare these yourself.
 
@@ -781,7 +784,7 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
 
 - [ ] Retarget to `net11.0`, swap the packages, and remove every `System.CommandLine*` reference
 - [ ] One `[NuruRoute]` class per `Command`; `[NuruRoute("")]` for the root action
-- [ ] `[Parameter]` per argument, properties in command-line order (catch-all last)
+- [ ] `[Parameter]` per argument, with `Order` when there is more than one (catch-all last)
 - [ ] `[Option]` per option; defaults as initializers; required options checked in the handler
 - [ ] `[NuruRouteGroup]` per command level; `[GroupOption]` for recursive options
 - [ ] Exit codes through `Environment.ExitCode`; expected exceptions caught around `RunAsync`

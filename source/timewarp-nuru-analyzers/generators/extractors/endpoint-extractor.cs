@@ -176,11 +176,13 @@ internal static partial class EndpointExtractor
     }
 
     // Extract parameters and options from properties
+    ImmutableArray<Diagnostic>.Builder endpointDiagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
     ImmutableArray<SegmentDefinition> segments = ExtractSegmentsFromProperties(
       classSymbol,
       compilation,
-      cancellationToken,
-      identity.HasOperation);
+      endpointDiagnostics,
+      identity.HasOperation,
+      cancellationToken);
 
     // For validated patterns, we know they are either empty or single literal
     // So we can safely use the pattern as-is (no need to parse for parameters/options)
@@ -254,7 +256,10 @@ internal static partial class EndpointExtractor
       title: TitleValue(classSymbol, identity.HasOperation));
 
     if (missingHandler is not null)
-      return EndpointExtractionResult.SuccessWithDiagnostics(route, [missingHandler]);
+      endpointDiagnostics.Add(missingHandler);
+
+    if (endpointDiagnostics.Count > 0)
+      return EndpointExtractionResult.SuccessWithDiagnostics(route, endpointDiagnostics.ToImmutable());
 
     return EndpointExtractionResult.Success(route);
   }

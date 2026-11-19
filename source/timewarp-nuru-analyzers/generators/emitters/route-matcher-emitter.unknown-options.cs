@@ -159,12 +159,23 @@ internal static partial class RouteMatcherEmitter
 
   /// <summary>
   /// True when a route option has a match guard: an unbound discriminator flag, a required value
-  /// option, or an option whose value is required when the option is given.
+  /// option, an option whose value is required when the option is given, or a repeated option
+  /// whose element is required (a bare flag took no value).
   /// </summary>
   private static bool HasOptionGuard(RouteDefinition route) =>
-    route.Options.Any(option => option.IsFlag
-      ? !option.IsOptional && !option.IsFlagBound(route)
-      : !option.IsRepeated && !option.IsJsonValue && (!option.IsOptional || !option.ParameterIsOptional));
+    route.Options.Any(option =>
+    {
+      if (option.IsJsonValue)
+        return false;
+
+      if (option.IsFlag)
+        return !option.IsOptional && !option.IsFlagBound(route);
+
+      if (option.IsRepeated)
+        return !option.ParameterIsOptional;
+
+      return !option.IsOptional || !option.ParameterIsOptional;
+    });
 
   /// <summary>
   /// Skips the route when an option guard failed. Emitted after the unknown-option check so a typo

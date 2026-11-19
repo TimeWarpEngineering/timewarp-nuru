@@ -14,10 +14,10 @@ using TimeWarp.Nuru;
 [NuruRoute("subtract", Description = "Subtract the second number from the first")]
 public sealed class SubtractCommand : IQuery<double>
 {
-  [Parameter(Description = "First number")]
+  [Parameter(Order = 0, Description = "First number")]
   public double X { get; set; }
 
-  [Parameter(Description = "Second number")]
+  [Parameter(Order = 1, Description = "Second number")]
   public double Y { get; set; }
 
   public sealed class Handler : IRequestHandler<SubtractCommand, double>

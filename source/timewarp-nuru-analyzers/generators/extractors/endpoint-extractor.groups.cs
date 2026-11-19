@@ -245,13 +245,14 @@ internal static partial class EndpointExtractor
     }
 
     string typeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-    bool isFlag = typeName is "bool" or "global::System.Boolean";
 
     // Check for array/collection types (repeated options), via symbol inspection.
     isRepeated = IsRepeatedOptionType(property.Type);
 
     // Extract default value from property initializer
     PropertyDefault propertyDefault = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+    bool isBool = typeName is "bool" or "global::System.Boolean";
+    bool isFlag = isBool && !IsTrueBoolDefault(propertyDefault);
 
     return new OptionDefinition(
       Position: position,
@@ -278,7 +279,9 @@ internal static partial class EndpointExtractor
   private static void ExtractGroupOptionBindingsFromBaseClasses
   (
     INamedTypeSymbol classSymbol,
-    ImmutableArray<ParameterBinding>.Builder propertyBindings
+    ImmutableArray<ParameterBinding>.Builder propertyBindings,
+    Compilation? compilation,
+    CancellationToken cancellationToken
   )
   {
     if (classSymbol.BaseType is null)
@@ -305,7 +308,20 @@ internal static partial class EndpointExtractor
 
           if (typeName is "bool" or "global::System.Boolean")
           {
-            propertyBindings.Add(ParameterBinding.FromFlag(property.Name, optionLongForm));
+            PropertyDefault propertyDefault = ExtractPropertyDefaultValueFromSymbol(property, compilation, cancellationToken);
+            if (IsTrueBoolDefault(propertyDefault))
+            {
+              propertyBindings.Add(ParameterBinding.FromOption(
+                parameterName: property.Name,
+                typeName: typeName,
+                optionName: optionLongForm,
+                isOptional: true,
+                requiresConversion: true));
+            }
+            else
+            {
+              propertyBindings.Add(ParameterBinding.FromFlag(property.Name, optionLongForm));
+            }
           }
           else
           {

@@ -28,6 +28,7 @@ NURU_S010 | RoutePattern.Semantic | Error | Unknown type constraint
 NURU_A001 | Endpoints | Error | Multi-word route pattern requires [NuruRouteGroup]
 NURU_A002 | Endpoints | Error | Multiple parameters require explicit Order
 NURU_A003 | Endpoints | Warning | DiscoverEndpoints() pulls in endpoints meant for other apps
+NURU_A004 | Endpoints | Error | IsRepeated requires a collection
 NURU_H001 | Handler.Validation | Error | Instance method handler not supported
 NURU_H002 | Handler.Validation | Error | Closure detected in handler
 NURU_H003 | Handler.Validation | Error | Unsupported handler expression

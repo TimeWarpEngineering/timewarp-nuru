@@ -6,8 +6,8 @@ using static System.Console;
 [NuruRoute("color", Description = "Set theme color")]
 public sealed class ColorCommand : ICommand<Unit>
 {
-  [Parameter] public string Primary { get; set; } = "#FF5733";
-  [Parameter] public string? Secondary { get; set; }
+  [Parameter(Order = 0)] public string Primary { get; set; } = "#FF5733";
+  [Parameter(Order = 1)] public string? Secondary { get; set; }
 
   public sealed class Handler : IRequestHandler<ColorCommand, Unit>
   {

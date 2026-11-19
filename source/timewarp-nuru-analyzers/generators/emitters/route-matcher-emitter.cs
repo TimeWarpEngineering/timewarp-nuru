@@ -14,9 +14,9 @@
 // EmitAliasMatch must NOT re-emit literal segments from route.Segments — they are already
 // encoded in the alias parts. Only parameters, catch-all, and end-of-options segments are emitted.
 //
-// EXACT LENGTH: Routes without optional params or catch-all enforce exact positional arg count.
-// Unknown options never reach the positional list (see UNKNOWN OPTIONS), so a route with options
-// enforces it too.
+// POSITIONAL LENGTH: A route with no catch-all accepts at most its required positionals plus
+// its optional (non-catch-all) positionals. Extra tokens skip the route. A catch-all takes the rest.
+// Unknown options never reach the positional list (see UNKNOWN OPTIONS).
 //
 // UNKNOWN OPTIONS (task 515): An option-shaped token before "--" that no declared option consumed
 // (NuruUnknownOption.IsOptionLike: not "-", not a number) is held out of the positional list.
@@ -34,6 +34,9 @@
 // after an unknown option, since that token is likely the option's value ("{file} --outpt out").
 // Only a typo of a value-taking option drops it (515 M3); a flag typo leaves the next token positional.
 // Option type conversions run after that skip, because a missing value must skip, not error.
+// A present option whose value is required sets the guard when no value token was taken, even
+// when a property default seeded the raw string. An optional value ({mode?}, nullable) still
+// binds that default. A repeated option with a required element does the same for a bare flag.
 // Guards take the skip label of the block they are in; an alias block jumping to route_skip_N
 // would jump backward to before itself.
 //
@@ -205,15 +208,9 @@ internal static partial class RouteMatcherEmitter
     // Check minimum positional args (required parameters must be present)
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto route_skip_{routeIndex};");
 
-    // For routes with ONLY literals, required params, and options (no optional params, no catch-all),
-    // enforce exact length matching. This prevents empty pattern routes from matching arbitrary input (Issue #179).
-    // Unknown options are held out of the positional list, so routes with options enforce it too.
-    bool hasOnlyLiteralsAndRequiredParams = !route.HasOptionalPositionalParams && !route.HasCatchAll;
-    if (hasOnlyLiteralsAndRequiredParams)
-    {
-      // Enforce exact length (no extra args allowed)
-      sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length > {minPositionalArgs}) goto route_skip_{routeIndex};");
-    }
+    // Extra positional tokens skip the route. Optional parameters raise the cap by one each.
+    // A catch-all takes the rest. Unknown options are held out of the positional list.
+    EmitMaxPositionalCheck(sb, route, routeIndex, minPositionalArgs, $"route_skip_{routeIndex}");
 
     // Emit matching and parameter extraction in one pass through ALL segments
     // This keeps positionalIndex correctly aligned for interleaved patterns
@@ -309,5 +306,29 @@ internal static partial class RouteMatcherEmitter
     InterceptorEmitter.EmitExclusiveGateEnd(sb, route, "      ");
     sb.AppendLine("    }");
     sb.AppendLine($"    route_skip_{routeIndex}:;");
+  }
+
+  /// <summary>
+  /// Skips the route when positional tokens remain after the last non-catch-all parameter.
+  /// </summary>
+  private static void EmitMaxPositionalCheck(
+    StringBuilder sb,
+    RouteDefinition route,
+    int routeIndex,
+    int minPositionalArgs,
+    string skipLabel)
+  {
+    if (route.HasCatchAll)
+      return;
+
+    int optionalCount = 0;
+    foreach (ParameterDefinition parameter in route.Parameters)
+    {
+      if (parameter.IsOptional && !parameter.IsCatchAll)
+        optionalCount++;
+    }
+
+    int maxPositionalArgs = minPositionalArgs + optionalCount;
+    sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length > {maxPositionalArgs}) goto {skipLabel};");
   }
 }

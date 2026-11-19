@@ -123,6 +123,7 @@ return await app.RunAsync(args);
 
 ```csharp
 // scan-command.cs
+using System.IO;
 using TimeWarp.Mediator;
 using TimeWarp.Nuru;
 
@@ -130,10 +131,10 @@ using TimeWarp.Nuru;
 public sealed class ScanCommand : ICommand<Unit>
 {
   [Parameter(Description = "Folder to scan")]
-  public string? Path { get; set; }
+  public DirectoryInfo? Path { get; set; }
 
   [Option("output", "o", Description = "Output file")]
-  public string? Output { get; set; }
+  public FileInfo? Output { get; set; }
 
   [Option("depth", Description = "Scan depth")]
   public int Depth { get; set; } = 3;
@@ -145,9 +146,8 @@ public sealed class ScanCommand : ICommand<Unit>
   {
     public ValueTask<Unit> Handle(ScanCommand command, CancellationToken cancellationToken)
     {
-      DirectoryInfo path = new(command.Path ?? ".");
-      FileInfo? output = command.Output is null ? null : new FileInfo(command.Output);
-      Environment.ExitCode = Scanner.Run(path, output, command.Depth, command.Verbose);
+      DirectoryInfo path = command.Path ?? new DirectoryInfo(".");
+      Environment.ExitCode = Scanner.Run(path, command.Output, command.Depth, command.Verbose);
       return Unit.ValueTask;
     }
   }
@@ -161,12 +161,14 @@ Notes:
 - `.Map<ScanCommand>()` registers one endpoint. `.DiscoverEndpoints()` registers every `[NuruRoute]` class in
   the compilation. Either works in an app. Use `Map<T>()` in a test assembly that builds several apps
   (analyzer `NURU_A003`).
-- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` does not bind on 4.0.0-beta.14.
-  Bind a `string` and build the object in the handler, or register a type converter (see
-  [Supported Types](../reference/supported-types.md)). Endpoint properties bind `string`, the numeric types,
-  `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`,
-  `Uri`, `Version`, and enums. Fluent route constraints such as `{file:FileInfo}` convert the full
-  [built-in type](../../../glossary.md) set, which includes `FileInfo` and `DirectoryInfo`.
+- An endpoint property of type `FileInfo`, `DirectoryInfo`, or `IPAddress` binds from the argument string.
+  `FileInfo` and `DirectoryInfo` take the path. `IPAddress` uses `IPAddress.TryParse`; a bad address is an
+  invalid-value error. The same conversion is what a fluent `{file:FileInfo}` constraint uses. Endpoint
+  properties also bind `string`, the numeric types, `bool`, `char`, `Guid`, `DateTime`, `DateTimeOffset`,
+  `TimeSpan`, `DateOnly`, `TimeOnly`, `BigInteger`, `Uri`, `Version`, and enums. On 4.0.0-beta.14 a
+  `FileInfo`, `DirectoryInfo`, or `IPAddress` property did not bind; bind a `string` and build the object
+  in the handler on that package. See [Supported Types](../reference/supported-types.md) and
+  [built-in type](../../../glossary.md).
 - The exit code comes from `Environment.ExitCode`, not from the handler's return value. A property named
   `Environment` shadows the type; write `System.Environment.ExitCode` then.
 - Endpoint classes can be `public sealed` or `internal sealed`. Use `internal` when the handler takes an
@@ -783,6 +785,12 @@ Each item comes from running the 4.0.0-beta.14 package. Check the ones that affe
     (On 4.0.0-beta.14 a property named `Type` emitted `@type_0` and failed to compile, and two enum types
     with the same simple name in different namespaces were an ambiguous reference, `CS0104`, in generated
     code. Fixed in task 591-006.)
+13. **`FileInfo`, `DirectoryInfo`, and `IPAddress` properties bind.** A `[Parameter]` or `[Option]` of one
+    of those types converts the argument the same way a fluent `{name:FileInfo}` constraint does.
+    `FileInfo` and `DirectoryInfo` take the path. A path the constructor rejects, and a string
+    `IPAddress.TryParse` rejects, are invalid-value errors. An `[Operation]` property of one of those types
+    binds from argv too.
+    (On 4.0.0-beta.14 those properties did not bind. Fixed in task 591-007.)
 
 ## What you get after the port
 

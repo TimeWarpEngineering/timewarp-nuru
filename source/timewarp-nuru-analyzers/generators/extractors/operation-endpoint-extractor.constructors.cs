@@ -266,6 +266,11 @@ internal static partial class EndpointExtractor
     }
 
     string display = type.ToDisplayString();
+    // FileInfo, DirectoryInfo, and IPAddress bind from argv, same as Uri and Version.
+    // Drop only their nullable annotation. Other types keep the display ToDisplayString returns.
+    if (display is "System.IO.FileInfo?" or "System.IO.DirectoryInfo?" or "System.Net.IPAddress?")
+      display = display[..^1];
+
     return display is "System.DateTimeOffset"
       or "System.DateOnly"
       or "System.TimeOnly"
@@ -273,7 +278,10 @@ internal static partial class EndpointExtractor
       or "System.Guid"
       or "System.Uri"
       or "System.Version"
-      or "System.Numerics.BigInteger";
+      or "System.Numerics.BigInteger"
+      or "System.IO.FileInfo"
+      or "System.IO.DirectoryInfo"
+      or "System.Net.IPAddress";
   }
 
   private static ITypeSymbol? ElementType(ITypeSymbol type)

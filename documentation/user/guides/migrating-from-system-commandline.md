@@ -346,10 +346,10 @@ must be the last parameter:
 [NuruRoute("get", Description = "Send a GET request")]
 public sealed class GetCommand : IQuery<Unit>
 {
-  [Parameter(Description = "URL")]
+  [Parameter(Order = 0, Description = "URL")]
   public string Url { get; set; } = string.Empty;
 
-  [Parameter(IsCatchAll = true, Description = "Request items: key=value, Header:value")]
+  [Parameter(Order = 1, IsCatchAll = true, Description = "Request items: key=value, Header:value")]
   public string[] Items { get; set; } = [];
 
   [Option("verbose", "v", Description = "Print the request")]
@@ -393,10 +393,10 @@ A tool that forwards arguments to another program (`dotnet r build -- --no-resto
 [NuruRoute("run", Description = "Run a script")]
 public sealed class RunCommand : ICommand<Unit>
 {
-  [Parameter(Description = "Script name")]
+  [Parameter(Order = 0, Description = "Script name")]
   public string Script { get; set; } = string.Empty;
 
-  [Parameter(IsCatchAll = true, Description = "Arguments for the script")]
+  [Parameter(Order = 1, IsCatchAll = true, Description = "Arguments for the script")]
   public string[] Args { get; set; } = [];
 
   [Option("if-present", Description = "Skip a missing script")]

@@ -229,8 +229,8 @@ Handlers support:
 Parameter optionality is inferred from nullability:
 
 ```csharp
-[Parameter] public string Env { get; set; } = string.Empty;     // Required
-[Parameter] public string? Tag { get; set; }                     // Optional
+[Parameter(Order = 0)] public string Env { get; set; } = string.Empty; // Required
+[Parameter(Order = 1)] public string? Tag { get; set; }                 // Optional
 ```
 
 Option optionality follows the same pattern:

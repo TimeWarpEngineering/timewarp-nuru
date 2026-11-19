@@ -38,6 +38,10 @@ Binding must not drop input or ignore an attribute the docs already promise. The
 
 Acceptance: the routing tests show a boolean-looking positional after a flag still binds, and a bare default-true bool exits 1; the generator test reports `NURU_A005` for a hyphenated `Name` and the generated source does not declare that hyphenated local; the endpoint guides set `Order`; the migration guide and the migrate skill describe the flag and the bare `--create` rejection; the unused property-syntax extractor is gone; build, the touched test files, and one repo audit pass.
 
+This fix pass closes review M6. A reader who copies an example with two `[Parameter]` properties must get a build that passes `NURU_A002`. A catch-all counts as one of those properties. `GetCommand` and `RunCommand` in the System.CommandLine migration guide set `Order = 0` on the positional and `Order = 1` on the catch-all. The getting-started add command, the readme's second add command, and the endpoint guide's required/optional pair are the same omission, so they set `Order` too. The binder does not change.
+
+Acceptance for this pass: those examples set `Order`. `./bin/dev build` and one `ganda repo audit` pass. No test file changes, because the edit is documentation.
+
 ## Checklist
 
 - [x] Decide per item: fix it, or keep the behavior and say why in Results
@@ -56,6 +60,9 @@ Acceptance: the routing tests show a boolean-looking positional after a flag sti
   5 findings open (M1–M3 bug, M4 suggestion, M5 nit); fix pass requested. Files under `review/round-1/`.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d6032c14-55c2-4816-8407-2b95f06f556f, max-turns 200, artifacts general.md, merged.md — 2026-11-19T12:27:50Z
 - Fix pass (implement-fix-2, 2026-11-19): M1 a plain flag sets true and leaves the next token. M2 `NURU_A005` plus the property-name fallback. M3 the endpoint guides set `Order`. M4 a bare `--create` stays Unknown command and the migration guide and skill say so. M5 deleted `ExtractSegmentFromProperty`. The review example `seek --verbose {pos:int?}` is a value option whose parameter is `pos`, so the collision tests use `seek {pos:int?} --verbose` and `repeat {count:int} --quiet` with the boolean token still after the flag.
+- Review round 2 (2026-11-19): review oracle, Claude Opus 5.5, effort 2, roster general. Scope `14104e13..HEAD`.
+  M1–M5 fixed. New M6 (bug) open: two migration-guide examples omit `Order`. Fix pass requested. Files under `review/round-2/`.
+- Fix pass (implement-fix-3, 2026-11-19): M6 sets `Order` on `GetCommand` and `RunCommand`. The same omission was in the getting-started add command, the readme's second add command, and the endpoint guide's required/optional pair. Those set `Order` too. No binder change.
 
 ## Results
 
@@ -65,7 +72,7 @@ All five items are fixed.
 2. A present value option with no value token skips the route only when the value is required (`!ParameterIsOptional`). The initializer applies only when the option is absent. `--opt=` counts as a value. A nullable value (`string?`, fluent `{mode?}`) still binds null and exits 0. There is no dedicated missing-value sentence, because option parsing runs before the literal check.
 3. A non-nullable `bool` whose initializer is `true` is a value option and keeps the attribute's long and short forms. Leaving it off stays true. `--create false` and `--create true` bind that bool. A bare `--create` with no token skips the route, because the value is required. A normal flag means presence is true and does not take the next token. A following `0`, `false`, `yes`, or other boolean spelling stays a positional. `--flag=true` stays an unknown option.
 4. A repeated option (collection type, or fluent `*`) takes every following non-option token after one space-separated flag, until the next declared option or an option-like token. `--env A B` binds both. `--env A --env B` still works. `--env=A` stays one value. A positional after those values is swallowed. A bare repeated flag whose element is required skips the route.
-5. `[Parameter]` reads `Order` and `Name`. Two or more parameters that omit `Order` report `NURU_A002` (error) and the route is kept. Parameters sort by `Order`, then declaration index. A catch-all stays last. Duplicate explicit orders keep declaration order as the tie-break. `Name` is trimmed and lowercased when it is an identifier (letter or underscore, then letters, digits, and underscores). A name such as `source-file` reports `NURU_A005` and the route uses the property name lowercased, so the matcher and the constructor both compile. In-repo multi-parameter endpoints set `Order` to their declaration index so current binding order is unchanged. A single parameter may omit `Order`. The user and generator guides set `Order` on every parameter in a multi-parameter example.
+5. `[Parameter]` reads `Order` and `Name`. Two or more parameters that omit `Order` report `NURU_A002` (error) and the route is kept. Parameters sort by `Order`, then declaration index. A catch-all stays last. Duplicate explicit orders keep declaration order as the tie-break. `Name` is trimmed and lowercased when it is an identifier (letter or underscore, then letters, digits, and underscores). A name such as `source-file` reports `NURU_A005` and the route uses the property name lowercased, so the matcher and the constructor both compile. In-repo multi-parameter endpoints set `Order` to their declaration index so current binding order is unchanged. A single parameter may omit `Order`. The user and generator guides set `Order` on every parameter in a multi-parameter example. The migration guide's `GetCommand` and `RunCommand`, the getting-started add command, the readme's second add command, and the endpoint guide's required/optional pair set `Order` too. A catch-all counts toward `NURU_A002`.
 6. `[Option(IsRepeated = true)]` is read. On a collection it is already repeated. On a scalar it reports `NURU_A004` (error) and the option stays a single value. `IsRepeated = false` does not turn a collection into one value. The dead `LongName` / `ShortName` / `IsRequired` branches on `OptionAttribute` stay an open question.
 
 ### How to validate
@@ -74,30 +81,34 @@ Smoke:
 
 ```bash
 ./bin/dev build
-dotnet run --file tests/timewarp-nuru-tests/routing/routing-43-binding-strictness.cs
-dotnet run --file tests/timewarp-nuru-tests/generator/generator-76-binding-attribute-diagnostics.cs
 ganda repo audit
 ```
 
 Expect:
 
 - `./bin/dev build` succeeds with 0 warnings and 0 errors.
-- routing-43: 20 passed. `seek --verbose 0` on `seek {pos:int?} --verbose` exits 0 and prints `pos:0|verbose:True`. `repeat --quiet 1` on `repeat {count:int} --quiet` exits 0 and prints `count:1|quiet:True`. A bare `make --create` exits 1 with `Unknown command`. `--create false` still binds false.
-- generator-76: 5 passed. `Name = "source-file"` reports `NURU_A005` once, and the generated source uses `sourcepath` and does not declare `source-file`. `NURU_A002` and `NURU_A004` stay as before.
+- No test file was added or edited, and no production type changed, so no `dotnet run --file` run. The edit is documentation: `GetCommand` and `RunCommand` set `Order = 0` and `Order = 1`, and so do the getting-started add command, the readme's second add command, and the endpoint guide's required/optional pair.
 - `ganda repo audit`: 45 passed, 0 failed, 1 skipped (`self-hosted-runner`).
-- help-11 was not rerun. This pass did not edit it.
 
-Gates (this fix pass):
+Gates (implement-fix-3):
 
 - `./bin/dev build` — succeeded (0 warnings, 0 errors)
+- no test file — documentation only; no production type changed
+- `ganda repo audit` — passed (45 passed, 0 failed, 1 skipped)
+
+Prior pass (implement-fix-2), not rerun:
+
 - `dotnet run --file tests/timewarp-nuru-tests/routing/routing-43-binding-strictness.cs` — 20 passed
 - `dotnet run --file tests/timewarp-nuru-tests/generator/generator-76-binding-attribute-diagnostics.cs` — 5 passed
-- `ganda repo audit` — passed (45 passed, 0 failed, 1 skipped)
 
 ### Review
 
 - Round 1 (effort 3, roster general): 3 bug, 1 suggestion, 1 nit. The fix pass implemented M1–M5. Statuses stay open for review round 2.
-- Framework: `review/review-framework.md`. Last merged: `review/round-1/merged.md`.
+- Round 2 (effort 2, roster general, scope `14104e13..HEAD`): M1–M5 fixed. M6 (bug) implemented in implement-fix-3:
+  `GetCommand` and `RunCommand` set `Order`, and the same omission in getting-started, the readme, and the endpoint
+  optionality pair does too. Status stays open for review round 3. Counts before this pass: bug 1 open / 3 fixed,
+  suggestion 1 fixed, nit 1 fixed.
+- Framework: `review/review-framework.md`. Last merged: `review/round-2/merged.md`.
 
 ## Learnings
 
@@ -109,7 +120,9 @@ Gates (this fix pass):
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
-- Fix pass implemented M1–M5. Round 2 has not closed them.
+- Fix pass implemented M1–M5.
+- Round 2: Blocked — open M6
+- Fix pass implemented M6. Review round 3 has not closed it.
 
 ## Notes
 

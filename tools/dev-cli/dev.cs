@@ -31,6 +31,7 @@
 //   dev format             - Check code formatting (--fix to auto-fix)
 //   dev analyze            - Run Roslynator analysis and fixes
 //   dev self-install       - AOT compile and install dev CLI to ./bin
+//   dev audit              - Run repo pre-test checks (none registered here; ganda repo audit calls it)
 //
 // Telemetry (tools/dev-cli/telemetry.md):
 //   UseTelemetry service name is the literal "timewarp-nuru-dev".

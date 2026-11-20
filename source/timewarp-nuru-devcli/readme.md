@@ -12,6 +12,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `self-install` | AOT compile dev CLI to ./bin | None (standalone) |
 | `check-version` | Verify version is ready to release — three-state publish gate, plus an honest prerelease-increment distance (warns when more than one ahead; `--strict` exits non-zero) | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
 | `release` | Cut a release: create tag `v{Version}` (from `source/Directory.Build.props`) and the GitHub Release, gated by working-tree/branch/sync/tag-availability/publish-state/CI-run/target-attestation guards; `--dry-run` runs every guard and previews the exact commands without creating anything | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
+| `audit` | Run this repo's fast pre-test checks, one line each with wall time, then a passed/failed summary; exits 1 when any check fails. With no checks it prints that there is nothing to run and exits 0. `ganda repo audit` runs it. See [Repo audit checks](#repo-audit-checks-dev-audit) | None (checks come from `DevAuditChecks.AddRepoChecks`) |
 
 ### Services
 
@@ -39,6 +40,9 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `AttestationConfigResolver` (`AttestationMode`, `AttestationModeResolution`) | Pure resolver for `attestation.mode`: blank/absent → `(null, null)`; `"off"`/`"warn"`/`"require"` (case-insensitive) → enum; unrecognized non-blank → `(null, trimmed)` so callers can warn about a typo. `EffectiveMode(resolution, whenUnset)` applies context defaults (`DefaultPrMode` = Warn, `DefaultReleaseMode` = Require). Typos never silently become Off |
 | `PullRequestBuildClassifier` (`PullRequestBuildDecision`) | The fleet pull request build decision (kanban task 595). `DecideAsync(repoRoot, ct)` reads the GitHub event, runs `git diff --name-only base...head`, applies the non-build rule plus the repo's `pullRequestBuild` additions, and returns build or skip with the line to print. See [Pull request build decision](#pull-request-build-decision) |
 | `PullRequestBuildConfig` | Config model for `pullRequestBuild` in `.timewarp/dev.jsonc`: `buildPaths` and `nonBuildPaths` |
+| `IDevAuditCheck` / `DevAuditCheckResult` | One repo-specific `dev audit` check: `Name`, `RunAsync`, and `Pass(message?)` or `Fail(message)` |
+| `DevAuditChecks` | The `dev audit` registry. `All()` returns the checks the repo adds in its `AddRepoChecks` partial method; none by default |
+| `DevAuditRunner` (`DevAuditSummary`) | Runs the checks in order, prints the per-check lines and the summary, and returns the passed/failed counts and exit code |
 
 ## Configuration
 
@@ -210,6 +214,63 @@ gates the others on its output. timewarp-nuru does this: `dev workflow --stage c
 the one call and writes `code=true|false` to `GITHUB_OUTPUT`; the stage jobs run only when
 `code != 'false'`, and the required `ci` job is skipped (which reports success) on `false`.
 
+## Repo audit checks (`dev audit`)
+
+`ganda repo audit` runs `./bin/dev audit` when the repo's dev CLI has it and fails on a
+non-zero exit. DevCli owns the `audit` route, so a repo adds checks and never defines the
+command itself.
+
+`dev audit` is for **fast pre-test checks**: config, dependency or layout rules that finish
+in seconds. Do not run a build or a test suite from a check; every walk, merge and manual
+audit pays for it. `dev audit` never calls `ganda repo audit` (that calls `dev audit`, so
+the other direction loops).
+
+Add a check in your own `tools/dev-cli`, then register it by implementing the
+`AddRepoChecks` partial method once:
+
+```csharp
+namespace DevCli;
+
+internal sealed class DepsCheck : IDevAuditCheck
+{
+  public string Name => "deps-check";
+
+  public async ValueTask<DevAuditCheckResult> RunAsync(CancellationToken cancellationToken)
+  {
+    IReadOnlyList<string> problems = await FindOutdatedDependenciesAsync(cancellationToken);
+    return problems.Count == 0
+      ? DevAuditCheckResult.Pass()
+      : DevAuditCheckResult.Fail(string.Join('\n', problems));
+  }
+}
+
+internal static partial class DevAuditChecks
+{
+  static partial void AddRepoChecks(List<IDevAuditCheck> checks)
+  {
+    checks.Add(new DepsCheck());
+  }
+}
+```
+
+Checks run in the order added. Every check runs even after one fails. Output:
+
+```
+PASS deps-check (120ms)
+FAIL layout-check (8ms)
+<the failing check's message, in full>
+dev audit: 1 passed, 1 failed
+```
+
+A check that throws counts as failed, with the exception type and message as its message.
+
+**Why a partial method:** DevCli is source-only, so `DevAuditChecks` compiles into your dev
+CLI's own assembly and the repo's `AddRepoChecks` body is bound at compile time. That needs no
+reflection and no DI, so it works in the AOT dev CLI. Nuru's source-generated DI does not
+resolve `IEnumerable<T>`, which rules out multi-registration. A repo without checks writes
+nothing and the call compiles away. `AddRepoChecks` can be implemented only once per dev CLI;
+add every check there.
+
 ## Installation
 
 Add the package to your project:
@@ -251,6 +312,13 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 4.0.0-beta.17+: shared `dev audit` endpoint (`audit-command.cs`, kanban task 600)
+
+DevCli now owns the `audit` route. A dev CLI that defines its own `[NuruRoute("audit")]`
+endpoint gets a route clash after this upgrade. Delete that endpoint, move each check it ran
+into an `IDevAuditCheck`, and add them in `DevAuditChecks.AddRepoChecks` (see
+[Repo audit checks](#repo-audit-checks-dev-audit)).
 
 ### 4.0.0-beta.16+: typed Amuru builders (kanban task 598)
 

@@ -146,10 +146,25 @@ Expect:
   attest's audit then failed `runfile-executable` (the new test runfile lacked +x once tracked);
   fixed with `chmod +x` / `git update-index --chmod=+x` in a follow-up commit.
 
+### Review
+
+- Round 1. Effort 2. Roster: general. Reviewer session not reported.
+- Counts: bug 0 open / 0 fixed / 0 wontfix, suggestion 0, nit 0.
+- Disposition: clean. No wontfix and no escalation. The goal restatement matches the original task.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- This review read the diff and the recorded gates. It did not re-run `./bin/dev build`, `./bin/dev test`, or `ganda repo audit`.
+
 ## Session
 
 - Created: 64677b22-d705-4b25-b537-4b53732bcb92 (2026-11-21)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 9ace78e0-e547-4ec9-9c30-91c7ec717d2a, max-turns 500, Done — 2026-11-20T20:50:04Z
+- Reviewer: grok (2026-11-21). Effort 2, roster general. Session not reported.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7), max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-21
+- Review oracle: review by reviewer-cursor (cursor, vendor xai, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 120), artifacts general.md, merged.md, disposition.md — 2026-11-20T20:57:02Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 

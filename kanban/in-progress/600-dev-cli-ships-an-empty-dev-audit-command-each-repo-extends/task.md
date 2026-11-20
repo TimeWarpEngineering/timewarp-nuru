@@ -141,6 +141,10 @@ Expect:
 - `ganda repo audit`: passed with 1 advisory warning (`vscode-window-icon`: `.vscode/settings.json`
   missing). Boy-scout: `ganda repo audit --fix` fixed it (writes the git-ignored
   `.vscode/settings.json`, nothing to commit); the fix run reports all checks passing.
+- Commit attest (post-commit hook) first failed with `Text file busy: bin/dev` because
+  `tools/dev-cli/dev.cs` changed after the self-install; `./bin/dev self-install` cleared it. The
+  attest's audit then failed `runfile-executable` (the new test runfile lacked +x once tracked);
+  fixed with `chmod +x` / `git update-index --chmod=+x` in a follow-up commit.
 
 ## Session
 

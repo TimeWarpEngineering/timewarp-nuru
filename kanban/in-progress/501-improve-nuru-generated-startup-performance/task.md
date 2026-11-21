@@ -70,6 +70,7 @@ Acceptance:
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 28ec19d3-31b5-4e7e-930c-fcb89c5025ca, max-turns 500, Done — 2026-11-21T07:17:06Z
 - Review oracle: round 1 by reviewer-grok (grok, vendor xai, model grok-4.7), session 01a1fcf7-678e-7302-88c7-a5553cb89ee6, effort 3, roster general, turn cap 200 — 2026-11-21. Open findings M1–M3. Disposition not written.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1fcf7-678e-7302-88c7-a5553cb89ee6, max-turns 200, artifacts general.md, merged.md — 2026-11-21T07:32:21Z
+- Review oracle: round 2 by reviewer-grok (grok, vendor xai, model grok-4.7), session 01a1fd08-e6eb-7fe1-b154-9cf4a3790324, effort 1, roster general, turn cap 80 — 2026-11-21. No new findings. Disposition clean.
 
 ## Results
 
@@ -213,6 +214,8 @@ Expect:
 
 Round 1, effort 3, roster general. Counts: bug 0, suggestion 1 (M1), nit 2 (M2, M3); all three fixed in the round-1 fix pass, wontfix 0. M1: the System.Text.Json load claim is corrected in the changelog, both emitter remarks and the analysis note (`ExecuteRouteAsync` still names `JsonDocument`; the split saves JIT, not the assembly load). M2: duplicate `EmitDispatch` summary removed. M3: analysis note names PowerArgs' `/str:` argv. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. The misread is under `## Learnings`.
 
+Round 2, effort 1, roster general, reviewed commit `89a59f10` only. M1, M2, and M3 verified fixed. No new findings. Disposition: clean. Final counts: bug 0, suggestion 1 fixed, nit 2 fixed, open 0, wontfix 0. Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Learnings
 
 - Misread: the original Goal says make Nuru measurably faster than its peers wherever framework work is what is measured, and aims for the full builder with Mediator to start in single-digit ms. The checklist also requires a synchronous path when no handler awaits, and a compile-time route table. The restatement changes the bar to "cheaper and measurable" and proves each gain with the 578 verdict. It drops the peer comparison and the synchronous path, and it adds acceptance items the diff does not do: skip tracked-disposal teardown, avoid per-call matching allocations, and file follow-ups as kanban tasks. The refreshed table shows Nuru 2nd of 10: cold 9.3 ms against ConsoleAppFramework 1.0 ms, warm 0.6 µs against ConsoleAppFramework about 0.02 µs. The Mediator path that was 131.96 ms was removed in task 330; that explanation matches the original "explained and fixed or filed" item. The synchronous path and allocation-free matching are listed as follow-ups in Results, which matches tw-perf-sweep (a second hot spot stays in the kitchen). They are not filed kanban ids. That gap is the misread, not a round-1 finding.
@@ -221,3 +224,4 @@ Round 1, effort 3, roster general. Counts: bug 0, suggestion 1 (M1), nit 2 (M2, 
 
 - Round 1: Blocked — open M1, M2, M3
 - Round 1 fix pass: M1, M2, M3 fixed (2026-11-21).
+- Round 2: Done

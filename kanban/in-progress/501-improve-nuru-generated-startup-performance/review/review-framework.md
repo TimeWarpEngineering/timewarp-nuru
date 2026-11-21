@@ -2,19 +2,21 @@
 
 **Date:** 2026-11-21
 **Host task:** kanban/in-progress/501-improve-nuru-generated-startup-performance/
-**Diff scope:** branch `task/501-improve-nuru-generated-startup-performance` vs merge-base `740a3661` (master). Four commits, 1164 lines in `git diff --stat`. Product and test diff reviewed; kanban `task.md` included for the restatement check.
+**Diff scope:** Round 1: branch `task/501-improve-nuru-generated-startup-performance` vs merge-base `740a3661` (master). Four commits, 1164 lines in `git diff --stat`. Product and test diff reviewed; kanban `task.md` included for the restatement check. Round 2: commit `89a59f10` only (the M1–M3 documentation fix), not the whole branch.
 **Plan / brief:** Make Nuru's own startup cheaper and measurable (task 501). Implementer restatement is in `task.md`.
-**Effort:** 3 (general only; by-diff budget)
+**Effort:** Round 1 was 3. Round 2 is 1 (general only; by-diff budget).
 **Reviewer roster:** general
-**Session IDs:** implementer-claude session 28ec19d3-31b5-4e7e-930c-fcb89c5025ca; reviewer Grok session 01a1fcf7-678e-7302-88c7-a5553cb89ee6
+**Session IDs:** implementer-claude session 28ec19d3-31b5-4e7e-930c-fcb89c5025ca; round 1 reviewer Grok session 01a1fcf7-678e-7302-88c7-a5553cb89ee6; round 2 reviewer Grok session 01a1fd08-e6eb-7fe1-b154-9cf4a3790324
 
 ## Budget (by-diff)
 
-- Lines changed: 1164
-- Effort: 3
+Round 2 budget (this table). Round 1 was 1164 lines, effort 3, turn cap 200.
+
+- Lines changed: 135
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 

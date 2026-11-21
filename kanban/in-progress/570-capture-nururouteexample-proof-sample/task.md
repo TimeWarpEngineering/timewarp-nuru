@@ -48,6 +48,7 @@ Acceptance:
   All eight passed, including stdin `-` from a pipe and from a heredoc.
 - Observation: 4.0.0-beta.16 writes ANSI color codes when stdout is a pipe and `NO_COLOR=1` is
   set, so the plain `*.txt` captures are the raw `*.ansi.txt` bytes with escapes removed by sed.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d96f45fb-6348-4705-a660-2fb3ab1ffa14, max-turns 500, Done — 2026-11-21T02:44:55Z
 
 ## Notes
 

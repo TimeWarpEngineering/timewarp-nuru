@@ -154,7 +154,8 @@ internal static partial class InterceptorEmitter
   /// <remarks>
   /// The JIT compiles a whole async state machine on first call. The <c>NuruApp.InvokeAsync</c> switch and the
   /// <c>--json-args</c> selection each repeat every handler call, so inline they made the first argv run pay to
-  /// compile code it never runs, and load System.Text.Json (task 501). The parameters are the
+  /// compile code it never runs (task 501). ExecuteRouteAsync still names <c>JsonDocument</c>, so this split
+  /// does not keep System.Text.Json from loading. The parameters are the
   /// ExecuteRouteAsync locals handler and binding code reads. <c>configuration</c> is null when the app
   /// reads none (<see cref="ResolveBlankConfiguration"/>). Every path in <paramref name="body"/> returns or throws.
   /// AsyncLocal state the caller set flows in; ExecuteRouteAsync returns this method's result unchanged.

@@ -229,10 +229,6 @@ internal static partial class JsonArgsEmitter
   }
 
   /// <summary>
-  /// When a JSON object is loaded, selects a route by literal count and binds it.
-  /// Always returns from the generated method on this path.
-  /// </summary>
-  /// <summary>
   /// Emits the body of the JSON selection method: route selection, binding and the handler call.
   /// It runs in its own generated method (see <c>InterceptorEmitter.EmitDeferredDispatchMethod</c>), which
   /// owns <c>__jsonDoc</c> and always returns.

@@ -82,8 +82,9 @@ internal static partial class JsonArgsEmitter
   /// object, parsed to a JSON object document. It writes the error and returns null on failure.
   /// </summary>
   /// <remarks>
-  /// A separate method, not inline in ExecuteRouteAsync, so a run without <c>--json-args</c> neither
-  /// JIT-compiles it nor loads System.Text.Json (task 501).
+  /// A separate method, not inline in ExecuteRouteAsync, so a run without <c>--json-args</c> does not
+  /// JIT-compile it. ExecuteRouteAsync still names <c>JsonDocument</c>, so System.Text.Json can still
+  /// load on that run (task 501).
   /// </remarks>
   public static void EmitReadMethod(StringBuilder sb)
   {

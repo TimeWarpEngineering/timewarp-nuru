@@ -68,6 +68,8 @@ Acceptance:
 - 2026-11-17 groom: 567 (measurement bar) archived, covered by the tw-perf-sweep skill; the "after numbers" box now names the 578 verdict.
 - 2026-11-21 implement (ganda task work, implement oracle, Claude Opus 5.5): benchmark suite fixes in commit 5bebefd8, then signal, configuration and dispatch-split changes measured against it.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 28ec19d3-31b5-4e7e-930c-fcb89c5025ca, max-turns 500, Done — 2026-11-21T07:17:06Z
+- Review oracle: round 1 by reviewer-grok (grok, vendor xai, model grok-4.7), session 01a1fcf7-678e-7302-88c7-a5553cb89ee6, effort 3, roster general, turn cap 200 — 2026-11-21. Open findings M1–M3. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1fcf7-678e-7302-88c7-a5553cb89ee6, max-turns 200, artifacts general.md, merged.md — 2026-11-21T07:32:21Z
 
 ## Results
 
@@ -176,6 +178,14 @@ current `CreateBuilder` cold call is 9.3 ms and 2.3 KB. Nothing is left to fix.
   set the bit and created the git-ignored settings file; generator-80 got the same bit by hand. Rerun after
   the fix -> "Repository passes all audit checks."
 
+- Review round 1 fix pass (M1–M3, doc comments and notes only):
+  - `./bin/dev build` -> Build completed successfully.
+  - `ganda runfile cache --clear`, then covering files for the edited emitters:
+  - `tests/timewarp-nuru-tests/generator/generator-80-startup-work-omission.cs` -> 4/4 passed.
+  - `tests/timewarp-nuru-tests/routing/routing-33-json-args.cs` -> 15/15 passed.
+  - `tests/timewarp-nuru-tests/routing/routing-34-json-bind-invoke.cs` -> 10/10 passed.
+  - `ganda repo audit` -> Repository passes all audit checks.
+
 ### How to validate
 
 Smoke:
@@ -199,3 +209,15 @@ Expect:
   `ExecuteRouteAsync` calls `EnsureServicesInitialized(app, null)`, has no `ConfigurationBuilder`,
   and calls `__DispatchInvocationAsync` and `__DispatchJsonArgsAsync`.
 
+### Review
+
+Round 1, effort 3, roster general. Counts: bug 0, suggestion 1 (M1), nit 2 (M2, M3); all three fixed in the round-1 fix pass, wontfix 0. M1: the System.Text.Json load claim is corrected in the changelog, both emitter remarks and the analysis note (`ExecuteRouteAsync` still names `JsonDocument`; the split saves JIT, not the assembly load). M2: duplicate `EmitDispatch` summary removed. M3: analysis note names PowerArgs' `/str:` argv. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. The misread is under `## Learnings`.
+
+## Learnings
+
+- Misread: the original Goal says make Nuru measurably faster than its peers wherever framework work is what is measured, and aims for the full builder with Mediator to start in single-digit ms. The checklist also requires a synchronous path when no handler awaits, and a compile-time route table. The restatement changes the bar to "cheaper and measurable" and proves each gain with the 578 verdict. It drops the peer comparison and the synchronous path, and it adds acceptance items the diff does not do: skip tracked-disposal teardown, avoid per-call matching allocations, and file follow-ups as kanban tasks. The refreshed table shows Nuru 2nd of 10: cold 9.3 ms against ConsoleAppFramework 1.0 ms, warm 0.6 µs against ConsoleAppFramework about 0.02 µs. The Mediator path that was 131.96 ms was removed in task 330; that explanation matches the original "explained and fixed or filed" item. The synchronous path and allocation-free matching are listed as follow-ups in Results, which matches tw-perf-sweep (a second hot spot stays in the kitchen). They are not filed kanban ids. That gap is the misread, not a round-1 finding.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
+- Round 1 fix pass: M1, M2, M3 fixed (2026-11-21).

@@ -2,19 +2,28 @@
 
 **Date:** 2026-11-21
 **Host task:** kanban/in-progress/578-add-a-shared-dev-benchmark-contract-to-the-dev-cli-list-run-base-verdict/
-**Diff scope:** branch `task/578-add-a-shared-dev-benchmark-contract-to-the-dev-cli` vs merge-base `aee2e073` (`master...HEAD`, 4 commits, 29 files, +2078/−263)
-**Plan / brief:** Shared `dev benchmark` contract in the DevCli source-only package (`list`, `run --base`, ratio, noise band, verdict), Nuru benchmarks `aot-startup` and `operation-dispatch`, stored absolute baseline removed.
-**Effort:** 3
+**Diff scope:** Round 2 re-reviews the fix delta since round 1 (commit `744cd3a5`, plus attest-retry note `5021e768`), not the whole branch. Round 1 scope remains branch `task/578-add-a-shared-dev-benchmark-contract-to-the-dev-cli` vs merge-base `aee2e073`.
+**Plan / brief:** Shared `dev benchmark` contract in the DevCli source-only package (`list`, `run --base`, ratio, noise band, verdict), Nuru benchmarks `aot-startup` and `operation-dispatch`, stored absolute baseline removed. Round 2 checks the M1 fix: ready-made benchmarks opt-in so consumers pass CA1812.
+**Effort:** Round 1 was 3 (general). Round 2 is 1 (general).
 **Reviewer roster:** general
-**Session IDs:** review grok `01a1fc98-a2d9-7362-abfc-1bd422410c67` (2026-11-21). Implementer session `8843d6fc-e0a0-4adc-97fc-ac45cef640e3`.
+**Session IDs:** Round 1 review grok `01a1fc98-a2d9-7362-abfc-1bd422410c67` (2026-11-21). Round 2 review grok `01a1fcad-8660-7600-b4cf-c539c04aa481` (2026-11-21). Implementer session `8843d6fc-e0a0-4adc-97fc-ac45cef640e3`.
 
 ## Budget (by-diff)
 
-- Lines changed: 2341
-- Effort: 3
+Round 2 re-review budget (host). Round 1 was 2341 lines, effort 3, turn cap 200.
+
+- Lines changed: 172
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
+
+## Round 2
+
+- **Date:** 2026-11-21
+- **Diff scope:** `744cd3a5` (opt-in ready-made benchmarks, readme, changelog, test and dev-cli props, runfile executable bit) and `5021e768` (attest-retry note on `task.md`)
+- **Effort:** 1, roster general
+- **Session:** grok `01a1fcad-8660-7600-b4cf-c539c04aa481`
 
 ## Ground rules
 

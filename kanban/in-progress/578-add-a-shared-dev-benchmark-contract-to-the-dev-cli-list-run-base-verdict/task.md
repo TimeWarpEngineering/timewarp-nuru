@@ -72,6 +72,7 @@ Acceptance:
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1fc98-a2d9-7362-abfc-1bd422410c67, max-turns 200, artifacts general.md, merged.md — 2026-11-21T05:47:59Z
 - Implement-fix-2 (review round 1 M1, Claude Opus 5.5, 2026-11-21): ready-made benchmarks moved to opt-in `content/any/benchmarks/`; consumer check now 0 warnings. See Results > Review round 1 fix.
 - Commit 744cd3a5: post-commit `ganda repo attest` failed again with "Text file busy" on `bin/dev`; this follow-up commit re-runs the hook.
+- Review round 2: grok session 01a1fcad-8660-7600-b4cf-c539c04aa481 (2026-11-21), effort 1, roster general, turn cap 80. M1 fixed, no new findings. Disposition clean.
 
 ## Results
 
@@ -149,7 +150,7 @@ Expect:
 
 ### Review round 1
 
-Effort 3, roster general. Counts: 1 open bug (M1), 0 fixed, 0 wontfix. Disposition is not written. M1: `ProcessInvocationBenchmark` and `ReportedMetricBenchmark` trip CA1812 in `tests/devcli-consumer-check` (samples-stage `dotnet build`). Paths: `review/review-framework.md`, `review/round-1/merged.md`.
+Effort 3, roster general. At the end of round 1: 1 open bug (M1), 0 fixed, 0 wontfix. Disposition was not written while M1 was open. M1: `ProcessInvocationBenchmark` and `ReportedMetricBenchmark` trip CA1812 in `tests/devcli-consumer-check` (samples-stage `dotnet build`). Paths: `review/review-framework.md`, `review/round-1/merged.md`.
 
 ### Review round 1 fix (implement-fix-2)
 
@@ -183,14 +184,20 @@ Fix-pass gates:
 
 Validate M1: `(cd tests/devcli-consumer-check && dotnet build --nologo -v q)` -> 0 warnings, 0 errors.
 
+### Review round 2
+
+Effort 1, roster general. Re-reviewed the fix delta (`744cd3a5`), not the whole branch. M1 is fixed. No new findings. Counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0. Disposition: clean. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
+Gates were not re-run. The fix-pass `## Results` already record the consumer-check build, `./bin/dev build`, the three benchmark runfiles, the ci-tests compile, and audit. One targeted command checked a suspected opt-in hole (a `Compile` item using `$(NuruDevCliContentDirectory)` inside `Directory.Build.props`, which is imported before package props): `dotnet msbuild /tmp/nuru-578-prop-order/check.proj -t:Show -nologo -v:m`. The item resolved to `content/any/benchmarks/process-invocation-benchmark.cs`. Not a defect.
+
 ## Learnings
 
 - Misread: the implementer restatement's acceptance line says the DevCli version is bumped so a release can be cut after merge. The original task does not require a bump. Publish stays on the checklist as a later `dev release`, which waits for an explicit ask. Staying on unreleased 4.0.0-beta.17 (latest tag v4.0.0-beta.16) matches the task. Not a product defect.
 
 ## Review
 
-- Round 1: Blocked — open M1
-
+- Round 1: open M1, fixed in the follow-up and confirmed in round 2
+- Round 2: Done
 ## Notes
 
 - Compare ratios, not stored absolute numbers; shared CI runners are too noisy.

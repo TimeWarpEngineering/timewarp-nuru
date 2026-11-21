@@ -71,6 +71,7 @@ Acceptance:
 - Review oracle: round 1 by reviewer-grok (grok, vendor xai, model grok-4.7), session 01a1fcf7-678e-7302-88c7-a5553cb89ee6, effort 3, roster general, turn cap 200 — 2026-11-21. Open findings M1–M3. Disposition not written.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1fcf7-678e-7302-88c7-a5553cb89ee6, max-turns 200, artifacts general.md, merged.md — 2026-11-21T07:32:21Z
 - Review oracle: round 2 by reviewer-grok (grok, vendor xai, model grok-4.7), session 01a1fd08-e6eb-7fe1-b154-9cf4a3790324, effort 1, roster general, turn cap 80 — 2026-11-21. No new findings. Disposition clean.
+- Installed ganda changed during this walk: was 55981976 bytes c2befc83618dcca07b08a61eb090b0de89aa6424922d68796e30364a5417e530; now 55981976 bytes 55ff2454e639260430fb9a25ab6e97e6a13cd8ad8d0546962dcd0d3d8c08a554
 
 ## Results
 

@@ -1,0 +1,47 @@
+{
+  "name": "calc",
+  "version": "1.0.0",
+  "endpoints": [
+    {
+      "pattern": "add",
+      "groupPath": [],
+      "aliases": [],
+      "description": "Add two numbers",
+      "kind": "query",
+      "parameters": [
+        {
+          "name": "x",
+          "type": "double",
+          "required": true,
+          "isCatchAll": false,
+          "description": "First number"
+        },
+        {
+          "name": "y",
+          "type": "double",
+          "required": true,
+          "isCatchAll": false,
+          "description": "Second number"
+        }
+      ],
+      "options": [],
+      "examples": [
+        {
+          "command": "add 2 3",
+          "description": "Adds 2 and 3, prints 5"
+        }
+      ],
+      "returnType": {
+        "name": "double",
+        "kind": "primitive"
+      }
+    }
+  ],
+  "invocation": {
+    "jsonArgs": "--json-args",
+    "stdin": "-",
+    "filePrefix": "@",
+    "merge": "argvOverridesJson",
+    "unknownKeys": "error"
+  }
+}

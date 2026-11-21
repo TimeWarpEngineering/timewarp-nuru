@@ -1,0 +1,5 @@
+<Project>
+  <!-- Stops MSBuild from importing the repository Directory.Build.props (analyzers, project
+       references). The sample compiles against the published TimeWarp.Nuru package only. Its
+       version comes from the repository Directory.Packages.props. -->
+</Project>

@@ -1,0 +1,21 @@
+[1m[96mVersion:[0m[0m
+[1m[96m  v1.0.0[0m[0m
+
+
+[33mUsage:[0m
+[33m  calc [command] [options][0m
+
+[1m[36mOptions:[0m[0m
+┌───────────────────────────────┬──────────────────────────────────────────────┐
+│ --help, -h                    │ Show this help message                       │
+│ --version                     │ Show version information                     │
+│ --capabilities                │ Show capabilities for AI tools               │
+│ --capabilities --group-fil... │ Filter capabilities by group prefix          │
+│ --capabilities --search <q... │ Search capabilities using nuru               │
+│ --json-args <value>           │ Bind arguments from -, @path, or an inlin... │
+└───────────────────────────────┴──────────────────────────────────────────────┘
+
+[1m[36mCommands:[0m[0m
+┌─────────┬─────────────────┐
+│ add     │ Add two numbers │
+└─────────┴─────────────────┘

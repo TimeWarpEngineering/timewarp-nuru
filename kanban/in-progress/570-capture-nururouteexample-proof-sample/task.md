@@ -49,6 +49,12 @@ Acceptance:
 - Observation: 4.0.0-beta.16 writes ANSI color codes when stdout is a pipe and `NO_COLOR=1` is
   set, so the plain `*.txt` captures are the raw `*.ansi.txt` bytes with escapes removed by sed.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session d96f45fb-6348-4705-a660-2fb3ab1ffa14, max-turns 500, Done — 2026-11-21T02:44:55Z
+- Review oracle: grok, session 01a1fbfe-3684-7332-8e67-b2bcea883f19, effort 2, roster general, round 1, disposition clean — 2026-11-21
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1fbfe-3684-7332-8e67-b2bcea883f19, max-turns 120, artifacts general.md, merged.md, disposition.md — 2026-11-21T02:54:05Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -96,4 +102,12 @@ git diff --stat -- kanban/in-progress/570-capture-nururouteexample-proof-sample/
 
 Expect: `8 PASS` and `0 FAIL`, and no diff under `capture/`. The regenerated output matches the
 committed capture. `capture/help-add.txt` shows `Examples:` / `add 2 3` / `Adds 2 and 3, prints 5`.
+
+### Review
+
+- Round 1. Effort 2. Roster: general.
+- Counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0; nit 0. Final open count: 0.
+- Disposition: clean. No wontfix and no escalation.
+- The goal restatement matches the original task. No misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 

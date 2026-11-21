@@ -1,0 +1,42 @@
+## baseline argv
+$ ./calc.cs add 2 3
+5
+exit=0 expected_exit=0 expected_stdout=5 -> PASS
+
+## inline object
+$ ./calc.cs add --json-args '{"x":2,"y":3}'
+5
+exit=0 expected_exit=0 expected_stdout=5 -> PASS
+
+## stdin '-' from a pipe
+$ printf '{"x":2,"y":3}' | ./calc.cs add --json-args -
+5
+exit=0 expected_exit=0 expected_stdout=5 -> PASS
+
+## stdin '-' from a heredoc
+$ ./calc.cs add --json-args - <<'JSON'
+{"x": 2, "y": 3}
+JSON
+5
+exit=0 expected_exit=0 expected_stdout=5 -> PASS
+
+## @path file
+$ ./calc.cs add --json-args @add-2-3.json
+5
+exit=0 expected_exit=0 expected_stdout=5 -> PASS
+
+## argv overrides JSON for the same name
+$ ./calc.cs add 10 --json-args '{"x":2,"y":3}'
+13
+exit=0 expected_exit=0 expected_stdout=13 -> PASS
+
+## unknown key is an error
+$ ./calc.cs add --json-args '{"x":2,"y":3,"z":4}'
+Error: Unknown key 'z' for 'add'. Known names: x, y.
+exit=1 expected_exit=1 expected_stdout=- -> PASS
+
+## attached form is rejected
+$ ./calc.cs add '--json-args={"x":2,"y":3}'
+Error: --json-args must be a separate token. Use --json-args -, --json-args @path, or --json-args '{...}'.
+exit=1 expected_exit=1 expected_stdout=- -> PASS
+

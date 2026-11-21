@@ -33,6 +33,10 @@
     <!-- TimeWarp.Contracts 2.0.0-beta.31 depends on TimeWarp.Mediator 15.0.0-beta.4, so the two move together (task 566). -->
     <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.10" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.10" />
+    <!-- Only the task 570 proof runfile (kanban/.../570-capture-nururouteexample-proof-sample/proof/calc.cs)
+         uses this: it proves the published package, so it must not use the project references.
+         Its committed capture came from 4.0.0-beta.16; a bump means rerunning proof/capture.sh. -->
+    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.16" />
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="Shouldly" Version="5.0.0-preview.2" />

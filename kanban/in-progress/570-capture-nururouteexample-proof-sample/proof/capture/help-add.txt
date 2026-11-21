@@ -1,0 +1,17 @@
+add {x} {y}
+
+  Add two numbers
+
+Parameters:
+┌──────┬──────────┬────────┬───────────────┐
+│ Name │ Required │ Type   │ Description   │
+├──────┼──────────┼────────┼───────────────┤
+│ x    │ Yes      │ double │ First number  │
+│ y    │ Yes      │ double │ Second number │
+└──────┴──────────┴────────┴───────────────┘
+
+Examples:
+  add 2 3
+    Adds 2 and 3, prints 5
+
+Values may come from --json-args.

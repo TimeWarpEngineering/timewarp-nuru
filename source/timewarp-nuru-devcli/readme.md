@@ -13,6 +13,8 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `check-version` | Verify version is ready to release — three-state publish gate, plus an honest prerelease-increment distance (warns when more than one ahead; `--strict` exits non-zero) | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
 | `release` | Cut a release: create tag `v{Version}` (from `source/Directory.Build.props`) and the GitHub Release, gated by working-tree/branch/sync/tag-availability/publish-state/CI-run/target-attestation guards; `--dry-run` runs every guard and previews the exact commands without creating anything | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
 | `audit` | Run this repo's fast pre-test checks, one line each with wall time, then a passed/failed summary; exits 1 when any check fails. With no checks it prints that there is nothing to run and exits 0. `ganda repo audit` runs it. See [Repo audit checks](#repo-audit-checks-dev-audit) | None (checks come from `DevAuditChecks.AddRepoChecks`) |
+| `benchmark list` | Print the repo's named benchmarks, one per line (`--json` for an array). Empty means the repo is not in a perf sweep. See [Benchmark contract](#benchmark-contract-dev-benchmark) | None (benchmarks come from `DevBenchmarks.AddRepoBenchmarks`) |
+| `benchmark run <name> --base <ref>` | Build and run the named benchmark at the base ref and at the working tree in the same run, then print one JSON verdict (`win`, `noise`, or `regression`) on stdout | None |
 
 ### Services
 
@@ -43,6 +45,14 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `IDevAuditCheck` / `DevAuditCheckResult` | One repo-specific `dev audit` check: `Name`, `RunAsync`, and `Pass(message?)` or `Fail(message)` |
 | `DevAuditChecks` | The `dev audit` registry. `All()` returns the checks the repo adds in its `AddRepoChecks` partial method; none by default |
 | `DevAuditRunner` (`DevAuditSummary`) | Runs the checks in order, prints the per-check lines and the summary, and returns the passed/failed counts and exit code |
+| `IDevBenchmark` / `IDevBenchmarkSide` / `DevBenchmarkTree` | One named `dev benchmark`: `PrepareAsync(tree)` builds it from a tree and returns a side whose `MeasureAsync` takes one sample (a cost; lower is better) |
+| `DevBenchmarks` | The `dev benchmark` registry. `All()` returns the benchmarks the repo adds in its `AddRepoBenchmarks` partial method; none by default |
+| `DevBenchmarkRunner` (`DevBenchmarkRunOptions`) | Prepares base and head, discards warmup rounds, takes interleaved samples (order alternates per round), and returns the comparison |
+| `BenchmarkComparison` (`BenchmarkVerdict`, `BenchmarkSideStatistics`) | Pure statistics: medians, MADs, the head/base ratio, the noise band, and the `win` / `noise` / `regression` verdict |
+| `DevBenchmarkResult` (`DevBenchmarkRevision`) | The `dev-benchmark/v1` JSON result and the stderr summary line |
+| `BenchmarkBaseCheckout` | Resolves `--base`, checks it out into a temporary detached worktree (hooks off), reads the head commit and dirty flag, and removes the worktree afterwards |
+| `ProcessInvocationBenchmark` | Opt-in ready-made benchmark (`content/any/benchmarks/`): publish a project (AOT by default) from each tree and time one process invocation per sample, in ms |
+| `ReportedMetricBenchmark` | Opt-in ready-made benchmark (`content/any/benchmarks/`): build a project or runfile from each tree, run it once per sample, and read the sample from a `key=value` stdout line |
 
 ## Configuration
 
@@ -271,6 +281,136 @@ resolve `IEnumerable<T>`, which rules out multi-registration. A repo without che
 nothing and the call compiles away. `AddRepoChecks` can be implemented only once per dev CLI;
 add every check there.
 
+## Benchmark contract (`dev benchmark`)
+
+Every TimeWarp repo answers the same perf-sweep questions the same way:
+
+| Command | Answer |
+|---------|--------|
+| `dev benchmark list` | The named benchmarks this repo offers. Nothing printed (exit 0) means the repo does not take part in a perf sweep |
+| `dev benchmark run <name> --base <git-ref>` | Is the working tree faster or slower than `<git-ref>` on this benchmark? One JSON object on stdout |
+
+DevCli owns both routes and the plumbing: checking out the base, building and running both
+sides, the ratio, the noise band and the verdict. A repo only names its benchmarks.
+
+### What `run` does
+
+1. Resolves `--base` with `git rev-parse --verify <ref>^{commit}`. It does not fetch, so run
+   `git fetch` first for `origin/master`. A branch, tag or SHA works.
+2. Checks the base out into a temporary detached `git worktree` under the system temp
+   directory, with repo hooks off. Head is the current working tree, uncommitted changes
+   included (`"dirty": true` in the result).
+3. Calls the benchmark's `PrepareAsync` for base, then for head. Build output goes to
+   `artifacts/benchmarks/<name>/base` and `/head`. The benchmark definition is the head's
+   code, applied to both trees, so it must build from any tree that has the paths it names.
+4. Takes `--warmup` rounds (default 3, discarded), then `--samples` rounds (default 30). Each
+   round measures base and head once; even rounds measure base first, odd rounds head first,
+   so drift on the machine hits both sides equally.
+5. Compares the two sides and removes the temporary worktree.
+
+Both sides run in one process on one machine, and only the ratio is compared. There is no
+stored absolute number: shared CI runners are too noisy for that.
+
+### Ratio, noise band, verdict
+
+A sample is a cost (a wall time, nanoseconds per call); lower is better.
+
+```
+spread(side) = 1.4826 * MAD / median        robust relative spread
+ratio        = median(head) / median(base)  below 1 is faster
+noiseBand    = max(noiseFloor, 3 * 1.2533 * sqrt(spread(base)^2 / n(base) + spread(head)^2 / n(head)))
+
+ratio < 1 - noiseBand  -> win
+ratio > 1 + noiseBand  -> regression
+otherwise              -> noise
+```
+
+The band is three standard errors of the relative difference between the medians.
+`--noise-floor` (default `0.02`, 2%) keeps two very quiet sides from calling a tiny change a
+win. Medians and MADs, not means, so one descheduled sample does not move the answer.
+
+### Output
+
+stdout carries only the result (schema `dev-benchmark/v1`); progress and one summary line go
+to stderr:
+
+```json
+{
+  "schema": "dev-benchmark/v1",
+  "benchmark": "aot-startup",
+  "unit": "ms",
+  "base": { "ref": "origin/master", "commit": "<sha>", "dirty": false, "median": 2.713, "mad": 0.1517, "samples": 30 },
+  "head": { "ref": "HEAD", "commit": "<sha>", "dirty": true, "median": 2.8074, "mad": 0.0828, "samples": 30 },
+  "ratio": 1.0348,
+  "noiseBand": 0.0788,
+  "verdict": "noise"
+}
+```
+
+Exit 0 means a verdict was produced, whatever it is; read `verdict`. Exit 1 means there is no
+verdict (unknown name, no `--base`, a ref that names no commit, a failed build, a failing
+sample) and nothing is written to stdout.
+
+### What a repo implements
+
+Implement `IDevBenchmark` (or use a ready-made one) in your own `tools/dev-cli`, and register
+it by implementing the `AddRepoBenchmarks` partial method once.
+
+The two ready-made benchmarks are opt-in. The package's props do not compile
+`content/any/benchmarks/`: each is an internal class that only your `AddRepoBenchmarks`
+constructs, so a repo that compiled one without constructing it would fail CA1812. Compile
+the ones you use:
+
+```xml
+<ItemGroup>
+  <Compile Include="$(NuruDevCliContentDirectory)benchmarks/process-invocation-benchmark.cs" />
+  <Compile Include="$(NuruDevCliContentDirectory)benchmarks/reported-metric-benchmark.cs" />
+</ItemGroup>
+```
+
+`NuruDevCliContentDirectory` is the package's `content/any/` folder, set by its props.
+Then register them:
+
+```csharp
+namespace DevCli;
+
+internal static partial class DevBenchmarks
+{
+  static partial void AddRepoBenchmarks(List<IDevBenchmark> benchmarks)
+  {
+    // Cold start: publish (AOT) from each tree, time one invocation per sample.
+    benchmarks.Add(new ProcessInvocationBenchmark(
+      name: "aot-startup",
+      description: "Cold start of an AOT-published sample app",
+      projectPath: "benchmarks/startup-app/startup-app.csproj",
+      executableName: "startup-app",
+      arguments: ["--version"]));
+
+    // In-process metric: build from each tree, run once per sample, read `key=value` from stdout.
+    benchmarks.Add(new ReportedMetricBenchmark(
+      name: "dispatch",
+      description: "Nanoseconds per dispatched call",
+      unit: "ns",
+      path: "benchmarks/dispatch/dispatch.cs",
+      assemblyName: "dispatch",
+      metricKey: "per-call-ns"));
+  }
+}
+```
+
+A custom benchmark implements `Name`, `Description`, `Unit`, and
+`PrepareAsync(DevBenchmarkTree tree, CancellationToken)`. `PrepareAsync` builds from
+`tree.Root` into `tree.OutputDirectory` and returns an `IDevBenchmarkSide` whose
+`MeasureAsync` returns one sample. Throw `InvalidOperationException` with a full message when
+the tree cannot be built or a sample fails. Keep one sample short (milliseconds to a second or
+two): the run takes `2 * (warmup + samples)` of them.
+
+The registry is a partial method for the same reasons as `DevAuditChecks` (see
+[Repo audit checks](#repo-audit-checks-dev-audit)): source-only, AOT-safe, no reflection or DI.
+A repo without benchmarks writes nothing.
+
+Bench runs stay off the pull request path. They are for a perf sweep or a manual check.
+
 ## Installation
 
 Add the package to your project:
@@ -312,6 +452,14 @@ await app.RunAsync(args);
 ```
 
 ## Migration Notes
+
+### 4.0.0-beta.17+: shared `dev benchmark` contract (kanban task 578)
+
+DevCli now owns `benchmark list` and `benchmark run`. A dev CLI with its own
+`[NuruRoute("benchmark")]` endpoint keeps compiling (the routes differ), but a perf sweep only
+reads the shared contract: register named benchmarks in `DevBenchmarks.AddRepoBenchmarks`
+(see [Benchmark contract](#benchmark-contract-dev-benchmark)) and retire stored absolute
+baselines.
 
 ### 4.0.0-beta.17+: shared `dev audit` endpoint (`audit-command.cs`, kanban task 600)
 
@@ -689,7 +837,9 @@ This package serves as a reference for creating your own reusable endpoint packa
 
 1. Create a project with `IncludeBuildOutput=false`
 2. Place endpoint files in `content/any/endpoints/`
-3. Place service files in `content/any/services/`
+3. Place service files in `content/any/services/`. Put a type only the consumer constructs
+   (such as this package's `content/any/benchmarks/`) in a folder the props do not compile,
+   so a consumer that does not use it does not fail CA1812
 4. Create a `.props` file in `build/` to include the content files
 5. Pack the project as a NuGet package
 

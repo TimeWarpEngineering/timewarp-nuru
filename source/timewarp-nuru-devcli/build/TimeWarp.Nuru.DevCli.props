@@ -9,6 +9,13 @@
     copied to the consuming project's directory structure during package install.
   -->
 
+  <PropertyGroup>
+    <!-- The package's content/any/ folder. A consumer compiles an opt-in file from it, such as a
+         ready-made benchmark under benchmarks/, with
+         <Compile Include="$(NuruDevCliContentDirectory)benchmarks/<file>.cs" />. -->
+    <NuruDevCliContentDirectory>$(MSBuildThisFileDirectory)../content/any/</NuruDevCliContentDirectory>
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- Include DevCli shared endpoint files -->
     <Compile Include="$(MSBuildThisFileDirectory)../content/any/endpoints/*.cs" 
@@ -16,6 +23,10 @@
     <!-- Include DevCli shared service files -->
     <Compile Include="$(MSBuildThisFileDirectory)../content/any/services/*.cs" 
              Visible="false" />
+    <!-- content/any/benchmarks/*.cs (ProcessInvocationBenchmark, ReportedMetricBenchmark) is
+         not compiled here. Each is an internal class only the repo's AddRepoBenchmarks constructs,
+         so compiling it in a repo that does not would fail CA1812 (kanban 578). A repo compiles
+         the ones it uses through $(NuruDevCliContentDirectory). -->
   </ItemGroup>
 
 </Project>

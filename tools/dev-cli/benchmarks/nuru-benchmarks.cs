@@ -12,6 +12,11 @@
 //   tests/benchmarks/aot-invocation-baseline.json, both deleted.
 // - operation-dispatch: builds benchmarks/operation-dispatch/operation-dispatch-overhead.cs
 //   and reads mediator-per-call-ns, the in-process cost of one mediator-dispatched call.
+// - startup-first-call and startup-warm-call (task 501): build
+//   benchmarks/startup-overhead/startup-overhead.cs. first-call-us is Nuru's own startup in a
+//   fresh JIT process (build, route, dispatch, JIT included; process start excluded).
+//   warm-call-ns is the same build and run after warm-up. aot-startup cannot see these: its
+//   ~3 ms is mostly process and runtime start.
 //
 // benchmarks/timewarp-nuru-benchmarks (BenchmarkDotNet, Nuru against other CLI
 // frameworks) and benchmarks/aot-benchmarks/run-benchmark.sh (hyperfine across
@@ -46,6 +51,30 @@ internal static partial class DevBenchmarks
         path: "benchmarks/operation-dispatch/operation-dispatch-overhead.cs",
         assemblyName: "operation-dispatch-overhead",
         metricKey: "mediator-per-call-ns"
+      )
+    );
+    benchmarks.Add
+    (
+      new ReportedMetricBenchmark
+      (
+        name: "startup-first-call",
+        description: "Nuru's in-process startup: first build and run in a fresh JIT process (startup-overhead.cs)",
+        unit: "us",
+        path: "benchmarks/startup-overhead/startup-overhead.cs",
+        assemblyName: "startup-overhead",
+        metricKey: "first-call-us"
+      )
+    );
+    benchmarks.Add
+    (
+      new ReportedMetricBenchmark
+      (
+        name: "startup-warm-call",
+        description: "One warm build and run of the cross-framework route (startup-overhead.cs)",
+        unit: "ns",
+        path: "benchmarks/startup-overhead/startup-overhead.cs",
+        assemblyName: "startup-overhead",
+        metricKey: "warm-call-ns"
       )
     );
   }

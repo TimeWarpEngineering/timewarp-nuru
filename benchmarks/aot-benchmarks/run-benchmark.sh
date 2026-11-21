@@ -1,11 +1,12 @@
 #!/bin/bash
 # AOT Benchmark: Compare all CLI frameworks
 # Run from benchmarks/aot-benchmarks directory
+# Every framework gets the same argv: --str hello -i 13 -b (task 501).
 
 cd "$(dirname "$0")"
 
 hyperfine --warmup 20 --runs 1000 -N \
-  -n 'ConsoleAppFramework' 'publish/bench-consoleappframework/bench-consoleappframework --str hello --i 13 --b' \
+  -n 'ConsoleAppFramework' 'publish/bench-consoleappframework/bench-consoleappframework --str hello -i 13 -b' \
   -n 'System.CommandLine' 'publish/bench-systemcommandline/bench-systemcommandline --str hello -i 13 -b' \
   -n 'CommandLineParser' 'publish/bench-commandlineparser/bench-commandlineparser --str hello -i 13 -b' \
   -n 'CoconaLite' 'publish/bench-coconalite/bench-coconalite --str hello -i 13 -b' \

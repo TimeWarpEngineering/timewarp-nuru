@@ -3,6 +3,26 @@
 ## Goal
 Make Nuru measurably faster than its peers wherever framework work (not process startup) is what is measured. Aim for the full builder (with Mediator) to start in single-digit ms. AOT launch time will stay about 3 ms, because that is the process-startup floor.
 
+## Goal (implementer restatement)
+
+Make the work Nuru itself does at startup (not process and runtime startup) cheaper and
+measurable, and prove each gain with the 578 `dev benchmark run <name> --base <ref>` verdict.
+
+Acceptance:
+
+- The benchmark suite measures Nuru fairly: the same argv for every framework (in-process and
+  AOT), honest labels, a warm steady-state job beside the cold-start job, and named `dev
+  benchmark` entries that isolate Nuru's in-process startup (first call in a fresh JIT process)
+  and its warm per-call cost.
+- Baseline numbers are recorded in Results before any emitter change.
+- Generated code skips work no route needs (configuration build, DI, tracked-disposal
+  teardown, the `--json-args` machinery) on the plain CLI path, without behavior change.
+- Matching avoids per-call allocations that can be compile-time constants.
+- The December 2025 "full builder with Mediator" regression is explained (and fixed or filed).
+- After numbers come from the `dev benchmark run ... --base master` verdict JSON, not hand-copied
+  timings. Items too large for this task are filed as follow-ups with the measured reason.
+- Build, touched test files, and `ganda repo audit` pass.
+
 ## Findings
 - Headline AOT launch numbers (benchmarks/aot-benchmarks/results/2026-01-21-aot-benchmark.md, .NET 10.0.2, hyperfine) are dominated by about 2.5-3 ms of process and runtime startup: ConsoleAppFramework 3.2 ± 0.6 ms, Nuru 3.2 ± 0.6 ms, System.CommandLine 3.8 ms. The ±0.6 ms noise hides Nuru's extra work.
 - In-process (benchmarks/timewarp-nuru-benchmarks/results/2025-12-20-analysis.md, BenchmarkDotNet cold start): Nuru takes 3.98 ms and 14.8 KB, against ConsoleAppFramework v5 at 0.79 ms and 288 B. That is about 5x the time and about 50x the memory. ConsoleAppFramework emits a bare synchronous argument loop. Nuru builds an app object, config, DI, an async path and a route table at startup.

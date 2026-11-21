@@ -1,11 +1,11 @@
 namespace TimeWarp.Nuru.Benchmarks.Commands;
 
 using CliFx;
-using CliFx.Attributes;
+using CliFx.Binding;
 using CliFx.Infrastructure;
 
 [Command]
-public class CliFxCommand : ICommand
+public partial class CliFxCommand : ICommand
 {
   [CommandOption("str", 's')]
   public string? StrOption { get; set; }

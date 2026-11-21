@@ -67,6 +67,7 @@ Acceptance:
 - 2026-11-14 groom: added Checklist and Depends on 578 so the speedups are measured through the shared benchmark contract.
 - 2026-11-17 groom: 567 (measurement bar) archived, covered by the tw-perf-sweep skill; the "after numbers" box now names the 578 verdict.
 - 2026-11-21 implement (ganda task work, implement oracle, Claude Opus 5.5): benchmark suite fixes in commit 5bebefd8, then signal, configuration and dispatch-split changes measured against it.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 28ec19d3-31b5-4e7e-930c-fcb89c5025ca, max-turns 500, Done — 2026-11-21T07:17:06Z
 
 ## Results
 

@@ -48,6 +48,9 @@
              Exclude="endpoints/clean-command.cs;endpoints/check-version-command.cs;endpoints/self-install-command.cs" />
     <Compile Remove="telemetry-proof/**" />
 
+    <!-- The repo's named benchmarks for `dev benchmark` (DevBenchmarks.AddRepoBenchmarks) -->
+    <Compile Include="benchmarks/**/*.cs" />
+
     <!-- Include shared DevCli endpoints from source-only project -->
     <Compile Include="../../source/timewarp-nuru-devcli/content/any/endpoints/*.cs" />
 

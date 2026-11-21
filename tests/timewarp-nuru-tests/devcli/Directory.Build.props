@@ -46,6 +46,14 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-check.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-checks.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-runner.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-benchmark.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-benchmarks.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/benchmark-comparison.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-benchmark-runner.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-benchmark-result.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/benchmark-base-checkout.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/process-invocation-benchmark.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/reported-metric-benchmark.cs" />
 
     <!-- check-version-command.cs (the [NuruRoute] endpoint) compiled ONLY here, not in
          tests/ci-tests: this directory's standalone runfiles are compiled one at a time,

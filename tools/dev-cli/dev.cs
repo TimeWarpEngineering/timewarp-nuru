@@ -32,6 +32,8 @@
 //   dev analyze            - Run Roslynator analysis and fixes
 //   dev self-install       - AOT compile and install dev CLI to ./bin
 //   dev audit              - Run repo pre-test checks (none registered here; ganda repo audit calls it)
+//   dev benchmark list     - List named benchmarks (tools/dev-cli/benchmarks/nuru-benchmarks.cs)
+//   dev benchmark run <name> --base <ref> - Same-run A/B against a base ref; JSON verdict on stdout
 //
 // Telemetry (tools/dev-cli/telemetry.md):
 //   UseTelemetry service name is the literal "timewarp-nuru-dev".

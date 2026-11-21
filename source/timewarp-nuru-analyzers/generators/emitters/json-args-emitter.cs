@@ -195,7 +195,10 @@ internal static partial class JsonArgsEmitter
     sb.AppendLine("      __jsonBuiltInOnly = __MatchesNoBodyBuiltIn(routeArgs);");
     sb.AppendLine("      if (!__jsonBuiltInOnly && !__jsonHelpToken)");
     sb.AppendLine("      {");
-    EmitParse(sb);
+    // The reader is its own method so a call without --json-args never JIT-compiles it (task 501).
+    sb.AppendLine($"        __jsonDoc = await {ReadMethodName}(app, __jsonArgsValue, fromRepl, cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine("        if (__jsonDoc is null)");
+    sb.AppendLine("          return 1;");
     sb.AppendLine("      }");
     sb.AppendLine("    }");
     sb.AppendLine();
@@ -226,8 +229,9 @@ internal static partial class JsonArgsEmitter
   }
 
   /// <summary>
-  /// When a JSON object is loaded, selects a route by literal count and binds it.
-  /// Always returns from the generated method on this path.
+  /// Emits the body of the JSON selection method: route selection, binding and the handler call.
+  /// It runs in its own generated method (see <c>InterceptorEmitter.EmitDeferredDispatchMethod</c>), which
+  /// owns <c>__jsonDoc</c> and always returns.
   /// </summary>
   public static void EmitDispatch(
     StringBuilder sb,
@@ -238,9 +242,8 @@ internal static partial class JsonArgsEmitter
     bool hasGeneratedMediator,
     bool forwardRoutes = false)
   {
-    sb.AppendLine("    if (__jsonDoc is not null)");
+    sb.AppendLine("    using (__jsonDoc)");
     sb.AppendLine("    {");
-    sb.AppendLine("      using (__jsonDoc)");
     sb.AppendLine("      {");
     sb.AppendLine("        global::System.Collections.Generic.Dictionary<string, global::System.Text.Json.JsonElement> __jsonMap = new(global::System.StringComparer.Ordinal);");
     sb.AppendLine("        foreach (global::System.Text.Json.JsonProperty __prop in __jsonDoc.RootElement.EnumerateObject())");

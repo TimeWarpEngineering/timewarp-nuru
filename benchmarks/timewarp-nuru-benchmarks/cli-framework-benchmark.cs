@@ -14,10 +14,10 @@ public class CliFrameworkBenchmark
 {
   private static readonly string[] Arguments = ["--str", "hello world", "-i", "13", "-b"];
 
-  [Benchmark(Description = "TimeWarp.Nuru")]
-  public async Task ExecuteWithNuru()
+  [Benchmark(Description = "TimeWarp.Nuru (CreateBuilder)")]
+  public Task<int> ExecuteWithNuru()
   {
-    await NuruDirectCommand.Execute(Arguments);
+    return NuruDirectCommand.Execute(Arguments);
   }
 
   [Benchmark(Description = "Cocona.Lite")]
@@ -41,7 +41,7 @@ public class CliFrameworkBenchmark
   [Benchmark(Description = "CliFx")]
   public ValueTask<int> ExecuteWithCliFx()
   {
-    return new CliApplicationBuilder().AddCommand(typeof(CliFxCommand)).Build().RunAsync(Arguments);
+    return new CommandLineApplicationBuilder().AddCommandsFromThisAssembly().Build().RunAsync(Arguments);
   }
 
   [Benchmark(Description = "System.CommandLine")]

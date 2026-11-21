@@ -2,23 +2,20 @@ namespace TimeWarp.Nuru.Benchmarks.Commands;
 
 using TimeWarp.Nuru;
 
+// Nuru's only builder is CreateBuilder: CreateSlimBuilder and CreateEmptyBuilder were removed in
+// January 2026, and the generator now emits only what the app uses. The route and argv match
+// every other framework in CliFrameworkBenchmark (task 501).
 public static class NuruDirectCommand
 {
-  // Cache the array since benchmark always uses the same arguments
-  private static readonly string[] CachedNuruArgs =
-    ["test", "--str", "hello world", "-i", "13", "-b"];
-
-  public static async Task Execute(string[] args)
+  public static Task<int> Execute(string[] args)
   {
-    // Use CreateBuilder for benchmark
     NuruApp app = NuruApp.CreateBuilder()
-      // Add a route that matches the benchmark arguments pattern
-      .Map("test --str {str} -i {intOption:int} -b")
-        .WithHandler((string str, int intOption) => 0)
+      .Map("--str {str} -i {i:int} -b")
+        .WithHandler((string str, int i) => { })
         .AsQuery()
         .Done()
       .Build();
 
-    await app.RunAsync(CachedNuruArgs);
+    return app.RunAsync(args);
   }
 }

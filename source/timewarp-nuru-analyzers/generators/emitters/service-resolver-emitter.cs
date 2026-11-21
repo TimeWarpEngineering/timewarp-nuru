@@ -56,8 +56,10 @@ internal static class ServiceResolverEmitter
     // (built by ConfigurationEmitter when AddConfiguration() is called)
     if (IsConfigurationType(typeName))
     {
-      sb.AppendLine(
-        $"{indent}{typeName} {varName} = configuration;");
+      // A parameter named configuration already holds it; redeclaring is CS0136/CS0165 (task 501).
+      if (CSharpIdentifierUtils.Bare(varName) != "configuration")
+        sb.AppendLine($"{indent}{typeName} {varName} = configuration;");
+
       return;
     }
 

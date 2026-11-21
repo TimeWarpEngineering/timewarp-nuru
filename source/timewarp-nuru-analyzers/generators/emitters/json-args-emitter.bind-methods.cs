@@ -108,9 +108,9 @@ internal static partial class JsonArgsEmitter
   }
 
   /// <summary>
-  /// Runs a request bound by <c>NuruApp.TryBind</c> (or renders its captured result) inside
-  /// ExecuteRouteAsync, after configuration, services and the command scope are set up.
-  /// Always returns from the generated method on this path.
+  /// Emits the body that runs a request bound by <c>NuruApp.TryBind</c> (or renders its captured result).
+  /// ExecuteRouteAsync calls it as its own generated method after configuration, services and the command
+  /// scope are set up (task 501). Every path returns or throws.
   /// </summary>
   public static void EmitInvocationDispatch(
     StringBuilder sb,
@@ -120,7 +120,6 @@ internal static partial class JsonArgsEmitter
     string? loggerFactoryFieldName,
     bool hasGeneratedMediator)
   {
-    sb.AppendLine("    if (__invocation is not null)");
     sb.AppendLine("    {");
     sb.AppendLine("      switch (__invocation.Request)");
     sb.AppendLine("      {");

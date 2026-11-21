@@ -1,25 +1,25 @@
 // AOT Benchmark: CliFx
-// Class-first framework for building CLIs
+// Class-first framework for building CLIs (CliFx 3: source-generated command descriptors)
 using CliFx;
-using CliFx.Attributes;
+using CliFx.Binding;
 using CliFx.Infrastructure;
 
-return await new CliApplicationBuilder()
-    .AddCommand<BenchCommand>()
+return await new CommandLineApplicationBuilder()
+    .AddCommandsFromThisAssembly()
     .Build()
     .RunAsync(args);
 
 [Command]
-public class BenchCommand : ICommand
+public partial class BenchCommand : ICommand
 {
     [CommandOption("str", 's')]
-    public string? Str { get; init; }
+    public string? Str { get; set; }
 
     [CommandOption("int", 'i')]
-    public int Int { get; init; }
+    public int Int { get; set; }
 
     [CommandOption("bool", 'b')]
-    public bool Bool { get; init; }
+    public bool Bool { get; set; }
 
     public ValueTask ExecuteAsync(IConsole console) => default;
 }

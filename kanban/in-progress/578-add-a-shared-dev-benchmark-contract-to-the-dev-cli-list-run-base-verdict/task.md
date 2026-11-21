@@ -67,6 +67,7 @@ Acceptance:
 - Implemented 2026-11-21 (ganda task work, implement oracle, Claude Opus 5.5).
 - Commit 7f1dfd2e: the post-commit `ganda repo attest` failed with "Text file busy" on `bin/dev`
   (the dev CLI binary was being replaced while in use); this follow-up commit re-runs the hook.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 8843d6fc-e0a0-4adc-97fc-ac45cef640e3, max-turns 500, Done — 2026-11-21T05:33:35Z
 
 ## Results
 

@@ -51,8 +51,8 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `BenchmarkComparison` (`BenchmarkVerdict`, `BenchmarkSideStatistics`) | Pure statistics: medians, MADs, the head/base ratio, the noise band, and the `win` / `noise` / `regression` verdict |
 | `DevBenchmarkResult` (`DevBenchmarkRevision`) | The `dev-benchmark/v1` JSON result and the stderr summary line |
 | `BenchmarkBaseCheckout` | Resolves `--base`, checks it out into a temporary detached worktree (hooks off), reads the head commit and dirty flag, and removes the worktree afterwards |
-| `ProcessInvocationBenchmark` | Ready-made benchmark: publish a project (AOT by default) from each tree and time one process invocation per sample, in ms |
-| `ReportedMetricBenchmark` | Ready-made benchmark: build a project or runfile from each tree, run it once per sample, and read the sample from a `key=value` stdout line |
+| `ProcessInvocationBenchmark` | Opt-in ready-made benchmark (`content/any/benchmarks/`): publish a project (AOT by default) from each tree and time one process invocation per sample, in ms |
+| `ReportedMetricBenchmark` | Opt-in ready-made benchmark (`content/any/benchmarks/`): build a project or runfile from each tree, run it once per sample, and read the sample from a `key=value` stdout line |
 
 ## Configuration
 
@@ -354,7 +354,22 @@ sample) and nothing is written to stdout.
 ### What a repo implements
 
 Implement `IDevBenchmark` (or use a ready-made one) in your own `tools/dev-cli`, and register
-it by implementing the `AddRepoBenchmarks` partial method once:
+it by implementing the `AddRepoBenchmarks` partial method once.
+
+The two ready-made benchmarks are opt-in. The package's props do not compile
+`content/any/benchmarks/`: each is an internal class that only your `AddRepoBenchmarks`
+constructs, so a repo that compiled one without constructing it would fail CA1812. Compile
+the ones you use:
+
+```xml
+<ItemGroup>
+  <Compile Include="$(NuruDevCliContentDirectory)benchmarks/process-invocation-benchmark.cs" />
+  <Compile Include="$(NuruDevCliContentDirectory)benchmarks/reported-metric-benchmark.cs" />
+</ItemGroup>
+```
+
+`NuruDevCliContentDirectory` is the package's `content/any/` folder, set by its props.
+Then register them:
 
 ```csharp
 namespace DevCli;
@@ -822,7 +837,9 @@ This package serves as a reference for creating your own reusable endpoint packa
 
 1. Create a project with `IncludeBuildOutput=false`
 2. Place endpoint files in `content/any/endpoints/`
-3. Place service files in `content/any/services/`
+3. Place service files in `content/any/services/`. Put a type only the consumer constructs
+   (such as this package's `content/any/benchmarks/`) in a folder the props do not compile,
+   so a consumer that does not use it does not fail CA1812
 4. Create a `.props` file in `build/` to include the content files
 5. Pack the project as a NuGet package
 

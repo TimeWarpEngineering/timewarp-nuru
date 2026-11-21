@@ -56,6 +56,11 @@
 
     <!-- Include shared DevCli services from source-only project -->
     <Compile Include="../../source/timewarp-nuru-devcli/content/any/services/*.cs" />
+
+    <!-- DevCli's ready-made benchmarks are opt-in (not in services/): benchmarks/nuru-benchmarks.cs
+         constructs both. A consumer of the package uses $(NuruDevCliContentDirectory)benchmarks/. -->
+    <Compile Include="../../source/timewarp-nuru-devcli/content/any/benchmarks/process-invocation-benchmark.cs" />
+    <Compile Include="../../source/timewarp-nuru-devcli/content/any/benchmarks/reported-metric-benchmark.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -68,6 +68,9 @@ Acceptance:
 - Commit 7f1dfd2e: the post-commit `ganda repo attest` failed with "Text file busy" on `bin/dev`
   (the dev CLI binary was being replaced while in use); this follow-up commit re-runs the hook.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 8843d6fc-e0a0-4adc-97fc-ac45cef640e3, max-turns 500, Done — 2026-11-21T05:33:35Z
+- Review round 1: grok session 01a1fc98-a2d9-7362-abfc-1bd422410c67 (2026-11-21), effort 3, roster general. Open finding M1. Disposition not written.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1fc98-a2d9-7362-abfc-1bd422410c67, max-turns 200, artifacts general.md, merged.md — 2026-11-21T05:47:59Z
+- Implement-fix-2 (review round 1 M1, Claude Opus 5.5, 2026-11-21): ready-made benchmarks moved to opt-in `content/any/benchmarks/`; consumer check now 0 warnings. See Results > Review round 1 fix.
 
 ## Results
 
@@ -87,7 +90,7 @@ Acceptance:
 - stdout is one `dev-benchmark/v1` JSON object; progress and a summary line go to stderr. Exit 0
   whenever a verdict exists; exit 1 with nothing on stdout when there is none.
 - Registry: `DevBenchmarks.AddRepoBenchmarks` partial method (same shape as `DevAuditChecks`).
-  Ready-made `ProcessInvocationBenchmark` (publish, AOT by default, time one process start) and
+  Opt-in ready-made (in `content/any/benchmarks/`, not compiled by the package props; see review round 1 fix) `ProcessInvocationBenchmark` (publish, AOT by default, time one process start) and
   `ReportedMetricBenchmark` (build, run, read a `key=value` stdout metric). Both pass
   `GeneratePackageOnBuild=false` because `-o` breaks packing of referenced packable projects.
 - Nuru registers `aot-startup` (bench-nuru, AOT, ms) and `operation-dispatch`
@@ -142,6 +145,50 @@ Expect:
 - `run nope` prints `Unknown benchmark 'nope'. Known: aot-startup, operation-dispatch` and exits 1.
 - `git worktree list` shows no `dev-benchmark-base-*` entry after a run.
 - The three test files pass (9, 9, 3).
+
+### Review round 1
+
+Effort 3, roster general. Counts: 1 open bug (M1), 0 fixed, 0 wontfix. Disposition is not written. M1: `ProcessInvocationBenchmark` and `ReportedMetricBenchmark` trip CA1812 in `tests/devcli-consumer-check` (samples-stage `dotnet build`). Paths: `review/review-framework.md`, `review/round-1/merged.md`.
+
+### Review round 1 fix (implement-fix-2)
+
+- M1 fixed. `process-invocation-benchmark.cs` and `reported-metric-benchmark.cs` moved
+  (`git mv`) from `content/any/services/` to `content/any/benchmarks/`, which
+  `build/TimeWarp.Nuru.DevCli.props` does not glob. The props now set
+  `NuruDevCliContentDirectory` (the package's `content/any/`), so a consumer compiles only the
+  ready-made benchmarks its `AddRepoBenchmarks` constructs:
+  `<Compile Include="$(NuruDevCliContentDirectory)benchmarks/<file>.cs" />`. CA1812 stays on;
+  no suppression and no dummy `new`.
+- `tools/dev-cli/Directory.Build.props` compiles both files by explicit path (Nuru constructs
+  both in `benchmarks/nuru-benchmarks.cs`). The two test `Directory.Build.props` files
+  (`tests/ci-tests`, `tests/timewarp-nuru-tests/devcli`) point at the new paths.
+- DevCli readme: services rows mark both types opt-in; "What a repo implements" shows the
+  `Compile Include`; the "Creating your own source-only package" steps say to keep
+  consumer-constructed types out of the props glob. Changelog entry updated.
+- Boy-scout: `ganda repo audit` failed `runfile-executable` on the three new
+  `tests/timewarp-nuru-tests/devcli/benchmark-0*.cs` runfiles (no executable bit);
+  `ganda repo audit --fix` set mode 100755.
+
+Fix-pass gates:
+
+- `./bin/dev build` -> Build succeeded, 0 warnings, 0 errors.
+- `dotnet build` in `tests/devcli-consumer-check` (the M1 gate, samples-stage consumer check) -> Build succeeded, 0 warnings, 0 errors (was 2 CA1812 errors).
+- `./bin/dev self-install` (tools/dev-cli props changed) -> installed; `./bin/dev benchmark list` prints `aot-startup` and `operation-dispatch`.
+- `dotnet run --file tests/timewarp-nuru-tests/devcli/benchmark-01-comparison.cs` -> 9/9 passed.
+- `dotnet run --file tests/timewarp-nuru-tests/devcli/benchmark-02-runner.cs` -> 9/9 passed.
+- `dotnet run --file tests/timewarp-nuru-tests/devcli/benchmark-03-base-checkout.cs` -> 3/3 passed.
+- `dotnet build tests/ci-tests/run-ci-tests.cs` (compile only; its props changed) -> succeeded.
+- `ganda repo audit` -> failed `runfile-executable` (3 files); `ganda repo audit --fix` -> "Repository passes all audit checks."
+
+Validate M1: `(cd tests/devcli-consumer-check && dotnet build --nologo -v q)` -> 0 warnings, 0 errors.
+
+## Learnings
+
+- Misread: the implementer restatement's acceptance line says the DevCli version is bumped so a release can be cut after merge. The original task does not require a bump. Publish stays on the checklist as a later `dev release`, which waits for an explicit ask. Staying on unreleased 4.0.0-beta.17 (latest tag v4.0.0-beta.16) matches the task. Not a product defect.
+
+## Review
+
+- Round 1: Blocked — open M1
 
 ## Notes
 

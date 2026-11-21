@@ -74,83 +74,100 @@ internal static partial class JsonArgsEmitter
     _ = ind;
   }
 
-  private static void EmitParse(StringBuilder sb)
+  /// <summary>Name of the shared <c>--json-args</c> reader <see cref="EmitReadMethod"/> emits.</summary>
+  public const string ReadMethodName = "__ReadJsonArgsAsync";
+
+  /// <summary>
+  /// Emits, once per generated class, the <c>--json-args</c> reader: stdin, <c>@path</c> or an inline
+  /// object, parsed to a JSON object document. It writes the error and returns null on failure.
+  /// </summary>
+  /// <remarks>
+  /// A separate method, not inline in ExecuteRouteAsync, so a run without <c>--json-args</c> neither
+  /// JIT-compiles it nor loads System.Text.Json (task 501).
+  /// </remarks>
+  public static void EmitReadMethod(StringBuilder sb)
   {
-    sb.AppendLine("        if (fromRepl && __jsonArgsValue == \"-\")");
-    sb.AppendLine("        {");
-    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args - is not available in the REPL. Use @path or a single-line '{\\\"…\\\"}'.\", null, null).ConfigureAwait(false);");
-    sb.AppendLine("          return 1;");
-    sb.AppendLine("        }");
+    sb.AppendLine($"  private static async global::System.Threading.Tasks.Task<global::System.Text.Json.JsonDocument?> {ReadMethodName}(NuruApp app, string __jsonArgsValue, bool fromRepl, global::System.Threading.CancellationToken cancellationToken)");
+    sb.AppendLine("  {");
+    sb.AppendLine("    if (fromRepl && __jsonArgsValue == \"-\")");
+    sb.AppendLine("    {");
+    sb.AppendLine("      await app.WriteBindErrorAsync(\"Error: --json-args - is not available in the REPL. Use @path or a single-line '{\\\"…\\\"}'.\", null, null).ConfigureAwait(false);");
+    sb.AppendLine("      return null;");
+    sb.AppendLine("    }");
     sb.AppendLine();
-    sb.AppendLine("        string __jsonText;");
-    sb.AppendLine("        if (__jsonArgsValue == \"-\")");
-    sb.AppendLine("        {");
-    sb.AppendLine("          if (!global::System.Console.IsInputRedirected)");
-    sb.AppendLine("          {");
-    sb.AppendLine("            await app.WriteBindErrorAsync(\"Error: --json-args - requires redirected stdin.\", null, null).ConfigureAwait(false);");
-    sb.AppendLine("            return 1;");
-    sb.AppendLine("          }");
+    sb.AppendLine("    string __jsonText;");
+    sb.AppendLine("    if (__jsonArgsValue == \"-\")");
+    sb.AppendLine("    {");
+    sb.AppendLine("      if (!global::System.Console.IsInputRedirected)");
+    sb.AppendLine("      {");
+    sb.AppendLine("        await app.WriteBindErrorAsync(\"Error: --json-args - requires redirected stdin.\", null, null).ConfigureAwait(false);");
+    sb.AppendLine("        return null;");
+    sb.AppendLine("      }");
     sb.AppendLine();
-    sb.AppendLine("          using global::System.IO.StreamReader __jsonReader = new(global::System.Console.OpenStandardInput(), global::System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);");
-    sb.AppendLine("          __jsonText = await __jsonReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);");
-    sb.AppendLine("          if (string.IsNullOrWhiteSpace(__jsonText))");
-    sb.AppendLine("          {");
-    sb.AppendLine("            await app.WriteBindErrorAsync(\"Error: --json-args - got empty stdin.\", null, null).ConfigureAwait(false);");
-    sb.AppendLine("            return 1;");
-    sb.AppendLine("          }");
-    sb.AppendLine("        }");
-    sb.AppendLine("        else if (__jsonArgsValue.StartsWith(\"@\", global::System.StringComparison.Ordinal))");
-    sb.AppendLine("        {");
-    sb.AppendLine("          string __jsonPath = __jsonArgsValue.Substring(1);");
-    sb.AppendLine("          if (__jsonPath.Contains(\"://\", global::System.StringComparison.Ordinal))");
-    sb.AppendLine("          {");
-    sb.AppendLine("            await app.WriteBindErrorAsync(\"Error: --json-args @path does not accept URIs.\", null, null).ConfigureAwait(false);");
-    sb.AppendLine("            return 1;");
-    sb.AppendLine("          }");
+    sb.AppendLine("      using global::System.IO.StreamReader __jsonReader = new(global::System.Console.OpenStandardInput(), global::System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);");
+    sb.AppendLine("      __jsonText = await __jsonReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);");
+    sb.AppendLine("      if (string.IsNullOrWhiteSpace(__jsonText))");
+    sb.AppendLine("      {");
+    sb.AppendLine("        await app.WriteBindErrorAsync(\"Error: --json-args - got empty stdin.\", null, null).ConfigureAwait(false);");
+    sb.AppendLine("        return null;");
+    sb.AppendLine("      }");
+    sb.AppendLine("    }");
+    sb.AppendLine("    else if (__jsonArgsValue.StartsWith(\"@\", global::System.StringComparison.Ordinal))");
+    sb.AppendLine("    {");
+    sb.AppendLine("      string __jsonPath = __jsonArgsValue.Substring(1);");
+    sb.AppendLine("      if (__jsonPath.Contains(\"://\", global::System.StringComparison.Ordinal))");
+    sb.AppendLine("      {");
+    sb.AppendLine("        await app.WriteBindErrorAsync(\"Error: --json-args @path does not accept URIs.\", null, null).ConfigureAwait(false);");
+    sb.AppendLine("        return null;");
+    sb.AppendLine("      }");
     sb.AppendLine();
-    sb.AppendLine("          if (__jsonPath == \"~\" || __jsonPath.StartsWith(\"~/\", global::System.StringComparison.Ordinal) || __jsonPath.StartsWith(\"~\\\\\", global::System.StringComparison.Ordinal))");
-    sb.AppendLine("          {");
-    sb.AppendLine("            string __home = global::System.Environment.GetFolderPath(global::System.Environment.SpecialFolder.UserProfile);");
-    sb.AppendLine("            __jsonPath = __jsonPath == \"~\" ? __home : global::System.IO.Path.Combine(__home, __jsonPath.Substring(2));");
-    sb.AppendLine("          }");
+    sb.AppendLine("      if (__jsonPath == \"~\" || __jsonPath.StartsWith(\"~/\", global::System.StringComparison.Ordinal) || __jsonPath.StartsWith(\"~\\\\\", global::System.StringComparison.Ordinal))");
+    sb.AppendLine("      {");
+    sb.AppendLine("        string __home = global::System.Environment.GetFolderPath(global::System.Environment.SpecialFolder.UserProfile);");
+    sb.AppendLine("        __jsonPath = __jsonPath == \"~\" ? __home : global::System.IO.Path.Combine(__home, __jsonPath.Substring(2));");
+    sb.AppendLine("      }");
     sb.AppendLine();
-    sb.AppendLine("          try");
-    sb.AppendLine("          {");
-    sb.AppendLine("            __jsonText = global::System.IO.File.ReadAllText(global::TimeWarp.Nuru.NuruCallContext.GetFullPath(__jsonPath), global::System.Text.Encoding.UTF8);");
-    sb.AppendLine("          }");
-    sb.AppendLine("          catch (global::System.Exception)");
-    sb.AppendLine("          {");
-    sb.AppendLine("            await app.WriteBindErrorAsync(\"Error: --json-args could not read '\" + __jsonPath + \"'.\", null, null).ConfigureAwait(false);");
-    sb.AppendLine("            return 1;");
-    sb.AppendLine("          }");
-    sb.AppendLine("        }");
-    sb.AppendLine("        else if (__jsonArgsValue.StartsWith(\"{\", global::System.StringComparison.Ordinal))");
-    sb.AppendLine("        {");
-    sb.AppendLine("          __jsonText = __jsonArgsValue;");
-    sb.AppendLine("        }");
-    sb.AppendLine("        else");
-    sb.AppendLine("        {");
-    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args value must be -, @path, or a JSON object.\", null, null).ConfigureAwait(false);");
-    sb.AppendLine("          return 1;");
-    sb.AppendLine("        }");
+    sb.AppendLine("      try");
+    sb.AppendLine("      {");
+    sb.AppendLine("        __jsonText = global::System.IO.File.ReadAllText(global::TimeWarp.Nuru.NuruCallContext.GetFullPath(__jsonPath), global::System.Text.Encoding.UTF8);");
+    sb.AppendLine("      }");
+    sb.AppendLine("      catch (global::System.Exception)");
+    sb.AppendLine("      {");
+    sb.AppendLine("        await app.WriteBindErrorAsync(\"Error: --json-args could not read '\" + __jsonPath + \"'.\", null, null).ConfigureAwait(false);");
+    sb.AppendLine("        return null;");
+    sb.AppendLine("      }");
+    sb.AppendLine("    }");
+    sb.AppendLine("    else if (__jsonArgsValue.StartsWith(\"{\", global::System.StringComparison.Ordinal))");
+    sb.AppendLine("    {");
+    sb.AppendLine("      __jsonText = __jsonArgsValue;");
+    sb.AppendLine("    }");
+    sb.AppendLine("    else");
+    sb.AppendLine("    {");
+    sb.AppendLine("      await app.WriteBindErrorAsync(\"Error: --json-args value must be -, @path, or a JSON object.\", null, null).ConfigureAwait(false);");
+    sb.AppendLine("      return null;");
+    sb.AppendLine("    }");
     sb.AppendLine();
-    sb.AppendLine("        try");
-    sb.AppendLine("        {");
-    sb.AppendLine("          __jsonDoc = global::System.Text.Json.JsonDocument.Parse(__jsonText);");
-    sb.AppendLine("        }");
-    sb.AppendLine("        catch (global::System.Text.Json.JsonException)");
-    sb.AppendLine("        {");
-    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args value is not valid JSON.\", null, null).ConfigureAwait(false);");
-    sb.AppendLine("          return 1;");
-    sb.AppendLine("        }");
+    sb.AppendLine("    global::System.Text.Json.JsonDocument __jsonDoc;");
+    sb.AppendLine("    try");
+    sb.AppendLine("    {");
+    sb.AppendLine("      __jsonDoc = global::System.Text.Json.JsonDocument.Parse(__jsonText);");
+    sb.AppendLine("    }");
+    sb.AppendLine("    catch (global::System.Text.Json.JsonException)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      await app.WriteBindErrorAsync(\"Error: --json-args value is not valid JSON.\", null, null).ConfigureAwait(false);");
+    sb.AppendLine("      return null;");
+    sb.AppendLine("    }");
     sb.AppendLine();
-    sb.AppendLine("        if (__jsonDoc.RootElement.ValueKind != global::System.Text.Json.JsonValueKind.Object)");
-    sb.AppendLine("        {");
-    sb.AppendLine("          __jsonDoc.Dispose();");
-    sb.AppendLine("          __jsonDoc = null;");
-    sb.AppendLine("          await app.WriteBindErrorAsync(\"Error: --json-args value must be a JSON object.\", global::TimeWarp.Nuru.NuruBindErrorKind.NotAnObject, null).ConfigureAwait(false);");
-    sb.AppendLine("          return 1;");
-    sb.AppendLine("        }");
+    sb.AppendLine("    if (__jsonDoc.RootElement.ValueKind != global::System.Text.Json.JsonValueKind.Object)");
+    sb.AppendLine("    {");
+    sb.AppendLine("      __jsonDoc.Dispose();");
+    sb.AppendLine("      await app.WriteBindErrorAsync(\"Error: --json-args value must be a JSON object.\", global::TimeWarp.Nuru.NuruBindErrorKind.NotAnObject, null).ConfigureAwait(false);");
+    sb.AppendLine("      return null;");
+    sb.AppendLine("    }");
+    sb.AppendLine();
+    sb.AppendLine("    return __jsonDoc;");
+    sb.AppendLine("  }");
+    sb.AppendLine();
   }
 
   private static void EmitBuiltInPredicate(StringBuilder sb, AppModel app)

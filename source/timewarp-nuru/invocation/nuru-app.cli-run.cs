@@ -5,9 +5,16 @@
 #region Design
 // Generated RunAsync_Intercepted calls RunCliAsync around ExecuteRouteAsync. ExecuteAsync and
 // InvokeAsync do not, so a daemon or MCP host still sees handler exceptions.
-// Ctrl+C is Terminal.CancelKeyPress (what TestTerminal raises) and Posix SIGINT. SIGTERM is the
-// same wait with exit code 143. One signal arms one timeout; a second signal does not restart it.
-// On Linux, Ctrl+C raises both, so the arm flag collapses them. The wait is Task.Delay, not a wait
+// Ctrl+C is Posix SIGINT, and Terminal.CancelKeyPress for any terminal but the console (TestTerminal
+// raises it). Ctrl+Break (SIGQUIT) is a Ctrl+C. SIGTERM is the same wait with exit code 143. One
+// signal arms one timeout; a second signal does not restart it. The arm flag collapses a signal that
+// arrives twice. The console terminal (TimeWarpTerminal) forwards CancelKeyPress to
+// Console.CancelKeyPress, whose first subscription initializes the console: about 5 ms on a cold
+// Linux start, more than the rest of a run (task 501). Console.CancelKeyPress is SIGINT and SIGQUIT,
+// so the Posix registrations already cover it; it is used only when they fail. The Posix registrations
+// are process-wide: created by the first CLI run and kept, so a run does not pay to create and dispose
+// three of them (about 2 µs per warm run, task 501). A signal goes to every run in progress. With none
+// in progress nothing sets Cancel and the default action runs, as it did with no registration. The wait is Task.Delay, not a wait
 // inside the signal handler. Null ProcessTerminationTimeout skips registration and passes
 // CancellationToken.None. The exception handler stays on.
 // While a REPL session owns the signal, this registration does not cancel and does not set
@@ -28,6 +35,14 @@ public partial class NuruApp
 {
   private const int SigintExitCode = 130;
   private const int SigtermExitCode = 143;
+
+  // Process-wide Posix registrations and the runs they signal (see Design).
+  private static readonly Lock SignalGate = new();
+  private static Func<int, bool>[] SignalRuns = [];
+  private static bool SignalsRegistered;
+  private static PosixSignalRegistration? InterruptRegistration;
+  private static PosixSignalRegistration? QuitRegistration;
+  private static PosixSignalRegistration? TerminateRegistration;
 
   /// <summary>
   /// Runs one CLI <see cref="RunAsync"/> call: signal handling, then <paramref name="execute"/>.
@@ -113,14 +128,18 @@ public partial class NuruApp
         eventArgs.Cancel = true;
     }
 
-    PosixSignalRegistration? interrupt = null;
-    PosixSignalRegistration? terminate = null;
+    Func<int, bool> arm = TryArm;
     Task<int>? run = null;
-    app.Terminal.CancelKeyPress += OnCancelKeyPress;
+    ITerminal terminal = app.Terminal;
+    bool keyPressSubscribed = false;
     try
     {
-      interrupt = TryRegister(PosixSignal.SIGINT, () => TryArm(SigintExitCode));
-      terminate = TryRegister(PosixSignal.SIGTERM, () => TryArm(SigtermExitCode));
+      bool ctrlCSignalled = EnterSignalScope(arm);
+      if (terminal is not TimeWarpTerminal || !ctrlCSignalled)
+      {
+        terminal.CancelKeyPress += OnCancelKeyPress;
+        keyPressSubscribed = true;
+      }
 
       run = execute(app, args, signalSource.Token);
       Task<int> winner = await Task.WhenAny(run, forced.Task).ConfigureAwait(false);
@@ -140,9 +159,10 @@ public partial class NuruApp
     }
     finally
     {
-      app.Terminal.CancelKeyPress -= OnCancelKeyPress;
-      interrupt?.Dispose();
-      terminate?.Dispose();
+      if (keyPressSubscribed)
+        terminal.CancelKeyPress -= OnCancelKeyPress;
+
+      ExitSignalScope(arm);
       await delayCancellation.CancelAsync().ConfigureAwait(false);
       delayCancellation.Dispose();
       runCancellation?.Dispose();
@@ -170,13 +190,58 @@ public partial class NuruApp
     }
   }
 
-  private static PosixSignalRegistration? TryRegister(PosixSignal signal, Func<bool> arm)
+  /// <summary>
+  /// Adds a run to the signalled runs, registering the process-wide Posix handlers on first use.
+  /// </summary>
+  /// <returns>True when SIGINT and SIGQUIT are registered, so Ctrl+C and Ctrl+Break reach the run.</returns>
+  private static bool EnterSignalScope(Func<int, bool> arm)
+  {
+    lock (SignalGate)
+    {
+      if (!SignalsRegistered)
+      {
+        SignalsRegistered = true;
+        InterruptRegistration = TryRegister(PosixSignal.SIGINT, SigintExitCode);
+        QuitRegistration = TryRegister(PosixSignal.SIGQUIT, SigintExitCode);
+        TerminateRegistration = TryRegister(PosixSignal.SIGTERM, SigtermExitCode);
+      }
+
+      Func<int, bool>[] runs = new Func<int, bool>[SignalRuns.Length + 1];
+      SignalRuns.CopyTo(runs, 0);
+      runs[^1] = arm;
+      Volatile.Write(ref SignalRuns, runs);
+      return InterruptRegistration is not null && QuitRegistration is not null;
+    }
+  }
+
+  /// <summary>Removes a run added by <see cref="EnterSignalScope"/>.</summary>
+  private static void ExitSignalScope(Func<int, bool> arm)
+  {
+    lock (SignalGate)
+    {
+      int index = Array.IndexOf(SignalRuns, arm);
+      if (index < 0)
+        return;
+
+      Func<int, bool>[] runs = new Func<int, bool>[SignalRuns.Length - 1];
+      Array.Copy(SignalRuns, 0, runs, 0, index);
+      Array.Copy(SignalRuns, index + 1, runs, index, runs.Length - index);
+      Volatile.Write(ref SignalRuns, runs);
+    }
+  }
+
+  private static PosixSignalRegistration? TryRegister(PosixSignal signal, int exitCode)
   {
     try
     {
       return PosixSignalRegistration.Create(signal, context =>
       {
-        if (arm())
+        // Every run in progress arms; any that takes the signal cancels the default action.
+        bool cancel = false;
+        foreach (Func<int, bool> arm in Volatile.Read(ref SignalRuns))
+          cancel |= arm(exitCode);
+
+        if (cancel)
           context.Cancel = true;
       });
     }

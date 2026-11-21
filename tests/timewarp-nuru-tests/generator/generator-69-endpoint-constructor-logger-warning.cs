@@ -219,7 +219,8 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen69EndpointConstructorLoggerWarning
 
       run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
       // The service field reads the running app's factory, which this app passes in (task 544).
-      run.GeneratedSource.ShouldContain("EnsureServicesInitialized(app, configuration, __loggerFactory);");
+      // Nothing reads configuration, so it is null (task 501).
+      run.GeneratedSource.ShouldContain("EnsureServicesInitialized(app, null, __loggerFactory);");
       run.GeneratedSource.ShouldContain("__fw_ILogger_Gen69Service = (__nuruLoggerFactory?.CreateLogger<global::Gen69Service>()");
       run.GeneratedSource.ShouldNotContain("NullLoggerFactory.Instance.CreateLogger<global::Gen69Service>()");
       run.GeneratorDiagnostics.Any(static d => d.Id == "NURU_H007").ShouldBeFalse(Describe(run.GeneratorDiagnostics));
@@ -251,7 +252,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen69EndpointConstructorLoggerWarning
       GeneratorRun run = Run(Source);
 
       run.CompileErrors.ShouldBeEmpty(Describe(run.CompileErrors));
-      run.GeneratedSource.ShouldContain("EnsureServicesInitialized(app, configuration, app.LoggerFactory);");
+      run.GeneratedSource.ShouldContain("EnsureServicesInitialized(app, null, app.LoggerFactory);");
       run.GeneratedSource.ShouldContain("__fw_ILogger_Gen69Service = (__nuruLoggerFactory?.CreateLogger<global::Gen69Service>()");
       run.GeneratorDiagnostics.Any(static d => d.Id == "NURU_H007").ShouldBeFalse(Describe(run.GeneratorDiagnostics));
 

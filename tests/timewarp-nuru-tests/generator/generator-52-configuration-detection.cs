@@ -7,6 +7,8 @@
 // Task 321: full configuration sources are emitted only for AddConfiguration(),
 // a constructor parameter of type IConfiguration, IConfigurationRoot, or IOptions<T>,
 // or such a parameter on a handler.
+// Task 501: otherwise a blank root is built only when generated code reads it or a container
+// (generated mediator, runtime DI) can hand IConfiguration out. A plain app builds none.
 #endregion
 
 #if !JARIBU_MULTI
@@ -73,7 +75,17 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
       generatedSource.ShouldNotContain(FullMarker);
     }
 
-    public static async Task NoConfigurationUsage_Should_EmitMinimalConfiguration()
+    // Task 501: nothing reads configuration, so no root is built and services get null.
+    private static void ShouldEmitNone(string source)
+    {
+      string generatedSource = GeneratedSource(RunNuruGenerator(source));
+      generatedSource.ShouldNotContain(FullMarker);
+      generatedSource.ShouldNotContain(MinimalMarker);
+      generatedSource.ShouldNotContain("ConfigurationBuilder()");
+      generatedSource.ShouldContain("EnsureServicesInitialized(app, null);");
+    }
+
+    public static async Task NoConfigurationUsage_Should_EmitNoConfiguration()
     {
       const string Source = """
         using TimeWarp.Nuru;
@@ -88,7 +100,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
         return await app.RunAsync(args);
         """;
 
-      ShouldEmitMinimal(Source);
+      ShouldEmitNone(Source);
       await Task.CompletedTask;
     }
 
@@ -216,7 +228,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
       await Task.CompletedTask;
     }
 
-    public static async Task LambdaIOptionsSnapshot_Should_EmitMinimalConfiguration()
+    public static async Task LambdaIOptionsSnapshot_Should_EmitNoConfiguration()
     {
       const string Source = """
         using Microsoft.Extensions.Options;
@@ -237,7 +249,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
         }
         """;
 
-      ShouldEmitMinimal(Source);
+      ShouldEmitNone(Source);
       await Task.CompletedTask;
     }
 
@@ -266,7 +278,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
       await Task.CompletedTask;
     }
 
-    public static async Task UnrelatedIConfigurationHelper_Should_EmitMinimalConfiguration()
+    public static async Task UnrelatedIConfigurationHelper_Should_EmitNoConfiguration()
     {
       const string Source = """
         using Microsoft.Extensions.Configuration;
@@ -284,7 +296,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
         return await app.RunAsync(args);
         """;
 
-      ShouldEmitMinimal(Source);
+      ShouldEmitNone(Source);
       await Task.CompletedTask;
     }
 
@@ -448,7 +460,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
       await Task.CompletedTask;
     }
 
-    public static async Task HandleMethodWithoutNuruInterface_Should_EmitMinimalConfiguration()
+    public static async Task HandleMethodWithoutNuruInterface_Should_EmitNoConfiguration()
     {
       const string Source = """
         using Microsoft.Extensions.Configuration;
@@ -469,7 +481,7 @@ namespace TimeWarp.Nuru.Tests.Generator.Gen52ConfigurationDetection
         }
         """;
 
-      ShouldEmitMinimal(Source);
+      ShouldEmitNone(Source);
       await Task.CompletedTask;
     }
   }

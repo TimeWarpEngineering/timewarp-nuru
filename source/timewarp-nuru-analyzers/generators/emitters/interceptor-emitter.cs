@@ -91,6 +91,7 @@ internal static partial class InterceptorEmitter
     }
 
     BehaviorEmitter.EmitBehaviorFields(sb, allBehaviors, allServices, currentAppLoggerFactory);
+    JsonArgsEmitter.EmitReadMethod(sb);
 
     // Emit per-app interceptor methods
     // A Build() site is emitted once even when two app models share it.
@@ -308,10 +309,12 @@ internal static partial class InterceptorEmitter
     // Method body with this app's routes only
     // Note: LoggerFactory is static and should NOT be disposed after each command
     // (this would break REPL mode). Disposal happens at app shutdown via NuruApp.
-    EmitMethodBody(sb, app, appIndex, model, loggerFactoryFieldName);
+    StringBuilder deferred = new();
+    EmitMethodBody(sb, deferred, app, appIndex, model, loggerFactoryFieldName);
 
     sb.AppendLine("  }");
     sb.AppendLine();
+    sb.Append(deferred);
 
     // Public bind and invoke: NuruApp.TryBind / InvokeAsync / RenderAsync.
     JsonArgsEmitter.EmitBindMethods(sb, RoutesInIndexOrder(app, model), app, methodSuffix);

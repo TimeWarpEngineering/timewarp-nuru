@@ -8,7 +8,11 @@ using System.Text;
 
 internal static partial class InterceptorEmitter
 {
-  private static void EmitMethodBody(StringBuilder sb, AppModel app, int appIndex, GeneratorModel model, string? loggerFactoryFieldName)
+  /// <summary>
+  /// Emits ExecuteRouteAsync's body into <paramref name="sb"/>, and into <paramref name="deferred"/> the
+  /// class-level dispatch methods it calls (<see cref="EmitDeferredDispatchMethod"/>).
+  /// </summary>
+  private static void EmitMethodBody(StringBuilder sb, StringBuilder deferred, AppModel app, int appIndex, GeneratorModel model, string? loggerFactoryFieldName)
   {
     // Peel --json-args before the command scope so the REPL host check sees routeArgs
     // (config args stripped), including AutoStartWhenEmpty on an empty route.
@@ -27,28 +31,33 @@ internal static partial class InterceptorEmitter
     JsonArgsEmitter.EmitPrepare(sb, app, allRoutesOrdered);
 
     // Full sources when AddConfiguration() ran or a handler takes configuration.
-    // A blank root still satisfies EnsureServicesInitialized.
     // Built after EmitPrepare: AddCommandLine reads only the overrides the route filter dropped.
+    // Otherwise a blank root, and only when generated code reads it (task 501). A container
+    // (generated mediator or runtime DI) can hand IConfiguration to any type, so it always gets one.
+    int blankConfigurationAt = -1;
     if (app.HasConfiguration)
     {
       ConfigurationEmitter.Emit(sb);
     }
+    else if (model.SourceGenDIRequiresMediator || model.UsesMicrosoftDependencyInjection)
+    {
+      EmitBlankConfiguration(sb);
+    }
     else
     {
-      sb.AppendLine("    // Minimal configuration for service initialization");
-      sb.AppendLine("    global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration =");
-      sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");
+      blankConfigurationAt = sb.Length;
     }
 
     // The REPL host must not open a command scope. Nested commands open their own.
     // await using disposes that scope on every later return, including early exits.
     string enteringRepl = EnteringReplExpression(app);
-    sb.AppendLine("    // Initialize services with app and configuration");
+    sb.AppendLine("    // Initialize services with the running app");
     sb.AppendLine($"    bool __enteringRepl = __invocation is null && ({enteringRepl});");
     string scopeSuffix = model.Apps.Length > 1 ? $"_{appIndex}" : "";
+    string configurationArgument = blankConfigurationAt < 0 ? "configuration" : ConfigurationArgumentPlaceholder;
     string ensureArgs = model.Apps.Any(HasLoggerFactorySource)
-      ? $"app, configuration, {loggerFactoryFieldName ?? "null"}"
-      : "app, configuration";
+      ? $"app, {configurationArgument}, {loggerFactoryFieldName ?? "null"}"
+      : $"app, {configurationArgument}";
     if (app.UseMicrosoftDependencyInjection)
     {
       sb.AppendLine($"    EnsureServicesInitialized({ensureArgs});");
@@ -75,10 +84,21 @@ internal static partial class InterceptorEmitter
     IEnumerable<RouteDefinition> allRoutes = app.RoutesBySpecificity.Concat(endpointsForApp);
 
     // A request bound by NuruApp.TryBind runs here, after services and the command scope.
-    JsonArgsEmitter.EmitInvocationDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);
-
     // JSON selection returns. Calls without --json-args leave __jsonDoc null and fall through.
-    JsonArgsEmitter.EmitDispatch(sb, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null);
+    // Both run in their own methods: a plain argv run then JIT-compiles neither (task 501).
+    StringBuilder invocationBody = new();
+    JsonArgsEmitter.EmitInvocationDispatch(invocationBody, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator);
+    StringBuilder jsonBody = new();
+    JsonArgsEmitter.EmitDispatch(jsonBody, allRoutesOrdered, app, methodSuffix, loggerFactoryFieldName, model.HasGeneratedMediator, forwardRoutes: app.ServeRoute is not null);
+    string forwardArgument = app.ServeRoute is not null ? ", __forwardMode" : "";
+    sb.AppendLine("    if (__invocation is not null)");
+    sb.AppendLine($"      return await {InvocationDispatchMethodName}{methodSuffix}(app, args, routeArgs, cancellationToken, fromRepl, {configurationArgument}, __invocation{forwardArgument}).ConfigureAwait(false);");
+    sb.AppendLine();
+    sb.AppendLine("    if (__jsonDoc is not null)");
+    sb.AppendLine($"      return await {JsonDispatchMethodName}{methodSuffix}(app, args, routeArgs, cancellationToken, fromRepl, {configurationArgument}, __jsonDoc{forwardArgument}).ConfigureAwait(false);");
+    sb.AppendLine();
+    EmitDeferredDispatchMethod(deferred, InvocationDispatchMethodName + methodSuffix, "global::TimeWarp.Nuru.NuruInvocation __invocation", app, invocationBody);
+    EmitDeferredDispatchMethod(deferred, JsonDispatchMethodName + methodSuffix, "global::System.Text.Json.JsonDocument __jsonDoc", app, jsonBody);
 
     // Route matchers record an option-shaped token no route declares; the no-match fallback names it.
     sb.AppendLine("    string? __unknownOption = null;");
@@ -120,7 +140,96 @@ internal static partial class InterceptorEmitter
 
     // No match fallback
     EmitNoMatch(sb);
+
+    if (blankConfigurationAt >= 0)
+      ResolveBlankConfiguration(sb, blankConfigurationAt, invocationBody.ToString(), jsonBody.ToString());
   }
+
+  private const string InvocationDispatchMethodName = "__DispatchInvocationAsync";
+  private const string JsonDispatchMethodName = "__DispatchJsonArgsAsync";
+
+  /// <summary>
+  /// Emits a class-level method that holds dispatch code ExecuteRouteAsync used to hold inline.
+  /// </summary>
+  /// <remarks>
+  /// The JIT compiles a whole async state machine on first call. The <c>NuruApp.InvokeAsync</c> switch and the
+  /// <c>--json-args</c> selection each repeat every handler call, so inline they made the first argv run pay to
+  /// compile code it never runs, and load System.Text.Json (task 501). The parameters are the
+  /// ExecuteRouteAsync locals handler and binding code reads. <c>configuration</c> is null when the app
+  /// reads none (<see cref="ResolveBlankConfiguration"/>). Every path in <paramref name="body"/> returns or throws.
+  /// AsyncLocal state the caller set flows in; ExecuteRouteAsync returns this method's result unchanged.
+  /// </remarks>
+  private static void EmitDeferredDispatchMethod(StringBuilder deferred, string methodName, string subjectParameter, AppModel app, StringBuilder body)
+  {
+    string forwardParameter = app.ServeRoute is not null ? ", global::TimeWarp.Nuru.NuruForwardMode __forwardMode" : "";
+    deferred.AppendLine($"  private static async Task<int> {methodName}");
+    deferred.AppendLine("  (");
+    deferred.AppendLine("    NuruApp app,");
+    deferred.AppendLine("    string[] args,");
+    deferred.AppendLine("    string[] routeArgs,");
+    deferred.AppendLine("    global::System.Threading.CancellationToken cancellationToken,");
+    deferred.AppendLine("    bool fromRepl,");
+    deferred.AppendLine("    global::Microsoft.Extensions.Configuration.IConfigurationRoot? configuration,");
+    deferred.AppendLine($"    {subjectParameter}{forwardParameter}");
+    deferred.AppendLine("  )");
+    deferred.AppendLine("  {");
+    deferred.Append(body);
+    deferred.AppendLine("  }");
+    deferred.AppendLine();
+  }
+
+  // Stands in for EnsureServicesInitialized's configuration argument until the body is complete.
+  private const string ConfigurationArgumentPlaceholder = "\u0001NuruConfigurationArgument\u0001";
+
+  private static void EmitBlankConfiguration(StringBuilder sb)
+  {
+    sb.AppendLine("    // Minimal configuration for service initialization");
+    sb.AppendLine("    global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration =");
+    sb.AppendLine("      new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();");
+  }
+
+  /// <summary>
+  /// Inserts the blank configuration root at <paramref name="start"/> when the body emitted since then, or a
+  /// deferred dispatch body, reads <c>configuration</c>; otherwise null is passed and nothing is built.
+  /// </summary>
+  /// <remarks>
+  /// Building a blank root loads Microsoft.Extensions.Configuration and costs about 1 ms on a cold JIT
+  /// start and about 0.5 µs per warm call (task 501). The scan is conservative: a comment or string that
+  /// contains the word keeps the root, which is the previous behavior.
+  /// </remarks>
+  private static void ResolveBlankConfiguration(StringBuilder sb, int start, params string[] deferredBodies)
+  {
+    string body = sb.ToString(start, sb.Length - start);
+    bool readsConfiguration = ReadsIdentifier(body.Replace(ConfigurationArgumentPlaceholder, string.Empty, StringComparison.Ordinal), "configuration")
+      || deferredBodies.Any(deferredBody => ReadsIdentifier(deferredBody, "configuration"));
+    sb.Replace(ConfigurationArgumentPlaceholder, readsConfiguration ? "configuration" : "null", start, sb.Length - start);
+    if (!readsConfiguration)
+      return;
+
+    StringBuilder declaration = new();
+    EmitBlankConfiguration(declaration);
+    sb.Insert(start, declaration.ToString());
+  }
+
+  /// <summary>True when <paramref name="text"/> contains <paramref name="identifier"/> as a whole token not after a dot.</summary>
+  internal static bool ReadsIdentifier(string text, string identifier)
+  {
+    int index = 0;
+    while ((index = text.IndexOf(identifier, index, StringComparison.Ordinal)) >= 0)
+    {
+      int end = index + identifier.Length;
+      bool startsToken = index == 0 || !(IsIdentifierChar(text[index - 1]) || text[index - 1] == '.');
+      bool endsToken = end == text.Length || !IsIdentifierChar(text[end]);
+      if (startsToken && endsToken)
+        return true;
+
+      index = end;
+    }
+
+    return false;
+  }
+
+  private static bool IsIdentifierChar(char c) => char.IsLetterOrDigit(c) || c == '_';
 
   /// <summary>
   /// For an <c>[Exclusive]</c> / <c>.Exclusive()</c> route, takes the app's exclusive gate before the

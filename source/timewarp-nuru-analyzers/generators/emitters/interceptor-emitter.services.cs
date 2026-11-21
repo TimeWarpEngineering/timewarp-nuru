@@ -296,14 +296,15 @@ internal static partial class InterceptorEmitter
       : ", global::Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory";
     string loggerFactoryArgument = loggerFactoryFieldName is null ? "" : ", loggerFactory";
 
-    sb.AppendLine($"  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration{loggerFactoryParameter})");
+    // configuration is null when the running app reads none (task 501); see ResolveBlankConfiguration.
+    sb.AppendLine($"  private static void EnsureServicesInitialized(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot? configuration{loggerFactoryParameter})");
     sb.AppendLine("  {");
     // Concurrent first calls (a daemon or MCP host) must not set up an app twice.
     sb.AppendLine("    lock (__nuruInitLock)");
     sb.AppendLine($"      EnsureServicesInitializedLocked(app, configuration{loggerFactoryArgument});");
     sb.AppendLine("  }");
     sb.AppendLine();
-    sb.AppendLine($"  private static void EnsureServicesInitializedLocked(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot configuration{loggerFactoryParameter})");
+    sb.AppendLine($"  private static void EnsureServicesInitializedLocked(NuruApp app, global::Microsoft.Extensions.Configuration.IConfigurationRoot? configuration{loggerFactoryParameter})");
     sb.AppendLine("  {");
     sb.AppendLine("    if (__fw_NuruApp == app)");
     sb.AppendLine("      return;");
@@ -338,6 +339,9 @@ internal static partial class InterceptorEmitter
       string initExpr = LoggerExpressions.IsLoggingServiceType(frameworkType)
         ? LoggerExpressions.Resolve(frameworkType, loggerFactoryFieldName)
         : FrameworkServices.GetInitExpression(frameworkType);
+      if (initExpr == "configuration")
+        initExpr = "configuration ?? new global::Microsoft.Extensions.Configuration.ConfigurationBuilder().Build()";
+
       sb.AppendLine($"    {fieldName} = {initExpr};");
     }
 

@@ -34,6 +34,8 @@ class Program
     // Warm: steady-state cost of one parse and dispatch after JIT and warm-up (task 501).
     config = config.AddJob(Job.Default
                      .WithStrategy(RunStrategy.Throughput)
+                     .WithWarmupCount(5)
+                     .WithIterationCount(15)
                      .DontEnforcePowerPlan()
                      .WithId("Warm"));
 

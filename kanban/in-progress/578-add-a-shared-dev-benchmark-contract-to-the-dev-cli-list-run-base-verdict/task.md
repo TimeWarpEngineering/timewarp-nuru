@@ -71,6 +71,7 @@ Acceptance:
 - Review round 1: grok session 01a1fc98-a2d9-7362-abfc-1bd422410c67 (2026-11-21), effort 3, roster general. Open finding M1. Disposition not written.
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1fc98-a2d9-7362-abfc-1bd422410c67, max-turns 200, artifacts general.md, merged.md — 2026-11-21T05:47:59Z
 - Implement-fix-2 (review round 1 M1, Claude Opus 5.5, 2026-11-21): ready-made benchmarks moved to opt-in `content/any/benchmarks/`; consumer check now 0 warnings. See Results > Review round 1 fix.
+- Commit 744cd3a5: post-commit `ganda repo attest` failed again with "Text file busy" on `bin/dev`; this follow-up commit re-runs the hook.
 
 ## Results
 

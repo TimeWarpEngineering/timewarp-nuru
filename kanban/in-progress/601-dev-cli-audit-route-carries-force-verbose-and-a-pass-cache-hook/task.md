@@ -68,6 +68,7 @@ Acceptance criteria:
 - Created: 5e357388-dba6-4ffe-89e8-92df174ea48a (2026-11-25)
 - 2026-11-25 implementer (ganda task work, Claude): implemented the route options, pass cache,
   tree stamp and subset run; fixed the pre-existing `ganda repo audit` failures (see Results).
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 23de9849-2434-422e-9c73-bfe581606347, max-turns 500, Done — 2026-11-25T16:58:45Z
 
 ## Notes
 

@@ -145,6 +145,9 @@ Audit fixes (pre-existing failures on master, boy-scout):
   content): succeeded; `./bin/dev audit --force -v` printed the nothing-to-run line, exit 0.
 - `ganda repo audit`: first run failed (`package-pin-currency`, `source-file-line-cap`, both
   pre-existing); after the fixes above, rerun passed (exit 0, one warning: `vscode-window-icon`).
+- Commit hook attest then failed `runfile-executable` (the three new test runfiles were committed
+  without the executable bit; the working-tree audit had not flagged them while untracked). Set
+  `+x` in the index; `ganda repo audit` rerun passed (exit 0, same warning).
 
 ### How to validate
 

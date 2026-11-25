@@ -44,6 +44,9 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/windows-exe-replace.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-run-promotion.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-check.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-context.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-pass-cache.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-tree-stamp.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-checks.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-runner.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-benchmark.cs" />
@@ -66,6 +69,10 @@
          test file itself, since this Compile Include is per-project and does not affect
          tests/ci-tests/Directory.Build.props, which is intentionally left untouched). -->
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/endpoints/check-version-command.cs" />
+    <!-- audit-command.cs (kanban task 601): compiled here only, like check-version-command.cs, so
+         audit-02-endpoint.cs can route `audit` with its force and verbose options through a NuruApp. That test file is
+         #if !JARIBU_MULTI throughout and listed in CiTestExcludes. -->
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/endpoints/audit-command.cs" />
   </ItemGroup>
 
   <ItemGroup>

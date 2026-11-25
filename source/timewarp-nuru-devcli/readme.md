@@ -12,7 +12,7 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `self-install` | AOT compile dev CLI to ./bin | None (standalone) |
 | `check-version` | Verify version is ready to release — three-state publish gate, plus an honest prerelease-increment distance (warns when more than one ahead; `--strict` exits non-zero) | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
 | `release` | Cut a release: create tag `v{Version}` (from `source/Directory.Build.props`) and the GitHub Release, gated by working-tree/branch/sync/tag-availability/publish-state/CI-run/target-attestation guards; `--dry-run` runs every guard and previews the exact commands without creating anything | `NuGetVersionService`, `IRepoConfigService`, `IPackableProjectService` |
-| `audit` | Run this repo's fast pre-test checks, one line each with wall time, then a passed/failed summary; exits 1 when any check fails. With no checks it prints that there is nothing to run and exits 0. `ganda repo audit` runs it. See [Repo audit checks](#repo-audit-checks-dev-audit) | None (checks come from `DevAuditChecks.AddRepoChecks`) |
+| `audit [--force] [--verbose,-v]` | Run this repo's fast pre-test checks, one line each with wall time, then a passed/failed summary; exits 1 when any check fails. With no checks it prints that there is nothing to run and exits 0. With a pass cache, skips the run when these inputs already passed (`--force` runs anyway). `ganda repo audit` runs it. See [Repo audit checks](dev-audit.md) | None (checks come from `DevAuditChecks.AddRepoChecks`, the optional cache from `DevAuditChecks.ConfigurePassCache`) |
 | `benchmark list` | Print the repo's named benchmarks, one per line (`--json` for an array). Empty means the repo is not in a perf sweep. See [Benchmark contract](#benchmark-contract-dev-benchmark) | None (benchmarks come from `DevBenchmarks.AddRepoBenchmarks`) |
 | `benchmark run <name> --base <ref>` | Build and run the named benchmark at the base ref and at the working tree in the same run, then print one JSON verdict (`win`, `noise`, or `regression`) on stdout | None |
 
@@ -42,9 +42,11 @@ Reusable dev-cli endpoints and services for TimeWarp repositories. This package 
 | `AttestationConfigResolver` (`AttestationMode`, `AttestationModeResolution`) | Pure resolver for `attestation.mode`: blank/absent → `(null, null)`; `"off"`/`"warn"`/`"require"` (case-insensitive) → enum; unrecognized non-blank → `(null, trimmed)` so callers can warn about a typo. `EffectiveMode(resolution, whenUnset)` applies context defaults (`DefaultPrMode` = Warn, `DefaultReleaseMode` = Require). Typos never silently become Off |
 | `PullRequestBuildClassifier` (`PullRequestBuildDecision`) | The fleet pull request build decision (kanban task 595). `DecideAsync(repoRoot, ct)` reads the GitHub event, runs `git diff --name-only base...head`, applies the non-build rule plus the repo's `pullRequestBuild` additions, and returns build or skip with the line to print. See [Pull request build decision](#pull-request-build-decision) |
 | `PullRequestBuildConfig` | Config model for `pullRequestBuild` in `.timewarp/dev.jsonc`: `buildPaths` and `nonBuildPaths` |
-| `IDevAuditCheck` / `DevAuditCheckResult` | One repo-specific `dev audit` check: `Name`, `RunAsync`, and `Pass(message?)` or `Fail(message)` |
-| `DevAuditChecks` | The `dev audit` registry. `All()` returns the checks the repo adds in its `AddRepoChecks` partial method; none by default |
-| `DevAuditRunner` (`DevAuditSummary`) | Runs the checks in order, prints the per-check lines and the summary, and returns the passed/failed counts and exit code |
+| `IDevAuditCheck` / `DevAuditCheckResult` | One repo-specific `dev audit` check: `Name`, `RunAsync(DevAuditContext, CancellationToken)`, and `Pass(message?)` or `Fail(message)` |
+| `DevAuditContext` | What one `dev audit` run hands each check and the pass cache: `RepoRoot`, `Force` (`--force`), `Verbose` (`--verbose`, `-v`) |
+| `DevAuditChecks` | The `dev audit` registry. `All()` returns the checks the repo adds in its `AddRepoChecks` partial method; none by default. `Named(...)` / `Select(checks, names)` pick checks by name (an unknown name throws). `PassCache()` returns the cache the repo sets in `ConfigurePassCache`; none by default |
+| `IDevAuditPassCache` / `DevAuditTreeStamp` | The optional `dev audit` pass cache: `KeyAsync` (null: cannot name these inputs, run everything), `HasPass`, `RecordPass`. `DevAuditTreeStamp.Create(ignoredEntries?)` keys the committed tree (without `kanban/` by default) plus the SDK version, and stores the last passing key in `artifacts/dev-audit/passed.key` |
+| `DevAuditRunner` (`DevAuditSummary`) | Runs the checks in order with the context, prints the per-check lines and the summary, and returns the passed/failed counts, `Skipped`, and exit code. With a pass cache it skips a run whose inputs already passed and records a pass only when every check passed |
 | `IDevBenchmark` / `IDevBenchmarkSide` / `DevBenchmarkTree` | One named `dev benchmark`: `PrepareAsync(tree)` builds it from a tree and returns a side whose `MeasureAsync` takes one sample (a cost; lower is better) |
 | `DevBenchmarks` | The `dev benchmark` registry. `All()` returns the benchmarks the repo adds in its `AddRepoBenchmarks` partial method; none by default |
 | `DevBenchmarkRunner` (`DevBenchmarkRunOptions`) | Prepares base and head, discards warmup rounds, takes interleaved samples (order alternates per round), and returns the comparison |
@@ -226,60 +228,8 @@ the one call and writes `code=true|false` to `GITHUB_OUTPUT`; the stage jobs run
 
 ## Repo audit checks (`dev audit`)
 
-`ganda repo audit` runs `./bin/dev audit` when the repo's dev CLI has it and fails on a
-non-zero exit. DevCli owns the `audit` route, so a repo adds checks and never defines the
-command itself.
-
-`dev audit` is for **fast pre-test checks**: config, dependency or layout rules that finish
-in seconds. Do not run a build or a test suite from a check; every walk, merge and manual
-audit pays for it. `dev audit` never calls `ganda repo audit` (that calls `dev audit`, so
-the other direction loops).
-
-Add a check in your own `tools/dev-cli`, then register it by implementing the
-`AddRepoChecks` partial method once:
-
-```csharp
-namespace DevCli;
-
-internal sealed class DepsCheck : IDevAuditCheck
-{
-  public string Name => "deps-check";
-
-  public async ValueTask<DevAuditCheckResult> RunAsync(CancellationToken cancellationToken)
-  {
-    IReadOnlyList<string> problems = await FindOutdatedDependenciesAsync(cancellationToken);
-    return problems.Count == 0
-      ? DevAuditCheckResult.Pass()
-      : DevAuditCheckResult.Fail(string.Join('\n', problems));
-  }
-}
-
-internal static partial class DevAuditChecks
-{
-  static partial void AddRepoChecks(List<IDevAuditCheck> checks)
-  {
-    checks.Add(new DepsCheck());
-  }
-}
-```
-
-Checks run in the order added. Every check runs even after one fails. Output:
-
-```
-PASS deps-check (120ms)
-FAIL layout-check (8ms)
-<the failing check's message, in full>
-dev audit: 1 passed, 1 failed
-```
-
-A check that throws counts as failed, with the exception type and message as its message.
-
-**Why a partial method:** DevCli is source-only, so `DevAuditChecks` compiles into your dev
-CLI's own assembly and the repo's `AddRepoChecks` body is bound at compile time. That needs no
-reflection and no DI, so it works in the AOT dev CLI. Nuru's source-generated DI does not
-resolve `IEnumerable<T>`, which rules out multi-registration. A repo without checks writes
-nothing and the call compiles away. `AddRepoChecks` can be implemented only once per dev CLI;
-add every check there.
+DevCli owns the `audit` route; a repo adds `IDevAuditCheck`s, an optional pass cache, and
+in-process subset runs. See [dev-audit.md](dev-audit.md).
 
 ## Benchmark contract (`dev benchmark`)
 
@@ -406,7 +356,7 @@ the tree cannot be built or a sample fails. Keep one sample short (milliseconds 
 two): the run takes `2 * (warmup + samples)` of them.
 
 The registry is a partial method for the same reasons as `DevAuditChecks` (see
-[Repo audit checks](#repo-audit-checks-dev-audit)): source-only, AOT-safe, no reflection or DI.
+[Repo audit checks](dev-audit.md)): source-only, AOT-safe, no reflection or DI.
 A repo without benchmarks writes nothing.
 
 Bench runs stay off the pull request path. They are for a perf sweep or a manual check.
@@ -461,12 +411,26 @@ reads the shared contract: register named benchmarks in `DevBenchmarks.AddRepoBe
 (see [Benchmark contract](#benchmark-contract-dev-benchmark)) and retire stored absolute
 baselines.
 
+### 4.0.0-beta.18+: `dev audit` options, pass cache and subset run (kanban task 601)
+
+`IDevAuditCheck.RunAsync` takes a `DevAuditContext` first:
+`RunAsync(DevAuditContext context, CancellationToken cancellationToken)`. Add the parameter to
+each check; read `context.RepoRoot`, `context.Verbose` and `context.Force` where a check needs
+them. `DevAuditRunner.RunAsync` takes the context and a pass cache:
+`RunAsync(checks, context, terminal, passCache, ct)`.
+
+A dev CLI with its own `audit` command for `--force`, `--verbose` or a pass stamp can drop it:
+the shared route has both options, `ConfigurePassCache` with `DevAuditTreeStamp.Create()`
+replaces a tree stamp like ganda's `DevAuditStamp` (same key rule and file path), and
+`DevAuditChecks.Named(...)` replaces a scoped in-process run (see
+[Repo audit checks](dev-audit.md)).
+
 ### 4.0.0-beta.17+: shared `dev audit` endpoint (`audit-command.cs`, kanban task 600)
 
 DevCli now owns the `audit` route. A dev CLI that defines its own `[NuruRoute("audit")]`
 endpoint gets a route clash after this upgrade. Delete that endpoint, move each check it ran
 into an `IDevAuditCheck`, and add them in `DevAuditChecks.AddRepoChecks` (see
-[Repo audit checks](#repo-audit-checks-dev-audit)).
+[Repo audit checks](dev-audit.md)).
 
 ### 4.0.0-beta.16+: typed Amuru builders (kanban task 598)
 

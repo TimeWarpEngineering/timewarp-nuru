@@ -16,12 +16,15 @@ namespace TimeWarp.Nuru.Tests.DevCli
 using global::DevCli;
 
 /// <summary>
-/// DevAuditRunner driven with fake checks. AuditCommand passes DevAuditChecks.All()
-/// to the same runner and copies a non-zero ExitCode to Environment.ExitCode.
+/// DevAuditRunner driven with fake checks and no pass cache. AuditCommand passes
+/// DevAuditChecks.All() to the same runner and copies a non-zero ExitCode to
+/// Environment.ExitCode. The pass cache and subset run are in audit-03-pass-cache-and-subset.cs.
 /// </summary>
 [TestTag("DevCli")]
 public class DevAuditRunnerTests
 {
+  private static readonly DevAuditContext Context = new(Environment.CurrentDirectory);
+
   [ModuleInitializer]
   internal static void Register() => RegisterTests<DevAuditRunnerTests>();
 
@@ -29,7 +32,7 @@ public class DevAuditRunnerTests
   {
     using TestTerminal terminal = new();
 
-    DevAuditSummary summary = await DevAuditRunner.RunAsync([], terminal, CancellationToken.None);
+    DevAuditSummary summary = await DevAuditRunner.RunAsync([], Context, terminal, passCache: null, CancellationToken.None);
 
     summary.ExitCode.ShouldBe(0);
     summary.Passed.ShouldBe(0);
@@ -54,7 +57,7 @@ public class DevAuditRunnerTests
       new FakeAuditCheck("second-check", DevAuditCheckResult.Pass())
     ];
 
-    DevAuditSummary summary = await DevAuditRunner.RunAsync(checks, terminal, CancellationToken.None);
+    DevAuditSummary summary = await DevAuditRunner.RunAsync(checks, Context, terminal, passCache: null, CancellationToken.None);
 
     summary.ExitCode.ShouldBe(0);
     summary.Passed.ShouldBe(2);
@@ -75,7 +78,7 @@ public class DevAuditRunnerTests
       after
     ];
 
-    DevAuditSummary summary = await DevAuditRunner.RunAsync(checks, terminal, CancellationToken.None);
+    DevAuditSummary summary = await DevAuditRunner.RunAsync(checks, Context, terminal, passCache: null, CancellationToken.None);
 
     summary.ExitCode.ShouldBe(1);
     summary.Passed.ShouldBe(1);
@@ -93,7 +96,7 @@ public class DevAuditRunnerTests
     using TestTerminal terminal = new();
     IDevAuditCheck[] checks = [new ThrowingAuditCheck()];
 
-    DevAuditSummary summary = await DevAuditRunner.RunAsync(checks, terminal, CancellationToken.None);
+    DevAuditSummary summary = await DevAuditRunner.RunAsync(checks, Context, terminal, passCache: null, CancellationToken.None);
 
     summary.ExitCode.ShouldBe(1);
     terminal.OutputContains("FAIL throwing-check (").ShouldBeTrue();
@@ -116,7 +119,7 @@ internal sealed class FakeAuditCheck(string name, DevAuditCheckResult result) : 
 
   public bool Ran { get; private set; }
 
-  public ValueTask<DevAuditCheckResult> RunAsync(CancellationToken cancellationToken)
+  public ValueTask<DevAuditCheckResult> RunAsync(DevAuditContext context, CancellationToken cancellationToken)
   {
     Ran = true;
     return ValueTask.FromResult(result);
@@ -127,7 +130,7 @@ internal sealed class ThrowingAuditCheck : IDevAuditCheck
 {
   public string Name => "throwing-check";
 
-  public ValueTask<DevAuditCheckResult> RunAsync(CancellationToken cancellationToken) =>
+  public ValueTask<DevAuditCheckResult> RunAsync(DevAuditContext context, CancellationToken cancellationToken) =>
     throw new InvalidOperationException("config file missing");
 }
 

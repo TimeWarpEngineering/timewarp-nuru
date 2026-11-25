@@ -31,9 +31,9 @@ Iteration X - [Participant Name]
 
 ## Files in this Workspace
 - `consensus-framework.md` - This document
-- `grok-iteration-1.md` - Grok's first position
-- `claude-iteration-1.md` - Claude's first position (to be created)
-- Subsequent iteration files as discussion progresses
+- `grok-opening-position.md` - Grok's first position
+- `claude-opening-position.md` - Claude's first position (to be created)
+- `*-rebuttal.md`, `*-closing-position.md` - later iterations, one pair per round
 - `final-consensus.md` - Final agreed-upon resolution
 
 ## Ground Rules

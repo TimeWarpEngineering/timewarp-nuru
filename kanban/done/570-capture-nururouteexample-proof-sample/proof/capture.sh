@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerates every file under capture/ by running calc.cs (TimeWarp.Nuru 4.0.0-beta.16).
+# Regenerates every file under capture/ by running calc.cs (TimeWarp.Nuru 4.0.0-beta.17).
 # Each *.ansi.txt is the raw stdout+stderr bytes. Each *.txt is the same output with ANSI
 # escape sequences removed by sed (the published package does not honor NO_COLOR).
 # capture/json-args.txt records every --json-args command, its output, exit code, and verdict.

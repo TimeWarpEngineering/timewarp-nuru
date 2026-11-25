@@ -1,3 +1,27 @@
 {
-  "files": {}
+  "files": {
+    ".agent/workspace/2025-12-24T21-30-00_opencode-session-archiver-design.md": 546,
+    ".agent/workspace/2025-12-25T12-00-00_v2-fluent-dsl-design.md": 639,
+    ".agent/workspace/2025-12-25T14-00-00_v2-source-generator-architecture.md": 860,
+    ".agent/workspace/2026-01-15T14-30-00_cross-method-tracking-static-fields-analysis.md": 508,
+    ".agent/workspace/2026-01-21T12-00-00_bug-390-comprehensive-analysis.md": 657,
+    "documentation/developer/design/completion/completion-engine-architecture.md": 699,
+    "documentation/developer/design/parser/syntax-rules.md": 567,
+    "documentation/developer/reference/glossary.md": 668,
+    "documentation/developer/standards/roslynator-rules.md": 1082,
+    "documentation/developer/ubiquitous-language.md": 1025,
+    "documentation/posts/presentations/2026-01-16T10-00-00_nuru-source-generator-presentation.md": 558,
+    "documentation/posts/presentations/presentation-source-generator-architecture.md": 531,
+    "documentation/user/features/routing.md": 535,
+    "documentation/user/features/shell-completion.md": 693,
+    "documentation/user/features/terminal-abstractions.md": 741,
+    "documentation/user/features/widgets.md": 556,
+    "documentation/user/guides/migrating-from-system-commandline.md": 838,
+    "documentation/user/guides/subset-publishing.md": 725,
+    "skills/tw-nuru/SKILL.md": 557,
+    "source/timewarp-nuru-devcli/readme.md": 821,
+    "tests/timewarp-nuru-mcp-tests/mcp-test-plan.md": 593,
+    "tests/timewarp-nuru-tests/parser/parser-test-plan.md": 877,
+    "tests/timewarp-nuru-tests/routing/routing-test-plan.md": 575
+  }
 }

@@ -44,6 +44,7 @@
          Run standalone via run-ci-tests.cs second phase (task 470-010 / M15). -->
     <!-- check-version-07: same CheckVersionCommand constraint as check-version-04.
          Run standalone via run-ci-tests.cs second phase (task 456 distance wiring). -->
+    <!-- audit-02-endpoint: same constraint for AuditCommand (kanban task 601). Run standalone. -->
     <!-- generator-28: Roslyn-hosted generator test; references timewarp-nuru-analyzers as a
          LIBRARY, whose shared parsing types (Lexer/Token) collide with timewarp-nuru's in one
          compilation (CS0433). Run standalone by run-ci-tests.cs as a second phase instead. -->
@@ -57,6 +58,7 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-04-endpoint-zero-package.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-07-endpoint-fail-closed.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-07b-endpoint-declared-feeds.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/devcli/audit-02-endpoint.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs" />
@@ -239,6 +241,9 @@
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/windows-exe-replace.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/ci-run-promotion.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-check.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-context.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-pass-cache.cs" />
+    <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-tree-stamp.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-checks.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-audit-runner.cs" />
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/services/dev-benchmark.cs" />

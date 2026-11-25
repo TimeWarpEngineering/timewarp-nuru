@@ -60,8 +60,8 @@ Community-Feedback/
 - `claude-2025-08-27-critical-feedback-analysis.md`
 
 ### Iteration Files
-- `grok-iteration-1.md`
-- `claude-iteration-2.md`
+- `grok-opening-position.md`
+- `claude-rebuttal.md`
 - `final-consensus.md`
 
 ## Status Tracking

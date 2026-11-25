@@ -7,6 +7,8 @@
 // DevAuditChecks.AddRepoChecks (dev-audit-checks.cs). The shared AuditCommand owns the
 // `audit` route, so a repo never defines it. Checks must be fast: `ganda repo audit`
 // runs `dev audit` before every walk, merge and manual audit. No full test suite here.
+// RunAsync takes a DevAuditContext (repo root, --force, --verbose) so a check reads the
+// route's options without its own command (kanban task 601).
 #endregion
 
 namespace DevCli;
@@ -16,11 +18,11 @@ namespace DevCli;
 /// </summary>
 internal interface IDevAuditCheck
 {
-  /// <summary>Short name printed on the check's result line.</summary>
+  /// <summary>Short name printed on the check's result line, and the name <see cref="DevAuditChecks.Named"/> selects by.</summary>
   string Name { get; }
 
   /// <summary>Runs the check. Return <see cref="DevAuditCheckResult.Fail"/> to fail <c>dev audit</c>.</summary>
-  ValueTask<DevAuditCheckResult> RunAsync(CancellationToken cancellationToken);
+  ValueTask<DevAuditCheckResult> RunAsync(DevAuditContext context, CancellationToken cancellationToken);
 }
 
 /// <summary>

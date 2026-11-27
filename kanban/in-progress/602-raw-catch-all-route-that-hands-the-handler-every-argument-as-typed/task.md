@@ -85,6 +85,10 @@ Expect: stdout `-n|40|--lines=40`, exit 0. The same app with `Map("{*args}")` an
 
 Round 1 (effort 3, roster: general): 1 bug, 1 suggestion, 1 nit. Fix pass closed all three. M1: group help is skipped when a raw route's literals equal the group prefix, so `raw602-tail --help` and `-h` reach the handler, and a sibling `show --help` still prints its own help. M2: routing-43 runs the endpoint through `.Map<T>()` with the full token set and a fluent `.WithAlias("t")` raw route. `.WithAlias` is the compile-time stub the generator already reads; the public method was missing, so the alias test could not compile. M3: routing.md states that an override on a raw route reaches the handler and configuration, and that an override before the leading literals stops the match. Those two cases are pinned in routing-43. See `review/round-1/merged.md`.
 
+Round 2 (effort 2, roster: general) re-verified the fix delta 1fa4a72e. It read the diff and the recorded results and did not rerun the gates. M1, M2, and M3 are fixed. It raised one new nit, M4: the new public `EndpointBuilder<TBuilder>.WithAlias(string)` turns on fluent route aliases, but the changelog does not name it. M4 is wontfix: the package is beta, the stub is additive, the generator already handled it, and routing-43 covers it. The changelog line goes with the next fluent-alias change.
+
+Final counts: bug 1 fixed; suggestion 1 fixed; nit 1 fixed, 1 wontfix; 0 open. Disposition: **accepted-exceptions**. Files: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### Fix pass (review round 1)
 
 ### How to validate
@@ -104,11 +108,12 @@ Expect: stdout `--help`, exit 0. The output does not contain `commands:`.
 - Review oracle round 1: Claude Opus 5.5 (claude-opus-5-5), session db32ea30-4109-48f3-b176-2a2ff984f511, effort 3, roster general, max-turns 200. Blocked: fix pass needed for open findings M1, M2, M3 (2026-11-27)
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session db32ea30-4109-48f3-b176-2a2ff984f511, max-turns 200, artifacts general.md, merged.md — 2026-11-27T16:17:36Z
 - Fix pass (implement-fix-2): closed M1, M2, and M3 — 2026-11-27
+- Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, max-turns 120. Disposition accepted-exceptions (M4 nit wontfix), 0 open, Done (2026-11-27)
 
 ## Review
 
 - Round 1: fixed on this branch — M1 group help, M2 endpoint and alias runtime tests, M3 configuration-override docs
-
+- Round 2: Done
 ## Notes
 
 - First consumer: timewarp-ganda task 731 (`tail`), with the parser in timewarp-amuru task 158.

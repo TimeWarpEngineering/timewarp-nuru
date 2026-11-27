@@ -109,6 +109,7 @@ Expect: stdout `--help`, exit 0. The output does not contain `commands:`.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session db32ea30-4109-48f3-b176-2a2ff984f511, max-turns 200, artifacts general.md, merged.md — 2026-11-27T16:17:36Z
 - Fix pass (implement-fix-2): closed M1, M2, and M3 — 2026-11-27
 - Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, max-turns 120. Disposition accepted-exceptions (M4 nit wontfix), 0 open, Done (2026-11-27)
+- CI red at merge gate (2026-11-27, PR #439, run 46034487255, check `test-multi`): the multi-mode test assembly does not compile. `tests/timewarp-nuru-tests/lexer/lexer-test-helper.cs(17,19)` and `(37,33)`: error CS0433, the types `Lexer` and `Token` exist in both `TimeWarp.Nuru.Analyzers` and `TimeWarp.Nuru`. Master CI is green, so this branch introduced it. Unconfirmed lead: one of the three new test files (`generator-81-raw-catchall-diagnostic.cs`, `parser-20-raw-catchall.cs`, `routing-43-raw-catchall.cs`) brings the analyzers assembly into the CI assembly as a normal reference. Fix pass: reproduce with `ganda runfile cache --clear` then `dotnet run tests/ci-tests/run-ci-tests.cs`, fix the ambiguity (drop the reference, or run that test standalone only behind `#if !JARIBU_MULTI` and add it to `tests/ci-standalone/run-standalone-tests.cs`), and confirm the CI multi-mode run passes before finishing.
 
 ## Review
 

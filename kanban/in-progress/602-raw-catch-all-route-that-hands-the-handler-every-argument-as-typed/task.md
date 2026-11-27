@@ -43,6 +43,8 @@ A command override needs a route that hands every remaining token to the handler
 
 The handler receives those tokens in order and unchanged: `-n`, `-40`, `+5`, `--`, `--lines=40`, a lone `-`, empty strings, `--help`, and `--version`. A raw route may have leading literals or none. It cannot also declare options, other parameters, `--`, or a type constraint (NURU_S011). `--json-args` is still peeled. `--interactive` / `-i` with no other tokens still starts the REPL. A raw route that starts with a literal still leaves `myapp --help` to Nuru. The same generated matcher runs under AOT and in the REPL.
 
+The Roslyn-hosted diagnostic runfile stays out of the multi-mode assembly. Referencing TimeWarp.Nuru.Analyzers there makes `Lexer` and `Token` ambiguous with TimeWarp.Nuru. CI runs that file on its own, the same way the other analyzer-hosted generator tests run.
+
 Review round 1 adds three acceptances. Group help must not answer `<group> --help` or `<group> -h` when a raw route's literal prefix is exactly that group's words, which is the `ganda tail` shape (`[NuruRouteGroup("tail")]`, `[NuruRoute("")]`, raw catch-all). Those tokens reach the handler. A raw route with further literals still leaves the shorter group summary in place, and a sibling command under the same group keeps its own help. A runtime test maps that endpoint with `.Map<T>()` and checks the full token set on the property. Another runtime test runs a fluent raw route through `.WithAlias(...)`. routing.md states both configuration facts: an override on a raw route reaches the handler and is still applied to configuration, and an override typed before the leading literals stops that route from matching.
 
 ## Checklist
@@ -87,7 +89,9 @@ Round 1 (effort 3, roster: general): 1 bug, 1 suggestion, 1 nit. Fix pass closed
 
 Round 2 (effort 2, roster: general) re-verified the fix delta 1fa4a72e. It read the diff and the recorded results and did not rerun the gates. M1, M2, and M3 are fixed. It raised one new nit, M4: the new public `EndpointBuilder<TBuilder>.WithAlias(string)` turns on fluent route aliases, but the changelog does not name it. M4 is wontfix: the package is beta, the stub is additive, the generator already handled it, and routing-43 covers it. The changelog line goes with the next fluent-alias change.
 
-Final counts: bug 1 fixed; suggestion 1 fixed; nit 1 fixed, 1 wontfix; 0 open. Disposition: **accepted-exceptions**. Files: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+Round 3 (effort 3, roster: general) reviewed the CI fix 4711ceed. generator-81 now runs only in the standalone phase, through `CiTestExcludes` and the standalone list, the same as generator-80. Round 3 checked the recorded local CI run (multi 2405 passed, 7 skipped, 0 failed; standalone 0 failed) and found that master's two extra commits touch only this task's kanban files. It did not rerun the gates and raised no new findings. The next PR #439 CI run is still the merge proof.
+
+Final counts: bug 1 fixed; suggestion 1 fixed; nit 1 fixed, 1 wontfix; 0 open. Disposition: **accepted-exceptions**. Files: `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ### Fix pass (review round 1)
 
@@ -101,6 +105,21 @@ Expect: stdout `--help`, exit 0. The output does not contain `commands:`.
 - `dotnet run --file tests/timewarp-nuru-tests/routing/routing-43-raw-catchall.cs` — 18 passed
 - `ganda repo audit` — pass, 43 passed, 0 failed, 1 warning (`vscode-window-icon`)
 
+### Fix pass (CI test-multi CS0433)
+
+`generator-81-raw-catchall-diagnostic.cs` references TimeWarp.Nuru.Analyzers. The multi-mode compile follows that `#:project` directive, so `Lexer` and `Token` exist in both assemblies (CS0433 in `lexer-test-helper.cs`). The file is in `CiTestExcludes` and in the standalone list, the same as generator-80. parser-20 and routing-43 stay in the multi assembly. RawCatchAllRouting passed there (18).
+
+### How to validate
+
+Smoke: `ganda runfile cache --clear`, then `env -u NURU_CI_PHASE dotnet run tests/ci-tests/run-ci-tests.cs`.
+
+Expect: the multi-mode assembly compiles and the run exits 0. The standalone phase runs generator-81 and that file passes 6.
+
+- `./bin/dev build` — passed, 0 warnings, 0 errors
+- `dotnet run --file tests/timewarp-nuru-tests/generator/generator-81-raw-catchall-diagnostic.cs` — 6 passed
+- `env -u NURU_CI_PHASE dotnet run tests/ci-tests/run-ci-tests.cs` — multi 2405 passed, 7 skipped, 0 failed (total 2412) in 126.4s; standalone 53 files, 0 failed in 26.8s (generator-81 6 passed)
+- `ganda repo audit` — pass, 44 passed, 0 failed, 0 warnings
+
 ## Session
 
 - Created: 549bb8ea-d8c7-4ef7-9b7e-95b0ae556b64 (2026-11-27), from a timewarp-amuru session
@@ -109,11 +128,16 @@ Expect: stdout `--help`, exit 0. The output does not contain `commands:`.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session db32ea30-4109-48f3-b176-2a2ff984f511, max-turns 200, artifacts general.md, merged.md — 2026-11-27T16:17:36Z
 - Fix pass (implement-fix-2): closed M1, M2, and M3 — 2026-11-27
 - Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, max-turns 120. Disposition accepted-exceptions (M4 nit wontfix), 0 open, Done (2026-11-27)
+- CI red at merge gate (2026-11-27, PR #439, run 46034487255, check `test-multi`): the multi-mode test assembly does not compile. `tests/timewarp-nuru-tests/lexer/lexer-test-helper.cs(17,19)` and `(37,33)`: error CS0433, the types `Lexer` and `Token` exist in both `TimeWarp.Nuru.Analyzers` and `TimeWarp.Nuru`. Master CI is green, so this branch introduced it. Cause: `generator-81-raw-catchall-diagnostic.cs` references TimeWarp.Nuru.Analyzers and was compiled into the multi assembly. Fixed by listing it in `CiTestExcludes` and `tests/ci-standalone/run-standalone-tests.cs`. Local `env -u NURU_CI_PHASE dotnet run tests/ci-tests/run-ci-tests.cs` passed (2026-11-28).
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21ef4-1246-7b32-99cb-a8f24989906c, max-turns 500, Done — 2026-11-27T21:54:35Z
+- Review oracle round 3: Claude Opus 5.5 (claude-opus-5-5), effort 3, roster general, max-turns 200. 0 new findings; disposition accepted-exceptions (M4 nit wontfix), 0 open, Done (2026-11-28)
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b992faf8-3ed3-4f6f-8f3d-83d1b5d0625f, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-27T21:56:00Z
 
 ## Review
 
 - Round 1: fixed on this branch — M1 group help, M2 endpoint and alias runtime tests, M3 configuration-override docs
 - Round 2: Done
+- Round 3: Done
 ## Notes
 
 - First consumer: timewarp-ganda task 731 (`tail`), with the parser in timewarp-amuru task 158.
@@ -122,3 +146,11 @@ Expect: stdout `--help`, exit 0. The output does not contain `commands:`.
 - Seen in the same test, not part of this task: a repeated option (`-n 1 -n 2`) puts the second
   `-n` and its value in the catch-all, and a missing option value (`-n` alone) exits 0.
 - Background: timewarp-amuru `kanban/done/157-research-head-and-tail-commands-that-save-the-full-stream-for-agents/task.md`.
+
+## Parked
+
+2026-11-27 at merge: PR #439 CI is red; refusing merge. check 'test-multi' (run 46034487255) concluded failure.
+
+No failing command output.
+
+2026-11-28: that compile failure is fixed on this branch. The local multi-mode run passed (2405 passed, 7 skipped, 0 failed). The next CI run of PR #439 is the merge proof.

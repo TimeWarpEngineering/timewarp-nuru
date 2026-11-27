@@ -127,6 +127,7 @@ Expect: the multi-mode assembly compiles and the run exits 0. The standalone pha
 - Fix pass (implement-fix-2): closed M1, M2, and M3 — 2026-11-27
 - Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, max-turns 120. Disposition accepted-exceptions (M4 nit wontfix), 0 open, Done (2026-11-27)
 - CI red at merge gate (2026-11-27, PR #439, run 46034487255, check `test-multi`): the multi-mode test assembly does not compile. `tests/timewarp-nuru-tests/lexer/lexer-test-helper.cs(17,19)` and `(37,33)`: error CS0433, the types `Lexer` and `Token` exist in both `TimeWarp.Nuru.Analyzers` and `TimeWarp.Nuru`. Master CI is green, so this branch introduced it. Cause: `generator-81-raw-catchall-diagnostic.cs` references TimeWarp.Nuru.Analyzers and was compiled into the multi assembly. Fixed by listing it in `CiTestExcludes` and `tests/ci-standalone/run-standalone-tests.cs`. Local `env -u NURU_CI_PHASE dotnet run tests/ci-tests/run-ci-tests.cs` passed (2026-11-28).
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21ef4-1246-7b32-99cb-a8f24989906c, max-turns 500, Done — 2026-11-27T21:54:35Z
 
 ## Review
 

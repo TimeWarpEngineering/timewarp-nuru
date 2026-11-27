@@ -25,7 +25,7 @@ using TimeWarp.Amuru;
 // - generator-19/20: multi-included for filtered cases, but #if !JARIBU_MULTI methods
 //   (NoFilter_IncludesAll, Gen20KanbanQuery) only run in this standalone phase (M29)
 // - operation-endpoint-dispatch: the typed HttpClient case is #if !JARIBU_MULTI (NURU050)
-// - generator-28..76, generator-78..80: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
+// - generator-28..76, generator-78..81: Roslyn-hosted; timewarp-nuru-analyzers LIBRARY collides (CS0433)
 // JARIBU_COVERAGE=1 (dev test --coverage, task 574): relaunch this runner under
 // dotnet-coverage before any child starts, so every per-file `dotnet run` below is
 // profiled by that one collection. This runner registers no test classes, hence
@@ -93,6 +93,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-78-member-and-type-names.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-79-binding-attribute-diagnostics.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-80-startup-work-omission.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-81-raw-catchall-diagnostic.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "auto", "operation-endpoint-dispatch.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "telemetry", "telemetry-04-otlp-endpoint-paths.cs"),
 ];

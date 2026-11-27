@@ -8,6 +8,11 @@
 // is emitted with {**args} and the unstripped argv (__rawRouteArgs).
 #endregion
 
+#region Design
+// Roslyn-hosted like generator-80, so the CI multi-mode assembly excludes it (CS0433) and it runs
+// standalone. Each test compiles the generated source and reads its text.
+#endregion
+
 #if !JARIBU_MULTI
 return await RunAllTests();
 #endif

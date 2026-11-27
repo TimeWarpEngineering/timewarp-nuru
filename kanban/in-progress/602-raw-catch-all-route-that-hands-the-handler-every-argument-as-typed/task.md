@@ -39,11 +39,11 @@ it stays. `kanban create "Title" --repo x` must keep failing.
 
 ## Goal (implementer restatement)
 
-A command override needs a route that stops interpreting arguments. `{*args}` stays fail-closed: an option-shaped token such as `-n` is still an unknown option, and `--key=value` is still stripped before routing. A second marker, `{**args}`, is the opt-out. It is written in the pattern so help and capabilities show it. The endpoint form is `[Parameter(IsCatchAll = true, IsRaw = true)]` because `[NuruRoute]` only accepts a literal.
+A command override needs a route that hands every remaining token to the handler and stops interpreting them. `{*args}` stays fail-closed on an unknown option, and `--key=value` is still removed before a normal route matches. `{**args}` is the visible opt-out. `[NuruRoute]` accepts only a literal, so the endpoint form is `[Parameter(IsCatchAll = true, IsRaw = true)]` on a `string[]`.
 
-The handler gets a `string[]` of every token after the route's leading literals, in order and unchanged. That includes `-n`, `-40`, `+5`, `--`, `--lines=40`, a lone `-`, and empty strings. `--help` and `--version` are arguments on a raw route, not Nuru's own commands. A raw route with a leading literal still leaves `myapp --help` to Nuru. A raw route may have leading literals or none. It cannot also declare options, other parameters, `--`, or a type constraint; that is build error NURU_S011. The same generated matcher runs under AOT and in the REPL. `--interactive` / `-i` still starts the REPL before user routes, and `--json-args` is still peeled as transport.
+The handler receives those tokens in order and unchanged: `-n`, `-40`, `+5`, `--`, `--lines=40`, a lone `-`, empty strings, `--help`, and `--version`. A raw route may have leading literals or none. It cannot also declare options, other parameters, `--`, or a type constraint (NURU_S011). `--json-args` is still peeled. `--interactive` / `-i` with no other tokens still starts the REPL. A raw route that starts with a literal still leaves `myapp --help` to Nuru. The same generated matcher runs under AOT and in the REPL.
 
-Done when the parser accepts `{**args}`, the generated matcher skips unknown-option checks and configuration stripping for that route only, `--help` and `--version` reach the handler, NURU_S011 fires for a raw catch-all that is not alone, the task 515 `{*args}` tests stay green, and routing.md, the tw-nuru skill, and the changelog describe the raw form.
+Review round 1 adds three acceptances. Group help must not answer `<group> --help` or `<group> -h` when a raw route's literal prefix is exactly that group's words, which is the `ganda tail` shape (`[NuruRouteGroup("tail")]`, `[NuruRoute("")]`, raw catch-all). Those tokens reach the handler. A raw route with further literals still leaves the shorter group summary in place, and a sibling command under the same group keeps its own help. A runtime test maps that endpoint with `.Map<T>()` and checks the full token set on the property. Another runtime test runs a fluent raw route through `.WithAlias(...)`. routing.md states both configuration facts: an override on a raw route reaches the handler and is still applied to configuration, and an override typed before the leading literals stops that route from matching.
 
 ## Checklist
 
@@ -81,10 +81,33 @@ Expect: stdout `-n|40|--lines=40`, exit 0. The same app with `Map("{*args}")` an
 - `dotnet run --file samples/fluent/03-syntax/fluent-syntax-examples.cs -- --help` — compiled; help lists `fluent-tail`
 - `ganda repo audit` — pass, 43 passed, 0 failed, 1 warning (`vscode-window-icon`)
 
+### Review
+
+Round 1 (effort 3, roster: general): 1 bug, 1 suggestion, 1 nit. Fix pass closed all three. M1: group help is skipped when a raw route's literals equal the group prefix, so `raw602-tail --help` and `-h` reach the handler, and a sibling `show --help` still prints its own help. M2: routing-43 runs the endpoint through `.Map<T>()` with the full token set and a fluent `.WithAlias("t")` raw route. `.WithAlias` is the compile-time stub the generator already reads; the public method was missing, so the alias test could not compile. M3: routing.md states that an override on a raw route reaches the handler and configuration, and that an override before the leading literals stops the match. Those two cases are pinned in routing-43. See `review/round-1/merged.md`.
+
+### Fix pass (review round 1)
+
+### How to validate
+
+Smoke: map a grouped endpoint `[NuruRouteGroup("raw602-tail")]` with `[NuruRoute("")]` and `[Parameter(IsCatchAll = true, IsRaw = true)]`, then run `raw602-tail --help`.
+
+Expect: stdout `--help`, exit 0. The output does not contain `commands:`.
+
+- `./bin/dev build` — passed, 0 warnings, 0 errors
+- `dotnet run --file tests/timewarp-nuru-tests/routing/routing-43-raw-catchall.cs` — 18 passed
+- `ganda repo audit` — pass, 43 passed, 0 failed, 1 warning (`vscode-window-icon`)
+
 ## Session
 
 - Created: 549bb8ea-d8c7-4ef7-9b7e-95b0ae556b64 (2026-11-27), from a timewarp-amuru session
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21d9e-aa2e-7ac2-a734-c29847cd62bf, max-turns 500, Done — 2026-11-27T16:13:46Z
+- Review oracle round 1: Claude Opus 5.5 (claude-opus-5-5), session db32ea30-4109-48f3-b176-2a2ff984f511, effort 3, roster general, max-turns 200. Blocked: fix pass needed for open findings M1, M2, M3 (2026-11-27)
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session db32ea30-4109-48f3-b176-2a2ff984f511, max-turns 200, artifacts general.md, merged.md — 2026-11-27T16:17:36Z
+- Fix pass (implement-fix-2): closed M1, M2, and M3 — 2026-11-27
+
+## Review
+
+- Round 1: fixed on this branch — M1 group help, M2 endpoint and alias runtime tests, M3 configuration-override docs
 
 ## Notes
 

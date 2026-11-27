@@ -362,19 +362,20 @@ public sealed class TailCommand : ICommand<Unit>
 # args = ["-n", "40"]
 
 ./cli tail --lines=40
-# args = ["--lines=40"]    # not stripped as configuration
+# args = ["--lines=40"]    # kept, and applied to configuration when AddConfiguration() is on
 
 ./cli tail --help
 # args = ["--help"]        # not Nuru's help
 ```
 
-A route with no leading literal (`{**args}`) is the whole program: `myapp --help` is an argument too. A raw route that starts with a literal leaves `myapp --help` to Nuru.
+A route with no leading literal (`{**args}`) is the whole program: `myapp --help` is an argument too. A raw route that starts with a literal leaves `myapp --help` to Nuru. `<group> --help` and `<group> -h` reach the handler when the raw route's literals are exactly the group prefix (`[NuruRouteGroup("tail")]` with `[NuruRoute("")]`). A raw route with further literals leaves that group's summary in place.
 
 **Rules:**
 - Leading literals are allowed. Other parameters, options, `--`, and a type constraint (`{**args:int}`) are build error NURU_S011
 - `IsRaw` requires `IsCatchAll`. `IsRaw` alone is the same error and does not become a catch-all
 - Handler parameter is `string[]`
 - `--json-args` is still peeled before routing. `--interactive` / `-i` with no other tokens still starts the REPL when `AddRepl()` is on. `tail -i` is an argument
+- A `--key=value` or `--key:value` token reaches the handler and, when the app calls `AddConfiguration()`, is applied to configuration as well. Put that token after the route's leading literals. An override before them (`myapp --Logging:LogLevel:Default=Debug tail -n 4`) stays in the raw argument list, so the literal does not match
 
 ## Unknown Options
 
@@ -388,7 +389,7 @@ and never ignored:
 
 - Negative numbers (`-5`, `-1.5e10`) and a lone `-` are values, not options.
 - Everything after `--` is a value, even `--port` or `-la`.
-- `--key=value` and `--key:value` are configuration overrides and are removed before routing. A raw catch-all (`{**args}`) keeps them.
+- `--key=value` and `--key:value` are configuration overrides and are removed before routing. A raw catch-all keeps them for the handler and still applies them to configuration. An override before the raw route's leading literals stops that route from matching. See [Raw catch-all](#raw-catch-all).
 - An extra token that is not option-shaped still reports `Unknown command`.
 - A REPL line follows the same rules.
 

@@ -4,6 +4,7 @@
 #region Purpose
 // Pins {**args}: every remaining token reaches the handler unchanged, including option-shaped
 // tokens, "--", configuration overrides, and --help/--version. {*args} still fails closed.
+// Also pins the grouped endpoint form, a fluent alias, and configuration side effects.
 #endregion
 
 #if !JARIBU_MULTI
@@ -220,6 +221,148 @@ public class RawCatchAllRoutingTests
     await app.RunAsync(["--interactive"]);
 
     terminal.OutputContains("-n|40").ShouldBeTrue();
+  }
+
+  public static async Task Should_pass_every_token_through_a_grouped_endpoint_raw_route()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map<Raw602TailCommand>()
+      .Map<Raw602TailShowCommand>()
+      .Build();
+
+    int exitCode = await app.RunAsync(["raw602-tail", .. Tokens]);
+
+    exitCode.ShouldBe(0);
+    terminal.Output.Trim().ShouldBe(string.Join("|", Tokens));
+  }
+
+  public static async Task Should_pass_help_through_a_grouped_endpoint_raw_route()
+  {
+    using TestTerminal helpTerminal = new();
+    NuruApp helpApp = NuruApp.CreateBuilder()
+      .UseTerminal(helpTerminal)
+      .Map<Raw602TailCommand>()
+      .Map<Raw602TailShowCommand>()
+      .Build();
+
+    (await helpApp.RunAsync(["raw602-tail", "--help"])).ShouldBe(0);
+    helpTerminal.Output.Trim().ShouldBe("--help");
+    helpTerminal.OutputContains("commands:").ShouldBeFalse();
+
+    using TestTerminal shortTerminal = new();
+    NuruApp shortApp = NuruApp.CreateBuilder()
+      .UseTerminal(shortTerminal)
+      .Map<Raw602TailCommand>()
+      .Map<Raw602TailShowCommand>()
+      .Build();
+
+    (await shortApp.RunAsync(["raw602-tail", "-h"])).ShouldBe(0);
+    shortTerminal.Output.Trim().ShouldBe("-h");
+
+    using TestTerminal versionTerminal = new();
+    NuruApp versionApp = NuruApp.CreateBuilder()
+      .UseTerminal(versionTerminal)
+      .Map<Raw602TailCommand>()
+      .Build();
+
+    (await versionApp.RunAsync(["raw602-tail", "--version"])).ShouldBe(0);
+    versionTerminal.Output.Trim().ShouldBe("--version");
+
+    using TestTerminal showTerminal = new();
+    NuruApp showApp = NuruApp.CreateBuilder()
+      .UseTerminal(showTerminal)
+      .Map<Raw602TailCommand>()
+      .Map<Raw602TailShowCommand>()
+      .Build();
+
+    (await showApp.RunAsync(["raw602-tail", "show", "--help"])).ShouldBe(0);
+    showTerminal.OutputContains("raw602-tail show").ShouldBeTrue();
+    showTerminal.OutputContains("Show the log").ShouldBeTrue();
+    showTerminal.Output.Trim().ShouldNotBe("show");
+  }
+
+  public static async Task Should_pass_every_token_through_a_raw_route_alias()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("tail {**args}").WithAlias("t").WithHandler((string[] args) => string.Join("|", args)).AsCommand().Done()
+      .Build();
+
+    int exitCode = await app.RunAsync(["t", .. Tokens]);
+
+    exitCode.ShouldBe(0);
+    terminal.Output.Trim().ShouldBe(string.Join("|", Tokens));
+  }
+
+  public static async Task Should_apply_a_configuration_override_and_keep_it_on_a_raw_route()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .AddConfiguration()
+      .Map("tail {**args}")
+        .WithHandler((string[] args, IConfiguration config) =>
+          string.Join("|", args) + " cfg:" + (config["lines"] ?? "unset"))
+        .AsCommand()
+        .Done()
+      .Build();
+
+    int exitCode = await app.RunAsync(["tail", "--lines=40"]);
+
+    exitCode.ShouldBe(0);
+    terminal.Output.Trim().ShouldBe("--lines=40 cfg:40");
+  }
+
+  public static async Task Should_miss_a_raw_route_when_the_override_precedes_the_literal()
+  {
+    using TestTerminal terminal = new();
+    NuruApp app = NuruApp.CreateBuilder()
+      .UseTerminal(terminal)
+      .Map("tail {**args}").WithHandler((string[] args) => "raw:" + string.Join("|", args)).AsCommand().Done()
+      .Build();
+
+    int exitCode = await app.RunAsync(["--Logging:LogLevel:Default=Debug", "tail", "-n", "4"]);
+
+    exitCode.ShouldBe(1);
+    terminal.OutputContains("raw:").ShouldBeFalse();
+    terminal.ErrorContains("Unknown command").ShouldBeTrue();
+  }
+}
+
+[NuruRouteGroup("raw602-tail")]
+internal abstract class Raw602TailGroup;
+
+[NuruRoute("")]
+internal sealed class Raw602TailCommand : Raw602TailGroup, IQuery<string>
+{
+  [Parameter(IsCatchAll = true, IsRaw = true)]
+  public string[] Args { get; set; } = [];
+
+  internal sealed class Handler : IRequestHandler<Raw602TailCommand, string>
+  {
+    public ValueTask<string> Handle(Raw602TailCommand command, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(command);
+      _ = cancellationToken;
+      return ValueTask.FromResult(string.Join("|", command.Args));
+    }
+  }
+}
+
+[NuruRoute("show", Description = "Show the log")]
+internal sealed class Raw602TailShowCommand : Raw602TailGroup, IQuery<string>
+{
+  internal sealed class Handler : IRequestHandler<Raw602TailShowCommand, string>
+  {
+    public ValueTask<string> Handle(Raw602TailShowCommand command, CancellationToken cancellationToken)
+    {
+      ArgumentNullException.ThrowIfNull(command);
+      _ = cancellationToken;
+      return ValueTask.FromResult("show");
+    }
   }
 }
 }

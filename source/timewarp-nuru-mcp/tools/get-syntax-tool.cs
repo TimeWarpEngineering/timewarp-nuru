@@ -167,7 +167,8 @@ internal sealed class GetSyntaxTool
     sb.AppendLine("- **Literals**: `status`, `git commit`");
     sb.AppendLine("- **Parameters**: `{name}`, `{id:int}`");
     sb.AppendLine("- **Optional**: `{tag?}`, `{count:int?}`");
-    sb.AppendLine("- **Catch-all**: `{*args}`");
+    sb.AppendLine("- **Catch-all**: `{*args}` (option-shaped tokens only after `--`)");
+    sb.AppendLine("- **Raw catch-all**: `{**args}` (every token unchanged; no other parameters)");
     sb.AppendLine("- **Options**: `--verbose`, `-v`, `--config {mode}`");
     sb.AppendLine("- **Repeated Options**: `--tag {t}*` (can be used multiple times)");
     sb.AppendLine("- **Descriptions**: `{env|Environment name}`, `--force|Skip confirmations`");

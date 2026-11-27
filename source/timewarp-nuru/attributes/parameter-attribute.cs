@@ -6,7 +6,10 @@
 // Read by EndpointExtractor from the request property. Optionality comes from nullability.
 // Order is the positional order. Two or more parameters that omit it report NURU_A002.
 // A single parameter may omit Order. Equal Order values keep declaration order.
-// A catch-all is forced last. Name, when set, is the route segment name (lowercased)
+// A catch-all is forced last. IsRaw requires IsCatchAll and means {**name}: every remaining
+// token, with no option check. IsRaw without IsCatchAll, or a raw catch-all that shares the
+// route with another parameter, an option, or a type constraint, reports NURU_S011.
+// Name, when set, is the route segment name (lowercased)
 // and the generated local. It must be an identifier. A name that is not reports NURU_A005
 // and the property name is used. Description is help text.
 #endregion
@@ -71,4 +74,14 @@ public sealed class ParameterAttribute : Attribute
   /// Catch-all parameters must be the last parameter and should have an array type (e.g., <c>string[]</c>).
   /// </remarks>
   public bool IsCatchAll { get; set; }
+
+  /// <summary>
+  /// Gets or sets whether this catch-all receives every remaining token unchanged.
+  /// </summary>
+  /// <remarks>
+  /// Requires <see cref="IsCatchAll"/>. The route may have leading literals only.
+  /// Other parameters, options, and a type constraint report NURU_S011.
+  /// Option-shaped tokens, <c>--</c>, <c>--key=value</c>, and <c>--help</c> reach the handler.
+  /// </remarks>
+  public bool IsRaw { get; set; }
 }

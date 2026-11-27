@@ -4,7 +4,7 @@
 
 #region Design
 // Every configuration method is a no-op stub. NuruGenerator reads the call chain syntactically
-// and semantically at compile time (handler, description, examples, message type, LocalOnly,
+// and semantically at compile time (handler, description, examples, alias, message type, LocalOnly,
 // Exclusive, Implements<T>), so no route table is built at runtime; that keeps routing AOT-safe.
 // Arguments such as the handler delegate and the Implements<T> configure lambda are inspected,
 // never invoked.
@@ -100,6 +100,18 @@ public class EndpointBuilder<TBuilder>
   {
     // Source generator extracts description at compile time
     _ = description;
+    return this;
+  }
+
+  /// <summary>
+  /// Adds an alias that matches this route in place of its leading literals.
+  /// </summary>
+  /// <param name="alias">The alias text, verbatim, with the same parameter and option syntax as the route.</param>
+  /// <returns>This configurator for further endpoint configuration.</returns>
+  public EndpointBuilder<TBuilder> WithAlias(string alias)
+  {
+    // Source generator extracts the alias at compile time
+    _ = alias;
     return this;
   }
 

@@ -38,7 +38,11 @@ internal static class HelpPatternHelper
           break;
 
         case ParameterDefinition param:
-          if (param.IsCatchAll)
+          if (param.IsRaw)
+          {
+            pattern.Append($"{{**{param.Name}}} ");
+          }
+          else if (param.IsCatchAll)
           {
             pattern.Append($"{{*{param.Name}}} ");
           }

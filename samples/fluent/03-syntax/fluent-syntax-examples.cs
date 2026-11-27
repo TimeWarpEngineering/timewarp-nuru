@@ -101,6 +101,11 @@ builder.Map("fluent-run {script} {*params}")
     .WithHandler((string script, string[] @params) =>
         Console.WriteLine($"Running {script} with {@params.Length} parameters"))
     .AsCommand().Done();
+// {**args} passes every remaining token unchanged, including option-shaped tokens.
+// {*args} still fails closed on those tokens. A raw catch-all cannot take other parameters.
+builder.Map("fluent-tail {**args}")
+    .WithHandler((string[] args) => Console.WriteLine($"Tail args: {string.Join(" ", args)}"))
+    .AsCommand().Done();
 #endregion
 
 #region MCP:fluent-options

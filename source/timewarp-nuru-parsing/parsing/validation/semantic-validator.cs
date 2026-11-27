@@ -34,6 +34,7 @@ internal sealed class SemanticValidator
     ValidateEndOfOptionsSeparator(context, semanticErrors);
     ValidateDuplicateOptionAliases(context, semanticErrors);
     ValidateMixedCatchAllWithOptional(context, semanticErrors);
+    ValidateRawCatchAllAlone(context, semanticErrors);
 
     return semanticErrors.Count > 0 ? [.. semanticErrors] : null;
   }
@@ -325,5 +326,31 @@ internal sealed class SemanticValidator
     }
   }
 
-  // AddError method removed - create specific error types directly
+  // NURU_S011: A raw catch-all ({**name}) may share its route with leading literals only.
+  private static void ValidateRawCatchAllAlone(ValidationContext context, List<SemanticError> semanticErrors)
+  {
+    foreach (ParameterSyntax parameter in context.Parameters)
+    {
+      if (!parameter.IsRaw)
+        continue;
+
+      bool hasOtherParameter = false;
+      foreach (ParameterSyntax other in context.Parameters)
+      {
+        if (!ReferenceEquals(other, parameter))
+        {
+          hasOtherParameter = true;
+          break;
+        }
+      }
+
+      if (hasOtherParameter || context.Options.Count > 0 || context.EndOfOptionsIndex is not null || parameter.Type is not null)
+      {
+        semanticErrors.Add(new RawCatchAllNotAloneError(
+          parameter.Position,
+          parameter.Length,
+          parameter.Name));
+      }
+    }
+  }
 }

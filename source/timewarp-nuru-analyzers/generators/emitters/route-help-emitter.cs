@@ -15,6 +15,10 @@
 // leading literals, which keeps another group's routes out of this invocation.
 // Shared-prefix help is emitted before group-summary help so an empty subcommand and
 // {env} under the same group prefix still print per-route blocks.
+// A raw catch-all ({**name}) is left out of per-route help, shared-prefix help, and the
+// group summary when its literal prefix equals the group's words: "tail --help" is an
+// argument. A raw route with further literals (commit {**args} under group git) still
+// leaves "git --help" as the group summary.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -45,6 +49,9 @@ internal static class RouteHelpEmitter
     HashSet<RouteDefinition>? sharedPrefixHelpRoutes = null,
     int indent = 4)
   {
+    if (route.HasRawCatchAll)
+      return;
+
     if (sharedPrefixHelpRoutes?.Contains(route) == true)
       return;
 
@@ -92,7 +99,8 @@ internal static class RouteHelpEmitter
     foreach (RouteDefinition route in routes)
     {
       List<string> prefix = GetLiteralPrefix(route);
-      if (prefix.Count == 0)
+      // A raw catch-all answers "tail --help" itself. It must not join a shared-prefix help check.
+      if (route.HasRawCatchAll || prefix.Count == 0)
         continue;
 
       prefixed.Add((route, string.Join('\u001f', prefix), prefix));
@@ -185,6 +193,12 @@ internal static class RouteHelpEmitter
   }
 
   /// <summary>
+  /// True when the route's leading literals are the group's words, ignoring case.
+  /// </summary>
+  private static bool LiteralPrefixEquals(List<string> prefix, string[] words) =>
+    prefix.Count == words.Length && prefix.SequenceEqual(words, StringComparer.OrdinalIgnoreCase);
+
+  /// <summary>
   /// Emits the help content for a specific route.
   /// </summary>
   private static void EmitRouteHelpContent(StringBuilder sb, RouteDefinition route, int indent)
@@ -223,15 +237,19 @@ internal static class RouteHelpEmitter
       foreach (ParameterDefinition param in parameters)
       {
         string name = param.Name;
-        if (param.IsCatchAll)
-        {
+        if (param.IsRaw)
+          name = $"**{name}";
+        else if (param.IsCatchAll)
           name = $"*{name}";
-        }
 
         string required = param.IsOptional ? "No" : "Yes";
-        string type = param.HasTypeConstraint && param.TypeConstraint is not null
-          ? param.TypeConstraint
-          : "string";
+        string type;
+        if (param.IsRaw && !param.HasTypeConstraint)
+          type = "string[]";
+        else if (param.HasTypeConstraint && param.TypeConstraint is not null)
+          type = param.TypeConstraint;
+        else
+          type = "string";
 
         if (anyDescriptions)
         {
@@ -314,6 +332,8 @@ internal static class RouteHelpEmitter
   /// Call this after shared-prefix help and before route matching. A single route under the
   /// group prefix still reaches this summary; two or more routes that share the prefix are
   /// already printed by <see cref="EmitSharedPrefixHelpChecks"/>.
+  /// A raw catch-all whose literal prefix equals the group's words is omitted: that invocation
+  /// is an argument of the raw route.
   /// </summary>
   /// <param name="sb">The StringBuilder to append to.</param>
   /// <param name="routes">All routes to group by prefix.</param>
@@ -337,6 +357,10 @@ internal static class RouteHelpEmitter
 
       // Split prefix by spaces into words
       string[] words = groupPrefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+      // A raw route whose literals are exactly these words answers "<group> --help".
+      if (groupRoutes.Any(route => route.HasRawCatchAll && LiteralPrefixEquals(GetLiteralPrefix(route), words)))
+        continue;
 
       string helpPattern = BuildHelpArgsPattern(words);
 

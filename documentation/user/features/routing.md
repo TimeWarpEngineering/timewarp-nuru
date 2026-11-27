@@ -14,6 +14,7 @@ TimeWarp.Nuru supports intuitive route patterns:
 | Optional        | `deploy {env} {tag?}`   | `./cli deploy prod` or `./cli deploy prod v1.2` |
 | Options         | `build --config {mode}` | `./cli build --config Release`                  |
 | Catch-all       | `docker {*args}`        | `./cli docker -- run -it ubuntu`                |
+| Raw catch-all   | `tail {**args}`         | `./cli tail -n 40` (every token, unchanged)     |
 
 ## Type Safety
 
@@ -337,6 +338,45 @@ builder.Map("git add {*files}")
 - Handler parameter must be `string[]`
 - Option-shaped args (`-la`, `--port`) reach the catch-all only after `--`: `./cli docker run -- nginx --port 8080`
 
+### Raw catch-all
+
+`{**args}` is a second catch-all for a command override that parses its own arguments (`tail -40`, `find . -name x`, `dd if=a of=b`). The handler receives a `string[]` of every token after the route's leading literals, in order and unchanged: option-shaped tokens, `--`, `--key=value`, `--help`, `--version`, a lone `-`, and empty strings. `{*args}` does not change. It still fails closed on an unknown option.
+
+```csharp
+builder.Map("tail {**args}")
+  .WithHandler((string[] args) => RunTail(args))
+  .AsCommand()
+  .Done();
+
+// Endpoint DSL: [NuruRoute] is one literal, so the marker is IsRaw.
+[NuruRoute("tail")]
+public sealed class TailCommand : ICommand<Unit>
+{
+  [Parameter(IsCatchAll = true, IsRaw = true)]
+  public string[] Args { get; set; } = [];
+}
+```
+
+```bash
+./cli tail -n 40
+# args = ["-n", "40"]
+
+./cli tail --lines=40
+# args = ["--lines=40"]    # kept, and applied to configuration when AddConfiguration() is on
+
+./cli tail --help
+# args = ["--help"]        # not Nuru's help
+```
+
+A route with no leading literal (`{**args}`) is the whole program: `myapp --help` is an argument too. A raw route that starts with a literal leaves `myapp --help` to Nuru. `<group> --help` and `<group> -h` reach the handler when the raw route's literals are exactly the group prefix (`[NuruRouteGroup("tail")]` with `[NuruRoute("")]`). A raw route with further literals leaves that group's summary in place.
+
+**Rules:**
+- Leading literals are allowed. Other parameters, options, `--`, and a type constraint (`{**args:int}`) are build error NURU_S011
+- `IsRaw` requires `IsCatchAll`. `IsRaw` alone is the same error and does not become a catch-all
+- Handler parameter is `string[]`
+- `--json-args` is still peeled before routing. `--interactive` / `-i` with no other tokens still starts the REPL when `AddRepl()` is on. `tail -i` is an argument
+- A `--key=value` or `--key:value` token reaches the handler and, when the app calls `AddConfiguration()`, is applied to configuration as well. Put that token after the route's leading literals. An override before them (`myapp --Logging:LogLevel:Default=Debug tail -n 4`) stays in the raw argument list, so the literal does not match
+
 ## Unknown Options
 
 An option-shaped token that the route does not declare fails the call. It is never bound as a value
@@ -349,113 +389,13 @@ and never ignored:
 
 - Negative numbers (`-5`, `-1.5e10`) and a lone `-` are values, not options.
 - Everything after `--` is a value, even `--port` or `-la`.
-- `--key=value` and `--key:value` are configuration overrides and are removed before routing.
+- `--key=value` and `--key:value` are configuration overrides and are removed before routing. A raw catch-all keeps them for the handler and still applies them to configuration. An override before the raw route's leading literals stops that route from matching. See [Raw catch-all](#raw-catch-all).
 - An extra token that is not option-shaped still reports `Unknown command`.
 - A REPL line follows the same rules.
 
 ## Complex Scenarios
 
-### Git-Style Sub-Commands
-
-Build hierarchical command structures:
-
-```csharp
-// Repository commands
-builder.Map("git init")
-  .WithHandler(() => GitInit())
-  .AsCommand()
-  .Done();
-builder.Map("git clone {url}")
-  .WithHandler((string url) => GitClone(url))
-  .AsCommand()
-  .Done();
-builder.Map("git status")
-  .WithHandler(() => GitStatus())
-  .AsCommand()
-  .Done();
-
-// Branch commands
-builder.Map("git branch")
-  .WithHandler(() => ListBranches())
-  .AsCommand()
-  .Done();
-builder.Map("git branch {name}")
-  .WithHandler((string name) => CreateBranch(name))
-  .AsCommand()
-  .Done();
-builder.Map("git checkout {branch}")
-  .WithHandler((string branch) => Checkout(branch))
-  .AsCommand()
-  .Done();
-
-// Commit commands
-builder.Map("git add {*files}")
-  .WithHandler((string[] files) => GitAdd(files))
-  .AsCommand()
-  .Done();
-builder.Map("git commit -m {message}")
-  .WithHandler((string message) => GitCommit(message))
-  .AsCommand()
-  .Done();
-builder.Map("git push")
-  .WithHandler(() => GitPush())
-  .AsCommand()
-  .Done();
-builder.Map("git push --force")
-  .WithHandler(() => GitPushForce())
-  .AsCommand()
-  .Done();
-```
-
-### Docker-Style Options
-
-Complex option combinations:
-
-```csharp
-builder.Map("run {image}")
-  .WithHandler((string image) => Docker.Run(image))
-  .AsCommand()
-  .Done();
-
-builder.Map("run {image} --port {port:int}")
-  .WithHandler((string image, int port) => Docker.Run(image, port: port))
-  .AsCommand()
-  .Done();
-
-builder.Map("run {image} --port {port:int} --detach")
-  .WithHandler((string image, int port) => Docker.Run(image, port: port, detached: true))
-  .AsCommand()
-  .Done();
-
-builder.Map("run {image} --env {*vars}")
-  .WithHandler((string image, string[] vars) => Docker.Run(image, envVars: vars))
-  .AsCommand()
-  .Done();
-```
-
-### Conditional Routing Based on Options
-
-Different handlers for different option combinations:
-
-```csharp
-// Dry run
-builder.Map("deploy {app} --env {environment} --dry-run")
-  .WithHandler((string app, string environment) => DeployDryRun(app, environment))
-  .AsCommand()
-  .Done();
-
-// Actual deployment
-builder.Map("deploy {app} --env {environment}")
-  .WithHandler((string app, string environment) => DeployReal(app, environment))
-  .AsCommand()
-  .Done();
-
-// Force deployment
-builder.Map("deploy {app} --env {environment} --force")
-  .WithHandler((string app, string environment) => DeployForce(app, environment))
-  .AsCommand()
-  .Done();
-```
+Git-style sub-commands, docker-style options, and option-specific handlers are in [Routing scenarios](routing-scenarios.md).
 
 ## Route Specificity and Matching
 

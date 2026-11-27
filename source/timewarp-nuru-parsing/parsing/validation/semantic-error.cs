@@ -122,6 +122,19 @@ public record InvalidEndOfOptionsSeparatorError(
 }
 
 /// <summary>
+/// Raw catch-all combined with another parameter, an option, '--', or a type constraint.
+/// </summary>
+public record RawCatchAllNotAloneError(
+  int Position,
+  int Length,
+  string CatchAllParam
+) : SemanticError(Position, Length)
+{
+  public override string ToString() =>
+    $"Semantic Error at position {Position}: Raw catch-all '{CatchAllParam}' must be the route's only parameter, with no options and no type constraint";
+}
+
+/// <summary>
 /// Options after end-of-options separator error.
 /// </summary>
 public record OptionsAfterEndOfOptionsSeparatorError(

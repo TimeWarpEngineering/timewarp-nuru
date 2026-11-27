@@ -1,7 +1,7 @@
 # NuruRouteExample proof capture (task 570)
 
-`calc.cs` is a one-route runfile that uses the published package `TimeWarp.Nuru` 4.0.0-beta.17 (first captured on 4.0.0-beta.16; task 601 recaptured it unchanged),
-the newest version on nuget.org on 2026-11-21. The version is pinned in the repository
+`calc.cs` is a one-route runfile that uses the published package `TimeWarp.Nuru` 4.0.0-beta.18 (first captured on 4.0.0-beta.16; task 601 recaptured it on beta.17; task 602 recaptured it on beta.18),
+the newest version on nuget.org on 2026-11-27. The version is pinned in the repository
 `Directory.Packages.props`, because the `cpm-consistency` audit check refuses an inline
 `#:package …@version`. The sample does not use the repository's project references. The
 `Directory.Build.*` files in this folder stop MSBuild from importing the repository build and

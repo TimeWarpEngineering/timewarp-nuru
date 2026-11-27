@@ -291,11 +291,22 @@ internal static class HelpEmitter
 
     foreach (ParameterDefinition parameter in parameters)
     {
-      string name = parameter.IsCatchAll ? $"*{parameter.Name}" : parameter.Name;
+      string name;
+      if (parameter.IsRaw)
+        name = $"**{parameter.Name}";
+      else if (parameter.IsCatchAll)
+        name = $"*{parameter.Name}";
+      else
+        name = parameter.Name;
+
       string required = parameter.IsOptional ? "No" : "Yes";
-      string type = parameter.HasTypeConstraint && parameter.TypeConstraint is not null
-        ? parameter.TypeConstraint
-        : "string";
+      string type;
+      if (parameter.IsRaw && !parameter.HasTypeConstraint)
+        type = "string[]";
+      else if (parameter.HasTypeConstraint && parameter.TypeConstraint is not null)
+        type = parameter.TypeConstraint;
+      else
+        type = "string";
 
       if (anyDescriptions)
       {

@@ -10,6 +10,8 @@
 // The trade-off: POSIX-style flag grouping (-la == -l -a) is deliberately NOT
 // supported — grouping and multi-char shorts are mutually exclusive conventions,
 // and grouping would require interpreting undeclared tokens (kanban 454-005/454-014).
+// A second asterisk ({**name}) is a raw catch-all: the same catch-all, and the matcher
+// copies every remaining token with no option check (task 602). One asterisk stays fail-closed.
 // Parameter names use IsValidIdentifierFormat (letter or underscore, then letters, digits,
 // and underscores). Hyphens stay legal on option names only (--dry-run).
 #endregion
@@ -48,11 +50,14 @@ internal sealed partial class Parser
     Token leftBrace = Consume(RouteTokenType.LeftBrace, "Expected '{'");
     int startPos = leftBrace.Position;
 
-    // Check for catch-all marker
+    // One asterisk is a catch-all. A second asterisk is the raw form ({**name}).
     bool isCatchAll = false;
+    bool isRaw = false;
     if (Match(RouteTokenType.Asterisk))
     {
       isCatchAll = true;
+      if (Match(RouteTokenType.Asterisk))
+        isRaw = true;
     }
 
     // Parameter name
@@ -132,7 +137,7 @@ internal sealed partial class Parser
 
     Token rightBrace = Consume(RouteTokenType.RightBrace, "Expected '}'");
 
-    return new ParameterSyntax(paramName, isCatchAll, isOptional, false, typeConstraint, description)
+    return new ParameterSyntax(paramName, isCatchAll, isOptional, false, typeConstraint, description, isRaw)
     {
       Position = startPos,
       Length = rightBrace.EndPosition - startPos

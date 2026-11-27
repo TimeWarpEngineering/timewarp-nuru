@@ -26,6 +26,12 @@
 // built-in can still match; if none does, the no-match fallback names the option and exits 1.
 // The REPL calls the same ExecuteRouteAsync, so a REPL line fails the same way.
 //
+// RAW CATCH-ALL (task 602): {**name} is a catch-all that copies every unconsumed-check-free token,
+// including option-shaped tokens, "--", and --key=value. The matcher swaps routeArgs for
+// __rawRouteArgs (json-args peeled, configuration overrides kept) and restores it on skip.
+// It does not skip built-in flags, does not record unknown options, and does not answer --help.
+// A route with no options skips the option-form locals so they are not unused.
+//
 // OPTION GUARDS: A missing required option, a missing required value, or an absent unbound
 // discriminator flag sets __optionMissing_N instead of skipping at once. The skip runs after the
 // unknown-option check, so a close typo of the missing form is recorded and suggested (515 M1).
@@ -161,6 +167,14 @@ internal static partial class RouteMatcherEmitter
     // PositionalMatchSegments includes group prefix literals, pattern literals, and end-of-options
     int minPositionalArgs = route.PositionalMatchSegments.Count() + route.Parameters.Count(p => !p.IsOptional && !p.IsCatchAll);
 
+    // Raw catch-all reads __rawRouteArgs for this block only. A later route still sees routeArgs.
+    if (route.HasRawCatchAll)
+    {
+      sb.AppendLine("    {");
+      sb.AppendLine($"      string[] __outerRouteArgs_{routeIndex} = routeArgs;");
+      sb.AppendLine("      routeArgs = __rawRouteArgs;");
+    }
+
     // Initial length check (minimum possible args)
     sb.AppendLine($"    if (routeArgs.Length >= {minPositionalArgs})");
     sb.AppendLine("    {");
@@ -169,27 +183,40 @@ internal static partial class RouteMatcherEmitter
     // built-in flags like --help. The flag ends up as a positional arg or option value.
     // Skip built-in flags for these routes regardless of required parameter count,
     // UNLESS the route explicitly maps a built-in flag (e.g., Map("--version")).
+    // A raw catch-all is the override: --help and --version are arguments.
     bool hasNoLiterals = !route.PositionalMatchSegments.Any();
     bool isBuiltInFlagRoute = route.OriginalPattern is "--help" or "-h" or "--version" or "--capabilities";
-    if (hasNoLiterals && !isBuiltInFlagRoute)
+    if (hasNoLiterals && !isBuiltInFlagRoute && !route.HasRawCatchAll)
     {
       sb.AppendLine("      // Skip built-in flags for routes with no literals (default/options-only)");
       sb.AppendLine($"      if (routeArgs is {BuiltInFlags.PatternMatchExpression})");
       sb.AppendLine($"        goto route_skip_{routeIndex};");
     }
 
-    // Emit the set of all option forms for this route (used to distinguish options from values)
-    EmitOptionFormsSet(sb, route, routeIndex);
+    // A raw route with no options has nothing to parse. Emitting the option locals would
+    // leave them unused. An invalid raw route that still declares options keeps the locals
+    // so the handler's option parameters compile; NURU_S011 already fails that build.
+    string optionConversions;
+    bool parseOptions = !route.HasRawCatchAll || route.HasOptions;
+    if (parseOptions)
+    {
+      // Emit the set of all option forms for this route (used to distinguish options from values)
+      EmitOptionFormsSet(sb, route, routeIndex);
 
-    // Find end-of-options marker (--)
-    sb.AppendLine($"      int __endOfOptions_{routeIndex} = global::System.Array.IndexOf(routeArgs, \"--\");");
-    sb.AppendLine($"      if (__endOfOptions_{routeIndex} < 0) __endOfOptions_{routeIndex} = routeArgs.Length;");
+      // Find end-of-options marker (--)
+      sb.AppendLine($"      int __endOfOptions_{routeIndex} = global::System.Array.IndexOf(routeArgs, \"--\");");
+      sb.AppendLine($"      if (__endOfOptions_{routeIndex} < 0) __endOfOptions_{routeIndex} = routeArgs.Length;");
 
-    // Track consumed indices (options and their values)
-    sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
+      // Track consumed indices (options and their values)
+      sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
 
-    // First pass: Extract all options (with index tracking)
-    string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters, minPositionalArgs);
+      // First pass: Extract all options (with index tracking)
+      optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters, minPositionalArgs);
+    }
+    else
+    {
+      optionConversions = "";
+    }
 
     // Build positional args array (excluding consumed indices; -- is included only if route expects it)
     List<string> literalPrefix = RouteHelpEmitter.GetLiteralPrefix(route);
@@ -198,11 +225,16 @@ internal static partial class RouteMatcherEmitter
     // An unknown option stops this route; record it when the command's leading literals match, or
     // for a route with no leading literal, when the positional args fit the route.
     // This runs before the option-guard skip so a typo of a required option is still suggested.
-    if (literalPrefix.Count > 0)
-      EmitUnknownOptionPrefixCheck(sb, routeIndex, literalPrefix, $"route_skip_{routeIndex}");
-    else
-      EmitUnknownOptionShapeCheck(sb, routeIndex, minPositionalArgs, exact: !route.HasOptionalPositionalParams && !route.HasCatchAll, GetPositionalLiteralChecks(route, route.GroupPrefix?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? [], includeSegmentLiterals: true), $"route_skip_{routeIndex}");
-    EmitOptionGuardSkip(sb, route, routeIndex, $"route_skip_{routeIndex}");
+    // A raw catch-all does not treat those tokens as unknown.
+    if (!route.HasRawCatchAll)
+    {
+      if (literalPrefix.Count > 0)
+        EmitUnknownOptionPrefixCheck(sb, routeIndex, literalPrefix, $"route_skip_{routeIndex}");
+      else
+        EmitUnknownOptionShapeCheck(sb, routeIndex, minPositionalArgs, exact: !route.HasOptionalPositionalParams && !route.HasCatchAll, GetPositionalLiteralChecks(route, route.GroupPrefix?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? [], includeSegmentLiterals: true), $"route_skip_{routeIndex}");
+      EmitOptionGuardSkip(sb, route, routeIndex, $"route_skip_{routeIndex}");
+    }
+
     sb.Append(optionConversions);
 
     // Check minimum positional args (required parameters must be present)
@@ -306,6 +338,11 @@ internal static partial class RouteMatcherEmitter
     InterceptorEmitter.EmitExclusiveGateEnd(sb, route, "      ");
     sb.AppendLine("    }");
     sb.AppendLine($"    route_skip_{routeIndex}:;");
+    if (route.HasRawCatchAll)
+    {
+      sb.AppendLine($"      routeArgs = __outerRouteArgs_{routeIndex};");
+      sb.AppendLine("    }");
+    }
   }
 
   /// <summary>

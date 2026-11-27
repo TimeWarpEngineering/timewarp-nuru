@@ -191,6 +191,24 @@ A typed catch-all (`{*points:T}`) converts built-in element types only (every bu
 
 NURU_S010 is the only error such a route produces: the generated code still compiles, so the build does not also report CS0103 or CS0029 inside generated files.
 
+### NURU_S011: Raw Catch-All Is Not Alone
+
+**Problem**: A raw catch-all takes every remaining token. It cannot share the route with another parameter, an option, `--`, or a type constraint.
+
+```csharp
+// ❌ Error: raw catch-all plus an option
+builder.Map("tail {**args} --verbose").WithHandler((string[] args, bool verbose) => 0).AsCommand().Done();
+
+// ❌ Error: IsRaw without IsCatchAll
+[Parameter(IsRaw = true)]
+public string Args { get; set; } = "";
+
+// ✅ Correct: leading literals only
+builder.Map("tail {**args}").WithHandler((string[] args) => 0).AsCommand().Done();
+```
+
+The endpoint form is `[Parameter(IsCatchAll = true, IsRaw = true)]` on a `string[]`. `{*args}` is unchanged and does not report NURU_S011.
+
 ### Typed endpoints
 
 `.Map<TEndpoint>()` takes no pattern argument. Put the route on `[NuruRoute]`. There is no `NURU_D001` diagnostic.
@@ -341,6 +359,7 @@ There is no `NURU_DEBUG` diagnostic id.
 | NURU_S008 | Options after end-of-options separator |
 | NURU_S009 | Unresolved type converter type |
 | NURU_S010 | Unknown type constraint |
+| NURU_S011 | Raw catch-all is not alone |
 
 ## Related Documentation
 

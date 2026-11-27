@@ -43,6 +43,7 @@ namespace TimeWarp.Nuru;
 [JsonSerializable(typeof(OptionalBeforeRequiredError))]
 [JsonSerializable(typeof(InvalidEndOfOptionsSeparatorError))]
 [JsonSerializable(typeof(OptionsAfterEndOfOptionsSeparatorError))]
+[JsonSerializable(typeof(RawCatchAllNotAloneError))]
 [JsonSerializable(typeof(ParseError))]
 [JsonSerializable(typeof(InvalidParameterSyntaxError))]
 [JsonSerializable(typeof(UnbalancedBracesError))]

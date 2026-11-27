@@ -236,6 +236,9 @@ public sealed partial class DslInterpreter
       OptionsAfterEndOfOptionsSeparatorError e =>
         Diagnostic.Create(DiagnosticDescriptors.OptionsAfterEndOfOptionsSeparator, location, e.Option),
 
+      RawCatchAllNotAloneError e =>
+        Diagnostic.Create(DiagnosticDescriptors.RawCatchAllNotAlone, location, e.CatchAllParam),
+
       _ => null
     };
   }

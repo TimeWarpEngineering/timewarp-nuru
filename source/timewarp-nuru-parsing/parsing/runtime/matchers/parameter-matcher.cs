@@ -34,14 +34,19 @@ public class ParameterMatcher : RouteMatcher
   /// Gets whether this parameter is optional.
   /// </summary>
   public bool IsOptional { get; }
+  /// <summary>
+  /// Gets whether this catch-all takes every remaining token unchanged ({**name}).
+  /// </summary>
+  public bool IsRaw { get; }
 
-  public ParameterMatcher(string name, bool isCatchAll = false, string? constraint = null, string? description = null, bool isOptional = false)
+  public ParameterMatcher(string name, bool isCatchAll = false, string? constraint = null, string? description = null, bool isOptional = false, bool isRaw = false)
   {
     Name = name ?? throw new ArgumentNullException(nameof(name));
     IsCatchAll = isCatchAll;
     Constraint = constraint;
     Description = description;
     IsOptional = isOptional;
+    IsRaw = isRaw;
   }
 
   public override bool TryMatch(string arg, out string? extractedValue)
@@ -52,7 +57,14 @@ public class ParameterMatcher : RouteMatcher
 
   public override string ToDisplayString()
   {
-    string result = IsCatchAll ? "{*" : "{";
+    string result;
+    if (IsRaw)
+      result = "{**";
+    else if (IsCatchAll)
+      result = "{*";
+    else
+      result = "{";
+
     result += Name;
     if (IsOptional)
     {

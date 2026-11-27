@@ -6,7 +6,9 @@
 // [Parameter] Order is the positional order. Two or more parameters that omit it report NURU_A002.
 // Name, when set, is the route segment name (lowercased) and must be an identifier.
 // A name that is not an identifier reports NURU_A005 and the property name is used instead.
-// A catch-all stays last.
+// A catch-all stays last. IsRaw is {**name}. It must be IsCatchAll, and the route's only
+// parameter, with no options and no type constraint (NURU_S011). IsRaw alone does not
+// become a catch-all: a scalar would otherwise be assigned string[].
 // [Option] reading lives in endpoint-extractor.option-attributes.cs.
 #endregion
 
@@ -157,7 +159,63 @@ internal static partial class EndpointExtractor
 
     ReportMissingParameterOrder(pendingParameters, diagnostics);
     ReorderParametersByOrder(segments, pendingParameters);
+    ReportRawCatchAllNotAlone(classSymbol, segments, diagnostics);
     return segments.ToImmutable();
+  }
+
+  /// <summary>
+  /// A raw catch-all may share the endpoint with leading literals only. Literals come from
+  /// [NuruRoute] and are not in this segment list. Group options are already included.
+  /// IsRaw without IsCatchAll reports the same diagnostic and stays a scalar parameter.
+  /// </summary>
+  private static void ReportRawCatchAllNotAlone(
+    INamedTypeSymbol classSymbol,
+    ImmutableArray<SegmentDefinition>.Builder segments,
+    ImmutableArray<Diagnostic>.Builder diagnostics)
+  {
+    List<ParameterDefinition> parameters = [];
+    bool hasOption = false;
+    bool hasEndOfOptions = false;
+    foreach (SegmentDefinition segment in segments)
+    {
+      switch (segment)
+      {
+        case ParameterDefinition parameter:
+          parameters.Add(parameter);
+          break;
+        case OptionDefinition:
+          hasOption = true;
+          break;
+        case EndOfOptionsSeparatorDefinition:
+          hasEndOfOptions = true;
+          break;
+      }
+    }
+
+    foreach (ParameterDefinition raw in parameters)
+    {
+      if (!raw.IsRaw)
+        continue;
+
+      if (parameters.Count == 1 && !hasOption && !hasEndOfOptions && !raw.HasTypeConstraint && raw.IsCatchAll)
+        continue;
+
+      diagnostics.Add(Diagnostic.Create(
+        DiagnosticDescriptors.RawCatchAllNotAlone,
+        LocationForRawParameter(classSymbol, raw.Name),
+        raw.Name));
+    }
+  }
+
+  private static Location LocationForRawParameter(INamedTypeSymbol classSymbol, string parameterName)
+  {
+    foreach (IPropertySymbol property in classSymbol.GetMembers().OfType<IPropertySymbol>())
+    {
+      if (string.Equals(property.Name, parameterName, StringComparison.OrdinalIgnoreCase))
+        return property.Locations.FirstOrDefault() ?? Location.None;
+    }
+
+    return classSymbol.Locations.FirstOrDefault() ?? Location.None;
   }
 
   /// <summary>
@@ -282,6 +340,7 @@ internal static partial class EndpointExtractor
   {
     string? description = null;
     bool isCatchAll = false;
+    bool isRaw = false;
     bool isOptional = property.NullableAnnotation == NullableAnnotation.Annotated;
     order = -1;
 
@@ -295,6 +354,9 @@ internal static partial class EndpointExtractor
           break;
         case "IsCatchAll":
           isCatchAll = namedArg.Value.Value is true;
+          break;
+        case "IsRaw":
+          isRaw = namedArg.Value.Value is true;
           break;
         case "Order":
           if (namedArg.Value.Value is int orderValue)
@@ -313,7 +375,8 @@ internal static partial class EndpointExtractor
       Description: description,
       IsOptional: isOptional,
       IsCatchAll: isCatchAll,
-      ResolvedClrTypeName: typeName);
+      ResolvedClrTypeName: typeName,
+      IsRaw: isRaw);
   }
 
   /// <summary>

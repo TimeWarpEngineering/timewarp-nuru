@@ -96,7 +96,8 @@ internal sealed class Compiler : SyntaxVisitor<object?>
         parameter.IsCatchAll,
         parameter.Type,
         parameter.Description,
-        parameter.IsOptional);
+        parameter.IsOptional,
+        parameter.IsRaw);
 
     Segments.Add(parameterMatcher);
     return null;

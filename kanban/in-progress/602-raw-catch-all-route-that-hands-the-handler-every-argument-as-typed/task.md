@@ -122,3 +122,9 @@ Expect: stdout `--help`, exit 0. The output does not contain `commands:`.
 - Seen in the same test, not part of this task: a repeated option (`-n 1 -n 2`) puts the second
   `-n` and its value in the catch-all, and a missing option value (`-n` alone) exits 0.
 - Background: timewarp-amuru `kanban/done/157-research-head-and-tail-commands-that-save-the-full-stream-for-agents/task.md`.
+
+## Parked
+
+2026-11-27 at merge: PR #439 CI is red; refusing merge. check 'test-multi' (run 46034487255) concluded failure.
+
+No failing command output.

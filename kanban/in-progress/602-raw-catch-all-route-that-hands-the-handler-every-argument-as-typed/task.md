@@ -89,7 +89,9 @@ Round 1 (effort 3, roster: general): 1 bug, 1 suggestion, 1 nit. Fix pass closed
 
 Round 2 (effort 2, roster: general) re-verified the fix delta 1fa4a72e. It read the diff and the recorded results and did not rerun the gates. M1, M2, and M3 are fixed. It raised one new nit, M4: the new public `EndpointBuilder<TBuilder>.WithAlias(string)` turns on fluent route aliases, but the changelog does not name it. M4 is wontfix: the package is beta, the stub is additive, the generator already handled it, and routing-43 covers it. The changelog line goes with the next fluent-alias change.
 
-Final counts: bug 1 fixed; suggestion 1 fixed; nit 1 fixed, 1 wontfix; 0 open. Disposition: **accepted-exceptions**. Files: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+Round 3 (effort 3, roster: general) reviewed the CI fix 4711ceed. generator-81 now runs only in the standalone phase, through `CiTestExcludes` and the standalone list, the same as generator-80. Round 3 checked the recorded local CI run (multi 2405 passed, 7 skipped, 0 failed; standalone 0 failed) and found that master's two extra commits touch only this task's kanban files. It did not rerun the gates and raised no new findings. The next PR #439 CI run is still the merge proof.
+
+Final counts: bug 1 fixed; suggestion 1 fixed; nit 1 fixed, 1 wontfix; 0 open. Disposition: **accepted-exceptions**. Files: `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ### Fix pass (review round 1)
 
@@ -128,11 +130,14 @@ Expect: the multi-mode assembly compiles and the run exits 0. The standalone pha
 - Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, max-turns 120. Disposition accepted-exceptions (M4 nit wontfix), 0 open, Done (2026-11-27)
 - CI red at merge gate (2026-11-27, PR #439, run 46034487255, check `test-multi`): the multi-mode test assembly does not compile. `tests/timewarp-nuru-tests/lexer/lexer-test-helper.cs(17,19)` and `(37,33)`: error CS0433, the types `Lexer` and `Token` exist in both `TimeWarp.Nuru.Analyzers` and `TimeWarp.Nuru`. Master CI is green, so this branch introduced it. Cause: `generator-81-raw-catchall-diagnostic.cs` references TimeWarp.Nuru.Analyzers and was compiled into the multi assembly. Fixed by listing it in `CiTestExcludes` and `tests/ci-standalone/run-standalone-tests.cs`. Local `env -u NURU_CI_PHASE dotnet run tests/ci-tests/run-ci-tests.cs` passed (2026-11-28).
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21ef4-1246-7b32-99cb-a8f24989906c, max-turns 500, Done — 2026-11-27T21:54:35Z
+- Review oracle round 3: Claude Opus 5.5 (claude-opus-5-5), effort 3, roster general, max-turns 200. 0 new findings; disposition accepted-exceptions (M4 nit wontfix), 0 open, Done (2026-11-28)
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b992faf8-3ed3-4f6f-8f3d-83d1b5d0625f, max-turns 200, artifacts general.md, merged.md, disposition.md — 2026-11-27T21:56:00Z
 
 ## Review
 
 - Round 1: fixed on this branch — M1 group help, M2 endpoint and alias runtime tests, M3 configuration-override docs
 - Round 2: Done
+- Round 3: Done
 ## Notes
 
 - First consumer: timewarp-ganda task 731 (`tail`), with the parser in timewarp-amuru task 158.

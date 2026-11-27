@@ -1,7 +1,7 @@
 #!/usr/bin/env -S dotnet --
 // Proof sample for kanban 570: a worked example declared with [NuruRouteExample]
 // shows up in per-route --help and in the --capabilities catalog.
-// Pinned to the published TimeWarp.Nuru 4.0.0-beta.17 package by the repository
+// Pinned to the published TimeWarp.Nuru 4.0.0-beta.18 package by the repository
 // Directory.Packages.props (not a project reference).
 #:package TimeWarp.Nuru
 #:property InterceptorsNamespaces=$(InterceptorsNamespaces);TimeWarp.Nuru.Generated

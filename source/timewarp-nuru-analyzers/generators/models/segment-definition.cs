@@ -50,6 +50,7 @@ public sealed record LiteralDefinition(int Position, string Value)
 /// <param name="IsCatchAll">Whether this is a catch-all parameter (*)</param>
 /// <param name="ResolvedClrTypeName">The resolved CLR type name (e.g., "global::System.Int32")</param>
 /// <param name="DefaultValue">Default value expression, if any</param>
+/// <param name="IsRaw">Whether this catch-all takes every remaining token unchanged ({**name})</param>
 public sealed record ParameterDefinition(
   int Position,
   string Name,
@@ -58,7 +59,8 @@ public sealed record ParameterDefinition(
   bool IsOptional,
   bool IsCatchAll,
   string? ResolvedClrTypeName,
-  string? DefaultValue = null)
+  string? DefaultValue = null,
+  bool IsRaw = false)
   : SegmentDefinition(Position)
 {
   /// <summary>
@@ -99,6 +101,8 @@ public sealed record ParameterDefinition(
       // TypeConstraint keeps a trailing '?' when the source wrote {name:type?}.
       string baseType = HasTypeConstraint ? TypeConstraint!.TrimEnd('?') : "";
       string typeSpec = HasTypeConstraint ? $":{baseType}" : "";
+      if (IsRaw)
+        return $"{{**{Name}}}";
       if (IsCatchAll)
         return $"{{*{Name}{typeSpec}}}";
       if (IsOptional)

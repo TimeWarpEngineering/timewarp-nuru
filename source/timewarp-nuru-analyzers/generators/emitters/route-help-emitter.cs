@@ -15,6 +15,7 @@
 // leading literals, which keeps another group's routes out of this invocation.
 // Shared-prefix help is emitted before group-summary help so an empty subcommand and
 // {env} under the same group prefix still print per-route blocks.
+// A raw catch-all ({**name}) is left out of both checks: "tail --help" is an argument.
 #endregion
 
 namespace TimeWarp.Nuru.Generators;
@@ -45,6 +46,9 @@ internal static class RouteHelpEmitter
     HashSet<RouteDefinition>? sharedPrefixHelpRoutes = null,
     int indent = 4)
   {
+    if (route.HasRawCatchAll)
+      return;
+
     if (sharedPrefixHelpRoutes?.Contains(route) == true)
       return;
 
@@ -92,7 +96,8 @@ internal static class RouteHelpEmitter
     foreach (RouteDefinition route in routes)
     {
       List<string> prefix = GetLiteralPrefix(route);
-      if (prefix.Count == 0)
+      // A raw catch-all answers "tail --help" itself. It must not join a shared-prefix help check.
+      if (route.HasRawCatchAll || prefix.Count == 0)
         continue;
 
       prefixed.Add((route, string.Join('\u001f', prefix), prefix));
@@ -223,15 +228,19 @@ internal static class RouteHelpEmitter
       foreach (ParameterDefinition param in parameters)
       {
         string name = param.Name;
-        if (param.IsCatchAll)
-        {
+        if (param.IsRaw)
+          name = $"**{name}";
+        else if (param.IsCatchAll)
           name = $"*{name}";
-        }
 
         string required = param.IsOptional ? "No" : "Yes";
-        string type = param.HasTypeConstraint && param.TypeConstraint is not null
-          ? param.TypeConstraint
-          : "string";
+        string type;
+        if (param.IsRaw && !param.HasTypeConstraint)
+          type = "string[]";
+        else if (param.HasTypeConstraint && param.TypeConstraint is not null)
+          type = param.TypeConstraint;
+        else
+          type = "string";
 
         if (anyDescriptions)
         {

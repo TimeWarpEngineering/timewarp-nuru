@@ -8,14 +8,15 @@ using System.Text;
 
 /// <summary>
 /// A parameter segment that captures a value from command line arguments.
-/// Examples: {name}, {count:int}, {file?}, {*args}, {value}*
+/// Examples: {name}, {count:int}, {file?}, {*args}, {**args}, {value}*
 /// </summary>
 /// <param name="Name">The parameter name.</param>
-/// <param name="IsCatchAll">True if this is a catch-all parameter ({*args}).</param>
+/// <param name="IsCatchAll">True if this is a catch-all parameter ({*args} or {**args}).</param>
 /// <param name="IsOptional">True if this parameter is optional ({name?}).</param>
 /// <param name="IsRepeated">True if this parameter can be repeated ({value}* in options).</param>
 /// <param name="Type">The type constraint (e.g., "int", "double"), if specified.</param>
 /// <param name="Description">Parameter description from pipe syntax, if specified.</param>
+/// <param name="IsRaw">True if this catch-all takes every remaining token unchanged ({**args}).</param>
 internal record ParameterSyntax
 (
   string Name,
@@ -23,7 +24,8 @@ internal record ParameterSyntax
   bool IsOptional = false,
   bool IsRepeated = false,
   string? Type = null,
-  string? Description = null
+  string? Description = null,
+  bool IsRaw = false
 ) : SegmentSyntax
 {
   public override string ToString()
@@ -31,6 +33,7 @@ internal record ParameterSyntax
     StringBuilder sb = new();
     sb.Append("Parameter: name='").Append(Name).Append('\'');
     if (IsCatchAll) sb.Append(", catchAll=true");
+    if (IsRaw) sb.Append(", raw=true");
     if (IsOptional) sb.Append(", optional=true");
     if (IsRepeated) sb.Append(", repeated=true");
     if (Type is not null) sb.Append(", type='").Append(Type).Append('\'');

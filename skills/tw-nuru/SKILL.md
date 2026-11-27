@@ -162,6 +162,8 @@ Usage: `myapp build MyApp --mode Release --verbose` or `myapp build MyApp -m Rel
 
 ### Catch-all Parameters
 
+`{*args}` captures remaining arguments and still fails closed on an option-shaped token (that token is an unknown option unless it comes after `--`). `{**args}` is the raw form for a command override that parses its own arguments: every token after the leading literals arrives unchanged, including `-n`, `--lines=40`, `--`, and `--help`. A raw catch-all cannot share the route with other parameters or options (NURU_S011). The endpoint marker is `[Parameter(IsCatchAll = true, IsRaw = true)]` on `string[]`. `--json-args` is still peeled. `--interactive` / `-i` alone still starts the REPL when `AddRepl()` is on.
+
 ```csharp
 [NuruRoute("exec", Description = "Run with arbitrary arguments")]
 public sealed class ExecCommand : ICommand<Unit>
@@ -372,10 +374,7 @@ NuruApp app = NuruApp.CreateBuilder()
 return await app.RunAsync(args);
 ```
 
-**Mode detection:**
-- With args: runs as CLI (e.g. `myapp add 2 3`)
-- Without args + `AutoStartWhenEmpty`: starts REPL
-- With `--interactive` / `-i`: starts REPL explicitly
+**Mode detection:** arguments run the CLI (`myapp add 2 3`); no arguments with `AutoStartWhenEmpty`, or `--interactive` / `-i`, starts the REPL.
 
 ## Fluent DSL
 
@@ -403,6 +402,7 @@ In the Fluent DSL, the full route pattern including parameters, options, and sub
 | Typed | `"delay {ms:int}"` | Type-constrained parameter |
 | Optional | `"deploy {env} {tag?}"` | Nullable parameter (handler param must be nullable) |
 | Catch-all | `"exec {*args}"` | Captures all remaining args (must be last); option-shaped args only after `--` |
+| Raw catch-all | `"tail {**args}"` | Every remaining token unchanged, including options, `--`, and `--help`. No other parameters or options (NURU_S011) |
 | Option | `"build --config {mode}"` | Named option with value |
 | Flag | `"build --verbose"` | Boolean flag |
 | Short option | `"build -m {mode}"` | Short alias |

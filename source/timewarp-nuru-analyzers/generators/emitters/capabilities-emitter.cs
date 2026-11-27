@@ -284,7 +284,7 @@ internal static class CapabilitiesEmitter
   private static void EmitParameterCapability(StringBuilder sb, ParameterDefinition param, bool isLast, IReadOnlyDictionary<string, ImmutableArray<string>> enumValues, string? handlerTypeName = null)
   {
     string name = EmitterStringUtils.EscapeForStringLiteral(param.Name);
-    string type = EmitterStringUtils.EscapeForStringLiteral(param.TypeConstraint ?? "string");
+    string type = EmitterStringUtils.EscapeForStringLiteral(param.IsRaw && param.TypeConstraint is null ? "string[]" : param.TypeConstraint ?? "string");
     string required = param.IsOptional ? "false" : "true";
     string isCatchAll = param.IsCatchAll ? "true" : "false";
 

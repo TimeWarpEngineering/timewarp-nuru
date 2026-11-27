@@ -278,6 +278,13 @@ public sealed record RouteDefinition(
     Parameters.Any(p => p.IsCatchAll);
 
   /// <summary>
+  /// Gets whether this route has a raw catch-all ({**name}).
+  /// The handler receives every remaining token, including option-shaped tokens.
+  /// </summary>
+  public bool HasRawCatchAll =>
+    Parameters.Any(p => p.IsRaw);
+
+  /// <summary>
   /// Gets whether this route has any optional positional parameters.
   /// </summary>
   public bool HasOptionalPositionalParams =>

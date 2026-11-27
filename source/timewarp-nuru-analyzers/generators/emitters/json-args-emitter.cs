@@ -75,6 +75,8 @@ internal static partial class JsonArgsEmitter
   /// <c>--name=value</c> or <c>--name:value</c> stays a route token (task 591-001).
   /// When the app has configuration, the dropped overrides are collected in <c>__configArgList</c>
   /// for <see cref="ConfigurationEmitter"/>, which runs after this.
+  /// A raw catch-all also keeps <c>__rawRouteArgs</c>, the peeled args before that filter,
+  /// so <c>--key=value</c> still reaches its handler. Other routes keep reading <c>routeArgs</c>.
   /// </summary>
   /// <param name="sb">The generated method body.</param>
   /// <param name="app">The app being emitted.</param>
@@ -178,6 +180,22 @@ internal static partial class JsonArgsEmitter
     sb.AppendLine("    }");
     sb.AppendLine();
     sb.AppendLine("    string[] routeArgs = [.. __routeArgList];");
+    bool hasRawCatchAll = false;
+    foreach (RouteDefinition route in routes)
+    {
+      if (route.HasRawCatchAll)
+      {
+        hasRawCatchAll = true;
+        break;
+      }
+    }
+
+    if (hasRawCatchAll)
+    {
+      sb.AppendLine("    // Raw catch-all ({**args}) reads this: --json-args is peeled, configuration overrides are not.");
+      sb.AppendLine("    string[] __rawRouteArgs = [.. __jsonPeeledArgs];");
+    }
+
     sb.AppendLine("    global::System.Text.Json.JsonDocument? __jsonDoc = null;");
     sb.AppendLine("    bool __jsonBuiltInOnly = false;");
     sb.AppendLine("    if (__jsonArgsValue is not null)");

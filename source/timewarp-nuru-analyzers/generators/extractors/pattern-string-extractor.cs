@@ -137,7 +137,8 @@ internal static class PatternStringExtractor
         Description: parameter.Description,
         IsOptional: parameter.IsOptional,
         IsCatchAll: parameter.IsCatchAll,
-        ResolvedClrTypeName: ResolveClrTypeName(parameter.Type)),
+        ResolvedClrTypeName: ResolveClrTypeName(parameter.Type),
+        IsRaw: parameter.IsRaw),
       OptionSyntax option => new OptionDefinition(
         Position: position,
         LongForm: option.LongForm,

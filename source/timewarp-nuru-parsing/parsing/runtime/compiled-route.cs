@@ -40,6 +40,11 @@ public class CompiledRoute
   public bool HasCatchAll => CatchAllParameterName is not null;
 
   /// <summary>
+  /// Gets whether the catch-all is raw ({**name}): every remaining token, with no option check.
+  /// </summary>
+  public bool IsRawCatchAll => Segments.OfType<ParameterMatcher>().Any(matcher => matcher.IsRaw);
+
+  /// <summary>
   /// Gets or sets the specificity score used for ordering route matches.
   /// Higher values indicate more specific routes that should be tried first.
   /// </summary>

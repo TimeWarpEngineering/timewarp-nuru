@@ -102,4 +102,13 @@ internal static partial class DiagnosticDescriptors
                    "Register a converter, use its target type name or its ConstraintAlias, or fix the constraint. " +
                    "ConstraintAlias is read from the converter source and must be a constant string. " +
                    "A typed catch-all converts built-in element types only; a repeated option converts built-in and enum elements.");
+
+  public static readonly DiagnosticDescriptor RawCatchAllNotAlone = new(
+      id: "NURU_S011",
+      title: "Raw catch-all is not alone",
+      messageFormat: "Raw catch-all '{0}' must be the route's only parameter, with no options and no type constraint",
+      category: SemanticCategory,
+      defaultSeverity: DiagnosticSeverity.Error,
+      isEnabledByDefault: true,
+      description: "A raw catch-all ({**name} or [Parameter(IsCatchAll = true, IsRaw = true)]) takes every remaining token unchanged. The route may have leading literals only. Other parameters, options, '--', and a type constraint are a build error.");
 }

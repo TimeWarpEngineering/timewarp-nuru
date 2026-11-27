@@ -42,6 +42,13 @@ internal static partial class RouteMatcherEmitter
   {
     sb.AppendLine($"    // Alias: {EscapeXmlComment(alias)}");
 
+    if (route.HasRawCatchAll)
+    {
+      sb.AppendLine("    {");
+      sb.AppendLine($"      string[] __outerAliasRouteArgs_{routeIndex} = routeArgs;");
+      sb.AppendLine("      routeArgs = __rawRouteArgs;");
+    }
+
     string[] aliasParts = alias.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
     // The alias is a complete replacement for groupPrefix + pattern literals.
@@ -55,19 +62,32 @@ internal static partial class RouteMatcherEmitter
     sb.AppendLine($"    if (routeArgs.Length >= {minPositionalArgs})");
     sb.AppendLine("    {");
 
-    EmitOptionFormsSet(sb, route, routeIndex);
+    string optionConversions;
+    if (!route.HasRawCatchAll || route.HasOptions)
+    {
+      EmitOptionFormsSet(sb, route, routeIndex);
 
-    sb.AppendLine($"      int __endOfOptions_{routeIndex} = global::System.Array.IndexOf(routeArgs, \"--\");");
-    sb.AppendLine($"      if (__endOfOptions_{routeIndex} < 0) __endOfOptions_{routeIndex} = routeArgs.Length;");
-    sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
+      sb.AppendLine($"      int __endOfOptions_{routeIndex} = global::System.Array.IndexOf(routeArgs, \"--\");");
+      sb.AppendLine($"      if (__endOfOptions_{routeIndex} < 0) __endOfOptions_{routeIndex} = routeArgs.Length;");
+      sb.AppendLine($"      global::System.Collections.Generic.HashSet<int> __consumed_{routeIndex} = [];");
 
-    string optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters, minPositionalArgs);
-    EmitPositionalArrayConstruction(sb, route, routeIndex, trackUnknownValues: aliasParts.Length == 0);
-    if (aliasParts.Length > 0)
-      EmitUnknownOptionPrefixCheck(sb, routeIndex, [.. aliasParts], aliasSkipLabel);
+      optionConversions = EmitOptionParsingWithIndexTracking(sb, route, routeIndex, customConverters, minPositionalArgs);
+    }
     else
-      EmitUnknownOptionShapeCheck(sb, routeIndex, minPositionalArgs, exact: false, GetPositionalLiteralChecks(route, aliasParts, includeSegmentLiterals: false), aliasSkipLabel);
-    EmitOptionGuardSkip(sb, route, routeIndex, aliasSkipLabel);
+    {
+      optionConversions = "";
+    }
+
+    EmitPositionalArrayConstruction(sb, route, routeIndex, trackUnknownValues: aliasParts.Length == 0);
+    if (!route.HasRawCatchAll)
+    {
+      if (aliasParts.Length > 0)
+        EmitUnknownOptionPrefixCheck(sb, routeIndex, [.. aliasParts], aliasSkipLabel);
+      else
+        EmitUnknownOptionShapeCheck(sb, routeIndex, minPositionalArgs, exact: false, GetPositionalLiteralChecks(route, aliasParts, includeSegmentLiterals: false), aliasSkipLabel);
+      EmitOptionGuardSkip(sb, route, routeIndex, aliasSkipLabel);
+    }
+
     sb.Append(optionConversions);
 
     sb.AppendLine($"      if (__positionalArgs_{routeIndex}.Length < {minPositionalArgs}) goto {aliasSkipLabel};");
@@ -147,6 +167,11 @@ internal static partial class RouteMatcherEmitter
     InterceptorEmitter.EmitExclusiveGateEnd(sb, route, "      ");
     sb.AppendLine("    }");
     sb.AppendLine($"    {aliasSkipLabel}:;");
+    if (route.HasRawCatchAll)
+    {
+      sb.AppendLine($"      routeArgs = __outerAliasRouteArgs_{routeIndex};");
+      sb.AppendLine("    }");
+    }
   }
 
   /// <summary>
@@ -202,6 +227,13 @@ internal static partial class RouteMatcherEmitter
   /// </summary>
   private static void EmitPositionalArrayConstruction(StringBuilder sb, RouteDefinition route, int routeIndex, bool trackUnknownValues)
   {
+    // Raw catch-all: every token, including "--" and option-shaped tokens. routeArgs is __rawRouteArgs here.
+    if (route.HasRawCatchAll)
+    {
+      sb.AppendLine($"      string[] __positionalArgs_{routeIndex} = routeArgs;");
+      return;
+    }
+
     sb.AppendLine($"      string? __unknownOption_{routeIndex} = null;");
     sb.AppendLine($"      global::System.Collections.Generic.List<string> __positionalList_{routeIndex} = [];");
     if (trackUnknownValues)

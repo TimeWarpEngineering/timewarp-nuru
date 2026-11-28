@@ -3,12 +3,12 @@
 #endregion
 
 #region Design
-// Shadow mode (GreenKeyShadow.Enabled) logs hit or miss and the would-line, then the caller still
-// runs the whole pipeline. Nothing in this type skips a stage. A marker is staged only after a
-// same-repo candidate's full pipeline succeeded, as marker.json plus a GITHUB_OUTPUT name. The
-// workflow upload step publishes it. Forks, path-filter skips, and excluded events stage nothing.
+// Observe logs the key and writes green_key_run (full, skip, or pack-only) for the workflow.
+// GreenKeyShadow.Effective forces full while the shadow flag is on. A marker is staged only after
+// a same-repo candidate's full pipeline succeeded. A skip and a pack-only run do not stage one:
+// they did not retest. Forks, path-filter skips, and excluded events stage nothing.
 // Lookup uses gh api. A run step has no ACTIONS_RUNTIME_TOKEN, so this type does not call the
-// artifact service. Observe never throws: a failure is outcome=error and exit stays 0.
+// artifact service. Observe never throws: a failure is outcome=error, green_key_run=full, and exit stays 0.
 #endregion
 
 namespace DevCli;
@@ -43,7 +43,8 @@ internal static partial class GreenKeyLedger
       terminal.WriteLine(line);
       terminal.WriteLine(would);
       AppendSummary(GreenKeyLog.FormatSummary(line, would));
-      await WriteOutputsAsync("", writer: false, "error", cancellationToken).ConfigureAwait(false);
+      await WriteOutputsAsync("", writer: false, "error", GreenKeyLog.RunFull, null, cancellationToken)
+        .ConfigureAwait(false);
       return new GreenKeyObservation
       {
         Key = "",
@@ -151,7 +152,13 @@ internal static partial class GreenKeyLedger
       earlier = "error";
     }
 
-    string pipeline = GreenKeyLog.NormalizePipeline(Environment.GetEnvironmentVariable("GREEN_KEY_PIPELINE"));
+    string? runKind = Environment.GetEnvironmentVariable("GREEN_KEY_RUN");
+    string pipeline = string.IsNullOrWhiteSpace(runKind)
+      ? GreenKeyLog.NormalizePipeline(Environment.GetEnvironmentVariable("GREEN_KEY_PIPELINE"))
+      : GreenKeyLog.PipelineFor(
+        runKind,
+        Environment.GetEnvironmentVariable("GREEN_KEY_STAGE"),
+        Environment.GetEnvironmentVariable("GREEN_KEY_CARRY"));
 
     bool writer = string.Equals(
       Environment.GetEnvironmentVariable("GREEN_KEY_WRITER"),
@@ -263,15 +270,26 @@ internal static partial class GreenKeyLedger
       rows,
       cancellationToken).ConfigureAwait(false);
 
+    GreenKeyRunKind effective = GreenKeyShadow.Effective(GreenKeyLog.RunKindFromWould(would));
+    string? acted = GreenKeyShadow.Enabled
+      ? null
+      : GreenKeyLog.FormatActed(effective, wouldReason, computed.Key, runId, commit, marker, carryRun, earlier);
+    string decision = acted ?? GreenKeyLog.FormatWould(would, wouldReason, computed.Key, runId, commit, carryRun);
     string line = GreenKeyLog.FormatObservation(disposition, reason, computed.Key, runId, commit, lookup, marker);
-    string wouldLine = GreenKeyLog.FormatWould(would, wouldReason, computed.Key, runId, commit, carryRun);
     terminal.WriteLine(line);
     terminal.WriteLine(GreenKeyLog.FormatDetail(sdk, runner, imageLines.Count, computed.TreeCount));
-    terminal.WriteLine(wouldLine);
-    AppendSummary(GreenKeyLog.FormatSummary(line, wouldLine));
+    terminal.WriteLine(decision);
+    AppendSummary(GreenKeyLog.FormatSummary(line, decision));
 
     bool allowWrite = disposition == GreenKeyDisposition.Candidate && GreenKeyManifest.IsKey(computed.Key);
-    await WriteOutputsAsync(computed.Key, allowWrite, earlier, cancellationToken).ConfigureAwait(false);
+    long? carryOutput = effective == GreenKeyRunKind.Skip ? carryRun : null;
+    await WriteOutputsAsync(
+      computed.Key,
+      allowWrite,
+      earlier,
+      GreenKeyLog.RunKindName(effective),
+      carryOutput,
+      cancellationToken).ConfigureAwait(false);
     return new GreenKeyObservation
     {
       Key = computed.Key,
@@ -297,7 +315,8 @@ internal static partial class GreenKeyLedger
     terminal.WriteLine(line);
     terminal.WriteLine(would);
     AppendSummary(GreenKeyLog.FormatSummary(line, would));
-    await WriteOutputsAsync("", writer: false, "error", cancellationToken).ConfigureAwait(false);
+    await WriteOutputsAsync("", writer: false, "error", GreenKeyLog.RunFull, null, cancellationToken)
+      .ConfigureAwait(false);
     return new GreenKeyObservation
     {
       Key = "",

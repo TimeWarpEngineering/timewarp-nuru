@@ -8,8 +8,8 @@
 // still has a live Packages-* artifact. Otherwise the master run packs only (it builds this commit and
 // does not retest). Pull request runs never upload Packages-*, so a pull request hit skips with nothing
 // to carry. Carry probes read master rows only. A pull-request marker has no Packages-* and must not
-// consume the probe limit. Shadow mode (GreenKeyShadow.Enabled) logs this decision and does not act on it.
-// The key does not hash the attestation git note, so an enabled skip still runs attestation.
+// consume the probe limit. GreenKeyShadow.Enabled false means the workflow acts on this decision.
+// The key does not hash the attestation git note, so a skip still runs attestation.
 #endregion
 
 namespace DevCli;
@@ -157,7 +157,7 @@ internal static class GreenKeySkip
   }
 }
 
-/// <summary>What phase 2 would run after a green-key lookup. Shadow mode does not act on this.</summary>
+/// <summary>What phase 2 runs after a green-key lookup.</summary>
 internal enum GreenKeyRunKind
 {
   /// <summary>The whole pipeline.</summary>
@@ -171,14 +171,13 @@ internal enum GreenKeyRunKind
 }
 
 /// <summary>
-/// Shadow mode logs <see cref="GreenKeyRunKind"/> and still runs the full pipeline.
-/// The enable step, after the shadow window shows no key defect, is this constant plus the
-/// workflow branch that acts on it. While it is true, <see cref="Effective"/> is always
-/// <see cref="GreenKeyRunKind.Full"/>.
+/// When <see cref="Enabled"/> is false, <see cref="Effective"/> returns the phase-2 kind and the
+/// workflow acts on it. A true value forces <see cref="GreenKeyRunKind.Full"/> (log only).
+/// A property, not a const: a const false makes the full-run branch unreachable to the compiler.
 /// </summary>
 internal static class GreenKeyShadow
 {
-  internal const bool Enabled = true;
+  internal static bool Enabled => false;
 
   internal static GreenKeyRunKind Effective(GreenKeyRunKind kind) =>
     Enabled ? GreenKeyRunKind.Full : kind;

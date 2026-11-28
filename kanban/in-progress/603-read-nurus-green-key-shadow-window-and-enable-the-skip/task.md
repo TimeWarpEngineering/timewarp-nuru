@@ -44,8 +44,8 @@ Review round 1 is part of the same goal. The stage job's `if` must not read `mat
 
 ## Review
 
-- Round 1: M1 and M2 were open. The fix pass implements both. Round 2 has not run.
-
+- Round 1: M1 and M2 were open. The fix pass implements both.
+- Round 2: Done
 ## Notes
 
 - Steven's yes to enable the skip was given on 2026-11-28 ("enable the skip now and relaunch"), on ganda's and architecture's evidence. The wait for a nuru shadow window is waived.
@@ -66,6 +66,7 @@ Review round 1 is part of the same goal. The stage job's `if` must not read `mat
 - Review oracle round 1: reviewer general (Claude Opus 5.5, effort 2, by-diff budget 673 lines, turn cap 120), 2026-11-28. Open findings M1 (bug) and M2 (suggestion). A fix pass is needed.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 19855cc3-6d3a-4630-811a-b12818a772bc, max-turns 120, artifacts general.md, merged.md — 2026-11-28T08:28:08Z
 - Fix pass (implement-fix-2, 2026-11-28): M1, the stage job `if` no longer reads `matrix`. Pack-only selects the build leg in `strategy.matrix`. M2, every push logs `green-key-seconds`, and the tally subtracts that wall. Session 01a22144-d57c-7280-811e-ccb7c5169c94.
+- Review oracle round 2: reviewer general (Claude Opus 5.5, effort 1, by-diff budget 165 lines, turn cap 80), 2026-11-28. M1 and M2 fixed, no new findings. Disposition: clean.
 
 ## Results
 
@@ -103,7 +104,9 @@ The enable pass also ran `dotnet run --file tools/dev-cli/dev.cs -- workflow --h
 
 ### Review
 
-- Round 1 (2026-11-28), reviewer general, effort 2. Counts: bug 1 open, suggestion 1 open, nit 0. The fix pass implements both. Round 2 has not run.
+- Round 1 (2026-11-28), reviewer general, effort 2. Counts: bug 1 open, suggestion 1 open, nit 0. The fix pass implements both.
+- Round 2 (2026-11-28), reviewer general, effort 1. Final counts: bug 0 open / 1 fixed, suggestion 0 open / 1 fixed, nit 0. No new findings.
+- Disposition: **clean** (2 rounds, 0 open, no wontfix).
 - M1 (bug): the stage job `if` no longer reads `matrix`. Pack-only selects `["build"]` in `strategy.matrix`; every other decision keeps the four legs. The `!= 'skip'` gate stays in the job `if`. actionlint 1.7.12 parses the file.
 - M2 (suggestion): the tally subtracts `green-key-seconds` on every push. The `green-key` job logs that line the way `ci` logs `ci-finish-seconds`.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.

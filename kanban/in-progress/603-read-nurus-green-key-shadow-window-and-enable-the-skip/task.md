@@ -49,6 +49,7 @@ The skip stays off until that window is large enough to compare (ganda's pilot w
 - Created: 3078006 (2026-11-28)
 - Filed from 540 review round 1 M1 so the deferred enable work stays on a card after 540 closes.
 - 2026-11-28: first shadow read, about 80 minutes after PR #440 merged. Two `green-key-v1` runs, both `would=full` and `false_skip=false`. Skip left off. `GreenKeyShadow.Enabled` stays true. No product change.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2202c-19c8-7271-8cc3-ec07756abc82, max-turns 500, Blocked — 2026-11-28T03:27:42Z
 
 ## Results
 
@@ -72,3 +73,17 @@ Smoke: `gh run list --repo TimeWarpEngineering/timewarp-nuru --workflow workflow
 Expect: a later read sees more than these two runs. A `would=skip` or `would=pack-only` is still `shadow=log-only` and the stage matrix still runs. `false_skip=true` is listed with its run id. `GreenKeyShadow.Enabled` is still true until the window is compared and Steven says yes.
 
 Gates: none. No product file changed, so `./bin/dev build`, the green-key runfile, and `ganda repo audit` were not run.
+
+## Blocked
+
+2026-11-28: A shadow window after 540 merged (2026-11-28T02:00:55Z, https://github.com/TimeWarpEngineering/timewarp-nuru/pull/440). Ganda's pilot was about 40 runs or 1–2 weeks (77 measured) before Steven's yes. This window is two runs, both would=full and false_skip=false: PR https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/46095191604 (miss) and master https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/46095948159 (hit, carry-unknown, full pipeline still ran). Unblock: that window read and compared, no key-defect false_skip, and Steven's yes to turn GreenKeyShadow.Enabled off. The several-week minutes tally starts only after the skip is on.
+
+- https://github.com/TimeWarpEngineering/timewarp-nuru/pull/440
+- https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/46095191604
+- https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/46095948159
+
+## Parked
+
+2026-11-28 at implement: A shadow window after 540 merged (2026-11-28T02:00:55Z, https://github.com/TimeWarpEngineering/timewarp-nuru/pull/440). Ganda's pilot was about 40 runs or 1–2 weeks (77 measured) before Steven's yes. This window is two runs, both would=full and false_skip=false: PR https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/46095191604 (miss) and master https://github.com/TimeWarpEngineering/timewarp-nuru/actions/runs/46095948159 (hit, carry-unknown, full pipeline still ran). Unblock: that window read and compared, no key-defect false_skip, and Steven's yes to turn GreenKeyShadow.Enabled off. The several-week minutes tally starts only after the skip is on.
+
+No failing command output.

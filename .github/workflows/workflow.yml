@@ -84,6 +84,9 @@ jobs:
       green_key: ${{ steps.gate.outputs.green_key }}
       green_key_writer: ${{ steps.gate.outputs.green_key_writer }}
       green_key_earlier: ${{ steps.gate.outputs.green_key_earlier }}
+      # Empty when this job did not classify. Consumers coalesce with the green-key job, then 'full'.
+      green_key_run: ${{ steps.gate.outputs.green_key_run }}
+      green_key_carry_run: ${{ steps.gate.outputs.green_key_carry_run }}
     steps:
       - name: Checkout repository
         if: github.event_name == 'pull_request'
@@ -98,8 +101,9 @@ jobs:
           nuget-cache: ${{ runner.environment == 'github-hosted' }}
 
       - name: Classify changed paths
-        # Also logs the green key (task 540). Same compile and same runner as
-        # the stages, so the key matches. Shadow mode: log only, skip nothing.
+        # Also logs the green key (task 540, enable task 603). Same compile and
+        # same runner as the stages, so the key matches. green_key_run is
+        # full, skip, or pack-only. A skip does not run the stage matrix.
         id: gate
         if: github.event_name == 'pull_request'
         env:
@@ -107,15 +111,16 @@ jobs:
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage classify
 
   green-key:
-    # Shadow ledger for every event the changes job does not classify (task 540).
-    # Pull requests observe inside classify. This job does not need changes, so a
-    # push does not wait on the dev-cli compile before the stage matrix. A push
-    # uses the wslc stage runners: a key hashed on ubuntu-latest would never
-    # match a wslc stage. This job does not run for a pull request, so the
+    # Ledger for every event the changes job does not classify (task 540, enable
+    # task 603). Pull requests observe inside classify. The stage matrix needs
+    # this job on a push, so a push waits for the decision before it builds.
+    # That wait is the whole job. The last step logs green-key-seconds so a
+    # minutes tally can subtract it on every push, hit or miss.
+    # A push uses the wslc stage runners: a key hashed on ubuntu-latest would
+    # never match a wslc stage. This job does not run for a pull request, so the
     # runner expression has no pull_request clause. continue-on-error: a failure
-    # here must not fail the workflow run. dev release lists only successful
-    # runs, and a red conclusion would hide a green Packages-* upload.
-    # Shadow mode logs hit or miss and does not skip.
+    # here must not fail the workflow run. An empty green_key_run means full,
+    # so a failed observe still builds. dev release lists only successful runs.
     if: github.event_name != 'pull_request'
     continue-on-error: true
     runs-on: >-
@@ -129,7 +134,14 @@ jobs:
       green_key: ${{ steps.observe.outputs.green_key }}
       green_key_writer: ${{ steps.observe.outputs.green_key_writer }}
       green_key_earlier: ${{ steps.observe.outputs.green_key_earlier }}
+      green_key_run: ${{ steps.observe.outputs.green_key_run }}
+      green_key_carry_run: ${{ steps.observe.outputs.green_key_carry_run }}
     steps:
+      - name: Note green-key start
+        # First step. The last step subtracts this tick count. The span is the
+        # job wall the stage matrix waits on for every push.
+        run: echo "GREEN_KEY_STARTED_TICKS=$([DateTimeOffset]::UtcNow.UtcTicks)" >> $env:GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -146,18 +158,35 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage green-key
 
+      - name: Log green-key seconds
+        # always(): a failed observe still records the wait. A cancelled run
+        # does not. Ceiling matches ci-finish-seconds.
+        if: always() && !cancelled()
+        run: |
+          $started = [int64]$env:GREEN_KEY_STARTED_TICKS
+          $elapsed = [TimeSpan]::FromTicks([DateTimeOffset]::UtcNow.UtcTicks - $started)
+          Write-Output ("green-key-v1 green-key-seconds=" + [int][Math]::Ceiling($elapsed.TotalSeconds))
+
   stage:
     # The PR/merge pipeline as parallel jobs (task 538): build (pack plus the
     # package gates), samples, and the two test phases. Each job is its own
     # runner, so samples and tests cannot touch the packages the build job
     # verified. Release and probe runs build nothing (the release job).
-    # Only an explicit code=false skips. A failed or missing gate still builds.
+    # Only an explicit code=false skips the whole matrix. A failed or missing
+    # gate still builds. A green-key skip (task 603) runs no stage. The job if
+    # cannot read matrix: GitHub rejects the workflow file when it does. A
+    # pack-only master hit selects only the build leg in strategy.matrix, where
+    # needs is allowed. Anything else, including an empty green_key_run, runs
+    # every stage. always() so a skipped green-key job (pull requests observe
+    # inside changes) does not skip this matrix.
     name: ${{ matrix.stage }}
-    needs: changes
+    needs: [changes, green-key]
     if: >-
-      ${{ !cancelled() && needs.changes.outputs.code != 'false' &&
+      ${{ always() && !cancelled() && needs.changes.outputs.code != 'false' &&
       github.event_name != 'release' &&
-      !(github.event_name == 'workflow_dispatch' && inputs.mode != 'merge') }}
+      !(github.event_name == 'workflow_dispatch' && inputs.mode != 'merge') &&
+      (needs['green-key'].result == 'success' || needs['green-key'].result == 'failure' || needs['green-key'].result == 'skipped') &&
+      (needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') != 'skip' }}
     # Runner (task 539). A push to this repo, or a pull request whose head
     # branch lives in this repo, runs on the wslc container runners on TWE-001
     # (labels self-hosted, twe-001, wslc; org runner group 3, which allows this
@@ -177,9 +206,14 @@ jobs:
       contents: read
     strategy:
       # Report every stage. A samples failure no longer hides the tests.
+      # Pack-only is one build leg, so needs.stage.result is success or failure.
+      # Parentheses group the two outputs before the pack-only comparison.
+      # Without them == would bind first, and any non-empty changes output would
+      # select only build. An empty run value is not pack-only, so the matrix
+      # stays the four stages.
       fail-fast: false
       matrix:
-        stage: [build, samples, test-multi, test-standalone]
+        stage: ${{ fromJSON((needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run) == 'pack-only' && '["build"]' || '["build","samples","test-multi","test-standalone"]') }}
 
     steps:
       - name: Checkout repository
@@ -323,14 +357,16 @@ jobs:
     steps:
       - name: Checkout repository
         # The finish step compiles dev workflow and writes the marker file.
-        # fetch-depth 1 is enough: it does not recompute the key.
+        # A skip also attests, which needs the note history, so that checkout is
+        # full. fetch-depth uses quoted 0 and 1: a bare 0 is falsy in an expression.
         # continue-on-error: a checkout flake must not fail the required check
-        # or skip the Packages-* upload. Finish runs only after this step.
+        # or skip the Packages-* upload on a full run. A skip still fails below
+        # when this checkout did not succeed, because it has no packages of its own.
         id: green-key-checkout
         continue-on-error: true
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          fetch-depth: ${{ (needs.changes.outputs.green_key_run == 'skip' || needs['green-key'].outputs.green_key_run == 'skip') && '0' || '1' }}
 
       - name: Setup .NET
         id: green-key-setup
@@ -338,15 +374,32 @@ jobs:
         continue-on-error: true
         uses: ./.github/actions/setup-dotnet
 
+      - name: Attest and carry packages
+        # A green-key skip (task 603). Attestation still runs. On master,
+        # GREEN_KEY_CARRY_RUN is the green master run whose Packages-* this
+        # commit republishes. continue-on-error so the finish step can log
+        # key-skip-failed before the require step fails the check.
+        id: green-key-carry
+        if: >-
+          ${{ !cancelled() &&
+          (needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') == 'skip' &&
+          steps.green-key-checkout.outcome == 'success' &&
+          steps.green-key-setup.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GREEN_KEY_CARRY_RUN: ${{ needs.changes.outputs.green_key_carry_run || needs['green-key'].outputs.green_key_carry_run }}
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage green-key-skip
+
       - name: Finish green-key ledger
-        # Shadow mode (task 540). Logs the end line, including false_skip when a
-        # hit's full run failed, and stages a marker after success. continue-on-error
-        # so the ledger cannot fail the required ci check. Runs before require so a
-        # red matrix still records false_skip. !cancelled(): a cancelled run skips
-        # checkout, and this step would otherwise compile with no tree. A cancelled
-        # stage that still reaches this step logs pipeline=cancelled (rate=out,
-        # false_skip=false), not a false skip. ci-finish-seconds is the compile
-        # this step adds on the ci critical path.
+        # Logs the end line. A full success stages a marker. A skip logs
+        # pipeline=key-skipped (rate=out, false_skip=false) and stages nothing.
+        # continue-on-error so the ledger cannot fail the required ci check.
+        # Runs before require so a red matrix still records false_skip.
+        # !cancelled(): a cancelled run skips checkout, and this step would
+        # otherwise compile with no tree. A cancelled stage logs
+        # pipeline=cancelled. ci-finish-seconds is the compile this step adds
+        # on the ci critical path. Subtract it when tallying minutes saved.
         id: green-key-finish
         if: >-
           ${{ !cancelled() &&
@@ -358,7 +411,9 @@ jobs:
           GREEN_KEY: ${{ needs.changes.outputs.green_key || needs['green-key'].outputs.green_key }}
           GREEN_KEY_EARLIER: ${{ needs.changes.outputs.green_key_earlier || needs['green-key'].outputs.green_key_earlier }}
           GREEN_KEY_WRITER: ${{ needs.changes.outputs.green_key_writer || needs['green-key'].outputs.green_key_writer }}
-          GREEN_KEY_PIPELINE: ${{ needs.stage.result == 'success' && 'succeeded' || needs.stage.result == 'cancelled' && 'cancelled' || 'failed' }}
+          GREEN_KEY_RUN: ${{ needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full' }}
+          GREEN_KEY_STAGE: ${{ needs.stage.result }}
+          GREEN_KEY_CARRY: ${{ steps.green-key-carry.outcome }}
         run: |
           $watch = [Diagnostics.Stopwatch]::StartNew()
           dotnet run --file tools/dev-cli/dev.cs -- workflow --stage green-key-finish
@@ -366,7 +421,22 @@ jobs:
           Write-Output ("green-key-v1 ci-finish-seconds=" + [int][Math]::Ceiling($watch.Elapsed.TotalSeconds))
           exit $code
 
+      - name: Require the carried skip
+        # An intentional skip is green only after attestation (and, on master, the carry).
+        if: >-
+          ${{ !cancelled() &&
+          (needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') == 'skip' &&
+          steps.green-key-carry.outcome != 'success' }}
+        run: |
+          Write-Output "::error::Green-key skip did not attest, or the carried Packages-* could not be republished."
+          exit 1
+
       - name: Require every stage
+        # A skip already ran no stages; requiring them would fail a green ci.
+        # A cancelled run still fails this check, including a cancelled skip.
+        if: >-
+          ${{ cancelled() ||
+          (needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') != 'skip' }}
         env:
           STAGE_RESULT: ${{ needs.stage.result }}
         run: |
@@ -389,7 +459,10 @@ jobs:
           if-no-files-found: warn
 
       - name: Download staged packages
-        if: github.ref == 'refs/heads/master'
+        # A master skip already has the carried Packages-* in artifacts/packages.
+        if: >-
+          ${{ github.ref == 'refs/heads/master' &&
+          (needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') != 'skip' }}
         uses: actions/download-artifact@v8
         with:
           name: staged-packages
@@ -397,11 +470,14 @@ jobs:
 
       - name: Upload Artifacts
         # Green master only: 458-002 promotes Packages-* from a push run at the
-        # tag SHA. PR / always() uploads filled the org quota. Failed runs never
-        # reach this step; release and probe runs have no ci job. The bytes are
-        # the build stage's verified Release packages.
+        # tag SHA. A master skip uploads the carried bytes under this run's name,
+        # so release still finds a Packages-* for the skipped commit. A failed
+        # carry does not upload. PR runs do not upload.
         id: upload-packages
-        if: github.ref == 'refs/heads/master'
+        if: >-
+          ${{ github.ref == 'refs/heads/master' &&
+          ((needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') != 'skip'
+          || steps.green-key-carry.outcome == 'success') }}
         uses: actions/upload-artifact@v7
         with:
           name: Packages-${{ github.run_number }}

@@ -21,11 +21,13 @@
 // stops before attestation when the answer is skip. The single stages never
 // re-ask: the changes job already did. Repo additions to the rule live in
 // .timewarp/dev.jsonc under pullRequestBuild.
-// Green-key ledger (task 540), shadow mode: --stage green-key logs hit or miss
-// and the phase-2 would-line, and skips nothing. --stage green-key-finish logs
-// the end line from the observe job's outputs and stages a marker after a full
-// success. classify and all observe too, so a path-filter skip still logs.
-// GreenKeyShadow.Enabled keeps the pipeline on the full run.
+// Green-key ledger (task 540, enable task 603): --stage green-key logs hit or
+// miss and writes green_key_run. The workflow skips stages on skip, runs only
+// the build stage on pack-only, and runs every stage on full. --stage
+// green-key-skip attests and, on a master skip, downloads the carried
+// Packages-* into artifacts/packages. --stage green-key-finish logs the end
+// line and stages a marker after a full success only. A skip does not retest,
+// so it does not stage a marker. classify and all observe too.
 // Partial files: .verification, .release, .attestation, .publish.
 #endregion
 
@@ -59,7 +61,7 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
   [Option("mode", "m", Description = "CI mode: pr, merge, or release (auto-detected from GITHUB_EVENT_NAME if not specified)")]
   public string? Mode { get; set; }
 
-  [Option("stage", "s", Description = "PR/merge stage: all (default), classify, build, samples, test-multi, test-standalone, green-key, or green-key-finish")]
+  [Option("stage", "s", Description = "PR/merge stage: all (default), classify, build, samples, test-multi, test-standalone, green-key, green-key-skip, or green-key-finish")]
   public string? Stage { get; set; }
 
   [Option("api-key", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
@@ -77,6 +79,7 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
     private const string StageTestMulti = "test-multi";
     private const string StageTestStandalone = "test-standalone";
     private const string StageGreenKey = "green-key";
+    private const string StageGreenKeySkip = "green-key-skip";
     private const string StageGreenKeyFinish = "green-key-finish";
 
     private readonly ITerminal Terminal;
@@ -114,10 +117,10 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
       string stage = string.IsNullOrEmpty(command.Stage) ? StageAll : command.Stage;
       if (stage is not (
         StageAll or StageClassify or StageBuild or StageSamples or StageTestMulti or StageTestStandalone
-        or StageGreenKey or StageGreenKeyFinish))
+        or StageGreenKey or StageGreenKeySkip or StageGreenKeyFinish))
       {
         throw new ArgumentException(
-          $"Unknown stage: {stage}. Valid options: all, classify, build, samples, test-multi, test-standalone, green-key, green-key-finish");
+          $"Unknown stage: {stage}. Valid options: all, classify, build, samples, test-multi, test-standalone, green-key, green-key-skip, green-key-finish");
       }
 
       // Before the release check. A release event may log the key, and must not
@@ -125,6 +128,12 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
       if (stage == StageGreenKey)
       {
         await GreenKeyLedger.ObserveAsync(Terminal, mode == CiMode.Release, ct).ConfigureAwait(false);
+        return Unit.Value;
+      }
+
+      if (stage == StageGreenKeySkip)
+      {
+        await RunGreenKeySkipAsync().ConfigureAwait(false);
         return Unit.Value;
       }
 

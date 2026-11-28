@@ -137,6 +137,8 @@ internal static partial class GreenKeyLedger
     string key,
     bool writer,
     string earlier,
+    string runKind,
+    long? carryRun,
     CancellationToken cancellationToken)
   {
     string? outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
@@ -145,9 +147,12 @@ internal static partial class GreenKeyLedger
       return;
     }
 
+    string carry = carryRun is long id ? id.ToString(CultureInfo.InvariantCulture) : "";
     string text = "green_key=" + key + "\n"
       + "green_key_writer=" + (writer ? "true" : "false") + "\n"
-      + "green_key_earlier=" + earlier + "\n";
+      + "green_key_earlier=" + earlier + "\n"
+      + "green_key_run=" + runKind + "\n"
+      + "green_key_carry_run=" + carry + "\n";
     try
     {
       await File.AppendAllTextAsync(outputPath, text, cancellationToken).ConfigureAwait(false);

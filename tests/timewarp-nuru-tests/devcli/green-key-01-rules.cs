@@ -294,7 +294,11 @@ public class GreenKeyRulesTests
     workflow.ShouldContain("needs: [changes, stage, green-key]");
     workflow.ShouldContain("needs: [changes, green-key]");
     workflow.ShouldContain("!= 'skip'");
-    workflow.ShouldContain("!= 'pack-only' || matrix.stage == 'build'");
+    workflow.ShouldNotContain("!= 'pack-only' || matrix.stage == 'build'");
+    workflow.ShouldContain("== 'pack-only' && '[\"build\"]'");
+    workflow.ShouldContain("'[\"build\",\"samples\",\"test-multi\",\"test-standalone\"]'");
+    workflow.ShouldContain("GREEN_KEY_STARTED_TICKS=");
+    workflow.ShouldContain("green-key-seconds=");
     workflow.ShouldContain("GREEN_KEY_CARRY_RUN:");
     workflow.ShouldContain("GREEN_KEY_RUN:");
     workflow.ShouldContain("GREEN_KEY_STAGE:");
@@ -320,6 +324,14 @@ public class GreenKeyRulesTests
     string stageJob = workflow[stageAt..ciAt];
     stageJob.ShouldContain("needs.changes.outputs.code");
     stageJob.ShouldContain("green_key_run");
+    stageJob.ShouldContain("fromJSON(");
+    int stageIfAt = stageJob.IndexOf("if: >-", StringComparison.Ordinal);
+    int stageRunsOnAt = stageJob.IndexOf("runs-on:", StringComparison.Ordinal);
+    stageIfAt.ShouldBeGreaterThan(0);
+    stageRunsOnAt.ShouldBeGreaterThan(stageIfAt);
+    // The job if is evaluated before the matrix exists. matrix there is a
+    // workflow-file error. Step ifs below runs-on may read matrix.stage.
+    stageJob[stageIfAt..stageRunsOnAt].ShouldNotContain("matrix");
     await Task.CompletedTask;
   }
 

@@ -114,6 +114,8 @@ jobs:
     # Ledger for every event the changes job does not classify (task 540, enable
     # task 603). Pull requests observe inside classify. The stage matrix needs
     # this job on a push, so a push waits for the decision before it builds.
+    # That wait is the whole job. The last step logs green-key-seconds so a
+    # minutes tally can subtract it on every push, hit or miss.
     # A push uses the wslc stage runners: a key hashed on ubuntu-latest would
     # never match a wslc stage. This job does not run for a pull request, so the
     # runner expression has no pull_request clause. continue-on-error: a failure
@@ -135,6 +137,11 @@ jobs:
       green_key_run: ${{ steps.observe.outputs.green_key_run }}
       green_key_carry_run: ${{ steps.observe.outputs.green_key_carry_run }}
     steps:
+      - name: Note green-key start
+        # First step. The last step subtracts this tick count. The span is the
+        # job wall the stage matrix waits on for every push.
+        run: echo "GREEN_KEY_STARTED_TICKS=$([DateTimeOffset]::UtcNow.UtcTicks)" >> $env:GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -151,16 +158,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage green-key
 
+      - name: Log green-key seconds
+        # always(): a failed observe still records the wait. A cancelled run
+        # does not. Ceiling matches ci-finish-seconds.
+        if: always() && !cancelled()
+        run: |
+          $started = [int64]$env:GREEN_KEY_STARTED_TICKS
+          $elapsed = [TimeSpan]::FromTicks([DateTimeOffset]::UtcNow.UtcTicks - $started)
+          Write-Output ("green-key-v1 green-key-seconds=" + [int][Math]::Ceiling($elapsed.TotalSeconds))
+
   stage:
     # The PR/merge pipeline as parallel jobs (task 538): build (pack plus the
     # package gates), samples, and the two test phases. Each job is its own
     # runner, so samples and tests cannot touch the packages the build job
     # verified. Release and probe runs build nothing (the release job).
     # Only an explicit code=false skips the whole matrix. A failed or missing
-    # gate still builds. A green-key skip (task 603) runs no stage. A pack-only
-    # master hit runs the build stage only. Anything else, including an empty
-    # green_key_run, runs every stage. always() so a skipped green-key job
-    # (pull requests observe inside changes) does not skip this matrix.
+    # gate still builds. A green-key skip (task 603) runs no stage. The job if
+    # cannot read matrix: GitHub rejects the workflow file when it does. A
+    # pack-only master hit selects only the build leg in strategy.matrix, where
+    # needs is allowed. Anything else, including an empty green_key_run, runs
+    # every stage. always() so a skipped green-key job (pull requests observe
+    # inside changes) does not skip this matrix.
     name: ${{ matrix.stage }}
     needs: [changes, green-key]
     if: >-
@@ -168,8 +186,7 @@ jobs:
       github.event_name != 'release' &&
       !(github.event_name == 'workflow_dispatch' && inputs.mode != 'merge') &&
       (needs['green-key'].result == 'success' || needs['green-key'].result == 'failure' || needs['green-key'].result == 'skipped') &&
-      (needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') != 'skip' &&
-      ((needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') != 'pack-only' || matrix.stage == 'build') }}
+      (needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run || 'full') != 'skip' }}
     # Runner (task 539). A push to this repo, or a pull request whose head
     # branch lives in this repo, runs on the wslc container runners on TWE-001
     # (labels self-hosted, twe-001, wslc; org runner group 3, which allows this
@@ -189,9 +206,14 @@ jobs:
       contents: read
     strategy:
       # Report every stage. A samples failure no longer hides the tests.
+      # Pack-only is one build leg, so needs.stage.result is success or failure.
+      # Parentheses group the two outputs before the pack-only comparison.
+      # Without them == would bind first, and any non-empty changes output would
+      # select only build. An empty run value is not pack-only, so the matrix
+      # stays the four stages.
       fail-fast: false
       matrix:
-        stage: [build, samples, test-multi, test-standalone]
+        stage: ${{ fromJSON((needs.changes.outputs.green_key_run || needs['green-key'].outputs.green_key_run) == 'pack-only' && '["build"]' || '["build","samples","test-multi","test-standalone"]') }}
 
     steps:
       - name: Checkout repository

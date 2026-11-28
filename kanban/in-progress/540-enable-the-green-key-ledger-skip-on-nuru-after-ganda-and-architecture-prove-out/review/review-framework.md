@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2384
-- Effort: 3
+- Lines changed: 334
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Round 1 scope
 
@@ -14,6 +14,13 @@
 **Diff scope:** branch `task/540-enable-the-green-key-ledger-skip-on-nuru-after` vs `master` (44290254..85363b84)
 **Plan / brief:** `## Goal (implementer restatement)` in task.md: port the green-key-v1 ledger in shadow mode (log hit/miss and the would-line, skip nothing)
 **Effort:** 3, roster axes general
+**Reviewer roster:** general (review oracle, Claude Opus 5.5)
+
+## Round 2 scope
+
+**Date:** 2026-11-28
+**Diff scope:** fix-pass delta `85363b84..ac2b28c6`, re-verifying round-1 M1–M5 and scanning the delta for new defects
+**Effort:** 2, roster axes general, turn cap 120
 **Reviewer roster:** general (review oracle, Claude Opus 5.5)
 
 ## Ground rules

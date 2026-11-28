@@ -48,7 +48,7 @@ Review round 1 is in scope. A green-key failure must not turn a green master run
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
-
+- Round 2: Done
 ## Notes
 
 - Cross-repo gates, checked 2026-11-28, all met:
@@ -70,6 +70,7 @@ Review round 1 is in scope. A green-key failure must not turn a green master run
 - Review oracle round 1 (2026-11-28): reviewer general (Claude Opus 5.5, claude-opus-5-5), effort 3, turn cap 200. 5 open findings (M1 bug, M2 suggestion, M3–M5 nit). Fix pass requested. See `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 2ebf0ecc-6285-4173-a0f2-1f822ba12aa8, max-turns 200, artifacts general.md, merged.md — 2026-11-28T01:29:41Z
 - Fix pass (implement-fix-2, 2026-11-28): M1–M5. Follow-up card is 603. The green-key job and the ci checkout and setup continue on error. Finish runs only when the run is not cancelled and those two steps succeeded. A cancelled stage is `pipeline=cancelled`. Carry probes keep master rows. The green-key runner expression no longer mentions `pull_request`.
+- Review oracle round 2 (2026-11-28): reviewer general (Claude Opus 5.5, claude-opus-5-5), effort 2, turn cap 120. Re-verified M1–M5 on delta 85363b84..ac2b28c6, all fixed, with no new findings. Disposition clean. See `review/round-2/merged.md` and `review/disposition.md`.
 
 ## Results
 
@@ -98,9 +99,10 @@ Gates (fix pass, 2026-11-28):
 
 ### Review
 
-- Round 1 (2026-11-28), roster general, effort 3. Final counts so far: bug 1 open, suggestion 1 open, nit 3 open; 0 fixed, 0 wontfix.
-- Disposition: not reached. A fix pass is requested for M1–M5.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Rounds: 2, roster general. Round 1 at effort 3, round 2 at effort 2 (fix-pass delta).
+- Final counts (round 2): bug 0 open / 1 fixed, suggestion 0 open / 1 fixed, nit 0 open / 3 fixed; 0 wontfix.
+- Disposition: **clean**. M1–M5 were fixed in ac2b28c6, and round 2 raised no new findings. The deferred phase-2 work is task 603.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Learnings
 

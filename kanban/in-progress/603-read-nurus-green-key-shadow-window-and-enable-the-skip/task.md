@@ -16,7 +16,8 @@ Source: [timewarp-intel PR #75](https://github.com/TimeWarpEngineering/timewarp-
 
 ## Requirements
 
-- Read the shadow window 540 starts once its workflow is on master, and compare it with the estimate above. A false skip (a hit whose full run failed) blocks enabling when the key missed an input. A flaky test on a tree that had just passed is not a key defect: record the run and do not change the key for it (ganda 470; Steven waived two such runs on 2026-11-23).
+- **Decision, Steven 2026-11-28: "enable the skip now and relaunch".** Turn the skip on in this walk. Do not wait for a nuru shadow window; the evidence is ganda's pilot (about 77 runs, 469 and 470) and architecture 504, which run the same key rules. This is Steven's yes for the workflow edit.
+- Record the two shadow runs read on 2026-11-28 as the before-state; no larger window is required. A false skip (a hit whose full run failed) blocks enabling when the key missed an input. A flaky test on a tree that had just passed is not a key defect: record the run and do not change the key for it (ganda 470; Steven waived two such runs on 2026-11-23).
 - On master, skip only when a green master run with the same key still has a live `Packages-*` to carry forward, and republish those bytes on the skipped run (ganda 470's rule). Otherwise build. Release must still find a `Packages-*` for every master commit it can promote.
 - A skipped run still reports success on the stable required `ci` check.
 - Record skipped runs and minutes saved over several weeks in Results. Subtract the ci time 540 added (about 26 seconds per run, and the `ci-finish-seconds` line).
@@ -26,7 +27,7 @@ Source: [timewarp-intel PR #75](https://github.com/TimeWarpEngineering/timewarp-
 
 Once 540's shadow logger is on master, read the same-repo `green-key-v1 shadow=log-only` lines and compare them with the intel estimate (most of the old 72% was kanban-only work 537 already skips; the leftover master saving is only a tree-equal push that still has a live `Packages-*`). A `false_skip=true` whose full run failed because the key missed an input blocks the enable. A flake on a tree that had just passed is recorded and does not change the key.
 
-The skip stays off until that window is large enough to compare (ganda's pilot was about 40 runs or 1–2 weeks, and 77 runs were measured) and Steven says yes. His yes for 540 was the logger only. After that yes, turn `GreenKeyShadow.Enabled` off and make the workflow act on the would-line: a pull request hit skips, a master hit skips only when a green master run for the key still has a live `Packages-*` and those bytes are republished, and every other master hit builds. The required `ci` check stays green on a skip. Release must still find a `Packages-*` for every master commit it can promote. Skipped runs and minutes saved, minus the `ci-finish-seconds` 540 added, are recorded after the skip has been on for several weeks. The proof PR carries the run links.
+Steven said yes on 2026-11-28 without waiting for a larger nuru window (see Requirements). Turn `GreenKeyShadow.Enabled` off and make the workflow act on the would-line: a pull request hit skips, a master hit skips only when a green master run for the key still has a live `Packages-*` and those bytes are republished, and every other master hit builds. The required `ci` check stays green on a skip. Release must still find a `Packages-*` for every master commit it can promote. Skipped runs and minutes saved, minus the `ci-finish-seconds` 540 added, are recorded after the skip has been on for several weeks. The proof PR carries the run links.
 
 ## Checklist
 
@@ -38,7 +39,7 @@ The skip stays off until that window is large enough to compare (ganda's pilot w
 
 ## Notes
 
-- Enabling the skip waits on Steven's yes. The shadow window is the evidence for that yes. 540's walk is the yes for the shadow logger only.
+- Steven's yes to enable the skip was given on 2026-11-28 ("enable the skip now and relaunch"), on ganda's and architecture's evidence. The wait for a nuru shadow window is waived.
 - 540 logs and does not skip. `GreenKeyShadow.Enabled` stays true until this card turns it off.
 - Cross-repo gates are already met (recorded on 540): nuru 537, timewarp-ganda 469 and 470, timewarp-architecture 504.
 - ganda 709 tallies skips and minutes saved over two weeks. Use its numbers when sizing this window.
@@ -50,6 +51,7 @@ The skip stays off until that window is large enough to compare (ganda's pilot w
 - Filed from 540 review round 1 M1 so the deferred enable work stays on a card after 540 closes.
 - 2026-11-28: first shadow read, about 80 minutes after PR #440 merged. Two `green-key-v1` runs, both `would=full` and `false_skip=false`. Skip left off. `GreenKeyShadow.Enabled` stays true. No product change.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2202c-19c8-7271-8cc3-ec07756abc82, max-turns 500, Blocked — 2026-11-28T03:27:42Z
+- 2026-11-28: the Blocked and Parked entries below are resolved. Steven: "enable the skip now and relaunch". The shadow-window wait is waived and the yes is given; implement the enable in this walk. Claude session 06092692.
 
 ## Results
 

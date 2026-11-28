@@ -21,6 +21,11 @@
 // stops before attestation when the answer is skip. The single stages never
 // re-ask: the changes job already did. Repo additions to the rule live in
 // .timewarp/dev.jsonc under pullRequestBuild.
+// Green-key ledger (task 540), shadow mode: --stage green-key logs hit or miss
+// and the phase-2 would-line, and skips nothing. --stage green-key-finish logs
+// the end line from the observe job's outputs and stages a marker after a full
+// success. classify and all observe too, so a path-filter skip still logs.
+// GreenKeyShadow.Enabled keeps the pipeline on the full run.
 // Partial files: .verification, .release, .attestation, .publish.
 #endregion
 
@@ -54,7 +59,7 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
   [Option("mode", "m", Description = "CI mode: pr, merge, or release (auto-detected from GITHUB_EVENT_NAME if not specified)")]
   public string? Mode { get; set; }
 
-  [Option("stage", "s", Description = "PR/merge stage: all (default), classify, build, samples, test-multi, or test-standalone")]
+  [Option("stage", "s", Description = "PR/merge stage: all (default), classify, build, samples, test-multi, test-standalone, green-key, or green-key-finish")]
   public string? Stage { get; set; }
 
   [Option("api-key", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
@@ -71,6 +76,8 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
     private const string StageSamples = "samples";
     private const string StageTestMulti = "test-multi";
     private const string StageTestStandalone = "test-standalone";
+    private const string StageGreenKey = "green-key";
+    private const string StageGreenKeyFinish = "green-key-finish";
 
     private readonly ITerminal Terminal;
     private readonly IRepoCleanService RepoCleanService;
@@ -105,9 +112,26 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
       Terminal.WriteLine("");
 
       string stage = string.IsNullOrEmpty(command.Stage) ? StageAll : command.Stage;
-      if (stage is not (StageAll or StageClassify or StageBuild or StageSamples or StageTestMulti or StageTestStandalone))
+      if (stage is not (
+        StageAll or StageClassify or StageBuild or StageSamples or StageTestMulti or StageTestStandalone
+        or StageGreenKey or StageGreenKeyFinish))
       {
-        throw new ArgumentException($"Unknown stage: {stage}. Valid options: all, classify, build, samples, test-multi, test-standalone");
+        throw new ArgumentException(
+          $"Unknown stage: {stage}. Valid options: all, classify, build, samples, test-multi, test-standalone, green-key, green-key-finish");
+      }
+
+      // Before the release check. A release event may log the key, and must not
+      // be told that --stage applies to PR/merge mode only.
+      if (stage == StageGreenKey)
+      {
+        await GreenKeyLedger.ObserveAsync(Terminal, mode == CiMode.Release, ct).ConfigureAwait(false);
+        return Unit.Value;
+      }
+
+      if (stage == StageGreenKeyFinish)
+      {
+        GreenKeyLedger.FinishFromEnvironment(Terminal);
+        return Unit.Value;
       }
 
       if (mode == CiMode.Release)
@@ -121,24 +145,60 @@ public sealed partial class WorkflowCommand : ICommand<Unit>
       }
       else
       {
-        if (stage is StageAll or StageClassify)
+        GreenKeyObservation? observation = null;
+        string? greenPipeline = null;
+        try
         {
-          // Task 595: the fleet pull request build decision, one call.
-          PullRequestBuildDecision decision = await PullRequestBuildClassifier.DecideAsync(ResolveRepoRoot(), ct);
-          Terminal.WriteLine(decision.Message);
-          if (stage == StageClassify)
+          if (stage is StageAll or StageClassify)
           {
+            // Task 595: the fleet pull request build decision, one call.
+            PullRequestBuildDecision decision = await PullRequestBuildClassifier.DecideAsync(ResolveRepoRoot(), ct);
+            Terminal.WriteLine(decision.Message);
+            observation = await GreenKeyLedger.ObserveAsync(Terminal, releaseMode: false, ct).ConfigureAwait(false);
             await WriteGitHubOutputAsync("code", decision.RequiresBuild ? "true" : "false", ct);
-            return Unit.Value;
+            if (!decision.RequiresBuild)
+            {
+              // ci does not run when code=false, so the end line is logged here.
+              greenPipeline = GreenKeyLog.PathSkipped;
+              return Unit.Value;
+            }
+
+            if (stage == StageClassify)
+            {
+              return Unit.Value;
+            }
           }
 
-          if (!decision.RequiresBuild)
+          await RunPrWorkflowAsync(command.Attestation, stage, ModeName(mode));
+          if (observation is not null)
           {
-            return Unit.Value;
+            greenPipeline = Environment.ExitCode == 0 ? GreenKeyLog.Succeeded : GreenKeyLog.Failed;
           }
         }
+        catch (Exception)
+        {
+          if (observation is not null)
+          {
+            greenPipeline = GreenKeyLog.Failed;
+          }
 
-        await RunPrWorkflowAsync(command.Attestation, stage, ModeName(mode));
+          throw;
+        }
+        finally
+        {
+          if (observation is not null && greenPipeline is not null)
+          {
+            try
+            {
+              GreenKeyLedger.Finish(Terminal, observation, greenPipeline);
+            }
+            catch (Exception exception)
+            {
+              Terminal.WriteErrorLine(
+                "green-key-v1 marker-write=failed error=" + GreenKeyLog.Redact(exception.Message));
+            }
+          }
+        }
       }
 
       return Unit.Value;

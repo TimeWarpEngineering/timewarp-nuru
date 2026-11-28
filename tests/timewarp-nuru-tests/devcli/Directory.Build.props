@@ -73,6 +73,19 @@
          audit-02-endpoint.cs can route `audit` with its force and verbose options through a NuruApp. That test file is
          #if !JARIBU_MULTI throughout and listed in CiTestExcludes. -->
     <Compile Include="$(SourceDirectory)timewarp-nuru-devcli/content/any/endpoints/audit-command.cs" />
+
+    <!-- Green-key rules (task 540). The ledger calls gh and is not compiled here. -->
+    <Compile Include="$(RepositoryRoot)tools/dev-cli/services/green-key-manifest.cs" />
+    <Compile Include="$(RepositoryRoot)tools/dev-cli/services/green-key-event.cs" />
+    <Compile Include="$(RepositoryRoot)tools/dev-cli/services/green-key-markers.cs" />
+    <Compile Include="$(RepositoryRoot)tools/dev-cli/services/green-key-log.cs" />
+    <Compile Include="$(RepositoryRoot)tools/dev-cli/services/green-key-skip.cs" />
+    <Compile Include="$(RepositoryRoot)tools/dev-cli/services/green-key-runner-image.cs" />
+    <Compile Include="$(RepositoryRoot)tools/dev-cli/services/green-key-tree.cs" />
+    <Using Include="System.Text" />
+    <Using Include="System.Text.Json" />
+    <Using Include="System.Text.RegularExpressions" />
+    <Using Include="System.Security.Cryptography" />
   </ItemGroup>
 
   <ItemGroup>

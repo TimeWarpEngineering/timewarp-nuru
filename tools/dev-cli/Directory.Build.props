@@ -29,7 +29,12 @@
     <Using Include="System.Collections.Generic" />
     <Using Include="System.Diagnostics" />
     <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Text" />
     <Using Include="System.Text.Json" />
+    <Using Include="System.Text.RegularExpressions" />
+    <Using Include="System.Globalization" />
+    <Using Include="System.Security.Cryptography" />
+    <Using Include="System.ComponentModel" />
     <Using Include="System.Xml.Linq" />
 
     <Using Include="TimeWarp.Nuru" />
@@ -46,6 +51,7 @@
     <!-- Include local command files in compilation (excluding shared DevCli endpoints) -->
     <Compile Include="endpoints/**/*.cs"
              Exclude="endpoints/clean-command.cs;endpoints/check-version-command.cs;endpoints/self-install-command.cs" />
+    <Compile Include="services/**/*.cs" />
     <Compile Remove="telemetry-proof/**" />
 
     <!-- The repo's named benchmarks for `dev benchmark` (DevBenchmarks.AddRepoBenchmarks) -->

@@ -74,8 +74,16 @@ jobs:
       fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
     permissions:
       contents: read
+      # read: the classify step looks up green-key markers (task 540). It does not upload.
+      actions: read
     outputs:
       code: ${{ steps.gate.outputs.code || 'true' }}
+      # Empty when this job did not classify (push, release, dispatch). The ci
+      # job then reads the parallel green-key job. Do not default these to a
+      # non-empty value: a string default is truthy and would hide that job.
+      green_key: ${{ steps.gate.outputs.green_key }}
+      green_key_writer: ${{ steps.gate.outputs.green_key_writer }}
+      green_key_earlier: ${{ steps.gate.outputs.green_key_earlier }}
     steps:
       - name: Checkout repository
         if: github.event_name == 'pull_request'
@@ -90,9 +98,53 @@ jobs:
           nuget-cache: ${{ runner.environment == 'github-hosted' }}
 
       - name: Classify changed paths
+        # Also logs the green key (task 540). Same compile and same runner as
+        # the stages, so the key matches. Shadow mode: log only, skip nothing.
         id: gate
         if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage classify
+
+  green-key:
+    # Shadow ledger for every event the changes job does not classify (task 540).
+    # Pull requests observe inside classify. This job does not need changes, so a
+    # push does not wait on the dev-cli compile before the stage matrix. A push
+    # uses the wslc stage runners: a key hashed on ubuntu-latest would never
+    # match a wslc stage. This job does not run for a pull request, so the
+    # runner expression has no pull_request clause. continue-on-error: a failure
+    # here must not fail the workflow run. dev release lists only successful
+    # runs, and a red conclusion would hide a green Packages-* upload.
+    # Shadow mode logs hit or miss and does not skip.
+    if: github.event_name != 'pull_request'
+    continue-on-error: true
+    runs-on: >-
+      ${{ vars.CI_HOSTED_ONLY != 'true' &&
+      github.event_name == 'push' &&
+      fromJSON('["self-hosted", "twe-001", "wslc"]') || 'ubuntu-latest' }}
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      green_key: ${{ steps.observe.outputs.green_key }}
+      green_key_writer: ${{ steps.observe.outputs.green_key_writer }}
+      green_key_earlier: ${{ steps.observe.outputs.green_key_earlier }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup .NET
+        uses: ./.github/actions/setup-dotnet
+        with:
+          nuget-cache: ${{ runner.environment == 'github-hosted' }}
+
+      - name: Observe green key
+        id: observe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: dotnet run --file tools/dev-cli/dev.cs -- workflow --stage green-key
 
   stage:
     # The PR/merge pipeline as parallel jobs (task 538): build (pack plus the
@@ -256,7 +308,7 @@ jobs:
     # Skipped exactly when changes says code=false (a skipped job reports
     # success) and on release and probe runs, which have no stages. always()
     # rather than !cancelled(): a cancelled run must fail this check, not skip it.
-    needs: [changes, stage]
+    needs: [changes, stage, green-key]
     if: >-
       ${{ always() && needs.changes.outputs.code != 'false' &&
       github.event_name != 'release' &&
@@ -269,6 +321,51 @@ jobs:
       actions: write
 
     steps:
+      - name: Checkout repository
+        # The finish step compiles dev workflow and writes the marker file.
+        # fetch-depth 1 is enough: it does not recompute the key.
+        # continue-on-error: a checkout flake must not fail the required check
+        # or skip the Packages-* upload. Finish runs only after this step.
+        id: green-key-checkout
+        continue-on-error: true
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup .NET
+        id: green-key-setup
+        if: steps.green-key-checkout.outcome == 'success'
+        continue-on-error: true
+        uses: ./.github/actions/setup-dotnet
+
+      - name: Finish green-key ledger
+        # Shadow mode (task 540). Logs the end line, including false_skip when a
+        # hit's full run failed, and stages a marker after success. continue-on-error
+        # so the ledger cannot fail the required ci check. Runs before require so a
+        # red matrix still records false_skip. !cancelled(): a cancelled run skips
+        # checkout, and this step would otherwise compile with no tree. A cancelled
+        # stage that still reaches this step logs pipeline=cancelled (rate=out,
+        # false_skip=false), not a false skip. ci-finish-seconds is the compile
+        # this step adds on the ci critical path.
+        id: green-key-finish
+        if: >-
+          ${{ !cancelled() &&
+          steps.green-key-checkout.outcome == 'success' &&
+          steps.green-key-setup.outcome == 'success' &&
+          (needs.changes.outputs.green_key != '' || needs['green-key'].outputs.green_key != '') }}
+        continue-on-error: true
+        env:
+          GREEN_KEY: ${{ needs.changes.outputs.green_key || needs['green-key'].outputs.green_key }}
+          GREEN_KEY_EARLIER: ${{ needs.changes.outputs.green_key_earlier || needs['green-key'].outputs.green_key_earlier }}
+          GREEN_KEY_WRITER: ${{ needs.changes.outputs.green_key_writer || needs['green-key'].outputs.green_key_writer }}
+          GREEN_KEY_PIPELINE: ${{ needs.stage.result == 'success' && 'succeeded' || needs.stage.result == 'cancelled' && 'cancelled' || 'failed' }}
+        run: |
+          $watch = [Diagnostics.Stopwatch]::StartNew()
+          dotnet run --file tools/dev-cli/dev.cs -- workflow --stage green-key-finish
+          $code = $LASTEXITCODE
+          Write-Output ("green-key-v1 ci-finish-seconds=" + [int][Math]::Ceiling($watch.Elapsed.TotalSeconds))
+          exit $code
+
       - name: Require every stage
         env:
           STAGE_RESULT: ${{ needs.stage.result }}
@@ -278,6 +375,18 @@ jobs:
             Write-Output "::error::A CI stage did not succeed ($($env:STAGE_RESULT))."
             exit 1
           }
+
+      - name: Upload green-key marker
+        # Same-repo full success only. The finish step sets the output when it
+        # staged artifacts/green-key/marker.json. A marker failure must not fail ci.
+        if: success() && steps['green-key-finish'].outputs.green_key_artifact != ''
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps['green-key-finish'].outputs.green_key_artifact }}
+          path: artifacts/green-key/marker.json
+          retention-days: 90
+          if-no-files-found: warn
 
       - name: Download staged packages
         if: github.ref == 'refs/heads/master'

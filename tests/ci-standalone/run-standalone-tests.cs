@@ -22,6 +22,7 @@ using TimeWarp.Amuru;
 // - check-version-04: entire body #if !JARIBU_MULTI; needs CheckVersionCommand endpoint (M15)
 // - check-version-07: entire body #if !JARIBU_MULTI; needs CheckVersionCommand endpoint (task 456)
 // - audit-02-endpoint: entire body #if !JARIBU_MULTI; needs AuditCommand endpoint (task 601)
+// - green-key-01: entire body #if !JARIBU_MULTI; green-key rules compile only into the devcli props (task 540)
 // - generator-19/20: multi-included for filtered cases, but #if !JARIBU_MULTI methods
 //   (NoFilter_IncludesAll, Gen20KanbanQuery) only run in this standalone phase (M29)
 // - operation-endpoint-dispatch: the typed HttpClient case is #if !JARIBU_MULTI (NURU050)
@@ -48,6 +49,7 @@ string[] standaloneTests =
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-07-endpoint-fail-closed.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "check-version-07b-endpoint-declared-feeds.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "audit-02-endpoint.cs"),
+  Path.Combine(ciDir, "..", "timewarp-nuru-tests", "devcli", "green-key-01-rules.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-19-group-filtering.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-20-parameterized-service-constructor.cs"),
   Path.Combine(ciDir, "..", "timewarp-nuru-tests", "generator", "generator-28-interpreter-cycle-guard.cs"),

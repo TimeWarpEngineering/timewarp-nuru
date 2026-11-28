@@ -45,6 +45,8 @@
     <!-- check-version-07: same CheckVersionCommand constraint as check-version-04.
          Run standalone via run-ci-tests.cs second phase (task 456 distance wiring). -->
     <!-- audit-02-endpoint: same constraint for AuditCommand (kanban task 601). Run standalone. -->
+    <!-- green-key-01: entire body is #if !JARIBU_MULTI. The rules compile only into the
+         devcli standalone props (task 540). Run standalone. -->
     <!-- generator-28: Roslyn-hosted generator test; references timewarp-nuru-analyzers as a
          LIBRARY, whose shared parsing types (Lexer/Token) collide with timewarp-nuru's in one
          compilation (CS0433). Run standalone by run-ci-tests.cs as a second phase instead. -->
@@ -59,6 +61,7 @@
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-07-endpoint-fail-closed.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/check-version-07b-endpoint-declared-feeds.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/devcli/audit-02-endpoint.cs" />
+    <CiTestExcludes Include="../timewarp-nuru-tests/devcli/green-key-01-rules.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-28-interpreter-cycle-guard.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-29-h002-named-arguments.cs" />
     <CiTestExcludes Include="../timewarp-nuru-tests/generator/generator-30-nuru-r003-overlap.cs" />

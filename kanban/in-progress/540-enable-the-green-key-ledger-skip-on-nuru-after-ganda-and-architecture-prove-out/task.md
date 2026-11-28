@@ -25,10 +25,19 @@ Filed 2026-10-25 at Steven's request ("File tasks to do this", 23:44 Asia/Bangko
 - A skipped run still reports success on the stable required `ci` check.
 - Record skipped runs and minutes saved over several weeks in Results.
 
+## Goal (implementer restatement)
+
+Nuru's `dev workflow` grows a green-key ledger with the same rules as timewarp-ganda: a versioned key over the code inputs this CI actually reads, the SDK, `global.json`, the workflow file and its scripts, the runner image, and any container image digest. Same-repo master pushes and same-repo pull requests may look up and, after a full success, write a marker. Fork pull requests may look up and never write. `release`, `schedule`, and `workflow_dispatch` are not candidates.
+
+This change runs that ledger in shadow mode. Every candidate run logs hit or miss, including the phase-2 decision (a pull request hit would skip; a master hit would skip only when a green run for the key still has a live `Packages-*`, otherwise it would pack only). Nothing is skipped. The stage jobs still build and test, and the required check stays `ci`. A full success stages `artifacts/green-key/marker.json` for an `actions/upload-artifact` step. A hit whose full run then fails is `false_skip=true` in the log. That is the signal that blocks turning the skip on when the key missed an input. A flaky test on a tree that had just passed is recorded and does not change the key.
+
+The skip itself stays off (`GreenKeyShadow.Enabled`). Enabling it, proving a tree-equal master push stays green, proving release still finds `Packages-*`, and recording minutes saved all wait on the shadow window this logger starts once it is on the workflow. The workflow edit is in this branch. Notes still require Steven's yes before that edit merges.
+
 ## Checklist
 
 - [x] Confirm the gates in Notes are met (2026-11-28)
-- [ ] Port the ledger and run a short shadow window
+- [x] Port the ledger into `tools/dev-cli/` and log hit or miss without skipping
+- [ ] Run a short shadow window and compare it with the estimate (starts once this is on the workflow)
 - [ ] Enable the skip; prove a tree-equal master push is skipped and `ci` is green
 - [ ] Prove release still finds a `Packages-*` artifact after a skipped commit
 - [ ] Record skips and minutes saved
@@ -49,5 +58,21 @@ Filed 2026-10-25 at Steven's request ("File tasks to do this", 23:44 Asia/Bangko
 
 - Created: 988895 (2026-10-25)
 - 2026-11-28: backlog review; gates rechecked and spec refreshed (Steven: "update 540"). Claude session 06092692.
+- 2026-11-28: shadow port of the green-key ledger. Same-repo runs log hit or miss and the phase-2 would-line (`shadow=log-only`). The stage matrix still builds and tests. `GreenKeyShadow.Enabled` stays true, so a skip is not wired. The shadow window, the enable proof, and the minutes tally stay open until this is on the workflow.
 
 ## Results
+
+Shadow mode only. The ledger is in `tools/dev-cli/services/` and `dev workflow` logs it. A pull request observes inside the existing classify step (same wslc runner as the stages). Every other event observes in a parallel `green-key` job that does not sit in front of the matrix. The `ci` job logs the end line, including `false_skip`, and uploads `green-key-v1-<key>` after a same-repo full success. Nothing is skipped. Enabling the skip, proving a tree-equal master push, proving release still finds `Packages-*`, and recording minutes saved wait on the shadow window after merge.
+
+### How to validate
+
+Smoke: Open a pull request whose files are code. In the classify log, find `green-key-v1 shadow=log-only` and a `would=` line. The build, samples, and test stages still run. The required check is still `ci`.
+
+Expect: A same-repo pull request logs `outcome=hit` or `outcome=miss`. A hit logs `would=skip` and still builds and tests. A master push logs `would=skip` with `carry_run` only when a green run for that key still has a live `Packages-*`; otherwise it logs `would=pack-only` or `would=full`, and the build stage still runs. A hit whose full run then fails logs `false_skip=true`. Fork, release, schedule, and `workflow_dispatch` runs do not upload a marker. `GreenKeyShadow.Enabled` is true.
+
+Gates:
+
+- `./bin/dev build` — succeeded, 0 warnings
+- `dotnet run --file tests/timewarp-nuru-tests/devcli/green-key-01-rules.cs` — 14 passed. Standalone runfile (`#if !JARIBU_MULTI`); CI runs it from `tests/ci-standalone/run-standalone-tests.cs`
+- `dotnet run --file tools/dev-cli/dev.cs -- --help` — succeeded. Type-check of the dev CLI runfile, which `./bin/dev build` does not compile
+- `ganda repo audit` — passed, 43 passed, 0 failed, 1 warning (`vscode-window-icon`, exit 0)

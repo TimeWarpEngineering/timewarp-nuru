@@ -59,6 +59,7 @@ The skip itself stays off (`GreenKeyShadow.Enabled`). Enabling it, proving a tre
 - Created: 988895 (2026-10-25)
 - 2026-11-28: backlog review; gates rechecked and spec refreshed (Steven: "update 540"). Claude session 06092692.
 - 2026-11-28: shadow port of the green-key ledger. Same-repo runs log hit or miss and the phase-2 would-line (`shadow=log-only`). The stage matrix still builds and tests. `GreenKeyShadow.Enabled` stays true, so a skip is not wired. The shadow window, the enable proof, and the minutes tally stay open until this is on the workflow.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a21f96-b680-7262-a431-e0bfbe7c5a25, max-turns 500, Done — 2026-11-28T01:25:20Z
 
 ## Results
 

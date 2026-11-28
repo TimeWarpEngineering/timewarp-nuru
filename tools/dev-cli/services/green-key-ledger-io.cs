@@ -30,7 +30,7 @@ internal static partial class GreenKeyLedger
     {
       listed = await Gh.Api(path)
         .WithPaginate()
-        .WithJq(".artifacts[] | {id,expired,created_at,run_id:.workflow_run.id,head_sha:.workflow_run.head_sha}")
+        .WithJq(GreenKeyMarkers.ArtifactListJq)
         .WithWorkingDirectory(repoRoot)
         .WithNoValidation()
         .CaptureAsync(cancellationToken)

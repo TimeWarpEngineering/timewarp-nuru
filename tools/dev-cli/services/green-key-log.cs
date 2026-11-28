@@ -5,8 +5,9 @@
 #region Design
 // Every line starts with green-key-v1 and shadow=log-only. A later tally must not read these as skips:
 // the skip, once enabled, says mode=skip and skip=yes. false_skip=true is a hit whose full run then failed.
-// rate=in is a run that spent pipeline minutes (succeeded or failed). path-skipped is rate=out: task 537
-// already removed that run, and it did not test this tree.
+// rate=in is a run that spent pipeline minutes (succeeded or failed). path-skipped and cancelled are
+// rate=out and false_skip=false. Task 537 already removed a path-skipped run. Cancelling a pull request
+// is not a key defect.
 #endregion
 
 namespace DevCli;
@@ -19,6 +20,9 @@ internal static class GreenKeyLog
   internal const string Failed = "failed";
 
   internal const string PathSkipped = "path-skipped";
+
+  /// <summary>A cancelled stage. Rate-out, and not a false skip.</summary>
+  internal const string Cancelled = "cancelled";
 
   private const string FormatId = GreenKeyManifest.FormatId;
 
@@ -129,6 +133,13 @@ internal static class GreenKeyLog
       + " run=" + One(runId)
       + " commit=" + One(commit);
   }
+
+  /// <summary>
+  /// A pipeline value the end line accepts. Anything else is <see cref="Failed"/>,
+  /// the value that can mark a false skip.
+  /// </summary>
+  internal static string NormalizePipeline(string? pipeline) =>
+    pipeline is Succeeded or Failed or PathSkipped or Cancelled ? pipeline : Failed;
 
   /// <summary>True for <c>succeeded</c> and <c>failed</c>. Those runs have wall minutes.</summary>
   internal static bool CountsTowardHitRate(string pipeline) =>

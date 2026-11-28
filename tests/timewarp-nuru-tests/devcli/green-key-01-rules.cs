@@ -119,15 +119,24 @@ public class GreenKeyRulesTests
     await Task.CompletedTask;
   }
 
-  public static async Task Carry_candidates_are_newest_first_and_distinct()
+  public static async Task Carry_candidates_are_newest_master_rows()
   {
+    GreenKeyMarkers.TryParseArtifactRow(
+      """{"id":7,"expired":false,"created_at":"2026-06-01T00:00:00Z","run_id":70,"head_sha":"abc","head_branch":"master"}""",
+      out GreenKeyArtifactRow parsed).ShouldBeTrue();
+    parsed.HeadBranch.ShouldBe(GreenKeySkip.MasterBranchName);
+    parsed.RunId.ShouldBe(70L);
+    GreenKeyMarkers.ArtifactListJq.ShouldContain("head_branch:.workflow_run.head_branch");
+
     GreenKeyArtifactRow[] rows =
     [
-      new(1, false, "2026-01-01T00:00:00Z", 10, "a"),
-      new(2, false, "2026-03-01T00:00:00Z", 30, "c"),
-      new(3, false, "2026-03-01T00:00:00Z", 30, "c-dup"),
-      new(4, true, "2026-04-01T00:00:00Z", 40, "expired"),
-      new(5, false, "2026-02-01T00:00:00Z", 20, "b")
+      new(1, false, "2026-01-01T00:00:00Z", 10, "a", "master"),
+      new(2, false, "2026-03-01T00:00:00Z", 30, "c", "master"),
+      new(3, false, "2026-03-01T00:00:00Z", 30, "c-dup", "master"),
+      new(4, true, "2026-04-01T00:00:00Z", 40, "expired", "master"),
+      new(5, false, "2026-02-01T00:00:00Z", 20, "b", "master"),
+      new(6, false, "2026-05-01T00:00:00Z", 50, "pr", "task/540-enable"),
+      new(8, false, "2026-05-02T00:00:00Z", 60, "missing", null)
     ];
 
     GreenKeySkip.CarryCandidateRuns(rows).ShouldBe([30L, 20L, 10L]);
@@ -181,6 +190,14 @@ public class GreenKeyRulesTests
     string passed = GreenKeyLog.FormatPipelineEnd("hit", GreenKeyLog.Succeeded, "abc", "1", "def");
     passed.ShouldContain("false_skip=false");
     passed.ShouldContain("rate=in");
+
+    string cancelled = GreenKeyLog.FormatPipelineEnd("hit", GreenKeyLog.Cancelled, "abc", "1", "def");
+    cancelled.ShouldContain("pipeline=cancelled");
+    cancelled.ShouldContain("false_skip=false");
+    cancelled.ShouldContain("rate=out");
+    GreenKeyLog.NormalizePipeline(GreenKeyLog.Cancelled).ShouldBe(GreenKeyLog.Cancelled);
+    GreenKeyLog.NormalizePipeline("nope").ShouldBe(GreenKeyLog.Failed);
+    GreenKeyLog.NormalizePipeline(null).ShouldBe(GreenKeyLog.Failed);
     await Task.CompletedTask;
   }
 
@@ -229,9 +246,20 @@ public class GreenKeyRulesTests
     workflow.ShouldContain("Shadow mode");
     workflow.ShouldContain("needs: [changes, stage, green-key]");
     workflow.ShouldContain("if: github.ref == 'refs/heads/master'");
+    workflow.ShouldContain("!cancelled() &&");
+    workflow.ShouldContain("steps.green-key-checkout.outcome == 'success'");
+    workflow.ShouldContain("steps.green-key-setup.outcome == 'success'");
+    workflow.ShouldContain("needs.stage.result == 'cancelled' && 'cancelled'");
+    workflow.ShouldContain("ci-finish-seconds=");
 
+    int greenKeyAt = workflow.IndexOf("\n  green-key:\n", StringComparison.Ordinal);
     int stageAt = workflow.IndexOf("\n  stage:\n", StringComparison.Ordinal);
     int ciAt = workflow.IndexOf("\n  ci:\n", stageAt, StringComparison.Ordinal);
+    greenKeyAt.ShouldBeGreaterThan(0);
+    string greenKeyJob = workflow[greenKeyAt..stageAt];
+    greenKeyJob.ShouldContain("continue-on-error: true");
+    greenKeyJob.ShouldNotContain("head.repo");
+    greenKeyJob.ShouldContain("github.event_name == 'push' &&");
     stageAt.ShouldBeGreaterThan(0);
     ciAt.ShouldBeGreaterThan(stageAt);
     string stageJob = workflow[stageAt..ciAt];

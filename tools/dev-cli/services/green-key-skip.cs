@@ -7,7 +7,8 @@
 // `Green-Key: full-run`. On a master push the carry is required: skip only when a green run for the key
 // still has a live Packages-* artifact. Otherwise the master run packs only (it builds this commit and
 // does not retest). Pull request runs never upload Packages-*, so a pull request hit skips with nothing
-// to carry. Shadow mode (GreenKeyShadow.Enabled) logs this decision and does not act on it.
+// to carry. Carry probes read master rows only. A pull-request marker has no Packages-* and must not
+// consume the probe limit. Shadow mode (GreenKeyShadow.Enabled) logs this decision and does not act on it.
 // The key does not hash the attestation git note, so an enabled skip still runs attestation.
 #endregion
 
@@ -23,6 +24,9 @@ internal static class GreenKeySkip
   internal const string ForceTrailerValue = "full-run";
 
   internal const string PackagesPrefix = "Packages-";
+
+  /// <summary>Short branch name of a master push. Artifact rows use this, not <c>refs/heads/master</c>.</summary>
+  internal const string MasterBranchName = "master";
 
   /// <summary>True for a same-repo candidate whose key hit, unless the force trailer is set.</summary>
   internal static bool ShouldSkipPipeline(GreenKeyDisposition disposition, bool hit, bool forceFullRun) =>
@@ -76,16 +80,22 @@ internal static class GreenKeySkip
   /// <summary>True for a push to <c>refs/heads/master</c>, the only event that uploads Packages-*.</summary>
   internal static bool IsMasterPush(string? eventName, string? githubRef) =>
     string.Equals(eventName, "push", StringComparison.Ordinal)
-    && string.Equals(githubRef, "refs/heads/master", StringComparison.Ordinal);
+    && string.Equals(githubRef, "refs/heads/" + MasterBranchName, StringComparison.Ordinal);
 
-  /// <summary>Run ids of live green markers, newest first, each once.</summary>
+  /// <summary>Run ids of live green master markers, newest first, each once.</summary>
   internal static IReadOnlyList<long> CarryCandidateRuns(IEnumerable<GreenKeyArtifactRow> rows)
   {
     ArgumentNullException.ThrowIfNull(rows);
     List<(long RunId, DateTimeOffset Created)> live = [];
     foreach (GreenKeyArtifactRow row in rows)
     {
-      if (row.Expired || row.RunId is not long runId || runId <= 0)
+      if
+      (
+        !string.Equals(row.HeadBranch, MasterBranchName, StringComparison.Ordinal)
+        || row.Expired
+        || row.RunId is not long runId
+        || runId <= 0
+      )
       {
         continue;
       }

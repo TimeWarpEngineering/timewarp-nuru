@@ -22,6 +22,13 @@ internal static class GreenKeyMarkers
   /// <summary>Step output the workflow's upload step reads. Set only when a marker is staged.</summary>
   internal const string ArtifactOutputName = "green_key_artifact";
 
+  /// <summary>
+  /// jq projection for one artifact row. <c>head_branch</c> is the short branch name
+  /// (<c>master</c>, not <c>refs/heads/master</c>). Carry probes keep master rows.
+  /// </summary>
+  internal const string ArtifactListJq =
+    ".artifacts[] | {id,expired,created_at,run_id:.workflow_run.id,head_sha:.workflow_run.head_sha,head_branch:.workflow_run.head_branch}";
+
   /// <summary>Artifact name for a key. Repo-scoped lookup uses this exact name.</summary>
   internal static string ArtifactName(string key)
   {
@@ -29,7 +36,7 @@ internal static class GreenKeyMarkers
     return GreenKeyManifest.FormatId + "-" + key.ToLowerInvariant();
   }
 
-  /// <summary>One artifact list row. <paramref name="jsonLine"/> is one object (<c>id</c>, <c>expired</c>, <c>created_at</c>, <c>run_id</c>, <c>head_sha</c>).</summary>
+  /// <summary>One artifact list row. <paramref name="jsonLine"/> is one object from <see cref="ArtifactListJq"/>.</summary>
   internal static bool TryParseArtifactRow(string jsonLine, out GreenKeyArtifactRow row)
   {
     row = default;
@@ -58,7 +65,13 @@ internal static class GreenKeyMarkers
         runId = parsedRun;
       }
 
-      row = new GreenKeyArtifactRow(id, expired, createdAt, runId, GreenKeyEvent.JsonText(root, "head_sha"));
+      row = new GreenKeyArtifactRow(
+        id,
+        expired,
+        createdAt,
+        runId,
+        GreenKeyEvent.JsonText(root, "head_sha"),
+        GreenKeyEvent.JsonText(root, "head_branch"));
       return true;
     }
     catch (JsonException)
@@ -141,4 +154,5 @@ internal readonly record struct GreenKeyArtifactRow(
   bool Expired,
   string? CreatedAt,
   long? RunId,
-  string? Commit);
+  string? Commit,
+  string? HeadBranch = null);

@@ -151,11 +151,7 @@ internal static partial class GreenKeyLedger
       earlier = "error";
     }
 
-    string pipeline = Environment.GetEnvironmentVariable("GREEN_KEY_PIPELINE") ?? "";
-    if (pipeline is not (GreenKeyLog.Succeeded or GreenKeyLog.Failed or GreenKeyLog.PathSkipped))
-    {
-      pipeline = GreenKeyLog.Failed;
-    }
+    string pipeline = GreenKeyLog.NormalizePipeline(Environment.GetEnvironmentVariable("GREEN_KEY_PIPELINE"));
 
     bool writer = string.Equals(
       Environment.GetEnvironmentVariable("GREEN_KEY_WRITER"),

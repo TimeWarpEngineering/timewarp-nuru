@@ -28,10 +28,10 @@ Backlog until Roslynk (the driving consumer) says whether it needs a typed resul
 
 ## Checklist
 
-- [ ] Ask Roslynk whether a typed result or CLI-side behavior is needed; record the answer here
-- [ ] Promote or archive
-- [ ] Implement the decided option(s)
-- [ ] Tests and docs
+- [x] Ask Roslynk whether a typed result or CLI-side behavior is needed; record the answer here (answered from Roslynk's code, see Results)
+- [x] Promote or archive (archived)
+- [ ] Implement the decided option(s) (not needed)
+- [ ] Tests and docs (not needed)
 
 ## Notes
 
@@ -42,3 +42,20 @@ Backlog until Roslynk (the driving consumer) says whether it needs a typed resul
 
 - Created as 508-010: 3918158 (2026-10-19)
 - 2026-10-21: moved out from under 508 to top-level 516 (Steven) so 508 can close; decision still open.
+- 2026-11-28: backlog review, archived (Steven: "archive 516"). Claude session 06092692.
+
+## Results
+
+Archived 2026-11-28. The shipped 508-005 contract is accepted: argv (or the JSON object) on the wire, text and exit code back, and the whole `INuruBehavior` pipeline on the server.
+
+The decision gate asked whether Roslynk needs a typed result in the CLI process or a CLI-side behavior. Nobody on the Roslynk side answered in words. The answer below is read from Roslynk's master on 2026-11-28:
+
+- Roslynk is on `TimeWarp.Nuru.Daemon` and `TimeWarp.Nuru.McpHost` 4.0.0-beta.12 and uses the contract as shipped.
+- Its CLI prints server-rendered text through `UseVerbatimRendererOutput()` and `UseProblemRendererForErrors()` (508-011 and 508-018, both landed after this card was filed). The `IResponseRenderer<T>` classes run in the engine, on the server.
+- `RoslynkForwarder` reads only the exit code and the output text of a forwarded call.
+- Roslynk registers no `INuruBehavior`, so there is nothing to place on the CLI side.
+- Roslynk's board has no open task, and none asks for either option.
+
+Nothing in the daemon changed for this card. `documentation/user/features/served-apps.md` already describes the accepted contract. The 508-005 `## Learnings` departure is closed as accepted, not a defect.
+
+If a consumer later needs the value in the CLI process (a non-default `OutputStrategy`, post-processing a typed response) or a CLI-side behavior, file a new task; the Requirements above are a starting spec.

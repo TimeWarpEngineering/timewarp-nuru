@@ -56,6 +56,7 @@ Skipped runs and minutes saved, minus each run's `ci-finish-seconds`, start at z
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a2202c-19c8-7271-8cc3-ec07756abc82, max-turns 500, Blocked — 2026-11-28T03:27:42Z
 - 2026-11-28: the earlier Blocked and Parked entries are resolved. Steven: "enable the skip now and relaunch". The shadow-window wait is waived and the yes is given. Claude session 06092692.
 - 2026-11-28: implementer-grok turned the skip on. Session 01a22127-0b47-71b3-a689-25f5e184eafe.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a22127-0b47-71b3-a689-25f5e184eafe, max-turns 500, Done — 2026-11-28T08:25:54Z
 
 ## Results
 

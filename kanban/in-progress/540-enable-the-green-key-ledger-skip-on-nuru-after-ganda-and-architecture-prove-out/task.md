@@ -75,4 +75,4 @@ Gates:
 - `./bin/dev build` — succeeded, 0 warnings
 - `dotnet run --file tests/timewarp-nuru-tests/devcli/green-key-01-rules.cs` — 14 passed. Standalone runfile (`#if !JARIBU_MULTI`); CI runs it from `tests/ci-standalone/run-standalone-tests.cs`
 - `dotnet run --file tools/dev-cli/dev.cs -- --help` — succeeded. Type-check of the dev CLI runfile, which `./bin/dev build` does not compile
-- `ganda repo audit` — passed, 43 passed, 0 failed, 1 warning (`vscode-window-icon`, exit 0)
+- `ganda repo audit` — passed, 43 passed, 0 failed, 1 warning (`vscode-window-icon`, exit 0). The commit hook then failed `runfile-executable` on `green-key-01-rules.cs` (mode 100644). The file is now executable, same as the other devcli runfiles, and the follow-up commit re-attests.
